@@ -45,10 +45,8 @@ class TheMeathookMassacreTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve spell
         harness.passBothPriorities(); // resolve ETB → -2/-2 → SBAs kill bears
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(findMeathook()).isNotNull();
     }
 

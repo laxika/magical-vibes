@@ -39,8 +39,7 @@ class ManamorphoseTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
 
         // Draw a card resolves after the mana is added.
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog)
                 .extracting(entry -> entry.plainText())
@@ -61,7 +60,6 @@ class ManamorphoseTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLUE");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 }

@@ -72,8 +72,8 @@ class OvercomeTest extends BaseCardTest {
         ));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test

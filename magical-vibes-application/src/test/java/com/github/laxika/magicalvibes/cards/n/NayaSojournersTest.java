@@ -67,10 +67,8 @@ class NayaSojournersTest extends BaseCardTest {
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         // The cycling draw still happens: Naya Sojourners discarded, the library card drawn.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Naya Sojourners"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Naya Sojourners");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     private void killWithFlameJavelin() {

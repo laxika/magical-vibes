@@ -67,8 +67,7 @@ class CorpseCurTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false); // decline
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Blight Mamba"));
+        harness.assertInGraveyard(player1, "Blight Mamba");
     }
 
     // ===== Graveyard return =====
@@ -84,10 +83,8 @@ class CorpseCurTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Blight Mamba"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Blight Mamba"));
+        harness.assertInHand(player1, "Blight Mamba");
+        harness.assertNotInGraveyard(player1, "Blight Mamba");
     }
 
     @Test
@@ -99,12 +96,9 @@ class CorpseCurTest extends BaseCardTest {
         // Choose Contagious Nim (index 1)
         harness.handleGraveyardCardChosen(player1, 1);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Contagious Nim"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Blight Mamba"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Contagious Nim"));
+        harness.assertInHand(player1, "Contagious Nim");
+        harness.assertInGraveyard(player1, "Blight Mamba");
+        harness.assertNotInGraveyard(player1, "Contagious Nim");
     }
 
     // ===== Filtering =====
@@ -148,9 +142,7 @@ class CorpseCurTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, -1);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Blight Mamba"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Blight Mamba"));
+        harness.assertInGraveyard(player1, "Blight Mamba");
+        harness.assertNotInHand(player1, "Blight Mamba");
     }
 }

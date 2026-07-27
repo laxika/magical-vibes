@@ -55,8 +55,7 @@ class StormFleetSpyTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         // Creature is still on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Storm Fleet Spy"));
+        harness.assertOnBattlefield(player1, "Storm Fleet Spy");
 
         // Hand size unchanged (no draw)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeAfterCast);
@@ -90,8 +89,7 @@ class StormFleetSpyTest extends BaseCardTest {
         castStormFleetSpy();
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Storm Fleet Spy"));
+        harness.assertOnBattlefield(player1, "Storm Fleet Spy");
     }
 
     @Test

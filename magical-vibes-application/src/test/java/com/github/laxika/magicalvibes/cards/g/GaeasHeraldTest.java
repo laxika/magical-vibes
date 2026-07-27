@@ -35,13 +35,9 @@ class GaeasHeraldTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Cancel"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Cancel");
     }
 
     @Test
@@ -63,8 +59,7 @@ class GaeasHeraldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Might of Oaks"));
+        harness.assertInGraveyard(player1, "Might of Oaks");
         assertThat(gd.stack)
                 .noneMatch(se -> se.getCard().getName().equals("Might of Oaks"));
     }
@@ -88,9 +83,7 @@ class GaeasHeraldTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isNull();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 }

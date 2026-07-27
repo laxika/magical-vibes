@@ -27,8 +27,7 @@ class FlameWaveTest extends BaseCardTest {
         // Target player takes 4 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         // Both 2/2 bears die to 4 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player2.getId()).stream()
                 .filter(c -> c.getName().equals("Grizzly Bears"))
                 .count()).isEqualTo(2);
@@ -46,7 +45,6 @@ class FlameWaveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Caster's creature is unharmed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }

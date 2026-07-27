@@ -41,8 +41,7 @@ class DemonicTaskmasterTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(bears.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(taskmaster.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -84,7 +83,6 @@ class DemonicTaskmasterTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(taskmaster.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }

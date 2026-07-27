@@ -27,10 +27,8 @@ class AetherFlashTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell → Aether Flash triggers
         harness.passBothPriorities(); // resolve trigger → 2 damage → lethal to a 2/2
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -67,7 +65,6 @@ class AetherFlashTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell → trigger
         harness.passBothPriorities(); // resolve trigger → 2 damage → lethal to a 2/2
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }

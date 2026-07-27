@@ -90,8 +90,7 @@ class FeelingOfDreadTest extends BaseCardTest {
         harness.castInstant(player1, 0, List.of(creature.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Feeling of Dread"));
+        harness.assertInGraveyard(player1, "Feeling of Dread");
     }
 
     @Test
@@ -145,8 +144,7 @@ class FeelingOfDreadTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Should NOT be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Feeling of Dread"));
+        harness.assertNotInGraveyard(player1, "Feeling of Dread");
         // Should be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Feeling of Dread"));
@@ -191,9 +189,7 @@ class FeelingOfDreadTest extends BaseCardTest {
 
         harness.castFlashback(player1, 0, List.of(creature.getId()));
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Feeling of Dread"));
+        harness.assertNotInGraveyard(player1, "Feeling of Dread");
     }
 
     private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {

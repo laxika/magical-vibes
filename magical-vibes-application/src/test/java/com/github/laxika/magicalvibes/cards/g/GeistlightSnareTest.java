@@ -32,10 +32,8 @@ class GeistlightSnareTest extends BaseCardTest {
         harness.castInstant(player2, 0, elves.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -58,13 +56,11 @@ class GeistlightSnareTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
     }
 
     @Nested

@@ -18,8 +18,7 @@ class DreadReaperTest extends BaseCardTest {
         castDreadReaper();
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Dread Reaper"));
+        harness.assertOnBattlefield(player1, "Dread Reaper");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
     }

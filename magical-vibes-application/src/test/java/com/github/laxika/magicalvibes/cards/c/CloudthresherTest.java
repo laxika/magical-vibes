@@ -37,14 +37,11 @@ class CloudthresherTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
 
         // flyer destroyed, non-flyer survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Suntail Hawk"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
 
         // Cloudthresher has Reach (not flying), so it is unaffected and remains
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Cloudthresher"));
+        harness.assertOnBattlefield(player1, "Cloudthresher");
     }
 
     // ===== Evoke =====
@@ -63,13 +60,10 @@ class CloudthresherTest extends BaseCardTest {
         // ETB damage happened
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Suntail Hawk"));
+        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
 
         // Cloudthresher sacrificed on entry
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Cloudthresher"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Cloudthresher"));
+        harness.assertNotOnBattlefield(player1, "Cloudthresher");
+        harness.assertInGraveyard(player1, "Cloudthresher");
     }
 }

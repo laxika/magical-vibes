@@ -72,10 +72,8 @@ class IxallisKeeperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Ixalli's Keeper is sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ixalli's Keeper"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ixalli's Keeper"));
+        harness.assertNotOnBattlefield(player1, "Ixalli's Keeper");
+        harness.assertInGraveyard(player1, "Ixalli's Keeper");
 
         // Grizzly Bears (2/2) gets +5/+5 = 7/7
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(7);

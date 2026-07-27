@@ -32,8 +32,7 @@ class ReinsOfTheVinesteedTest extends BaseCardTest {
 
         Permanent aura = findPermanent(player1, "Reins of the Vinesteed");
         assertThat(aura.getAttachedTo()).isEqualTo(otherElf.getId());
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Reins of the Vinesteed"));
+        harness.assertNotInGraveyard(player1, "Reins of the Vinesteed");
         // +2/+2 applies to the new host (Elvish Warrior is 2/3)
         assertThat(gqs.getEffectivePower(gd, otherElf)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, otherElf)).isEqualTo(5);
@@ -66,8 +65,7 @@ class ReinsOfTheVinesteedTest extends BaseCardTest {
         destroyEnchantedCreature(dyingElf);
         harness.handleMayAbilityChosen(player1, false); // decline
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Reins of the Vinesteed"));
+        harness.assertInGraveyard(player1, "Reins of the Vinesteed");
         for (var bf : gd.playerBattlefields.values()) {
             assertThat(bf).noneMatch(p -> p.getCard().getName().equals("Reins of the Vinesteed"));
         }
@@ -83,8 +81,7 @@ class ReinsOfTheVinesteedTest extends BaseCardTest {
         destroyEnchantedCreature(dyingElf);
         harness.handleMayAbilityChosen(player1, true); // accept, but nothing to attach to
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Reins of the Vinesteed"));
+        harness.assertInGraveyard(player1, "Reins of the Vinesteed");
         for (var bf : gd.playerBattlefields.values()) {
             assertThat(bf).noneMatch(p -> p.getCard().getName().equals("Reins of the Vinesteed"));
         }

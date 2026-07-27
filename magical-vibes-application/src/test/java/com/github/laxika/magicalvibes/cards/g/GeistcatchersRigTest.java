@@ -39,10 +39,8 @@ class GeistcatchersRigTest extends BaseCardTest {
         castRigAndAcceptMay(pegasusId);
 
         // Stormfront Pegasus is 2/1, 4 damage kills it
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Stormfront Pegasus"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Stormfront Pegasus"));
+        harness.assertNotOnBattlefield(player2, "Stormfront Pegasus");
+        harness.assertInGraveyard(player2, "Stormfront Pegasus");
     }
 
     // ===== May ability declined =====
@@ -63,12 +61,10 @@ class GeistcatchersRigTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false); // decline
 
         // Stormfront Pegasus still on battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Stormfront Pegasus"));
+        harness.assertOnBattlefield(player2, "Stormfront Pegasus");
 
         // Rig still entered the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Geistcatcher's Rig"));
+        harness.assertOnBattlefield(player1, "Geistcatcher's Rig");
     }
 
     // ===== Geistcatcher's Rig enters as 4/5 =====

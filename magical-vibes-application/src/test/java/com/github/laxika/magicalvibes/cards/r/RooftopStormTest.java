@@ -42,8 +42,7 @@ class RooftopStormTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Rooftop Storm"));
+        harness.assertOnBattlefield(player1, "Rooftop Storm");
     }
 
     // ===== Alternative zero cost for Zombie creature spells =====

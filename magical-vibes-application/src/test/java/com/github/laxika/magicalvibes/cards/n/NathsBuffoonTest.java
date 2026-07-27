@@ -66,10 +66,8 @@ class NathsBuffoonTest extends BaseCardTest {
 
         // Nath's Buffoon (1/1) deals 1 damage to Llanowar Elves (1/1) — kills it
         // Llanowar Elves' 1 damage is prevented by protection from Elves — Buffoon survives
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Nath's Buffoon"));
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertOnBattlefield(player2, "Nath's Buffoon");
     }
 
     @Test
@@ -93,8 +91,7 @@ class NathsBuffoonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Hill Giant deals 3 damage to Nath's Buffoon (1/1) — it dies
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Nath's Buffoon"));
+        harness.assertNotOnBattlefield(player2, "Nath's Buffoon");
     }
 
     // ===== Protection - blocking =====

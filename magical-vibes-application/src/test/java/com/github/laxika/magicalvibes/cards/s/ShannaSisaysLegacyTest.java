@@ -152,8 +152,7 @@ class ShannaSisaysLegacyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Shanna should have been destroyed by Royal Assassin
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Shanna, Sisay's Legacy"));
+        harness.assertNotOnBattlefield(player1, "Shanna, Sisay's Legacy");
     }
 
 }

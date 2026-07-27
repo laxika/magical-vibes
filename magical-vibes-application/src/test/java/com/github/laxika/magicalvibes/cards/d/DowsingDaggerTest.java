@@ -233,8 +233,7 @@ class DowsingDaggerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Lost Vale should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Lost Vale"));
+        harness.assertOnBattlefield(player1, "Lost Vale");
     }
 
     // ===== Helpers =====

@@ -65,8 +65,7 @@ class SparringConstructTest extends BaseCardTest {
             GameData gd = harness.getGameData();
 
             // Sparring Construct should be dead
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Sparring Construct"));
+            harness.assertInGraveyard(player1, "Sparring Construct");
 
             // Controller should be prompted to choose a target creature
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);

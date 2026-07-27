@@ -131,10 +131,8 @@ class BlazeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears (2/2) should be destroyed by 2 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -149,8 +147,7 @@ class BlazeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Serra Angel (4/4) should survive 3 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Serra Angel"));
+        harness.assertOnBattlefield(player2, "Serra Angel");
     }
 
     // ===== Graveyard and stack cleanup =====
@@ -165,8 +162,7 @@ class BlazeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 3, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Blaze"));
+        harness.assertInGraveyard(player1, "Blaze");
     }
 
     @Test

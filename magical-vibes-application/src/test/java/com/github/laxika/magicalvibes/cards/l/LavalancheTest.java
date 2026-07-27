@@ -30,11 +30,9 @@ class LavalancheTest extends BaseCardTest {
         // Target player takes X (=3) damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         // The 2/2 dies to 3 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // The 2/4 survives 3 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
+        harness.assertOnBattlefield(player2, "Giant Spider");
     }
 
     @Test
@@ -51,7 +49,6 @@ class LavalancheTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Caster's creature is unharmed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }

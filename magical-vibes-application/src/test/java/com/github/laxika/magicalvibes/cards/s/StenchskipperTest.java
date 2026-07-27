@@ -45,10 +45,8 @@ class StenchskipperTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Stenchskipper"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Stenchskipper"));
+        harness.assertNotOnBattlefield(player1, "Stenchskipper");
+        harness.assertInGraveyard(player1, "Stenchskipper");
     }
 
     @Test
@@ -61,8 +59,7 @@ class StenchskipperTest extends BaseCardTest {
         advanceToEndStep();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Stenchskipper"));
+        harness.assertOnBattlefield(player1, "Stenchskipper");
     }
 
     @Test
@@ -76,8 +73,7 @@ class StenchskipperTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Stenchskipper"));
+        harness.assertNotOnBattlefield(player1, "Stenchskipper");
     }
 
     @Test
@@ -93,7 +89,6 @@ class StenchskipperTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve trigger — condition no longer met
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Stenchskipper"));
+        harness.assertOnBattlefield(player1, "Stenchskipper");
     }
 }

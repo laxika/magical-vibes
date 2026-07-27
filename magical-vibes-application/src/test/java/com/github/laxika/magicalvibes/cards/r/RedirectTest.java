@@ -140,11 +140,9 @@ class RedirectTest extends BaseCardTest {
         // Resolve Boomerang — bounces player2's bears
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Player1's bears should still be on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -175,11 +173,8 @@ class RedirectTest extends BaseCardTest {
         // Resolve Boomerang — bounces player1's bears (original target)
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     // ===== Resolving — untargeted spell =====
@@ -274,9 +269,7 @@ class RedirectTest extends BaseCardTest {
         // Decline retarget
         harness.handleMayAbilityChosen(player2, false);
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Redirect"));
+        harness.assertInGraveyard(player2, "Redirect");
     }
 
     // ===== Fizzle =====
@@ -307,8 +300,7 @@ class RedirectTest extends BaseCardTest {
 
         // Redirect fizzles
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Redirect"));
+        harness.assertInGraveyard(player2, "Redirect");
     }
 
     // ===== Stack empties after full resolution =====

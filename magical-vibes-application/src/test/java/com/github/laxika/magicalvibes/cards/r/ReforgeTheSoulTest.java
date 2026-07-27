@@ -44,8 +44,7 @@ class ReforgeTheSoulTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(c -> c.getName().equals("Grizzly Bears")).hasSize(2);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Reforge the Soul"));
+        harness.assertInGraveyard(player1, "Reforge the Soul");
     }
 
     @Test

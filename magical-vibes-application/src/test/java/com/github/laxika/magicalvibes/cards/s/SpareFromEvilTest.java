@@ -149,8 +149,7 @@ class SpareFromEvilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Elite Vanguard (2/1) should survive because 5 damage from non-Human is prevented
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Elite Vanguard"));
+        harness.assertOnBattlefield(player1, "Elite Vanguard");
     }
 
     // ===== Protection clears at end of turn =====

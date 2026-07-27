@@ -87,8 +87,7 @@ class RelentlessSkaabsTest extends BaseCardTest {
         assertThat(returnedSkaabs.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(returnedSkaabs.getEffectivePower()).isEqualTo(5);
         assertThat(returnedSkaabs.getEffectiveToughness()).isEqualTo(5);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Relentless Skaabs"));
+        harness.assertNotInGraveyard(player1, "Relentless Skaabs");
     }
 
     @Test
@@ -102,9 +101,7 @@ class RelentlessSkaabsTest extends BaseCardTest {
         harness.castInstant(player2, 0, skaabs.getId());
         resolveUntilEmpty();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Relentless Skaabs"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Relentless Skaabs"));
+        harness.assertNotOnBattlefield(player1, "Relentless Skaabs");
+        harness.assertInGraveyard(player1, "Relentless Skaabs");
     }
 }

@@ -50,8 +50,7 @@ class LiquimetalCoatingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Liquimetal Coating"));
+        harness.assertOnBattlefield(player1, "Liquimetal Coating");
     }
 
     // ===== Activated ability: targeting a creature =====

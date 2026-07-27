@@ -46,8 +46,7 @@ class FireAtWillTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(attacker.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertInGraveyard(player1, "Hill Giant");
     }
 
     @Test

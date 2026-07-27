@@ -50,8 +50,7 @@ class CallTheCavalryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Call the Cavalry"));
+        harness.assertInGraveyard(player1, "Call the Cavalry");
     }
 
     @Test

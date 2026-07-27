@@ -27,8 +27,7 @@ class FiligreeFractureTest extends BaseCardTest {
         castFiligreeFracture(harness.getPermanentId(player2, "Coastal Piracy"));
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Coastal Piracy"));
+        harness.assertInGraveyard(player2, "Coastal Piracy");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
     }
@@ -43,8 +42,7 @@ class FiligreeFractureTest extends BaseCardTest {
         castFiligreeFracture(harness.getPermanentId(player2, "Bad Moon"));
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Bad Moon"));
+        harness.assertInGraveyard(player2, "Bad Moon");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
     }
@@ -59,8 +57,7 @@ class FiligreeFractureTest extends BaseCardTest {
         castFiligreeFracture(harness.getPermanentId(player2, "Fountain of Youth"));
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Fountain of Youth"));
+        harness.assertInGraveyard(player2, "Fountain of Youth");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
     }

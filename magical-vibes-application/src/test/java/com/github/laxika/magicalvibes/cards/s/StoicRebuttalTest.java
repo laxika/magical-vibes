@@ -32,11 +32,8 @@ class StoicRebuttalTest extends BaseCardTest {
         harness.castInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Metalcraft cost reduction =====
@@ -62,9 +59,7 @@ class StoicRebuttalTest extends BaseCardTest {
         harness.castInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -112,7 +107,6 @@ class StoicRebuttalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Stoic Rebuttal"));
+        harness.assertInGraveyard(player2, "Stoic Rebuttal");
     }
 }

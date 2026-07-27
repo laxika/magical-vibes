@@ -93,8 +93,7 @@ class DistressTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class)).isNull();
 
         // Grizzly Bears should be in player2's graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // Peek should remain in player2's hand
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -198,8 +197,7 @@ class DistressTest extends BaseCardTest {
         harness.handleCardChosen(player1, 1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // Two forests remain in hand
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
@@ -264,8 +262,7 @@ class DistressTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Peek should remain in hand
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -289,8 +286,7 @@ class DistressTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Distress"));
+        harness.assertInGraveyard(player1, "Distress");
     }
 
     // ===== Logging =====

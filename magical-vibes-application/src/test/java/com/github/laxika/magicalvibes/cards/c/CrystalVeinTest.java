@@ -19,8 +19,7 @@ class CrystalVeinTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Crystal Vein"));
+        harness.assertOnBattlefield(player1, "Crystal Vein");
     }
 
     @Test
@@ -32,9 +31,7 @@ class CrystalVeinTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Crystal Vein"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Crystal Vein"));
+        harness.assertNotOnBattlefield(player1, "Crystal Vein");
+        harness.assertInGraveyard(player1, "Crystal Vein");
     }
 }

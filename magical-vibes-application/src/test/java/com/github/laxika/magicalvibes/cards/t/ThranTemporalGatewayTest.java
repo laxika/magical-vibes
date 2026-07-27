@@ -91,8 +91,7 @@ class ThranTemporalGatewayTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sparring Construct"));
+        harness.assertOnBattlefield(player1, "Sparring Construct");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 

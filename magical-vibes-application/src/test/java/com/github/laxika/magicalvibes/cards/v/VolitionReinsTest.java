@@ -116,8 +116,7 @@ class VolitionReinsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Volition Reins should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Volition Reins"));
+        harness.assertInGraveyard(player1, "Volition Reins");
     }
 
     // ===== Permanent returns when aura leaves =====

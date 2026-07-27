@@ -121,8 +121,7 @@ class IndestructibilityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature should survive
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -136,8 +135,7 @@ class IndestructibilityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature should survive because it's indestructible
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Effects stop when removed =====

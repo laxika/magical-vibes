@@ -65,8 +65,7 @@ class WarpedDevotionTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         // player1 discards the Forest; the bounced Grizzly Bears remains in hand.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player1, "Forest");
     }
 
     @Test

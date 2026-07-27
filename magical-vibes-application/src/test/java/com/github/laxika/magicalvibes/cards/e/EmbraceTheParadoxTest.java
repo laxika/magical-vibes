@@ -62,9 +62,7 @@ class EmbraceTheParadoxTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInHand(player1, "Forest");
     }
 }

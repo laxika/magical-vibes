@@ -87,8 +87,7 @@ class PyreheartWolfTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, wolf));
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Pyreheart Wolf"));
+        harness.assertNotInGraveyard(player1, "Pyreheart Wolf");
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(perm -> perm.getCard().getName().equals("Pyreheart Wolf"))
                 .singleElement()
@@ -105,10 +104,8 @@ class PyreheartWolfTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, wolf));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(perm -> perm.getCard().getName().equals("Pyreheart Wolf"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Pyreheart Wolf"));
+        harness.assertNotOnBattlefield(player1, "Pyreheart Wolf");
+        harness.assertInGraveyard(player1, "Pyreheart Wolf");
     }
 
     private void attackWithWolf() {

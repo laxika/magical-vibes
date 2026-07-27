@@ -53,8 +53,7 @@ class InfernoTitanTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             // Grizzly Bears (2/2) should be dead from 3 damage
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertInGraveyard(player2, "Grizzly Bears");
         }
 
         @Test
@@ -177,8 +176,7 @@ class InfernoTitanTest extends BaseCardTest {
             harness.passBothPriorities(); // resolves trigger + auto-passes through combat
 
             // Bears took 2 damage (lethal for 2/2) — should be dead
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertInGraveyard(player2, "Grizzly Bears");
 
             // 1 from trigger + 6 from combat (unblocked) = 7 total
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);

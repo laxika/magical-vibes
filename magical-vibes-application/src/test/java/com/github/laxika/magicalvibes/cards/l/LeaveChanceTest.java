@@ -36,8 +36,7 @@ class LeaveChanceTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .filteredOn(c -> c.getName().equals("Grizzly Bears") || c.getName().equals("Island"))
                 .hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Leave"));
+        harness.assertInGraveyard(player1, "Leave");
     }
 
     @Test
@@ -52,8 +51,7 @@ class LeaveChanceTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Leave"));
+        harness.assertInGraveyard(player1, "Leave");
     }
 
     @Test

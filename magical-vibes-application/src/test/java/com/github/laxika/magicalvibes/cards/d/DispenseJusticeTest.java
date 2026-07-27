@@ -64,10 +64,8 @@ class DispenseJusticeTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -122,12 +120,9 @@ class DispenseJusticeTest extends BaseCardTest {
         // Player 2 chooses to sacrifice Grizzly Bears
         harness.handleMultiplePermanentsChosen(player2, List.of(bears.getId()));
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== With metalcraft =====
@@ -160,12 +155,10 @@ class DispenseJusticeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both creatures auto-sacrificed (eligible count == required count)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .noneMatch(p -> p.getCard().getName().equals("Giant Spider"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Giant Spider"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Giant Spider");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Giant Spider");
     }
 
     @Test
@@ -204,11 +197,9 @@ class DispenseJusticeTest extends BaseCardTest {
         // Player 2 chooses to sacrifice Grizzly Bears and Hill Giant
         harness.handleMultiplePermanentsChosen(player2, List.of(bears.getId(), giant.getId()));
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .noneMatch(p -> p.getCard().getName().equals("Hill Giant"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertOnBattlefield(player2, "Giant Spider");
     }
 
     // ===== Metalcraft counts only controller's artifacts =====
@@ -269,10 +260,8 @@ class DispenseJusticeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Only the attacker is sacrificed (auto, since it's the only one eligible)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Giant Spider");
     }
 
     // ===== No attacking creatures =====
@@ -294,8 +283,7 @@ class DispenseJusticeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no attacking creatures to sacrifice"));
     }
 
@@ -325,9 +313,7 @@ class DispenseJusticeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Even though metalcraft says 2, only 1 attacker exists — sacrificed automatically
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }

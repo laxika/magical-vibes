@@ -89,7 +89,6 @@ class DoubleCleaveTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Double Cleave"));
+        harness.assertInGraveyard(player1, "Double Cleave");
     }
 }

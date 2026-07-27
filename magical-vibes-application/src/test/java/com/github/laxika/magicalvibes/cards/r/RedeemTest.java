@@ -47,8 +47,7 @@ class RedeemTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -59,8 +58,7 @@ class RedeemTest extends BaseCardTest {
         castRedeem(List.of(a.getId()));
         shock(a);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -75,8 +73,7 @@ class RedeemTest extends BaseCardTest {
 
         shock(a);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test

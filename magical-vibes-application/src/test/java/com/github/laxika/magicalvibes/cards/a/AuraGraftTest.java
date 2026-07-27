@@ -316,8 +316,7 @@ class AuraGraftTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Aura Graft should go to graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Aura Graft"));
+        harness.assertInGraveyard(player1, "Aura Graft");
     }
 
     @Test
@@ -334,8 +333,7 @@ class AuraGraftTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, myCreature.getId());
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Aura Graft"));
+        harness.assertInGraveyard(player1, "Aura Graft");
     }
 
     // ===== Validation errors for permanent choice =====

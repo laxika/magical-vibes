@@ -29,10 +29,8 @@ class VolcanicSubmersionTest extends BaseCardTest {
         harness.castSorcery(player1, 0, thopter.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ornithopter"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Ornithopter"));
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertInGraveyard(player2, "Ornithopter");
     }
 
     @Test
@@ -48,10 +46,8 @@ class VolcanicSubmersionTest extends BaseCardTest {
         harness.castSorcery(player1, 0, forest.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
     }
 
     @Test
@@ -67,8 +63,7 @@ class VolcanicSubmersionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test

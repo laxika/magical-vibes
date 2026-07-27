@@ -23,10 +23,8 @@ class HibernationTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(c -> c.getName()).contains("Grizzly Bears");
@@ -44,10 +42,8 @@ class HibernationTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hill Giant"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertNotInHand(player1, "Hill Giant");
     }
 
     @Test
@@ -61,7 +57,6 @@ class HibernationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hill Giant"));
+        harness.assertOnBattlefield(player1, "Hill Giant");
     }
 }

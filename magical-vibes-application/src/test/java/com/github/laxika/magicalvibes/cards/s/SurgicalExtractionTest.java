@@ -97,12 +97,10 @@ class SurgicalExtractionTest extends BaseCardTest {
                 .hasSize(2);
 
         // Grizzly Bears should not be in hand
-        assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInHand(player2, "Grizzly Bears");
 
         // Peek should remain in hand
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Peek"));
+        harness.assertInHand(player2, "Peek");
     }
 
     @Test
@@ -124,8 +122,7 @@ class SurgicalExtractionTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .filteredOn(c -> c.getName().equals("Grizzly Bears"))
                 .hasSize(2);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -181,16 +178,13 @@ class SurgicalExtractionTest extends BaseCardTest {
         assertThat(exiledCount).isEqualTo(3);
 
         // No Grizzly Bears in any zone
-        assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Peek should remain in hand
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Peek"));
+        harness.assertInHand(player2, "Peek");
     }
 
     @Test
@@ -324,8 +318,7 @@ class SurgicalExtractionTest extends BaseCardTest {
         // Bears exiled from player1's graveyard
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -360,8 +353,7 @@ class SurgicalExtractionTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Surgical Extraction"));
+        harness.assertInGraveyard(player1, "Surgical Extraction");
     }
 
     // ===== Library shuffle =====

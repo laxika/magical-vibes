@@ -72,10 +72,8 @@ class FlayerOfTheHateboundTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Flayer of the Hatebound"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Flayer of the Hatebound"));
+        harness.assertInGraveyard(player1, "Flayer of the Hatebound");
+        harness.assertNotOnBattlefield(player1, "Flayer of the Hatebound");
     }
 
     // ===== Enters-from-graveyard trigger (self via undying) =====
@@ -144,7 +142,6 @@ class FlayerOfTheHateboundTest extends BaseCardTest {
 
         // Reassembling Skeleton is a 1/1, so it deals 1 damage.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Reassembling Skeleton"));
+        harness.assertOnBattlefield(player1, "Reassembling Skeleton");
     }
 }

@@ -31,8 +31,7 @@ class HonoredHydraTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Honored Hydra"));
+        harness.assertNotInGraveyard(player1, "Honored Hydra");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Honored Hydra"));
     }
@@ -69,7 +68,6 @@ class HonoredHydraTest extends BaseCardTest {
         Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Honored Hydra"));
+        harness.assertInGraveyard(player1, "Honored Hydra");
     }
 }

@@ -50,9 +50,7 @@ class BumpInTheNightTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bump in the Night"));
+        harness.assertInGraveyard(player1, "Bump in the Night");
     }
 
     @Test
@@ -81,8 +79,7 @@ class BumpInTheNightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Bump in the Night"));
+        harness.assertNotInGraveyard(player1, "Bump in the Night");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Bump in the Night"));
     }

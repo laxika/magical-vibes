@@ -27,11 +27,9 @@ class BoggartLoggersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(loggers);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Boggart Loggers"));
+        harness.assertInGraveyard(player1, "Boggart Loggers");
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(treefolk);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Black Poplar Shaman"));
+        harness.assertInGraveyard(player2, "Black Poplar Shaman");
     }
 
     @Test
@@ -46,8 +44,7 @@ class BoggartLoggersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(forest);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player2, "Forest");
     }
 
     @Test

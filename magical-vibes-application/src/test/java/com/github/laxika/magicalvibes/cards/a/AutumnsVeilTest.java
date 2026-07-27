@@ -80,10 +80,8 @@ class AutumnsVeilTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Creature should enter the battlefield since Cancel couldn't counter it
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
+            harness.assertNotInGraveyard(player1, "Grizzly Bears");
         }
 
         @Test
@@ -119,8 +117,7 @@ class AutumnsVeilTest extends BaseCardTest {
             assertThat(gd.playerCreaturesCantBeTargetedByColorsThisTurn).doesNotContainKey(player1.getId());
 
             // Autumn's Veil should be in graveyard
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Autumn's Veil"));
+            harness.assertInGraveyard(player1, "Autumn's Veil");
         }
 
         @Test
@@ -161,8 +158,7 @@ class AutumnsVeilTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Creature should enter the battlefield (counter failed)
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
         }
 
         @Test
@@ -208,8 +204,7 @@ class AutumnsVeilTest extends BaseCardTest {
                     .isInstanceOf(IllegalStateException.class);
 
             // Creature should still be alive
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
         }
 
         @Test
@@ -292,8 +287,7 @@ class AutumnsVeilTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Creature should still be alive (Doom Blade fizzled)
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
         }
 
         @Test
@@ -320,8 +314,7 @@ class AutumnsVeilTest extends BaseCardTest {
                     .isInstanceOf(IllegalStateException.class);
 
             // Creature should still be alive and unenchanted
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
         }
 
         @Test
@@ -348,8 +341,7 @@ class AutumnsVeilTest extends BaseCardTest {
                     .isInstanceOf(IllegalStateException.class);
 
             // Creature should still be alive
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
         }
 
         @Test

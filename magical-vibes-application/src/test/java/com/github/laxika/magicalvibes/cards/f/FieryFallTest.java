@@ -38,8 +38,7 @@ class FieryFallTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(giant.getId()));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertInGraveyard(player2, "Hill Giant");
     }
 
     @Test
@@ -73,8 +72,7 @@ class FieryFallTest extends BaseCardTest {
         harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fiery Fall"));
+        harness.assertInGraveyard(player1, "Fiery Fall");
     }
 
     // ===== Basic landcycling {1}{R} =====

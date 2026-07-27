@@ -60,8 +60,7 @@ class CarrionCallTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Carrion Call"));
+        harness.assertInGraveyard(player1, "Carrion Call");
     }
 
     @Test

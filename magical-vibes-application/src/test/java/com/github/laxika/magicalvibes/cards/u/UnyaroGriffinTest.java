@@ -36,13 +36,10 @@ class UnyaroGriffinTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Shock is countered into player2's graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player2, "Shock");
         // Unyaro Griffin sacrificed as a cost
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Unyaro Griffin"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Unyaro Griffin"));
+        harness.assertInGraveyard(player1, "Unyaro Griffin");
+        harness.assertNotOnBattlefield(player1, "Unyaro Griffin");
         assertThat(gd.stack).isEmpty();
     }
 

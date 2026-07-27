@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -42,8 +41,7 @@ class ArgentSphinxTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Sphinx should be exiled
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Argent Sphinx"));
+        harness.assertNotOnBattlefield(player1, "Argent Sphinx");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Argent Sphinx"));
     }
@@ -60,8 +58,7 @@ class ArgentSphinxTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Argent Sphinx"));
+        harness.assertNotOnBattlefield(player1, "Argent Sphinx");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Argent Sphinx"));
     }
@@ -77,15 +74,13 @@ class ArgentSphinxTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Sphinx is exiled
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Argent Sphinx"));
+        harness.assertNotOnBattlefield(player1, "Argent Sphinx");
 
         // Advance to end step naturally (POSTCOMBAT_MAIN -> END_STEP triggers handler)
         advanceToEndStep();
 
         // Sphinx should be back on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Argent Sphinx"));
+        harness.assertOnBattlefield(player1, "Argent Sphinx");
         // And removed from exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Argent Sphinx"));
@@ -121,10 +116,8 @@ class ArgentSphinxTest extends BaseCardTest {
 
         advanceToEndStep();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Argent Sphinx"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Argent Sphinx"));
+        harness.assertOnBattlefield(player1, "Argent Sphinx");
+        harness.assertNotOnBattlefield(player2, "Argent Sphinx");
     }
 
     // ===== Mana cost =====

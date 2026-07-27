@@ -35,12 +35,9 @@ class GaeasRevengeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Gaea's Revenge"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Gaea's Revenge"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Cancel"));
+        harness.assertOnBattlefield(player1, "Gaea's Revenge");
+        harness.assertNotInGraveyard(player1, "Gaea's Revenge");
+        harness.assertInGraveyard(player2, "Cancel");
     }
 
     // ===== Can't be targeted by nongreen spells =====

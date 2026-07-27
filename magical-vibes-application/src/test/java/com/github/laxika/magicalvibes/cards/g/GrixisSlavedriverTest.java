@@ -55,8 +55,7 @@ class GrixisSlavedriverTest extends BaseCardTest {
 
         Permanent perm = findPermanent(player1, "Grixis Slavedriver");
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grixis Slavedriver"));
+        harness.assertNotInGraveyard(player1, "Grixis Slavedriver");
     }
 
     @Test
@@ -73,8 +72,7 @@ class GrixisSlavedriverTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to end step → Slavedriver exiled, leaves-battlefield trigger onto stack
         harness.passBothPriorities(); // trigger resolves → token created
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grixis Slavedriver"));
+        harness.assertNotOnBattlefield(player1, "Grixis Slavedriver");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grixis Slavedriver"));
 

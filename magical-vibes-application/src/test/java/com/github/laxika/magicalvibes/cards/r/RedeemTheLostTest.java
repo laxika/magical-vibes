@@ -53,10 +53,8 @@ class RedeemTheLostTest extends BaseCardTest {
 
         castAtOwnCreature();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Redeem the Lost"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Redeem the Lost"));
+        harness.assertInHand(player1, "Redeem the Lost");
+        harness.assertNotInGraveyard(player1, "Redeem the Lost");
     }
 
     @Test
@@ -68,10 +66,8 @@ class RedeemTheLostTest extends BaseCardTest {
 
         castAtOwnCreature();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Redeem the Lost"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Redeem the Lost"));
+        harness.assertInGraveyard(player1, "Redeem the Lost");
+        harness.assertNotInHand(player1, "Redeem the Lost");
     }
 
     @Test

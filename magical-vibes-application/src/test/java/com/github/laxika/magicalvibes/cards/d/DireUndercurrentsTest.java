@@ -36,8 +36,7 @@ class DireUndercurrentsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     @Test
@@ -86,8 +85,7 @@ class DireUndercurrentsTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Off-color creature does not trigger either ability =====

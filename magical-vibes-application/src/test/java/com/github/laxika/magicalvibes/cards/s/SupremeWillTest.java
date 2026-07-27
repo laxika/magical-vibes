@@ -44,10 +44,8 @@ class SupremeWillTest extends BaseCardTest {
             harness.castInstant(player1, 0, 0, elves.getId());
             harness.passBothPriorities();
 
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Llanowar Elves"));
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+            harness.assertInGraveyard(player2, "Llanowar Elves");
+            harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         }
 
         @Test
@@ -71,8 +69,7 @@ class SupremeWillTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player2, true);
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+            harness.assertOnBattlefield(player2, "Llanowar Elves");
         }
     }
 

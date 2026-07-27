@@ -29,8 +29,7 @@ class KithkinHarbingerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Kithkin Harbinger"));
+        harness.assertOnBattlefield(player1, "Kithkin Harbinger");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 

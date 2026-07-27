@@ -49,8 +49,7 @@ class MyrWelderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Rod of Ruin should be removed from graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Rod of Ruin"));
+        harness.assertNotInGraveyard(player1, "Rod of Ruin");
 
         // Should be tracked in permanentExiledCards for the welder
         List<Card> exiledWithWelder = gd.getCardsExiledByPermanent(welder.getId());
@@ -74,8 +73,7 @@ class MyrWelderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Rod of Ruin should be removed from opponent's graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Rod of Ruin"));
+        harness.assertNotInGraveyard(player2, "Rod of Ruin");
 
         // Should be tracked in permanentExiledCards for the welder
         List<Card> exiledWithWelder = gd.getCardsExiledByPermanent(welder.getId());

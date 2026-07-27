@@ -33,10 +33,8 @@ class CalderaHellionTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB mass damage
 
         // Hellion (3/3) took 3 -> dies; opponent's 2/2 also dies.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Caldera Hellion"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Caldera Hellion");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -64,8 +62,7 @@ class CalderaHellionTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(hellion.getMarkedDamage()).isEqualTo(3);
         // Opponent's 2/2 took 3 -> dies.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -87,9 +84,7 @@ class CalderaHellionTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB mass damage
 
         // 3/3 with no counters dies to its own 3 damage; the other 2/2 dies too.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Caldera Hellion"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Caldera Hellion");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 }

@@ -67,8 +67,7 @@ class ConsumeSpiritTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 2 damage kills Grizzly Bears (2 toughness)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Controller gains 2 life
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
     }

@@ -48,10 +48,8 @@ class ReaperFromTheAbyssTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bears should be destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -73,8 +71,7 @@ class ReaperFromTheAbyssTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
 
         // Bears should still be alive
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -98,10 +95,8 @@ class ReaperFromTheAbyssTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
 
         // Both Reapers should still be alive
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Reaper from the Abyss"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Reaper from the Abyss"));
+        harness.assertOnBattlefield(player1, "Reaper from the Abyss");
+        harness.assertOnBattlefield(player2, "Reaper from the Abyss");
     }
 
     @Test
@@ -129,8 +124,7 @@ class ReaperFromTheAbyssTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Own Bears should be destroyed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -158,8 +152,7 @@ class ReaperFromTheAbyssTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bears destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test

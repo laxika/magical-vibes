@@ -38,10 +38,8 @@ class JundPanoramaTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Jund Panorama"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Jund Panorama"));
+        harness.assertNotOnBattlefield(player1, "Jund Panorama");
+        harness.assertInGraveyard(player1, "Jund Panorama");
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())

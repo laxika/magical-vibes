@@ -81,7 +81,6 @@ class WormHarvestTest extends BaseCardTest {
         // Two lands already in the graveyard plus the discarded land = three Worm tokens.
         assertThat(wormTokens(player1.getId())).hasSize(3);
         // Worm Harvest returns to the graveyard, so it can be retraced again.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Worm Harvest"));
+        harness.assertInGraveyard(player1, "Worm Harvest");
     }
 }

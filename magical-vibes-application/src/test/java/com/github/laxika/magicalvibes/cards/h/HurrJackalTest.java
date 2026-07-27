@@ -80,11 +80,8 @@ class HurrJackalTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Drudge Skeletons"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Drudge Skeletons"));
+        harness.assertNotOnBattlefield(player2, "Drudge Skeletons");
+        harness.assertInGraveyard(player2, "Drudge Skeletons");
     }
 
     @Test
@@ -104,9 +101,7 @@ class HurrJackalTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Drudge Skeletons"));
+        harness.assertOnBattlefield(player2, "Drudge Skeletons");
         assertThat(skele.getRegenerationShield()).isEqualTo(0);
     }
 

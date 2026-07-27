@@ -90,8 +90,7 @@ class SpellPierceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Might of Oaks"));
+        harness.assertInGraveyard(player1, "Might of Oaks");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -123,14 +122,12 @@ class SpellPierceTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Might of Oaks should not be countered
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Might of Oaks"));
+        harness.assertNotInGraveyard(player1, "Might of Oaks");
 
         // Resolve the Might of Oaks spell
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Might of Oaks"));
+        harness.assertInGraveyard(player1, "Might of Oaks");
     }
 
     // ===== Counter-unless-pays: opponent declines to pay =====
@@ -159,8 +156,7 @@ class SpellPierceTest extends BaseCardTest {
         // Player1 declines to pay
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Might of Oaks"));
+        harness.assertInGraveyard(player1, "Might of Oaks");
     }
 
     // ===== Mana payment confirmation =====
@@ -219,8 +215,7 @@ class SpellPierceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Spell Pierce"));
+        harness.assertInGraveyard(player2, "Spell Pierce");
     }
 
     // ===== Spell Pierce goes to graveyard =====
@@ -243,8 +238,6 @@ class SpellPierceTest extends BaseCardTest {
         harness.castInstant(player2, 0, might.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Spell Pierce"));
+        harness.assertInGraveyard(player2, "Spell Pierce");
     }
 }

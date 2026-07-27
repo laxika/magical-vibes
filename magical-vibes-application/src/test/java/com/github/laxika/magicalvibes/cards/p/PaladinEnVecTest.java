@@ -84,8 +84,7 @@ class PaladinEnVecTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Paladin en-Vec"));
+        harness.assertOnBattlefield(player1, "Paladin en-Vec");
     }
 
     @Test
@@ -126,12 +125,9 @@ class PaladinEnVecTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // First strike kills Bears before it deals damage; Paladin survives
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Paladin en-Vec"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Paladin en-Vec");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Protection - blocking =====
@@ -228,10 +224,8 @@ class PaladinEnVecTest extends BaseCardTest {
         // Paladin has first strike: deals 2 to Black Knight (3/3 survives)
         // Black Knight's 3 regular damage to Paladin is prevented (protection)
         // Both survive
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Black Knight"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Paladin en-Vec"));
+        harness.assertOnBattlefield(player1, "Black Knight");
+        harness.assertOnBattlefield(player2, "Paladin en-Vec");
     }
 
     @Test
@@ -256,10 +250,8 @@ class PaladinEnVecTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both survive: Paladin deals 2 first strike (2 < 3), red creature's 3 damage is prevented
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Fire Elemental"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Paladin en-Vec"));
+        harness.assertOnBattlefield(player1, "Fire Elemental");
+        harness.assertOnBattlefield(player2, "Paladin en-Vec");
     }
 
     @Test
@@ -285,12 +277,9 @@ class PaladinEnVecTest extends BaseCardTest {
 
         // Paladin deals 2 first strike (2 < 3, green survives)
         // Green deals 3 regular damage (3 >= 2, Paladin dies — no protection from green)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Big Green"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Paladin en-Vec"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Paladin en-Vec"));
+        harness.assertOnBattlefield(player1, "Big Green");
+        harness.assertNotOnBattlefield(player2, "Paladin en-Vec");
+        harness.assertInGraveyard(player2, "Paladin en-Vec");
     }
 
     // ===== Protection - targeting =====

@@ -38,10 +38,8 @@ class ContractKillingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Target creature destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // Two Treasure tokens created for the caster
         List<Permanent> treasures = gd.playerBattlefields.get(player1.getId()).stream()
@@ -114,8 +112,7 @@ class ContractKillingTest extends BaseCardTest {
 
         // Spell fizzles — no treasures
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Treasure"));
+        harness.assertNotOnBattlefield(player1, "Treasure");
     }
 
     // ===== Targeting =====
@@ -150,7 +147,6 @@ class ContractKillingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Contract Killing"));
+        harness.assertInGraveyard(player1, "Contract Killing");
     }
 }

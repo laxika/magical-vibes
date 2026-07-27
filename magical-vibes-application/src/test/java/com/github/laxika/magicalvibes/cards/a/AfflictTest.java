@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AfflictTest extends BaseCardTest {
 
-
     private void setupBearAndAfflict() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Afflict()));
@@ -177,8 +176,7 @@ class AfflictTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Afflict"));
+        harness.assertInGraveyard(player1, "Afflict");
     }
 }
 

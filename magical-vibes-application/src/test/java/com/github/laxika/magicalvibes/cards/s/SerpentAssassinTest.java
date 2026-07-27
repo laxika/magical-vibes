@@ -58,8 +58,7 @@ class SerpentAssassinTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Serpent Assassin"));
+        harness.assertOnBattlefield(player1, "Serpent Assassin");
     }
 
     // ===== ETB may ability =====
@@ -89,10 +88,8 @@ class SerpentAssassinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -110,10 +107,8 @@ class SerpentAssassinTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false); // decline
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Serpent Assassin"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Serpent Assassin");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Target restrictions =====
@@ -130,8 +125,7 @@ class SerpentAssassinTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mass of Ghouls"));
+        harness.assertOnBattlefield(player2, "Mass of Ghouls");
     }
 
     // ===== No target scenarios =====
@@ -147,7 +141,6 @@ class SerpentAssassinTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Serpent Assassin"));
+        harness.assertOnBattlefield(player1, "Serpent Assassin");
     }
 }

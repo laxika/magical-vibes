@@ -10,8 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 class SindbadTest extends BaseCardTest {
 
     @Test
@@ -24,10 +22,8 @@ class SindbadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Island"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Island"));
+        harness.assertInHand(player1, "Island");
+        harness.assertNotInGraveyard(player1, "Island");
     }
 
     @Test
@@ -40,10 +36,8 @@ class SindbadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     private void addReadySindbad(Player player) {

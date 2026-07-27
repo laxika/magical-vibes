@@ -27,11 +27,9 @@ class BoggartArsonistsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(arsonists);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Boggart Arsonists"));
+        harness.assertInGraveyard(player1, "Boggart Arsonists");
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(scarecrow);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("One-Eyed Scarecrow"));
+        harness.assertInGraveyard(player2, "One-Eyed Scarecrow");
     }
 
     @Test
@@ -45,8 +43,7 @@ class BoggartArsonistsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(plains);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Plains"));
+        harness.assertInGraveyard(player2, "Plains");
     }
 
     @Test

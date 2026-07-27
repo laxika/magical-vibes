@@ -31,7 +31,7 @@ class KaleidostoneTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         // One card cast, one drawn: net hand size returns to what it was before casting.
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore);
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
     }
 
     // ===== Mana ability =====
@@ -62,9 +62,7 @@ class KaleidostoneTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Kaleidostone"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Kaleidostone"));
+        harness.assertNotOnBattlefield(player1, "Kaleidostone");
+        harness.assertInGraveyard(player1, "Kaleidostone");
     }
 }

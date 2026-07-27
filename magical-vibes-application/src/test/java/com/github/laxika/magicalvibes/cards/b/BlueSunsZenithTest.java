@@ -85,8 +85,7 @@ class BlueSunsZenithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Not in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Blue Sun's Zenith"));
+        harness.assertNotInGraveyard(player1, "Blue Sun's Zenith");
         // In library (deck size increased by 1)
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore + 1);
         // Card exists somewhere in the deck

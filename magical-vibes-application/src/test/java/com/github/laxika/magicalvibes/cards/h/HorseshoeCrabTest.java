@@ -44,8 +44,7 @@ class HorseshoeCrabTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Horseshoe Crab"));
+        harness.assertOnBattlefield(player1, "Horseshoe Crab");
     }
 
     @Test

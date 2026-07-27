@@ -37,10 +37,8 @@ class IncendiaryCommandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -60,8 +58,7 @@ class IncendiaryCommandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(2); // 6 - 4
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ghost Quarter"));
+        harness.assertNotOnBattlefield(player2, "Ghost Quarter");
     }
 
     @Test
@@ -81,22 +78,17 @@ class IncendiaryCommandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Land destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ghost Quarter"));
+        harness.assertNotOnBattlefield(player2, "Ghost Quarter");
 
         // Player 1 discarded their two remaining cards and drew two from library
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Plains"))
-                .anyMatch(c -> c.getName().equals("Island"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Hill Giant");
+        harness.assertInHand(player1, "Plains");
+        harness.assertInHand(player1, "Island");
 
         // Player 2 discarded their one card and drew one from library
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player2, "Spellbook");
+        harness.assertInHand(player2, "Forest");
     }
 
     @Test

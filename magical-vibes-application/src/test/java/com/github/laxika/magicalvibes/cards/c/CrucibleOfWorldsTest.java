@@ -37,8 +37,7 @@ class CrucibleOfWorldsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Crucible of Worlds"));
+        harness.assertOnBattlefield(player1, "Crucible of Worlds");
     }
 
     // ===== Playing lands from graveyard =====
@@ -57,8 +56,7 @@ class CrucibleOfWorldsTest extends BaseCardTest {
         harness.playGraveyardLand(player1, 0);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player1, "Forest");
     }
 
     @Test
@@ -245,8 +243,7 @@ class CrucibleOfWorldsTest extends BaseCardTest {
 
         gs.playCard(gd, player1, 0, 0, null, null);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Plains"));
+        harness.assertOnBattlefield(player1, "Plains");
     }
 
     // ===== Postcombat main phase =====
@@ -265,8 +262,7 @@ class CrucibleOfWorldsTest extends BaseCardTest {
         harness.playGraveyardLand(player1, 0);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player1, "Forest");
     }
 
     // ===== Plays the correct card from graveyard =====
@@ -289,10 +285,8 @@ class CrucibleOfWorldsTest extends BaseCardTest {
         harness.playGraveyardLand(player1, 1);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Forest"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotInGraveyard(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Forest");
     }
 }
 

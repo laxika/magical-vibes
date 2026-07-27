@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -103,10 +102,8 @@ class CrackleburrTest extends BaseCardTest {
         harness.activateAbility(player1, idx, BOUNCE_ABILITY, null, victim);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
         assertThat(crackleburr.isTapped()).isFalse();
         assertThat(blue1.isTapped()).isFalse();
         assertThat(blue2.isTapped()).isFalse();

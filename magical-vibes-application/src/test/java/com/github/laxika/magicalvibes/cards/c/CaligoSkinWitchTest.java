@@ -32,8 +32,7 @@ class CaligoSkinWitchTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
 
         // Creature entered the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Caligo Skin-Witch"));
+        harness.assertOnBattlefield(player1, "Caligo Skin-Witch");
         // No ETB trigger on the stack
         assertThat(gd.stack).isEmpty();
         // Opponent still has all cards in hand
@@ -54,8 +53,7 @@ class CaligoSkinWitchTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
 
         // Creature entered the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Caligo Skin-Witch"));
+        harness.assertOnBattlefield(player1, "Caligo Skin-Witch");
         // ETB trigger is on the stack
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);

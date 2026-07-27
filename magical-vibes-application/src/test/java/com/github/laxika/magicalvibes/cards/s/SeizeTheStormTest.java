@@ -116,8 +116,7 @@ class SeizeTheStormTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Seize the Storm"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Seize the Storm"));
+        harness.assertNotInGraveyard(player1, "Seize the Storm");
     }
 
     private Permanent findElemental() {

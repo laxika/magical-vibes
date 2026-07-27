@@ -33,8 +33,7 @@ class OppressionTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0); // discard the remaining Forest
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player1, "Forest");
     }
 
     @Test
@@ -55,8 +54,7 @@ class OppressionTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player2, "Forest");
     }
 
     @Test

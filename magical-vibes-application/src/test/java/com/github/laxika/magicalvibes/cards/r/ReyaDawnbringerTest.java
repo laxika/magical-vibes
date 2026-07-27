@@ -73,8 +73,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Reya Dawnbringer"));
+        harness.assertOnBattlefield(player1, "Reya Dawnbringer");
     }
 
     // ===== Upkeep trigger =====
@@ -151,10 +150,8 @@ class ReyaDawnbringerTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
 
         // Grizzly Bears moved from graveyard to battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -172,10 +169,8 @@ class ReyaDawnbringerTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, -1);
 
         // Grizzly Bears stays in graveyard, not on battlefield
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -192,12 +187,9 @@ class ReyaDawnbringerTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 1);
 
         // Angel of Mercy returned, Grizzly Bears stays
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Angel of Mercy"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Angel of Mercy"));
+        harness.assertOnBattlefield(player1, "Angel of Mercy");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Angel of Mercy");
     }
 
     // ===== No creatures in graveyard =====
@@ -231,8 +223,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no creature cards in graveyard"));
         // HolyDay stays in graveyard untouched
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Holy Day"));
+        harness.assertInGraveyard(player1, "Holy Day");
     }
 
     // ===== ETB on returned creature =====

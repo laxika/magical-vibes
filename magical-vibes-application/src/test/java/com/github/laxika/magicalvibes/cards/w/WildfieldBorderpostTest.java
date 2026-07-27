@@ -51,7 +51,7 @@ class WildfieldBorderpostTest extends BaseCardTest {
         assertThat(borderpost(player1).isTapped()).isTrue();
         // The basic land is returned to its owner's hand, not sacrificed.
         harness.assertInHand(player1, "Plains");
-        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getName().equals("Plains"));
+        harness.assertNotInGraveyard(player1, "Plains");
         // Only {1} was paid.
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }

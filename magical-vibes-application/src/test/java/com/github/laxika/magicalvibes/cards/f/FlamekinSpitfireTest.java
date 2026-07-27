@@ -44,9 +44,7 @@ class FlamekinSpitfireTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Flamekin Spitfire"));
+        harness.assertInGraveyard(player2, "Flamekin Spitfire");
     }
 
     @Test

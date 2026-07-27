@@ -56,8 +56,7 @@ class MesaEnchantressTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Card was drawn
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
     }
 
     // ===== Decline =====

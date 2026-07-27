@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -51,10 +50,8 @@ class BrokenVisageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears (2/2) destroyed -> owner's graveyard.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Caster gets a 2/2 Spirit token.
         Permanent spirit = findSpiritToken(player2);
@@ -86,16 +83,14 @@ class BrokenVisageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Token exists after resolution.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Spirit"));
+        harness.assertOnBattlefield(player2, "Spirit");
 
         // Advance to the end step — the token should be sacrificed.
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spirit"));
+        harness.assertNotOnBattlefield(player2, "Spirit");
     }
 
     @Test

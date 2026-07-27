@@ -41,7 +41,7 @@ class SporeCrawlerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve death trigger
 
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore - 1 + 1);
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
     }
 
     @Test
@@ -78,6 +78,6 @@ class SporeCrawlerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve death trigger
 
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
     }
 }

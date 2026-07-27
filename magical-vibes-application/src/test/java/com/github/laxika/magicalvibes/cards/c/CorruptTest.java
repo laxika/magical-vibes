@@ -54,10 +54,8 @@ class CorruptTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // 3 damage kills Grizzly Bears (2 toughness)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         // Controller gains 3 life (equal to Swamp count)
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
     }
@@ -99,8 +97,7 @@ class CorruptTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Only 1 damage (1 Swamp controlled by player1), Grizzly Bears survives (2 toughness)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         // Controller gains 1 life
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
     }

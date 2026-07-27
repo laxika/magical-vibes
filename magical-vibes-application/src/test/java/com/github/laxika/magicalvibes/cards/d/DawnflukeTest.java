@@ -32,10 +32,8 @@ class DawnflukeTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(bears.getDamagePreventionShield()).isEqualTo(3);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Dawnfluke"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Dawnfluke"));
+        harness.assertOnBattlefield(player1, "Dawnfluke");
+        harness.assertNotInGraveyard(player1, "Dawnfluke");
     }
 
     @Test
@@ -80,9 +78,7 @@ class DawnflukeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Dawnfluke"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Dawnfluke"));
+        harness.assertNotOnBattlefield(player1, "Dawnfluke");
+        harness.assertInGraveyard(player1, "Dawnfluke");
     }
 }

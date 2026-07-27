@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.Demolish;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,8 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class SacredGroundTest extends BaseCardTest {
 
@@ -37,12 +34,9 @@ class SacredGroundTest extends BaseCardTest {
         harness.castSorcery(player2, 0, mountainId);
         resolveStack();
 
-        GameData gd = harness.getGameData();
         // Sacred Ground returned the land to its owner's battlefield.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mountain"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Mountain"));
+        harness.assertOnBattlefield(player1, "Mountain");
+        harness.assertNotInGraveyard(player1, "Mountain");
     }
 
     @Test
@@ -59,12 +53,9 @@ class SacredGroundTest extends BaseCardTest {
         harness.castSorcery(player1, 0, mountainId);
         resolveStack();
 
-        GameData gd = harness.getGameData();
         // Cause is controlled by the land's owner, so the land stays in the graveyard.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mountain"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mountain"));
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Mountain");
     }
 
     @Test
@@ -81,11 +72,8 @@ class SacredGroundTest extends BaseCardTest {
         harness.castSorcery(player2, 0, mountainId);
         resolveStack();
 
-        GameData gd = harness.getGameData();
         // The land went to the opponent's graveyard, not the Sacred Ground controller's, so no trigger.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mountain"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Mountain"));
+        harness.assertNotOnBattlefield(player2, "Mountain");
+        harness.assertInGraveyard(player2, "Mountain");
     }
 }

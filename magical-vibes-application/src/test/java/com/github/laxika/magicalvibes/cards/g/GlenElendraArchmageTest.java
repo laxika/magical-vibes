@@ -52,8 +52,7 @@ class GlenElendraArchmageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, shock.getId());
         resolveUntilInputOrEmpty();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player2, "Shock");
         harness.assertLife(player1, 20); // Shock was countered, no damage
     }
 

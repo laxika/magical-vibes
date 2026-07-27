@@ -52,10 +52,8 @@ class LumengridDrakeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     @Test
@@ -68,8 +66,7 @@ class LumengridDrakeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Lumengrid Drake"));
+        harness.assertOnBattlefield(player1, "Lumengrid Drake");
     }
 
     @Test
@@ -99,12 +96,10 @@ class LumengridDrakeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Drake is still on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Lumengrid Drake"));
+        harness.assertOnBattlefield(player1, "Lumengrid Drake");
 
         // No creature was bounced
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -122,8 +117,7 @@ class LumengridDrakeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
 
         // No creature was bounced
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Metalcraft lost before resolution =====
@@ -144,8 +138,7 @@ class LumengridDrakeTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger — metalcraft no longer met
 
         // Target creature was NOT bounced
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("metalcraft ability does nothing"));
     }
@@ -167,10 +160,8 @@ class LumengridDrakeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     // ===== Helpers =====

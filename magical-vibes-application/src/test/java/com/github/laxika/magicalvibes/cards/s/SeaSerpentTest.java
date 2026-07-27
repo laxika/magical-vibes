@@ -27,10 +27,8 @@ class SeaSerpentTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature → state trigger fires
         harness.passBothPriorities(); // resolve state trigger → sacrificed
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Sea Serpent"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Sea Serpent"));
+        harness.assertNotOnBattlefield(player1, "Sea Serpent");
+        harness.assertInGraveyard(player1, "Sea Serpent");
     }
 
     @Test
@@ -44,8 +42,7 @@ class SeaSerpentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sea Serpent"));
+        harness.assertOnBattlefield(player1, "Sea Serpent");
     }
 
     // ===== Attack restriction: defending player must control an Island =====

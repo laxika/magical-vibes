@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -169,8 +168,7 @@ class ArguelsBloodFastTest extends BaseCardTest {
         // Gained 4 life (creature toughness)
         assertThat(gd.getLife(player1.getId())).isEqualTo(14);
         // Creature should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Beefy Beast"));
+        harness.assertInGraveyard(player1, "Beefy Beast");
     }
 
     @Test

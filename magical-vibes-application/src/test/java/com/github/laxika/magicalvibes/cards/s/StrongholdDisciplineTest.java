@@ -86,7 +86,6 @@ class StrongholdDisciplineTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Stronghold Discipline"));
+        harness.assertInGraveyard(player1, "Stronghold Discipline");
     }
 }

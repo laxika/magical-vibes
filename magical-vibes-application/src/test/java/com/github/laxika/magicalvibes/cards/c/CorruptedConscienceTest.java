@@ -162,8 +162,7 @@ class CorruptedConscienceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Corrupted Conscience should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Corrupted Conscience"));
+        harness.assertInGraveyard(player1, "Corrupted Conscience");
     }
 
     // ===== Aura destruction: creature returns and loses infect =====

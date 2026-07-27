@@ -28,12 +28,10 @@ class SeaDrakeTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Island"));
+        harness.assertNotOnBattlefield(player1, "Island");
         assertThat(gd.playerHands.get(player1.getId()).stream()
                 .filter(c -> c.getName().equals("Island")).count()).isEqualTo(2);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sea Drake"));
+        harness.assertOnBattlefield(player1, "Sea Drake");
     }
 
     @Test

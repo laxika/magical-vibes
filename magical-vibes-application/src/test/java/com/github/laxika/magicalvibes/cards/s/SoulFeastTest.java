@@ -84,7 +84,6 @@ class SoulFeastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Soul Feast"));
+        harness.assertInGraveyard(player1, "Soul Feast");
     }
 }

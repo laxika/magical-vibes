@@ -71,8 +71,7 @@ class WallOfFrostTest extends BaseCardTest {
         declareBlockers(List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -84,8 +83,7 @@ class WallOfFrostTest extends BaseCardTest {
         declareBlockers(List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Wall of Frost"));
+        harness.assertOnBattlefield(player2, "Wall of Frost");
     }
 
     // ===== Attacker removed before resolution =====

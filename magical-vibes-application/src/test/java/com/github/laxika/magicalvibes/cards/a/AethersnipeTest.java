@@ -30,12 +30,9 @@ class AethersnipeTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> ETB trigger on stack
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Aethersnipe"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Aethersnipe");
     }
 
     @Test
@@ -68,8 +65,7 @@ class AethersnipeTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> ETB trigger on stack
         harness.passBothPriorities(); // resolve ETB trigger (bounce + evoke sacrifice)
 
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player2, "Grizzly Bears");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
 
@@ -86,9 +82,7 @@ class AethersnipeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Aethersnipe"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Aethersnipe"));
+        harness.assertNotOnBattlefield(player1, "Aethersnipe");
+        harness.assertInGraveyard(player1, "Aethersnipe");
     }
 }

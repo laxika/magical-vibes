@@ -162,10 +162,8 @@ class TelJiladDefianceTest extends BaseCardTest {
 
         // Both creatures should survive: Iron Myr's 1 damage to Grizzly Bears is prevented (protection)
         // Grizzly Bears' 2 damage kills Iron Myr (1/1)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Iron Myr"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Iron Myr");
     }
 
     @Test

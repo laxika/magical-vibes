@@ -78,11 +78,9 @@ class LashwritheTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve living weapon ETB
 
         // Germ is 0/0 with no swamps — dies to state-based actions
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phyrexian Germ"));
+        harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
         // Equipment stays on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Lashwrithe"));
+        harness.assertOnBattlefield(player1, "Lashwrithe");
     }
 
     // ===== Boost per Swamp =====
@@ -233,7 +231,6 @@ class LashwritheTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         gd.playerBattlefields.get(player1.getId()).remove(germ);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Lashwrithe"));
+        harness.assertOnBattlefield(player1, "Lashwrithe");
     }
 }

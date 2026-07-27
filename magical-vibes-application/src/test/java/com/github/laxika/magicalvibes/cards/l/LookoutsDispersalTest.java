@@ -35,10 +35,8 @@ class LookoutsDispersalTest extends BaseCardTest {
         harness.castInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -65,14 +63,12 @@ class LookoutsDispersalTest extends BaseCardTest {
         // Player1 pays {4}
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
 
         // Resolve the bears spell
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Counter-unless-pays: opponent declines to pay =====
@@ -97,10 +93,8 @@ class LookoutsDispersalTest extends BaseCardTest {
         // Player1 declines to pay
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Mana payment confirmation =====
@@ -234,8 +228,7 @@ class LookoutsDispersalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Lookout's Dispersal"));
+        harness.assertInGraveyard(player2, "Lookout's Dispersal");
     }
 
     // ===== Goes to graveyard =====
@@ -255,8 +248,7 @@ class LookoutsDispersalTest extends BaseCardTest {
         harness.castInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Lookout's Dispersal"));
+        harness.assertInGraveyard(player2, "Lookout's Dispersal");
         assertThat(gd.stack).isEmpty();
     }
 }

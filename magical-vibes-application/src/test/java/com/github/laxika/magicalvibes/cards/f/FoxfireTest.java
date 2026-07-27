@@ -54,8 +54,7 @@ class FoxfireTest extends BaseCardTest {
         // A 3/3 blocker would normally kill the 2/2 attacker; combat damage to it is prevented.
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(attacker.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test

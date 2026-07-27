@@ -86,8 +86,7 @@ class PersuasionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Persuasion should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Persuasion"));
+        harness.assertInGraveyard(player1, "Persuasion");
     }
 
     @Test

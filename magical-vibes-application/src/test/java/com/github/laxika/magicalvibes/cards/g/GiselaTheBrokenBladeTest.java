@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -43,8 +42,7 @@ class GiselaTheBrokenBladeTest extends BaseCardTest {
 
         advanceToControllerEndStep();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Gisela, the Broken Blade"));
+        harness.assertOnBattlefield(player1, "Gisela, the Broken Blade");
     }
 
     @Test
@@ -73,8 +71,7 @@ class GiselaTheBrokenBladeTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(gisela.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Brisela, Voice of Nightmares"));
+        harness.assertNotOnBattlefield(player1, "Brisela, Voice of Nightmares");
     }
 
     @Test
@@ -95,8 +92,7 @@ class GiselaTheBrokenBladeTest extends BaseCardTest {
 
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, brisela);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Brisela, Voice of Nightmares"));
+        harness.assertNotOnBattlefield(player1, "Brisela, Voice of Nightmares");
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .contains(giselaCard, brunaCard);
     }

@@ -11,8 +11,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 class EtherswornShieldmageTest extends BaseCardTest {
 
     private void castShieldmage() {
@@ -41,10 +39,8 @@ class EtherswornShieldmageTest extends BaseCardTest {
         // Shock's 2 damage would be lethal to the 0/2 artifact creature, but it's prevented.
         shock(ornithopter);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Ornithopter"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Ornithopter"));
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        harness.assertNotInGraveyard(player1, "Ornithopter");
     }
 
     @Test
@@ -55,8 +51,7 @@ class EtherswornShieldmageTest extends BaseCardTest {
         castShieldmage();
         shock(bears);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -70,7 +65,6 @@ class EtherswornShieldmageTest extends BaseCardTest {
 
         shock(ornithopter);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ornithopter"));
+        harness.assertInGraveyard(player1, "Ornithopter");
     }
 }

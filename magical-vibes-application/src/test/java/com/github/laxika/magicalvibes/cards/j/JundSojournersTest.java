@@ -50,8 +50,7 @@ class JundSojournersTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(elvesId));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player2, "Llanowar Elves");
     }
 
     // ===== Cycling reflexive trigger: ping any target, then draw =====
@@ -70,10 +69,8 @@ class JundSojournersTest extends BaseCardTest {
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(p2LifeBefore - 1);
         // The cycling draw still happens: Jund Sojourners discarded, the library card drawn.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Jund Sojourners"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Jund Sojourners");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test
@@ -91,8 +88,7 @@ class JundSojournersTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(elvesId));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     private void killWithFlameJavelin() {

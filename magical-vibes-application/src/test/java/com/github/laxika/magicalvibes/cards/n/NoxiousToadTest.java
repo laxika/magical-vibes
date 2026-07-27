@@ -26,8 +26,7 @@ class NoxiousToadTest extends BaseCardTest {
         setupCombatWhereToadDies();
         harness.passBothPriorities(); // Combat damage — Toad dies
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Noxious Toad"));
+        harness.assertInGraveyard(player1, "Noxious Toad");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Noxious Toad");

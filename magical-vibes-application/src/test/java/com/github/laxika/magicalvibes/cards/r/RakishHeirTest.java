@@ -147,7 +147,6 @@ class RakishHeirTest extends BaseCardTest {
         harness.passBothPriorities(); // combat damage
 
         // Vampire should be dead — no combat damage to player means no trigger
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bloodcrazed Neonate"));
+        harness.assertInGraveyard(player1, "Bloodcrazed Neonate");
     }
 }

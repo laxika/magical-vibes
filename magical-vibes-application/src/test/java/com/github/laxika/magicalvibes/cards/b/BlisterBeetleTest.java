@@ -53,8 +53,7 @@ class BlisterBeetleTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities(); // resolve ETB — 0/0 dies to SBA
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fugitive Wizard"));
+        harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
     }
 
     @Test

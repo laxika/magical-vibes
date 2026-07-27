@@ -84,10 +84,9 @@ class MemorysJourneyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Cards should no longer be in graveyard (only Memory's Journey itself goes to graveyard)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"))
-                .noneMatch(c -> c.getName().equals("Lightning Bolt"))
-                .anyMatch(c -> c.getName().equals("Memory's Journey"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Lightning Bolt");
+        harness.assertInGraveyard(player1, "Memory's Journey");
 
         // Library should have gained 2 cards
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(libSizeBefore + 2);
@@ -175,8 +174,7 @@ class MemorysJourneyTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(opponentLibSizeBefore + 2);
 
         // Memory's Journey goes to caster's graveyard, not opponent's
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Memory's Journey"));
+        harness.assertInGraveyard(player1, "Memory's Journey");
     }
 
     // ===== No valid targets in graveyard =====
@@ -197,8 +195,7 @@ class MemorysJourneyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Memory's Journey goes to graveyard after resolving
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Memory's Journey"));
+        harness.assertInGraveyard(player1, "Memory's Journey");
     }
 
     // ===== Max targets cap =====
@@ -238,8 +235,7 @@ class MemorysJourneyTest extends BaseCardTest {
         harness.castFlashback(player1, 0, player2.getId());
 
         // Memory's Journey removed from graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Memory's Journey"));
+        harness.assertNotInGraveyard(player1, "Memory's Journey");
 
         // Should prompt for graveyard card selection from opponent's graveyard
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);

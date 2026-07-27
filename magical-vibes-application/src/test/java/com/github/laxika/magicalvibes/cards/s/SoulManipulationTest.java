@@ -39,10 +39,8 @@ class SoulManipulationTest extends BaseCardTest {
         harness.castModalInstantWithModes(player2, 0, 1, new int[]{0}, elves.getId(), List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
     }
 
     @Test
@@ -86,10 +84,8 @@ class SoulManipulationTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(deadCreature.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== Mode 2: both =====
@@ -116,15 +112,11 @@ class SoulManipulationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Counter half: Llanowar Elves countered
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
         // Return half: Grizzly Bears back in player2's hand
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -146,9 +138,7 @@ class SoulManipulationTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
     }
 }

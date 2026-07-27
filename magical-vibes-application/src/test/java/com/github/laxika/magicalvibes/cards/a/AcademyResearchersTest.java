@@ -52,8 +52,7 @@ class AcademyResearchersTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Academy Researchers is on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Academy Researchers"));
+        harness.assertOnBattlefield(player1, "Academy Researchers");
 
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 

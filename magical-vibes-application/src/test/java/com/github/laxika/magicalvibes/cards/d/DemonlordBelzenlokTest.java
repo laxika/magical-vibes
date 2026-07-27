@@ -38,8 +38,7 @@ class DemonlordBelzenlokTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Forest"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
 
@@ -59,10 +58,8 @@ class DemonlordBelzenlokTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Serra Angel"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Serra Angel");
+        harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
@@ -88,10 +85,8 @@ class DemonlordBelzenlokTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .allMatch(c -> c.getName().equals("Forest"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Serra Angel"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Suntail Hawk"));
+        harness.assertInHand(player1, "Serra Angel");
+        harness.assertInHand(player1, "Suntail Hawk");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 
@@ -111,8 +106,7 @@ class DemonlordBelzenlokTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
@@ -170,8 +164,7 @@ class DemonlordBelzenlokTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Serra Angel"));
+        harness.assertInHand(player1, "Serra Angel");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("library is empty"));
@@ -196,8 +189,7 @@ class DemonlordBelzenlokTest extends BaseCardTest {
         long serraCount = gd.playerHands.get(player1.getId()).stream()
                 .filter(c -> c.getName().equals("Serra Angel")).count();
         assertThat(serraCount).isEqualTo(2);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
     }
 

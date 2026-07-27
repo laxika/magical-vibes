@@ -106,8 +106,7 @@ class GoblinOutlanderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // White creature's 3 damage to the Outlander is prevented (protection from white)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Goblin Outlander"));
+        harness.assertOnBattlefield(player2, "Goblin Outlander");
     }
 
     @Test

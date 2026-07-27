@@ -35,10 +35,8 @@ class ViashinoSandscoutTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Viashino Sandscout"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Viashino Sandscout"));
+        harness.assertNotOnBattlefield(player1, "Viashino Sandscout");
+        harness.assertInHand(player1, "Viashino Sandscout");
     }
 }
 

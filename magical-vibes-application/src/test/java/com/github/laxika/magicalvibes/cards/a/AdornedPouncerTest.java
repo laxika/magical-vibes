@@ -38,8 +38,7 @@ class AdornedPouncerTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Adorned Pouncer"));
+        harness.assertNotInGraveyard(player1, "Adorned Pouncer");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Adorned Pouncer"));
     }
@@ -87,7 +86,6 @@ class AdornedPouncerTest extends BaseCardTest {
         Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Adorned Pouncer"));
+        harness.assertInGraveyard(player1, "Adorned Pouncer");
     }
 }

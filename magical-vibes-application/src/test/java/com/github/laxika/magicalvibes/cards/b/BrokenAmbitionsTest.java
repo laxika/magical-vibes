@@ -53,10 +53,8 @@ class BrokenAmbitionsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Spell was countered (player1 could not pay {1}).
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // Won clash → its controller (player1) milled four cards.
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(libraryBefore - 4);
     }
@@ -80,8 +78,7 @@ class BrokenAmbitionsTest extends BaseCardTest {
         int libraryBefore = gd.playerDecks.get(player1.getId()).size();
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(libraryBefore); // no mill
     }
 
@@ -108,7 +105,6 @@ class BrokenAmbitionsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // pay {1}
         harness.passBothPriorities(); // resolve Grizzly Bears
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }

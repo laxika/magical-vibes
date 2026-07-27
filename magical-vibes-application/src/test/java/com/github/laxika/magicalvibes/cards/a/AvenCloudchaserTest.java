@@ -54,8 +54,7 @@ class AvenCloudchaserTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Aven Cloudchaser"));
+        harness.assertOnBattlefield(player1, "Aven Cloudchaser");
 
         // ETB triggered ability should be on stack
         assertThat(gd.stack).hasSize(1);
@@ -82,10 +81,8 @@ class AvenCloudchaserTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Angelic Chorus"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Angelic Chorus"));
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertInGraveyard(player2, "Angelic Chorus");
     }
 
     @Test
@@ -102,11 +99,8 @@ class AvenCloudchaserTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Angelic Chorus trigger (top of stack)
         harness.passBothPriorities(); // resolve ETB (destroy enchantment)
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Angelic Chorus"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Angelic Chorus"));
+        harness.assertNotOnBattlefield(player1, "Angelic Chorus");
+        harness.assertInGraveyard(player1, "Angelic Chorus");
     }
 
     @Test
@@ -161,8 +155,7 @@ class AvenCloudchaserTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Creature should be on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Aven Cloudchaser"));
+        harness.assertOnBattlefield(player1, "Aven Cloudchaser");
         // No triggered ability on stack
         assertThat(gd.stack).isEmpty();
     }

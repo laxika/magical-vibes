@@ -35,8 +35,7 @@ class BlitzHellionTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Blitz Hellion"));
+        harness.assertNotOnBattlefield(player1, "Blitz Hellion");
         assertThat(gd.playerDecks.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Blitz Hellion"));
     }
@@ -55,7 +54,6 @@ class BlitzHellionTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger
 
         // Only the shuffle-into-library effect removes it, so leaving the battlefield proves it fired.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Blitz Hellion"));
+        harness.assertNotOnBattlefield(player1, "Blitz Hellion");
     }
 }

@@ -62,7 +62,6 @@ class DuskUrchinsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve death trigger -> draw 2
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Dusk Urchins"));
+        harness.assertInGraveyard(player1, "Dusk Urchins");
     }
 }

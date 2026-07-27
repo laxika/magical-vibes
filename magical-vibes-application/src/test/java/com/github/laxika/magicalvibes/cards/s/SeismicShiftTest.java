@@ -116,7 +116,6 @@ class SeismicShiftTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Seismic Shift"));
+        harness.assertInGraveyard(player1, "Seismic Shift");
     }
 }

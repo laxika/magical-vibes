@@ -45,11 +45,9 @@ class DesecratorHagTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, 1);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .noneMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertInHand(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Hill Giant");
     }
 
     @Test
@@ -76,11 +74,9 @@ class DesecratorHagTest extends BaseCardTest {
         // Choose Serra Angel (index 1) among the tied pair.
         harness.handleGraveyardCardChosen(player1, 1);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Serra Angel"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Air Elemental"))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Serra Angel");
+        harness.assertInGraveyard(player1, "Air Elemental");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -115,7 +111,6 @@ class DesecratorHagTest extends BaseCardTest {
         castAndResolveEtb();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Holy Day"));
+        harness.assertInGraveyard(player1, "Holy Day");
     }
 }

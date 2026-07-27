@@ -54,11 +54,8 @@ class BlackSunsZenithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both 2/2 bears get 2 -1/-1 counters → 0/0 → die to SBA
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -74,8 +71,7 @@ class BlackSunsZenithTest extends BaseCardTest {
 
         // Bear is now 1/1 (2/2 with one -1/-1 counter)
         assertThat(bear.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -90,13 +86,10 @@ class BlackSunsZenithTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 3);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // 2/2 bear gets 3 -1/-1 counters → -1/-1 → dies
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         // 4/5 gets 3 -1/-1 counters → 1/2 → survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Big Creature"));
+        harness.assertOnBattlefield(player2, "Big Creature");
         assertThat(bigCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
     }
 
@@ -147,8 +140,7 @@ class BlackSunsZenithTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Not in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Black Sun's Zenith"));
+        harness.assertNotInGraveyard(player1, "Black Sun's Zenith");
         // In library (deck size increased by 1)
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore + 1);
         // Card exists somewhere in the deck

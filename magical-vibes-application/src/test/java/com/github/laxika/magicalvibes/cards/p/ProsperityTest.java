@@ -50,8 +50,7 @@ class ProsperityTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Prosperity"));
+        harness.assertInGraveyard(player1, "Prosperity");
         assertThat(gd.stack).isEmpty();
     }
 }

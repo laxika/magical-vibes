@@ -106,8 +106,7 @@ class DeathtouchMechanicTest extends BaseCardTest {
         ));
 
         // Both blockers should be dead (1 damage from deathtouch is lethal)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== 3. Deathtouch + trample: excess goes to player =====
@@ -148,8 +147,7 @@ class DeathtouchMechanicTest extends BaseCardTest {
         ));
 
         // Blocker dies (1 deathtouch damage is lethal)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Player took 7 damage
         harness.assertLife(player2, 13);
     }

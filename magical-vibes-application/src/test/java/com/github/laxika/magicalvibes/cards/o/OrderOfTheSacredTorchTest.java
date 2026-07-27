@@ -42,10 +42,8 @@ class OrderOfTheSacredTorchTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Cruel Edict is countered — Grizzly Bears survives, 1 life paid
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Cruel Edict"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Cruel Edict");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }

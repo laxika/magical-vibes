@@ -45,8 +45,7 @@ class SuspendAggressionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Target permanent exiled; opponent (its owner) may play it.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.exilePlayPermissions.get(bearsCardId)).isEqualTo(player2.getId());
 
         // Top card of caster's library exiled; caster may play it.

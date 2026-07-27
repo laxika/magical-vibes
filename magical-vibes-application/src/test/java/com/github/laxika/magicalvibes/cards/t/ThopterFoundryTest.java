@@ -42,10 +42,8 @@ class ThopterFoundryTest extends BaseCardTest {
         assertThat(thopterTokens()).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
         // The chosen artifact is sacrificed; the Foundry stays.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Thopter Foundry"));
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        harness.assertOnBattlefield(player1, "Thopter Foundry");
     }
 
     @Test
@@ -93,8 +91,7 @@ class ThopterFoundryTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice)
                 .isFalse();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Thopter Foundry"));
+        harness.assertNotOnBattlefield(player1, "Thopter Foundry");
         assertThat(thopterTokens()).isEqualTo(1);
     }
 }

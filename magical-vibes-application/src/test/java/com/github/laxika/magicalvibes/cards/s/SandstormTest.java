@@ -36,10 +36,8 @@ class SandstormTest extends BaseCardTest {
         addAttacker(player1, player2, makeCreature("Goblin", 2, 1));
         castSandstorm();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Goblin"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Goblin"));
+        harness.assertNotOnBattlefield(player1, "Goblin");
+        harness.assertInGraveyard(player1, "Goblin");
     }
 
     @Test

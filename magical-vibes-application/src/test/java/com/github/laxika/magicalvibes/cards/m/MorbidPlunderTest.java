@@ -62,18 +62,15 @@ class MorbidPlunderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both creatures should be in hand, not in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"))
-                .noneMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
 
         // Morbid Plunder goes to graveyard after resolution
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Morbid Plunder"));
+        harness.assertInGraveyard(player1, "Morbid Plunder");
 
         // Both creatures should be in hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Llanowar Elves");
 
         // Log should mention returning from graveyard
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("from graveyard to hand"));
@@ -98,8 +95,7 @@ class MorbidPlunderTest extends BaseCardTest {
 
         // One creature returned to hand, one still in graveyard (plus Morbid Plunder)
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Morbid Plunder"));
+        harness.assertInGraveyard(player1, "Morbid Plunder");
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
@@ -120,9 +116,8 @@ class MorbidPlunderTest extends BaseCardTest {
 
         // Creature still in graveyard, Morbid Plunder also in graveyard
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Morbid Plunder"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Morbid Plunder");
 
         // Hand should be empty
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -148,9 +143,8 @@ class MorbidPlunderTest extends BaseCardTest {
 
         // Non-creature card untouched in graveyard. Morbid Plunder also goes to graveyard.
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Leonin Scimitar"))
-                .anyMatch(c -> c.getName().equals("Morbid Plunder"));
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+        harness.assertInGraveyard(player1, "Morbid Plunder");
     }
 
     @Test

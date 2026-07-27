@@ -99,8 +99,7 @@ class SkyshroudRangerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player1, "Forest");
     }
 
     @Test

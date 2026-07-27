@@ -103,8 +103,7 @@ class ChandraDressedToKillTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Chandra, Dressed to Kill"));
+        harness.assertNotOnBattlefield(player1, "Chandra, Dressed to Kill");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .contains(red1.getId(), blue.getId(), red2.getId(), green.getId(), red3.getId());

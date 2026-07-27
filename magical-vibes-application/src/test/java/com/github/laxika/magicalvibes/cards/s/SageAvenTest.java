@@ -28,8 +28,7 @@ class SageAvenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sage Aven"));
+        harness.assertOnBattlefield(player1, "Sage Aven");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();

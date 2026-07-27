@@ -67,16 +67,14 @@ class PhyrexianHydraTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Hydra survives with 2 -1/-1 counters from Bears' 2 power
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Phyrexian Hydra"));
+        harness.assertOnBattlefield(player2, "Phyrexian Hydra");
         Permanent hydra = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Phyrexian Hydra"))
                 .findFirst().orElseThrow();
         assertThat(hydra.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
 
         // Bears dies from Hydra's 7 power (infect → -1/-1 counters, toughness 0)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Lethal damage via counters kills the Hydra =====
@@ -105,10 +103,8 @@ class PhyrexianHydraTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Hydra dies from 7 -1/-1 counters (toughness = 0)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phyrexian Hydra"));
+        harness.assertNotOnBattlefield(player2, "Phyrexian Hydra");
     }
 
     // ===== Infect deals poison counters to players =====

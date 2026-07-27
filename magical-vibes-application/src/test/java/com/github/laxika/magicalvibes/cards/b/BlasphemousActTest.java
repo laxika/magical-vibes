@@ -120,10 +120,8 @@ class BlasphemousActTest extends BaseCardTest {
 
             GameData gd = harness.getGameData();
             // Both creatures should be dead — 13 damage kills anything
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Giant Spider"));
+            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+            harness.assertNotOnBattlefield(player2, "Giant Spider");
             // Players should NOT take damage
             assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -140,8 +138,7 @@ class BlasphemousActTest extends BaseCardTest {
 
             GameData gd = harness.getGameData();
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Blasphemous Act"));
+            harness.assertInGraveyard(player1, "Blasphemous Act");
         }
     }
 }

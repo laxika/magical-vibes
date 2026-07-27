@@ -91,10 +91,8 @@ class StasisTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Stasis"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Stasis"));
+        harness.assertNotOnBattlefield(player1, "Stasis");
+        harness.assertInGraveyard(player1, "Stasis");
     }
 
     @Test
@@ -107,8 +105,7 @@ class StasisTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Stasis"));
+        harness.assertOnBattlefield(player1, "Stasis");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 
@@ -120,7 +117,6 @@ class StasisTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Stasis"));
+        harness.assertOnBattlefield(player1, "Stasis");
     }
 }

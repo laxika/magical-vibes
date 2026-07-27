@@ -34,8 +34,7 @@ class DemonmailHauberkTest extends BaseCardTest {
         assertThat(hauberk.getAttachedTo()).isEqualTo(bears.getId());
 
         // Token should have been sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Goblin Token"));
+        harness.assertNotOnBattlefield(player1, "Goblin Token");
 
         // Bears should get +4/+2 (2/2 base + 4/2 = 6/4)
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
@@ -98,8 +97,7 @@ class DemonmailHauberkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // First bear should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
         // Equipment should be attached to secondBear
         Permanent hauberk = findPermanent(player1, "Demonmail Hauberk");

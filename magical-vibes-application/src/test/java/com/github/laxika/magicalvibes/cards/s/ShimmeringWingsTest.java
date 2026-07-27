@@ -116,11 +116,9 @@ class ShimmeringWingsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Shimmering Wings should be in hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shimmering Wings"));
+        harness.assertInHand(player1, "Shimmering Wings");
         // No longer on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Shimmering Wings"));
+        harness.assertNotOnBattlefield(player1, "Shimmering Wings");
     }
 
     @Test
@@ -166,8 +164,7 @@ class ShimmeringWingsTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shimmering Wings"));
+        harness.assertInHand(player1, "Shimmering Wings");
 
         // Re-cast it
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -210,10 +207,8 @@ class ShimmeringWingsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Shimmering Wings should go to graveyard (fizzle)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shimmering Wings"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Shimmering Wings"));
+        harness.assertInGraveyard(player1, "Shimmering Wings");
+        harness.assertNotOnBattlefield(player1, "Shimmering Wings");
     }
 
     // ===== Orphaned aura =====
@@ -248,10 +243,8 @@ class ShimmeringWingsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Shimmering Wings should be in graveyard (orphaned aura cleanup)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Shimmering Wings"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Shimmering Wings"));
+        harness.assertNotOnBattlefield(player2, "Shimmering Wings");
+        harness.assertInGraveyard(player2, "Shimmering Wings");
     }
 
     // ===== Targeting restriction =====

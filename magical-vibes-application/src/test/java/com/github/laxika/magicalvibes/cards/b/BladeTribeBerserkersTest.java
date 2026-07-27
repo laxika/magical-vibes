@@ -54,8 +54,7 @@ class BladeTribeBerserkersTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Blade-Tribe Berserkers"));
+        harness.assertOnBattlefield(player1, "Blade-Tribe Berserkers");
 
         Permanent berserkers = findBerserkers();
         assertThat(berserkers.getPowerModifier()).isEqualTo(0);
@@ -144,8 +143,7 @@ class BladeTribeBerserkersTest extends BaseCardTest {
         castBerserkers();
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Blade-Tribe Berserkers"));
+        harness.assertOnBattlefield(player1, "Blade-Tribe Berserkers");
     }
 
     @Test

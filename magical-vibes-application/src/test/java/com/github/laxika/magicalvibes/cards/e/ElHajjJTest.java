@@ -71,8 +71,7 @@ class ElHajjJTest extends BaseCardTest {
         resolveCombatAndTrigger();
 
         // El-Hajjâj traded away but its "deals damage" trigger still resolved.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("El-Hajjâj"));
+        harness.assertInGraveyard(player1, "El-Hajjâj");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21); // gained 1 life
     }
 

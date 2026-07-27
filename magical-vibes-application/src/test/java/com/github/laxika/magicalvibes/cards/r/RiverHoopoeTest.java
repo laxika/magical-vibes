@@ -33,8 +33,7 @@ class RiverHoopoeTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test

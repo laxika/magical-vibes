@@ -50,8 +50,7 @@ class ReassemblingSkeletonTest extends BaseCardTest {
         assertThat(perm.isTapped()).isTrue();
 
         // Should no longer be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Reassembling Skeleton"));
+        harness.assertNotInGraveyard(player1, "Reassembling Skeleton");
     }
 
     @Test
@@ -92,8 +91,7 @@ class ReassemblingSkeletonTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Reassembling Skeleton"));
+        harness.assertOnBattlefield(player1, "Reassembling Skeleton");
 
         // Simulate dying: remove from battlefield and put back in graveyard
         Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
@@ -108,7 +106,6 @@ class ReassemblingSkeletonTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Reassembling Skeleton"));
+        harness.assertOnBattlefield(player1, "Reassembling Skeleton");
     }
 }

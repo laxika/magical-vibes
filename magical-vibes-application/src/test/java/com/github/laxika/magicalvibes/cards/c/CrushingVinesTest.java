@@ -40,11 +40,8 @@ class CrushingVinesTest extends BaseCardTest {
             harness.castInstant(player1, 0, 0, airElementalPermanent.getId());
             harness.passBothPriorities();
 
-            GameData gd = harness.getGameData();
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Air Elemental"));
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Air Elemental"));
+            harness.assertNotOnBattlefield(player2, "Air Elemental");
+            harness.assertInGraveyard(player2, "Air Elemental");
         }
 
         @Test
@@ -104,11 +101,8 @@ class CrushingVinesTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, millstonePermanent.getId());
             harness.passBothPriorities();
 
-            GameData gd = harness.getGameData();
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Millstone"));
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Millstone"));
+            harness.assertNotOnBattlefield(player2, "Millstone");
+            harness.assertInGraveyard(player2, "Millstone");
         }
 
         @Test
@@ -166,7 +160,6 @@ class CrushingVinesTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Crushing Vines"));
+        harness.assertInGraveyard(player1, "Crushing Vines");
     }
 }

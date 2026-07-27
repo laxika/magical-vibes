@@ -34,8 +34,7 @@ class AbandonedSarcophagusTest extends BaseCardTest {
         harness.castFlashback(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Inferno Jet"));
+        harness.assertNotInGraveyard(player1, "Inferno Jet");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Inferno Jet"));
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
@@ -55,10 +54,8 @@ class AbandonedSarcophagusTest extends BaseCardTest {
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Striped Riverwinder"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Striped Riverwinder"));
+        harness.assertOnBattlefield(player1, "Striped Riverwinder");
+        harness.assertNotInGraveyard(player1, "Striped Riverwinder");
     }
 
     @Test
@@ -93,12 +90,10 @@ class AbandonedSarcophagusTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Countervailing Winds"));
+        harness.assertInGraveyard(player1, "Countervailing Winds");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Countervailing Winds"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInHand(player1, "Shock");
     }
 
     @Test
@@ -113,8 +108,7 @@ class AbandonedSarcophagusTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Lurching Rotbeast"));
+        harness.assertNotInGraveyard(player1, "Lurching Rotbeast");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Lurching Rotbeast"));
     }
@@ -131,8 +125,7 @@ class AbandonedSarcophagusTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
     }

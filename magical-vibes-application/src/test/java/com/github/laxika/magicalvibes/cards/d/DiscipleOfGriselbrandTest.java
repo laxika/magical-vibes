@@ -64,8 +64,7 @@ class DiscipleOfGriselbrandTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
 
         // Grizzly Bears should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -110,10 +109,8 @@ class DiscipleOfGriselbrandTest extends BaseCardTest {
 
         // Disciple is 1/1 and auto-sacrificed (only creature), so gains 1 life
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Disciple of Griselbrand"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Disciple of Griselbrand"));
+        harness.assertNotOnBattlefield(player1, "Disciple of Griselbrand");
+        harness.assertInGraveyard(player1, "Disciple of Griselbrand");
     }
 
     @Test
@@ -168,8 +165,7 @@ class DiscipleOfGriselbrandTest extends BaseCardTest {
 
         // Disciple auto-sacrificed (only creature), gains 1 life (toughness 1)
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Disciple of Griselbrand"));
+        harness.assertNotOnBattlefield(player1, "Disciple of Griselbrand");
     }
 
     // ===== Helper methods =====
@@ -181,7 +177,6 @@ class DiscipleOfGriselbrandTest extends BaseCardTest {
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
-
 
     private Card createCreature(String name, int power, int toughness) {
         Card card = new Card();

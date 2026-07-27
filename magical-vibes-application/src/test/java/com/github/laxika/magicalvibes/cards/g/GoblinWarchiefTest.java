@@ -42,8 +42,7 @@ class GoblinWarchiefTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Goblin Warchief"));
+        harness.assertOnBattlefield(player1, "Goblin Warchief");
     }
 
     // ===== Haste grant =====

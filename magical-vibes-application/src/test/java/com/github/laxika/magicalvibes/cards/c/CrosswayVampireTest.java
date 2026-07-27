@@ -82,8 +82,7 @@ class CrosswayVampireTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Crossway Vampire"));
+        harness.assertOnBattlefield(player1, "Crossway Vampire");
         assertThat(gd.stack).isEmpty();
     }
 

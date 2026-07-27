@@ -35,8 +35,7 @@ class AbundantMawTest extends BaseCardTest {
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
         assertThat(gd.getLife(player1.getId())).isEqualTo(23);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Abundant Maw"));
+        harness.assertOnBattlefield(player1, "Abundant Maw");
     }
 
     @Test
@@ -62,11 +61,9 @@ class AbundantMawTest extends BaseCardTest {
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
         assertThat(gd.getLife(player1.getId())).isEqualTo(23);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Abundant Maw"))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Abundant Maw");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
 
@@ -118,8 +115,7 @@ class AbundantMawTest extends BaseCardTest {
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
         assertThat(gd.getLife(player1.getId())).isEqualTo(23);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Abundant Maw"));
+        harness.assertNotOnBattlefield(player1, "Abundant Maw");
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Abundant Maw");
     }
 }

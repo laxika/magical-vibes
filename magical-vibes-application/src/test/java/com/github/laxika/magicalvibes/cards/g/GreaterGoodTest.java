@@ -79,10 +79,8 @@ class GreaterGoodTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature gone from the battlefield, only Greater Good remains
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Bear"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bear"));
+        harness.assertNotOnBattlefield(player1, "Bear");
+        harness.assertInGraveyard(player1, "Bear");
     }
 
     // ===== Helpers =====

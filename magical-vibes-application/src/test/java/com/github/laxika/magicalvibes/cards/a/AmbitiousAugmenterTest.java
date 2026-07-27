@@ -152,8 +152,7 @@ class AmbitiousAugmenterTest extends BaseCardTest {
 
             GameData gd = harness.getGameData();
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Fractal"));
+            harness.assertNotOnBattlefield(player1, "Fractal");
         }
     }
 }

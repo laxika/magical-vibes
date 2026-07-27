@@ -26,15 +26,12 @@ class EmperorCrocodileTest extends BaseCardTest {
 
         // State trigger is on the stack — Crocodile still alive
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Emperor Crocodile"));
+        harness.assertOnBattlefield(player1, "Emperor Crocodile");
 
         // Resolve state trigger → Crocodile is sacrificed
         harness.passBothPriorities();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Emperor Crocodile"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Emperor Crocodile"));
+        harness.assertNotOnBattlefield(player1, "Emperor Crocodile");
+        harness.assertInGraveyard(player1, "Emperor Crocodile");
     }
 
     @Test
@@ -48,8 +45,7 @@ class EmperorCrocodileTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Emperor Crocodile"));
+        harness.assertOnBattlefield(player1, "Emperor Crocodile");
     }
 
     @Test
@@ -74,10 +70,8 @@ class EmperorCrocodileTest extends BaseCardTest {
         // Bears gone → state trigger fires; resolve it → Crocodile sacrificed
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Emperor Crocodile"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Emperor Crocodile"));
+        harness.assertNotOnBattlefield(player1, "Emperor Crocodile");
+        harness.assertInGraveyard(player1, "Emperor Crocodile");
     }
 
     @Test
@@ -91,9 +85,7 @@ class EmperorCrocodileTest extends BaseCardTest {
         harness.passBothPriorities(); // state trigger fires — opponent's creature doesn't count
         harness.passBothPriorities(); // resolve → sacrificed
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Emperor Crocodile"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Emperor Crocodile"));
+        harness.assertNotOnBattlefield(player1, "Emperor Crocodile");
+        harness.assertInGraveyard(player1, "Emperor Crocodile");
     }
 }

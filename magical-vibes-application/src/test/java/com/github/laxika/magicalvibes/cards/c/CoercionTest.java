@@ -35,8 +35,7 @@ class CoercionTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId()).get(0).getName()).isEqualTo("Peek");
     }
@@ -57,8 +56,7 @@ class CoercionTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 1);
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player2, "Forest");
     }
 
     @Test

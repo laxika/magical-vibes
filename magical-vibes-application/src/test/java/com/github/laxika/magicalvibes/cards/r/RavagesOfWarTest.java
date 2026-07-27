@@ -33,12 +33,9 @@ class RavagesOfWarTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().getType().name().equals("LAND"));
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getType().name().equals("LAND"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mountain"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Island"));
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertInGraveyard(player2, "Island");
     }
 
     @Test
@@ -51,8 +48,6 @@ class RavagesOfWarTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }

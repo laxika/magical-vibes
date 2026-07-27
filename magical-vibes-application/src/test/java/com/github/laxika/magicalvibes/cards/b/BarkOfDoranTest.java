@@ -150,13 +150,10 @@ class BarkOfDoranTest extends BaseCardTest {
         resolveCombat();
 
         // Attacker deals 3 damage (toughness) to blocker with 2 toughness → blocker dies
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         // Blocker deals 2 damage to attacker with 3 toughness → attacker survives
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -179,10 +176,8 @@ class BarkOfDoranTest extends BaseCardTest {
         resolveCombat();
 
         // HillGiant (3/3) takes 3 damage from blocker → dies
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hill Giant"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Hill Giant");
     }
 
     // ===== Combat damage: power >= toughness → uses power (normal) =====

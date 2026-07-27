@@ -85,8 +85,7 @@ class FatestitcherTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Fatestitcher"))
                 .findFirst().orElseThrow();
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Fatestitcher"));
+        harness.assertNotInGraveyard(player1, "Fatestitcher");
     }
 
     @Test
@@ -103,8 +102,7 @@ class FatestitcherTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fatestitcher"));
+        harness.assertNotOnBattlefield(player1, "Fatestitcher");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Fatestitcher"));
     }
@@ -122,8 +120,7 @@ class FatestitcherTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fatestitcher"));
+        harness.assertInGraveyard(player1, "Fatestitcher");
     }
 
     @Test
@@ -146,10 +143,8 @@ class FatestitcherTest extends BaseCardTest {
         harness.castInstant(player2, 0, perm.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fatestitcher"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Fatestitcher"));
+        harness.assertNotOnBattlefield(player1, "Fatestitcher");
+        harness.assertNotInGraveyard(player1, "Fatestitcher");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Fatestitcher"));
     }

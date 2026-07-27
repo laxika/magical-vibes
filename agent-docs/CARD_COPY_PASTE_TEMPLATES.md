@@ -195,8 +195,7 @@ class CARDNAMETest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Adjust assertion based on DAMAGE vs target toughness
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -297,8 +296,7 @@ class CARDNAMETest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("CARD_DISPLAY_NAME"));
+        harness.assertInGraveyard(player1, "CARD_DISPLAY_NAME");
     }
 }
 ```

@@ -34,13 +34,9 @@ class RayOfRevelationTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Angelic Chorus"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Angelic Chorus"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ray of Revelation"));
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertInGraveyard(player2, "Angelic Chorus");
+        harness.assertInGraveyard(player1, "Ray of Revelation");
     }
 
     @Test
@@ -54,10 +50,8 @@ class RayOfRevelationTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Telepathy"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Telepathy"));
+        harness.assertNotOnBattlefield(player1, "Telepathy");
+        harness.assertInGraveyard(player1, "Telepathy");
     }
 
     @Test
@@ -83,11 +77,8 @@ class RayOfRevelationTest extends BaseCardTest {
         harness.castFlashback(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Angelic Chorus"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Angelic Chorus"));
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertInGraveyard(player2, "Angelic Chorus");
     }
 
     @Test
@@ -102,8 +93,7 @@ class RayOfRevelationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Ray of Revelation"));
+        harness.assertNotInGraveyard(player1, "Ray of Revelation");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Ray of Revelation"));
     }
@@ -123,8 +113,7 @@ class RayOfRevelationTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Ray of Revelation"));
+        harness.assertNotInGraveyard(player1, "Ray of Revelation");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Ray of Revelation"));
     }

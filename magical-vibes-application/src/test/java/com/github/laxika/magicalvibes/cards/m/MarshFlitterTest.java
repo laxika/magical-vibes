@@ -49,8 +49,7 @@ class MarshFlitterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Goblin"));
+        harness.assertNotOnBattlefield(player1, "Goblin");
         assertThat(flitter.getEffectivePower()).isEqualTo(3);
         assertThat(flitter.getEffectiveToughness()).isEqualTo(3);
     }

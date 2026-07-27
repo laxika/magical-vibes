@@ -34,10 +34,8 @@ class TolarianWindsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .allMatch(c -> c.getName().equals("Island"));
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Tolarian Winds"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Tolarian Winds");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -52,8 +50,7 @@ class TolarianWindsTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Tolarian Winds"));
+        harness.assertInGraveyard(player1, "Tolarian Winds");
     }
 
     private void setDeck(Player player, List<Card> cards) {

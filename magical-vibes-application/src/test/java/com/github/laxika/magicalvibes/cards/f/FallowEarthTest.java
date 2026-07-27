@@ -34,11 +34,9 @@ class FallowEarthTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Land removed from battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player2, "Forest");
         // Land NOT in graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Forest"));
+        harness.assertNotInGraveyard(player2, "Forest");
         // Land on top of owner's library
         List<Card> deck = gd.playerDecks.get(player2.getId());
         assertThat(deck).hasSize(deckSizeBefore + 1);

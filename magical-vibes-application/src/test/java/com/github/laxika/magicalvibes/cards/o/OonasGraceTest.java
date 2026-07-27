@@ -58,10 +58,9 @@ class OonasGraceTest extends BaseCardTest {
 
         // Discarded the Island, drew one card: net zero.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
-        assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getName().equals("Island"));
+        harness.assertNotInHand(player1, "Island");
         // Retrace returns the spell to the graveyard, not exile.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Oona's Grace"));
+        harness.assertInGraveyard(player1, "Oona's Grace");
     }
 
     @Test

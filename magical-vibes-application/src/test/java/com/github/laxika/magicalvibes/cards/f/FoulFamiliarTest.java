@@ -50,10 +50,8 @@ class FoulFamiliarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Foul Familiar"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Foul Familiar"));
+        harness.assertInHand(player1, "Foul Familiar");
+        harness.assertNotOnBattlefield(player1, "Foul Familiar");
     }
 
     @Test

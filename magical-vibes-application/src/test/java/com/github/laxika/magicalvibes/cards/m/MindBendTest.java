@@ -240,8 +240,7 @@ class MindBendTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mind Bend"));
+        harness.assertInGraveyard(player1, "Mind Bend");
     }
 
     @Test
@@ -262,8 +261,7 @@ class MindBendTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mind Bend"));
+        harness.assertInGraveyard(player1, "Mind Bend");
     }
 
     @Test

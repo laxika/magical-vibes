@@ -45,8 +45,7 @@ class CloudElementalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Cloud Elemental"));
+        harness.assertOnBattlefield(player1, "Cloud Elemental");
     }
 
     @Test
@@ -147,11 +146,9 @@ class CloudElementalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Cloud Sprite should die (1 toughness vs 2 damage)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Cloud Sprite"));
+        harness.assertInGraveyard(player1, "Cloud Sprite");
         // Cloud Elemental should survive (3 toughness vs 1 damage)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Cloud Elemental"));
+        harness.assertOnBattlefield(player2, "Cloud Elemental");
         // No damage to player
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }

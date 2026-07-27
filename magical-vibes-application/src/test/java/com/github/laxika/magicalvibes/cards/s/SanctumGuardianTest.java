@@ -29,10 +29,8 @@ class SanctumGuardianTest extends BaseCardTest {
 
         harness.activateAbility(player1, indexOf(player1, guardian), null, null);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Sanctum Guardian"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Sanctum Guardian"));
+        harness.assertNotOnBattlefield(player1, "Sanctum Guardian");
+        harness.assertInGraveyard(player1, "Sanctum Guardian");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }

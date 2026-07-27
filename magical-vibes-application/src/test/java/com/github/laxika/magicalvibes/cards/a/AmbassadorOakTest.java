@@ -21,8 +21,7 @@ class AmbassadorOakTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Ambassador Oak"));
+        harness.assertOnBattlefield(player1, "Ambassador Oak");
         assertThat(gd.stack).hasSize(1);
     }
 

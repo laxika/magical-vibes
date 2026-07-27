@@ -31,11 +31,8 @@ class IngotChewerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> ETB trigger on stack
         harness.passBothPriorities(); // resolve ETB trigger
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Ornithopter"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Ingot Chewer"));
+        harness.assertInGraveyard(player2, "Ornithopter");
+        harness.assertOnBattlefield(player1, "Ingot Chewer");
     }
 
     // ===== Evoke =====
@@ -53,12 +50,9 @@ class IngotChewerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger (destroy + evoke sacrifice)
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Ornithopter"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ingot Chewer"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ingot Chewer"));
+        harness.assertInGraveyard(player2, "Ornithopter");
+        harness.assertNotOnBattlefield(player1, "Ingot Chewer");
+        harness.assertInGraveyard(player1, "Ingot Chewer");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
 

@@ -53,10 +53,8 @@ class FieldOfRuinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, targetId);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Field of Ruin"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Field of Ruin"));
+        harness.assertNotOnBattlefield(player1, "Field of Ruin");
+        harness.assertInGraveyard(player1, "Field of Ruin");
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
@@ -101,10 +99,8 @@ class FieldOfRuinTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Target land is destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ghost Quarter"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Ghost Quarter"));
+        harness.assertNotOnBattlefield(player2, "Ghost Quarter");
+        harness.assertInGraveyard(player2, "Ghost Quarter");
 
         // Active player (player1) is prompted to search first (APNAP order)
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);

@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HurricaneTest extends BaseCardTest {
 
-
     /** A 2/2 flying creature for test purposes. */
     private static Card flyingCreature() {
         Card card = new Card();
@@ -35,7 +34,6 @@ class HurricaneTest extends BaseCardTest {
         card.setKeywords(Set.of(Keyword.FLYING));
         return card;
     }
-
 
     @Test
     @DisplayName("Casting Hurricane puts it on the stack as a sorcery spell")
@@ -93,11 +91,8 @@ class HurricaneTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Flying creature should be destroyed (2 damage >= 2 toughness)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Wind Drake"));
+        harness.assertNotOnBattlefield(player2, "Wind Drake");
     }
 
     @Test
@@ -112,11 +107,8 @@ class HurricaneTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Non-flying creature survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test

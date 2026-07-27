@@ -185,12 +185,10 @@ class KnightExemplarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Black Knight should survive (indestructible from Knight Exemplar)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Black Knight"));
+        harness.assertOnBattlefield(player1, "Black Knight");
 
         // Knight Exemplar should be destroyed (doesn't buff itself)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Knight Exemplar"));
+        harness.assertNotOnBattlefield(player1, "Knight Exemplar");
     }
 
     @Test
@@ -217,12 +215,10 @@ class KnightExemplarTest extends BaseCardTest {
                 .count()).isEqualTo(2);
 
         // Black Knight survives too
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Black Knight"));
+        harness.assertOnBattlefield(player1, "Black Knight");
 
         // Opponent's non-Knight creature is destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
 }

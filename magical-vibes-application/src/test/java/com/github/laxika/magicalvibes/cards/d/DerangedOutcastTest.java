@@ -71,8 +71,7 @@ class DerangedOutcastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Human"));
+        harness.assertInGraveyard(player1, "Human");
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .contains(outcast);
     }
@@ -93,8 +92,7 @@ class DerangedOutcastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Deranged Outcast"));
+        harness.assertInGraveyard(player1, "Deranged Outcast");
     }
 
     @Test

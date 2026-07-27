@@ -31,10 +31,8 @@ class ParaseleneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Rule of Law"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Angelic Chorus"));
+        harness.assertNotOnBattlefield(player1, "Rule of Law");
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE + 2);
     }
 
@@ -50,8 +48,7 @@ class ParaseleneTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -65,8 +62,7 @@ class ParaseleneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Rule of Law"));
+        harness.assertInGraveyard(player1, "Rule of Law");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE + 1);
     }
 
@@ -81,11 +77,8 @@ class ParaseleneTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Rule of Law"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Rule of Law");
     }
 
     @Test
@@ -97,8 +90,6 @@ class ParaseleneTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Paraselene"));
+        harness.assertInGraveyard(player1, "Paraselene");
     }
 }

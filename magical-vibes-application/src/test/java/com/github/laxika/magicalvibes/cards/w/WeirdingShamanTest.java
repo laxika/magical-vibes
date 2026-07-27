@@ -28,8 +28,7 @@ class WeirdingShamanTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(countGoblinRogueTokens(player1)).isEqualTo(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Weirding Shaman"));
+        harness.assertInGraveyard(player1, "Weirding Shaman");
     }
 
     @Test

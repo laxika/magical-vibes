@@ -67,18 +67,15 @@ class ScarbladeEliteTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
 
         // Assassin card exiled from graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Scarblade Elite"));
+        harness.assertNotInGraveyard(player1, "Scarblade Elite");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Scarblade Elite"));
 
         harness.passBothPriorities();
 
         // Grizzly Bears destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test

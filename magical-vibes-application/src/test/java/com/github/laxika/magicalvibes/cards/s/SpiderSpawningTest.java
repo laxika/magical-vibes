@@ -113,8 +113,7 @@ class SpiderSpawningTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Spider Spawning"));
+        harness.assertNotInGraveyard(player1, "Spider Spawning");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Spider Spawning"));
     }
@@ -128,8 +127,6 @@ class SpiderSpawningTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spider Spawning"));
+        harness.assertInGraveyard(player1, "Spider Spawning");
     }
 }

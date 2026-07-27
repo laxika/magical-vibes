@@ -75,8 +75,7 @@ class CorpseConnoisseurTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Corpse Connoisseur"));
+        harness.assertNotOnBattlefield(player1, "Corpse Connoisseur");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Corpse Connoisseur"));
     }

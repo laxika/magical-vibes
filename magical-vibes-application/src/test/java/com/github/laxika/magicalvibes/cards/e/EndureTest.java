@@ -54,10 +54,8 @@ class EndureTest extends BaseCardTest {
         harness.castInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Grizzly Bears (2/2) takes 2 damage from Shock, but it is prevented.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test

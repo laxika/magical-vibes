@@ -76,10 +76,8 @@ class SoaringHopeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Off the battlefield and not in hand
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Soaring Hope"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Soaring Hope"));
+        harness.assertNotOnBattlefield(player1, "Soaring Hope");
+        harness.assertNotInHand(player1, "Soaring Hope");
         // On top of the owner's library
         assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Soaring Hope");
     }
@@ -141,9 +139,7 @@ class SoaringHopeTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Soaring Hope"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Soaring Hope"));
+        harness.assertInGraveyard(player1, "Soaring Hope");
+        harness.assertNotOnBattlefield(player1, "Soaring Hope");
     }
 }

@@ -32,13 +32,11 @@ class CallToHeelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Bounced creature + drawn Island both in the controller's hand (started empty)
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 2);
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Island"));
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Island");
     }
 
     @Test
@@ -54,10 +52,8 @@ class CallToHeelTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Island"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Island");
     }
 
     @Test

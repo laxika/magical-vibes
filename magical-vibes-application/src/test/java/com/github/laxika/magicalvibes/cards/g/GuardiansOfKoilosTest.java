@@ -50,10 +50,8 @@ class GuardiansOfKoilosTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
             harness.handlePermanentChosen(player1, lotusId);
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Gilded Lotus"));
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Gilded Lotus"));
+            harness.assertNotOnBattlefield(player1, "Gilded Lotus");
+            harness.assertInHand(player1, "Gilded Lotus");
         }
 
         @Test
@@ -67,10 +65,8 @@ class GuardiansOfKoilosTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
             harness.handlePermanentChosen(player1, arvadId);
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Arvad the Cursed"));
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Arvad the Cursed"));
+            harness.assertNotOnBattlefield(player1, "Arvad the Cursed");
+            harness.assertInHand(player1, "Arvad the Cursed");
         }
 
         @Test
@@ -83,10 +79,8 @@ class GuardiansOfKoilosTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, false); // decline
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Gilded Lotus"));
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Guardians of Koilos"));
+            harness.assertOnBattlefield(player1, "Gilded Lotus");
+            harness.assertOnBattlefield(player1, "Guardians of Koilos");
         }
 
         @Test
@@ -100,8 +94,7 @@ class GuardiansOfKoilosTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true);
             harness.handlePermanentChosen(player1, lotusId);
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Guardians of Koilos"));
+            harness.assertOnBattlefield(player1, "Guardians of Koilos");
         }
     }
 
@@ -122,8 +115,7 @@ class GuardiansOfKoilosTest extends BaseCardTest {
             assertThat(gd.interaction.activeInteraction()).isNull();
             assertThat(gd.stack).isEmpty();
             // Opponent's Gilded Lotus is still on the battlefield
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Gilded Lotus"));
+            harness.assertOnBattlefield(player2, "Gilded Lotus");
         }
 
         @Test
@@ -137,8 +129,7 @@ class GuardiansOfKoilosTest extends BaseCardTest {
             assertThat(gd.interaction.activeInteraction()).isNull();
             assertThat(gd.stack).isEmpty();
             // Guardians is still on the battlefield (wasn't bounced)
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Guardians of Koilos"));
+            harness.assertOnBattlefield(player1, "Guardians of Koilos");
         }
 
         @Test
@@ -154,10 +145,8 @@ class GuardiansOfKoilosTest extends BaseCardTest {
             harness.handlePermanentChosen(player1, otherGuardiansId);
 
             // The first Guardians should be bounced, the newly cast one remains
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Guardians of Koilos"));
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Guardians of Koilos"));
+            harness.assertInHand(player1, "Guardians of Koilos");
+            harness.assertOnBattlefield(player1, "Guardians of Koilos");
         }
     }
 }

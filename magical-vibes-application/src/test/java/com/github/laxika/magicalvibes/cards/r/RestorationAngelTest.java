@@ -32,8 +32,7 @@ class RestorationAngelTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bearsId);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(bearsId));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -75,10 +74,8 @@ class RestorationAngelTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Restoration Angel"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Restoration Angel");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -94,8 +91,7 @@ class RestorationAngelTest extends BaseCardTest {
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Serra Angel"));
+        harness.assertOnBattlefield(player1, "Serra Angel");
     }
 
     @Test
@@ -111,8 +107,7 @@ class RestorationAngelTest extends BaseCardTest {
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -140,8 +135,7 @@ class RestorationAngelTest extends BaseCardTest {
         Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.stolenCreatures).containsEntry(returned.getId(), player2.getId());
     }
 }

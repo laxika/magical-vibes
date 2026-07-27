@@ -112,10 +112,8 @@ class AlteredEgoTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Altered Ego"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Cancel"));
+        harness.assertNotInGraveyard(player1, "Altered Ego");
+        harness.assertInGraveyard(player2, "Cancel");
     }
 
     private Permanent findAlteredEgoCopy(com.github.laxika.magicalvibes.model.Player player) {

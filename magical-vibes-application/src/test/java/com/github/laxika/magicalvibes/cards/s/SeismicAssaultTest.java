@@ -51,8 +51,8 @@ class SeismicAssaultTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getName().equals("Plains"));
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Plains"));
+        harness.assertNotInHand(player1, "Plains");
+        harness.assertInGraveyard(player1, "Plains");
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
@@ -131,9 +131,8 @@ class SeismicAssaultTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
-        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
     }
 
     private Permanent addReadySeismicAssault(Player player) {

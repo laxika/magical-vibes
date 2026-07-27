@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -28,10 +27,8 @@ class DetonateTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 4, target);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Rod of Ruin"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Rod of Ruin"));
+        harness.assertNotOnBattlefield(player2, "Rod of Ruin");
+        harness.assertInGraveyard(player2, "Rod of Ruin");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 4);
     }
 
@@ -47,8 +44,7 @@ class DetonateTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 3, target);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Darksteel Plate"));
+        harness.assertOnBattlefield(player2, "Darksteel Plate");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
     }
 

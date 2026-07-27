@@ -121,8 +121,7 @@ class OliviaVoldarenTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Elves should be dead (state-based actions destroy it)
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+            harness.assertNotOnBattlefield(player2, "Llanowar Elves");
 
             // Olivia still gets the +1/+1 counter
             assertThat(olivia.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

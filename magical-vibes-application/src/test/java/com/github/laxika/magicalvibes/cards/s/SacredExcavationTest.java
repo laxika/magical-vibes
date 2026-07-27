@@ -48,9 +48,8 @@ class SacredExcavationTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Censor"))
-                .anyMatch(c -> c.getName().equals("Compelling Argument"));
+        harness.assertInHand(player1, "Censor");
+        harness.assertInHand(player1, "Compelling Argument");
         // Sacred Excavation is the only card left in the graveyard.
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .hasSize(1)

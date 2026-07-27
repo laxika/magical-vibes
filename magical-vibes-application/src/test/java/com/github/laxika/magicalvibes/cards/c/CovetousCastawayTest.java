@@ -86,8 +86,7 @@ class CovetousCastawayTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getId)
                 .contains(deckCard.getId(), gy1.getId(), gy2.getId(), gy3.getId());
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Ghostly Castigator"));
+        harness.assertOnBattlefield(player1, "Ghostly Castigator");
     }
 
     @Test

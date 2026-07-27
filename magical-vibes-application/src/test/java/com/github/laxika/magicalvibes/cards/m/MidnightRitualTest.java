@@ -455,8 +455,7 @@ class MidnightRitualTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Midnight Ritual should be in the graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Midnight Ritual"));
+        harness.assertInGraveyard(player1, "Midnight Ritual");
     }
 }
 

@@ -37,10 +37,8 @@ class GrappleWithDeathTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);
     }
 
@@ -60,10 +58,8 @@ class GrappleWithDeathTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player2, "Spellbook");
+        harness.assertInGraveyard(player2, "Spellbook");
     }
 
     @Test

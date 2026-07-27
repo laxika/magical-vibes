@@ -35,10 +35,8 @@ class ThrullSurgeonTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Thrull Surgeon"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Thrull Surgeon"));
+        harness.assertNotOnBattlefield(player1, "Thrull Surgeon");
+        harness.assertInGraveyard(player1, "Thrull Surgeon");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -66,8 +64,7 @@ class ThrullSurgeonTest extends BaseCardTest {
         harness.handleCardChosen(player1, 1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player2, "Forest");
         assertThat(gd.playerHands.get(player2.getId()))
                 .singleElement()
                 .extracting(card -> card.getName())
@@ -88,8 +85,7 @@ class ThrullSurgeonTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Thrull Surgeon"));
+        harness.assertInGraveyard(player1, "Thrull Surgeon");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("empty"));
     }
 

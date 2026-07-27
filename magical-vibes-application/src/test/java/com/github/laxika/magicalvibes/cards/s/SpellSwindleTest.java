@@ -62,13 +62,9 @@ class SpellSwindleTest extends BaseCardTest {
         harness.castInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Spell is countered — Bears goes to graveyard, not battlefield
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
         // 2 Treasure tokens created for the counter spell's controller
         List<Permanent> treasures = findAllPermanents(player2, "Treasure");
@@ -91,11 +87,8 @@ class SpellSwindleTest extends BaseCardTest {
         harness.castInstant(player2, 0, angel.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Spell is countered
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Serra Angel"));
+        harness.assertInGraveyard(player1, "Serra Angel");
 
         // 5 Treasure tokens created
         List<Permanent> treasures = findAllPermanents(player2, "Treasure");
@@ -170,8 +163,7 @@ class SpellSwindleTest extends BaseCardTest {
         assertThat(findAllPermanents(player2, "Treasure")).isEmpty();
 
         // Spell Swindle still goes to caster's graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Spell Swindle"));
+        harness.assertInGraveyard(player2, "Spell Swindle");
     }
 
     // ===== Stack cleanup =====
@@ -192,8 +184,7 @@ class SpellSwindleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Spell Swindle"));
+        harness.assertInGraveyard(player2, "Spell Swindle");
         assertThat(gd.stack).isEmpty();
     }
 

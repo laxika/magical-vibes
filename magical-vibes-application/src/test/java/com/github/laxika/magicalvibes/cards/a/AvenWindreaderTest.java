@@ -38,8 +38,7 @@ class AvenWindreaderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Aven Windreader"));
+        harness.assertOnBattlefield(player1, "Aven Windreader");
     }
 
     // ===== Activated ability: reveal top card =====

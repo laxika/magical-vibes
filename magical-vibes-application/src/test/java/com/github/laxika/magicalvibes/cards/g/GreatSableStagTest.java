@@ -63,12 +63,9 @@ class GreatSableStagTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Great Sable Stag"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Great Sable Stag"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Cancel"));
+        harness.assertOnBattlefield(player1, "Great Sable Stag");
+        harness.assertNotInGraveyard(player1, "Great Sable Stag");
+        harness.assertInGraveyard(player2, "Cancel");
     }
 
     // ===== Protection - targeting =====
@@ -230,10 +227,8 @@ class GreatSableStagTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Stag deals 3 to Blue Giant (4/4 survives), Blue Giant's 4 damage is prevented by protection
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Great Sable Stag"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Blue Giant"));
+        harness.assertOnBattlefield(player2, "Great Sable Stag");
+        harness.assertOnBattlefield(player1, "Blue Giant");
     }
 
     @Test
@@ -257,12 +252,9 @@ class GreatSableStagTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Red Giant deals 4 to Stag (4 >= 3 toughness, dies), Stag deals 3 to Red Giant (3 < 4, survives)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Great Sable Stag"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Great Sable Stag"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Red Giant"));
+        harness.assertNotOnBattlefield(player2, "Great Sable Stag");
+        harness.assertInGraveyard(player2, "Great Sable Stag");
+        harness.assertOnBattlefield(player1, "Red Giant");
     }
 
     // ===== Helper methods =====

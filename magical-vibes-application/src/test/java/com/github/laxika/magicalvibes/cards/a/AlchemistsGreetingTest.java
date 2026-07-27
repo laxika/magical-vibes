@@ -103,7 +103,6 @@ class AlchemistsGreetingTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Alchemist's Greeting"));
+        harness.assertInGraveyard(player1, "Alchemist's Greeting");
     }
 }

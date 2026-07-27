@@ -21,8 +21,7 @@ class WatchersOfTheDeadTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Watchers of the Dead"));
+        harness.assertNotOnBattlefield(player1, "Watchers of the Dead");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Watchers of the Dead"));
         assertThat(gd.stack).hasSize(1);

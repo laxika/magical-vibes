@@ -142,16 +142,14 @@ class CloneShellTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve death trigger
 
         // Grizzly Bears should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
 
         // Grizzly Bears should be removed from exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Clone Shell should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Clone Shell"));
+        harness.assertInGraveyard(player1, "Clone Shell");
     }
 
     // ===== Dies trigger — non-creature imprinted =====

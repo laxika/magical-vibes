@@ -73,8 +73,7 @@ class DreamstealerTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities(); // resolve the Eternalize ability
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Dreamstealer"));
+        harness.assertNotInGraveyard(player1, "Dreamstealer");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Dreamstealer"));
 
@@ -102,8 +101,7 @@ class DreamstealerTest extends BaseCardTest {
         Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Dreamstealer"));
+        harness.assertInGraveyard(player1, "Dreamstealer");
     }
 
     // ===== Helpers =====

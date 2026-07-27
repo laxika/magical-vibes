@@ -120,9 +120,8 @@ class IntoTheCoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both artifacts should be exiled, not on the battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Gold Myr"))
-                .noneMatch(p -> p.getCard().getName().equals("Hexplate Golem"));
+        harness.assertNotOnBattlefield(player2, "Gold Myr");
+        harness.assertNotOnBattlefield(player2, "Hexplate Golem");
 
         // Both should be in exile
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -144,10 +143,8 @@ class IntoTheCoreTest extends BaseCardTest {
         harness.castInstant(player1, 0, List.of(ownMyrId, oppGolemId));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Gold Myr"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hexplate Golem"));
+        harness.assertNotOnBattlefield(player1, "Gold Myr");
+        harness.assertNotOnBattlefield(player2, "Hexplate Golem");
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Gold Myr"));
@@ -169,9 +166,8 @@ class IntoTheCoreTest extends BaseCardTest {
         harness.castInstant(player1, 0, List.of(wellspringId, myrId));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ichor Wellspring"))
-                .noneMatch(p -> p.getCard().getName().equals("Gold Myr"));
+        harness.assertNotOnBattlefield(player2, "Ichor Wellspring");
+        harness.assertNotOnBattlefield(player2, "Gold Myr");
     }
 
     // ===== Partial resolution =====
@@ -197,8 +193,7 @@ class IntoTheCoreTest extends BaseCardTest {
 
         // Gold Myr was removed — skipped
         // Hexplate Golem should be exiled
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hexplate Golem"));
+        harness.assertNotOnBattlefield(player2, "Hexplate Golem");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Hexplate Golem"));
     }
@@ -232,7 +227,6 @@ class IntoTheCoreTest extends BaseCardTest {
         harness.castInstant(player1, 0, List.of(bf.get(0).getId(), bf.get(1).getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Into the Core"));
+        harness.assertInGraveyard(player1, "Into the Core");
     }
 }

@@ -46,8 +46,7 @@ class PackGuardianTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player1, "Forest");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
         // Reflexive trigger: create Wolf token — resolve it
@@ -80,8 +79,7 @@ class PackGuardianTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Forest");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Wolf"));
+        harness.assertNotOnBattlefield(player1, "Wolf");
     }
 
     @Test
@@ -105,8 +103,7 @@ class PackGuardianTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Wolf"));
+        harness.assertNotOnBattlefield(player1, "Wolf");
     }
 
     @Test

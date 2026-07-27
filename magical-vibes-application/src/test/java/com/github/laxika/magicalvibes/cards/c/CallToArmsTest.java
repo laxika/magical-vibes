@@ -156,8 +156,7 @@ class CallToArmsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(controlsCallToArms(player1)).isFalse();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Call to Arms"));
+        harness.assertInGraveyard(player1, "Call to Arms");
     }
 
     @Test
@@ -178,7 +177,6 @@ class CallToArmsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(controlsCallToArms(player1)).isFalse();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Call to Arms"));
+        harness.assertInGraveyard(player1, "Call to Arms");
     }
 }

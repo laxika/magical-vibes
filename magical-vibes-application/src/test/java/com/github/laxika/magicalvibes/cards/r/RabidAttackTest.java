@@ -86,8 +86,7 @@ class RabidAttackTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(bear.getId()));
         // The lone library card was drawn by the granted "when this dies, draw a card" trigger
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
     }
 
     @Test

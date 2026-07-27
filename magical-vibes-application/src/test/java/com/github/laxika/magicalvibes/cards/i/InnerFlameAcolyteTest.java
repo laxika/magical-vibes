@@ -37,8 +37,7 @@ class InnerFlameAcolyteTest extends BaseCardTest {
         assertThat(bears.getEffectivePower()).isEqualTo(4);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Inner-Flame Acolyte"));
+        harness.assertOnBattlefield(player1, "Inner-Flame Acolyte");
     }
 
     @Test
@@ -86,10 +85,8 @@ class InnerFlameAcolyteTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(bears.getEffectivePower()).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Inner-Flame Acolyte"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Inner-Flame Acolyte"));
+        harness.assertNotOnBattlefield(player1, "Inner-Flame Acolyte");
+        harness.assertInGraveyard(player1, "Inner-Flame Acolyte");
     }
 
     @Test

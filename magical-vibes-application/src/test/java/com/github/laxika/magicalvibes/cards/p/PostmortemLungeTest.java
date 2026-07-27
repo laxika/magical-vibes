@@ -58,11 +58,9 @@ class PostmortemLungeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature should be on player1's battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         // Creature should be removed from graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
 
         // Creature should have haste
         Permanent creature = findCreatureOnBattlefield(player1.getId(), "Grizzly Bears");
@@ -89,8 +87,7 @@ class PostmortemLungeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature should no longer be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         // Creature should be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -122,8 +119,7 @@ class PostmortemLungeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -139,8 +135,7 @@ class PostmortemLungeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
@@ -167,8 +162,7 @@ class PostmortemLungeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Postmortem Lunge"));
+        harness.assertInGraveyard(player1, "Postmortem Lunge");
     }
 
     private Permanent findCreatureOnBattlefield(UUID playerId, String cardName) {

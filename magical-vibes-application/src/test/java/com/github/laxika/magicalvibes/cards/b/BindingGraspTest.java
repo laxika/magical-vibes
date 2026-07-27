@@ -65,10 +65,8 @@ class BindingGraspTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Binding Grasp"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Binding Grasp"));
+        harness.assertNotOnBattlefield(player1, "Binding Grasp");
+        harness.assertInGraveyard(player1, "Binding Grasp");
     }
 
     @Test
@@ -82,8 +80,7 @@ class BindingGraspTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Binding Grasp"));
+        harness.assertOnBattlefield(player1, "Binding Grasp");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 
@@ -96,8 +93,7 @@ class BindingGraspTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Binding Grasp"));
+        harness.assertOnBattlefield(player1, "Binding Grasp");
     }
 
     // ===== Targeting restriction =====

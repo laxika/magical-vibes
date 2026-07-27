@@ -45,13 +45,11 @@ class ResoundingSilenceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.exiledCards)
                 .anyMatch(e -> e.card().getName().equals("Grizzly Bears"));
         // Exile, not destroy — the creature never reaches a graveyard.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -88,16 +86,13 @@ class ResoundingSilenceTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(a1.getId(), a2.getId()));
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.exiledCards)
                 .filteredOn(e -> e.card().getName().equals("Grizzly Bears"))
                 .hasSize(2);
         // The cycling draw still happens: Resounding Silence is discarded, the library card drawn.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Resounding Silence"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Resounding Silence");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test
@@ -117,10 +112,8 @@ class ResoundingSilenceTest extends BaseCardTest {
         // No attackers exiled, but the cycling draw resolves.
         assertThat(gd.exiledCards)
                 .noneMatch(e -> e.card().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test
@@ -143,8 +136,7 @@ class ResoundingSilenceTest extends BaseCardTest {
                 .hasSize(1);
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(a2.getId()));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test
@@ -161,10 +153,8 @@ class ResoundingSilenceTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.exiledCards)
                 .noneMatch(e -> e.card().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     private void addMana(Player player) {

@@ -41,8 +41,7 @@ class MakeshiftMannequinTest extends BaseCardTest {
     void reanimatesWithMannequinCounter() {
         Permanent bears = reanimate(new GrizzlyBears());
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.MANNEQUIN)).isEqualTo(1);
     }
 
@@ -59,10 +58,8 @@ class MakeshiftMannequinTest extends BaseCardTest {
         assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -82,10 +79,8 @@ class MakeshiftMannequinTest extends BaseCardTest {
         assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test

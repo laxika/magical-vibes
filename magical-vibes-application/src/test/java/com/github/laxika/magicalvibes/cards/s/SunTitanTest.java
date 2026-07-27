@@ -51,10 +51,8 @@ class SunTitanTest extends BaseCardTest {
             harness.handleGraveyardCardChosen(player1, 0);
 
             // Grizzly Bears should now be on the battlefield
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
+            harness.assertNotInGraveyard(player1, "Grizzly Bears");
         }
 
         @Test
@@ -69,8 +67,7 @@ class SunTitanTest extends BaseCardTest {
 
             harness.handleGraveyardCardChosen(player1, 0);
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Plains"));
+            harness.assertOnBattlefield(player1, "Plains");
         }
 
         @Test
@@ -111,8 +108,7 @@ class SunTitanTest extends BaseCardTest {
 
             assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
             // Grizzly Bears still in graveyard
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertInGraveyard(player1, "Grizzly Bears");
         }
 
         @Test
@@ -145,8 +141,7 @@ class SunTitanTest extends BaseCardTest {
             // Choose the first valid card (Grizzly Bears)
             harness.handleGraveyardCardChosen(player1, 0);
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
         }
     }
 
@@ -183,10 +178,8 @@ class SunTitanTest extends BaseCardTest {
 
             harness.handleGraveyardCardChosen(player1, 0);
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
+            harness.assertNotInGraveyard(player1, "Grizzly Bears");
         }
 
         @Test
@@ -201,8 +194,7 @@ class SunTitanTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, false);
 
             assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertInGraveyard(player1, "Grizzly Bears");
         }
     }
 

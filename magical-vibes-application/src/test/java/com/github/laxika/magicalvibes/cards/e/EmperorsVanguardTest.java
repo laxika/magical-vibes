@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
@@ -119,8 +118,7 @@ class EmperorsVanguardTest extends BaseCardTest {
         resolveCombat();
 
         // Vanguard should be dead — no explore trigger
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Emperor's Vanguard"));
+        harness.assertInGraveyard(player1, "Emperor's Vanguard");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
     }
 

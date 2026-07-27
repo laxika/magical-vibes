@@ -59,10 +59,8 @@ class CountersquallTest extends BaseCardTest {
         harness.castInstant(player2, 0, might.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Countered spell goes to owner's graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Might of Oaks"));
+        harness.assertInGraveyard(player1, "Might of Oaks");
         // Its controller loses 2 life
         harness.assertLife(player1, 18);
     }

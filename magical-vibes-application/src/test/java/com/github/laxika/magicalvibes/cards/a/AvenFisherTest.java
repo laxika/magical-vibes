@@ -37,8 +37,7 @@ class AvenFisherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Aven Fisher"));
+        harness.assertOnBattlefield(player1, "Aven Fisher");
     }
 
     // ===== Death trigger: combat (blocker dies) =====
@@ -76,10 +75,8 @@ class AvenFisherTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Aven Fisher should be dead
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Aven Fisher"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Aven Fisher"));
+        harness.assertNotOnBattlefield(player1, "Aven Fisher");
+        harness.assertInGraveyard(player1, "Aven Fisher");
 
         // Resolve MayEffect from stack → may prompt
         harness.passBothPriorities();
@@ -124,8 +121,7 @@ class AvenFisherTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Aven Fisher should be dead
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Aven Fisher"));
+        harness.assertInGraveyard(player1, "Aven Fisher");
 
         // Resolve MayEffect from stack → may prompt
         harness.passBothPriorities();
@@ -169,8 +165,7 @@ class AvenFisherTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Aven Fisher should be dead
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Aven Fisher"));
+        harness.assertInGraveyard(player1, "Aven Fisher");
 
         // Resolve MayEffect from stack → may prompt
         harness.passBothPriorities();
@@ -205,10 +200,8 @@ class AvenFisherTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Both creatures should be dead
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Aven Fisher"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Aven Fisher"));
+        harness.assertNotOnBattlefield(player1, "Aven Fisher");
+        harness.assertInGraveyard(player1, "Aven Fisher");
 
         // Resolve MayEffect from stack → may prompt
         harness.passBothPriorities();
@@ -279,8 +272,7 @@ class AvenFisherTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Aven Fisher should still be alive
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Aven Fisher"));
+        harness.assertOnBattlefield(player1, "Aven Fisher");
 
         // No may ability prompt
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();

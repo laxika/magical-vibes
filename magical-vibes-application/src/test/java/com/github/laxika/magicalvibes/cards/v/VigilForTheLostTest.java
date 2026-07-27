@@ -43,8 +43,7 @@ class VigilForTheLostTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Triggered ability should be on the stack (not a may ability prompt)
         assertThat(gd.stack).hasSize(1);
@@ -313,8 +312,7 @@ class VigilForTheLostTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Cruel Edict
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         // No trigger on the stack
         assertThat(gd.stack).isEmpty();
     }

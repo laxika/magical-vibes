@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -30,8 +29,7 @@ class BrittleEffigyTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Effigy is exiled as cost
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Brittle Effigy"));
+        harness.assertNotOnBattlefield(player1, "Brittle Effigy");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Brittle Effigy"));
         // Ability is on the stack
@@ -52,12 +50,10 @@ class BrittleEffigyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Effigy goes to exile, not graveyard =====
@@ -72,8 +68,7 @@ class BrittleEffigyTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Brittle Effigy"));
+        harness.assertNotInGraveyard(player1, "Brittle Effigy");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Brittle Effigy"));
     }

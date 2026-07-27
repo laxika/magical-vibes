@@ -29,8 +29,7 @@ class BloodrockCyclopsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Bloodrock Cyclops"));
+        harness.assertOnBattlefield(player1, "Bloodrock Cyclops");
     }
 
     @Test
@@ -253,10 +252,8 @@ class BloodrockCyclopsTest extends BaseCardTest {
         harness.passBothPriorities(); // through combat damage
 
         // Both 3/3 creatures should die
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bloodrock Cyclops"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Bloodrock Cyclops"));
+        harness.assertInGraveyard(player1, "Bloodrock Cyclops");
+        harness.assertInGraveyard(player2, "Bloodrock Cyclops");
     }
 
     // ===== Multiple must-attack creatures =====

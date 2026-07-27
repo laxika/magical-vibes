@@ -129,10 +129,8 @@ class CarnifexDemonTest extends BaseCardTest {
         assertThat(demon.getEffectiveToughness()).isEqualTo(6);
 
         // Opponent's Grizzly Bears (2/2) died from two -1/-1 counters (0/0 toughness)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Cannot activate without counters =====

@@ -44,8 +44,7 @@ class BoneyardWurmTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Boneyard Wurm"));
+        harness.assertOnBattlefield(player1, "Boneyard Wurm");
     }
 
     @Test
@@ -60,10 +59,8 @@ class BoneyardWurmTest extends BaseCardTest {
         // 0/0 creature dies to SBA — but then Boneyard Wurm itself is a creature card in the graveyard,
         // making it effectively a 1/1 while in play next time. However, SBA checks P/T on the battlefield
         // where it's 0/0 before going to the graveyard.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Boneyard Wurm"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Boneyard Wurm"));
+        harness.assertNotOnBattlefield(player1, "Boneyard Wurm");
+        harness.assertInGraveyard(player1, "Boneyard Wurm");
     }
 
     // ===== Dynamic power/toughness =====

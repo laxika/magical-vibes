@@ -44,8 +44,7 @@ class AbundanceTest extends BaseCardTest {
 
         harness.handleListChoice(player1, "NONLAND");
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Island");
         assertThat(gd.playerDecks.get(player1.getId()).getLast().getName()).isEqualTo("Forest");
     }
@@ -68,8 +67,7 @@ class AbundanceTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
         assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
     }
 
@@ -124,9 +122,7 @@ class AbundanceTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Island"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Island");
     }
 }

@@ -46,8 +46,7 @@ class FogElementalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Fog Elemental"));
+        harness.assertOnBattlefield(player1, "Fog Elemental");
     }
 
     @Test
@@ -148,10 +147,8 @@ class FogElementalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Fog Elemental should be in graveyard
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fog Elemental"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fog Elemental"));
+        harness.assertNotOnBattlefield(player1, "Fog Elemental");
+        harness.assertInGraveyard(player1, "Fog Elemental");
     }
 
     @Test
@@ -174,8 +171,7 @@ class FogElementalTest extends BaseCardTest {
         // Fog Elemental should deal 4 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         // And then be sacrificed
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fog Elemental"));
+        harness.assertInGraveyard(player1, "Fog Elemental");
     }
 
     // ===== Sacrificed at end of combat when blocking =====
@@ -205,13 +201,10 @@ class FogElementalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Fog Elemental should be in graveyard (sacrificed at end of combat)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fog Elemental"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Fog Elemental"));
+        harness.assertNotOnBattlefield(player2, "Fog Elemental");
+        harness.assertInGraveyard(player2, "Fog Elemental");
         // Grizzly Bears should also be dead from combat damage (4 power vs 2 toughness)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== Not sacrificed if removed before end of combat =====
@@ -237,8 +230,7 @@ class FogElementalTest extends BaseCardTest {
 
         // Fog Elemental should not end up in graveyard from sacrifice
         // (it was already removed from battlefield)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fog Elemental"));
+        harness.assertNotOnBattlefield(player1, "Fog Elemental");
     }
 
     // ===== Normal creatures don't trigger on attack =====

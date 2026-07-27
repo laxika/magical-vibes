@@ -50,8 +50,7 @@ class ThallidOmnivoreTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Saproling"));
+        harness.assertInGraveyard(player1, "Saproling");
 
         Permanent omnivore = findOmnivore(gd, player1);
         assertThat(omnivore.getPowerModifier()).isEqualTo(2);
@@ -77,8 +76,7 @@ class ThallidOmnivoreTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         Permanent omnivore = findOmnivore(gd, player1);
         assertThat(omnivore.getPowerModifier()).isEqualTo(2);
@@ -99,11 +97,8 @@ class ThallidOmnivoreTest extends BaseCardTest {
         // Ability 1 with excludeSelf; only 1 other creature → auto-sacrifices Bears
         harness.activateAbility(player1, 0, 1, null, null);
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Thallid Omnivore"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Thallid Omnivore");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== Mana cost required =====

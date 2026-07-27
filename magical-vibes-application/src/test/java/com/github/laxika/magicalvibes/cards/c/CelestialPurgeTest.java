@@ -50,12 +50,10 @@ class CelestialPurgeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Bog Raiders"));
+        harness.assertNotOnBattlefield(player2, "Bog Raiders");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Bog Raiders"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Bog Raiders"));
+        harness.assertNotInGraveyard(player2, "Bog Raiders");
     }
 
     @Test
@@ -70,12 +68,10 @@ class CelestialPurgeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Canyon Minotaur"));
+        harness.assertNotOnBattlefield(player2, "Canyon Minotaur");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Canyon Minotaur"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Canyon Minotaur"));
+        harness.assertNotInGraveyard(player2, "Canyon Minotaur");
     }
 
     @Test

@@ -84,8 +84,7 @@ class MirranCrusaderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mirran Crusader"));
+        harness.assertOnBattlefield(player1, "Mirran Crusader");
     }
 
     @Test
@@ -126,12 +125,9 @@ class MirranCrusaderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // First strike deals 2 damage killing the 2/2 blocker; Crusader survives
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mirran Crusader"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("White Knight"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("White Knight"));
+        harness.assertOnBattlefield(player1, "Mirran Crusader");
+        harness.assertNotOnBattlefield(player2, "White Knight");
+        harness.assertInGraveyard(player2, "White Knight");
     }
 
     @Test
@@ -157,14 +153,10 @@ class MirranCrusaderTest extends BaseCardTest {
         // First strike: 2 damage to 4/4 (survives)
         // Regular damage: Crusader deals 2 more (total 4, kills 4/4), Hill Giant deals 4 (kills Crusader)
         // Both die
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mirran Crusader"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mirran Crusader"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hill Giant"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertNotOnBattlefield(player1, "Mirran Crusader");
+        harness.assertInGraveyard(player1, "Mirran Crusader");
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player2, "Hill Giant");
     }
 
     // ===== Protection - blocking =====
@@ -259,12 +251,9 @@ class MirranCrusaderTest extends BaseCardTest {
 
         // Crusader deals 2 first strike + 2 regular = 4 total (kills 3/3)
         // Black Knight's 3 damage to Crusader is prevented (protection)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Black Knight"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Black Knight"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mirran Crusader"));
+        harness.assertNotOnBattlefield(player1, "Black Knight");
+        harness.assertInGraveyard(player1, "Black Knight");
+        harness.assertOnBattlefield(player2, "Mirran Crusader");
     }
 
     @Test
@@ -289,12 +278,9 @@ class MirranCrusaderTest extends BaseCardTest {
 
         // Crusader deals 2 first strike + 2 regular = 4 total (kills 3/3)
         // Green creature's 3 damage to Crusader is prevented (protection)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Giant Spider"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Giant Spider"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mirran Crusader"));
+        harness.assertNotOnBattlefield(player1, "Giant Spider");
+        harness.assertInGraveyard(player1, "Giant Spider");
+        harness.assertOnBattlefield(player2, "Mirran Crusader");
     }
 
     @Test
@@ -320,12 +306,9 @@ class MirranCrusaderTest extends BaseCardTest {
         // Crusader deals 2 first strike (3/3 survives)
         // Regular damage: Crusader deals 2 more (total 4, kills 3/3), Fire Elemental deals 3 (kills Crusader)
         // Both die
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fire Elemental"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mirran Crusader"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Mirran Crusader"));
+        harness.assertNotOnBattlefield(player1, "Fire Elemental");
+        harness.assertNotOnBattlefield(player2, "Mirran Crusader");
+        harness.assertInGraveyard(player2, "Mirran Crusader");
     }
 
     // ===== Protection - targeting =====

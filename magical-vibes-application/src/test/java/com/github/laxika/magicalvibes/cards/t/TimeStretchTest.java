@@ -78,8 +78,7 @@ class TimeStretchTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Time Stretch"));
+        harness.assertInGraveyard(player1, "Time Stretch");
         assertThat(gd.stack).isEmpty();
     }
 

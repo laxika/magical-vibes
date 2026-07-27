@@ -42,8 +42,7 @@ class HonorOfThePureTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Honor of the Pure"));
+        harness.assertOnBattlefield(player1, "Honor of the Pure");
     }
 
     // ===== Static effect: buffs own white creatures =====

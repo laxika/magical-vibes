@@ -33,10 +33,8 @@ class PirateShipTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
 
         harness.passBothPriorities(); // resolve state trigger → sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Pirate Ship"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Pirate Ship"));
+        harness.assertNotOnBattlefield(player1, "Pirate Ship");
+        harness.assertInGraveyard(player1, "Pirate Ship");
     }
 
     @Test
@@ -50,8 +48,7 @@ class PirateShipTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Pirate Ship"));
+        harness.assertOnBattlefield(player1, "Pirate Ship");
     }
 
     // ===== Attack restriction =====
@@ -120,8 +117,7 @@ class PirateShipTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     private Permanent addReadyPirateShip(Player player) {

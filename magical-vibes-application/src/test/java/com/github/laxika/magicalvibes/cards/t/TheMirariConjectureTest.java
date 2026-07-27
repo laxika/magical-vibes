@@ -61,10 +61,8 @@ class TheMirariConjectureTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Shock should be in hand, not in graveyard
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Shock"));
+        harness.assertInHand(player1, "Shock");
+        harness.assertNotInGraveyard(player1, "Shock");
     }
 
     @Test
@@ -106,10 +104,8 @@ class TheMirariConjectureTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Only Shock returned, Divination still in graveyard
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Divination"));
+        harness.assertInHand(player1, "Shock");
+        harness.assertInGraveyard(player1, "Divination");
     }
 
     // ===== Chapter II: graveyard targeting for sorceries =====
@@ -151,10 +147,8 @@ class TheMirariConjectureTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve chapter II
 
         // Divination should be in hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Divination"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Divination"));
+        harness.assertInHand(player1, "Divination");
+        harness.assertNotInGraveyard(player1, "Divination");
     }
 
     @Test
@@ -297,16 +291,13 @@ class TheMirariConjectureTest extends BaseCardTest {
         harness.passBothPriorities(); // precombat main → chapter III triggers
 
         // Saga should still be on battlefield while chapter is on stack
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("The Mirari Conjecture"));
+        harness.assertOnBattlefield(player1, "The Mirari Conjecture");
 
         harness.passBothPriorities(); // resolve chapter III
 
         // Saga should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("The Mirari Conjecture"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("The Mirari Conjecture"));
+        harness.assertNotOnBattlefield(player1, "The Mirari Conjecture");
+        harness.assertInGraveyard(player1, "The Mirari Conjecture");
     }
 
     @Test

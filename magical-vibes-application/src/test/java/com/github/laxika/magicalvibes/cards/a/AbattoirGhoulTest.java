@@ -44,8 +44,7 @@ class AbattoirGhoulTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears (toughness 2) should be dead
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // Controller gains life equal to Grizzly Bears' toughness (2)
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
@@ -78,8 +77,7 @@ class AbattoirGhoulTest extends BaseCardTest {
         // Resolve first strike damage — blocker survives (3 damage on 5 toughness)
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -97,8 +95,7 @@ class AbattoirGhoulTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Blocker should be dead
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         // Controller gains life equal to the dying creature's toughness (5)
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 5);
@@ -122,8 +119,7 @@ class AbattoirGhoulTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // No life gained — Abattoir Ghoul didn't damage the creature
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);

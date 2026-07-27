@@ -32,10 +32,8 @@ class TravelersAmuletTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Amulet should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Traveler's Amulet"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Traveler's Amulet"));
+        harness.assertNotOnBattlefield(player1, "Traveler's Amulet");
+        harness.assertInGraveyard(player1, "Traveler's Amulet");
 
         // Should be awaiting library search with only basic lands offered
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -72,10 +70,8 @@ class TravelersAmuletTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Amulet should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Traveler's Amulet"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Traveler's Amulet"));
+        harness.assertNotOnBattlefield(player1, "Traveler's Amulet");
+        harness.assertInGraveyard(player1, "Traveler's Amulet");
     }
 
     @Test
@@ -91,8 +87,7 @@ class TravelersAmuletTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Amulet should be sacrificed even though it was tapped
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Traveler's Amulet"));
+        harness.assertNotOnBattlefield(player1, "Traveler's Amulet");
     }
 
     private void setupLibraryWithBasicLands() {

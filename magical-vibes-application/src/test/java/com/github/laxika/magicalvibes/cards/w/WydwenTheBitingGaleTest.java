@@ -22,10 +22,8 @@ class WydwenTheBitingGaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Wydwen, the Biting Gale"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Wydwen, the Biting Gale"));
+        harness.assertInHand(player1, "Wydwen, the Biting Gale");
+        harness.assertNotOnBattlefield(player1, "Wydwen, the Biting Gale");
     }
 
     @Test

@@ -47,10 +47,8 @@ class DarkslickDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Darkslick Drake should be dead
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Darkslick Drake"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Darkslick Drake"));
+        harness.assertNotOnBattlefield(player1, "Darkslick Drake");
+        harness.assertInGraveyard(player1, "Darkslick Drake");
 
         // Triggered ability should be on the stack (mandatory, no may prompt)
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
@@ -93,8 +91,7 @@ class DarkslickDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Darkslick Drake should be dead
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Darkslick Drake"));
+        harness.assertInGraveyard(player1, "Darkslick Drake");
 
         // Triggered ability on stack
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
@@ -126,10 +123,8 @@ class DarkslickDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Darkslick Drake should be dead
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Darkslick Drake"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Darkslick Drake"));
+        harness.assertNotOnBattlefield(player1, "Darkslick Drake");
+        harness.assertInGraveyard(player1, "Darkslick Drake");
 
         // Triggered ability on stack (mandatory)
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
@@ -168,8 +163,7 @@ class DarkslickDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Darkslick Drake should still be alive
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Darkslick Drake"));
+        harness.assertOnBattlefield(player1, "Darkslick Drake");
 
         // No triggered ability on stack
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY

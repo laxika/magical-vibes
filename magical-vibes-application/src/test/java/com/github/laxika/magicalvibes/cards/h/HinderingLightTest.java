@@ -40,8 +40,7 @@ class HinderingLightTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Shock countered
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player2, "Shock");
         // Player1 life untouched
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         // Player1 drew a card (hand emptied by casting, then drew 1)
@@ -71,12 +70,8 @@ class HinderingLightTest extends BaseCardTest {
         harness.castInstant(player1, 0, shock.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Illegal targets =====

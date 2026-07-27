@@ -29,10 +29,8 @@ class FumeSpitterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
 
         // Fume Spitter should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fume Spitter"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fume Spitter"));
+        harness.assertNotOnBattlefield(player1, "Fume Spitter");
+        harness.assertInGraveyard(player1, "Fume Spitter");
 
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -71,10 +69,8 @@ class FumeSpitterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
     }
 
     // ===== Fizzle =====

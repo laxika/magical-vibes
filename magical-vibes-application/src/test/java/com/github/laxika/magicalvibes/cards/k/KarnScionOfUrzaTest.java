@@ -92,8 +92,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             harness.handleMultipleCardsChosen(player2, List.of(bears.getId()));
 
             // Grizzly Bears should be in controller's hand
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertInHand(player1, "Grizzly Bears");
 
             // Forest should be exiled with a silver counter
             assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -117,8 +116,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             harness.handleMultipleCardsChosen(player2, List.of(forest.getId()));
 
             // Forest in controller's hand
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Forest"));
+            harness.assertInHand(player1, "Forest");
 
             // Grizzly Bears exiled with silver counter
             assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -139,8 +137,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
 
             // Only one card — goes directly to hand, no opponent choice
             assertThat(gd.interaction.activeInteraction()).isNull();
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertInHand(player1, "Grizzly Bears");
         }
 
         @Test
@@ -178,8 +175,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
 
             assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(4); // 5 - 1
             // Card should be in hand
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertInHand(player1, "Grizzly Bears");
             // Card should no longer be in exile
             assertThat(gd.getPlayerExiledCards(player1.getId()))
                     .noneMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -209,8 +205,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             harness.handleMultipleCardsChosen(player1, List.of(card1.getId()));
 
             // Grizzly Bears in hand
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertInHand(player1, "Grizzly Bears");
             // Forest still in exile with silver counter
             assertThat(gd.getPlayerExiledCards(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Forest"));
@@ -246,8 +241,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Only the silver-counter card (Forest) should be returned
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Forest"));
+            harness.assertInHand(player1, "Forest");
             // Grizzly Bears stays in exile
             assertThat(gd.getPlayerExiledCards(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -346,8 +340,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Forest should be in hand now
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
         assertThat(gd.exiledCardsWithSilverCounters).doesNotContain(forest.getId());
     }
 

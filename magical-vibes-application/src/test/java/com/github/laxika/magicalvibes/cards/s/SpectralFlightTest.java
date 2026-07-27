@@ -157,10 +157,8 @@ class SpectralFlightTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spectral Flight"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spectral Flight"));
+        harness.assertInGraveyard(player1, "Spectral Flight");
+        harness.assertNotOnBattlefield(player1, "Spectral Flight");
     }
 
     // ===== Orphaned aura =====
@@ -195,10 +193,8 @@ class SpectralFlightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Spectral Flight should be in graveyard (orphaned aura cleanup)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spectral Flight"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Spectral Flight"));
+        harness.assertNotOnBattlefield(player2, "Spectral Flight");
+        harness.assertInGraveyard(player2, "Spectral Flight");
     }
 
     // ===== Targeting restriction =====

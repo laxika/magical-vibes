@@ -85,8 +85,7 @@ class SupernaturalStaminaTest extends BaseCardTest {
                 .filteredOn(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .singleElement()
                 .matches(Permanent::isTapped);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test

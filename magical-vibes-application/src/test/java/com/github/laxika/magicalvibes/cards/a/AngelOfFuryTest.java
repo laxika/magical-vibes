@@ -23,8 +23,7 @@ class AngelOfFuryTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         // It actually enters the graveyard; the death trigger waits on the stack.
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Angel of Fury"));
+        harness.assertInGraveyard(player2, "Angel of Fury");
         assertThat(gd.stack).isNotEmpty();
 
         // Resolve the MayEffect from the stack → may prompt for the owner.
@@ -55,8 +54,7 @@ class AngelOfFuryTest extends BaseCardTest {
         // Decline the may ability — the card remains in the graveyard.
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Angel of Fury"));
+        harness.assertInGraveyard(player2, "Angel of Fury");
         assertThat(gd.playerDecks.get(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Angel of Fury"));
     }

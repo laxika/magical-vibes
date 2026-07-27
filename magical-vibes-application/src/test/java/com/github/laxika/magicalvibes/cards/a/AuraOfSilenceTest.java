@@ -50,8 +50,7 @@ class AuraOfSilenceTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Aura of Silence"));
+        harness.assertOnBattlefield(player1, "Aura of Silence");
     }
 
     // ===== Static ability: cost increase =====
@@ -157,11 +156,8 @@ class AuraOfSilenceTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
         harness.sacrificePermanent(player1, 0, targetId);
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Aura of Silence"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Aura of Silence"));
+        harness.assertNotOnBattlefield(player1, "Aura of Silence");
+        harness.assertInGraveyard(player1, "Aura of Silence");
     }
 
     @Test
@@ -194,10 +190,8 @@ class AuraOfSilenceTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Angelic Chorus"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Angelic Chorus"));
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertInGraveyard(player2, "Angelic Chorus");
     }
 
     @Test
@@ -210,11 +204,8 @@ class AuraOfSilenceTest extends BaseCardTest {
         harness.sacrificePermanent(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Angelic Chorus"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Angelic Chorus"));
+        harness.assertNotOnBattlefield(player1, "Angelic Chorus");
+        harness.assertInGraveyard(player1, "Angelic Chorus");
     }
 
     @Test
@@ -346,10 +337,8 @@ class AuraOfSilenceTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Angel's Feather"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Angel's Feather"));
+        harness.assertNotOnBattlefield(player2, "Angel's Feather");
+        harness.assertInGraveyard(player2, "Angel's Feather");
     }
 }
 

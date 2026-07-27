@@ -47,10 +47,8 @@ class TarPitcherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Tar Pitcher"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Squeaking Pie Sneak"));
+        harness.assertOnBattlefield(player1, "Tar Pitcher");
+        harness.assertNotOnBattlefield(player1, "Squeaking Pie Sneak");
     }
 
     @Test
@@ -65,8 +63,7 @@ class TarPitcherTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Squeaking Pie Sneak"));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -81,8 +78,7 @@ class TarPitcherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Tar Pitcher"));
+        harness.assertNotOnBattlefield(player1, "Tar Pitcher");
     }
 
     @Test

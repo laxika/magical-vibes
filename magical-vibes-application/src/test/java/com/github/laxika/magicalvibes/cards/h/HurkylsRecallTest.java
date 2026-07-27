@@ -87,8 +87,7 @@ class HurkylsRecallTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature should still be on battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
 
         // Artifact should be in hand
         assertThat(gd.playerHands.get(player2.getId()))
@@ -108,8 +107,7 @@ class HurkylsRecallTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Player1's artifact should still be on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Angel's Feather"));
+        harness.assertOnBattlefield(player1, "Angel's Feather");
 
         // Player2's artifact should be in hand
         assertThat(gd.playerHands.get(player2.getId()))
@@ -128,8 +126,7 @@ class HurkylsRecallTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature still on battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
 
         assertThat(gd.stack).isEmpty();
     }
@@ -145,8 +142,7 @@ class HurkylsRecallTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hurkyl's Recall"));
+        harness.assertInGraveyard(player1, "Hurkyl's Recall");
     }
 }
 

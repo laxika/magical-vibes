@@ -23,8 +23,7 @@ class TalasExplorerTest extends BaseCardTest {
         castTalasExplorer(player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Talas Explorer"));
+        harness.assertOnBattlefield(player1, "Talas Explorer");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());

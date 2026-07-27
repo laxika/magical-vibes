@@ -37,10 +37,8 @@ class InfernoElementalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Attacker (2/2) takes 3 damage and dies
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== When Inferno Elemental becomes blocked =====
@@ -63,10 +61,8 @@ class InfernoElementalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Blocker (2/2) takes 3 damage and dies
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -92,8 +88,7 @@ class InfernoElementalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both blockers (2/2) take 3 damage and die
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .filteredOn(c -> c.getName().equals("Grizzly Bears"))
                 .hasSize(2);

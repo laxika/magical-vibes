@@ -24,8 +24,7 @@ class LavaHoundsTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve ETB
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Lava Hounds"));
+        harness.assertOnBattlefield(player1, "Lava Hounds");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
     }
 }

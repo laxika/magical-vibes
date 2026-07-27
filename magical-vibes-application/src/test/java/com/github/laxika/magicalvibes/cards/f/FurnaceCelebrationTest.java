@@ -67,10 +67,8 @@ class FurnaceCelebrationTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, hawkId);
 
         // Suntail Hawk (1/1) should be destroyed by 2 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Suntail Hawk"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Suntail Hawk"));
+        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
+        harness.assertInGraveyard(player2, "Suntail Hawk");
 
         // Mana should have been spent
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);

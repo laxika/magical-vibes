@@ -81,13 +81,11 @@ class AngelsHeraldTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, grizzlyId);
         harness.handlePermanentChosen(player1, hawkId);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Suntail Hawk"))
-                .anyMatch(c -> c.getName().equals("Fugitive Wizard"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Suntail Hawk");
+        harness.assertInGraveyard(player1, "Fugitive Wizard");
         // The Herald itself was not sacrificed and the ability is on the stack.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Angel's Herald"));
+        harness.assertOnBattlefield(player1, "Angel's Herald");
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.ACTIVATED_ABILITY);
     }
 
@@ -114,7 +112,6 @@ class AngelsHeraldTest extends BaseCardTest {
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Empyrial Archangel"));
+        harness.assertOnBattlefield(player1, "Empyrial Archangel");
     }
 }

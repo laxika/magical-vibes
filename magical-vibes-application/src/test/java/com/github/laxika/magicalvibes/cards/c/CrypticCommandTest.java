@@ -36,14 +36,11 @@ class CrypticCommandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Spell was countered
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
         // Controller drew the top card of their library
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     @Test
@@ -59,10 +56,8 @@ class CrypticCommandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Targeted permanent bounced
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
         // Remaining opponent creature tapped
         assertThat(toTap.isTapped()).isTrue();
@@ -87,14 +82,11 @@ class CrypticCommandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Spell countered
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Permanent bounced
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        harness.assertInHand(player1, "Spellbook");
     }
 
     @Test
@@ -110,8 +102,7 @@ class CrypticCommandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(toTap.isTapped()).isTrue();
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     @Test

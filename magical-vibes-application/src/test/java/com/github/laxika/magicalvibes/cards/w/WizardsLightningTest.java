@@ -52,8 +52,7 @@ class WizardsLightningTest extends BaseCardTest {
                     .orElse(null);
             // 3 damage kills a 2/2, so it should be in graveyard
             assertThat(permanent).isNull();
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertInGraveyard(player2, "Grizzly Bears");
         }
 
         @Test
@@ -65,8 +64,7 @@ class WizardsLightningTest extends BaseCardTest {
             harness.castInstant(player1, 0, player2.getId());
             harness.passBothPriorities();
 
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Wizard's Lightning"));
+            harness.assertInGraveyard(player1, "Wizard's Lightning");
         }
     }
 

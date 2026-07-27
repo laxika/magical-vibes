@@ -23,8 +23,7 @@ class CruelRealityTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
     }
 
@@ -38,8 +37,7 @@ class CruelRealityTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Liliana Vess"));
+        harness.assertNotOnBattlefield(player2, "Liliana Vess");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
     }
 
@@ -66,8 +64,7 @@ class CruelRealityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The land is not eligible, so nothing is sacrificed and the fallback life loss applies.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player2, "Forest");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 5);
     }
 
@@ -81,8 +78,7 @@ class CruelRealityTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 

@@ -184,8 +184,7 @@ class GreenSunsZenithTest extends BaseCardTest {
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Zenith should NOT be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Green Sun's Zenith"));
+        harness.assertNotInGraveyard(player1, "Green Sun's Zenith");
 
         // Zenith should be in library
         assertThat(gd.playerDecks.get(player1.getId()))

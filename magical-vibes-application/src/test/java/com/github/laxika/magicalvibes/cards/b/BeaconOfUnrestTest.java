@@ -67,10 +67,8 @@ class BeaconOfUnrestTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== Returning artifact from own graveyard =====
@@ -90,10 +88,8 @@ class BeaconOfUnrestTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Angel's Feather"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Angel's Feather"));
+        harness.assertOnBattlefield(player1, "Angel's Feather");
+        harness.assertNotInGraveyard(player1, "Angel's Feather");
     }
 
     // ===== Returning from opponent's graveyard =====
@@ -116,11 +112,9 @@ class BeaconOfUnrestTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
 
         // Card goes onto player1's battlefield (under your control)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         // Removed from opponent's graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Shuffle into library =====
@@ -140,8 +134,7 @@ class BeaconOfUnrestTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Not in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Beacon of Unrest"));
+        harness.assertNotInGraveyard(player1, "Beacon of Unrest");
         // In library (deck size increased by 1)
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore + 1);
         // Card exists somewhere in the deck
@@ -191,8 +184,7 @@ class BeaconOfUnrestTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no artifact or creature cards in any graveyard"));
         // Per Magic rules: spell fizzles when no legal targets — Beacon goes to graveyard, NOT shuffled into library
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Beacon of Unrest"));
+        harness.assertInGraveyard(player1, "Beacon of Unrest");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("shuffled into its owner's library"));
     }
@@ -218,13 +210,10 @@ class BeaconOfUnrestTest extends BaseCardTest {
         // Choose the artifact from opponent's graveyard (index 1)
         harness.handleGraveyardCardChosen(player1, 1);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Angel's Feather"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Angel's Feather"));
+        harness.assertOnBattlefield(player1, "Angel's Feather");
+        harness.assertNotInGraveyard(player2, "Angel's Feather");
         // Grizzly Bears stays in player1's graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== Stack is empty after resolution =====

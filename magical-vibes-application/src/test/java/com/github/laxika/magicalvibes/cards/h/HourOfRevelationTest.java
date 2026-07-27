@@ -87,14 +87,11 @@ class HourOfRevelationTest extends BaseCardTest {
 
             GameData gd = harness.getGameData();
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"))
-                    .anyMatch(p -> p.getCard().getName().equals("Plains"));
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"))
-                    .anyMatch(p -> p.getCard().getName().equals("Plains"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Hour of Revelation"));
+            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+            harness.assertOnBattlefield(player1, "Plains");
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+            harness.assertOnBattlefield(player2, "Plains");
+            harness.assertInGraveyard(player1, "Hour of Revelation");
         }
     }
 }

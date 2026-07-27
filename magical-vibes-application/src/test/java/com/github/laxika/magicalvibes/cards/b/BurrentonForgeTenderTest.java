@@ -62,10 +62,8 @@ class BurrentonForgeTenderTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Burrenton Forge-Tender"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Burrenton Forge-Tender"));
+        harness.assertNotOnBattlefield(player1, "Burrenton Forge-Tender");
+        harness.assertInGraveyard(player1, "Burrenton Forge-Tender");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }

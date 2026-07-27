@@ -140,8 +140,7 @@ class ArcaneTeachingsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 1 damage kills a 1/1
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
     }
 
     // ===== Granted activated ability: deal 1 damage to player =====

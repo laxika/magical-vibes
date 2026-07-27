@@ -54,8 +54,7 @@ class CoreProwlerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Core Prowler"));
+        harness.assertOnBattlefield(player1, "Core Prowler");
     }
 
     // ===== Death trigger: proliferate after combat =====
@@ -69,8 +68,7 @@ class CoreProwlerTest extends BaseCardTest {
         harness.passBothPriorities(); // Combat damage — Core Prowler dies
 
         // Core Prowler should be dead
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Core Prowler"));
+        harness.assertInGraveyard(player1, "Core Prowler");
 
         // Death trigger should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -204,8 +202,7 @@ class CoreProwlerTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Wrath — all creatures die
 
         // Core Prowler should be dead
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Core Prowler"));
+        harness.assertInGraveyard(player1, "Core Prowler");
 
         // Death trigger on the stack
         assertThat(gd.stack).hasSize(1);

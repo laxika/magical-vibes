@@ -48,8 +48,7 @@ class TormentorExarchTest extends BaseCardTest {
             castWithBoostMode(targetId);
             harness.passBothPriorities(); // resolve creature
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Tormentor Exarch"));
+            harness.assertOnBattlefield(player1, "Tormentor Exarch");
         }
     }
 
@@ -83,8 +82,7 @@ class TormentorExarchTest extends BaseCardTest {
             castWithDebuffMode(targetId);
             harness.passBothPriorities(); // resolve creature
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Tormentor Exarch"));
+            harness.assertOnBattlefield(player1, "Tormentor Exarch");
         }
 
         @Test
@@ -97,8 +95,7 @@ class TormentorExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         }
     }
 

@@ -77,8 +77,7 @@ class ChancellorOfTheAnnexTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Spell is countered (in graveyard, not on battlefield)
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -121,14 +120,12 @@ class ChancellorOfTheAnnexTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         // Spell should still be on the stack (not countered)
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
 
         // Resolve the creature spell
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -149,8 +146,7 @@ class ChancellorOfTheAnnexTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
 
         // Spell should be countered
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Battlefield: multiple Chancellors =====

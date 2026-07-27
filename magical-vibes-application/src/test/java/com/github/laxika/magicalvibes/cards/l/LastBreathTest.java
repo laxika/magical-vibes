@@ -34,8 +34,7 @@ class LastBreathTest extends BaseCardTest {
         // Target removed from battlefield and moved to exile (not graveyard)
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(target.getId()));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.exiledCards).anyMatch(e -> e.card().getName().equals("Grizzly Bears"));
 
         // The exiled creature's controller (player2) gains the life, not the caster

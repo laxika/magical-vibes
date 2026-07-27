@@ -77,8 +77,7 @@ class AbunaAcolyteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Defender took 1 damage - 1 prevented = 0 effective → survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Abuna Acolyte"));
+        harness.assertOnBattlefield(player2, "Abuna Acolyte");
     }
 
     // ===== Ability 2: Prevent 2 damage to target artifact creature =====

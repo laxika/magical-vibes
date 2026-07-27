@@ -79,8 +79,8 @@ class LeadTheStampedeTest extends BaseCardTest {
         // Choose both creature cards
         harness.handleMultipleCardsChosen(player1, List.of(elves.getId(), bears.getId()));
 
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Llanowar Elves"));
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Llanowar Elves");
+        harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(3);
 
@@ -113,7 +113,7 @@ class LeadTheStampedeTest extends BaseCardTest {
         // Choose only one creature
         harness.handleMultipleCardsChosen(player1, List.of(elves.getId()));
 
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInHand(player1, "Llanowar Elves");
         assertThat(gd.playerHands.get(player1.getId()).stream().map(Card::getName))
                 .doesNotContain("Grizzly Bears");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -201,8 +201,7 @@ class LeadTheStampedeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Lead the Stampede"));
+        harness.assertInGraveyard(player1, "Lead the Stampede");
         assertThat(gd.stack).isEmpty();
     }
 

@@ -33,8 +33,7 @@ class OrderOfWhiteclayTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
         harness.assertNotInGraveyard(player1, "Llanowar Elves");
         // Paying {Q} untapped the source.
         assertThat(order.isTapped()).isFalse();

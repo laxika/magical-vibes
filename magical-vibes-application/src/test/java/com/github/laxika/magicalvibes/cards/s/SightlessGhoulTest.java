@@ -55,8 +55,7 @@ class SightlessGhoulTest extends BaseCardTest {
 
         Permanent returnedGhoul = findPermanent(player1, "Sightless Ghoul");
         assertThat(returnedGhoul.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Sightless Ghoul"));
+        harness.assertNotInGraveyard(player1, "Sightless Ghoul");
     }
 
     @Test
@@ -70,10 +69,8 @@ class SightlessGhoulTest extends BaseCardTest {
         harness.castInstant(player2, 0, ghoul.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Sightless Ghoul"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Sightless Ghoul"));
+        harness.assertNotOnBattlefield(player1, "Sightless Ghoul");
+        harness.assertInGraveyard(player1, "Sightless Ghoul");
         assertThat(gd.stack).isEmpty();
     }
 }

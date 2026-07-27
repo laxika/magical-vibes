@@ -32,11 +32,10 @@ class SalvageTitanTest extends BaseCardTest {
         harness.castCreatureWithAlternateCost(player1, 0, List.of(ornithopter, juggernaut, copperMyr));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Salvage Titan"))
-                .noneMatch(p -> p.getCard().getName().equals("Ornithopter"))
-                .noneMatch(p -> p.getCard().getName().equals("Juggernaut"))
-                .noneMatch(p -> p.getCard().getName().equals("Copper Myr"));
+        harness.assertOnBattlefield(player1, "Salvage Titan");
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
+        harness.assertNotOnBattlefield(player1, "Juggernaut");
+        harness.assertNotOnBattlefield(player1, "Copper Myr");
 
         // The mana was not spent — the alternate cost was paid instead.
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(6);
@@ -51,8 +50,7 @@ class SalvageTitanTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 3);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Salvage Titan"));
+        harness.assertInHand(player1, "Salvage Titan");
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Ornithopter"))
@@ -71,7 +69,6 @@ class SalvageTitanTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("graveyard to exile");
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Salvage Titan"));
+        harness.assertInGraveyard(player1, "Salvage Titan");
     }
 }

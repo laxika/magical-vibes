@@ -39,8 +39,7 @@ class GloriousDecayTest extends BaseCardTest {
             harness.castInstant(player1, 0, 0, targetId);
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Fountain of Youth"));
+            harness.assertNotOnBattlefield(player2, "Fountain of Youth");
         }
 
         @Test
@@ -72,8 +71,7 @@ class GloriousDecayTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, targetId);
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Air Elemental"));
+            harness.assertNotOnBattlefield(player2, "Air Elemental");
         }
 
         @Test
@@ -106,8 +104,7 @@ class GloriousDecayTest extends BaseCardTest {
             harness.castInstant(player1, 0, 2, bears.getId());
             harness.passBothPriorities();
 
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertNotInGraveyard(player2, "Grizzly Bears");
             assertThat(gd.getPlayerExiledCards(player2.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
             assertThat(gd.playerHands.get(player1.getId())).hasSize(1);

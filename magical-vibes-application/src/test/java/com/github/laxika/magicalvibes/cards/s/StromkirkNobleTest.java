@@ -126,8 +126,7 @@ class StromkirkNobleTest extends BaseCardTest {
         harness.passBothPriorities(); // combat damage
 
         // Noble should be dead
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Stromkirk Noble"));
+        harness.assertInGraveyard(player1, "Stromkirk Noble");
     }
 
     // ===== Helpers =====

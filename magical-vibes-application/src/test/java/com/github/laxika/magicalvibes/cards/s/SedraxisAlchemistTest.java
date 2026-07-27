@@ -55,10 +55,8 @@ class SedraxisAlchemistTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     @Test
@@ -72,8 +70,7 @@ class SedraxisAlchemistTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sedraxis Alchemist"));
+        harness.assertOnBattlefield(player1, "Sedraxis Alchemist");
     }
 
     @Test
@@ -106,10 +103,8 @@ class SedraxisAlchemistTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sedraxis Alchemist"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Sedraxis Alchemist");
     }
 
     // ===== Gate lost before resolution =====
@@ -130,10 +125,8 @@ class SedraxisAlchemistTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve ETB trigger — gate no longer met
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
     }
 
     // ===== Helpers =====

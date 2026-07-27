@@ -42,10 +42,8 @@ class DrainLifeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2, bearsId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
     }
 
@@ -61,7 +59,6 @@ class DrainLifeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 2, plainsId))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Drain Life"));
+        harness.assertInHand(player1, "Drain Life");
     }
 }

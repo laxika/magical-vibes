@@ -84,10 +84,8 @@ class ManorGargoyleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both gargoyles should survive (both have defender → indestructible)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Manor Gargoyle"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Manor Gargoyle"));
+        harness.assertOnBattlefield(player1, "Manor Gargoyle");
+        harness.assertOnBattlefield(player2, "Manor Gargoyle");
     }
 
     @Test
@@ -113,10 +111,8 @@ class ManorGargoyleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Gargoyle should be destroyed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Manor Gargoyle"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Manor Gargoyle"));
+        harness.assertNotOnBattlefield(player1, "Manor Gargoyle");
+        harness.assertInGraveyard(player1, "Manor Gargoyle");
     }
 
     // ===== Activated ability =====

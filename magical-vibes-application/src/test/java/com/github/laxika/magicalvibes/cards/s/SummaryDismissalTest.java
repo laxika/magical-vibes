@@ -37,8 +37,7 @@ class SummaryDismissalTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.exiledCards).anyMatch(e -> e.card().getName().equals("Lightning Bolt"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Summary Dismissal"));
+        harness.assertInGraveyard(player2, "Summary Dismissal");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
@@ -105,7 +104,6 @@ class SummaryDismissalTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Summary Dismissal"));
+        harness.assertInGraveyard(player1, "Summary Dismissal");
     }
 }

@@ -65,9 +65,7 @@ class MonstrifyTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mountain"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Monstrify"));
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Monstrify");
     }
 }

@@ -33,8 +33,7 @@ class MagmaPhoenixTest extends BaseCardTest {
             setupCombatWherePhoenixDies();
             harness.passBothPriorities(); // Combat damage — Phoenix dies
 
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Magma Phoenix"));
+            harness.assertInGraveyard(player1, "Magma Phoenix");
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -82,8 +81,7 @@ class MagmaPhoenixTest extends BaseCardTest {
 
             // The 4/4 should have taken 3 damage — check it's still on battlefield
             // (SBA will handle lethal damage but 4/4 with 3 damage survives)
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player2, "Grizzly Bears");
         }
 
         @Test
@@ -106,8 +104,7 @@ class MagmaPhoenixTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // The 2/2 should be dead
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         }
     }
 
@@ -145,10 +142,8 @@ class MagmaPhoenixTest extends BaseCardTest {
             harness.passBothPriorities(); // Resolve ability
 
             // Phoenix should be in hand, not in graveyard
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Magma Phoenix"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Magma Phoenix"));
+            harness.assertInHand(player1, "Magma Phoenix");
+            harness.assertNotInGraveyard(player1, "Magma Phoenix");
         }
 
         @Test

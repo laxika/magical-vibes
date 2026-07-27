@@ -59,8 +59,7 @@ class DivestTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId()).get(0).getName()).isEqualTo("Peek");
     }
@@ -84,8 +83,7 @@ class DivestTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Accorder's Shield"));
+        harness.assertInGraveyard(player2, "Accorder's Shield");
     }
 
     @Test
@@ -187,8 +185,7 @@ class DivestTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Divest"));
+        harness.assertInGraveyard(player1, "Divest");
     }
 
     @Test

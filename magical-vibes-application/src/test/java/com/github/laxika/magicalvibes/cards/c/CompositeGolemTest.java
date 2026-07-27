@@ -22,10 +22,8 @@ class CompositeGolemTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // The permanent should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Composite Golem"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Composite Golem"));
+        harness.assertNotOnBattlefield(player1, "Composite Golem");
+        harness.assertInGraveyard(player1, "Composite Golem");
 
         // Mana ability resolves immediately — no stack entry
         assertThat(gd.stack).isEmpty();
@@ -50,8 +48,7 @@ class CompositeGolemTest extends BaseCardTest {
         // Should succeed even though the creature just entered the battlefield
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Composite Golem"));
+        harness.assertNotOnBattlefield(player1, "Composite Golem");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
     }
 

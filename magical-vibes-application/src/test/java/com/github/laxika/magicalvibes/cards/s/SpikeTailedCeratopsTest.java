@@ -196,7 +196,6 @@ class SpikeTailedCeratopsTest extends BaseCardTest {
         // 4/4 deals 4 damage: kills first 2/2, 2 remaining kills second 2/2
         // Both 2/2 deal 2+2=4 damage to ceratops — ceratops dies
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Spike-Tailed Ceratops"));
+        harness.assertInGraveyard(player2, "Spike-Tailed Ceratops");
     }
 }

@@ -49,8 +49,7 @@ class JodahArchmageEternalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Jodah, Archmage Eternal"));
+        harness.assertOnBattlefield(player1, "Jodah, Archmage Eternal");
     }
 
     // ===== Alternative WUBRG cost =====

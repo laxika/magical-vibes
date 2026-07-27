@@ -48,7 +48,7 @@ class MorbidOpportunistTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Opportunist trigger
 
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + 1);
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
     }
 
     @Test

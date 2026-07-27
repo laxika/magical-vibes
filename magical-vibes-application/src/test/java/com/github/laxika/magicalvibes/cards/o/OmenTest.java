@@ -93,7 +93,6 @@ class OmenTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Omen"));
+        harness.assertInGraveyard(player1, "Omen");
     }
 }

@@ -34,10 +34,8 @@ class RustedSlasherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Spellbook should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        harness.assertInGraveyard(player1, "Spellbook");
 
         // Rusted Slasher should have a regeneration shield
         assertThat(slasher.getRegenerationShield()).isEqualTo(1);
@@ -93,10 +91,8 @@ class RustedSlasherTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        harness.assertOnBattlefield(player1, "Leonin Scimitar");
     }
 
     @Test
@@ -142,9 +138,8 @@ class RustedSlasherTest extends BaseCardTest {
         assertThat(slasher.getRegenerationShield()).isEqualTo(2);
 
         // Both other artifacts should be gone
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"))
-                .noneMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        harness.assertNotOnBattlefield(player1, "Leonin Scimitar");
     }
 
     // ===== Regeneration saves from combat damage =====
@@ -171,8 +166,7 @@ class RustedSlasherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Rusted Slasher should survive via regeneration
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Rusted Slasher"));
+        harness.assertOnBattlefield(player1, "Rusted Slasher");
         Permanent survivedSlasher = findPermanent(player1, "Rusted Slasher");
         assertThat(survivedSlasher.isTapped()).isTrue();
         assertThat(survivedSlasher.getRegenerationShield()).isEqualTo(0);
@@ -198,10 +192,8 @@ class RustedSlasherTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Rusted Slasher"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Rusted Slasher"));
+        harness.assertNotOnBattlefield(player1, "Rusted Slasher");
+        harness.assertInGraveyard(player1, "Rusted Slasher");
     }
 
     // ===== Can sacrifice itself =====
@@ -216,10 +208,8 @@ class RustedSlasherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Slasher was sacrificed as cost
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Rusted Slasher"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Rusted Slasher"));
+        harness.assertNotOnBattlefield(player1, "Rusted Slasher");
+        harness.assertInGraveyard(player1, "Rusted Slasher");
 
         // Ability is on the stack but will fizzle on resolution
         assertThat(gd.stack).hasSize(1);

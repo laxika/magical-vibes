@@ -103,13 +103,10 @@ class ChandraNalaarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, 3, bear.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 6 - 3
         // Bear should be dead (3 damage to a 2/2)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -125,11 +122,9 @@ class ChandraNalaarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, 0, bear.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(6); // 6 - 0
         // Bear should still be alive (0 damage)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -163,16 +158,14 @@ class ChandraNalaarTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Chandra should have 0 loyalty (8 - 8) and be in graveyard
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Chandra Nalaar"));
+        harness.assertNotOnBattlefield(player1, "Chandra Nalaar");
 
         // Player 2 takes 10 damage
         int lifeAfter = gd.playerLifeTotals.get(player2.getId());
         assertThat(lifeAfter).isEqualTo(10); // 20 - 10
 
         // Both bears should be dead (10 damage to 2/2)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player2.getId()).stream()
                 .filter(c -> c.getName().equals("Grizzly Bears"))
                 .count()).isEqualTo(2);
@@ -188,10 +181,8 @@ class ChandraNalaarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Player 1's bear should be unharmed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test

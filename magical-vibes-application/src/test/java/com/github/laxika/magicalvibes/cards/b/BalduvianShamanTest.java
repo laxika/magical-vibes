@@ -82,8 +82,7 @@ class BalduvianShamanTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(cop);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Circle of Protection: Black"));
+        harness.assertInGraveyard(player1, "Circle of Protection: Black");
     }
 
     @Test

@@ -78,10 +78,8 @@ class WarPriestOfThuneTest extends BaseCardTest {
 
         // CR 603.5 — inner effect resolves inline when target is chosen
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Angelic Chorus"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Angelic Chorus"));
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertInGraveyard(player2, "Angelic Chorus");
     }
 
     @Test
@@ -95,10 +93,8 @@ class WarPriestOfThuneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Angelic Chorus"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Angelic Chorus"));
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertInGraveyard(player2, "Angelic Chorus");
     }
 
     @Test
@@ -116,10 +112,8 @@ class WarPriestOfThuneTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false); // decline
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("War Priest of Thune"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Angelic Chorus"));
+        harness.assertOnBattlefield(player1, "War Priest of Thune");
+        harness.assertOnBattlefield(player2, "Angelic Chorus");
     }
 
     // ===== No enchantment scenarios =====
@@ -139,8 +133,7 @@ class WarPriestOfThuneTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("War Priest of Thune"));
+        harness.assertOnBattlefield(player1, "War Priest of Thune");
     }
 
     // ===== Fizzle =====
@@ -177,10 +170,8 @@ class WarPriestOfThuneTest extends BaseCardTest {
         castAndAcceptMay(enchantmentId);
 
         // CR 603.5 — inner effect resolves inline
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Telepathy"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Telepathy"));
+        harness.assertNotOnBattlefield(player1, "Telepathy");
+        harness.assertInGraveyard(player1, "Telepathy");
     }
 
     // ===== War Priest stays on battlefield =====
@@ -194,7 +185,6 @@ class WarPriestOfThuneTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("War Priest of Thune"));
+        harness.assertOnBattlefield(player1, "War Priest of Thune");
     }
 }

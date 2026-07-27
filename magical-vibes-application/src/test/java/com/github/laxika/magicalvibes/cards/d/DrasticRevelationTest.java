@@ -73,8 +73,7 @@ class DrasticRevelationTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         // Graveyard: 2 discarded hand + 3 random discards + Drastic Revelation itself = 6.
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(6);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Drastic Revelation"));
+        harness.assertInGraveyard(player1, "Drastic Revelation");
         // Random discard prompts nothing.
         assertThat(gd.interaction.activeInteraction()).isNull();
         // Exactly three "at random" discards logged.

@@ -101,8 +101,7 @@ class MemoryDelugeTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(top[0].getId(), top[1].getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(top[0], top[1]);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Memory Deluge"));
+        harness.assertNotInGraveyard(player1, "Memory Deluge");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Memory Deluge"));
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(6)

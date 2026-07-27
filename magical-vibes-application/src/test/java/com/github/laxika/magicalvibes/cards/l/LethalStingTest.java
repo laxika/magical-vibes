@@ -35,10 +35,8 @@ class LethalStingTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hill Giant"));
+        harness.assertInGraveyard(player2, "Hill Giant");
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
     }
 
     @Test

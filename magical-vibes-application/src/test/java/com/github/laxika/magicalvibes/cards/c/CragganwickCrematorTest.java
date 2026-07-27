@@ -29,8 +29,7 @@ class CragganwickCrematorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
@@ -48,8 +47,7 @@ class CragganwickCrematorTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         // Mountain is discarded (non-creature) — the ability has no further effect.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mountain"));
+        harness.assertInGraveyard(player1, "Mountain");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 

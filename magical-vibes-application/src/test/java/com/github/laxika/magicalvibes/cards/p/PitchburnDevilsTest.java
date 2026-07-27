@@ -61,8 +61,7 @@ class PitchburnDevilsTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Pitchburn Devils"));
+        harness.assertOnBattlefield(player1, "Pitchburn Devils");
     }
 
     // ===== Death trigger — target creature =====
@@ -78,8 +77,7 @@ class PitchburnDevilsTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Pitchburn Devils"));
+        harness.assertInGraveyard(player1, "Pitchburn Devils");
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
@@ -114,8 +112,7 @@ class PitchburnDevilsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(bearsId));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Death trigger — target player =====
@@ -175,8 +172,7 @@ class PitchburnDevilsTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Pitchburn Devils"));
+        harness.assertInGraveyard(player1, "Pitchburn Devils");
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 

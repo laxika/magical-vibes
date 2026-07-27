@@ -70,8 +70,7 @@ class RevelInRichesTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → player1's bears die
 
         // No Treasure token should be created — trigger only fires for opponent's creatures
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Treasure"));
+        harness.assertNotOnBattlefield(player1, "Treasure");
     }
 
     @Test

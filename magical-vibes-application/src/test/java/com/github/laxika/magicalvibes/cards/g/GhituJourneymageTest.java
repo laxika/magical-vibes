@@ -69,8 +69,7 @@ class GhituJourneymageTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         // Creature is still on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Ghitu Journeymage"));
+        harness.assertOnBattlefield(player1, "Ghitu Journeymage");
 
         // Life totals unchanged
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -122,8 +121,7 @@ class GhituJourneymageTest extends BaseCardTest {
         castGhituJourneymage();
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Ghitu Journeymage"));
+        harness.assertOnBattlefield(player1, "Ghitu Journeymage");
     }
 
     @Test

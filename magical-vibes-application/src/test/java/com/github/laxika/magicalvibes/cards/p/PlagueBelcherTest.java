@@ -126,8 +126,7 @@ class PlagueBelcherTest extends BaseCardTest {
         harness.castInstant(player2, 0, belcherId);
         harness.passBothPriorities(); // 4 damage -> dies to SBA
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Plague Belcher"));
+        harness.assertNotOnBattlefield(player1, "Plague Belcher");
         assertThat(gd.getLife(player2.getId())).isEqualTo(p2LifeBefore);
     }
 

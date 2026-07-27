@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -69,10 +68,8 @@ class EncampmentKeeperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Encampment Keeper is sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Encampment Keeper"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Encampment Keeper"));
+        harness.assertNotOnBattlefield(player1, "Encampment Keeper");
+        harness.assertInGraveyard(player1, "Encampment Keeper");
 
         // Grizzly Bears (2/2) gets +2/+2 = 4/4
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);

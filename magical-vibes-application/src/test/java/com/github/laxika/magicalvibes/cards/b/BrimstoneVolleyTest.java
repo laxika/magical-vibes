@@ -41,10 +41,8 @@ class BrimstoneVolleyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 3 damage kills a 2/2
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== With morbid =====
@@ -79,8 +77,7 @@ class BrimstoneVolleyTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -138,8 +135,7 @@ class BrimstoneVolleyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bears should be dead
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         // Now cast Brimstone Volley targeting player2 — morbid should be active
         harness.castInstant(player1, 0, player2.getId());

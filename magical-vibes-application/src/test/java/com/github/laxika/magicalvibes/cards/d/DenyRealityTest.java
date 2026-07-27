@@ -36,10 +36,8 @@ class DenyRealityTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the cascade trigger (no-op, empty library)
         harness.passBothPriorities(); // resolve the bounce
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     @Test
@@ -54,10 +52,8 @@ class DenyRealityTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Island"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Island"));
+        harness.assertNotOnBattlefield(player2, "Island");
+        harness.assertInHand(player2, "Island");
     }
 
     @Test
@@ -75,8 +71,7 @@ class DenyRealityTest extends BaseCardTest {
         harness.passBothPriorities(); // bounce tries to resolve
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Deny Reality"));
+        harness.assertInGraveyard(player1, "Deny Reality");
     }
 
     // ===== Cascade =====

@@ -30,8 +30,7 @@ class MakeshiftMunitionsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Makeshift Munitions"));
+        harness.assertOnBattlefield(player1, "Makeshift Munitions");
     }
 
     @Test
@@ -43,8 +42,7 @@ class MakeshiftMunitionsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player1, "Spellbook");
         harness.assertInGraveyard(player1, "Spellbook");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
@@ -59,8 +57,7 @@ class MakeshiftMunitionsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
         harness.assertInGraveyard(player1, "Llanowar Elves");
         assertThat(gd.stack).hasSize(1);
     }
@@ -94,11 +91,9 @@ class MakeshiftMunitionsTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player1, "Spellbook");
         // Llanowar Elves should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
     }
 
     @Test
@@ -129,8 +124,7 @@ class MakeshiftMunitionsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Llanowar Elves is 1/1, so 1 damage kills it
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
     }
 
     @Test

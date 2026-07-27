@@ -15,7 +15,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MahamotiDjinnTest extends BaseCardTest {
 
-
     // ===== Card properties =====
 
     @Test
@@ -51,8 +50,7 @@ class MahamotiDjinnTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mahamoti Djinn"));
+        harness.assertOnBattlefield(player1, "Mahamoti Djinn");
     }
 
     @Test

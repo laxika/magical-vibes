@@ -32,14 +32,10 @@ class BontusLastReckoningTest extends BaseCardTest {
 
             cast();
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+            harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+            harness.assertInGraveyard(player1, "Grizzly Bears");
+            harness.assertInGraveyard(player2, "Llanowar Elves");
         }
 
         @Test
@@ -50,8 +46,7 @@ class BontusLastReckoningTest extends BaseCardTest {
 
             cast();
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Swamp"));
+            harness.assertOnBattlefield(player1, "Swamp");
         }
     }
 

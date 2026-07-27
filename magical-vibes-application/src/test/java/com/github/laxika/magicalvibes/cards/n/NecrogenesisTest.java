@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -32,8 +31,7 @@ class NecrogenesisTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature card exiled from graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
@@ -58,14 +56,12 @@ class NecrogenesisTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, bears.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Token created under controller's control
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Saproling"));
+        harness.assertOnBattlefield(player1, "Saproling");
     }
 
     @Test
@@ -108,7 +104,6 @@ class NecrogenesisTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No token created since exile fizzled
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Saproling"));
+        harness.assertNotOnBattlefield(player1, "Saproling");
     }
 }

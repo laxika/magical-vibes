@@ -72,8 +72,8 @@ class ReviveTheFallenTest extends BaseCardTest {
         harness.castSorcery(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Revive the Fallen"));
-        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getName().equals("Revive the Fallen"));
+        harness.assertInHand(player1, "Revive the Fallen");
+        harness.assertNotInGraveyard(player1, "Revive the Fallen");
     }
 
     @Test
@@ -90,8 +90,8 @@ class ReviveTheFallenTest extends BaseCardTest {
         harness.castSorcery(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Revive the Fallen"));
-        assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getName().equals("Revive the Fallen"));
+        harness.assertInGraveyard(player1, "Revive the Fallen");
+        harness.assertNotInHand(player1, "Revive the Fallen");
     }
 
     @Test

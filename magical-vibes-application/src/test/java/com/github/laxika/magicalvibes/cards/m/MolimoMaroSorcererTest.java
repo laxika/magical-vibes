@@ -43,10 +43,8 @@ class MolimoMaroSorcererTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Molimo, Maro-Sorcerer"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Molimo, Maro-Sorcerer"));
+        harness.assertNotOnBattlefield(player1, "Molimo, Maro-Sorcerer");
+        harness.assertInGraveyard(player1, "Molimo, Maro-Sorcerer");
     }
 
     @Test
@@ -59,8 +57,7 @@ class MolimoMaroSorcererTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Molimo, Maro-Sorcerer"));
+        harness.assertOnBattlefield(player1, "Molimo, Maro-Sorcerer");
     }
 
     @Test

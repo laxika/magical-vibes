@@ -46,10 +46,8 @@ class MindstabThrullTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // The Thrull is sacrificed as part of accepting.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mindstab Thrull"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mindstab Thrull"));
+        harness.assertNotOnBattlefield(player1, "Mindstab Thrull");
+        harness.assertInGraveyard(player1, "Mindstab Thrull");
 
         // Defending player discards three cards.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(3);
@@ -80,8 +78,7 @@ class MindstabThrullTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mindstab Thrull"));
+        harness.assertOnBattlefield(player1, "Mindstab Thrull");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
     }
 
@@ -104,8 +101,7 @@ class MindstabThrullTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mindstab Thrull"));
+        harness.assertOnBattlefield(player1, "Mindstab Thrull");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
     }
 }

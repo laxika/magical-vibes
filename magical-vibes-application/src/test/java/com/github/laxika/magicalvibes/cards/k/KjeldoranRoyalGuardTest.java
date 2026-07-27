@@ -45,8 +45,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Kjeldoran Royal Guard"));
+        harness.assertOnBattlefield(player1, "Kjeldoran Royal Guard");
     }
 
     // ===== Activate ability =====
@@ -116,8 +115,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         // Player takes no damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         // Guard survives (2 damage < 5 toughness)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Kjeldoran Royal Guard"));
+        harness.assertOnBattlefield(player2, "Kjeldoran Royal Guard");
     }
 
     @Test
@@ -137,8 +135,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         // Player takes no damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         // Guard survives (4 damage < 5 toughness)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Kjeldoran Royal Guard"));
+        harness.assertOnBattlefield(player2, "Kjeldoran Royal Guard");
     }
 
     @Test
@@ -160,10 +157,8 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         // Player still takes no damage (redirected)
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         // Guard is destroyed (6 >= 5)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Kjeldoran Royal Guard"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Kjeldoran Royal Guard"));
+        harness.assertNotOnBattlefield(player2, "Kjeldoran Royal Guard");
+        harness.assertInGraveyard(player2, "Kjeldoran Royal Guard");
     }
 
     @Test
@@ -184,8 +179,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         // Player takes no damage; the 2 first-strike damage stays marked on the Guard
         // (CR 120.3d), so the regular step's 4 more redirected damage is lethal (2 + 4 >= 5).
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Kjeldoran Royal Guard"));
+        harness.assertInGraveyard(player2, "Kjeldoran Royal Guard");
     }
 
     @Test
@@ -205,10 +199,8 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
 
         // Player takes no damage, and 4 + 2 >= 5 destroys the Guard (CR 704.5g)
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Kjeldoran Royal Guard"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Kjeldoran Royal Guard"));
+        harness.assertNotOnBattlefield(player2, "Kjeldoran Royal Guard");
+        harness.assertInGraveyard(player2, "Kjeldoran Royal Guard");
     }
 
     @Test
@@ -226,10 +218,8 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
 
         // 2 redirected deathtouch damage < 5 toughness, but deathtouch makes it lethal (CR 702.2b)
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Kjeldoran Royal Guard"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Kjeldoran Royal Guard"));
+        harness.assertNotOnBattlefield(player2, "Kjeldoran Royal Guard");
+        harness.assertInGraveyard(player2, "Kjeldoran Royal Guard");
     }
 
     @Test
@@ -264,10 +254,8 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         // Player takes no damage (creature was blocked)
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         // Both blocker and attacker die in combat (2/2 vs 2/2)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -308,8 +296,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         // Player takes no damage (unblocked damage redirected to Guard)
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         // Guard survives (only 2 redirected damage < 5 toughness)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Kjeldoran Royal Guard"));
+        harness.assertOnBattlefield(player2, "Kjeldoran Royal Guard");
     }
 
     @Test

@@ -59,8 +59,7 @@ class AcidWebSpiderTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Acid Web Spider"));
+        harness.assertOnBattlefield(player1, "Acid Web Spider");
     }
 
     // ===== ETB may ability =====
@@ -104,10 +103,8 @@ class AcidWebSpiderTest extends BaseCardTest {
         castAndAcceptMay(equipmentId);
 
         // Inner effect resolves inline — Equipment is already destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
+        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
     }
 
     @Test
@@ -121,10 +118,8 @@ class AcidWebSpiderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
+        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
     }
 
     @Test
@@ -143,11 +138,9 @@ class AcidWebSpiderTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         // Acid Web Spider on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Acid Web Spider"));
+        harness.assertOnBattlefield(player1, "Acid Web Spider");
         // Equipment still on battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
+        harness.assertOnBattlefield(player2, "Leonin Scimitar");
     }
 
     // ===== Multiple Equipment =====
@@ -164,13 +157,10 @@ class AcidWebSpiderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Loxodon Warhammer destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Loxodon Warhammer"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Loxodon Warhammer"));
+        harness.assertNotOnBattlefield(player2, "Loxodon Warhammer");
+        harness.assertInGraveyard(player2, "Loxodon Warhammer");
         // Leonin Scimitar still on battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
+        harness.assertOnBattlefield(player2, "Leonin Scimitar");
     }
 
     // ===== No Equipment scenarios =====
@@ -191,8 +181,7 @@ class AcidWebSpiderTest extends BaseCardTest {
         // No may prompt, nothing waiting on the stack, and the Spider is on the battlefield.
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Acid Web Spider"));
+        harness.assertOnBattlefield(player1, "Acid Web Spider");
     }
 
     // ===== Fizzle =====
@@ -221,11 +210,9 @@ class AcidWebSpiderTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         // Equipment was already removed from battlefield, graveyard should not contain it
         // (it was removed manually, not destroyed)
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Leonin Scimitar"));
+        harness.assertNotInGraveyard(player2, "Leonin Scimitar");
         // Acid Web Spider remains on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Acid Web Spider"));
+        harness.assertOnBattlefield(player1, "Acid Web Spider");
     }
 
     // ===== Can target own Equipment =====
@@ -240,10 +227,8 @@ class AcidWebSpiderTest extends BaseCardTest {
         // Resolve ETB
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
+        harness.assertNotOnBattlefield(player1, "Leonin Scimitar");
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
     }
 
     // ===== Acid Web Spider stays on battlefield =====
@@ -257,8 +242,7 @@ class AcidWebSpiderTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Acid Web Spider"));
+        harness.assertOnBattlefield(player1, "Acid Web Spider");
     }
 
     // ===== Stack is empty after full resolution =====

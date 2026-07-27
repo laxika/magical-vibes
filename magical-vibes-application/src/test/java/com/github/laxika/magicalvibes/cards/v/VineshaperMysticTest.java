@@ -95,8 +95,7 @@ class VineshaperMysticTest extends BaseCardTest {
             // Resolve creature spell — enters battlefield, ETB triggers
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Vineshaper Mystic"));
+            harness.assertOnBattlefield(player1, "Vineshaper Mystic");
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -154,8 +153,7 @@ class VineshaperMysticTest extends BaseCardTest {
             // Resolve creature spell
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Vineshaper Mystic"));
+            harness.assertOnBattlefield(player1, "Vineshaper Mystic");
             assertThat(gd.stack).isEmpty();
         }
 

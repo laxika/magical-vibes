@@ -85,8 +85,7 @@ class AvacynsCollarTest extends BaseCardTest {
         killCreature(creature);
 
         // No spirit token — battlefield should only have the collar remaining
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spirit"));
+        harness.assertNotOnBattlefield(player1, "Spirit");
     }
 
     // ===== Death trigger — not equipped =====
@@ -99,8 +98,7 @@ class AvacynsCollarTest extends BaseCardTest {
 
         killCreature(creature);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spirit"));
+        harness.assertNotOnBattlefield(player1, "Spirit");
     }
 
     // ===== Equipment persists =====
@@ -114,8 +112,7 @@ class AvacynsCollarTest extends BaseCardTest {
 
         killCreature(creature);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Avacyn's Collar"));
+        harness.assertOnBattlefield(player1, "Avacyn's Collar");
         assertThat(collar.getAttachedTo()).isNull();
     }
 

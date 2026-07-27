@@ -86,8 +86,7 @@ class PiratesPrizeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Pirate's Prize"));
+        harness.assertInGraveyard(player1, "Pirate's Prize");
         assertThat(gd.stack).isEmpty();
     }
 

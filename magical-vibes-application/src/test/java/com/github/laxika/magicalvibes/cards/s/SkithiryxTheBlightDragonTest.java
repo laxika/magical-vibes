@@ -42,8 +42,7 @@ class SkithiryxTheBlightDragonTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Skithiryx, the Blight Dragon"));
+        harness.assertOnBattlefield(player1, "Skithiryx, the Blight Dragon");
     }
 
     // ===== Haste ability =====
@@ -195,8 +194,7 @@ class SkithiryxTheBlightDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Skithiryx (4/4) takes only 2 damage from Grizzly Bears - not lethal, survives without regen
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Skithiryx, the Blight Dragon"));
+        harness.assertOnBattlefield(player1, "Skithiryx, the Blight Dragon");
         // Shield not consumed since damage wasn't lethal
         Permanent survived = findPermanent(player1, "Skithiryx, the Blight Dragon");
         assertThat(survived.getRegenerationShield()).isEqualTo(1);
@@ -223,8 +221,7 @@ class SkithiryxTheBlightDragonTest extends BaseCardTest {
 
         // Skithiryx should die because -1/-1 counters make it 0/0 and regeneration
         // can't save from 0 toughness (counters persist after regeneration)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Skithiryx, the Blight Dragon"));
+        harness.assertNotOnBattlefield(player1, "Skithiryx, the Blight Dragon");
     }
 
     // ===== Infect combat interaction =====
@@ -264,8 +261,7 @@ class SkithiryxTheBlightDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The blocker (4/4) takes 4 damage as -1/-1 counters → 0/0 → dies
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Skithiryx, the Blight Dragon"));
+        harness.assertNotOnBattlefield(player2, "Skithiryx, the Blight Dragon");
     }
 
     // ===== Helper methods =====

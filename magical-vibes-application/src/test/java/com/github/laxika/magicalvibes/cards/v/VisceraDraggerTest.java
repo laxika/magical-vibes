@@ -49,8 +49,7 @@ class VisceraDraggerTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Viscera Dragger"))
                 .findFirst().orElseThrow();
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Viscera Dragger"));
+        harness.assertNotInGraveyard(player1, "Viscera Dragger");
     }
 
     @Test
@@ -67,8 +66,7 @@ class VisceraDraggerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Viscera Dragger"));
+        harness.assertNotOnBattlefield(player1, "Viscera Dragger");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Viscera Dragger"));
     }

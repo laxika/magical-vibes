@@ -34,8 +34,7 @@ class DoomedDissenterTest extends BaseCardTest {
 
             GameData gd = harness.getGameData();
 
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Doomed Dissenter"));
+            harness.assertInGraveyard(player1, "Doomed Dissenter");
 
             // Death trigger should be on the stack
             assertThat(gd.stack).hasSize(1);

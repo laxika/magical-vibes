@@ -32,9 +32,8 @@ class DustToDustTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Fountain of Youth"))
-                .noneMatch(c -> c.getName().equals("Ornithopter"));
+        harness.assertNotInGraveyard(player2, "Fountain of Youth");
+        harness.assertNotInGraveyard(player2, "Ornithopter");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Fountain of Youth"))
                 .anyMatch(c -> c.getName().equals("Ornithopter"));

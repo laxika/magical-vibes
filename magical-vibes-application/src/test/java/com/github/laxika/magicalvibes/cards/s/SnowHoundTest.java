@@ -28,9 +28,8 @@ class SnowHoundTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(hound.getId()) || p.getId().equals(bears.getId()));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Snow Hound"))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Snow Hound");
+        harness.assertInHand(player1, "Grizzly Bears");
         assertThat(hound.isTapped()).isTrue();
     }
 
@@ -47,9 +46,8 @@ class SnowHoundTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(hound.getId()) || p.getId().equals(wizard.getId()));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Snow Hound"))
-                .anyMatch(c -> c.getName().equals("Fugitive Wizard"));
+        harness.assertInHand(player1, "Snow Hound");
+        harness.assertInHand(player1, "Fugitive Wizard");
     }
 
     @Test

@@ -29,8 +29,7 @@ class FoolishFateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 
@@ -48,8 +47,7 @@ class FoolishFateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
     }
 }

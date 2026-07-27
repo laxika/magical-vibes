@@ -43,10 +43,8 @@ class ConquerorsGalleonTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Galleon should be gone, Foothold should be on the battlefield
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Conqueror's Galleon"));
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Conqueror's Foothold"));
+            harness.assertNotOnBattlefield(player1, "Conqueror's Galleon");
+            harness.assertOnBattlefield(player1, "Conqueror's Foothold");
 
             // The new permanent should be marked as transformed
             Permanent foothold = gd.playerBattlefields.get(player1.getId()).stream()
@@ -93,10 +91,8 @@ class ConquerorsGalleonTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Foothold should be on player1's battlefield
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Conqueror's Foothold"));
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Conqueror's Foothold"));
+            harness.assertOnBattlefield(player1, "Conqueror's Foothold");
+            harness.assertNotOnBattlefield(player2, "Conqueror's Foothold");
         }
     }
 
@@ -152,10 +148,8 @@ class ConquerorsGalleonTest extends BaseCardTest {
             harness.activateAbility(player1, 0, 2, null, bears.getId(), Zone.GRAVEYARD);
             harness.passBothPriorities();
 
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertInHand(player1, "Grizzly Bears");
+            harness.assertNotInGraveyard(player1, "Grizzly Bears");
             assertThat(foothold.isTapped()).isTrue();
         }
     }

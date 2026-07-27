@@ -32,8 +32,7 @@ class VexingDevilTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Vexing Devil"));
+        harness.assertOnBattlefield(player1, "Vexing Devil");
         harness.assertLife(player2, 20);
         harness.assertNotInGraveyard(player1, "Vexing Devil");
     }
@@ -47,8 +46,7 @@ class VexingDevilTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         harness.assertLife(player2, 16);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Vexing Devil"));
+        harness.assertNotOnBattlefield(player1, "Vexing Devil");
         harness.assertInGraveyard(player1, "Vexing Devil");
     }
 }

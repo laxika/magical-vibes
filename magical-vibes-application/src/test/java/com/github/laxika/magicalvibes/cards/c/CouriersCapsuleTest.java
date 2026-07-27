@@ -25,10 +25,8 @@ class CouriersCapsuleTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Courier's Capsule"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Courier's Capsule"));
+        harness.assertNotOnBattlefield(player1, "Courier's Capsule");
+        harness.assertInGraveyard(player1, "Courier's Capsule");
     }
 
     @Test
@@ -83,8 +81,7 @@ class CouriersCapsuleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Courier's Capsule"));
+        harness.assertInGraveyard(player1, "Courier's Capsule");
     }
 
     private void addCapsuleMana(Player player) {

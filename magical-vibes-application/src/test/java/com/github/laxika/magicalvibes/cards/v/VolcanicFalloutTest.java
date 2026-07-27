@@ -68,7 +68,6 @@ class VolcanicFalloutTest extends BaseCardTest {
         // Cancel resolved but couldn't counter — Volcanic Fallout still dealt 2 to each player.
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Cancel"));
+        harness.assertInGraveyard(player2, "Cancel");
     }
 }

@@ -36,8 +36,7 @@ class QuicksilverGeyserTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerHands.get(player2.getId()).stream()
                 .filter(c -> c.getName().equals("Grizzly Bears")).count()).isEqualTo(2);
     }
@@ -58,9 +57,8 @@ class QuicksilverGeyserTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Spellbook");
     }
 
     // ===== Bounce one target =====
@@ -77,11 +75,8 @@ class QuicksilverGeyserTest extends BaseCardTest {
         harness.castInstant(player1, 0, List.of(targetId));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     // ===== Cannot target lands =====
@@ -123,12 +118,9 @@ class QuicksilverGeyserTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Spellbook should still be bounced
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player2, "Spellbook");
+        harness.assertInHand(player2, "Spellbook");
     }
 
     // ===== Full fizzle =====
@@ -153,8 +145,7 @@ class QuicksilverGeyserTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Quicksilver Geyser"));
+        harness.assertInGraveyard(player1, "Quicksilver Geyser");
     }
 
     // ===== Can bounce own permanents =====
@@ -175,9 +166,8 @@ class QuicksilverGeyserTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Spellbook");
     }
 
     // ===== Bounce permanents from different players =====
@@ -199,9 +189,7 @@ class QuicksilverGeyserTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Spellbook");
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 }

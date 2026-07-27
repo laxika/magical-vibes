@@ -73,10 +73,8 @@ class ValorousStanceTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, targetId);
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Air Elemental"));
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Air Elemental"));
+            harness.assertNotOnBattlefield(player2, "Air Elemental");
+            harness.assertInGraveyard(player2, "Air Elemental");
         }
 
         @Test
@@ -107,7 +105,6 @@ class ValorousStanceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Valorous Stance"));
+        harness.assertInGraveyard(player1, "Valorous Stance");
     }
 }

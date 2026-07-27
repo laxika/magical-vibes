@@ -171,8 +171,7 @@ class HealingGraceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // My 2/2 takes 3 damage from the 3/3, but 3 is prevented → creature survives
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Non-matching source =====
@@ -240,8 +239,7 @@ class HealingGraceTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, opponentCreature.getId());
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Healing Grace"));
+        harness.assertInGraveyard(player1, "Healing Grace");
     }
 
     // ===== Helpers =====

@@ -25,8 +25,7 @@ class DanceOfTheDeadTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Dance of the Dead")
                         && bears.getId().equals(p.getAttachedTo()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -91,10 +90,8 @@ class DanceOfTheDeadTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -113,8 +110,7 @@ class DanceOfTheDeadTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears).isNotNull();
         assertThat(bears.isTapped()).isTrue();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     private Permanent reanimateBears() {

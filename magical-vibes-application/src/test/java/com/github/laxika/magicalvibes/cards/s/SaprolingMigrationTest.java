@@ -50,8 +50,7 @@ class SaprolingMigrationTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Saproling Migration"));
+        harness.assertInGraveyard(player1, "Saproling Migration");
     }
 
     @Test
@@ -91,7 +90,6 @@ class SaprolingMigrationTest extends BaseCardTest {
         harness.castKickedSorcery(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Saproling Migration"));
+        harness.assertInGraveyard(player1, "Saproling Migration");
     }
 }

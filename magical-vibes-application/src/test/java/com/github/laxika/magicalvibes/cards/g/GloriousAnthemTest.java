@@ -41,8 +41,7 @@ class GloriousAnthemTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Glorious Anthem"));
+        harness.assertOnBattlefield(player1, "Glorious Anthem");
     }
 
     // ===== Static effect: buffs own creatures =====

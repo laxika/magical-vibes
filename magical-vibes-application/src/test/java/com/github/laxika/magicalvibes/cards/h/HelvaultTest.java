@@ -25,8 +25,7 @@ class HelvaultTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getCardsExiledByPermanent(helvault.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
@@ -56,8 +55,7 @@ class HelvaultTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, enemyBears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getCardsExiledByPermanent(helvault.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
@@ -105,15 +103,12 @@ class HelvaultTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both creatures return to the battlefield under their owners' control.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
 
         // Nothing remains tracked with the (now-dead) Helvault.
         assertThat(gd.getCardsExiledByPermanent(helvault.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Helvault"));
+        harness.assertInGraveyard(player1, "Helvault");
     }
 
     @Test
@@ -124,7 +119,6 @@ class HelvaultTest extends BaseCardTest {
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, helvault);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Helvault"));
+        harness.assertInGraveyard(player1, "Helvault");
     }
 }

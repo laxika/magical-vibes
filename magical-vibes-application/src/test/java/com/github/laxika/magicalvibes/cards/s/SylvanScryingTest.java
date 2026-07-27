@@ -131,8 +131,7 @@ class SylvanScryingTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.getGameService().handleInteractionAnswer(harness.getGameData(), player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(harness.getGameData().playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Sylvan Scrying"));
+        harness.assertInGraveyard(player1, "Sylvan Scrying");
     }
 
     private void setupAndCast() {

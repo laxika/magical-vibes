@@ -35,8 +35,7 @@ class HowlingBansheeTest extends BaseCardTest {
         castHowlingBanshee();
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Howling Banshee"));
+        harness.assertOnBattlefield(player1, "Howling Banshee");
 
         assertThat(gd.stack).isNotEmpty();
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);

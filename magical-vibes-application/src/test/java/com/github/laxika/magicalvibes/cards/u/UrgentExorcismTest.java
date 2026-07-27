@@ -52,11 +52,8 @@ class UrgentExorcismTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Orchard Spirit"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Orchard Spirit"));
+        harness.assertNotOnBattlefield(player2, "Orchard Spirit");
+        harness.assertInGraveyard(player2, "Orchard Spirit");
     }
 
     @Test
@@ -70,11 +67,8 @@ class UrgentExorcismTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Pacifism"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Pacifism"));
+        harness.assertNotOnBattlefield(player2, "Pacifism");
+        harness.assertInGraveyard(player2, "Pacifism");
     }
 
     @Test
@@ -104,7 +98,6 @@ class UrgentExorcismTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Urgent Exorcism"));
+        harness.assertInGraveyard(player1, "Urgent Exorcism");
     }
 }

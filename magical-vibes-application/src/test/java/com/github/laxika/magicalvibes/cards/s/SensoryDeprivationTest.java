@@ -96,10 +96,8 @@ class SensoryDeprivationTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(bears);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Sensory Deprivation"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Sensory Deprivation"));
+        harness.assertInGraveyard(player1, "Sensory Deprivation");
+        harness.assertNotOnBattlefield(player1, "Sensory Deprivation");
     }
 
     @Test

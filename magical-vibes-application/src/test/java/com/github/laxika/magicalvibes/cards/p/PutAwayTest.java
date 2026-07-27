@@ -53,14 +53,11 @@ class PutAwayTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player2, 0);
 
         // Grizzly Bears was countered
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Lightning Bolt was shuffled out of the graveyard into the library
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Lightning Bolt"));
+        harness.assertNotInGraveyard(player2, "Lightning Bolt");
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(libSizeBefore + 1);
     }
 
@@ -87,12 +84,10 @@ class PutAwayTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player2, -1);
 
         // Spell still countered
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Lightning Bolt stays in the graveyard; library unchanged
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Lightning Bolt"));
+        harness.assertInGraveyard(player2, "Lightning Bolt");
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(libSizeBefore);
     }
 
@@ -112,10 +107,8 @@ class PutAwayTest extends BaseCardTest {
 
         // No graveyard prompt, spell countered, Put Away in player2's graveyard
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Put Away"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Put Away");
     }
 
     @Test

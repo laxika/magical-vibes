@@ -38,8 +38,7 @@ class DoomfallTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(bears.getId()));
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -64,8 +63,7 @@ class DoomfallTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
+        harness.assertOnBattlefield(player2, "Giant Spider");
     }
 
     @Test
@@ -120,10 +118,8 @@ class DoomfallTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Peek"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Peek");
     }
 
     @Test

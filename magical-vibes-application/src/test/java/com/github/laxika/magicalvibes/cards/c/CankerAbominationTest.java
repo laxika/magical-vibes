@@ -69,8 +69,7 @@ class CankerAbominationTest extends BaseCardTest {
 
         castCanker();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Canker Abomination"));
+        harness.assertNotOnBattlefield(player1, "Canker Abomination");
     }
 
     private Permanent findCanker(Player player) {

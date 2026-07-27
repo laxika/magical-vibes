@@ -80,13 +80,10 @@ class FalseSummoningTest extends BaseCardTest {
         harness.castInstant(player2, 0, elves.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Countered spell goes to owner's graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
         // Does not enter the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
     }
 
     // ===== Fizzle =====

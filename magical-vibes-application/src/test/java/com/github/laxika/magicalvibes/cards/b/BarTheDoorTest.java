@@ -135,7 +135,6 @@ class BarTheDoorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bar the Door"));
+        harness.assertInGraveyard(player1, "Bar the Door");
     }
 }

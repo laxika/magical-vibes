@@ -188,10 +188,8 @@ class VedalkenAnatomistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Llanowar Elves (1/1) should die from 0 toughness
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
     }
 
     // ===== Can target own creatures =====

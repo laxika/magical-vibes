@@ -58,8 +58,7 @@ class SorcerousSpyglassTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at") && log.contains("hand"));
 
         // Permanent should NOT be on the battlefield yet — name must be chosen first (Rule 614.1c)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Sorcerous Spyglass"));
+        harness.assertNotOnBattlefield(player1, "Sorcerous Spyglass");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
     }

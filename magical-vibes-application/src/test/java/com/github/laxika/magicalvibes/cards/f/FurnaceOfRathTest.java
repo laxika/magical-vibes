@@ -51,8 +51,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Furnace of Rath"));
+        harness.assertOnBattlefield(player1, "Furnace of Rath");
     }
 
     // ===== Doubles spell damage to player =====
@@ -102,10 +101,8 @@ class FurnaceOfRathTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 2 damage doubled to 4 — kills Serra Angel (4/4)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Serra Angel"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Serra Angel"));
+        harness.assertNotOnBattlefield(player2, "Serra Angel");
+        harness.assertInGraveyard(player2, "Serra Angel");
     }
 
     @Test
@@ -121,8 +118,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 1 damage doubled to 2 — Serra Angel (4/4) survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Serra Angel"));
+        harness.assertOnBattlefield(player2, "Serra Angel");
     }
 
     // ===== Doubles combat damage =====
@@ -173,12 +169,10 @@ class FurnaceOfRathTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Serra Angel (4/4) takes 2*2=4 doubled damage — exactly lethal
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Serra Angel"));
+        harness.assertInGraveyard(player2, "Serra Angel");
 
         // Grizzly Bears (2/2) takes 4*2=8 doubled damage — also dies
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== Doubles first-strike combat damage =====
@@ -224,11 +218,9 @@ class FurnaceOfRathTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Doubled first strike (4) kills 3/3 before it can deal regular damage
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         // Knight survives since blocker died in first strike phase
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Benalish Knight"));
+        harness.assertOnBattlefield(player1, "Benalish Knight");
     }
 
     @Test
@@ -261,10 +253,8 @@ class FurnaceOfRathTest extends BaseCardTest {
         // Phase 1: 2 * 2 = 4 < 5, blocker survives first strike
         // Phase 2: blocker deals 3 * 2 = 6 >= 2, knight dies
         // Blocker total damage = 4 (FS attacker doesn't deal phase 2 damage), 4 < 5, survives
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Benalish Knight"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Benalish Knight");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Doubles double-strike combat damage =====
@@ -311,8 +301,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Phase 1: 1*2=2 < 3, survives. Phase 2: 1*2=2, total 4 >= 3, dies.
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -345,10 +334,8 @@ class FurnaceOfRathTest extends BaseCardTest {
 
         // Phase 1: 1*2=2 < 5, survives. Phase 2: 1*2=2, total 4 < 5, survives.
         // Blocker deals 3*2=6 >= 1, Skirmisher dies.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Skyhunter Skirmisher"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Skyhunter Skirmisher");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Affects all players symmetrically =====

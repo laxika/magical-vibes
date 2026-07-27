@@ -43,10 +43,8 @@ class PsychosisCrawlerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve cast — enters as 0/0, SBA kills it
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Psychosis Crawler"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Psychosis Crawler"));
+        harness.assertNotOnBattlefield(player1, "Psychosis Crawler");
+        harness.assertInGraveyard(player1, "Psychosis Crawler");
     }
 
     @Test

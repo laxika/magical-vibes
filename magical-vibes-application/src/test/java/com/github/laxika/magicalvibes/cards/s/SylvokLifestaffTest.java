@@ -101,11 +101,9 @@ class SylvokLifestaffTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger
 
         // Creature should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // Equipment should still be on the battlefield, unattached
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sylvok Lifestaff"));
+        harness.assertOnBattlefield(player1, "Sylvok Lifestaff");
         assertThat(lifestaff.getAttachedTo()).isNull();
     }
 

@@ -51,8 +51,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .filteredOn(c -> c.getName().equals("Grizzly Bears"))
                 .hasSize(2);
@@ -76,8 +75,7 @@ class HauntingEchoesTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Plains stays in graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Plains"));
+        harness.assertInGraveyard(player2, "Plains");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Plains"));
     }
@@ -241,8 +239,7 @@ class HauntingEchoesTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== After resolution =====
@@ -258,8 +255,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Haunting Echoes"));
+        harness.assertInGraveyard(player1, "Haunting Echoes");
     }
 
     // ===== Logging =====

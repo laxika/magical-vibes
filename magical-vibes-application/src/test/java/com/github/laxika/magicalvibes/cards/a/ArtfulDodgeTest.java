@@ -138,8 +138,7 @@ class ArtfulDodgeTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Artful Dodge"));
+        harness.assertInGraveyard(player1, "Artful Dodge");
     }
 
     // ===== Fizzle =====
@@ -163,8 +162,7 @@ class ArtfulDodgeTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Artful Dodge still goes to graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Artful Dodge"));
+        harness.assertInGraveyard(player1, "Artful Dodge");
     }
 
     // ===== Flashback =====
@@ -202,8 +200,7 @@ class ArtfulDodgeTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Should NOT be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Artful Dodge"));
+        harness.assertNotInGraveyard(player1, "Artful Dodge");
         // Should be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Artful Dodge"));

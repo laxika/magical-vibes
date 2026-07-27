@@ -70,8 +70,7 @@ class DualShotTest extends BaseCardTest {
 
         // Bear should be dead
         assertThat(harness.getGameData().playerBattlefields.get(player2.getId())).isEmpty();
-        assertThat(harness.getGameData().playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -122,7 +121,6 @@ class DualShotTest extends BaseCardTest {
         assertThat(harness.getGameData().stack).isEmpty();
         assertThat(harness.getGameData().gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Card should go to graveyard even when fizzled
-        assertThat(harness.getGameData().playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Dual Shot"));
+        harness.assertInGraveyard(player1, "Dual Shot");
     }
 }

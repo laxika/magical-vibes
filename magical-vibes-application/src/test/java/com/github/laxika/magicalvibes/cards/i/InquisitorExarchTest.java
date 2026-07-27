@@ -47,8 +47,7 @@ class InquisitorExarchTest extends BaseCardTest {
             castWithGainLifeMode();
             harness.passBothPriorities(); // resolve creature
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Inquisitor Exarch"));
+            harness.assertOnBattlefield(player1, "Inquisitor Exarch");
         }
 
         @Test
@@ -101,8 +100,7 @@ class InquisitorExarchTest extends BaseCardTest {
             castWithLoseLifeMode();
             harness.passBothPriorities(); // resolve creature
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Inquisitor Exarch"));
+            harness.assertOnBattlefield(player1, "Inquisitor Exarch");
         }
 
         @Test

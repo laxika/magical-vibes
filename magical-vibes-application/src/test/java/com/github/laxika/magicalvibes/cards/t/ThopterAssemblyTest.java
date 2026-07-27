@@ -197,7 +197,7 @@ class ThopterAssemblyTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger
 
         // Thopter Assembly is gone (destroyed), not in hand
-        assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getName().equals("Thopter Assembly"));
+        harness.assertNotInHand(player1, "Thopter Assembly");
 
         // Tokens should still be created
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()

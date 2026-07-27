@@ -37,8 +37,7 @@ class DoomedNecromancerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Doomed Necromancer"));
+        harness.assertOnBattlefield(player1, "Doomed Necromancer");
     }
 
     @Test
@@ -66,10 +65,8 @@ class DoomedNecromancerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Doomed Necromancer should be sacrificed (not on battlefield, in graveyard)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Doomed Necromancer"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Doomed Necromancer"));
+        harness.assertNotOnBattlefield(player1, "Doomed Necromancer");
+        harness.assertInGraveyard(player1, "Doomed Necromancer");
 
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -91,8 +88,7 @@ class DoomedNecromancerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Necromancer is in graveyard after sacrifice
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Doomed Necromancer"));
+        harness.assertInGraveyard(player1, "Doomed Necromancer");
     }
 
     @Test
@@ -128,10 +124,8 @@ class DoomedNecromancerTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -152,13 +146,10 @@ class DoomedNecromancerTest extends BaseCardTest {
         // Only creatures at indices 0, 1, 2 are valid; choose Angel of Mercy at index 1
         harness.handleGraveyardCardChosen(player1, 1);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Angel of Mercy"));
+        harness.assertOnBattlefield(player1, "Angel of Mercy");
         // Grizzly Bears stays in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Angel of Mercy"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Angel of Mercy");
     }
 
     @Test
@@ -174,8 +165,7 @@ class DoomedNecromancerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Doomed Necromancer is now in graveyard after sacrifice
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Doomed Necromancer"));
+        harness.assertInGraveyard(player1, "Doomed Necromancer");
 
         harness.passBothPriorities();
 
@@ -185,8 +175,7 @@ class DoomedNecromancerTest extends BaseCardTest {
         // Choose the Doomed Necromancer itself
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Doomed Necromancer"));
+        harness.assertOnBattlefield(player1, "Doomed Necromancer");
     }
 
     // ===== Empty graveyard =====

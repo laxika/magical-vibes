@@ -28,8 +28,7 @@ class MindSlashTest extends BaseCardTest {
         harness.activateAbility(player1, index, null, player2.getId());
 
         // The lone creature is auto-sacrificed as the cost.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         harness.passBothPriorities();
 
@@ -40,8 +39,7 @@ class MindSlashTest extends BaseCardTest {
         harness.handleCardChosen(player1, 1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player2, "Forest");
         assertThat(gd.playerHands.get(player2.getId()))
                 .singleElement()
                 .extracting(card -> card.getName())

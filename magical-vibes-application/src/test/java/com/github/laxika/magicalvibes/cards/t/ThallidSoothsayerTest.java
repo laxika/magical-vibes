@@ -36,14 +36,11 @@ class ThallidSoothsayerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bearsId);
 
         // Grizzly Bears should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Thallid Soothsayer should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Thallid Soothsayer"));
+        harness.assertOnBattlefield(player1, "Thallid Soothsayer");
 
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -97,8 +94,7 @@ class ThallidSoothsayerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both Grizzly Bears should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         // Should have drawn 2 cards
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
@@ -139,8 +135,7 @@ class ThallidSoothsayerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Thallid Soothsayer"));
+        harness.assertOnBattlefield(player1, "Thallid Soothsayer");
     }
 
     // ===== Validation =====
@@ -169,10 +164,8 @@ class ThallidSoothsayerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Thallid Soothsayer"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Thallid Soothsayer"));
+        harness.assertNotOnBattlefield(player1, "Thallid Soothsayer");
+        harness.assertInGraveyard(player1, "Thallid Soothsayer");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 

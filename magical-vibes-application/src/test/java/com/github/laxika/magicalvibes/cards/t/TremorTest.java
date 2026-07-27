@@ -25,11 +25,8 @@ class TremorTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fugitive Wizard"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fugitive Wizard"));
+        harness.assertNotOnBattlefield(player1, "Fugitive Wizard");
+        harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
     }
 
     @Test
@@ -43,11 +40,8 @@ class TremorTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Suntail Hawk"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fugitive Wizard"));
+        harness.assertOnBattlefield(player2, "Suntail Hawk");
+        harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
     }
 
     @Test
@@ -76,7 +70,6 @@ class TremorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Tremor"));
+        harness.assertInGraveyard(player1, "Tremor");
     }
 }

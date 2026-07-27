@@ -41,10 +41,8 @@ class ContestedWarZoneTest extends BaseCardTest {
         resolveCombat(player1, player2);
 
         // Contested War Zone should now be on player1's battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Contested War Zone"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Contested War Zone"));
+        harness.assertOnBattlefield(player1, "Contested War Zone");
+        harness.assertNotOnBattlefield(player2, "Contested War Zone");
     }
 
     @Test
@@ -62,8 +60,7 @@ class ContestedWarZoneTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getCard().getName().equals("Contested War Zone"))
                 .hasSize(1);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Contested War Zone"));
+        harness.assertNotOnBattlefield(player2, "Contested War Zone");
     }
 
     @Test
@@ -77,10 +74,8 @@ class ContestedWarZoneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Contested War Zone should still be on player2's battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Contested War Zone"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Contested War Zone"));
+        harness.assertOnBattlefield(player2, "Contested War Zone");
+        harness.assertNotOnBattlefield(player1, "Contested War Zone");
     }
 
     @Test
@@ -106,8 +101,7 @@ class ContestedWarZoneTest extends BaseCardTest {
         resolveCombat(player1, player2);
 
         // Contested War Zone should still be on player2's battlefield (attacker was blocked and killed)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Contested War Zone"));
+        harness.assertOnBattlefield(player2, "Contested War Zone");
     }
 
     // ===== Boost ability =====

@@ -32,8 +32,7 @@ class RuinsOfTrokairTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Ruins of Trokair"));
+        harness.assertOnBattlefield(player1, "Ruins of Trokair");
     }
 
     @Test
@@ -44,9 +43,7 @@ class RuinsOfTrokairTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(2);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ruins of Trokair"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ruins of Trokair"));
+        harness.assertNotOnBattlefield(player1, "Ruins of Trokair");
+        harness.assertInGraveyard(player1, "Ruins of Trokair");
     }
 }

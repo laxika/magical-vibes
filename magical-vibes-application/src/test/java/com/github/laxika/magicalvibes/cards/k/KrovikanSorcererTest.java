@@ -46,7 +46,7 @@ class KrovikanSorcererTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(sorcerer.isTapped()).isTrue();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
@@ -84,7 +84,7 @@ class KrovikanSorcererTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleCardChosen(player1, 0); // pay cost — discard Scathe Zombies
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Scathe Zombies"));
+        harness.assertInGraveyard(player1, "Scathe Zombies");
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities(); // resolve — draws two cards

@@ -86,9 +86,7 @@ class BlindingFogTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Blinding Fog"));
+        harness.assertInGraveyard(player1, "Blinding Fog");
     }
 
     // ===== Prevents combat damage to controller's creature =====
@@ -115,10 +113,8 @@ class BlindingFogTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Grizzly Bears (2/2) survives because combat damage is prevented
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Prevents combat damage to opponent's creature too =====
@@ -145,10 +141,8 @@ class BlindingFogTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Big Bear (5/5) also survives — damage to ALL creatures is prevented
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Big Bear"));
+        harness.assertOnBattlefield(player1, "Big Bear");
     }
 
     // ===== Does NOT prevent damage to players =====
@@ -192,10 +186,8 @@ class BlindingFogTest extends BaseCardTest {
         harness.castInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Grizzly Bears (2/2) survives Shock because damage to creatures is prevented
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -213,10 +205,8 @@ class BlindingFogTest extends BaseCardTest {
         harness.castInstant(player2, 0, creature.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Grizzly Bears survives — damage to all creatures is prevented
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Hexproof =====

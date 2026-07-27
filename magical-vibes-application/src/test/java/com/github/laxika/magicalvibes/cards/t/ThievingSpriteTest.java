@@ -60,8 +60,7 @@ class ThievingSpriteTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertInGraveyard(player2, "Hill Giant");
         assertThat(gd.playerHands.get(player2.getId()))
                 .singleElement()
                 .matches(c -> c.getName().equals("Grizzly Bears"));
@@ -85,8 +84,7 @@ class ThievingSpriteTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== X scales with the number of Faeries controlled =====
@@ -116,8 +114,7 @@ class ThievingSpriteTest extends BaseCardTest {
         harness.handleCardChosen(player1, 1); // discard the second revealed card (Hill Giant)
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertInGraveyard(player2, "Hill Giant");
         // Two cards remain: the other revealed card plus the never-revealed one.
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
     }

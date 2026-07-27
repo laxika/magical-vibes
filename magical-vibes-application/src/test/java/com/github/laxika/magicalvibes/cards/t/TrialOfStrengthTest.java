@@ -50,10 +50,8 @@ class TrialOfStrengthTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve a triggered ability
         harness.passBothPriorities(); // resolve the other triggered ability
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Trial of Strength"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Trial of Strength"));
+        harness.assertNotOnBattlefield(player1, "Trial of Strength");
+        harness.assertInHand(player1, "Trial of Strength");
     }
 
     @Test
@@ -75,7 +73,6 @@ class TrialOfStrengthTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve aura
         harness.passBothPriorities(); // resolve aura's ETB token trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Trial of Strength"));
+        harness.assertOnBattlefield(player1, "Trial of Strength");
     }
 }

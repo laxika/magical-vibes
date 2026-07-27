@@ -33,8 +33,7 @@ class CivicWayfinderTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell → may on stack
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Civic Wayfinder"));
+        harness.assertOnBattlefield(player1, "Civic Wayfinder");
 
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 

@@ -62,8 +62,7 @@ class SteadfastArmasaurTest extends BaseCardTest {
 
         // Armasaur has 3 toughness, so deals 3 damage to a 2/4 — survives
         assertThat(blocker.getMarkedDamage()).isEqualTo(3);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test

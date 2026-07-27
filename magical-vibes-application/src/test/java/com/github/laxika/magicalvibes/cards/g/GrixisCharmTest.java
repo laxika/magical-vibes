@@ -38,10 +38,8 @@ class GrixisCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 0, targetId);
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Fountain of Youth"));
-            assertThat(gd.playerHands.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Fountain of Youth"));
+            harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+            harness.assertInHand(player2, "Fountain of Youth");
         }
     }
 
@@ -60,10 +58,8 @@ class GrixisCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, targetId);
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+            harness.assertInGraveyard(player2, "Grizzly Bears");
         }
 
         @Test

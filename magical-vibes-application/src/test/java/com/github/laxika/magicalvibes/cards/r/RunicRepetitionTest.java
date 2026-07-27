@@ -36,7 +36,7 @@ class RunicRepetitionTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(flashbackCard.getId()));
         assertThat(gd.getPlayerExiledCards(player1.getId())).noneMatch(c -> c.getId().equals(flashbackCard.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Runic Repetition"));
+        harness.assertInGraveyard(player1, "Runic Repetition");
     }
 
     @Test

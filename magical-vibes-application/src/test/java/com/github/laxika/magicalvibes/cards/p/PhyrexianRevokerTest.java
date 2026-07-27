@@ -50,8 +50,7 @@ class PhyrexianRevokerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Permanent should NOT be on the battlefield yet — name must be chosen first (Rule 614.1c)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phyrexian Revoker"));
+        harness.assertNotOnBattlefield(player1, "Phyrexian Revoker");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
     }

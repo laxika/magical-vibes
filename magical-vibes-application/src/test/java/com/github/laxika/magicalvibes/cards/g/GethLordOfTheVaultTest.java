@@ -132,8 +132,7 @@ class GethLordOfTheVaultTest extends BaseCardTest {
                 .noneMatch(c -> c.getId().equals(bears.getId()));
 
         // Opponent should have been milled 2 cards (Dross Crocodiles)
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Dross Crocodile"));
+        harness.assertInGraveyard(player2, "Dross Crocodile");
     }
 
     @Test
@@ -246,9 +245,7 @@ class GethLordOfTheVaultTest extends BaseCardTest {
         gd.stolenCreatures.remove(stolenBears.getId());
 
         // Bears should go to player2's graveyard (original owner), not player1's
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 }

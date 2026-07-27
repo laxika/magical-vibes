@@ -98,10 +98,8 @@ class WeaknessTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, vanguard.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elite Vanguard"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Elite Vanguard"));
+        harness.assertNotOnBattlefield(player1, "Elite Vanguard");
+        harness.assertInGraveyard(player1, "Elite Vanguard");
     }
 
     @Test
@@ -117,10 +115,8 @@ class WeaknessTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(bears);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Weakness"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Weakness"));
+        harness.assertInGraveyard(player1, "Weakness");
+        harness.assertNotOnBattlefield(player1, "Weakness");
     }
 
     @Test

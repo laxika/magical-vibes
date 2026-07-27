@@ -81,8 +81,7 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
 
         // With only one historic card, it auto-exiles
         // Card should be exiled from graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Rod of Ruin"));
+        harness.assertNotInGraveyard(player1, "Rod of Ruin");
 
         // Card should be tracked in permanentExiledCards
         List<Card> exiledWithRona = gd.getCardsExiledByPermanent(rona.getId());
@@ -110,8 +109,7 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // Card should still be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Rod of Ruin"));
+        harness.assertInGraveyard(player1, "Rod of Ruin");
     }
 
     @Test
@@ -135,8 +133,7 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
         }
 
         // Bears should still be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== Activated ability: {4}, {T}: Exile top card of library =====
@@ -197,8 +194,7 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bears should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
 
         // Should be removed from permanentExiledCards
         List<Card> exiledWithRona = gd.getCardsExiledByPermanent(rona.getId());
@@ -256,8 +252,7 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Rod of Ruin should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Rod of Ruin"));
+        harness.assertOnBattlefield(player1, "Rod of Ruin");
 
         // Should no longer be tracked with Rona
         assertThat(gd.getCardsExiledByPermanent(rona.getId()))

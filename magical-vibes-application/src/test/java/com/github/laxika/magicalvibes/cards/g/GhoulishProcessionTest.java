@@ -143,8 +143,7 @@ class GhoulishProcessionTest extends BaseCardTest {
 
             GameData gd = harness.getGameData();
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Zombie"));
+            harness.assertNotOnBattlefield(player1, "Zombie");
         }
 
         @Test
@@ -216,8 +215,7 @@ class GhoulishProcessionTest extends BaseCardTest {
             gs.declareAttackers(gd, player1, List.of(zombieIndex));
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Zombie"));
+            harness.assertNotOnBattlefield(player1, "Zombie");
         }
     }
 }

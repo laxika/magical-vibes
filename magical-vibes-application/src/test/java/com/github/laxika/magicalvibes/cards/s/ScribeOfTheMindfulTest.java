@@ -35,8 +35,7 @@ class ScribeOfTheMindfulTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Scribe of the Mindful"))
                 .noneMatch(c -> c.getId().equals(bolt.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Scribe of the Mindful"));
+        harness.assertNotOnBattlefield(player1, "Scribe of the Mindful");
     }
 
     @Test
@@ -68,8 +67,7 @@ class ScribeOfTheMindfulTest extends BaseCardTest {
 
         // Illegal activation rewinds: nothing sacrificed, card stays in the graveyard.
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getId().equals(bears.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Scribe of the Mindful"));
+        harness.assertOnBattlefield(player1, "Scribe of the Mindful");
     }
 
     @Test

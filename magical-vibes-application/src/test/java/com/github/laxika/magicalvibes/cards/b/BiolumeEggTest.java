@@ -49,8 +49,7 @@ class BiolumeEggTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve sacrifice trigger, register delayed return
 
         assertThat(findPermanentOrNull(player1, "Biolume Egg")).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Biolume Egg"));
+        harness.assertInGraveyard(player1, "Biolume Egg");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passBothPriorities();
@@ -65,8 +64,7 @@ class BiolumeEggTest extends BaseCardTest {
         Permanent egg = harness.addToBattlefieldAndReturn(player1, new BiolumeEgg());
         harness.getPermanentRemovalService().tryDestroyPermanent(gd, egg, false);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Biolume Egg"));
+        harness.assertInGraveyard(player1, "Biolume Egg");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passBothPriorities();

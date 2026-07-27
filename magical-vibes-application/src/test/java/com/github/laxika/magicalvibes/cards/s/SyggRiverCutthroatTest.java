@@ -37,8 +37,7 @@ class SyggRiverCutthroatTest extends BaseCardTest {
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test
@@ -60,8 +59,7 @@ class SyggRiverCutthroatTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInHand(player1, "Grizzly Bears");
     }
 
     @Test

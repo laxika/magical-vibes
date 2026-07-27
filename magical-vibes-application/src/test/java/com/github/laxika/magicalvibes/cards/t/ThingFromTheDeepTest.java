@@ -43,10 +43,8 @@ class ThingFromTheDeepTest extends BaseCardTest {
 
         // No Island to pay with, so it's sacrificed automatically with no choice.
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Thing from the Deep"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Thing from the Deep"));
+        harness.assertNotOnBattlefield(player1, "Thing from the Deep");
+        harness.assertInGraveyard(player1, "Thing from the Deep");
     }
 
     @Test
@@ -72,8 +70,7 @@ class ThingFromTheDeepTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(islandsControlledBy(player1.getId())).isEqualTo(0);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Thing from the Deep"));
+        harness.assertOnBattlefield(player1, "Thing from the Deep");
     }
 
     @Test
@@ -96,8 +93,7 @@ class ThingFromTheDeepTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, islandIds);
 
         assertThat(islandsControlledBy(player1.getId())).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Thing from the Deep"));
+        harness.assertOnBattlefield(player1, "Thing from the Deep");
     }
 
     @Test
@@ -109,10 +105,8 @@ class ThingFromTheDeepTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Thing from the Deep"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Thing from the Deep"));
+        harness.assertNotOnBattlefield(player1, "Thing from the Deep");
+        harness.assertInGraveyard(player1, "Thing from the Deep");
         assertThat(islandsControlledBy(player1.getId())).isEqualTo(1);
     }
 
@@ -124,10 +118,8 @@ class ThingFromTheDeepTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Thing from the Deep"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Thing from the Deep"));
+        harness.assertNotOnBattlefield(player1, "Thing from the Deep");
+        harness.assertInGraveyard(player1, "Thing from the Deep");
         assertThat(islandsControlledBy(player2.getId())).isEqualTo(1);
     }
 }

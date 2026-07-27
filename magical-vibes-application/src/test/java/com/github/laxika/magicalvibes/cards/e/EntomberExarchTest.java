@@ -38,10 +38,8 @@ class EntomberExarchTest extends BaseCardTest {
             // Player should be prompted to choose a graveyard card
             harness.handleGraveyardCardChosen(player1, 0);
 
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertInHand(player1, "Grizzly Bears");
+            harness.assertNotInGraveyard(player1, "Grizzly Bears");
         }
 
         @Test
@@ -79,8 +77,7 @@ class EntomberExarchTest extends BaseCardTest {
             castWithGraveyardMode();
             harness.passBothPriorities(); // resolve creature
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Entomber Exarch"));
+            harness.assertOnBattlefield(player1, "Entomber Exarch");
         }
 
         private void castWithGraveyardMode() {
@@ -112,8 +109,7 @@ class EntomberExarchTest extends BaseCardTest {
 
             harness.handleCardChosen(player1, 0);
 
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Peek"));
+            harness.assertInGraveyard(player2, "Peek");
             assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
             assertThat(gd.playerHands.get(player2.getId()).get(0).getName()).isEqualTo("Grizzly Bears");
         }
@@ -184,8 +180,7 @@ class EntomberExarchTest extends BaseCardTest {
             castWithDiscardMode();
             harness.passBothPriorities(); // resolve creature
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Entomber Exarch"));
+            harness.assertOnBattlefield(player1, "Entomber Exarch");
         }
 
         private void castWithDiscardMode() {

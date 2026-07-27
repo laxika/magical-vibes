@@ -44,10 +44,8 @@ class BladewingTheRisenTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(whelp.getId()));
         harness.passBothPriorities(); // resolve the ETB triggered ability
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Dragon Whelp"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Dragon Whelp"));
+        harness.assertOnBattlefield(player1, "Dragon Whelp");
+        harness.assertNotInGraveyard(player1, "Dragon Whelp");
     }
 
     @Test
@@ -59,8 +57,7 @@ class BladewingTheRisenTest extends BaseCardTest {
 
         // No Dragon to return → no graveyard choice, nothing reanimated
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -77,10 +74,8 @@ class BladewingTheRisenTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Dragon Whelp"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Dragon Whelp"));
+        harness.assertInGraveyard(player1, "Dragon Whelp");
+        harness.assertNotOnBattlefield(player1, "Dragon Whelp");
     }
 
     @Test

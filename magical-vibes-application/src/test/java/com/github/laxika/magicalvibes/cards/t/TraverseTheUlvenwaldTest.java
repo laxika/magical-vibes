@@ -47,8 +47,7 @@ class TraverseTheUlvenwaldTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
     }
 
     @Test
@@ -88,8 +87,7 @@ class TraverseTheUlvenwaldTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(creatureIndex));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     private void cast() {

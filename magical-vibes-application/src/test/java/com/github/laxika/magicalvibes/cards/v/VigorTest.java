@@ -85,8 +85,7 @@ class VigorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Blocker takes no combat damage — it survives with two +1/+1 counters.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(bearsOf(player2.getId()).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
@@ -99,8 +98,7 @@ class VigorTest extends BaseCardTest {
 
         harness.runStateBasedActions();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Vigor"));
+        harness.assertInGraveyard(player2, "Vigor");
         assertThat(gd.stack).isNotEmpty();
 
         harness.passBothPriorities();

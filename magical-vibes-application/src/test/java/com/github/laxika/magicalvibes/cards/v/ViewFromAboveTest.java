@@ -69,8 +69,7 @@ class ViewFromAboveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("View from Above"));
+        harness.assertInGraveyard(player1, "View from Above");
     }
 
     @Test
@@ -83,10 +82,8 @@ class ViewFromAboveTest extends BaseCardTest {
         // Flying still resolved on the target.
         assertThat(bears(bearsId).getGrantedKeywords()).contains(Keyword.FLYING);
         // Spell bounced off the stack back to hand rather than the graveyard.
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("View from Above"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("View from Above"));
+        harness.assertInHand(player1, "View from Above");
+        harness.assertNotInGraveyard(player1, "View from Above");
     }
 
     // ===== Targeting =====

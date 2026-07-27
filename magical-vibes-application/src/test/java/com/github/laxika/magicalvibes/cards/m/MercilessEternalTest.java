@@ -32,7 +32,7 @@ class MercilessEternalTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, eternal)).isEqualTo(basePower + 2);
         assertThat(gqs.getEffectiveToughness(gd, eternal)).isEqualTo(baseToughness + 2);
     }

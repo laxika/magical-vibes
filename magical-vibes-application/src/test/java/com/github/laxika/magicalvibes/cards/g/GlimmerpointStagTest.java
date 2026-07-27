@@ -50,8 +50,7 @@ class GlimmerpointStagTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Stag should be on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Glimmerpoint Stag"));
+        harness.assertOnBattlefield(player1, "Glimmerpoint Stag");
 
         // ETB triggered ability should be on stack
         assertThat(gd.stack).hasSize(1);
@@ -77,8 +76,7 @@ class GlimmerpointStagTest extends BaseCardTest {
         // Resolve ETB
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
@@ -98,15 +96,13 @@ class GlimmerpointStagTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bears should be exiled
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         // Advance to end step
         advanceToEndStep();
 
         // Bears should be back on battlefield under owner's control
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
     }
@@ -125,13 +121,11 @@ class GlimmerpointStagTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
         advanceToEndStep();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test

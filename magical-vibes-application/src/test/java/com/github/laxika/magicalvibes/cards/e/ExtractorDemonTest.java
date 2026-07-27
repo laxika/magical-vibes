@@ -71,8 +71,7 @@ class ExtractorDemonTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Forest"));
+        harness.assertNotInGraveyard(player2, "Forest");
     }
 
     @Test
@@ -92,7 +91,7 @@ class ExtractorDemonTest extends BaseCardTest {
         harness.passBothPriorities(); // Unsummon resolves → Grizzly Bears returns to hand
         harness.passBothPriorities(); // Extractor Demon trigger resolves → "may" prompt
 
-        assertThat(gd.playerHands.get(player2.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player2, "Grizzly Bears");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
@@ -109,8 +108,7 @@ class ExtractorDemonTest extends BaseCardTest {
 
         Permanent perm = findPermanent(player1, "Extractor Demon");
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Extractor Demon"));
+        harness.assertNotInGraveyard(player1, "Extractor Demon");
     }
 
     @Test
@@ -126,8 +124,7 @@ class ExtractorDemonTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Extractor Demon"));
+        harness.assertNotOnBattlefield(player1, "Extractor Demon");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Extractor Demon"));
     }

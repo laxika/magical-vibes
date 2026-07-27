@@ -79,7 +79,6 @@ class HollowhengeScavengerTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(25);
 
         // Verify it's on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hollowhenge Scavenger"));
+        harness.assertOnBattlefield(player1, "Hollowhenge Scavenger");
     }
 }

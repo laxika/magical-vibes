@@ -90,8 +90,7 @@ class BoundByMoonsilverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(aura.getAttachedTo()).isEqualTo(second.getId());
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player1, "Forest");
     }
 
     @Test

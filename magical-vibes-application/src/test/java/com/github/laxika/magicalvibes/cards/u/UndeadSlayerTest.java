@@ -28,8 +28,7 @@ class UndeadSlayerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Scathe Zombies"));
+        harness.assertNotOnBattlefield(player2, "Scathe Zombies");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Scathe Zombies"));
     }

@@ -53,10 +53,8 @@ class ViashinoSandstalkerTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Viashino Sandstalker"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Viashino Sandstalker"));
+        harness.assertNotOnBattlefield(player1, "Viashino Sandstalker");
+        harness.assertInHand(player1, "Viashino Sandstalker");
     }
 
     @Test
@@ -76,9 +74,7 @@ class ViashinoSandstalkerTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Viashino Sandstalker"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Viashino Sandstalker"));
+        harness.assertNotOnBattlefield(player1, "Viashino Sandstalker");
+        harness.assertInHand(player1, "Viashino Sandstalker");
     }
 }

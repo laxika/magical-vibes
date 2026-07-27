@@ -42,8 +42,7 @@ class PrimalCommandTest extends BaseCardTest {
         assertThat(search.params().cards()).extracting(Card::getName).containsExactly("Grizzly Bears");
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test
@@ -62,8 +61,7 @@ class PrimalCommandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Forest left the battlefield; graveyard emptied into the library
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player2, "Forest");
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         // +1 (Forest to top) +2 (graveyard shuffled back)
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore + 3);

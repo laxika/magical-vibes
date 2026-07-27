@@ -86,8 +86,7 @@ class ScourgeDevilTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Scourge Devil"))
                 .findFirst().orElseThrow();
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Scourge Devil"));
+        harness.assertNotInGraveyard(player1, "Scourge Devil");
     }
 
     @Test
@@ -106,8 +105,7 @@ class ScourgeDevilTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Scourge Devil"));
+        harness.assertNotOnBattlefield(player1, "Scourge Devil");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Scourge Devil"));
     }

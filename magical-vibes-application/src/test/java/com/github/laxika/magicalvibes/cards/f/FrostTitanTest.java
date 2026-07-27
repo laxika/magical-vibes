@@ -64,8 +64,7 @@ class FrostTitanTest extends BaseCardTest {
             castFrostTitan(targetId);
             harness.passBothPriorities(); // resolve creature spell
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Frost Titan"));
+            harness.assertOnBattlefield(player1, "Frost Titan");
         }
     }
 
@@ -168,8 +167,7 @@ class FrostTitanTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Shock should be countered
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Shock"));
+            harness.assertInGraveyard(player2, "Shock");
             assertThat(gd.stack).isEmpty();
         }
 
@@ -213,8 +211,7 @@ class FrostTitanTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player2, true); // pay {2}
 
             // Shock should still be on the stack (not countered)
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .noneMatch(c -> c.getName().equals("Shock"));
+            harness.assertNotInGraveyard(player2, "Shock");
         }
 
         @Test
@@ -235,8 +232,7 @@ class FrostTitanTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player2, false); // decline to pay
 
             // Shock should be countered
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Shock"));
+            harness.assertInGraveyard(player2, "Shock");
         }
 
         @Test

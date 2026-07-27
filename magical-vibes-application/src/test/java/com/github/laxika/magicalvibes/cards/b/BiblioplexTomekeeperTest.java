@@ -98,8 +98,7 @@ class BiblioplexTomekeeperTest extends BaseCardTest {
             castTomekeeper(-1, null);
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Biblioplex Tomekeeper"));
+            harness.assertOnBattlefield(player1, "Biblioplex Tomekeeper");
             assertThat(gd.stack).isEmpty();
         }
     }

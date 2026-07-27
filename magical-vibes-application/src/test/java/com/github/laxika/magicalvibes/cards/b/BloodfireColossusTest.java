@@ -59,10 +59,8 @@ class BloodfireColossusTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Colossus should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Bloodfire Colossus"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bloodfire Colossus"));
+        harness.assertNotOnBattlefield(player1, "Bloodfire Colossus");
+        harness.assertInGraveyard(player1, "Bloodfire Colossus");
 
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -103,19 +101,13 @@ class BloodfireColossusTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Both Grizzly Bears (2/2) should be destroyed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         // Both should be in their owners' graveyards
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -129,11 +121,8 @@ class BloodfireColossusTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // 7/7 survives 6 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Enormous Baloth"));
+        harness.assertOnBattlefield(player2, "Enormous Baloth");
     }
 
     // ===== Indestructible =====
@@ -149,11 +138,8 @@ class BloodfireColossusTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Indestructible 2/2 survives even though 6 >= 2
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Darksteel Sentinel"));
+        harness.assertOnBattlefield(player2, "Darksteel Sentinel");
     }
 
     // ===== Mana cost validation =====
@@ -207,11 +193,8 @@ class BloodfireColossusTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Enchantment should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Test Enchantment"));
+        harness.assertOnBattlefield(player2, "Test Enchantment");
     }
 }
 

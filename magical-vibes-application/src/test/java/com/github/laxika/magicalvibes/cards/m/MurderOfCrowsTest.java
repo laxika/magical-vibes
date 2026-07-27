@@ -43,8 +43,7 @@ class MurderOfCrowsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature should be dead
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         // May ability prompt for Murder of Crows' controller
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());

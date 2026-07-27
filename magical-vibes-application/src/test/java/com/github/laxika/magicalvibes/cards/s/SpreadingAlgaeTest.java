@@ -91,8 +91,7 @@ class SpreadingAlgaeTest extends BaseCardTest {
         harness.tapPermanent(player1, 0);
         resolveStackFully();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Swamp"));
+        harness.assertNotOnBattlefield(player1, "Swamp");
     }
 
     @Test
@@ -106,8 +105,7 @@ class SpreadingAlgaeTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Spreading Algae"));
         assertThat(gd.pendingManaAbilityTriggers)
                 .noneMatch(entry -> entry.getCard().getName().equals("Spreading Algae"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Swamp"));
+        harness.assertOnBattlefield(player1, "Swamp");
     }
 
     // ===== Graveyard-from-battlefield trigger: return to hand =====
@@ -121,12 +119,9 @@ class SpreadingAlgaeTest extends BaseCardTest {
         // Resolve the destroy trigger, then the return-to-hand trigger it spawns.
         resolveStackFully();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spreading Algae"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Spreading Algae"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spreading Algae"));
+        harness.assertNotOnBattlefield(player1, "Spreading Algae");
+        harness.assertNotInGraveyard(player1, "Spreading Algae");
+        harness.assertInHand(player1, "Spreading Algae");
     }
 
     // ===== Helpers =====

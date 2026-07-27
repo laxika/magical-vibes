@@ -32,8 +32,7 @@ class DwarvenRuinsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Dwarven Ruins"));
+        harness.assertOnBattlefield(player1, "Dwarven Ruins");
     }
 
     @Test
@@ -44,9 +43,7 @@ class DwarvenRuinsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Dwarven Ruins"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Dwarven Ruins"));
+        harness.assertNotOnBattlefield(player1, "Dwarven Ruins");
+        harness.assertInGraveyard(player1, "Dwarven Ruins");
     }
 }

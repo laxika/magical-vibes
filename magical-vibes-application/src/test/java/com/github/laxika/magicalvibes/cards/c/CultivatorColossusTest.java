@@ -59,8 +59,7 @@ class CultivatorColossusTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().hasType(CardType.LAND))
                 .count()).isEqualTo(2);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Plains"));
+        harness.assertInHand(player1, "Plains");
     }
 
     @Test
@@ -79,8 +78,7 @@ class CultivatorColossusTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getCard().getName().equals("Forest"))
                 .hasSize(1);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(libraryBefore);
     }
 

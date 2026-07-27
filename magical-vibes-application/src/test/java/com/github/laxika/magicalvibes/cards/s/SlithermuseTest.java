@@ -81,9 +81,7 @@ class SlithermuseTest extends BaseCardTest {
         // After casting, player1's hand is empty; opponent holds 3 -> draw 3.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Slithermuse"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Slithermuse"));
+        harness.assertNotOnBattlefield(player1, "Slithermuse");
+        harness.assertInGraveyard(player1, "Slithermuse");
     }
 }

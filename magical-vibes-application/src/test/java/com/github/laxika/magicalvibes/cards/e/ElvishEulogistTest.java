@@ -47,7 +47,7 @@ class ElvishEulogistTest extends BaseCardTest {
         // 2 Elf cards already in the graveyard + the sacrificed Eulogist itself = 3 life.
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 3);
         assertThat(findEulogist(gd, player1)).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Elvish Eulogist"));
+        harness.assertInGraveyard(player1, "Elvish Eulogist");
     }
 
     @Test

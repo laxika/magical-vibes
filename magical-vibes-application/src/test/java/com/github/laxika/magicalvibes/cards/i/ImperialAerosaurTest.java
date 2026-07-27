@@ -53,8 +53,7 @@ class ImperialAerosaurTest extends BaseCardTest {
         // Resolve creature spell — enters battlefield, ETB triggers
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Imperial Aerosaur"));
+        harness.assertOnBattlefield(player1, "Imperial Aerosaur");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
@@ -186,8 +185,7 @@ class ImperialAerosaurTest extends BaseCardTest {
         // Resolve creature spell
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Imperial Aerosaur"));
+        harness.assertOnBattlefield(player1, "Imperial Aerosaur");
         assertThat(gd.stack).isEmpty();
     }
 

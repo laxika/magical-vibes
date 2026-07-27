@@ -34,10 +34,8 @@ class GhoulraiserTest extends BaseCardTest {
         // Resolve the ETB trigger
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Cemetery Reaper"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Cemetery Reaper"));
+        harness.assertInHand(player1, "Cemetery Reaper");
+        harness.assertNotInGraveyard(player1, "Cemetery Reaper");
     }
 
     @Test
@@ -79,11 +77,9 @@ class GhoulraiserTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Cemetery Reaper (Zombie) should be returned
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Cemetery Reaper"));
+        harness.assertInHand(player1, "Cemetery Reaper");
         // Grizzly Bears (not a Zombie) should stay in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -100,11 +96,9 @@ class GhoulraiserTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Grizzly Bears should stay in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // Hand should not contain Grizzly Bears
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInHand(player1, "Grizzly Bears");
     }
 
     @Test

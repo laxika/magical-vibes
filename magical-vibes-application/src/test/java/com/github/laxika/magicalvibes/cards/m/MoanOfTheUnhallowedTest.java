@@ -48,9 +48,7 @@ class MoanOfTheUnhallowedTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Moan of the Unhallowed"));
+        harness.assertInGraveyard(player1, "Moan of the Unhallowed");
     }
 
     @Test
@@ -87,8 +85,7 @@ class MoanOfTheUnhallowedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Moan of the Unhallowed"));
+        harness.assertNotInGraveyard(player1, "Moan of the Unhallowed");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Moan of the Unhallowed"));
     }

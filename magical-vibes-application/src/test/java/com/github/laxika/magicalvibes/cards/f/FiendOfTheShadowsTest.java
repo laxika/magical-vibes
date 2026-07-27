@@ -50,8 +50,7 @@ class FiendOfTheShadowsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -110,8 +109,7 @@ class FiendOfTheShadowsTest extends BaseCardTest {
         harness.castFromExile(player1, exiled.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.findExiledCard(exiled.getId())).isNull();
     }
 
@@ -156,8 +154,7 @@ class FiendOfTheShadowsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Human"));
+        harness.assertInGraveyard(player1, "Human");
         assertThat(fiend.getRegenerationShield()).isEqualTo(1);
     }
 

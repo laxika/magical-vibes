@@ -192,11 +192,9 @@ class LeoninScimitarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // Equipment should still be on the battlefield, unattached
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
+        harness.assertOnBattlefield(player1, "Leonin Scimitar");
         assertThat(scimitar.getAttachedTo()).isNull();
     }
 

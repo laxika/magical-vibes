@@ -71,8 +71,7 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
         // Two 2/2 wolves deal 4 total damage to the 2/2 — lethal
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(target.getId()));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test

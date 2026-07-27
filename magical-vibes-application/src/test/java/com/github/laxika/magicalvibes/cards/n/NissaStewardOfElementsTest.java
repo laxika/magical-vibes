@@ -73,8 +73,7 @@ class NissaStewardOfElementsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player1, "Forest");
         assertThat(gd.playerDecks.get(player1.getId())).noneMatch(c -> c.getName().equals("Forest"));
     }
 
@@ -88,8 +87,7 @@ class NissaStewardOfElementsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -103,8 +101,7 @@ class NissaStewardOfElementsTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerDecks.get(player1.getId()).get(0).getName()).isEqualTo("Grizzly Bears");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -118,8 +115,7 @@ class NissaStewardOfElementsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerDecks.get(player1.getId()).get(0).getName()).isEqualTo("Forest");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player1, "Forest");
     }
 
     // ===== -6: Untap up to two target lands, animate them =====

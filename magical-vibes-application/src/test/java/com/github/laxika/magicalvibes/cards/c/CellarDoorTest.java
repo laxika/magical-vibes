@@ -122,8 +122,7 @@ class CellarDoorTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         // No token created
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Zombie"));
+        harness.assertNotOnBattlefield(player1, "Zombie");
     }
 
     // ===== Conditional token creation =====
@@ -168,8 +167,7 @@ class CellarDoorTest extends BaseCardTest {
         // Non-creature goes to graveyard
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
         // No Zombie token created
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Zombie"));
+        harness.assertNotOnBattlefield(player1, "Zombie");
     }
 
     @Test
@@ -186,13 +184,10 @@ class CellarDoorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Controller (player1) gets the token
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Zombie"));
+        harness.assertOnBattlefield(player1, "Zombie");
         // Target (player2) does NOT get the token
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Zombie"));
+        harness.assertNotOnBattlefield(player2, "Zombie");
     }
 
     @Test
@@ -211,8 +206,7 @@ class CellarDoorTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Zombie"));
+        harness.assertOnBattlefield(player1, "Zombie");
     }
 
     // ===== Validation =====

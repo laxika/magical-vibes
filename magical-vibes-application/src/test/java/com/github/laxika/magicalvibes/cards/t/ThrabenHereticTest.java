@@ -31,8 +31,7 @@ class ThrabenHereticTest extends BaseCardTest {
         harness.activateAbility(player1, hereticIndex, 0, null, bears.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
@@ -48,8 +47,7 @@ class ThrabenHereticTest extends BaseCardTest {
         harness.activateAbility(player1, hereticIndex, 0, null, bears.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }

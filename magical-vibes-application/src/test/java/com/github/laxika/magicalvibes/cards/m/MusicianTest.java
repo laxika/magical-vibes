@@ -93,8 +93,7 @@ class MusicianTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -113,8 +112,7 @@ class MusicianTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test

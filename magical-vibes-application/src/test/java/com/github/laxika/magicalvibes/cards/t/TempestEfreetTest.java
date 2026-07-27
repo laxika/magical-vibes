@@ -28,11 +28,11 @@ class TempestEfreetTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
 
         // Revealed card goes to the ability controller's hand; the opponent's hand is emptied.
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         // Tempest Efreet (sacrificed as a cost) moves from its controller's graveyard to the opponent's.
-        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getName().equals("Tempest Efreet"));
-        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getName().equals("Tempest Efreet"));
+        harness.assertInGraveyard(player2, "Tempest Efreet");
+        harness.assertNotInGraveyard(player1, "Tempest Efreet");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
@@ -50,11 +50,11 @@ class TempestEfreetTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(10);
-        assertThat(gd.playerHands.get(player2.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
         // No exchange: Tempest Efreet stays where the sacrifice put it (its controller's graveyard).
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Tempest Efreet"));
-        assertThat(gd.playerGraveyards.get(player2.getId())).noneMatch(c -> c.getName().equals("Tempest Efreet"));
+        harness.assertInGraveyard(player1, "Tempest Efreet");
+        harness.assertNotInGraveyard(player2, "Tempest Efreet");
     }
 
     @Test
@@ -68,9 +68,9 @@ class TempestEfreetTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getName().equals("Tempest Efreet"));
+        harness.assertInGraveyard(player2, "Tempest Efreet");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(5);
     }
 
@@ -89,8 +89,8 @@ class TempestEfreetTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         // Nothing to reveal, so Tempest Efreet is not exchanged — it stays in its controller's graveyard.
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Tempest Efreet"));
-        assertThat(gd.playerGraveyards.get(player2.getId())).noneMatch(c -> c.getName().equals("Tempest Efreet"));
+        harness.assertInGraveyard(player1, "Tempest Efreet");
+        harness.assertNotInGraveyard(player2, "Tempest Efreet");
     }
 
     @Test

@@ -39,11 +39,8 @@ class FieryInterventionTest extends BaseCardTest {
             harness.castSorcery(player1, 0, 0, bearsPermanent.getId());
             harness.passBothPriorities();
 
-            GameData gd = harness.getGameData();
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+            harness.assertInGraveyard(player2, "Grizzly Bears");
         }
 
         @Test
@@ -84,11 +81,8 @@ class FieryInterventionTest extends BaseCardTest {
             harness.castSorcery(player1, 0, 1, millstonePermanent.getId());
             harness.passBothPriorities();
 
-            GameData gd = harness.getGameData();
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Millstone"));
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Millstone"));
+            harness.assertNotOnBattlefield(player2, "Millstone");
+            harness.assertInGraveyard(player2, "Millstone");
         }
 
         @Test
@@ -145,7 +139,6 @@ class FieryInterventionTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fiery Intervention"));
+        harness.assertInGraveyard(player1, "Fiery Intervention");
     }
 }

@@ -76,8 +76,6 @@ class DenseFoliageTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 }

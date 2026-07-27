@@ -40,8 +40,7 @@ class FaithlessLootingTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         // Two discarded cards plus the resolved Faithless Looting spell itself.
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Faithless Looting"));
+        harness.assertInGraveyard(player1, "Faithless Looting");
     }
 
     @Test
@@ -58,9 +57,7 @@ class FaithlessLootingTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Faithless Looting"));
+        harness.assertInGraveyard(player1, "Faithless Looting");
     }
 
     @Test
@@ -81,8 +78,7 @@ class FaithlessLootingTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Flashback spell is exiled, not returned to graveyard.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Faithless Looting"));
+        harness.assertNotInGraveyard(player1, "Faithless Looting");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Faithless Looting"));
     }

@@ -27,8 +27,7 @@ class YoungWolfTest extends BaseCardTest {
 
         Permanent returnedWolf = findPermanent(player1, "Young Wolf");
         assertThat(returnedWolf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Young Wolf"));
+        harness.assertNotInGraveyard(player1, "Young Wolf");
     }
 
     @Test
@@ -42,10 +41,8 @@ class YoungWolfTest extends BaseCardTest {
         harness.castInstant(player2, 0, wolf.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Young Wolf"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Young Wolf"));
+        harness.assertNotOnBattlefield(player1, "Young Wolf");
+        harness.assertInGraveyard(player1, "Young Wolf");
         assertThat(gd.stack).isEmpty();
     }
 }

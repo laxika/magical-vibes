@@ -59,9 +59,7 @@ class GeistflameTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Geistflame"));
+        harness.assertInGraveyard(player1, "Geistflame");
     }
 
     @Test
@@ -90,8 +88,7 @@ class GeistflameTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Geistflame"));
+        harness.assertNotInGraveyard(player1, "Geistflame");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Geistflame"));
     }

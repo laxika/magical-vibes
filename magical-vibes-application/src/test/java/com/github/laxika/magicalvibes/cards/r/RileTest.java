@@ -107,8 +107,7 @@ class RileTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Rile"));
+        harness.assertInGraveyard(player1, "Rile");
     }
 
     // ===== Fizzle =====
@@ -131,8 +130,7 @@ class RileTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Rile"));
+        harness.assertInGraveyard(player1, "Rile");
         // Should NOT draw a card when fizzling
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
     }

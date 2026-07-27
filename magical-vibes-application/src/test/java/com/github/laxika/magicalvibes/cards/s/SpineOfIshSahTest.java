@@ -72,8 +72,7 @@ class SpineOfIshSahTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
@@ -90,8 +89,7 @@ class SpineOfIshSahTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve artifact spell
         harness.passBothPriorities(); // resolve ETB
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
+        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
         harness.assertInGraveyard(player2, "Leonin Scimitar");
     }
 
@@ -119,8 +117,7 @@ class SpineOfIshSahTest extends BaseCardTest {
         // Resolve ETB
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== ETB: fizzle =====
@@ -176,10 +173,8 @@ class SpineOfIshSahTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         // Spine should be in hand, NOT in graveyard
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spine of Ish Sah"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Spine of Ish Sah"));
+        harness.assertInHand(player1, "Spine of Ish Sah");
+        harness.assertNotInGraveyard(player1, "Spine of Ish Sah");
     }
 
 }

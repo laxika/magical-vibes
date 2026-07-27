@@ -42,8 +42,7 @@ class ColossusOfSardiaTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Colossus of Sardia"));
+        harness.assertOnBattlefield(player1, "Colossus of Sardia");
     }
 
     // ===== Doesn't untap during untap step =====
@@ -249,8 +248,7 @@ class ColossusOfSardiaTest extends BaseCardTest {
         // 9 power - 2 toughness = 7 trample damage to player
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
         // Blocker should be dead
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test

@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FuneralMarchTest extends BaseCardTest {
@@ -44,10 +43,8 @@ class FuneralMarchTest extends BaseCardTest {
         resolveStack();
 
         // Only the victim remained after the enchanted creature died, so it is auto-sacrificed.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hill Giant"));
+        harness.assertInGraveyard(player1, "Hill Giant");
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
     }
 
     @Test
@@ -66,10 +63,8 @@ class FuneralMarchTest extends BaseCardTest {
         resolveStack();
 
         // Player2 (the enchanted creature's controller) sacrifices; player1's board is untouched.
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hill Giant"));
+        harness.assertInGraveyard(player2, "Hill Giant");
+        harness.assertOnBattlefield(player1, "Hill Giant");
     }
 
     @Test

@@ -80,8 +80,7 @@ class TempleBellTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Temple Bell"));
+        harness.assertOnBattlefield(player1, "Temple Bell");
     }
 
     // ===== Helper methods =====

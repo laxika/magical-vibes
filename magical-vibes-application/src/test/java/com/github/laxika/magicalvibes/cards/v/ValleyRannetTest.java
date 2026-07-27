@@ -49,7 +49,7 @@ class ValleyRannetTest extends BaseCardTest {
 
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Mountain"));
+        harness.assertInHand(player1, "Mountain");
     }
 
     // ===== Forestcycling {2} =====

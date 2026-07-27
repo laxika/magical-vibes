@@ -136,8 +136,7 @@ class WargateTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Wargate"));
+        harness.assertInGraveyard(player1, "Wargate");
         assertThat(gd.playerDecks.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Wargate"));
     }

@@ -30,10 +30,8 @@ class CrumbleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Rod of Ruin"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Rod of Ruin"));
+        harness.assertNotOnBattlefield(player2, "Rod of Ruin");
+        harness.assertInGraveyard(player2, "Rod of Ruin");
         // Rod of Ruin has mana value 4; its controller (player2), not the caster, gains 4 life
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(ownerLifeBefore + 4);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(casterLifeBefore);

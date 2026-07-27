@@ -42,8 +42,7 @@ class PersecuteTest extends BaseCardTest {
         harness.handleListChoice(player1, "GREEN");
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerHands.get(player2.getId()))
                 .singleElement()
                 .matches(c -> c.getName().equals("Peek"));
@@ -75,8 +74,7 @@ class PersecuteTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "GREEN");
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerHands.get(player2.getId()))
                 .singleElement()
                 .matches(c -> c.getName().equals("Forest"));

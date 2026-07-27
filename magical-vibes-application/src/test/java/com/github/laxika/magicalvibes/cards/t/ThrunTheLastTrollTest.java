@@ -42,12 +42,9 @@ class ThrunTheLastTrollTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Thrun, the Last Troll"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Thrun, the Last Troll"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Cancel"));
+        harness.assertOnBattlefield(player1, "Thrun, the Last Troll");
+        harness.assertNotInGraveyard(player1, "Thrun, the Last Troll");
+        harness.assertInGraveyard(player2, "Cancel");
     }
 
     @Test
@@ -67,8 +64,7 @@ class ThrunTheLastTrollTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Thrun, the Last Troll"));
+        harness.assertOnBattlefield(player1, "Thrun, the Last Troll");
     }
 
     // ===== Hexproof =====
@@ -158,8 +154,7 @@ class ThrunTheLastTrollTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Thrun, the Last Troll"));
+        harness.assertOnBattlefield(player1, "Thrun, the Last Troll");
         Permanent thrun = findPermanent(player1, "Thrun, the Last Troll");
         assertThat(thrun.isTapped()).isTrue();
         assertThat(thrun.getRegenerationShield()).isEqualTo(0);
@@ -181,10 +176,8 @@ class ThrunTheLastTrollTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Thrun, the Last Troll"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Thrun, the Last Troll"));
+        harness.assertNotOnBattlefield(player1, "Thrun, the Last Troll");
+        harness.assertInGraveyard(player1, "Thrun, the Last Troll");
     }
 
     // ===== Helper methods =====

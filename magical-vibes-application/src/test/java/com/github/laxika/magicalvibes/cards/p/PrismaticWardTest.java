@@ -124,8 +124,7 @@ class PrismaticWardTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(warded.getId()));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Warded One"));
+        harness.assertInGraveyard(player2, "Warded One");
     }
 
     // ===== Combat damage =====

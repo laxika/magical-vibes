@@ -133,11 +133,8 @@ class BurningOilTest extends BaseCardTest {
         harness.castInstant(player2, 0, attacker.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hill Giant"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Hill Giant");
     }
 
     @Test
@@ -181,8 +178,7 @@ class BurningOilTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Burning Oil"));
+        harness.assertInGraveyard(player2, "Burning Oil");
     }
 
     // ===== Fizzle =====
@@ -210,8 +206,7 @@ class BurningOilTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Burning Oil"));
+        harness.assertInGraveyard(player2, "Burning Oil");
     }
 
     // ===== Flashback =====
@@ -233,11 +228,8 @@ class BurningOilTest extends BaseCardTest {
         harness.castFlashback(player2, 0, attacker.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hill Giant"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Hill Giant");
     }
 
     @Test
@@ -258,8 +250,7 @@ class BurningOilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Burning Oil"));
+        harness.assertNotInGraveyard(player2, "Burning Oil");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Burning Oil"));
     }
@@ -286,8 +277,7 @@ class BurningOilTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Burning Oil"));
+        harness.assertNotInGraveyard(player2, "Burning Oil");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Burning Oil"));
     }
@@ -308,9 +298,7 @@ class BurningOilTest extends BaseCardTest {
 
         harness.castFlashback(player2, 0, attacker.getId());
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Burning Oil"));
+        harness.assertNotInGraveyard(player2, "Burning Oil");
     }
 
     @Test

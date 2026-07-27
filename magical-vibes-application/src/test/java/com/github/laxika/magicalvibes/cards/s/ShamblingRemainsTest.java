@@ -58,8 +58,7 @@ class ShamblingRemainsTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Shambling Remains"))
                 .findFirst().orElseThrow();
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Shambling Remains"));
+        harness.assertNotInGraveyard(player1, "Shambling Remains");
     }
 
     @Test
@@ -76,8 +75,7 @@ class ShamblingRemainsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Shambling Remains"));
+        harness.assertNotOnBattlefield(player1, "Shambling Remains");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Shambling Remains"));
     }

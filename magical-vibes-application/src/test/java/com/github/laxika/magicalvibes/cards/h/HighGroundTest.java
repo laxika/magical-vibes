@@ -44,8 +44,7 @@ class HighGroundTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("High Ground"));
+        harness.assertOnBattlefield(player1, "High Ground");
     }
 
     // ===== Blocking: one creature blocks two attackers =====
@@ -269,8 +268,7 @@ class HighGroundTest extends BaseCardTest {
         // 4/4 blocker deals 4 damage to first attacker (kills 2/2), remaining to second (kills 2/2)
         // Both 2/2 attackers deal 2+2=4 damage to blocker → 4/4 blocker dies
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -320,8 +318,7 @@ class HighGroundTest extends BaseCardTest {
         // Both 1/1 attackers should be dead
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
         // 5/5 blocker takes only 2 damage total — survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test

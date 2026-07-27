@@ -123,8 +123,7 @@ class NoggleHedgeMageTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Noggle Hedge-Mage"));
+        harness.assertOnBattlefield(player1, "Noggle Hedge-Mage");
     }
 
     // ===== Both gates met: independent tap + damage both resolve =====

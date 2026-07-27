@@ -33,10 +33,8 @@ class DispellersCapsuleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
 
         // Dispeller's Capsule should be sacrificed immediately (cost)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Dispeller's Capsule"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Dispeller's Capsule"));
+        harness.assertNotOnBattlefield(player1, "Dispeller's Capsule");
+        harness.assertInGraveyard(player1, "Dispeller's Capsule");
 
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -58,10 +56,8 @@ class DispellersCapsuleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
+        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
     }
 
     @Test
@@ -74,10 +70,8 @@ class DispellersCapsuleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Glorious Anthem"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Glorious Anthem"));
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        harness.assertInGraveyard(player2, "Glorious Anthem");
     }
 
     @Test
@@ -90,10 +84,8 @@ class DispellersCapsuleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ornithopter"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Ornithopter"));
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertInGraveyard(player2, "Ornithopter");
     }
 
     // ===== Mana requirements =====

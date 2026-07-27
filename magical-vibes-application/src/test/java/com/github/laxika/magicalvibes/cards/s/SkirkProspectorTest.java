@@ -23,10 +23,8 @@ class SkirkProspectorTest extends BaseCardTest {
         // Mana ability resolves immediately — no stack entry
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Skirk Prospector"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Skirk Prospector"));
+        harness.assertNotOnBattlefield(player1, "Skirk Prospector");
+        harness.assertInGraveyard(player1, "Skirk Prospector");
     }
 
     @Test
@@ -41,11 +39,9 @@ class SkirkProspectorTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, siegeGangId);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Siege-Gang Commander"));
+        harness.assertNotOnBattlefield(player1, "Siege-Gang Commander");
         // Skirk Prospector should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Skirk Prospector"));
+        harness.assertOnBattlefield(player1, "Skirk Prospector");
     }
 
     @Test
@@ -70,11 +66,9 @@ class SkirkProspectorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Skirk should be sacrificed (auto-selected as the only Goblin)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Skirk Prospector"));
+        harness.assertNotOnBattlefield(player1, "Skirk Prospector");
         // Llanowar Elves should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }
 }

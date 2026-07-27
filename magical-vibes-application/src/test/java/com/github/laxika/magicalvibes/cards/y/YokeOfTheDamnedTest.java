@@ -99,8 +99,7 @@ class YokeOfTheDamnedTest extends BaseCardTest {
         // The creature and its now-orphaned Aura are both gone; nothing else is affected.
         assertThat(onBattlefield(player1, "Grizzly Bears")).isFalse();
         assertThat(onBattlefield(player1, "Yoke of the Damned")).isFalse();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Yoke of the Damned"));
+        harness.assertInGraveyard(player1, "Yoke of the Damned");
     }
 
     // ===== Helpers =====

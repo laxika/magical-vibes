@@ -68,8 +68,7 @@ class ElderCatharTest extends BaseCardTest {
             GameData gd = harness.getGameData();
 
             // Elder Cathar should be dead
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Elder Cathar"));
+            harness.assertInGraveyard(player1, "Elder Cathar");
 
             // Controller should be prompted to choose a target creature
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);

@@ -55,10 +55,8 @@ class IdentityCrisisTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
 
         // Caster untouched: still holds Grizzly Bears, graveyard keeps Shock, nothing exiled.
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Shock");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 

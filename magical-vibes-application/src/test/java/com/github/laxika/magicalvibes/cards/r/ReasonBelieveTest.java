@@ -37,8 +37,7 @@ class ReasonBelieveTest extends BaseCardTest {
                 new InteractionAnswer.ScryOrder(List.of(0, 1, 2), List.of()));
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Reason"));
+        harness.assertInGraveyard(player1, "Reason");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -55,8 +54,7 @@ class ReasonBelieveTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Reason") || c.getName().equals("Believe"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -76,10 +74,8 @@ class ReasonBelieveTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Reason"));
     }
@@ -96,8 +92,7 @@ class ReasonBelieveTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.pendingMayAbilities).isEmpty();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
         assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Reason"));

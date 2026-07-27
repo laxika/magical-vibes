@@ -32,7 +32,6 @@ class IntoTheMawOfHellTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(landId, creatureId));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Land should be destroyed
         harness.assertNotOnBattlefield(player2, "Mountain");
         harness.assertInGraveyard(player2, "Mountain");
@@ -183,7 +182,6 @@ class IntoTheMawOfHellTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Into the Maw of Hell"));
+        harness.assertInGraveyard(player1, "Into the Maw of Hell");
     }
 }

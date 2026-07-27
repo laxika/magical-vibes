@@ -52,8 +52,7 @@ class HornetHarasserTest extends BaseCardTest {
         harness.passBothPriorities(); // Combat damage — Harasser dies
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hornet Harasser"));
+        harness.assertInGraveyard(player1, "Hornet Harasser");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -97,7 +96,7 @@ class HornetHarasserTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(bearId));
-        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test

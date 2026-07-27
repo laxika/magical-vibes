@@ -64,8 +64,7 @@ class CathedralMembraneTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Cathedral Membrane should be dead
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Cathedral Membrane"));
+        harness.assertInGraveyard(player2, "Cathedral Membrane");
 
         // Triggered ability should be on the stack
         assertThat(gd.stack).anyMatch(e ->
@@ -79,8 +78,7 @@ class CathedralMembraneTest extends BaseCardTest {
         // The attacker should be destroyed by the 6 damage
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(attackerId));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -129,8 +127,7 @@ class CathedralMembraneTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Cathedral Membrane should be dead
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Cathedral Membrane"));
+        harness.assertInGraveyard(player2, "Cathedral Membrane");
 
         // No Cathedral Membrane triggered ability should be on the stack
         // (Membrane died during precombat main, not during combat)

@@ -36,7 +36,7 @@ class ElsewhereFlaskTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         // One card cast, one drawn: net hand size returns to what it was before casting.
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore);
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
     }
 
     // ===== Sacrifice ability =====
@@ -50,10 +50,8 @@ class ElsewhereFlaskTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elsewhere Flask"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Elsewhere Flask"));
+        harness.assertNotOnBattlefield(player1, "Elsewhere Flask");
+        harness.assertInGraveyard(player1, "Elsewhere Flask");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }

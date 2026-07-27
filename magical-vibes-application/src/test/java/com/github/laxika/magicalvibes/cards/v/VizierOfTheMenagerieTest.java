@@ -33,8 +33,7 @@ class VizierOfTheMenagerieTest extends BaseCardTest {
             harness.castFromLibraryTop(player1);
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
             assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(bears);
         }
 
@@ -61,8 +60,7 @@ class VizierOfTheMenagerieTest extends BaseCardTest {
             harness.castFromLibraryTop(player1);
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
             assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         }
     }
@@ -111,8 +109,7 @@ class VizierOfTheMenagerieTest extends BaseCardTest {
 
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
         }
 
         @Test

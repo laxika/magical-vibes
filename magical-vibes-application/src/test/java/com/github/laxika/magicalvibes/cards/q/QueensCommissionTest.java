@@ -54,7 +54,6 @@ class QueensCommissionTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Queen's Commission"));
+        harness.assertInGraveyard(player1, "Queen's Commission");
     }
 }

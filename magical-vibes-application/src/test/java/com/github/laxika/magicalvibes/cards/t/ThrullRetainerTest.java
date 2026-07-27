@@ -79,10 +79,8 @@ class ThrullRetainerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(bears.getRegenerationShield()).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Thrull Retainer"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Thrull Retainer"));
+        harness.assertNotOnBattlefield(player1, "Thrull Retainer");
+        harness.assertInGraveyard(player1, "Thrull Retainer");
     }
 
     @Test

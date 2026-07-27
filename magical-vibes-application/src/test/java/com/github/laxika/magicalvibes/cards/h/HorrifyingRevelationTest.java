@@ -37,8 +37,7 @@ class HorrifyingRevelationTest extends BaseCardTest {
 
         // Grizzly Bears discarded + 1 card milled
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore - 1);
     }
 
@@ -95,8 +94,7 @@ class HorrifyingRevelationTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Horrifying Revelation"));
+        harness.assertInGraveyard(player1, "Horrifying Revelation");
         assertThat(gd.stack).isEmpty();
     }
 }

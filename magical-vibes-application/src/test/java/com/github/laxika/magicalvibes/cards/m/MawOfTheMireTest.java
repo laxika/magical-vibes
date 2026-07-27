@@ -51,10 +51,8 @@ class MawOfTheMireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mountain"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Mountain"));
+        harness.assertNotOnBattlefield(player2, "Mountain");
+        harness.assertInGraveyard(player2, "Mountain");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
     }
 
@@ -71,8 +69,7 @@ class MawOfTheMireTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Maw of the Mire"));
+        harness.assertInGraveyard(player1, "Maw of the Mire");
     }
 
     @Test
@@ -91,8 +88,7 @@ class MawOfTheMireTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Maw of the Mire"));
+        harness.assertInGraveyard(player1, "Maw of the Mire");
     }
 
     @Test

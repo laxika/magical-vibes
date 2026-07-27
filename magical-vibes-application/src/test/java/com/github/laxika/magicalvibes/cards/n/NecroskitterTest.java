@@ -37,10 +37,8 @@ class NecroskitterTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // The card is now a permanent under player1's control, gone from player2's graveyard.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
@@ -63,8 +61,7 @@ class NecroskitterTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test

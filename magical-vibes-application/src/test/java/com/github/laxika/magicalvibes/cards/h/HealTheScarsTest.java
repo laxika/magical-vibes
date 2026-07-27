@@ -100,9 +100,7 @@ class HealTheScarsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(bears.getRegenerationShield()).isEqualTo(0);
         assertThat(bears.isTapped()).isTrue();
         assertThat(bears.isBlocking()).isFalse();

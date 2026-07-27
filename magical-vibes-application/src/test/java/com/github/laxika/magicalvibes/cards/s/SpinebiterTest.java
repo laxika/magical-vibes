@@ -66,8 +66,7 @@ class SpinebiterTest extends BaseCardTest {
         // Poison counters should equal power (3)
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(3);
         // Blocker should survive (no damage assigned to it)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test

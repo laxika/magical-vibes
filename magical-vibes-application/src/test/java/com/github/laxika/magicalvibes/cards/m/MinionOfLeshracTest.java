@@ -47,8 +47,7 @@ class MinionOfLeshracTest extends BaseCardTest {
 
         assertThat(minion(player1).isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 5);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -62,8 +61,7 @@ class MinionOfLeshracTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(minion(player1).isTapped()).isFalse();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
@@ -81,8 +79,7 @@ class MinionOfLeshracTest extends BaseCardTest {
         assertThat(minion(player1).isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 5);
         // Source itself was not sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Minion of Leshrac"));
+        harness.assertOnBattlefield(player1, "Minion of Leshrac");
     }
 
     @Test
@@ -111,10 +108,8 @@ class MinionOfLeshracTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -127,8 +122,7 @@ class MinionOfLeshracTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player2, "Forest");
     }
 
     @Test

@@ -31,8 +31,7 @@ class TarpanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Tarpan is dead
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Tarpan"));
+        harness.assertInGraveyard(player1, "Tarpan");
 
         // Resolve the death trigger from the stack
         harness.passBothPriorities();
@@ -67,8 +66,7 @@ class TarpanTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Tarpan"));
+        harness.assertInGraveyard(player1, "Tarpan");
 
         // Resolve the death trigger from the stack
         harness.passBothPriorities();
@@ -103,8 +101,7 @@ class TarpanTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Tarpan"));
+        harness.assertOnBattlefield(player1, "Tarpan");
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
     }
 }

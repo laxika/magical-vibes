@@ -39,7 +39,6 @@ class IllusionaryForcesTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(forces);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Illusionary Forces"));
+        harness.assertInGraveyard(player1, "Illusionary Forces");
     }
 }

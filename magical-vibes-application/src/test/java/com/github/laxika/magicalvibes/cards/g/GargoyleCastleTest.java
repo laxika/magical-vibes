@@ -56,10 +56,8 @@ class GargoyleCastleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
 
         // Before resolution, Gargoyle Castle should already be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Gargoyle Castle"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Gargoyle Castle"));
+        harness.assertNotOnBattlefield(player1, "Gargoyle Castle");
+        harness.assertInGraveyard(player1, "Gargoyle Castle");
     }
 
     @Test

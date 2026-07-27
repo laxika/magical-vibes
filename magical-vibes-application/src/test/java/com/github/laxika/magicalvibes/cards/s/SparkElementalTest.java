@@ -93,8 +93,8 @@ class SparkElementalTest extends BaseCardTest {
         ));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Spark Elemental"));
-        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Spark Elemental");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -118,10 +118,8 @@ class SparkElementalTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spark Elemental"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spark Elemental"));
+        harness.assertNotOnBattlefield(player1, "Spark Elemental");
+        harness.assertInGraveyard(player1, "Spark Elemental");
     }
 }
 

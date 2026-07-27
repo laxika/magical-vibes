@@ -54,11 +54,8 @@ class BramblecrushTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fountain of Youth"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Fountain of Youth"));
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        harness.assertInGraveyard(player2, "Fountain of Youth");
     }
 
     @Test
@@ -72,11 +69,8 @@ class BramblecrushTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Pacifism"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Pacifism"));
+        harness.assertNotOnBattlefield(player2, "Pacifism");
+        harness.assertInGraveyard(player2, "Pacifism");
     }
 
     @Test
@@ -90,11 +84,8 @@ class BramblecrushTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
     }
 
     @Test
@@ -108,11 +99,8 @@ class BramblecrushTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Liliana Vess"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Liliana Vess"));
+        harness.assertNotOnBattlefield(player2, "Liliana Vess");
+        harness.assertInGraveyard(player2, "Liliana Vess");
     }
 
     @Test
@@ -142,7 +130,6 @@ class BramblecrushTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bramblecrush"));
+        harness.assertInGraveyard(player1, "Bramblecrush");
     }
 }

@@ -41,8 +41,7 @@ class GiltLeafArchdruidTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Island"));
+        harness.assertInHand(player1, "Island");
     }
 
     @Test
@@ -56,8 +55,7 @@ class GiltLeafArchdruidTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Island"));
+        harness.assertNotInHand(player1, "Island");
     }
 
     @Test

@@ -67,8 +67,7 @@ class KnollspineInvocationTest extends BaseCardTest {
         assertThat(entry.getXValue()).isEqualTo(2);
         // The mana-value-2 card was discarded to pay the cost
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         harness.passBothPriorities();
 
@@ -91,10 +90,8 @@ class KnollspineInvocationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears (2/2) destroyed by 2 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== X=0 edge case =====
@@ -111,7 +108,6 @@ class KnollspineInvocationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ornithopter"));
+        harness.assertInGraveyard(player1, "Ornithopter");
     }
 }

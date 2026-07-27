@@ -77,10 +77,8 @@ class MemorialToWarTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Mountain");
         harness.activateAbility(player1, 0, null, targetId);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Memorial to War"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Memorial to War"));
+        harness.assertNotOnBattlefield(player1, "Memorial to War");
+        harness.assertInGraveyard(player1, "Memorial to War");
     }
 
     @Test
@@ -96,10 +94,8 @@ class MemorialToWarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mountain"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Mountain"));
+        harness.assertNotOnBattlefield(player2, "Mountain");
+        harness.assertInGraveyard(player2, "Mountain");
     }
 
     @Test

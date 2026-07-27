@@ -58,8 +58,7 @@ class SemblanceAnvilTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Grizzly Bears should no longer be in hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInHand(player1, "Grizzly Bears");
 
         // Anvil should have Grizzly Bears imprinted
         Permanent anvil = gd.playerBattlefields.get(player1.getId()).stream()
@@ -84,8 +83,7 @@ class SemblanceAnvilTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Grizzly Bears should still be in hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
 
         // Anvil should have nothing imprinted
         Permanent anvil = gd.playerBattlefields.get(player1.getId()).stream()
@@ -109,8 +107,7 @@ class SemblanceAnvilTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Forest should still be in hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
 
         // Anvil should have nothing imprinted
         Permanent anvil = gd.playerBattlefields.get(player1.getId()).stream()

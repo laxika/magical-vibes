@@ -81,13 +81,10 @@ class EssenceScatterTest extends BaseCardTest {
         harness.castInstant(player2, 0, elves.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Countered spell goes to owner's graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
         // Does not enter the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
     }
 
     @Test
@@ -106,8 +103,7 @@ class EssenceScatterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Essence Scatter"));
+        harness.assertInGraveyard(player2, "Essence Scatter");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -135,7 +131,6 @@ class EssenceScatterTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Essence Scatter still goes to graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Essence Scatter"));
+        harness.assertInGraveyard(player2, "Essence Scatter");
     }
 }

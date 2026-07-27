@@ -65,10 +65,8 @@ class SyncopateTest extends BaseCardTest {
         // Spell should be exiled, NOT in graveyard
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Llanowar Elves"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -99,8 +97,7 @@ class SyncopateTest extends BaseCardTest {
         // Spell should be exiled, NOT in graveyard
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
     }
 
     // ===== Opponent pays: spell not countered =====
@@ -127,16 +124,14 @@ class SyncopateTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Elves should not be countered
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Llanowar Elves"));
 
         // Resolve the elves spell
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
     }
 
     // ===== Mana payment confirmation =====
@@ -218,8 +213,7 @@ class SyncopateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Syncopate"));
+        harness.assertInGraveyard(player2, "Syncopate");
     }
 
     // ===== Syncopate goes to graveyard =====
@@ -239,8 +233,6 @@ class SyncopateTest extends BaseCardTest {
         harness.castInstant(player2, 0, 1, elves.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Syncopate"));
+        harness.assertInGraveyard(player2, "Syncopate");
     }
 }

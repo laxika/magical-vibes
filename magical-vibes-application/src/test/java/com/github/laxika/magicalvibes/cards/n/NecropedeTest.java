@@ -59,8 +59,7 @@ class NecropedeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Necropede"));
+        harness.assertOnBattlefield(player1, "Necropede");
     }
 
     // ===== Death trigger: target selection then may =====
@@ -75,8 +74,7 @@ class NecropedeTest extends BaseCardTest {
         harness.passBothPriorities(); // Combat damage — Necropede dies, target selection prompt
 
         // Necropede should be dead
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Necropede"));
+        harness.assertInGraveyard(player1, "Necropede");
 
         // CR 603.3d: targets are chosen when the triggered ability is put on the stack
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -145,10 +143,8 @@ class NecropedeTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // Accept may -> effect resolves
 
         // Llanowar Elves (1/1) should be dead from 0 toughness
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
     }
 
     // ===== Decline may =====
@@ -219,8 +215,7 @@ class NecropedeTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Wrath — all creatures die
 
         // Necropede should be dead
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Necropede"));
+        harness.assertInGraveyard(player1, "Necropede");
 
         // No valid creature targets — trigger is skipped entirely (no stack entry, no may prompt)
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no valid targets"));

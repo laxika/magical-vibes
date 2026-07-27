@@ -36,8 +36,7 @@ class MolderBeastTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Cruel Edict
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Memnite"));
+        harness.assertInGraveyard(player2, "Memnite");
 
         // Molder Beast's triggered ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -62,8 +61,7 @@ class MolderBeastTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Naturalize
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Mind Stone"));
+        harness.assertInGraveyard(player2, "Mind Stone");
 
         // Molder Beast's triggered ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -84,8 +82,7 @@ class MolderBeastTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Cruel Edict
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // No triggered ability on the stack
         assertThat(gd.stack).isEmpty();
@@ -133,8 +130,7 @@ class MolderBeastTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Naturalize
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mind Stone"));
+        harness.assertInGraveyard(player1, "Mind Stone");
 
         // Molder Beast triggers even for own artifact
         assertThat(gd.stack).hasSize(1);

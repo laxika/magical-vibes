@@ -54,10 +54,8 @@ class VirulentWoundTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Llanowar Elves (1/1) gets -1/-1 counter → 0/0 → dies from state-based actions
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
 
         // Player 2 gets 1 poison counter
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
@@ -76,8 +74,7 @@ class VirulentWoundTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
 
         // Cast and resolve Go for the Throat to kill the wounded creature
@@ -85,10 +82,8 @@ class VirulentWoundTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearsId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // Player 2 gets 1 poison counter from delayed trigger
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
@@ -106,8 +101,7 @@ class VirulentWoundTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears (2/2) gets -1/-1 counter → effectively 1/1, survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
 
         // No poison counter since creature didn't die
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
@@ -127,8 +121,7 @@ class VirulentWoundTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Virulent Wound"));
+        harness.assertInGraveyard(player1, "Virulent Wound");
     }
 
     // ===== Fizzle =====

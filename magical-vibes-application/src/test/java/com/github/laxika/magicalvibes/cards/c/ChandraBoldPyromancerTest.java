@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -67,13 +66,10 @@ class ChandraBoldPyromancerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, bear.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(2); // 5 - 3
         // Bear should be dead (3 damage to a 2/2)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -91,11 +87,9 @@ class ChandraBoldPyromancerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, ajani.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(2); // 5 - 3
         // Ajani should be destroyed (3 damage to 3 loyalty planeswalker)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ajani, Outland Chaperone"));
+        harness.assertNotOnBattlefield(player2, "Ajani, Outland Chaperone");
     }
 
     // ===== -7 ability: 10 damage to target player and their creatures/planeswalkers =====
@@ -120,22 +114,19 @@ class ChandraBoldPyromancerTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Chandra should have 0 loyalty (7 - 7) and be in graveyard
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Chandra, Bold Pyromancer"));
+        harness.assertNotOnBattlefield(player1, "Chandra, Bold Pyromancer");
 
         // Player 2 takes 10 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(10); // 20 - 10
 
         // Both bears should be dead
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player2.getId()).stream()
                 .filter(c -> c.getName().equals("Grizzly Bears"))
                 .count()).isEqualTo(2);
 
         // Ajani should be destroyed (10 damage to 5 loyalty)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ajani, Outland Chaperone"));
+        harness.assertNotOnBattlefield(player2, "Ajani, Outland Chaperone");
     }
 
     @Test
@@ -148,10 +139,8 @@ class ChandraBoldPyromancerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Player 1's bear should be unharmed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Loyalty restrictions =====

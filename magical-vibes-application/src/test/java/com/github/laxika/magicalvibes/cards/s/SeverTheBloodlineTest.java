@@ -30,8 +30,7 @@ class SeverTheBloodlineTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
@@ -52,14 +51,11 @@ class SeverTheBloodlineTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // All Grizzly Bears should be exiled from both players' battlefields
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         // Llanowar Elves should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player2, "Llanowar Elves");
 
         // All Grizzly Bears should be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -101,14 +97,12 @@ class SeverTheBloodlineTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Target creature should be exiled
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Flashback spell should be exiled, not in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Sever the Bloodline"));
+        harness.assertNotInGraveyard(player1, "Sever the Bloodline");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Sever the Bloodline"));
     }

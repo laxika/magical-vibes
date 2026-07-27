@@ -30,8 +30,7 @@ class MagmaSprayTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.exiledCards).anyMatch(e -> e.card().getName().equals("Grizzly Bears"));
     }
 

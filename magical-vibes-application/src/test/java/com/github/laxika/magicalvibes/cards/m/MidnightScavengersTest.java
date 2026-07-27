@@ -43,10 +43,8 @@ class MidnightScavengersTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(elves.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInHand(player1, "Llanowar Elves");
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
     }
 
     @Test
@@ -74,10 +72,8 @@ class MidnightScavengersTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotInHand(player1, "Llanowar Elves");
     }
 
     @Test
@@ -86,7 +82,6 @@ class MidnightScavengersTest extends BaseCardTest {
         castMidnightScavengers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Midnight Scavengers"));
+        harness.assertOnBattlefield(player1, "Midnight Scavengers");
     }
 }

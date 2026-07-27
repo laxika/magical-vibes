@@ -89,11 +89,8 @@ class WillOTheWispTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Will-o'-the-Wisp"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Will-o'-the-Wisp"));
+        harness.assertNotOnBattlefield(player1, "Will-o'-the-Wisp");
+        harness.assertInGraveyard(player1, "Will-o'-the-Wisp");
     }
 
     private Permanent addWispReady(Player player) {

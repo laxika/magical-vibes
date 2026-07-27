@@ -107,12 +107,10 @@ class MemoricideTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Grizzly Bears should not be in hand
-        assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInHand(player2, "Grizzly Bears");
 
         // Peek should remain in hand
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Peek"));
+        harness.assertInHand(player2, "Peek");
     }
 
     @Test
@@ -133,8 +131,7 @@ class MemoricideTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -189,16 +186,13 @@ class MemoricideTest extends BaseCardTest {
         assertThat(exiledCount).isEqualTo(3);
 
         // No Grizzly Bears in any zone
-        assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Peek should remain in hand
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Peek"));
+        harness.assertInHand(player2, "Peek");
     }
 
     @Test
@@ -299,8 +293,7 @@ class MemoricideTest extends BaseCardTest {
         assertThat(exiledCount).isEqualTo(1);
 
         // Hand copy gone
-        assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInHand(player2, "Grizzly Bears");
 
         // Graveyard copy still there
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -371,8 +364,7 @@ class MemoricideTest extends BaseCardTest {
         // Grizzly Bears exiled from player1's hand
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInHand(player1, "Grizzly Bears");
     }
 
     // ===== After resolution =====
@@ -391,8 +383,7 @@ class MemoricideTest extends BaseCardTest {
         harness.handleListChoice(player1, "Grizzly Bears");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Memoricide"));
+        harness.assertInGraveyard(player1, "Memoricide");
     }
 
     // ===== Logging =====

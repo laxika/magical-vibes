@@ -31,8 +31,7 @@ class DenizenOfTheDeepTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Denizen of the Deep"));
+        harness.assertOnBattlefield(player1, "Denizen of the Deep");
 
         // ETB triggered ability should be on stack
         assertThat(gd.stack).hasSize(1);
@@ -88,8 +87,7 @@ class DenizenOfTheDeepTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Opponent's Serra Angel should still be on battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Serra Angel"));
+        harness.assertOnBattlefield(player2, "Serra Angel");
 
         // Player 1's Grizzly Bears should be bounced to hand
         assertThat(gd.playerHands.get(player1.getId()))

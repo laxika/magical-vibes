@@ -97,8 +97,7 @@ class VoiceOfAllTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Voice of All"));
+        harness.assertOnBattlefield(player1, "Voice of All");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
     }
@@ -237,11 +236,9 @@ class VoiceOfAllTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Voice of All survives — red damage prevented (protection from red)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Voice of All"));
+        harness.assertOnBattlefield(player2, "Voice of All");
         // Fire Elemental takes 2 from Voice of All (2 < 4 toughness) → survives
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Fire Elemental"));
+        harness.assertOnBattlefield(player1, "Fire Elemental");
     }
 
     @Test
@@ -266,10 +263,8 @@ class VoiceOfAllTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Voice of All dies — green is not the chosen color, 3 >= 2 toughness
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Voice of All"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Voice of All"));
+        harness.assertNotOnBattlefield(player2, "Voice of All");
+        harness.assertInGraveyard(player2, "Voice of All");
     }
 
     // ===== Protection - blocking =====
@@ -438,8 +433,7 @@ class VoiceOfAllTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Voice of All survives — white damage prevented
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Voice of All"));
+        harness.assertOnBattlefield(player2, "Voice of All");
     }
 
     // ===== No protection without color choice =====
@@ -466,10 +460,8 @@ class VoiceOfAllTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Voice of All dies — no protection without choosing a color (3 >= 2)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Voice of All"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Voice of All"));
+        harness.assertNotOnBattlefield(player2, "Voice of All");
+        harness.assertInGraveyard(player2, "Voice of All");
     }
 }
 

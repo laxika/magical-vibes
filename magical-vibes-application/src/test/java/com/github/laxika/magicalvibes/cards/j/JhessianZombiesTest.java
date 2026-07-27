@@ -49,7 +49,7 @@ class JhessianZombiesTest extends BaseCardTest {
 
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Island"));
+        harness.assertInHand(player1, "Island");
     }
 
     // ===== Swampcycling {2} =====

@@ -51,8 +51,7 @@ class InquisitorsSnareTest extends BaseCardTest {
 
         assertThat(gd.permanentsPreventedFromDealingDamage).contains(attacker.getId());
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(attacker);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertInGraveyard(player2, "Hill Giant");
     }
 
     @Test
@@ -63,8 +62,7 @@ class InquisitorsSnareTest extends BaseCardTest {
 
         assertThat(gd.permanentsPreventedFromDealingDamage).contains(attacker.getId());
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Prevention wears off =====

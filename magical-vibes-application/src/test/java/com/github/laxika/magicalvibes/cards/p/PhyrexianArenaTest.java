@@ -23,7 +23,7 @@ class PhyrexianArenaTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve life loss
 
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + 1);
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
     }
 

@@ -41,12 +41,10 @@ class SeizeTheSpoilsTest extends BaseCardTest {
         harness.castSorceryWithDiscard(player1, 0, 1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player1, "Forest");
         // Started with 2 cards, cast one, discarded one (net 0), then drew two.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Treasure"));
+        harness.assertOnBattlefield(player1, "Treasure");
     }
 
     @Test

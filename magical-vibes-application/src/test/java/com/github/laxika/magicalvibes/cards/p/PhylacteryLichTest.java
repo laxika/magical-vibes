@@ -38,8 +38,7 @@ class PhylacteryLichTest extends BaseCardTest {
         assertThat(artifact.getCounterCount(CounterType.PHYLACTERY)).isEqualTo(1);
 
         // Lich should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
+        harness.assertOnBattlefield(player1, "Phylactery Lich");
     }
 
     @Test
@@ -80,15 +79,12 @@ class PhylacteryLichTest extends BaseCardTest {
 
         // State trigger is on the stack — Lich is still alive
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
+        harness.assertOnBattlefield(player1, "Phylactery Lich");
 
         // Resolve state trigger → Lich is sacrificed
         harness.passBothPriorities();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Phylactery Lich"));
+        harness.assertNotOnBattlefield(player1, "Phylactery Lich");
+        harness.assertInGraveyard(player1, "Phylactery Lich");
     }
 
     @Test
@@ -115,10 +111,8 @@ class PhylacteryLichTest extends BaseCardTest {
         assertThat(perm.getCounterCount(CounterType.PHYLACTERY)).isEqualTo(0);
 
         // Lich should be in graveyard
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Phylactery Lich"));
+        harness.assertNotOnBattlefield(player1, "Phylactery Lich");
+        harness.assertInGraveyard(player1, "Phylactery Lich");
     }
 
     @Test
@@ -132,10 +126,8 @@ class PhylacteryLichTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell → state trigger fires
         harness.passBothPriorities(); // resolve state trigger → Lich sacrificed
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Phylactery Lich"));
+        harness.assertNotOnBattlefield(player1, "Phylactery Lich");
+        harness.assertInGraveyard(player1, "Phylactery Lich");
     }
 
     // ===== State-triggered sacrifice (rule 603.8) =====
@@ -150,8 +142,7 @@ class PhylacteryLichTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell → state trigger fires
 
         // Lich is on the battlefield while trigger is on the stack
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
+        harness.assertOnBattlefield(player1, "Phylactery Lich");
 
         // State trigger is on the stack
         assertThat(gd.stack).isNotEmpty();
@@ -161,8 +152,7 @@ class PhylacteryLichTest extends BaseCardTest {
 
         // Resolve trigger → Lich is sacrificed
         harness.passBothPriorities();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
+        harness.assertNotOnBattlefield(player1, "Phylactery Lich");
     }
 
     @Test
@@ -177,8 +167,7 @@ class PhylacteryLichTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Verify setup
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
+        harness.assertOnBattlefield(player1, "Phylactery Lich");
         assertThat(gqs.findPermanentById(gd, artifactId).getCounterCount(CounterType.PHYLACTERY)).isEqualTo(1);
 
         // Opponent casts Shatter to destroy the artifact
@@ -190,12 +179,9 @@ class PhylacteryLichTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Artifact destroyed, state trigger resolved → Lich is sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("The Hive"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Phylactery Lich"));
+        harness.assertNotOnBattlefield(player1, "The Hive");
+        harness.assertNotOnBattlefield(player1, "Phylactery Lich");
+        harness.assertInGraveyard(player1, "Phylactery Lich");
     }
 
     @Test
@@ -210,10 +196,8 @@ class PhylacteryLichTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Lich and artifact should both be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("The Hive"));
+        harness.assertOnBattlefield(player1, "Phylactery Lich");
+        harness.assertOnBattlefield(player1, "The Hive");
         assertThat(gqs.findPermanentById(gd, artifactId).getCounterCount(CounterType.PHYLACTERY)).isEqualTo(1);
 
         // No state trigger should fire
@@ -251,8 +235,7 @@ class PhylacteryLichTest extends BaseCardTest {
 
         // Lich should survive — second artifact still has phylactery counters
         // No state trigger should fire
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
+        harness.assertOnBattlefield(player1, "Phylactery Lich");
     }
 
     @Test
@@ -267,8 +250,7 @@ class PhylacteryLichTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Lich is on battlefield and has Indestructible (from Scryfall)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
+        harness.assertOnBattlefield(player1, "Phylactery Lich");
 
         // Destroy the artifact via Shatter
         harness.setHand(player2, List.of(new Shatter()));
@@ -279,9 +261,7 @@ class PhylacteryLichTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Indestructible does NOT prevent sacrifice — Lich goes to graveyard
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Phylactery Lich"));
+        harness.assertNotOnBattlefield(player1, "Phylactery Lich");
+        harness.assertInGraveyard(player1, "Phylactery Lich");
     }
 }

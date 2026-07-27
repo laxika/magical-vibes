@@ -58,10 +58,8 @@ class CaribouRangeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Caribou"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Caribou"));
+        harness.assertInGraveyard(player1, "Caribou");
+        harness.assertNotOnBattlefield(player1, "Caribou");
     }
 
     @Test

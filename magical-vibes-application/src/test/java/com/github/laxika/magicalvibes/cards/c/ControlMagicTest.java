@@ -62,8 +62,7 @@ class ControlMagicTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Control Magic should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Control Magic"));
+        harness.assertInGraveyard(player1, "Control Magic");
     }
 
     @Test

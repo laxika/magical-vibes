@@ -93,7 +93,6 @@ class MistmeadowSkulkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The 4/4's damage to the 1/1 Skulk is prevented (protection from MV 3+); Skulk survives.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mistmeadow Skulk"));
+        harness.assertOnBattlefield(player2, "Mistmeadow Skulk");
     }
 }

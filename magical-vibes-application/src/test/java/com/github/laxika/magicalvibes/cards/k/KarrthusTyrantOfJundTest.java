@@ -34,10 +34,8 @@ class KarrthusTyrantOfJundTest extends BaseCardTest {
         castKarrthus();
 
         // Control moved to player1
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Shivan Dragon"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Shivan Dragon"));
+        harness.assertOnBattlefield(player1, "Shivan Dragon");
+        harness.assertNotOnBattlefield(player2, "Shivan Dragon");
         // And it was untapped
         assertThat(enemyDragon.isTapped()).isFalse();
     }
@@ -50,8 +48,7 @@ class KarrthusTyrantOfJundTest extends BaseCardTest {
         castKarrthus();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(enemyBears);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test

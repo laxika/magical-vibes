@@ -143,10 +143,8 @@ class BaneslayerAngelTest extends BaseCardTest {
         // Baneslayer deals 5 first strike damage to 9/9 Demon (survives at 9/4)
         // Demon's 9 damage to Baneslayer is prevented (protection from Demons)
         // Both creatures survive
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Demon of Death's Gate"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Baneslayer Angel"));
+        harness.assertOnBattlefield(player1, "Demon of Death's Gate");
+        harness.assertOnBattlefield(player2, "Baneslayer Angel");
     }
 
     @Test
@@ -171,10 +169,8 @@ class BaneslayerAngelTest extends BaseCardTest {
 
         // Baneslayer deals 5 first strike damage (kills 5/5 Dragon)
         // Dragon's damage is prevented (protection from Dragons)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Shivan Dragon"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Baneslayer Angel"));
+        harness.assertNotOnBattlefield(player1, "Shivan Dragon");
+        harness.assertOnBattlefield(player2, "Baneslayer Angel");
     }
 
     @Test
@@ -200,9 +196,7 @@ class BaneslayerAngelTest extends BaseCardTest {
         // Baneslayer deals 5 first strike (6/6 survives at 6/1)
         // Regular damage: Hill Giant deals 6 (kills 5/5 Baneslayer)
         // Hill Giant survives, Baneslayer dies
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hill Giant"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Baneslayer Angel"));
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertNotOnBattlefield(player2, "Baneslayer Angel");
     }
 }

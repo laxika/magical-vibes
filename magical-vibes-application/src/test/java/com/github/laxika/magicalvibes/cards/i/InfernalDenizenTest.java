@@ -36,8 +36,7 @@ class InfernalDenizenTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger → auto-sacrifice both
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Swamp"));
+        harness.assertNotOnBattlefield(player1, "Swamp");
         assertThat(denizen(player1).isTapped()).isFalse();
     }
 
@@ -53,8 +52,7 @@ class InfernalDenizenTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve → penalty
 
         assertThat(denizen(player1).isTapped()).isTrue();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Swamp")); // the one Swamp is not sacrificed
+        harness.assertOnBattlefield(player1, "Swamp"); // the one Swamp is not sacrificed
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
@@ -145,7 +143,6 @@ class InfernalDenizenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(denizen(player1).isTapped()).isFalse();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Swamp"));
+        harness.assertOnBattlefield(player1, "Swamp");
     }
 }

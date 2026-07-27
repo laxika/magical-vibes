@@ -41,10 +41,8 @@ class SpreadTheSicknessTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve spell
 
         // Target creature destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // Proliferate choice is now awaited — choose the creature with counters
         harness.handleMultiplePermanentsChosen(player1, List.of(otherBears.getId()));
@@ -68,10 +66,8 @@ class SpreadTheSicknessTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bears was destroyed — proliferate has no eligible permanents now
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -133,7 +129,6 @@ class SpreadTheSicknessTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spread the Sickness"));
+        harness.assertInGraveyard(player1, "Spread the Sickness");
     }
 }

@@ -54,10 +54,8 @@ class ImpalerShrikeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Impaler Shrike should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Impaler Shrike"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Impaler Shrike"));
+        harness.assertNotOnBattlefield(player1, "Impaler Shrike");
+        harness.assertInGraveyard(player1, "Impaler Shrike");
 
         // Controller should have drawn 3 cards
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 3);
@@ -77,8 +75,7 @@ class ImpalerShrikeTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // Impaler Shrike should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Impaler Shrike"));
+        harness.assertOnBattlefield(player1, "Impaler Shrike");
 
         // No cards drawn
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);

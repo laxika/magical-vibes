@@ -35,8 +35,7 @@ class KnightOfTheWhiteOrchidTest extends BaseCardTest {
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Plains"));
+        harness.assertOnBattlefield(player1, "Plains");
     }
 
     @Test
@@ -52,8 +51,7 @@ class KnightOfTheWhiteOrchidTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Plains"));
+        harness.assertNotOnBattlefield(player1, "Plains");
     }
 
     @Test
@@ -68,8 +66,7 @@ class KnightOfTheWhiteOrchidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Plains"));
+        harness.assertNotOnBattlefield(player1, "Plains");
     }
 
     @Test
@@ -103,8 +100,7 @@ class KnightOfTheWhiteOrchidTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Plains"));
+        harness.assertNotOnBattlefield(player1, "Plains");
     }
 
     private void castKnight() {

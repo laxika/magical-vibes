@@ -172,8 +172,7 @@ class RighteousnessTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Righteousness"));
+        harness.assertInGraveyard(player2, "Righteousness");
     }
 
     // ===== Fizzle =====
@@ -247,10 +246,8 @@ class RighteousnessTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Blocker should survive (9 toughness vs 5 damage), attacker should die (5 toughness vs 9 damage)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Player2 takes no damage (attacker was blocked)
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);

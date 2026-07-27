@@ -40,11 +40,8 @@ class IllusoryDemonTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities(); // resolve the sacrifice trigger (on top of the stack)
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Illusory Demon"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Illusory Demon"));
+        harness.assertNotOnBattlefield(player1, "Illusory Demon");
+        harness.assertInGraveyard(player1, "Illusory Demon");
     }
 
     @Test
@@ -65,7 +62,6 @@ class IllusoryDemonTest extends BaseCardTest {
         // Only Opt on the stack — no sacrifice trigger from the controller's Demon
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Illusory Demon"));
+        harness.assertOnBattlefield(player1, "Illusory Demon");
     }
 }

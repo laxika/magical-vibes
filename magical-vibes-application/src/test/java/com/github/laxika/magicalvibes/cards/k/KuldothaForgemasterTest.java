@@ -135,15 +135,13 @@ class KuldothaForgemasterTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.ACTIVATED_ABILITY);
 
         // Sacrificed artifacts should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spellbook"))
-                .anyMatch(c -> c.getName().equals("Leonin Scimitar"))
-                .anyMatch(c -> c.getName().equals("Flight Spellbomb"));
+        harness.assertInGraveyard(player1, "Spellbook");
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+        harness.assertInGraveyard(player1, "Flight Spellbomb");
 
         // Non-sacrificed artifacts should remain
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Kuldotha Forgemaster"))
-                .anyMatch(p -> p.getCard().getName().equals("Gold Myr"));
+        harness.assertOnBattlefield(player1, "Kuldotha Forgemaster");
+        harness.assertOnBattlefield(player1, "Gold Myr");
     }
 
     @Test
@@ -174,8 +172,7 @@ class KuldothaForgemasterTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Gold Myr should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Gold Myr"));
+        harness.assertOnBattlefield(player1, "Gold Myr");
     }
 
     @Test

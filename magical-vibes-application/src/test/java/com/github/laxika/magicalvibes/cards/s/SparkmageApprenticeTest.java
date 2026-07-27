@@ -70,8 +70,7 @@ class SparkmageApprenticeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sparkmage Apprentice"));
+        harness.assertOnBattlefield(player1, "Sparkmage Apprentice");
 
         // ETB triggered ability should be on stack
         assertThat(gd.stack).hasSize(1);
@@ -103,10 +102,8 @@ class SparkmageApprenticeTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -126,8 +123,7 @@ class SparkmageApprenticeTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Damage to player =====
@@ -178,8 +174,7 @@ class SparkmageApprenticeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sparkmage Apprentice"));
+        harness.assertOnBattlefield(player1, "Sparkmage Apprentice");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -203,8 +198,7 @@ class SparkmageApprenticeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature enters battlefield, ETB skipped (no target provided)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sparkmage Apprentice"));
+        harness.assertOnBattlefield(player1, "Sparkmage Apprentice");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -222,8 +216,7 @@ class SparkmageApprenticeTest extends BaseCardTest {
 
         // Resolve creature spell → enters battlefield, ETB triggers with hexproof player target
         harness.passBothPriorities();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sparkmage Apprentice"));
+        harness.assertOnBattlefield(player1, "Sparkmage Apprentice");
 
         // Resolve ETB → fizzles because target player has hexproof
         harness.passBothPriorities();
@@ -270,16 +263,14 @@ class SparkmageApprenticeTest extends BaseCardTest {
 
         // Resolve creature spell → enters battlefield, ETB triggers
         harness.passBothPriorities();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sparkmage Apprentice"));
+        harness.assertOnBattlefield(player1, "Sparkmage Apprentice");
 
         // Resolve ETB → fizzles because target creature has hexproof
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         // Grizzly Bears should still be alive (no damage dealt)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Fizzle =====

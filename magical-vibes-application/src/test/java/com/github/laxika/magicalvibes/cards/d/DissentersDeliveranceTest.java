@@ -35,8 +35,7 @@ class DissentersDeliveranceTest extends BaseCardTest {
         castDeliverance(targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ornithopter"));
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
         harness.assertInGraveyard(player2, "Ornithopter");
     }
 

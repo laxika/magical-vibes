@@ -33,14 +33,10 @@ class AncientGrudgeTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fountain of Youth"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Fountain of Youth"));
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        harness.assertInGraveyard(player2, "Fountain of Youth");
         // Spell goes to graveyard (normal cast, not flashback)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ancient Grudge"));
+        harness.assertInGraveyard(player1, "Ancient Grudge");
     }
 
     @Test
@@ -66,11 +62,8 @@ class AncientGrudgeTest extends BaseCardTest {
         harness.castFlashback(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fountain of Youth"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Fountain of Youth"));
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        harness.assertInGraveyard(player2, "Fountain of Youth");
     }
 
     @Test
@@ -86,8 +79,7 @@ class AncientGrudgeTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Should NOT be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Ancient Grudge"));
+        harness.assertNotInGraveyard(player1, "Ancient Grudge");
         // Should be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Ancient Grudge"));
@@ -110,8 +102,7 @@ class AncientGrudgeTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Should NOT be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Ancient Grudge"));
+        harness.assertNotInGraveyard(player1, "Ancient Grudge");
         // Should be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Ancient Grudge"));
@@ -175,8 +166,6 @@ class AncientGrudgeTest extends BaseCardTest {
         harness.castFlashback(player1, 0, targetId);
 
         // Card should no longer be in the graveyard
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Ancient Grudge"));
+        harness.assertNotInGraveyard(player1, "Ancient Grudge");
     }
 }

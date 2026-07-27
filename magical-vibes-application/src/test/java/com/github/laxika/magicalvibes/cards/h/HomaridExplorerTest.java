@@ -21,8 +21,7 @@ class HomaridExplorerTest extends BaseCardTest {
         castHomaridExplorer(player2.getId());
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Homarid Explorer"));
+        harness.assertOnBattlefield(player1, "Homarid Explorer");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);

@@ -53,8 +53,7 @@ class ReapTheSeagrafTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Reap the Seagraf"));
+        harness.assertInGraveyard(player1, "Reap the Seagraf");
     }
 
     @Test
@@ -80,8 +79,7 @@ class ReapTheSeagrafTest extends BaseCardTest {
         harness.castFlashback(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Reap the Seagraf"));
+        harness.assertNotInGraveyard(player1, "Reap the Seagraf");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Reap the Seagraf"));
     }

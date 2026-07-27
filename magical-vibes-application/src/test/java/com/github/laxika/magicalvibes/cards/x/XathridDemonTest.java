@@ -75,10 +75,8 @@ class XathridDemonTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -131,8 +129,7 @@ class XathridDemonTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Xathrid Demon"));
+        harness.assertOnBattlefield(player1, "Xathrid Demon");
     }
 
     @Test
@@ -197,12 +194,9 @@ class XathridDemonTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, bears.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Giant Spider");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // Opponent loses life equal to Grizzly Bears' power (2)
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore - 2);
     }
@@ -238,8 +232,7 @@ class XathridDemonTest extends BaseCardTest {
         // Controller loses 7 life and demon is tapped (no OTHER creatures controller owns)
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 7);
         // Opponent's creature is untouched, opponent doesn't lose life from sacrifice
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
     }
 

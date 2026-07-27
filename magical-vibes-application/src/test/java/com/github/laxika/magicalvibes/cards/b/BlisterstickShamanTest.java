@@ -70,8 +70,7 @@ class BlisterstickShamanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Blisterstick Shaman"));
+        harness.assertOnBattlefield(player1, "Blisterstick Shaman");
 
         // ETB triggered ability should be on stack
         assertThat(gd.stack).hasSize(1);
@@ -103,10 +102,8 @@ class BlisterstickShamanTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -126,8 +123,7 @@ class BlisterstickShamanTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Damage to player =====
@@ -178,8 +174,7 @@ class BlisterstickShamanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Blisterstick Shaman"));
+        harness.assertOnBattlefield(player1, "Blisterstick Shaman");
         assertThat(gd.stack).isEmpty();
     }
 

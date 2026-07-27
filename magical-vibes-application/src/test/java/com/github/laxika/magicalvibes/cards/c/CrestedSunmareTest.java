@@ -135,7 +135,6 @@ class CrestedSunmareTest extends BaseCardTest {
         harness.castSorcery(player2, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Crested Sunmare"));
+        harness.assertNotOnBattlefield(player1, "Crested Sunmare");
     }
 }

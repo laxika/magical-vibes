@@ -53,10 +53,8 @@ class TorchFiendTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Torch Fiend"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Torch Fiend"));
+        harness.assertNotOnBattlefield(player1, "Torch Fiend");
+        harness.assertInGraveyard(player1, "Torch Fiend");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -75,10 +73,8 @@ class TorchFiendTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
+        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
     }
 
     @Test
@@ -91,10 +87,8 @@ class TorchFiendTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
+        harness.assertNotOnBattlefield(player1, "Leonin Scimitar");
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
     }
 
     @Test

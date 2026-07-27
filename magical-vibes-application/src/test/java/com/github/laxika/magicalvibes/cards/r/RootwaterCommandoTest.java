@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RootwaterCommandoTest extends BaseCardTest {
 
-
     // ===== Casting and resolving =====
 
     @Test
@@ -46,8 +45,7 @@ class RootwaterCommandoTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Rootwater Commando"));
+        harness.assertOnBattlefield(player1, "Rootwater Commando");
     }
 
     @Test
@@ -149,5 +147,4 @@ class RootwaterCommandoTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 }
-
 

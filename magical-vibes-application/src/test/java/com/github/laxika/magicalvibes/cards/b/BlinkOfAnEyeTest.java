@@ -52,10 +52,8 @@ class BlinkOfAnEyeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
         // No card drawn (hand size stays the same minus the spell cast)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore - 1);
     }
@@ -77,10 +75,8 @@ class BlinkOfAnEyeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
         // Drew a card (hand size = before - 1 spell cast + 1 draw = same as before)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
     }
@@ -98,11 +94,8 @@ class BlinkOfAnEyeTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player2, "Spellbook");
+        harness.assertInHand(player2, "Spellbook");
     }
 
     @Test
@@ -116,11 +109,8 @@ class BlinkOfAnEyeTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Angelic Chorus"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Angelic Chorus"));
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertInHand(player2, "Angelic Chorus");
     }
 
     // ===== Cannot target lands =====
@@ -152,11 +142,8 @@ class BlinkOfAnEyeTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        harness.assertInHand(player1, "Spellbook");
     }
 
     // ===== Fizzle =====
@@ -178,7 +165,6 @@ class BlinkOfAnEyeTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Blink of an Eye"));
+        harness.assertInGraveyard(player1, "Blink of an Eye");
     }
 }

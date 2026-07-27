@@ -32,8 +32,7 @@ class HavenwoodBattlegroundTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Havenwood Battleground"));
+        harness.assertOnBattlefield(player1, "Havenwood Battleground");
     }
 
     @Test
@@ -44,9 +43,7 @@ class HavenwoodBattlegroundTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Havenwood Battleground"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Havenwood Battleground"));
+        harness.assertNotOnBattlefield(player1, "Havenwood Battleground");
+        harness.assertInGraveyard(player1, "Havenwood Battleground");
     }
 }

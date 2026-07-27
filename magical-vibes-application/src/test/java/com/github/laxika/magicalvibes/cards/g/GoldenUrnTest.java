@@ -84,10 +84,8 @@ class GoldenUrnTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Golden Urn should be in graveyard
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Golden Urn"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Golden Urn"));
+        harness.assertNotOnBattlefield(player1, "Golden Urn");
+        harness.assertInGraveyard(player1, "Golden Urn");
 
         // Player should have gained 3 life
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
@@ -105,8 +103,7 @@ class GoldenUrnTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Golden Urn should be in graveyard
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Golden Urn"));
+        harness.assertNotOnBattlefield(player1, "Golden Urn");
 
         // Player should not have gained any life
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -157,10 +154,8 @@ class GoldenUrnTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Should be in graveyard immediately (sacrifice is a cost)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Golden Urn"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Golden Urn"));
+        harness.assertNotOnBattlefield(player1, "Golden Urn");
+        harness.assertInGraveyard(player1, "Golden Urn");
     }
 
     // ===== Helper methods =====

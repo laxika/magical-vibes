@@ -42,14 +42,11 @@ class FemerefArchersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Femeref Archers"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Femeref Archers"));
+        harness.assertOnBattlefield(player1, "Femeref Archers");
+        harness.assertNotInGraveyard(player1, "Femeref Archers");
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(attacker.getId()));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Skyhunter Skirmisher"));
+        harness.assertInGraveyard(player2, "Skyhunter Skirmisher");
     }
 
     @Test

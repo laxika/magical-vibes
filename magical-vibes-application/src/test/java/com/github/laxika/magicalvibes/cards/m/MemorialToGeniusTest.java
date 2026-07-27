@@ -69,10 +69,8 @@ class MemorialToGeniusTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Memorial to Genius"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Memorial to Genius"));
+        harness.assertNotOnBattlefield(player1, "Memorial to Genius");
+        harness.assertInGraveyard(player1, "Memorial to Genius");
     }
 
     @Test

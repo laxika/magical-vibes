@@ -32,8 +32,7 @@ class ForkedLightningTest extends BaseCardTest {
         // AirElemental is 4/4, 4 damage kills it
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(target.getId()));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Air Elemental"));
+        harness.assertInGraveyard(player2, "Air Elemental");
     }
 
     @Test

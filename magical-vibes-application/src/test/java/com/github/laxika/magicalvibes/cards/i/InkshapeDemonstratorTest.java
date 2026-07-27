@@ -96,6 +96,6 @@ class InkshapeDemonstratorTest extends BaseCardTest {
         harness.castInstant(player2, 0, demonstrator.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player2, "Shock");
     }
 }

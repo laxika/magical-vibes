@@ -97,8 +97,7 @@ class ShardConvergenceTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shard Convergence"));
+        harness.assertInGraveyard(player1, "Shard Convergence");
     }
 
     // ===== Helpers =====

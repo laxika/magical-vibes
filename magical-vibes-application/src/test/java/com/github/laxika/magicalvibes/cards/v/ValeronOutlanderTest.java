@@ -112,8 +112,7 @@ class ValeronOutlanderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Black Knight's 3 damage to Valeron is prevented by protection from black — it survives.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Valeron Outlander"));
+        harness.assertOnBattlefield(player2, "Valeron Outlander");
     }
 
     @Test
@@ -137,10 +136,8 @@ class ValeronOutlanderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No protection from green — 3 damage kills the 2/2.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Valeron Outlander"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Valeron Outlander"));
+        harness.assertNotOnBattlefield(player2, "Valeron Outlander");
+        harness.assertInGraveyard(player2, "Valeron Outlander");
     }
 
     // ===== Protection - targeting =====

@@ -33,10 +33,8 @@ class HorizonSpellbombTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Spellbomb should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Horizon Spellbomb"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Horizon Spellbomb"));
+        harness.assertNotOnBattlefield(player1, "Horizon Spellbomb");
+        harness.assertInGraveyard(player1, "Horizon Spellbomb");
 
         // Death trigger MayPayManaEffect resolves first (on top per CR 603.3)
         harness.passBothPriorities();

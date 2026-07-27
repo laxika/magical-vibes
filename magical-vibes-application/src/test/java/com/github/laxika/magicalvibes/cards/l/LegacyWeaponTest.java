@@ -53,8 +53,7 @@ class LegacyWeaponTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Legacy Weapon"));
+        harness.assertOnBattlefield(player1, "Legacy Weapon");
     }
 
     // ===== Activated ability: exile creature =====
@@ -88,14 +87,12 @@ class LegacyWeaponTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Creature is no longer on battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Creature is in exile zone
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         // Creature is NOT in graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Activated ability: exile land =====
@@ -111,8 +108,7 @@ class LegacyWeaponTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player2, "Forest");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Forest"));
     }
@@ -130,8 +126,7 @@ class LegacyWeaponTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Angel's Feather"));
+        harness.assertNotOnBattlefield(player2, "Angel's Feather");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Angel's Feather"));
     }
@@ -149,8 +144,7 @@ class LegacyWeaponTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Pacifism"));
+        harness.assertNotOnBattlefield(player2, "Pacifism");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Pacifism"));
     }
@@ -285,11 +279,9 @@ class LegacyWeaponTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Not on battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Legacy Weapon"));
+        harness.assertNotOnBattlefield(player2, "Legacy Weapon");
         // NOT in graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Legacy Weapon"));
+        harness.assertNotInGraveyard(player2, "Legacy Weapon");
         // Shuffled into library
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore + 1);
         assertThat(gd.playerDecks.get(player2.getId()))
@@ -313,8 +305,7 @@ class LegacyWeaponTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }

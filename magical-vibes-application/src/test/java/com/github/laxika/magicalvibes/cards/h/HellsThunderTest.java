@@ -28,10 +28,8 @@ class HellsThunderTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hell's Thunder"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hell's Thunder"));
+        harness.assertNotOnBattlefield(player1, "Hell's Thunder");
+        harness.assertInGraveyard(player1, "Hell's Thunder");
     }
 
     @Test
@@ -49,8 +47,7 @@ class HellsThunderTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Hell's Thunder"))
                 .findFirst().orElseThrow();
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Hell's Thunder"));
+        harness.assertNotInGraveyard(player1, "Hell's Thunder");
     }
 
     @Test
@@ -68,8 +65,7 @@ class HellsThunderTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hell's Thunder"));
+        harness.assertNotOnBattlefield(player1, "Hell's Thunder");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Hell's Thunder"));
     }

@@ -138,10 +138,8 @@ class BondsOfQuicksilverTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bonds of Quicksilver"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Bonds of Quicksilver"));
+        harness.assertInGraveyard(player1, "Bonds of Quicksilver");
+        harness.assertNotOnBattlefield(player1, "Bonds of Quicksilver");
     }
 
     // ===== Targeting restriction =====

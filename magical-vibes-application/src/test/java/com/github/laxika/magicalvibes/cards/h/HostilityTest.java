@@ -47,8 +47,7 @@ class HostilityTest extends BaseCardTest {
 
         // Not "a spell you control" — damage goes through and no tokens are made.
         harness.assertLife(player1, 17);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elemental Shaman"));
+        harness.assertNotOnBattlefield(player1, "Elemental Shaman");
     }
 
     @Test
@@ -60,8 +59,7 @@ class HostilityTest extends BaseCardTest {
 
         harness.runStateBasedActions();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hostility"));
+        harness.assertInGraveyard(player1, "Hostility");
         assertThat(gd.stack).isNotEmpty();
 
         harness.passBothPriorities();

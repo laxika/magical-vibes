@@ -43,8 +43,7 @@ class PyreticRitualTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Pyretic Ritual"));
+        harness.assertInGraveyard(player1, "Pyretic Ritual");
     }
 
     // ===== Helpers =====

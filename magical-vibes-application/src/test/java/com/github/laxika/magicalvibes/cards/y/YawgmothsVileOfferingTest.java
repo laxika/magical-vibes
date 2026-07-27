@@ -77,16 +77,13 @@ class YawgmothsVileOfferingTest extends BaseCardTest {
                 .noneMatch(c -> c.getId().equals(graveyardCreature.getId()));
 
         // Opponent's creature destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // Spell exiled
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Yawgmoth's Vile Offering"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Yawgmoth's Vile Offering"));
+        harness.assertNotInGraveyard(player1, "Yawgmoth's Vile Offering");
     }
 
     // ===== Reanimate from opponent's graveyard =====
@@ -161,8 +158,7 @@ class YawgmothsVileOfferingTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Opponent's creature destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         // Spell exiled
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -202,8 +198,7 @@ class YawgmothsVileOfferingTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Yawgmoth's Vile Offering"));
+        harness.assertNotInGraveyard(player1, "Yawgmoth's Vile Offering");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Yawgmoth's Vile Offering"));
     }
@@ -238,8 +233,7 @@ class YawgmothsVileOfferingTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().getId().equals(creature.getId()));
 
         // Destroy still resolves
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test

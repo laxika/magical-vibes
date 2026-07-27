@@ -44,8 +44,7 @@ class GroupProjectTest extends BaseCardTest {
         assertThat(c1.isTapped()).isTrue();
         assertThat(c2.isTapped()).isTrue();
         assertThat(c3.isTapped()).isTrue();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Spirit"));
+        harness.assertOnBattlefield(player1, "Spirit");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Group Project"));
     }

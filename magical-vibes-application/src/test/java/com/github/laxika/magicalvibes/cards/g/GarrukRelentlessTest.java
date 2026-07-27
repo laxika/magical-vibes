@@ -46,8 +46,7 @@ class GarrukRelentlessTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Garruk dealt 3 damage to 2/2 creature — creature should die
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
             // Creature had 2 power, so Garruk loses 2 loyalty: 3 - 2 = 1
             assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
         }
@@ -197,8 +196,7 @@ class GarrukRelentlessTest extends BaseCardTest {
             assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
 
             // Creature was sacrificed
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
             // Library search should be awaiting input
             assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class) != null).isTrue();
@@ -207,8 +205,7 @@ class GarrukRelentlessTest extends BaseCardTest {
             gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
             // The creature card should now be in hand
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Runeclaw Bear"));
+            harness.assertInHand(player1, "Runeclaw Bear");
         }
 
         @Test
@@ -234,8 +231,7 @@ class GarrukRelentlessTest extends BaseCardTest {
             harness.handlePermanentChosen(player1, creature1.getId());
 
             // creature1 was sacrificed
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
             // Library search should be awaiting input
             assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class) != null).isTrue();
@@ -243,8 +239,7 @@ class GarrukRelentlessTest extends BaseCardTest {
             // Choose the creature from library
             gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Runeclaw Bear"));
+            harness.assertInHand(player1, "Runeclaw Bear");
         }
 
         @Test

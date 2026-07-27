@@ -65,8 +65,7 @@ class AshesToAshesTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hill Giant"));
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 5);
     }
 

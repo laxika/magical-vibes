@@ -52,8 +52,7 @@ class CarrionThrashTest extends BaseCardTest {
         killInCombatUntilMayPrompt();
 
         // Carrion Thrash is now in the graveyard alongside the pre-seeded Grizzly Bears
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Carrion Thrash"));
+        harness.assertInGraveyard(player1, "Carrion Thrash");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
 
@@ -62,13 +61,10 @@ class CarrionThrashTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
         // "Another" — Carrion Thrash cannot return itself
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Carrion Thrash"));
+        harness.assertInGraveyard(player1, "Carrion Thrash");
     }
 
     @Test
@@ -81,10 +77,8 @@ class CarrionThrashTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
     }
 
     @Test
@@ -101,9 +95,7 @@ class CarrionThrashTest extends BaseCardTest {
 
         // No graveyard choice is offered and Carrion Thrash stays put
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Carrion Thrash"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Carrion Thrash"));
+        harness.assertInGraveyard(player1, "Carrion Thrash");
+        harness.assertNotInHand(player1, "Carrion Thrash");
     }
 }

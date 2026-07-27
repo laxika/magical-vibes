@@ -85,8 +85,7 @@ class BloodcrazedPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bears should be dead
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         // Now cast Bloodcrazed Paladin — should get 1 counter from the Bears death
         harness.setHand(player1, List.of(new BloodcrazedPaladin()));

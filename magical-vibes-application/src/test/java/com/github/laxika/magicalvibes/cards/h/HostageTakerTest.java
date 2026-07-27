@@ -51,8 +51,7 @@ class HostageTakerTest extends BaseCardTest {
         UUID creatureId = harness.getPermanentId(player2, "Goblin Piker");
         castAndExileTarget(creatureId);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Goblin Piker"));
+        harness.assertNotOnBattlefield(player2, "Goblin Piker");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Goblin Piker"));
     }
@@ -64,8 +63,7 @@ class HostageTakerTest extends BaseCardTest {
         UUID artifactId = harness.getPermanentId(player2, "Rod of Ruin");
         castAndExileTarget(artifactId);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Rod of Ruin"));
+        harness.assertNotOnBattlefield(player2, "Rod of Ruin");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Rod of Ruin"));
     }
@@ -93,12 +91,10 @@ class HostageTakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Hostage Taker is dead
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hostage Taker"));
+        harness.assertNotOnBattlefield(player1, "Hostage Taker");
 
         // Exiled card returns to battlefield under owner's control
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Goblin Piker"));
+        harness.assertOnBattlefield(player2, "Goblin Piker");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Goblin Piker"));
     }
@@ -121,8 +117,7 @@ class HostageTakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Exiled card returns to battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Goblin Piker"));
+        harness.assertOnBattlefield(player2, "Goblin Piker");
     }
 
     // ===== Cast from exile =====
@@ -159,8 +154,7 @@ class HostageTakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Goblin Piker should be on the battlefield under player1's control
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Goblin Piker"));
+        harness.assertOnBattlefield(player1, "Goblin Piker");
     }
 
     @Test
@@ -181,8 +175,7 @@ class HostageTakerTest extends BaseCardTest {
         gs.playCardFromExile(gd, player1, exiledRod.getId(), null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Rod of Ruin"));
+        harness.assertOnBattlefield(player1, "Rod of Ruin");
     }
 
     @Test
@@ -203,8 +196,7 @@ class HostageTakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Piker is now on player1's battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Goblin Piker"));
+        harness.assertOnBattlefield(player1, "Goblin Piker");
 
         resetForFollowUpSpell();
 

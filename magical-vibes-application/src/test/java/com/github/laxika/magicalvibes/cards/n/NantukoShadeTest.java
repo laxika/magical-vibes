@@ -43,9 +43,7 @@ class NantukoShadeTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Nantuko Shade"));
+        harness.assertOnBattlefield(player1, "Nantuko Shade");
     }
 
     // ===== Activate ability =====

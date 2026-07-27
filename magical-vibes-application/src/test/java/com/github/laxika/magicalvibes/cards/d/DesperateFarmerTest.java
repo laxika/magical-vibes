@@ -80,7 +80,6 @@ class DesperateFarmerTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Desperate Farmer"));
+        harness.assertInGraveyard(player1, "Desperate Farmer");
     }
 }

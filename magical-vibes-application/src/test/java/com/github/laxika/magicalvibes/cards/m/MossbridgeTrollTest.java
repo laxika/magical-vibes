@@ -33,10 +33,8 @@ class MossbridgeTrollTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Survives via intrinsic regeneration — no shield was ever set.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mossbridge Troll"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Mossbridge Troll"));
+        harness.assertOnBattlefield(player1, "Mossbridge Troll");
+        harness.assertNotInGraveyard(player1, "Mossbridge Troll");
         assertThat(troll.isTapped()).isTrue();
         assertThat(troll.getRegenerationShield()).isEqualTo(0);
     }
@@ -54,8 +52,7 @@ class MossbridgeTrollTest extends BaseCardTest {
         harness.castSorcery(player2, 0, 0, troll.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mossbridge Troll"));
+        harness.assertOnBattlefield(player1, "Mossbridge Troll");
 
         // Destroy it a second time the same game — a spent shield would be gone, intrinsic regen is not.
         harness.forceActivePlayer(player2);
@@ -65,10 +62,8 @@ class MossbridgeTrollTest extends BaseCardTest {
         harness.castSorcery(player2, 0, 0, troll.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mossbridge Troll"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Mossbridge Troll"));
+        harness.assertOnBattlefield(player1, "Mossbridge Troll");
+        harness.assertNotInGraveyard(player1, "Mossbridge Troll");
     }
 
     @Test
@@ -86,10 +81,8 @@ class MossbridgeTrollTest extends BaseCardTest {
         harness.castSorcery(player2, 0, 0, troll.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mossbridge Troll"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mossbridge Troll"));
+        harness.assertNotOnBattlefield(player1, "Mossbridge Troll");
+        harness.assertInGraveyard(player1, "Mossbridge Troll");
     }
 
     // ===== Pump ability: tap creatures with total power 10+ for +20/+20 =====

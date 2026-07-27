@@ -53,10 +53,8 @@ class MeltTerrainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
@@ -72,8 +70,7 @@ class MeltTerrainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Island"));
+        harness.assertNotOnBattlefield(player2, "Island");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
@@ -89,8 +86,7 @@ class MeltTerrainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player1, "Forest");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 
@@ -144,7 +140,6 @@ class MeltTerrainTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Melt Terrain"));
+        harness.assertInGraveyard(player1, "Melt Terrain");
     }
 }

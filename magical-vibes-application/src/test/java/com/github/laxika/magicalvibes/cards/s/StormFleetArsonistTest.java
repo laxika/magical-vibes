@@ -50,8 +50,7 @@ class StormFleetArsonistTest extends BaseCardTest {
 
         // Opponent's only permanent should be auto-sacrificed
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -81,8 +80,7 @@ class StormFleetArsonistTest extends BaseCardTest {
 
         // One sacrificed, one remains
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -113,12 +111,10 @@ class StormFleetArsonistTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Creature is on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Storm Fleet Arsonist"));
+        harness.assertOnBattlefield(player1, "Storm Fleet Arsonist");
 
         // Opponent's permanent unchanged
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Raid lost before resolution (intervening-if) =====
@@ -138,8 +134,7 @@ class StormFleetArsonistTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger — raid no longer met
 
         // Opponent's permanent should still be there
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("raid ability does nothing"));
     }
 
@@ -151,8 +146,7 @@ class StormFleetArsonistTest extends BaseCardTest {
         castStormFleetArsonist();
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Storm Fleet Arsonist"));
+        harness.assertOnBattlefield(player1, "Storm Fleet Arsonist");
     }
 
     // ===== Targeting =====

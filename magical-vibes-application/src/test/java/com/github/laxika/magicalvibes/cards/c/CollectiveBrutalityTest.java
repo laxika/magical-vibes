@@ -63,11 +63,9 @@ class CollectiveBrutalityTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Peek"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Peek"))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Peek");
+        harness.assertNotInHand(player2, "Peek");
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     @Test
@@ -85,9 +83,8 @@ class CollectiveBrutalityTest extends BaseCardTest {
                 List.of(bears.getId(), player2.getId()), List.of(1));
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"))
-                .anyMatch(c -> c.getName().equals("Collective Brutality"));
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertInGraveyard(player1, "Collective Brutality");
         assertThat(bears.getPowerModifier()).isEqualTo(-2);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);

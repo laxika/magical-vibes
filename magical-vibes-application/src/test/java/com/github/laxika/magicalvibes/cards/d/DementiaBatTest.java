@@ -28,8 +28,7 @@ class DementiaBatTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Dementia Bat"));
+        harness.assertNotOnBattlefield(player1, "Dementia Bat");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }
@@ -114,7 +113,6 @@ class DementiaBatTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Dementia Bat"));
+        harness.assertInGraveyard(player1, "Dementia Bat");
     }
 }

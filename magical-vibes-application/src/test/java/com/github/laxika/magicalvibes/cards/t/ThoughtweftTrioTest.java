@@ -34,10 +34,8 @@ class ThoughtweftTrioTest extends BaseCardTest {
         castThoughtweftTrio();
         harness.passBothPriorities(); // resolve champion ETB -> auto-sacrifice
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Thoughtweft Trio"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Thoughtweft Trio"));
+        harness.assertNotOnBattlefield(player1, "Thoughtweft Trio");
+        harness.assertInGraveyard(player1, "Thoughtweft Trio");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -48,8 +46,7 @@ class ThoughtweftTrioTest extends BaseCardTest {
         castThoughtweftTrio();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Thoughtweft Trio"));
+        harness.assertNotOnBattlefield(player1, "Thoughtweft Trio");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -61,8 +58,7 @@ class ThoughtweftTrioTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve champion ETB -> permanent choice
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Thoughtweft Trio"));
+        harness.assertOnBattlefield(player1, "Thoughtweft Trio");
     }
 
     @Test
@@ -75,10 +71,8 @@ class ThoughtweftTrioTest extends BaseCardTest {
         UUID stalwartId = harness.getPermanentId(player1, "Goldmeadow Stalwart");
         harness.handlePermanentChosen(player1, stalwartId);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Thoughtweft Trio"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Goldmeadow Stalwart"));
+        harness.assertOnBattlefield(player1, "Thoughtweft Trio");
+        harness.assertNotOnBattlefield(player1, "Goldmeadow Stalwart");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Goldmeadow Stalwart"));
         assertThat(gd.exileReturnOnPermanentLeave).isNotEmpty();
@@ -104,10 +98,8 @@ class ThoughtweftTrioTest extends BaseCardTest {
         harness.castInstant(player1, 0, trioId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Thoughtweft Trio"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Goldmeadow Stalwart"));
+        harness.assertNotOnBattlefield(player1, "Thoughtweft Trio");
+        harness.assertOnBattlefield(player1, "Goldmeadow Stalwart");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Goldmeadow Stalwart"));
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();

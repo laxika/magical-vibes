@@ -33,8 +33,7 @@ class TrinketMageTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Trinket Mage"));
+        harness.assertOnBattlefield(player1, "Trinket Mage");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }

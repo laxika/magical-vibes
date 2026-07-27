@@ -121,8 +121,7 @@ class KathariRemnantTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Kathari Remnant"));
+        harness.assertOnBattlefield(player1, "Kathari Remnant");
         Permanent kathari = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Kathari Remnant"))
                 .findFirst().orElseThrow();
@@ -149,10 +148,8 @@ class KathariRemnantTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Kathari Remnant"));
-        assertThat(harness.getGameData().playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Kathari Remnant"));
+        harness.assertNotOnBattlefield(player1, "Kathari Remnant");
+        harness.assertInGraveyard(player1, "Kathari Remnant");
     }
 
     // ===== Helpers =====

@@ -49,8 +49,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Lord of the Undead"));
+        harness.assertOnBattlefield(player1, "Lord of the Undead");
     }
 
     @Test
@@ -282,10 +281,8 @@ class LordOfTheUndeadTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Gravedigger"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Gravedigger"));
+        harness.assertInHand(player1, "Gravedigger");
+        harness.assertNotInGraveyard(player1, "Gravedigger");
     }
 
     @Test
@@ -302,12 +299,9 @@ class LordOfTheUndeadTest extends BaseCardTest {
         // Choose Graveborn Muse (index 1)
         harness.handleGraveyardCardChosen(player1, 1);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Graveborn Muse"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Gravedigger"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Graveborn Muse"));
+        harness.assertInHand(player1, "Graveborn Muse");
+        harness.assertInGraveyard(player1, "Gravedigger");
+        harness.assertNotInGraveyard(player1, "Graveborn Muse");
     }
 
     @Test
@@ -322,10 +316,8 @@ class LordOfTheUndeadTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, -1);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Gravedigger"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Gravedigger"));
+        harness.assertInGraveyard(player1, "Gravedigger");
+        harness.assertNotInHand(player1, "Gravedigger");
     }
 
     // ===== Activated ability: edge cases =====
@@ -355,8 +347,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no Zombie cards in graveyard"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -459,8 +450,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Lord of the Undead"));
+        harness.assertOnBattlefield(player1, "Lord of the Undead");
     }
 
     // ===== Helpers =====

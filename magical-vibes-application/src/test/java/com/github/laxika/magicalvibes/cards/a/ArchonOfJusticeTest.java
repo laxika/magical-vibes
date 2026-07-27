@@ -38,8 +38,7 @@ class ArchonOfJusticeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, forestId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player2, "Forest");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Forest"));
     }

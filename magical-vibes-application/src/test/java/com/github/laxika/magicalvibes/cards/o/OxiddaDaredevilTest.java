@@ -21,8 +21,7 @@ class OxiddaDaredevilTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player1, "Spellbook");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }
@@ -75,8 +74,7 @@ class OxiddaDaredevilTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
+        harness.assertInGraveyard(player1, "Spellbook");
     }
 
 }

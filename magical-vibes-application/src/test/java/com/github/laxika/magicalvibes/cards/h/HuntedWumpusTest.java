@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HuntedWumpusTest extends BaseCardTest {
 
-
     /**
      * Give player1 a Hunted Wumpus hand + enough mana, then cast it.
      * After casting the game auto-passes priority for player2 (no playable cards,
@@ -207,10 +206,8 @@ class HuntedWumpusTest extends BaseCardTest {
         assertThat(recursiveEtb.getCard().getName()).isEqualTo("Hunted Wumpus");
 
         // Both Wumpuses are on their respective battlefields
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hunted Wumpus"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hunted Wumpus"));
+        harness.assertOnBattlefield(player1, "Hunted Wumpus");
+        harness.assertOnBattlefield(player2, "Hunted Wumpus");
     }
 
     @Test
@@ -249,13 +246,11 @@ class HuntedWumpusTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         // Grizzly Bears is on player1's battlefield (alongside the first Wumpus)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hunted Wumpus"))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Hunted Wumpus");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
 
         // Player2 has their Wumpus on the battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hunted Wumpus"));
+        harness.assertOnBattlefield(player2, "Hunted Wumpus");
 
         // Player1's hand is now empty (they put the Grizzly Bears)
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -279,5 +274,4 @@ class HuntedWumpusTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 }
-
 

@@ -69,8 +69,7 @@ class TraumatizeTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
         // 5 milled cards + Traumatize itself goes to graveyard after resolving
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(6);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Traumatize"));
+        harness.assertInGraveyard(player1, "Traumatize");
     }
 
     @Test
@@ -116,8 +115,7 @@ class TraumatizeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Traumatize"));
+        harness.assertInGraveyard(player1, "Traumatize");
         assertThat(gd.stack).isEmpty();
     }
 

@@ -29,10 +29,8 @@ class ShardPhoenixTest extends BaseCardTest {
 
             harness.activateAbility(player1, 0, null, null);
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Shard Phoenix"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Shard Phoenix"));
+            harness.assertNotOnBattlefield(player1, "Shard Phoenix");
+            harness.assertInGraveyard(player1, "Shard Phoenix");
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
@@ -47,10 +45,8 @@ class ShardPhoenixTest extends BaseCardTest {
             harness.activateAbility(player1, 0, null, null);
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+            harness.assertInGraveyard(player2, "Grizzly Bears");
         }
 
         @Test
@@ -63,8 +59,7 @@ class ShardPhoenixTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // 1/1 flyer survives because it is not dealt damage
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Suntail Hawk"));
+            harness.assertOnBattlefield(player2, "Suntail Hawk");
         }
 
         @Test
@@ -97,10 +92,8 @@ class ShardPhoenixTest extends BaseCardTest {
             harness.activateGraveyardAbility(player1, 0);
             harness.passBothPriorities();
 
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Shard Phoenix"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Shard Phoenix"));
+            harness.assertInHand(player1, "Shard Phoenix");
+            harness.assertNotInGraveyard(player1, "Shard Phoenix");
         }
 
         @Test

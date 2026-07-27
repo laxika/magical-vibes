@@ -45,8 +45,7 @@ class OblivionRingTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         castAndResolveOblivionRing(bearsId);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.exileReturnOnPermanentLeave).isNotEmpty();
@@ -59,8 +58,7 @@ class OblivionRingTest extends BaseCardTest {
         UUID pacifismId = harness.getPermanentId(player1, "Pacifism");
         castAndResolveOblivionRing(pacifismId);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Pacifism"));
+        harness.assertNotOnBattlefield(player1, "Pacifism");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Pacifism"));
     }
@@ -85,10 +83,8 @@ class OblivionRingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears returns under player2's (owner's) control
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();

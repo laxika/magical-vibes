@@ -95,10 +95,8 @@ class AbductionTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Doom Blade
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Abduction"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Abduction"));
+        harness.assertInGraveyard(player1, "Abduction");
+        harness.assertNotOnBattlefield(player1, "Abduction");
     }
 
     // ===== Target validation =====

@@ -10,8 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 class ShadowOfTheGraveTest extends BaseCardTest {
 
     @Test
@@ -31,11 +29,9 @@ class ShadowOfTheGraveTest extends BaseCardTest {
         harness.castInstant(player1, 0);                  // Shadow of the Grave is now first in hand
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Censor"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Censor"))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Censor");
+        harness.assertNotInGraveyard(player1, "Censor");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -49,9 +45,7 @@ class ShadowOfTheGraveTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 }

@@ -28,10 +28,8 @@ class BlinkingSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Blinking Spirit"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Blinking Spirit"));
+        harness.assertInHand(player1, "Blinking Spirit");
+        harness.assertNotOnBattlefield(player1, "Blinking Spirit");
     }
 
     @Test
@@ -42,8 +40,7 @@ class BlinkingSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Blinking Spirit"));
+        harness.assertInHand(player1, "Blinking Spirit");
 
         // Re-cast it
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.WHITE, 4);
@@ -58,16 +55,13 @@ class BlinkingSpiritTest extends BaseCardTest {
         gs.playCard(gd, player1, spiritIndex, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Blinking Spirit"));
+        harness.assertOnBattlefield(player1, "Blinking Spirit");
 
         // Second bounce
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Blinking Spirit"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Blinking Spirit"));
+        harness.assertInHand(player1, "Blinking Spirit");
+        harness.assertNotOnBattlefield(player1, "Blinking Spirit");
     }
 }

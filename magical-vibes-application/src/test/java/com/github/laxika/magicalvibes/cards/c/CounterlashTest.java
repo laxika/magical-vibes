@@ -68,8 +68,7 @@ class CounterlashTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Grizzly Bears should be countered
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Should prompt player2 with may ability to cast Hill Giant
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -126,8 +125,7 @@ class CounterlashTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Hill Giant should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hill Giant"));
+        harness.assertOnBattlefield(player2, "Hill Giant");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -154,8 +152,7 @@ class CounterlashTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Hill Giant should still be in hand
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertInHand(player2, "Hill Giant");
         // Stack should be empty (no spells cast)
         assertThat(gd.stack).isEmpty();
     }
@@ -182,8 +179,7 @@ class CounterlashTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Grizzly Bears should be countered
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // No may ability should be offered — stack should be empty and no may prompt
         assertThat(gd.stack).isEmpty();
@@ -280,8 +276,7 @@ class CounterlashTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         // Hill Giant should still be in hand
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertInHand(player2, "Hill Giant");
     }
 
     // ===== Counter only — no cards in hand =====
@@ -305,8 +300,7 @@ class CounterlashTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Grizzly Bears should be countered
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // No may ability — hand is empty
         assertThat(gd.stack).isEmpty();

@@ -28,8 +28,7 @@ class SkirsdagCultistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
 
         // Auto-sacrificed the only creature (itself)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Skirsdag Cultist"));
+        harness.assertNotOnBattlefield(player1, "Skirsdag Cultist");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }
@@ -66,11 +65,9 @@ class SkirsdagCultistTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
         // Cultist should still be on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Skirsdag Cultist"));
+        harness.assertOnBattlefield(player1, "Skirsdag Cultist");
     }
 
     @Test
@@ -103,8 +100,7 @@ class SkirsdagCultistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, elvesId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
     }
 
     @Test

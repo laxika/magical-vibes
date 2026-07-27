@@ -47,9 +47,7 @@ class BloodthroneVampireTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Bloodthrone Vampire"));
+        harness.assertOnBattlefield(player1, "Bloodthrone Vampire");
     }
 
     // ===== Activation: sacrificing a creature =====
@@ -67,14 +65,11 @@ class BloodthroneVampireTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Grizzly Bears should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Bloodthrone Vampire should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Bloodthrone Vampire"));
+        harness.assertOnBattlefield(player1, "Bloodthrone Vampire");
 
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -132,10 +127,8 @@ class BloodthroneVampireTest extends BaseCardTest {
         assertThat(vamp.getEffectiveToughness()).isEqualTo(5);
 
         // Both sacrificed creatures should be in the graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Saproling Token"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Saproling Token");
     }
 
     @Test
@@ -148,10 +141,8 @@ class BloodthroneVampireTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Vampire should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Bloodthrone Vampire"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bloodthrone Vampire"));
+        harness.assertNotOnBattlefield(player1, "Bloodthrone Vampire");
+        harness.assertInGraveyard(player1, "Bloodthrone Vampire");
 
         // Ability should still be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -170,10 +161,8 @@ class BloodthroneVampireTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         // Vampire is in the graveyard, ability fizzled — no crash
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Bloodthrone Vampire"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bloodthrone Vampire"));
+        harness.assertNotOnBattlefield(player1, "Bloodthrone Vampire");
+        harness.assertInGraveyard(player1, "Bloodthrone Vampire");
     }
 
     // ===== No mana cost =====
@@ -245,10 +234,8 @@ class BloodthroneVampireTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Vampire should be auto-sacrificed (only creature available)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Bloodthrone Vampire"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bloodthrone Vampire"));
+        harness.assertNotOnBattlefield(player1, "Bloodthrone Vampire");
+        harness.assertInGraveyard(player1, "Bloodthrone Vampire");
         // Ability should still be on the stack
         assertThat(gd.stack).hasSize(1);
     }

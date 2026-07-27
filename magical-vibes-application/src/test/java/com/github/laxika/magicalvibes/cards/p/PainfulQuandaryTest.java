@@ -96,8 +96,7 @@ class PainfulQuandaryTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
 
         // The card was discarded
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Suntail Hawk"));
+        harness.assertInGraveyard(player2, "Suntail Hawk");
     }
 
     // ===== Opponent has cards: declines discard =====

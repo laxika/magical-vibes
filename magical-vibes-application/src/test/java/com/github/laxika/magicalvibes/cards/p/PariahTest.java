@@ -121,11 +121,9 @@ class PariahTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         // Enchanted creature (2/2) takes 2 damage -> dies
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Grizzly Bears goes to graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -156,10 +154,8 @@ class PariahTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         // Pariah should be in graveyard (orphaned aura cleanup)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Pariah"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Pariah"));
+        harness.assertNotOnBattlefield(player2, "Pariah");
+        harness.assertInGraveyard(player2, "Pariah");
     }
 
     // ===== Hurricane damage redirection =====

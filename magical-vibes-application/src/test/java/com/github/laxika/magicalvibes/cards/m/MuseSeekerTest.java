@@ -61,8 +61,7 @@ class MuseSeekerTest extends BaseCardTest {
         // Drew one (deck -1) and discarded one (into graveyard); hand ends empty.
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Island"));
+        harness.assertInGraveyard(player1, "Island");
     }
 
     @Test

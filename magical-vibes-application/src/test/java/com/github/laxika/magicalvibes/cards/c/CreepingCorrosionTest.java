@@ -61,15 +61,10 @@ class CreepingCorrosionTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Howling Mine"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ornithopter"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Howling Mine"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Ornithopter"));
+        harness.assertNotOnBattlefield(player1, "Howling Mine");
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertInGraveyard(player1, "Howling Mine");
+        harness.assertInGraveyard(player2, "Ornithopter");
     }
 
     @Test
@@ -82,9 +77,7 @@ class CreepingCorrosionTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -106,9 +99,7 @@ class CreepingCorrosionTest extends BaseCardTest {
         harness.castSorcery(player2, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Ornithopter"));
+        harness.assertOnBattlefield(player1, "Ornithopter");
     }
 
     @Test
@@ -121,8 +112,6 @@ class CreepingCorrosionTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Darksteel Relic"));
+        harness.assertOnBattlefield(player2, "Darksteel Relic");
     }
 }

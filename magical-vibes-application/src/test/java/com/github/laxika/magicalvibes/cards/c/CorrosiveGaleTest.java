@@ -62,13 +62,9 @@ class CorrosiveGaleTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Both flying creatures should be destroyed (2 damage >= 2 toughness)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Wind Drake"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Wind Drake"));
+        harness.assertNotOnBattlefield(player1, "Wind Drake");
+        harness.assertNotOnBattlefield(player2, "Wind Drake");
     }
 
     @Test
@@ -82,11 +78,8 @@ class CorrosiveGaleTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Non-flying creature survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -123,8 +116,7 @@ class CorrosiveGaleTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
 
         // Flying creature should be destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Wind Drake"));
+        harness.assertNotOnBattlefield(player2, "Wind Drake");
     }
 
     @Test
@@ -138,10 +130,7 @@ class CorrosiveGaleTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Flying creature survives with 0 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Wind Drake"));
+        harness.assertOnBattlefield(player2, "Wind Drake");
     }
 }

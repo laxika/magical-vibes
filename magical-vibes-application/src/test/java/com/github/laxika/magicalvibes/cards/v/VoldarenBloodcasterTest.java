@@ -40,8 +40,7 @@ class VoldarenBloodcasterTest extends BaseCardTest {
         }
 
         assertThat(bloodTokenCount(player1)).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Voldaren Bloodcaster"));
+        harness.assertOnBattlefield(player1, "Voldaren Bloodcaster");
     }
 
     @Test
@@ -58,8 +57,7 @@ class VoldarenBloodcasterTest extends BaseCardTest {
         }
 
         assertThat(bloodTokenCount(player1)).isEqualTo(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Voldaren Bloodcaster"));
+        harness.assertInGraveyard(player1, "Voldaren Bloodcaster");
     }
 
     @Test
@@ -81,8 +79,7 @@ class VoldarenBloodcasterTest extends BaseCardTest {
         }
 
         assertThat(bloodTokenCount(player1)).isZero();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Voldaren Bloodcaster"));
+        harness.assertOnBattlefield(player1, "Voldaren Bloodcaster");
     }
 
     @Test

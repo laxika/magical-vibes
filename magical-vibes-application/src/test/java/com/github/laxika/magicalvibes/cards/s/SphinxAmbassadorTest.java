@@ -71,8 +71,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Creature should be on controller's battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
 
         // Card should not be in opponent's library
         assertThat(gd.playerDecks.get(player2.getId()))
@@ -102,8 +101,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         harness.handleListChoice(player2, "Grizzly Bears");
 
         // No may ability — card should be returned to library
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
         // Card should be back in opponent's library (shuffled, so just check presence)
         assertThat(gd.playerDecks.get(player2.getId()))
@@ -136,8 +134,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         harness.handleListChoice(player2, "Grizzly Bears");
 
         // No may ability — non-creature card should be returned to library
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Shock"));
+        harness.assertNotOnBattlefield(player1, "Shock");
 
         // Card should be back in opponent's library
         assertThat(gd.playerDecks.get(player2.getId()))
@@ -193,8 +190,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false); // decline
 
         // Creature should NOT be on controller's battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
         // Card should be back in opponent's library
         assertThat(gd.playerDecks.get(player2.getId()))

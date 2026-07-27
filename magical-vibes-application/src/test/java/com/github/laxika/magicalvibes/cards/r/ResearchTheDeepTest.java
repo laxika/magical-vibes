@@ -10,8 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 class ResearchTheDeepTest extends BaseCardTest {
 
     private void castResearch() {
@@ -32,8 +30,7 @@ class ResearchTheDeepTest extends BaseCardTest {
 
         castResearch();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Island"));
+        harness.assertInHand(player1, "Island");
     }
 
     @Test
@@ -46,10 +43,8 @@ class ResearchTheDeepTest extends BaseCardTest {
 
         castResearch();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Research the Deep"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Research the Deep"));
+        harness.assertInHand(player1, "Research the Deep");
+        harness.assertNotInGraveyard(player1, "Research the Deep");
     }
 
     @Test
@@ -62,9 +57,7 @@ class ResearchTheDeepTest extends BaseCardTest {
 
         castResearch();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Research the Deep"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Research the Deep"));
+        harness.assertInGraveyard(player1, "Research the Deep");
+        harness.assertNotInHand(player1, "Research the Deep");
     }
 }

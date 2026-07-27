@@ -83,7 +83,6 @@ class FalkenrathMaraudersTest extends BaseCardTest {
         harness.passBothPriorities(); // combat damage
 
         // Marauders should be dead
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Falkenrath Marauders"));
+        harness.assertInGraveyard(player1, "Falkenrath Marauders");
     }
 }

@@ -39,8 +39,7 @@ class KnightOfDuskTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Knight of Dusk"));
+        harness.assertOnBattlefield(player1, "Knight of Dusk");
     }
 
     // ===== Activated ability: destroy creature blocking this =====
@@ -80,8 +79,7 @@ class KnightOfDuskTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(blocker.getId()));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test

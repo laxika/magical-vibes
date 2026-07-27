@@ -39,10 +39,8 @@ class SanctumGargoyleTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(ornithopter.getId()));
         harness.passBothPriorities(); // resolve the ETB triggered ability
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ornithopter"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Ornithopter"));
+        harness.assertInHand(player1, "Ornithopter");
+        harness.assertNotInGraveyard(player1, "Ornithopter");
     }
 
     @Test
@@ -53,8 +51,7 @@ class SanctumGargoyleTest extends BaseCardTest {
         castSanctumGargoyle();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -71,10 +68,8 @@ class SanctumGargoyleTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ornithopter"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Ornithopter"));
+        harness.assertInGraveyard(player1, "Ornithopter");
+        harness.assertNotInHand(player1, "Ornithopter");
     }
 
     @Test

@@ -80,10 +80,8 @@ class UnstoppableAshTest extends BaseCardTest {
         castAsh();
         harness.passBothPriorities(); // resolve champion ETB -> auto-sacrifice
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Unstoppable Ash"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Unstoppable Ash"));
+        harness.assertNotOnBattlefield(player1, "Unstoppable Ash");
+        harness.assertInGraveyard(player1, "Unstoppable Ash");
     }
 
     @Test
@@ -98,8 +96,7 @@ class UnstoppableAshTest extends BaseCardTest {
         UUID warriorId = harness.getPermanentId(player1, "Elvish Warrior");
         harness.handlePermanentChosen(player1, warriorId);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Unstoppable Ash"));
+        harness.assertOnBattlefield(player1, "Unstoppable Ash");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Elvish Warrior"));
     }

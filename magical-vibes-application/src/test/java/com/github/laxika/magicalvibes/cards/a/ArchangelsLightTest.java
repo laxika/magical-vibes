@@ -68,8 +68,7 @@ class ArchangelsLightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Graveyard should only contain Archangel's Light itself (sorcery goes to graveyard after resolution)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
         // Library should have 2 more cards (the bears)
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore + 2);
     }
@@ -123,7 +122,6 @@ class ArchangelsLightTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Archangel's Light"));
+        harness.assertInGraveyard(player1, "Archangel's Light");
     }
 }

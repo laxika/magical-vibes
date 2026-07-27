@@ -42,21 +42,15 @@ class SirenStormtamerTest extends BaseCardTest {
         // Resolve the counter ability
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Shock should be countered (in player2's graveyard)
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player2, "Shock");
 
         // Grizzly Bears should still be alive
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
 
         // Siren Stormtamer should be in player1's graveyard (sacrificed)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Siren Stormtamer"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Siren Stormtamer"));
+        harness.assertInGraveyard(player1, "Siren Stormtamer");
+        harness.assertNotOnBattlefield(player1, "Siren Stormtamer");
     }
 
     // ===== Counter spell targeting you (the player) =====
@@ -86,15 +80,13 @@ class SirenStormtamerTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Shock should be countered
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player2, "Shock");
 
         // Player1 life should be untouched (20)
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
 
         // Stormtamer should be sacrificed
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Siren Stormtamer"));
+        harness.assertInGraveyard(player1, "Siren Stormtamer");
     }
 
     // ===== Cannot counter a spell that doesn't target you or your creatures =====
@@ -172,16 +164,13 @@ class SirenStormtamerTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Fume Spitter's ability should be countered — Grizzly Bears survives without -1/-1 counter
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
 
         // Fume Spitter should be in graveyard (sacrificed as cost before countering)
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Fume Spitter"));
+        harness.assertInGraveyard(player2, "Fume Spitter");
 
         // Siren Stormtamer should be in graveyard (sacrificed as cost)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Siren Stormtamer"));
+        harness.assertInGraveyard(player1, "Siren Stormtamer");
 
         // Stack should be empty
         assertThat(gd.stack).isEmpty();
@@ -218,8 +207,7 @@ class SirenStormtamerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         // Stormtamer is still sacrificed (cost was already paid)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Siren Stormtamer"));
+        harness.assertInGraveyard(player1, "Siren Stormtamer");
     }
 
     // ===== Mana validation =====

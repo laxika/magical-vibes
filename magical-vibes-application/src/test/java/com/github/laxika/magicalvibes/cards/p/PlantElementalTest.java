@@ -36,10 +36,8 @@ class PlantElementalTest extends BaseCardTest {
 
         // No choice — the cost can't be paid, so Plant Elemental is sacrificed automatically.
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Plant Elemental"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Plant Elemental"));
+        harness.assertNotOnBattlefield(player1, "Plant Elemental");
+        harness.assertInGraveyard(player1, "Plant Elemental");
     }
 
     @Test
@@ -64,8 +62,7 @@ class PlantElementalTest extends BaseCardTest {
         // The lone Forest is sacrificed without a further choice; Plant Elemental stays.
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(forestsControlledBy(player1.getId())).isEqualTo(0);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Plant Elemental"));
+        harness.assertOnBattlefield(player1, "Plant Elemental");
     }
 
     @Test
@@ -89,8 +86,7 @@ class PlantElementalTest extends BaseCardTest {
 
         // One Forest sacrificed, one remains; Plant Elemental stays.
         assertThat(forestsControlledBy(player1.getId())).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Plant Elemental"));
+        harness.assertOnBattlefield(player1, "Plant Elemental");
     }
 
     @Test
@@ -101,10 +97,8 @@ class PlantElementalTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Plant Elemental"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Plant Elemental"));
+        harness.assertNotOnBattlefield(player1, "Plant Elemental");
+        harness.assertInGraveyard(player1, "Plant Elemental");
         assertThat(forestsControlledBy(player1.getId())).isEqualTo(1);
     }
 
@@ -115,10 +109,8 @@ class PlantElementalTest extends BaseCardTest {
         castPlantElemental();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Plant Elemental"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Plant Elemental"));
+        harness.assertNotOnBattlefield(player1, "Plant Elemental");
+        harness.assertInGraveyard(player1, "Plant Elemental");
         assertThat(forestsControlledBy(player2.getId())).isEqualTo(1);
     }
 }

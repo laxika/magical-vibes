@@ -53,8 +53,7 @@ class MorselTheftTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(STARTING_LIFE - 3);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE + 3);
         // Prowl cost paid — draw a card.
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 

@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BogWraithTest extends BaseCardTest {
 
-
     // ===== Casting and resolving =====
 
     @Test
@@ -46,8 +45,7 @@ class BogWraithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Bog Wraith"));
+        harness.assertOnBattlefield(player1, "Bog Wraith");
     }
 
     // ===== Swampwalk =====
@@ -124,5 +122,4 @@ class BogWraithTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 }
-
 

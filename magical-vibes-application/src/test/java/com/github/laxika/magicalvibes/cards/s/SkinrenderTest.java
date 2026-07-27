@@ -34,10 +34,8 @@ class SkinrenderTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Grizzly Bears (2/2) with 3 -1/-1 counters → -1/-1, dies to SBA
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -76,8 +74,7 @@ class SkinrenderTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Skinrender should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Skinrender"));
+        harness.assertOnBattlefield(player1, "Skinrender");
     }
 
     // ===== Targeting =====
@@ -96,8 +93,7 @@ class SkinrenderTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Own Grizzly Bears dies from 3 -1/-1 counters
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -121,8 +117,7 @@ class SkinrenderTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Skinrender"));
+        harness.assertOnBattlefield(player1, "Skinrender");
         assertThat(gd.stack).isEmpty();
     }
 

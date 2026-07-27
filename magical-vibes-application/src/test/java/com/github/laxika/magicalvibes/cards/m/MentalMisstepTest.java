@@ -102,11 +102,8 @@ class MentalMisstepTest extends BaseCardTest {
         harness.castInstant(player2, 0, elves.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
     }
 
     @Test
@@ -125,8 +122,7 @@ class MentalMisstepTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Mental Misstep"));
+        harness.assertInGraveyard(player2, "Mental Misstep");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -149,8 +145,7 @@ class MentalMisstepTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Countered spell goes to graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
         // Player 2 paid 2 life
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -177,7 +172,6 @@ class MentalMisstepTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Mental Misstep"));
+        harness.assertInGraveyard(player2, "Mental Misstep");
     }
 }

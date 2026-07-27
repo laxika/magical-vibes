@@ -48,16 +48,13 @@ class ForcedRetreatTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(card -> card.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
 
         List<Card> deck = gd.playerDecks.get(player2.getId());
         assertThat(deck).hasSize(deckSizeBefore + 1);
         assertThat(deck.getFirst().getName()).isEqualTo("Grizzly Bears");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Forced Retreat"));
+        harness.assertInGraveyard(player1, "Forced Retreat");
     }
 
     @Test
@@ -78,7 +75,6 @@ class ForcedRetreatTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Forced Retreat"));
+        harness.assertInGraveyard(player1, "Forced Retreat");
     }
 }

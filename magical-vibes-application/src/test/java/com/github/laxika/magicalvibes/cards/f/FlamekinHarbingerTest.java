@@ -29,8 +29,7 @@ class FlamekinHarbingerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Flamekin Harbinger"));
+        harness.assertOnBattlefield(player1, "Flamekin Harbinger");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 

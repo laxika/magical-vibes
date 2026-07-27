@@ -70,8 +70,7 @@ class WeightOfConscienceTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(enchanted);
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getId().equals(enchanted.getCard().getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Weight of Conscience"));
+        harness.assertNotOnBattlefield(player1, "Weight of Conscience");
     }
 
     // ===== Activated ability illegal when no two creatures share a type =====

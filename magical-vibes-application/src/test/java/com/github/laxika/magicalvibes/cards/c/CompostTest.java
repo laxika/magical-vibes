@@ -31,8 +31,7 @@ class CompostTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Compost trigger → may prompt
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Bog Imp"));
+        harness.assertInGraveyard(player2, "Bog Imp");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
     }
@@ -52,8 +51,7 @@ class CompostTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Compost trigger → may prompt
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Bog Imp"));
+        harness.assertInGraveyard(player2, "Bog Imp");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
     }
@@ -70,8 +68,7 @@ class CompostTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Cruel Edict → Grizzly Bears sacrificed
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
     }
@@ -90,8 +87,7 @@ class CompostTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Tome Scour → own black card into own graveyard
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bog Imp"));
+        harness.assertInGraveyard(player1, "Bog Imp");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
     }

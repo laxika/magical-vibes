@@ -37,8 +37,7 @@ class RepelIntrudersTest extends BaseCardTest {
                 .filteredOn(p -> p.getCard().getName().equals("Kithkin Soldier"))
                 .hasSize(2);
         // Creature spell was not countered
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
     }
 
     @Test
@@ -56,13 +55,10 @@ class RepelIntrudersTest extends BaseCardTest {
         harness.castInstant(player2, 0, elves.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Countered spell goes to owner's graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
         // No tokens created
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Kithkin Soldier"));
+        harness.assertNotOnBattlefield(player2, "Kithkin Soldier");
     }
 
     @Test
@@ -85,8 +81,7 @@ class RepelIntrudersTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .filteredOn(p -> p.getCard().getName().equals("Kithkin Soldier"))
                 .hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
     }
 
     @Test

@@ -148,10 +148,8 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Grizzly Bears should now be on player1's battlefield
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         }
 
         @Test
@@ -178,10 +176,8 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Opponent's Grizzly Bears should still be on their battlefield (not stolen)
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player2, "Grizzly Bears");
+            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         }
 
         @Test
@@ -200,10 +196,8 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Opponent's Grizzly Bears should still be on their battlefield (not stolen)
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player2, "Grizzly Bears");
+            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         }
 
         @Test
@@ -231,8 +225,7 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Opponent's Grizzly Bears should still be on their battlefield (not stolen)
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player2, "Grizzly Bears");
         }
 
         @Test

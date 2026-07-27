@@ -54,10 +54,8 @@ class DivineOfferingTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Rod of Ruin should be destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Rod of Ruin"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Rod of Ruin"));
+        harness.assertNotOnBattlefield(player2, "Rod of Ruin");
+        harness.assertInGraveyard(player2, "Rod of Ruin");
         // Rod of Ruin has mana value 4, so controller gains 4 life
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 4);
     }
@@ -76,8 +74,7 @@ class DivineOfferingTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Darksteel Plate is indestructible, should still be on battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Darksteel Plate"));
+        harness.assertOnBattlefield(player2, "Darksteel Plate");
         // Darksteel Plate has mana value 3, controller still gains 3 life
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 3);
     }
@@ -128,7 +125,6 @@ class DivineOfferingTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Divine Offering"));
+        harness.assertInGraveyard(player1, "Divine Offering");
     }
 }

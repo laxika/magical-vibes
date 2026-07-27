@@ -31,8 +31,7 @@ class NecroticPlagueTest extends BaseCardTest {
                 .anyMatch(p -> p.getId().equals(creature.getId()))).isFalse();
 
         // Creature should be in graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -76,8 +75,7 @@ class NecroticPlagueTest extends BaseCardTest {
         assertThat(auraPerm.getAttachedTo()).isEqualTo(myCreature.getId());
 
         // Necrotic Plague should NOT be in any graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Necrotic Plague"));
+        harness.assertNotInGraveyard(player1, "Necrotic Plague");
     }
 
     @Test
@@ -93,8 +91,7 @@ class NecroticPlagueTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve death trigger — no target, fizzles
 
         // Necrotic Plague should remain in the graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Necrotic Plague"));
+        harness.assertInGraveyard(player1, "Necrotic Plague");
 
         // No Necrotic Plague on any battlefield
         for (var bf : gd.playerBattlefields.values()) {

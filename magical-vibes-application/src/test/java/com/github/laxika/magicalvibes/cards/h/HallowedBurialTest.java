@@ -27,16 +27,12 @@ class HallowedBurialTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
 
         // Cards go to the bottom of their owners' libraries, not the graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Llanowar Elves");
         assertThat(gd.playerDecks.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.playerDecks.get(player2.getId()))
@@ -60,8 +56,7 @@ class HallowedBurialTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Not a destroy effect — indestructible is irrelevant
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
@@ -76,7 +71,6 @@ class HallowedBurialTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hallowed Burial"));
+        harness.assertInGraveyard(player1, "Hallowed Burial");
     }
 }

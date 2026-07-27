@@ -41,8 +41,7 @@ class SengirVampireTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(sengir.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(harness.getGameQueryService().getEffectivePower(gd, sengir)).isEqualTo(5);
         assertThat(harness.getGameQueryService().getEffectiveToughness(gd, sengir)).isEqualTo(5);
@@ -74,8 +73,7 @@ class SengirVampireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(sengir.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -87,8 +85,7 @@ class SengirVampireTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(sengir.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(harness.getGameQueryService().getEffectivePower(gd, sengir)).isEqualTo(5);
     }

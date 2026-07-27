@@ -67,10 +67,8 @@ class RazorHippogriffTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
 
         // GoldMyr moved from graveyard to hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Gold Myr"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Gold Myr"));
+        harness.assertInHand(player1, "Gold Myr");
+        harness.assertNotInGraveyard(player1, "Gold Myr");
 
         // Gained 2 life (Gold Myr's mana value)
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
@@ -105,12 +103,9 @@ class RazorHippogriffTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 1);
 
         // PalladiumMyr returned to hand, GoldMyr stays in graveyard
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Palladium Myr"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Gold Myr"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Palladium Myr"));
+        harness.assertInHand(player1, "Palladium Myr");
+        harness.assertInGraveyard(player1, "Gold Myr");
+        harness.assertNotInGraveyard(player1, "Palladium Myr");
 
         // Gained 3 life (Palladium Myr's mana value)
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 3);
@@ -129,8 +124,7 @@ class RazorHippogriffTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
 
         // Memnite returned to hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Memnite"));
+        harness.assertInHand(player1, "Memnite");
 
         // No life gained (mana value is 0, per CR 119.8 gaining 0 life is not a life gain event)
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
@@ -160,8 +154,7 @@ class RazorHippogriffTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no artifact cards in graveyard"));
         // GrizzlyBears stays in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== Only artifact cards are valid choices =====
@@ -194,10 +187,8 @@ class RazorHippogriffTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, -1);
 
         // GoldMyr stays in graveyard, not in hand
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Gold Myr"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Gold Myr"));
+        harness.assertInGraveyard(player1, "Gold Myr");
+        harness.assertNotInHand(player1, "Gold Myr");
 
         // No life gained
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
@@ -214,8 +205,7 @@ class RazorHippogriffTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Razor Hippogriff"));
+        harness.assertOnBattlefield(player1, "Razor Hippogriff");
     }
 
     // ===== Stack is empty after full resolution =====

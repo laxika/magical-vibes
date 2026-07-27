@@ -54,10 +54,8 @@ class CinderWallTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Cinder Wall"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Cinder Wall"));
+        harness.assertNotOnBattlefield(player2, "Cinder Wall");
+        harness.assertInGraveyard(player2, "Cinder Wall");
     }
 
     @Test

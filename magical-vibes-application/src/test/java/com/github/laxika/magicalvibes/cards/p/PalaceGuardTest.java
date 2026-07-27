@@ -116,8 +116,7 @@ class PalaceGuardTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).get(0).getId(), 1));
 
         // Palace Guard takes 3 damage total (3x 1/1) — survives as 1/4
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Palace Guard"));
+        harness.assertOnBattlefield(player2, "Palace Guard");
         // First attacker killed by Palace Guard's 1 power
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
     }
@@ -157,8 +156,7 @@ class PalaceGuardTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).get(0).getId(), 1));
 
         // Palace Guard takes 4 damage (4x 1/1) — dies (toughness 4)
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Palace Guard"));
+        harness.assertInGraveyard(player2, "Palace Guard");
         // Palace Guard kills first attacker with 1 power
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
     }

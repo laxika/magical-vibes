@@ -177,7 +177,6 @@ class NecroprouncerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phyrexian Germ"));
+        harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
     }
 }

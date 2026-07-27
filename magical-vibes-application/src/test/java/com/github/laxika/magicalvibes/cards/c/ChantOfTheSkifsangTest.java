@@ -95,10 +95,8 @@ class ChantOfTheSkifsangTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(bears);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Chant of the Skifsang"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Chant of the Skifsang"));
+        harness.assertInGraveyard(player1, "Chant of the Skifsang");
+        harness.assertNotOnBattlefield(player1, "Chant of the Skifsang");
     }
 
     @Test

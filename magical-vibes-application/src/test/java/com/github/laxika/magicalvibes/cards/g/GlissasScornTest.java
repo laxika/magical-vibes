@@ -33,10 +33,8 @@ class GlissasScornTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Rod of Ruin"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Rod of Ruin"));
+        harness.assertNotOnBattlefield(player2, "Rod of Ruin");
+        harness.assertInGraveyard(player2, "Rod of Ruin");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
     }
 
@@ -54,8 +52,7 @@ class GlissasScornTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Darksteel Plate is indestructible, should still be on battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Darksteel Plate"));
+        harness.assertOnBattlefield(player2, "Darksteel Plate");
         // Controller still loses 1 life
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
     }
@@ -105,8 +102,7 @@ class GlissasScornTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Rod of Ruin"));
+        harness.assertNotOnBattlefield(player1, "Rod of Ruin");
         // Caster is also the artifact's controller, so they lose 1 life
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
     }

@@ -38,8 +38,7 @@ class HeartPiercerManticoreTest extends BaseCardTest {
 
         // 2 damage (the sacrificed Grizzly Bears' power), not 4 (the Manticore's power).
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -54,8 +53,7 @@ class HeartPiercerManticoreTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears"));    // sacrifice
 
         // The 3/3 survives 2 damage; it would have died to the Manticore's own power (4).
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hill Giant"));
+        harness.assertOnBattlefield(player2, "Hill Giant");
     }
 
     @Test
@@ -69,10 +67,8 @@ class HeartPiercerManticoreTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears")); // target
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Hill Giant"));    // sacrifice
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hill Giant"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
     }
 
     @Test
@@ -85,8 +81,7 @@ class HeartPiercerManticoreTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test

@@ -90,8 +90,7 @@ class NeurokCommandoTest extends BaseCardTest {
         resolveCombat();
 
         // Neurok Commando should be dead
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Neurok Commando"));
+        harness.assertInGraveyard(player1, "Neurok Commando");
 
         // No may ability prompt for combat damage (it didn't deal damage to a player)
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);

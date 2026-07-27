@@ -56,8 +56,7 @@ class BloodPetalCelebrantTest extends BaseCardTest {
         assertThat(blood.getCard().getType()).isEqualTo(CardType.ARTIFACT);
         assertThat(blood.getCard().getSubtypes()).contains(CardSubtype.BLOOD);
         assertThat(blood.getCard().isToken()).isTrue();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Blood Petal Celebrant"));
+        harness.assertInGraveyard(player1, "Blood Petal Celebrant");
     }
 
     private void markAttacking(Player player, List<Integer> attackerIndices) {

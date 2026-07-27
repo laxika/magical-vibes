@@ -44,8 +44,7 @@ class TemporalMasteryTest extends BaseCardTest {
         assertThat(gd.extraTurns).containsExactly(player1.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Temporal Mastery"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Temporal Mastery"));
+        harness.assertNotInGraveyard(player1, "Temporal Mastery");
     }
 
     @Test

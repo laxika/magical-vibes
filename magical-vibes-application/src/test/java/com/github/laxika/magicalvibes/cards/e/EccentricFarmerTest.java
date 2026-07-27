@@ -41,8 +41,7 @@ class EccentricFarmerTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Eccentric Farmer"));
+        harness.assertOnBattlefield(player1, "Eccentric Farmer");
     }
 
     @Test
@@ -60,8 +59,7 @@ class EccentricFarmerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
 
@@ -77,8 +75,7 @@ class EccentricFarmerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Forest"));
+        harness.assertNotInHand(player1, "Forest");
     }
 
     @Test

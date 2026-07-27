@@ -181,8 +181,7 @@ class TwincastTest extends BaseCardTest {
         // Copy should not be in any graveyard
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Counsel of the Soratami") && c != counsel);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Counsel of the Soratami"));
+        harness.assertNotInGraveyard(player2, "Counsel of the Soratami");
     }
 
     @Test
@@ -202,9 +201,7 @@ class TwincastTest extends BaseCardTest {
         // Resolve Twincast
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Twincast"));
+        harness.assertInGraveyard(player2, "Twincast");
     }
 
     @Test
@@ -289,10 +286,8 @@ class TwincastTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Bears should be back in player1's hand after the copy's bounce
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
 
         // Original Boomerang should fizzle since target is gone
         harness.passBothPriorities();
@@ -324,8 +319,7 @@ class TwincastTest extends BaseCardTest {
         // Twincast fizzles
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Twincast still goes to graveyard when fizzling
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Twincast"));
+        harness.assertInGraveyard(player2, "Twincast");
     }
 
     // ===== Copy identity =====
@@ -559,11 +553,9 @@ class TwincastTest extends BaseCardTest {
         // Resolve copy → bounces player2's bears
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Player1's bears should still be on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test

@@ -37,7 +37,7 @@ class KefnetTheMindfulTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Card is drawn first, then the "may return a land" prompt is offered to the controller.
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
 
@@ -51,7 +51,7 @@ class KefnetTheMindfulTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(forestId))
                 .noneMatch(p -> p.getId().equals(islandId));
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Island"));
+        harness.assertInHand(player1, "Island");
     }
 
     @Test
@@ -69,9 +69,9 @@ class KefnetTheMindfulTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(islandId));
-        assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getName().equals("Island"));
+        harness.assertNotInHand(player1, "Island");
         assertThat(gd.stack).isEmpty();
     }
 

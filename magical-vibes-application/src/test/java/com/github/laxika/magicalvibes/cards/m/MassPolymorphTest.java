@@ -58,12 +58,10 @@ class MassPolymorphTest extends BaseCardTest {
         // Original creature should be exiled (not in graveyard)
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
 
         // Revealed creature should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));
+        harness.assertOnBattlefield(player1, "Air Elemental");
 
         // Non-creature card should be shuffled back into library
         assertThat(gd.playerDecks.get(player1.getId()))
@@ -97,9 +95,8 @@ class MassPolymorphTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
 
         // Two creature cards should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Air Elemental"))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Air Elemental");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
 
         // Non-creature cards should be back in library
         long boltsInLibrary = gd.playerDecks.get(player1.getId()).stream()
@@ -208,8 +205,7 @@ class MassPolymorphTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
 
         // Only one creature card found, so only one on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));
+        harness.assertOnBattlefield(player1, "Air Elemental");
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
 
         // Non-creature cards shuffled back
@@ -239,8 +235,7 @@ class MassPolymorphTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Player 2's creature should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player2, "Llanowar Elves");
     }
 
     @Test
@@ -259,7 +254,6 @@ class MassPolymorphTest extends BaseCardTest {
 
         gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mass Polymorph"));
+        harness.assertInGraveyard(player1, "Mass Polymorph");
     }
 }

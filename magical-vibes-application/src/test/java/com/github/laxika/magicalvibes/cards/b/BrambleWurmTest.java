@@ -43,8 +43,7 @@ class BrambleWurmTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Bramble Wurm"));
+        harness.assertNotInGraveyard(player1, "Bramble Wurm");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Bramble Wurm"));
 

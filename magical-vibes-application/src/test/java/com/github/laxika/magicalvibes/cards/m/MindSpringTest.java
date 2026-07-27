@@ -82,8 +82,7 @@ class MindSpringTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mind Spring"));
+        harness.assertInGraveyard(player1, "Mind Spring");
     }
 
     @Test

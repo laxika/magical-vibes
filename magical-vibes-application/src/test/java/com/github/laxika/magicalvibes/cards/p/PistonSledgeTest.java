@@ -99,8 +99,7 @@ class PistonSledgeTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Piston Sledge"));
+        harness.assertOnBattlefield(player1, "Piston Sledge");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -150,8 +149,7 @@ class PistonSledgeTest extends BaseCardTest {
         assertThat(pistonSledge.getAttachedTo()).isEqualTo(bears.getId());
 
         // Spellbook should have been sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player1, "Spellbook");
 
         // Bears should get +3/+1
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);

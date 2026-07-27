@@ -39,8 +39,7 @@ class RocEggTest extends BaseCardTest {
             GameData gd = harness.getGameData();
 
             // Roc Egg should be in the graveyard
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Roc Egg"));
+            harness.assertInGraveyard(player1, "Roc Egg");
 
             // Death trigger should be on the stack
             assertThat(gd.stack).hasSize(1);

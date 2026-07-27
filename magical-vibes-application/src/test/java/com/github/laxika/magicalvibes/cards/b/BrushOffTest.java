@@ -141,11 +141,9 @@ class BrushOffTest extends BaseCardTest {
             harness.passBothPriorities();
 
             GameData gd = harness.getGameData();
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Shock"));
+            harness.assertInGraveyard(player1, "Shock");
             assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Shock"));
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Brush Off"));
+            harness.assertInGraveyard(player2, "Brush Off");
         }
 
         @Test
@@ -163,11 +161,8 @@ class BrushOffTest extends BaseCardTest {
             harness.castInstant(player2, 0, bears.getId());
             harness.passBothPriorities();
 
-            GameData gd = harness.getGameData();
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertInGraveyard(player1, "Grizzly Bears");
+            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         }
     }
 }

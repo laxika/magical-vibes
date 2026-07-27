@@ -38,8 +38,7 @@ class WolfPackTest extends BaseCardTest {
         harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 7));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test

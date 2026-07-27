@@ -33,8 +33,7 @@ class WoodlandSleuthTest extends BaseCardTest {
         // No morbid — no ETB trigger should fire
         assertThat(gd.stack).isEmpty();
         // Grizzly Bears stays in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -58,8 +57,7 @@ class WoodlandSleuthTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Grizzly Bears should be in hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
         // Graveyard should be empty (only creature was returned)
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
@@ -82,8 +80,7 @@ class WoodlandSleuthTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Shock should stay in graveyard — it's not a creature
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player1, "Shock");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -130,11 +127,9 @@ class WoodlandSleuthTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Llanowar Elves should be returned to hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInHand(player1, "Llanowar Elves");
 
         // Woodland Sleuth should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Woodland Sleuth"));
+        harness.assertOnBattlefield(player1, "Woodland Sleuth");
     }
 }

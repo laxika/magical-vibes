@@ -46,8 +46,7 @@ class DreamsOfTheDeadTest extends BaseCardTest {
 
         assertThat(spirit.hasCumulativeUpkeep()).isTrue();
         assertThat(spirit.isExileIfLeavesBattlefield()).isTrue();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Blinking Spirit"));
+        harness.assertNotInGraveyard(player1, "Blinking Spirit");
     }
 
     @Test
@@ -100,8 +99,7 @@ class DreamsOfTheDeadTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(spirit);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Blinking Spirit"));
+        harness.assertNotInGraveyard(player1, "Blinking Spirit");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Blinking Spirit"));
     }
@@ -118,8 +116,7 @@ class DreamsOfTheDeadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(spirit);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Blinking Spirit"));
+        harness.assertNotInGraveyard(player1, "Blinking Spirit");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Blinking Spirit"));
     }

@@ -32,8 +32,7 @@ class TalarasBattalionTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Talara's Battalion"));
+        harness.assertOnBattlefield(player1, "Talara's Battalion");
     }
 
     @Test

@@ -56,10 +56,8 @@ class HauntedFengrafTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Haunted Fengraf"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Haunted Fengraf"));
+        harness.assertNotOnBattlefield(player1, "Haunted Fengraf");
+        harness.assertInGraveyard(player1, "Haunted Fengraf");
     }
 
     @Test
@@ -87,10 +85,8 @@ class HauntedFengrafTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -125,12 +121,9 @@ class HauntedFengrafTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The creature is returned, the instant stays in the graveyard
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Shock"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertNotInHand(player1, "Shock");
     }
 
     @Test
@@ -144,10 +137,8 @@ class HauntedFengrafTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertNotInHand(player1, "Shock");
     }
 
     // ===== Validation =====

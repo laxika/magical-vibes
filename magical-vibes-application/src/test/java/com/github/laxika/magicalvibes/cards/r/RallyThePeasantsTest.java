@@ -118,8 +118,7 @@ class RallyThePeasantsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Rally the Peasants"));
+        harness.assertInGraveyard(player1, "Rally the Peasants");
     }
 
     @Test
@@ -166,8 +165,7 @@ class RallyThePeasantsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Rally the Peasants"));
+        harness.assertNotInGraveyard(player1, "Rally the Peasants");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Rally the Peasants"));
     }
@@ -216,8 +214,6 @@ class RallyThePeasantsTest extends BaseCardTest {
 
         harness.castFlashback(player1, 0);
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Rally the Peasants"));
+        harness.assertNotInGraveyard(player1, "Rally the Peasants");
     }
 }

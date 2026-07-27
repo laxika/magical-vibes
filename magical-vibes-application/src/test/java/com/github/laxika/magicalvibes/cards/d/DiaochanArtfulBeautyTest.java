@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -32,18 +31,14 @@ class DiaochanArtfulBeautyTest extends BaseCardTest {
                 .isEqualTo(player2.getId());
         assertThat(gd.interaction.permanentChoiceContext())
                 .isInstanceOf(PermanentChoiceContext.DestroyChosenCreature.class);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Giant Spider"));
+        harness.assertInGraveyard(player2, "Giant Spider");
 
         // Opponent picks one of the controller's creatures to destroy.
         harness.handlePermanentChosen(player2, ownBears.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Diaochan, Artful Beauty"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Diaochan, Artful Beauty");
     }
 
     @Test
@@ -58,12 +53,9 @@ class DiaochanArtfulBeautyTest extends BaseCardTest {
         // Only Diaochan remains after the first destruction, so it is destroyed automatically
         // (the opponent's forced choice with a single legal creature).
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Giant Spider"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Diaochan, Artful Beauty"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Diaochan, Artful Beauty"));
+        harness.assertInGraveyard(player2, "Giant Spider");
+        harness.assertNotOnBattlefield(player1, "Diaochan, Artful Beauty");
+        harness.assertInGraveyard(player1, "Diaochan, Artful Beauty");
     }
 
     @Test

@@ -68,8 +68,8 @@ class BallLightningTest extends BaseCardTest {
         ));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Ball Lightning"));
-        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Ball Lightning");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -93,10 +93,8 @@ class BallLightningTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ball Lightning"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ball Lightning"));
+        harness.assertNotOnBattlefield(player1, "Ball Lightning");
+        harness.assertInGraveyard(player1, "Ball Lightning");
     }
 
     @Test

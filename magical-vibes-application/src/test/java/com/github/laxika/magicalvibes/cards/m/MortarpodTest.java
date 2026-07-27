@@ -177,12 +177,10 @@ class MortarpodTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
 
         // Germ should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phyrexian Germ"));
+        harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
 
         // Mortarpod should still be on the battlefield (unattached)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mortarpod"));
+        harness.assertOnBattlefield(player1, "Mortarpod");
     }
 
     // ===== Equip to another creature =====
@@ -240,8 +238,7 @@ class MortarpodTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Germ should be dead (0 toughness, state-based action)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phyrexian Germ"));
+        harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
     }
 
     // ===== Equipment stays when creature is sacrificed =====
@@ -260,8 +257,7 @@ class MortarpodTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Mortarpod should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mortarpod"));
+        harness.assertOnBattlefield(player1, "Mortarpod");
     }
 
     // ===== Helpers =====

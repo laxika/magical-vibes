@@ -72,8 +72,7 @@ class BlackKnightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Black Knight"));
+        harness.assertOnBattlefield(player1, "Black Knight");
     }
 
     // ===== First strike in combat =====
@@ -99,12 +98,9 @@ class BlackKnightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // First strike kills Bears before it deals damage; Black Knight survives
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Black Knight"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Black Knight");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Protection - blocking =====
@@ -178,10 +174,8 @@ class BlackKnightTest extends BaseCardTest {
         // Black Knight has first strike: deals 2 to White Knight (3/3 survives)
         // White Knight's 3 regular damage to Black Knight is prevented (protection)
         // Both survive
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("White Knight"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Black Knight"));
+        harness.assertOnBattlefield(player1, "White Knight");
+        harness.assertOnBattlefield(player2, "Black Knight");
     }
 
     @Test
@@ -206,12 +200,9 @@ class BlackKnightTest extends BaseCardTest {
 
         // Black Knight deals 2 first strike (2 < 3, green survives)
         // Green deals 3 regular damage (3 >= 2, Black Knight dies — no protection from green)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Big Green"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Black Knight"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Black Knight"));
+        harness.assertOnBattlefield(player1, "Big Green");
+        harness.assertNotOnBattlefield(player2, "Black Knight");
+        harness.assertInGraveyard(player2, "Black Knight");
     }
 
     // ===== Protection - targeting =====

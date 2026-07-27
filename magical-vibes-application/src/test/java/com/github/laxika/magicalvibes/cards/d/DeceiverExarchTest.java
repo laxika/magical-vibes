@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -47,9 +46,7 @@ class DeceiverExarchTest extends BaseCardTest {
             castWithUntapMode(targetId);
             harness.passBothPriorities(); // resolve creature
 
-            GameData gd = harness.getGameData();
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Deceiver Exarch"));
+            harness.assertOnBattlefield(player1, "Deceiver Exarch");
         }
     }
 
@@ -81,9 +78,7 @@ class DeceiverExarchTest extends BaseCardTest {
             castWithTapMode(targetId);
             harness.passBothPriorities(); // resolve creature
 
-            GameData gd = harness.getGameData();
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Deceiver Exarch"));
+            harness.assertOnBattlefield(player1, "Deceiver Exarch");
         }
     }
 

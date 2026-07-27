@@ -57,10 +57,8 @@ class DeathsCaressTest extends BaseCardTest {
         harness.castSorcery(player1, 0, human.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elite Vanguard"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Elite Vanguard"));
+        harness.assertNotOnBattlefield(player2, "Elite Vanguard");
+        harness.assertInGraveyard(player2, "Elite Vanguard");
         // Elite Vanguard has toughness 1, so controller gains 1 life
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
@@ -80,10 +78,8 @@ class DeathsCaressTest extends BaseCardTest {
         harness.castSorcery(player1, 0, nonHuman.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         // Grizzly Bears is not a Human, so no life is gained
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
@@ -102,8 +98,7 @@ class DeathsCaressTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Death's Caress"));
+        harness.assertInGraveyard(player1, "Death's Caress");
     }
 
     // ===== Fizzle =====
@@ -131,7 +126,6 @@ class DeathsCaressTest extends BaseCardTest {
         // No life is gained when the spell fizzles
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
         // Death's Caress still goes to the graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Death's Caress"));
+        harness.assertInGraveyard(player1, "Death's Caress");
     }
 }

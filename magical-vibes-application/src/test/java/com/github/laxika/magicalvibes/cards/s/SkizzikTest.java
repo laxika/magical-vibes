@@ -60,10 +60,8 @@ class SkizzikTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Skizzik"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Skizzik"));
+        harness.assertNotOnBattlefield(player1, "Skizzik");
+        harness.assertInGraveyard(player1, "Skizzik");
     }
 
     // ===== Cast with kicker =====
@@ -89,8 +87,7 @@ class SkizzikTest extends BaseCardTest {
         // Should still be on battlefield (not sacrificed)
         assertThat(findSkizzik(player1)).isNotNull();
         // Should not be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Skizzik"));
+        harness.assertNotInGraveyard(player1, "Skizzik");
     }
 
     // ===== Helpers =====

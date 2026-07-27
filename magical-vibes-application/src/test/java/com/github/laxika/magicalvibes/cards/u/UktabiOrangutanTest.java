@@ -33,8 +33,7 @@ class UktabiOrangutanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Uktabi Orangutan"));
+        harness.assertOnBattlefield(player1, "Uktabi Orangutan");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
@@ -57,10 +56,8 @@ class UktabiOrangutanTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("The Hive"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("The Hive"));
+        harness.assertNotOnBattlefield(player2, "The Hive");
+        harness.assertInGraveyard(player2, "The Hive");
     }
 
     @Test
@@ -107,8 +104,7 @@ class UktabiOrangutanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Uktabi Orangutan"));
+        harness.assertOnBattlefield(player1, "Uktabi Orangutan");
         assertThat(gd.stack).isEmpty();
     }
 }

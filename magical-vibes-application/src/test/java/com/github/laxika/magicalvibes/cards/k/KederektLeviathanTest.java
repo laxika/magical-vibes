@@ -39,14 +39,10 @@ class KederektLeviathanTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Glorious Anthem"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Glorious Anthem"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player2, "Glorious Anthem");
     }
 
     @Test
@@ -58,10 +54,8 @@ class KederektLeviathanTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Forest");
     }
 
     @Test
@@ -71,10 +65,8 @@ class KederektLeviathanTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Kederekt Leviathan"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Kederekt Leviathan"));
+        harness.assertOnBattlefield(player1, "Kederekt Leviathan");
+        harness.assertNotInHand(player1, "Kederekt Leviathan");
     }
 
     // ===== Unearth {6}{U} =====
@@ -92,8 +84,7 @@ class KederektLeviathanTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Kederekt Leviathan"))
                 .findFirst().orElseThrow();
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Kederekt Leviathan"));
+        harness.assertNotInGraveyard(player1, "Kederekt Leviathan");
     }
 
     @Test
@@ -110,8 +101,7 @@ class KederektLeviathanTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Kederekt Leviathan"));
+        harness.assertNotOnBattlefield(player1, "Kederekt Leviathan");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Kederekt Leviathan"));
     }
@@ -128,8 +118,7 @@ class KederektLeviathanTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Kederekt Leviathan"));
+        harness.assertInGraveyard(player1, "Kederekt Leviathan");
     }
 
     @Test
@@ -152,10 +141,8 @@ class KederektLeviathanTest extends BaseCardTest {
         harness.castInstant(player2, 0, perm.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Kederekt Leviathan"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Kederekt Leviathan"));
+        harness.assertNotOnBattlefield(player1, "Kederekt Leviathan");
+        harness.assertNotInGraveyard(player1, "Kederekt Leviathan");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Kederekt Leviathan"));
     }
@@ -172,15 +159,10 @@ class KederektLeviathanTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve unearth
         harness.passBothPriorities(); // resolve ETB
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Glorious Anthem"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Glorious Anthem"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Kederekt Leviathan"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player2, "Glorious Anthem");
+        harness.assertOnBattlefield(player1, "Kederekt Leviathan");
     }
 }

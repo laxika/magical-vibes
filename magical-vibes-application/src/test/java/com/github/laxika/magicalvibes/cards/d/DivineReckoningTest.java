@@ -31,8 +31,7 @@ class DivineReckoningTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Divine Reckoning"));
+        harness.assertInGraveyard(player1, "Divine Reckoning");
     }
 
     // ===== Single creature per player (auto-keep) =====
@@ -50,10 +49,8 @@ class DivineReckoningTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both creatures survive — they were auto-kept since they were the only ones
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Llanowar Elves");
     }
 
     // ===== Multiple creatures — player must choose =====
@@ -83,12 +80,9 @@ class DivineReckoningTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(bearsId));
 
         // Grizzly Bears survives, Llanowar Elves is destroyed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
     }
 
     @Test
@@ -124,15 +118,11 @@ class DivineReckoningTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player2, List.of(p2ElvesId));
 
         // Verify results: each player kept their chosen creature
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Mixed scenario: one player has one creature, the other has multiple =====
@@ -164,14 +154,11 @@ class DivineReckoningTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(elvesId));
 
         // Player1: Llanowar Elves kept, Grizzly Bears destroyed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
         // Player2: Grizzly Bears auto-kept
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Indestructible =====
@@ -199,10 +186,8 @@ class DivineReckoningTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(bearsId));
 
         // Both survive — Bears was chosen, Elves is indestructible
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
     }
 
     // ===== Regeneration =====
@@ -230,10 +215,8 @@ class DivineReckoningTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(bearsId));
 
         // Both survive — Bears was chosen, Elves regenerated
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
     }
 
     // ===== Flashback =====
@@ -259,10 +242,8 @@ class DivineReckoningTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(bearsId));
 
         // Grizzly Bears survives
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
     }
 
     @Test
@@ -278,8 +259,7 @@ class DivineReckoningTest extends BaseCardTest {
 
         // Single creature auto-resolves, no prompt needed
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Divine Reckoning"));
+        harness.assertNotInGraveyard(player1, "Divine Reckoning");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Divine Reckoning"));
     }
@@ -296,8 +276,7 @@ class DivineReckoningTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Divine Reckoning"));
+        harness.assertInGraveyard(player1, "Divine Reckoning");
     }
 
     // ===== Only one player has creatures =====
@@ -321,9 +300,7 @@ class DivineReckoningTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.handleMultiplePermanentsChosen(player1, List.of(bearsId));
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
     }
 }

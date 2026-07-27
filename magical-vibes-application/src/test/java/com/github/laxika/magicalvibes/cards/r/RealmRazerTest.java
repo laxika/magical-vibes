@@ -41,11 +41,9 @@ class RealmRazerTest extends BaseCardTest {
 
         castAndResolveRealmRazer();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mountain"))
-                .noneMatch(p -> p.getCard().getName().equals("Plains"));
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertNotOnBattlefield(player2, "Mountain");
+        harness.assertNotOnBattlefield(player2, "Plains");
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Forest"));
@@ -54,8 +52,7 @@ class RealmRazerTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Plains"));
 
         // Realm Razer itself is not a land and stays on the battlefield.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Realm Razer"));
+        harness.assertOnBattlefield(player1, "Realm Razer");
     }
 
     @Test
@@ -77,13 +74,10 @@ class RealmRazerTest extends BaseCardTest {
         harness.castInstant(player2, 0, razerId);
         harness.passBothPriorities(); // resolve Shock -> Realm Razer dies, lands return
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Realm Razer"));
+        harness.assertNotOnBattlefield(player1, "Realm Razer");
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mountain"));
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Mountain");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }

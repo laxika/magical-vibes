@@ -61,9 +61,7 @@ class ScuzzbackMaraudersTest extends BaseCardTest {
         resolveUntilInputOrEmpty();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Scuzzback Marauders"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Scuzzback Marauders"));
+        harness.assertNotOnBattlefield(player1, "Scuzzback Marauders");
+        harness.assertInGraveyard(player1, "Scuzzback Marauders");
     }
 }

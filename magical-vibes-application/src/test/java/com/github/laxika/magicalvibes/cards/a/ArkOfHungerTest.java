@@ -98,8 +98,7 @@ class ArkOfHungerTest extends BaseCardTest {
         harness.activateAbility(player1, arkIndex(player1), null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player1, "Shock");
         assertThat(gd.graveyardPlayPermissions.get(shock.getId())).isEqualTo(player1.getId());
         assertThat(gd.graveyardPlayPermissionsExpireEndOfTurn).contains(shock.getId());
     }

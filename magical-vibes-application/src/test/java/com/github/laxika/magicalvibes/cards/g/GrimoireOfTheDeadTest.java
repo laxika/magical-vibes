@@ -55,7 +55,7 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
 
         // Discard was paid
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Resolve the ability
         harness.passBothPriorities();
@@ -129,10 +129,8 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
         assertThat(creatureCount).isEqualTo(2);
 
         // Graveyards should be empty of creatures
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -144,10 +142,8 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
 
-        GameData gd = harness.getGameData();
         // Grimoire should be gone from battlefield (sacrificed as cost)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grimoire of the Dead"));
+        harness.assertNotOnBattlefield(player1, "Grimoire of the Dead");
     }
 
     @Test

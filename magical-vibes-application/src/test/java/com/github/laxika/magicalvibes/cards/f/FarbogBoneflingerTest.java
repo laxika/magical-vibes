@@ -53,8 +53,7 @@ class FarbogBoneflingerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB — -2/-2 kills Bears
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -91,8 +90,7 @@ class FarbogBoneflingerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Farbog Boneflinger"));
+        harness.assertOnBattlefield(player1, "Farbog Boneflinger");
         assertThat(gd.stack).isEmpty();
     }
 }

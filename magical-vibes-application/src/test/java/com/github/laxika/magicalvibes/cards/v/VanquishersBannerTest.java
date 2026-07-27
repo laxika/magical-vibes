@@ -43,8 +43,7 @@ class VanquishersBannerTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Vanquisher's Banner"));
+        harness.assertOnBattlefield(player1, "Vanquisher's Banner");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
     }
 

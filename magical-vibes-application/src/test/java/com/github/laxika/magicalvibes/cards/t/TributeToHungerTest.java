@@ -50,10 +50,8 @@ class TributeToHungerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears has toughness 2
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
     }
 
@@ -95,12 +93,9 @@ class TributeToHungerTest extends BaseCardTest {
         // Player 2 chooses to sacrifice Giant Spider (toughness 4)
         harness.handlePermanentChosen(player2, giant.getId());
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Giant Spider"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Giant Spider"));
+        harness.assertNotOnBattlefield(player2, "Giant Spider");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Giant Spider");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 4);
     }
 
@@ -122,12 +117,9 @@ class TributeToHungerTest extends BaseCardTest {
         // Player 2 chooses to sacrifice Grizzly Bears (toughness 2)
         harness.handlePermanentChosen(player2, bears.getId());
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
     }
 
@@ -159,7 +151,6 @@ class TributeToHungerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Tribute to Hunger"));
+        harness.assertInGraveyard(player1, "Tribute to Hunger");
     }
 }

@@ -32,10 +32,8 @@ class ChangelingHeroTest extends BaseCardTest {
         castChangelingHero();
         harness.passBothPriorities(); // resolve champion ETB -> auto-sacrifice
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Changeling Hero"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Changeling Hero"));
+        harness.assertNotOnBattlefield(player1, "Changeling Hero");
+        harness.assertInGraveyard(player1, "Changeling Hero");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -47,8 +45,7 @@ class ChangelingHeroTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve champion ETB -> permanent choice
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Changeling Hero"));
+        harness.assertOnBattlefield(player1, "Changeling Hero");
     }
 
     @Test
@@ -61,10 +58,8 @@ class ChangelingHeroTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.handlePermanentChosen(player1, bearsId);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Changeling Hero"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Changeling Hero");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.exileReturnOnPermanentLeave).isNotEmpty();
@@ -90,10 +85,8 @@ class ChangelingHeroTest extends BaseCardTest {
         harness.castInstant(player1, 0, heroId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Changeling Hero"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Changeling Hero");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();

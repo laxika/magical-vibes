@@ -108,11 +108,8 @@ class CarrionWallTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Carrion Wall"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Carrion Wall"));
+        harness.assertNotOnBattlefield(player1, "Carrion Wall");
+        harness.assertInGraveyard(player1, "Carrion Wall");
     }
 
     @Test
@@ -135,9 +132,7 @@ class CarrionWallTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Carrion Wall"));
+        harness.assertOnBattlefield(player1, "Carrion Wall");
     }
 
     private Permanent addCarrionWallReady(Player player) {

@@ -48,8 +48,7 @@ class DragonsClawTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Dragon's Claw"));
+        harness.assertOnBattlefield(player1, "Dragon's Claw");
     }
 
     // ===== Triggered ability: controller casts red spell =====

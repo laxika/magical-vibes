@@ -42,8 +42,7 @@ class VeteranSwordsmithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Veteran Swordsmith"));
+        harness.assertOnBattlefield(player1, "Veteran Swordsmith");
     }
 
     // ===== Static effect: buffs other own Soldiers =====

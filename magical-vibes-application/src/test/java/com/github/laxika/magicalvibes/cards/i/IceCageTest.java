@@ -135,10 +135,8 @@ class IceCageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Ice Cage should be destroyed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ice Cage"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ice Cage"));
+        harness.assertNotOnBattlefield(player1, "Ice Cage");
+        harness.assertInGraveyard(player1, "Ice Cage");
     }
 
     // ===== Destroyed when enchanted creature becomes target of an ability =====
@@ -171,10 +169,8 @@ class IceCageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Ice Cage should be destroyed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ice Cage"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ice Cage"));
+        harness.assertNotOnBattlefield(player1, "Ice Cage");
+        harness.assertInGraveyard(player1, "Ice Cage");
     }
 
     // ===== Creature can attack/block after Ice Cage is destroyed =====

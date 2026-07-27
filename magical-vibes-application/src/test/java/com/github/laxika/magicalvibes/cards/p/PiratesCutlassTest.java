@@ -98,8 +98,7 @@ class PiratesCutlassTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Pirate's Cutlass"));
+        harness.assertOnBattlefield(player1, "Pirate's Cutlass");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -113,8 +112,7 @@ class PiratesCutlassTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Pirate's Cutlass"));
+        harness.assertOnBattlefield(player1, "Pirate's Cutlass");
         assertThat(gd.stack).isEmpty();
     }
 

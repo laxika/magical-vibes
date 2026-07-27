@@ -56,8 +56,7 @@ class NaruMehaMasterWizardTest extends BaseCardTest {
         // Should not be awaiting any input
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         // Naru Meha should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Naru Meha, Master Wizard"));
+        harness.assertOnBattlefield(player1, "Naru Meha, Master Wizard");
     }
 
     @Test

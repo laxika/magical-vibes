@@ -70,7 +70,6 @@ class SpectralProcessionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spectral Procession"));
+        harness.assertInGraveyard(player1, "Spectral Procession");
     }
 }

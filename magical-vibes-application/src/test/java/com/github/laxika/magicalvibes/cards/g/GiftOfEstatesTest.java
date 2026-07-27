@@ -43,7 +43,7 @@ class GiftOfEstatesTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Plains"));
+        harness.assertInHand(player1, "Plains");
     }
 
     @Test
@@ -57,7 +57,7 @@ class GiftOfEstatesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getName().equals("Plains"));
+        harness.assertNotInHand(player1, "Plains");
     }
 
     private void setupAndCast() {

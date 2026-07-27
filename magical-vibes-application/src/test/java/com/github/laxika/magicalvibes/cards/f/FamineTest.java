@@ -29,10 +29,8 @@ class FamineTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Both 2/2 creatures die to 3 damage
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Both players take 3 damage
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -48,9 +46,7 @@ class FamineTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
+        harness.assertOnBattlefield(player2, "Giant Spider");
     }
 
     @Test
@@ -64,7 +60,6 @@ class FamineTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Famine"));
+        harness.assertInGraveyard(player1, "Famine");
     }
 }

@@ -13,7 +13,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SkyhunterSkirmisherTest extends BaseCardTest {
 
-
     // ===== Double strike deals damage in both phases =====
 
     @Test
@@ -34,15 +33,11 @@ class SkyhunterSkirmisherTest extends BaseCardTest {
 
         resolveCombat();
 
-        GameData gd = harness.getGameData();
         // Bears dies from 1 + 1 = 2 total damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         // Skirmisher also dies from 2 regular damage (2 >= 1)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Skyhunter Skirmisher"));
+        harness.assertNotOnBattlefield(player1, "Skyhunter Skirmisher");
     }
 
     @Test
@@ -66,13 +61,10 @@ class SkyhunterSkirmisherTest extends BaseCardTest {
 
         resolveCombat();
 
-        GameData gd = harness.getGameData();
         // Blocker killed in first strike phase
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Skirmisher survives — blocker was dead before it could deal damage
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Skyhunter Skirmisher"));
+        harness.assertOnBattlefield(player1, "Skyhunter Skirmisher");
     }
 
     // ===== Double strike unblocked =====
@@ -117,13 +109,10 @@ class SkyhunterSkirmisherTest extends BaseCardTest {
 
         resolveCombat();
 
-        GameData gd = harness.getGameData();
         // Skirmisher dies
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Skyhunter Skirmisher"));
+        harness.assertNotOnBattlefield(player1, "Skyhunter Skirmisher");
         // 3/3 survives (took only 2 total damage)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Double strike vs first strike =====
@@ -148,12 +137,9 @@ class SkyhunterSkirmisherTest extends BaseCardTest {
 
         resolveCombat();
 
-        GameData gd = harness.getGameData();
         // Both die in first strike phase
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Skyhunter Skirmisher"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Skyhunter Skirmisher");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Helpers =====

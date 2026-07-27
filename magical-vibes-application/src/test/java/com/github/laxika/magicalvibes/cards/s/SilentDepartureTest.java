@@ -70,13 +70,10 @@ class SilentDepartureTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Creature removed from battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Creature returned to owner's hand
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     // ===== Spell goes to graveyard =====
@@ -95,8 +92,7 @@ class SilentDepartureTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Silent Departure"));
+        harness.assertInGraveyard(player1, "Silent Departure");
     }
 
     // ===== Fizzle =====
@@ -119,12 +115,10 @@ class SilentDepartureTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Hand should not have the creature
-        assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInHand(player2, "Grizzly Bears");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Silent Departure still goes to graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Silent Departure"));
+        harness.assertInGraveyard(player1, "Silent Departure");
     }
 
     // ===== Flashback =====
@@ -142,13 +136,10 @@ class SilentDepartureTest extends BaseCardTest {
         harness.castFlashback(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Creature removed from battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Creature returned to owner's hand
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     @Test
@@ -166,8 +157,7 @@ class SilentDepartureTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Should NOT be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Silent Departure"));
+        harness.assertNotInGraveyard(player1, "Silent Departure");
         // Should be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Silent Departure"));

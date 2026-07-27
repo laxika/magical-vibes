@@ -95,9 +95,7 @@ class WiltLeafLiegeTest extends BaseCardTest {
         // Player1 chooses Wilt-Leaf Liege from player2's revealed hand
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Wilt-Leaf Liege"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Wilt-Leaf Liege"));
+        harness.assertOnBattlefield(player2, "Wilt-Leaf Liege");
+        harness.assertNotInGraveyard(player2, "Wilt-Leaf Liege");
     }
 }

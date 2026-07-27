@@ -32,11 +32,8 @@ class SpellbreakerBehemothTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Spellbreaker Behemoth"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Spellbreaker Behemoth"));
+        harness.assertOnBattlefield(player1, "Spellbreaker Behemoth");
+        harness.assertNotInGraveyard(player1, "Spellbreaker Behemoth");
     }
 
     @Test
@@ -57,11 +54,8 @@ class SpellbreakerBehemothTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Avatar of Might"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Avatar of Might"));
+        harness.assertOnBattlefield(player1, "Avatar of Might");
+        harness.assertNotInGraveyard(player1, "Avatar of Might");
     }
 
     @Test
@@ -82,8 +76,7 @@ class SpellbreakerBehemothTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.stack)
                 .noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
     }
@@ -107,8 +100,7 @@ class SpellbreakerBehemothTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Avatar of Might"));
+        harness.assertInGraveyard(player1, "Avatar of Might");
         assertThat(gd.stack)
                 .noneMatch(se -> se.getCard().getName().equals("Avatar of Might"));
     }

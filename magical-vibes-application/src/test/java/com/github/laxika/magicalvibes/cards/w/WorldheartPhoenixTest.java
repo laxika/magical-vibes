@@ -98,7 +98,6 @@ class WorldheartPhoenixTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         // Card stays in the graveyard; nothing entered the battlefield.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Worldheart Phoenix"));
+        harness.assertInGraveyard(player1, "Worldheart Phoenix");
     }
 }

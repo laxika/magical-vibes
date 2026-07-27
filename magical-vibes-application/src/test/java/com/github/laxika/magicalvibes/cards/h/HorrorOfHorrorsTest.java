@@ -30,8 +30,7 @@ class HorrorOfHorrorsTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(zombie.getId());
         // Swamp is sacrificed as a cost.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Swamp"));
+        harness.assertInGraveyard(player1, "Swamp");
     }
 
     @Test

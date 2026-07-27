@@ -163,8 +163,7 @@ class PhyrexianMetamorphTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getOriginalCard().getName().equals("Phyrexian Metamorph"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Phyrexian Metamorph"));
+        harness.assertInGraveyard(player1, "Phyrexian Metamorph");
     }
 
     @Test
@@ -181,8 +180,7 @@ class PhyrexianMetamorphTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getOriginalCard().getName().equals("Phyrexian Metamorph"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Phyrexian Metamorph"));
+        harness.assertInGraveyard(player1, "Phyrexian Metamorph");
     }
 
     // ===== Graveyard identity =====
@@ -213,9 +211,7 @@ class PhyrexianMetamorphTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(metamorphPerm);
         gd.playerGraveyards.get(player1.getId()).add(metamorphPerm.getOriginalCard());
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Phyrexian Metamorph"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Phyrexian Metamorph");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 }

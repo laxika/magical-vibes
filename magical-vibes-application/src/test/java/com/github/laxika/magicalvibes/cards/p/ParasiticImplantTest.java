@@ -41,8 +41,7 @@ class ParasiticImplantTest extends BaseCardTest {
                 .anyMatch(p -> p.getId().equals(creature.getId()))).isFalse();
 
         // Creature should be in graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // Aura should also be gone (orphaned)
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()

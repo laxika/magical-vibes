@@ -35,8 +35,7 @@ class HierophantsChaliceTest extends BaseCardTest {
         castChalice();
         harness.passBothPriorities(); // resolve artifact spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hierophant's Chalice"));
+        harness.assertOnBattlefield(player1, "Hierophant's Chalice");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);

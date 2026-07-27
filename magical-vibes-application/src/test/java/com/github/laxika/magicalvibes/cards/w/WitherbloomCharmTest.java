@@ -43,10 +43,8 @@ class WitherbloomCharmTest extends BaseCardTest {
             harness.handlePermanentChosen(player1, bearId);
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+            harness.assertInGraveyard(player1, "Grizzly Bears");
             assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         }
 
@@ -63,8 +61,7 @@ class WitherbloomCharmTest extends BaseCardTest {
 
             harness.handleMayAbilityChosen(player1, false);
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
             assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         }
     }
@@ -102,8 +99,7 @@ class WitherbloomCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 2, targetId);
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         }
 
         @Test

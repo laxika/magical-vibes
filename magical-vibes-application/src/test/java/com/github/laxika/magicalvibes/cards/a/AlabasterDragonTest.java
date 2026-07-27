@@ -22,8 +22,7 @@ class AlabasterDragonTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         // It first enters the graveyard, then its death trigger waits on the stack.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Alabaster Dragon"));
+        harness.assertInGraveyard(player1, "Alabaster Dragon");
         assertThat(gd.stack).isNotEmpty();
 
         harness.passBothPriorities();

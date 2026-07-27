@@ -34,14 +34,11 @@ class CorruptedHarvesterTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Grizzly Bears should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Corrupted Harvester should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Corrupted Harvester"));
+        harness.assertOnBattlefield(player1, "Corrupted Harvester");
 
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -95,8 +92,7 @@ class CorruptedHarvesterTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Corrupted Harvester should survive via regeneration
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Corrupted Harvester"));
+        harness.assertOnBattlefield(player1, "Corrupted Harvester");
         Permanent harvester = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Corrupted Harvester"))
                 .findFirst().orElseThrow();
@@ -120,12 +116,9 @@ class CorruptedHarvesterTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Both Corrupted Harvesters should kill each other (6 damage vs 3 toughness)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Corrupted Harvester"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Corrupted Harvester"));
+        harness.assertNotOnBattlefield(player1, "Corrupted Harvester");
+        harness.assertInGraveyard(player1, "Corrupted Harvester");
     }
 
     // ===== Can sacrifice itself =====
@@ -141,10 +134,8 @@ class CorruptedHarvesterTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Harvester should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Corrupted Harvester"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Corrupted Harvester"));
+        harness.assertNotOnBattlefield(player1, "Corrupted Harvester");
+        harness.assertInGraveyard(player1, "Corrupted Harvester");
 
         // Ability should still be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -163,10 +154,8 @@ class CorruptedHarvesterTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         // Harvester is in the graveyard, ability fizzled
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Corrupted Harvester"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Corrupted Harvester"));
+        harness.assertNotOnBattlefield(player1, "Corrupted Harvester");
+        harness.assertInGraveyard(player1, "Corrupted Harvester");
     }
 
     // ===== Mana cost =====
@@ -211,8 +200,7 @@ class CorruptedHarvesterTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Harvester should be auto-sacrificed (only creature available)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Corrupted Harvester"));
+        harness.assertNotOnBattlefield(player1, "Corrupted Harvester");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }

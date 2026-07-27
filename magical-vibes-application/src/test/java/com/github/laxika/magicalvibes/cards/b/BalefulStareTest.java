@@ -105,7 +105,6 @@ class BalefulStareTest extends BaseCardTest {
         castBalefulStare();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Baleful Stare"));
+        harness.assertInGraveyard(player1, "Baleful Stare");
     }
 }

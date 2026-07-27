@@ -54,8 +54,7 @@ class AwakenerDruidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Awakener Druid"));
+        harness.assertOnBattlefield(player1, "Awakener Druid");
 
         // ETB triggered ability should be on stack
         assertThat(gd.stack).hasSize(1);
@@ -257,8 +256,7 @@ class AwakenerDruidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Awakener Druid"));
+        harness.assertOnBattlefield(player1, "Awakener Druid");
         assertThat(gd.stack).isEmpty();
     }
 

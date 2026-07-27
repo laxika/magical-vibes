@@ -33,10 +33,8 @@ class TradeRoutesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, land.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Island"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Island"));
+        harness.assertNotOnBattlefield(player1, "Island");
+        harness.assertInHand(player1, "Island");
     }
 
     @Test
@@ -66,8 +64,7 @@ class TradeRoutesTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Island"));
+        harness.assertNotInHand(player1, "Island");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
@@ -99,9 +96,8 @@ class TradeRoutesTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Island"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player1, "Island");
+        harness.assertInHand(player1, "Forest");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("draws a card"));
     }

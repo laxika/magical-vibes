@@ -142,10 +142,8 @@ class ApostlesBlessingTest extends BaseCardTest {
         // Grizzly Bears is 2/2 so Iron Myr's 1 damage wouldn't kill it. Both survive.
         // Iron Myr's 1 damage goes through to Grizzly Bears (no protection), Grizzly Bears has 2 toughness, survives.
         // Grizzly Bears' 2 damage to Iron Myr is prevented by protection from green.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Iron Myr"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Iron Myr");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test

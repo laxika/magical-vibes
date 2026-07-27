@@ -49,10 +49,8 @@ class FireServantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 2 damage doubled to 4 — kills Serra Angel (4/4)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Serra Angel"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Serra Angel"));
+        harness.assertNotOnBattlefield(player2, "Serra Angel");
+        harness.assertInGraveyard(player2, "Serra Angel");
     }
 
     // ===== Doubles red sorcery damage =====

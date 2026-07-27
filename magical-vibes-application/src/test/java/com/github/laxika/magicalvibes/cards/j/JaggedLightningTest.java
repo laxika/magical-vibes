@@ -50,11 +50,9 @@ class JaggedLightningTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(spider.getId(), bears.getId()));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(spider.getMarkedDamage()).isEqualTo(3);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test

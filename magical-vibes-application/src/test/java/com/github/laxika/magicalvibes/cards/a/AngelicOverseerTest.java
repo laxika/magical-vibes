@@ -161,16 +161,13 @@ class AngelicOverseerTest extends BaseCardTest {
         // Angelic Overseer should survive (indestructible at time of Wrath resolving)
         // Note: The Human (Elite Vanguard) dies to Wrath, but the Overseer was indestructible
         // when Wrath resolved because the Human was still on the battlefield at that moment.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Angelic Overseer"));
+        harness.assertOnBattlefield(player1, "Angelic Overseer");
 
         // Elite Vanguard should be destroyed
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Elite Vanguard"));
+        harness.assertInGraveyard(player1, "Elite Vanguard");
 
         // Opponent's bears should be destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Static bonus survives end-of-turn reset =====

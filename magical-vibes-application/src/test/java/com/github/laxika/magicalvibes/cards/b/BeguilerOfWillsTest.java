@@ -47,8 +47,7 @@ class BeguilerOfWillsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Beguiler of Wills"));
+        harness.assertOnBattlefield(player1, "Beguiler of Wills");
     }
 
     // ===== Steal: power <= creature count =====

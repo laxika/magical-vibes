@@ -55,12 +55,9 @@ class TaintedAetherTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(forestId));
 
         // The Forest was sacrificed; the entering creature stays.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Forest");
     }
 
     @Test
@@ -77,10 +74,8 @@ class TaintedAetherTest extends BaseCardTest {
 
         // The enchantment isn't a creature or land, so the entering creature sacrifices itself.
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -100,9 +95,7 @@ class TaintedAetherTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger → opponent sacrifices
 
         // The entering creature's controller (player2), not Tainted Aether's controller, sacrifices.
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Tainted Aether"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Tainted Aether");
     }
 }

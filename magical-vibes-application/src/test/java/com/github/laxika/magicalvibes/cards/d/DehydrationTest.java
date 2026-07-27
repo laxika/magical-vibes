@@ -286,10 +286,8 @@ class DehydrationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Dehydration should be in graveyard, not on battlefield
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Dehydration"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Dehydration"));
+        harness.assertInGraveyard(player1, "Dehydration");
+        harness.assertNotOnBattlefield(player1, "Dehydration");
     }
 
     // ===== Targeting restriction =====

@@ -44,8 +44,7 @@ class SlagFiendTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Slag Fiend"));
+        harness.assertOnBattlefield(player1, "Slag Fiend");
     }
 
     @Test
@@ -58,10 +57,8 @@ class SlagFiendTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 0/0 creature dies to SBA
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Slag Fiend"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Slag Fiend"));
+        harness.assertNotOnBattlefield(player1, "Slag Fiend");
+        harness.assertInGraveyard(player1, "Slag Fiend");
     }
 
     // ===== Dynamic power/toughness =====

@@ -48,8 +48,7 @@ class MobilizationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mobilization"));
+        harness.assertOnBattlefield(player1, "Mobilization");
     }
 
     // ===== Token creation via mana-activated ability =====

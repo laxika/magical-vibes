@@ -123,8 +123,7 @@ class GnawToTheBoneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Gnaw to the Bone"));
+        harness.assertNotInGraveyard(player1, "Gnaw to the Bone");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Gnaw to the Bone"));
     }
@@ -142,8 +141,6 @@ class GnawToTheBoneTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Gnaw to the Bone"));
+        harness.assertInGraveyard(player1, "Gnaw to the Bone");
     }
 }

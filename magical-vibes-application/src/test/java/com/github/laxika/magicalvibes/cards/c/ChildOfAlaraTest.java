@@ -26,8 +26,7 @@ class ChildOfAlaraTest extends BaseCardTest {
         harness.passBothPriorities();          // enter combat damage — Child (trample) awaits its assignment
         assignChildDamageToBlocker(blocker);   // assign all 6 to the 7-toughness blocker → Child dies
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Child of Alara"));
+        harness.assertInGraveyard(player1, "Child of Alara");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Child of Alara");
@@ -55,10 +54,8 @@ class ChildOfAlaraTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().hasType(CardType.LAND));
 
         // The other creatures were destroyed and put into their owners' graveyards.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Helpers =====

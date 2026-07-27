@@ -58,10 +58,8 @@ class GrimStriderTest extends BaseCardTest {
         // 6 cards in hand => -6/-6 => 0/0
         harness.runStateBasedActions();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grim Strider"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grim Strider"));
+        harness.assertNotOnBattlefield(player1, "Grim Strider");
+        harness.assertInGraveyard(player1, "Grim Strider");
     }
 
     @Test

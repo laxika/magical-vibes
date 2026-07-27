@@ -28,14 +28,10 @@ class ElvishLyristTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elvish Lyrist"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Elvish Lyrist"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Glorious Anthem"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Glorious Anthem"));
+        harness.assertNotOnBattlefield(player1, "Elvish Lyrist");
+        harness.assertInGraveyard(player1, "Elvish Lyrist");
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        harness.assertInGraveyard(player2, "Glorious Anthem");
     }
 
     @Test
@@ -48,8 +44,7 @@ class ElvishLyristTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Glorious Anthem"));
+        harness.assertInGraveyard(player1, "Glorious Anthem");
     }
 
     @Test

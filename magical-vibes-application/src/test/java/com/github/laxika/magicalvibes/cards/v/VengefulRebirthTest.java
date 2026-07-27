@@ -44,8 +44,7 @@ class VengefulRebirthTest extends BaseCardTest {
         // Vengeful Rebirth exiled (not in graveyard)
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Vengeful Rebirth"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Vengeful Rebirth"));
+        harness.assertNotInGraveyard(player1, "Vengeful Rebirth");
     }
 
     @Test

@@ -41,8 +41,7 @@ class MikaeusTheLunarchTest extends BaseCardTest {
         gs.playCard(gd, player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mikaeus, the Lunarch"));
+        harness.assertNotOnBattlefield(player1, "Mikaeus, the Lunarch");
     }
 
     // ===== First ability: {T}: Put a +1/+1 counter on Mikaeus =====

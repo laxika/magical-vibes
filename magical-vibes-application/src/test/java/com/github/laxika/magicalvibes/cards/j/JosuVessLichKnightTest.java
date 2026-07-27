@@ -29,8 +29,7 @@ class JosuVessLichKnightTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
 
         // Creature entered the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Josu Vess, Lich Knight"));
+        harness.assertOnBattlefield(player1, "Josu Vess, Lich Knight");
         // No ETB trigger on the stack
         assertThat(gd.stack).isEmpty();
         // No tokens created — only Josu Vess on the battlefield
@@ -50,8 +49,7 @@ class JosuVessLichKnightTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
 
         // Creature entered the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Josu Vess, Lich Knight"));
+        harness.assertOnBattlefield(player1, "Josu Vess, Lich Knight");
         // ETB trigger is on the stack
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);

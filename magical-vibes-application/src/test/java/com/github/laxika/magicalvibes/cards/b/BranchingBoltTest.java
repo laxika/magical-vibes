@@ -42,11 +42,8 @@ class BranchingBoltTest extends BaseCardTest {
         harness.castInstant(player1, 0, 0, battlefieldId(player2, "Suntail Hawk"));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Suntail Hawk"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Suntail Hawk"));
+        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
+        harness.assertInGraveyard(player2, "Suntail Hawk");
     }
 
     @Test
@@ -74,11 +71,8 @@ class BranchingBoltTest extends BaseCardTest {
         harness.castInstant(player1, 0, 1, battlefieldId(player2, "Grizzly Bears"));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -109,13 +103,10 @@ class BranchingBoltTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, 2, List.of(hawkId, bearsId));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Suntail Hawk"))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Suntail Hawk"))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Suntail Hawk");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -130,7 +121,6 @@ class BranchingBoltTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Branching Bolt"));
+        harness.assertInGraveyard(player1, "Branching Bolt");
     }
 }

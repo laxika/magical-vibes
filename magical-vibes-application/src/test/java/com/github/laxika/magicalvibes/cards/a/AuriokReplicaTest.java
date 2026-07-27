@@ -37,8 +37,7 @@ class AuriokReplicaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Auriok Replica"));
+        harness.assertOnBattlefield(player1, "Auriok Replica");
     }
 
     // ===== Activation — sacrifice and source choice =====
@@ -53,10 +52,8 @@ class AuriokReplicaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Auriok Replica should be sacrificed (not on battlefield, in graveyard)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Auriok Replica"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Auriok Replica"));
+        harness.assertNotOnBattlefield(player1, "Auriok Replica");
+        harness.assertInGraveyard(player1, "Auriok Replica");
 
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -181,10 +178,8 @@ class AuriokReplicaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Before resolution, Auriok Replica should already be in the graveyard
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Auriok Replica"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Auriok Replica"));
+        harness.assertNotOnBattlefield(player1, "Auriok Replica");
+        harness.assertInGraveyard(player1, "Auriok Replica");
     }
 
     @Test

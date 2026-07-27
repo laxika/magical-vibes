@@ -35,13 +35,10 @@ class SymbolOfUnsummoningTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Creature bounced to owner's hand
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
         // Controller drew the card
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Island"));
+        harness.assertInHand(player1, "Island");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
@@ -76,12 +73,9 @@ class SymbolOfUnsummoningTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Whole spell is countered by game rules: no bounce, no draw.
-        assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Island"));
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Island");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Symbol of Unsummoning"));
+        harness.assertInGraveyard(player1, "Symbol of Unsummoning");
     }
 }

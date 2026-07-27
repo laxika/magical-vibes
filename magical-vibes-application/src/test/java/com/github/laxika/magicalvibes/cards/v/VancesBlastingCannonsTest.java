@@ -221,8 +221,7 @@ class VancesBlastingCannonsTest extends BaseCardTest {
         // 3/3 creature takes 3 damage — should die
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(creatureId));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Test Creature"));
+        harness.assertInGraveyard(player2, "Test Creature");
     }
 
     // ===== Helpers =====

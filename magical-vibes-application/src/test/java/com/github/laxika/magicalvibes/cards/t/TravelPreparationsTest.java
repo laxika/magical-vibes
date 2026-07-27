@@ -105,8 +105,7 @@ class TravelPreparationsTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(bearId));
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Travel Preparations"));
+        harness.assertInGraveyard(player1, "Travel Preparations");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -161,8 +160,7 @@ class TravelPreparationsTest extends BaseCardTest {
         harness.castFlashback(player1, 0, List.of(bearId));
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Travel Preparations"));
+        harness.assertNotInGraveyard(player1, "Travel Preparations");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Travel Preparations"));
     }

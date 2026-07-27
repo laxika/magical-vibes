@@ -95,10 +95,8 @@ class HerosResolveTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(bears);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hero's Resolve"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hero's Resolve"));
+        harness.assertInGraveyard(player1, "Hero's Resolve");
+        harness.assertNotOnBattlefield(player1, "Hero's Resolve");
     }
 
     @Test

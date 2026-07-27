@@ -54,10 +54,8 @@ class JestersCapTest extends BaseCardTest {
         // No further interaction pending
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         // Jester's Cap was sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Jester's Cap"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Jester's Cap"));
+        harness.assertNotOnBattlefield(player1, "Jester's Cap");
+        harness.assertInGraveyard(player1, "Jester's Cap");
     }
 
     @Test
@@ -91,7 +89,6 @@ class JestersCapTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Jester's Cap"));
+        harness.assertInGraveyard(player1, "Jester's Cap");
     }
 }

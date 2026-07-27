@@ -101,10 +101,8 @@ class PrimalCocoonTest extends BaseCardTest {
         // Resolve sacrifice trigger
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Primal Cocoon"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Primal Cocoon"));
+        harness.assertNotOnBattlefield(player1, "Primal Cocoon");
+        harness.assertInGraveyard(player1, "Primal Cocoon");
     }
 
     @Test
@@ -135,8 +133,7 @@ class PrimalCocoonTest extends BaseCardTest {
         // Creature should still have the +1/+1 counter
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         // Cocoon should be gone
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Primal Cocoon"));
+        harness.assertNotOnBattlefield(player1, "Primal Cocoon");
     }
 
     // ===== Helper methods =====

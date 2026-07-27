@@ -47,8 +47,7 @@ class CradleOfTheAccursedTest extends BaseCardTest {
         assertThat(token.getCard().getPower()).isEqualTo(2);
         assertThat(token.getCard().getToughness()).isEqualTo(2);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Cradle of the Accursed"));
+        harness.assertNotOnBattlefield(player1, "Cradle of the Accursed");
         harness.assertInGraveyard(player1, "Cradle of the Accursed");
     }
 

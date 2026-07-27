@@ -27,10 +27,8 @@ class NoRestForTheWickedTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("No Rest for the Wicked"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("No Rest for the Wicked"));
+        harness.assertNotOnBattlefield(player1, "No Rest for the Wicked");
+        harness.assertInGraveyard(player1, "No Rest for the Wicked");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();

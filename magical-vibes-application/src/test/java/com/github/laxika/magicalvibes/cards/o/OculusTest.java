@@ -46,10 +46,8 @@ class OculusTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Oculus (1/1) should be dead after blocking a 2/2
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Oculus"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Oculus"));
+        harness.assertNotOnBattlefield(player1, "Oculus");
+        harness.assertInGraveyard(player1, "Oculus");
 
         // Resolve the MayEffect from the stack
         harness.passBothPriorities();
@@ -89,8 +87,7 @@ class OculusTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Oculus"));
+        harness.assertInGraveyard(player1, "Oculus");
 
         // Resolve the MayEffect from the stack
         harness.passBothPriorities();
@@ -120,10 +117,8 @@ class OculusTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Oculus"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Oculus"));
+        harness.assertNotOnBattlefield(player1, "Oculus");
+        harness.assertInGraveyard(player1, "Oculus");
 
         // Resolve the MayEffect from the stack
         harness.passBothPriorities();

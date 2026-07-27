@@ -34,8 +34,7 @@ class SylvanRangerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sylvan Ranger"));
+        harness.assertOnBattlefield(player1, "Sylvan Ranger");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }

@@ -172,8 +172,7 @@ class CreepingRenaissanceTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .contains(creature);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Creeping Renaissance"));
+        harness.assertNotInGraveyard(player1, "Creeping Renaissance");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Creeping Renaissance"));
     }

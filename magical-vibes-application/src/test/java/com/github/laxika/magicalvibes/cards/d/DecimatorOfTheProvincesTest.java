@@ -36,8 +36,7 @@ class DecimatorOfTheProvincesTest extends BaseCardTest {
         assertThat(ally.hasKeyword(Keyword.TRAMPLE)).isTrue();
         assertThat(opponent.getEffectivePower()).isEqualTo(2);
         assertThat(opponent.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Decimator of the Provinces"));
+        harness.assertOnBattlefield(player1, "Decimator of the Provinces");
     }
 
     @Test
@@ -61,8 +60,7 @@ class DecimatorOfTheProvincesTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Decimator of the Provinces"))
                 .noneMatch(p -> p.getId().equals(bearsId));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
 
@@ -98,8 +96,7 @@ class DecimatorOfTheProvincesTest extends BaseCardTest {
 
         assertThat(ally.getEffectivePower()).isEqualTo(4);
         assertThat(ally.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Decimator of the Provinces"));
+        harness.assertNotOnBattlefield(player1, "Decimator of the Provinces");
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Decimator of the Provinces");
     }
 

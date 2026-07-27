@@ -48,10 +48,8 @@ class NihilSpellbombTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
 
         // Spellbomb should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Nihil Spellbomb"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Nihil Spellbomb"));
+        harness.assertNotOnBattlefield(player1, "Nihil Spellbomb");
+        harness.assertInGraveyard(player1, "Nihil Spellbomb");
     }
 
     @Test

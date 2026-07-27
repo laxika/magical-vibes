@@ -81,13 +81,11 @@ class DemonsHeraldTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, wizardId);
         harness.handlePermanentChosen(player1, zombiesId);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fugitive Wizard"))
-                .anyMatch(c -> c.getName().equals("Scathe Zombies"))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertInGraveyard(player1, "Fugitive Wizard");
+        harness.assertInGraveyard(player1, "Scathe Zombies");
+        harness.assertInGraveyard(player1, "Hill Giant");
         // The Herald itself was not sacrificed and the ability is on the stack.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Demon's Herald"));
+        harness.assertOnBattlefield(player1, "Demon's Herald");
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.ACTIVATED_ABILITY);
     }
 
@@ -114,7 +112,6 @@ class DemonsHeraldTest extends BaseCardTest {
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Prince of Thralls"));
+        harness.assertOnBattlefield(player1, "Prince of Thralls");
     }
 }

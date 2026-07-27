@@ -46,8 +46,7 @@ class LilianasCaressTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Liliana's Caress"));
+        harness.assertOnBattlefield(player1, "Liliana's Caress");
     }
 
     // ===== Triggered ability: opponent discards via Distress =====
@@ -70,8 +69,7 @@ class LilianasCaressTest extends BaseCardTest {
 
         // Liliana's Caress trigger: player2 loses 2 life
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Triggered ability: opponent discards via discard effect =====

@@ -61,9 +61,7 @@ class TrapjawKelpieTest extends BaseCardTest {
         resolveUntilInputOrEmpty();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Trapjaw Kelpie"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Trapjaw Kelpie"));
+        harness.assertNotOnBattlefield(player1, "Trapjaw Kelpie");
+        harness.assertInGraveyard(player1, "Trapjaw Kelpie");
     }
 }

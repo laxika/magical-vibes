@@ -69,18 +69,13 @@ class LostInTheMistTest extends BaseCardTest {
         harness.castInstant(player2, 0, bears.getId(), spellbookId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Spell was countered
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
         // Permanent was bounced
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        harness.assertInHand(player1, "Spellbook");
     }
 
     @Test
@@ -102,16 +97,12 @@ class LostInTheMistTest extends BaseCardTest {
         harness.castInstant(player2, 0, bears.getId(), spellbookId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Spell was countered
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Own permanent was bounced
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player2, "Spellbook");
+        harness.assertInHand(player2, "Spellbook");
     }
 
     @Test
@@ -134,8 +125,7 @@ class LostInTheMistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Lost in the Mist"));
+        harness.assertInGraveyard(player2, "Lost in the Mist");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -169,10 +159,8 @@ class LostInTheMistTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("fizzles"));
 
         // Permanent was still bounced
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        harness.assertInHand(player1, "Spellbook");
     }
 
     @Test
@@ -203,10 +191,8 @@ class LostInTheMistTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("fizzles"));
 
         // Spell was still countered
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Full fizzle =====
@@ -240,7 +226,6 @@ class LostInTheMistTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
 
         // Lost in the Mist goes to graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Lost in the Mist"));
+        harness.assertInGraveyard(player2, "Lost in the Mist");
     }
 }

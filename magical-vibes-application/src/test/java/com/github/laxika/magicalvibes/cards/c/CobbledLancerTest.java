@@ -85,15 +85,13 @@ class CobbledLancerTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Cobbled Lancer"));
+        harness.assertNotInGraveyard(player1, "Cobbled Lancer");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Cobbled Lancer"));
 
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 }

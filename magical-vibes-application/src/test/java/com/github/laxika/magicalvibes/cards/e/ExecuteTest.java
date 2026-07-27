@@ -28,10 +28,8 @@ class ExecuteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elite Vanguard"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Elite Vanguard"));
+        harness.assertNotOnBattlefield(player2, "Elite Vanguard");
+        harness.assertInGraveyard(player2, "Elite Vanguard");
         // Execute was cast from a one-card hand, so the only card in hand is the one drawn.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
@@ -49,11 +47,8 @@ class ExecuteTest extends BaseCardTest {
         harness.castInstant(player1, 0, hawk.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elite Vanguard"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Elite Vanguard"));
+        harness.assertNotOnBattlefield(player2, "Elite Vanguard");
+        harness.assertInGraveyard(player2, "Elite Vanguard");
     }
 
     @Test

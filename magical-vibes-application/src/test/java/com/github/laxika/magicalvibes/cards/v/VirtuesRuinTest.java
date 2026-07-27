@@ -2,15 +2,12 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class VirtuesRuinTest extends BaseCardTest {
 
@@ -25,15 +22,10 @@ class VirtuesRuinTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elite Vanguard"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elite Vanguard"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Elite Vanguard"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Elite Vanguard"));
+        harness.assertNotOnBattlefield(player1, "Elite Vanguard");
+        harness.assertNotOnBattlefield(player2, "Elite Vanguard");
+        harness.assertInGraveyard(player1, "Elite Vanguard");
+        harness.assertInGraveyard(player2, "Elite Vanguard");
     }
 
     @Test
@@ -46,9 +38,7 @@ class VirtuesRuinTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hill Giant"));
+        harness.assertOnBattlefield(player1, "Hill Giant");
     }
 
     @Test
@@ -62,9 +52,7 @@ class VirtuesRuinTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elite Vanguard"))
-                .anyMatch(p -> p.getCard().getName().equals("Hill Giant"));
+        harness.assertNotOnBattlefield(player1, "Elite Vanguard");
+        harness.assertOnBattlefield(player1, "Hill Giant");
     }
 }

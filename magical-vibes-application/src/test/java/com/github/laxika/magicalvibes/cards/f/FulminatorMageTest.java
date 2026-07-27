@@ -25,10 +25,8 @@ class FulminatorMageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, targetId);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fulminator Mage"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fulminator Mage"));
+        harness.assertNotOnBattlefield(player1, "Fulminator Mage");
+        harness.assertInGraveyard(player1, "Fulminator Mage");
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
@@ -44,11 +42,8 @@ class FulminatorMageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ghost Quarter"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Ghost Quarter"));
+        harness.assertNotOnBattlefield(player2, "Ghost Quarter");
+        harness.assertInGraveyard(player2, "Ghost Quarter");
     }
 
     @Test
@@ -61,9 +56,7 @@ class FulminatorMageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ghost Quarter"));
+        harness.assertNotOnBattlefield(player1, "Ghost Quarter");
     }
 
     @Test

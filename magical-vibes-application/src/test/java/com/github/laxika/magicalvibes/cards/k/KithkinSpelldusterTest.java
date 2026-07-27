@@ -39,10 +39,8 @@ class KithkinSpelldusterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         resolveUntilInputOrEmpty();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Glorious Anthem"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Glorious Anthem"));
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        harness.assertInGraveyard(player2, "Glorious Anthem");
     }
 
     @Test
@@ -60,8 +58,7 @@ class KithkinSpelldusterTest extends BaseCardTest {
                 .findFirst().orElse(null);
         assertThat(returned).isNotNull();
         assertThat(returned.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Kithkin Spellduster"));
+        harness.assertNotInGraveyard(player1, "Kithkin Spellduster");
     }
 
     @Test
@@ -74,8 +71,7 @@ class KithkinSpelldusterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         resolveUntilInputOrEmpty();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Glorious Anthem"));
+        harness.assertNotOnBattlefield(player1, "Glorious Anthem");
     }
 
     @Test

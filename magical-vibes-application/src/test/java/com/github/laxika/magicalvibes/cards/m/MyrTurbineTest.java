@@ -226,8 +226,7 @@ class MyrTurbineTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Myr Sire should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Myr Sire"));
+        harness.assertOnBattlefield(player1, "Myr Sire");
     }
 
     @Test

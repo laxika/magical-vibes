@@ -70,10 +70,8 @@ class ThoughtHemorrhageTest extends BaseCardTest {
         long exiled = gd.getPlayerExiledCards(player2.getId()).stream()
                 .filter(c -> c.getName().equals("Grizzly Bears")).count();
         assertThat(exiled).isEqualTo(2);
-        assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Peek"));
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Peek");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class)).isNull();
     }
 
@@ -100,8 +98,8 @@ class ThoughtHemorrhageTest extends BaseCardTest {
         long exiled = gd.getPlayerExiledCards(player2.getId()).stream()
                 .filter(c -> c.getName().equals("Grizzly Bears")).count();
         assertThat(exiled).isEqualTo(3);
-        assertThat(gd.playerHands.get(player2.getId())).noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId())).noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player2.getId())).noneMatch(c -> c.getName().equals("Grizzly Bears"));
     }
 
@@ -166,7 +164,6 @@ class ThoughtHemorrhageTest extends BaseCardTest {
         harness.handleListChoice(player1, "Grizzly Bears");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Thought Hemorrhage"));
+        harness.assertInGraveyard(player1, "Thought Hemorrhage");
     }
 }

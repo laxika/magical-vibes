@@ -61,8 +61,7 @@ class SilverquillCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, targetId);
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
             assertThat(gd.exiledCards).anyMatch(e -> e.card().getName().equals("Grizzly Bears"));
         }
 

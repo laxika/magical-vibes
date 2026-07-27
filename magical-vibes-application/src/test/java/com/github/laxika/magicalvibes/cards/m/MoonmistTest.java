@@ -197,8 +197,7 @@ class MoonmistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Moonmist"));
+        harness.assertInGraveyard(player1, "Moonmist");
     }
 
 }

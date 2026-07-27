@@ -75,7 +75,6 @@ class BeckonApparitionTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spirit"));
+        harness.assertNotOnBattlefield(player1, "Spirit");
     }
 }

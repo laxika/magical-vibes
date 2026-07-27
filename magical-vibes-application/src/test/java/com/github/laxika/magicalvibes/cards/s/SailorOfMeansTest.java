@@ -28,8 +28,7 @@ class SailorOfMeansTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve ETB trigger
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sailor of Means"));
+        harness.assertOnBattlefield(player1, "Sailor of Means");
     }
 
     // ===== ETB trigger =====

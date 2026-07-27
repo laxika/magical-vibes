@@ -51,10 +51,8 @@ class MurderousRedcapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -102,9 +100,7 @@ class MurderousRedcapTest extends BaseCardTest {
         harness.castInstant(player1, 0, redcap.getId());
         resolveUntilInputOrEmpty();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Murderous Redcap"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Murderous Redcap"));
+        harness.assertNotOnBattlefield(player1, "Murderous Redcap");
+        harness.assertInGraveyard(player1, "Murderous Redcap");
     }
 }

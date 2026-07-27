@@ -30,8 +30,7 @@ class TahCropSkirmisherTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Tah-Crop Skirmisher"));
+        harness.assertNotInGraveyard(player1, "Tah-Crop Skirmisher");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Tah-Crop Skirmisher"));
     }
@@ -68,7 +67,6 @@ class TahCropSkirmisherTest extends BaseCardTest {
         Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Tah-Crop Skirmisher"));
+        harness.assertInGraveyard(player1, "Tah-Crop Skirmisher");
     }
 }

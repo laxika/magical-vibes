@@ -104,8 +104,7 @@ class BurningInquiryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Burning Inquiry"));
+        harness.assertInGraveyard(player1, "Burning Inquiry");
     }
 
     @Test

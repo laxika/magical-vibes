@@ -106,8 +106,7 @@ class DiabolicTutorTest extends BaseCardTest {
 
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(bearsIndex));
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test
@@ -205,8 +204,7 @@ class DiabolicTutorTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Diabolic Tutor"));
+        harness.assertInGraveyard(player1, "Diabolic Tutor");
     }
 
     // ===== Helpers =====

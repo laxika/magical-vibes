@@ -36,8 +36,7 @@ class FamiliarsRuseTest extends BaseCardTest {
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(gd.stack.getLast().getTargetId()).isEqualTo(bears.getId());
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInHand(player2, "Llanowar Elves");
     }
 
     @Test
@@ -57,8 +56,7 @@ class FamiliarsRuseTest extends BaseCardTest {
         harness.castInstantWithSacrifice(player2, 0, bears.getId(), toReturn.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
         harness.assertInGraveyard(player2, "Familiar's Ruse");
     }

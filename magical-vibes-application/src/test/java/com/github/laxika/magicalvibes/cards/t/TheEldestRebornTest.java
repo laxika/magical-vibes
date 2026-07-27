@@ -62,12 +62,8 @@ class TheEldestRebornTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve enchantment → chapter I triggers
         harness.passBothPriorities(); // resolve chapter I
 
-        GameData gd = harness.getGameData();
-
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -82,12 +78,8 @@ class TheEldestRebornTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve enchantment → chapter I triggers
         harness.passBothPriorities(); // resolve chapter I
 
-        GameData gd = harness.getGameData();
-
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Liliana Vess"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Liliana Vess"));
+        harness.assertNotOnBattlefield(player2, "Liliana Vess");
+        harness.assertInGraveyard(player2, "Liliana Vess");
     }
 
     @Test
@@ -121,14 +113,10 @@ class TheEldestRebornTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve enchantment → chapter I triggers
         harness.passBothPriorities(); // resolve chapter I
 
-        GameData gd = harness.getGameData();
-
         // Controller's creature should still be there
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         // Opponent's creature should be gone
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Chapter II: each opponent discards a card =====
@@ -165,8 +153,7 @@ class TheEldestRebornTest extends BaseCardTest {
 
         gd = harness.getGameData();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -218,10 +205,8 @@ class TheEldestRebornTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
 
         gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -250,10 +235,8 @@ class TheEldestRebornTest extends BaseCardTest {
 
         gd = harness.getGameData();
         // Should be on player1's battlefield (under your control)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Saga lifecycle =====
@@ -276,8 +259,7 @@ class TheEldestRebornTest extends BaseCardTest {
         harness.passBothPriorities(); // precombat main → chapter III triggers
 
         // Chapter III on stack — saga should still be on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("The Eldest Reborn"));
+        harness.assertOnBattlefield(player1, "The Eldest Reborn");
 
         harness.passBothPriorities(); // resolve chapter III
 
@@ -290,11 +272,9 @@ class TheEldestRebornTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // Saga should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("The Eldest Reborn"));
+        harness.assertNotOnBattlefield(player1, "The Eldest Reborn");
         // Saga should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("The Eldest Reborn"));
+        harness.assertInGraveyard(player1, "The Eldest Reborn");
     }
 
     @Test

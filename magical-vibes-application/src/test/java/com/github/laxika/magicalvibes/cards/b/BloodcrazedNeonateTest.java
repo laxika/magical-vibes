@@ -126,7 +126,6 @@ class BloodcrazedNeonateTest extends BaseCardTest {
         harness.passBothPriorities(); // combat damage
 
         // Neonate should be dead
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bloodcrazed Neonate"));
+        harness.assertInGraveyard(player1, "Bloodcrazed Neonate");
     }
 }

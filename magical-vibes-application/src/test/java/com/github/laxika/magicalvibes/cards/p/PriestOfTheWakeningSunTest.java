@@ -106,8 +106,7 @@ class PriestOfTheWakeningSunTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Priest should be sacrificed (gone from battlefield)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Priest of the Wakening Sun"));
+        harness.assertNotOnBattlefield(player1, "Priest of the Wakening Sun");
 
         // Library search should be awaiting input
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -133,8 +132,7 @@ class PriestOfTheWakeningSunTest extends BaseCardTest {
         // Choose the Dinosaur
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grazing Whiptail"));
+        harness.assertInHand(player1, "Grazing Whiptail");
     }
 
     @Test
@@ -146,8 +144,7 @@ class PriestOfTheWakeningSunTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         // Should not be able to activate — not enough mana
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Priest of the Wakening Sun"));
+        harness.assertOnBattlefield(player1, "Priest of the Wakening Sun");
 
         // Priest stays on battlefield (ability not activated)
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
@@ -167,7 +164,6 @@ class PriestOfTheWakeningSunTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Priest of the Wakening Sun"));
+        harness.assertInGraveyard(player1, "Priest of the Wakening Sun");
     }
 }

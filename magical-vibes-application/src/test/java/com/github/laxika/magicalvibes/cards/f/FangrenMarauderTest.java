@@ -35,8 +35,7 @@ class FangrenMarauderTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Cruel Edict
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Memnite"));
+        harness.assertInGraveyard(player2, "Memnite");
 
         // Fangren Marauder's may ability goes on stack — resolve it to get prompt
         harness.passBothPriorities();
@@ -57,8 +56,7 @@ class FangrenMarauderTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Naturalize
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Mind Stone"));
+        harness.assertInGraveyard(player2, "Mind Stone");
 
         // Fangren Marauder's may ability goes on stack — resolve it to get prompt
         harness.passBothPriorities();
@@ -83,8 +81,7 @@ class FangrenMarauderTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Naturalize
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mind Stone"));
+        harness.assertInGraveyard(player1, "Mind Stone");
 
         // Fangren Marauder's may ability goes on stack — resolve it to get prompt
         harness.passBothPriorities();
@@ -103,8 +100,7 @@ class FangrenMarauderTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Cruel Edict
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // No trigger — not an artifact
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();

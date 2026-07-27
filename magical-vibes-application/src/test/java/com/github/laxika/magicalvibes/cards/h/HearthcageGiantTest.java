@@ -49,8 +49,7 @@ class HearthcageGiantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, giant.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elemental"));
+        harness.assertNotOnBattlefield(player1, "Elemental");
         assertThat(giant.getEffectivePower()).isEqualTo(8);
         assertThat(giant.getEffectiveToughness()).isEqualTo(6);
     }

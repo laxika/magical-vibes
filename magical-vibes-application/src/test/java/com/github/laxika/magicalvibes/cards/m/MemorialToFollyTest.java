@@ -64,10 +64,8 @@ class MemorialToFollyTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Memorial should be sacrificed (not on battlefield, in graveyard)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Memorial to Folly"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Memorial to Folly"));
+        harness.assertNotOnBattlefield(player1, "Memorial to Folly");
+        harness.assertInGraveyard(player1, "Memorial to Folly");
 
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -109,10 +107,8 @@ class MemorialToFollyTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
 
         // Grizzly Bears moved from graveyard to hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -130,13 +126,10 @@ class MemorialToFollyTest extends BaseCardTest {
         // Choose Angel of Mercy (index 1)
         harness.handleGraveyardCardChosen(player1, 1);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Angel of Mercy"));
+        harness.assertInHand(player1, "Angel of Mercy");
         // Grizzly Bears stays in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Angel of Mercy"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Angel of Mercy");
     }
 
     // ===== Validation — cannot activate =====

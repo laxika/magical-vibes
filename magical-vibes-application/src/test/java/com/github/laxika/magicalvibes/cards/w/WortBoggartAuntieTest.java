@@ -31,10 +31,8 @@ class WortBoggartAuntieTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Caterwauling Boggart"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Caterwauling Boggart"));
+        harness.assertInHand(player1, "Caterwauling Boggart");
+        harness.assertNotInGraveyard(player1, "Caterwauling Boggart");
     }
 
     @Test
@@ -48,12 +46,9 @@ class WortBoggartAuntieTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, 1);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Goblin Piker"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Caterwauling Boggart"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Goblin Piker"));
+        harness.assertInHand(player1, "Goblin Piker");
+        harness.assertInGraveyard(player1, "Caterwauling Boggart");
+        harness.assertNotInGraveyard(player1, "Goblin Piker");
     }
 
     @Test
@@ -66,8 +61,7 @@ class WortBoggartAuntieTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -78,7 +72,6 @@ class WortBoggartAuntieTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Caterwauling Boggart"));
+        harness.assertInGraveyard(player1, "Caterwauling Boggart");
     }
 }

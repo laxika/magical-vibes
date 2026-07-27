@@ -99,10 +99,8 @@ class MultaniYavimayasAvatarTest extends BaseCardTest {
             // 0/0 with no boost = dies to state-based actions
             harness.runStateBasedActions();
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Multani, Yavimaya's Avatar"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Multani, Yavimaya's Avatar"));
+            harness.assertNotOnBattlefield(player1, "Multani, Yavimaya's Avatar");
+            harness.assertInGraveyard(player1, "Multani, Yavimaya's Avatar");
         }
 
         @Test
@@ -190,10 +188,8 @@ class MultaniYavimayasAvatarTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Multani should be in hand, not in graveyard
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Multani, Yavimaya's Avatar"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Multani, Yavimaya's Avatar"));
+            harness.assertInHand(player1, "Multani, Yavimaya's Avatar");
+            harness.assertNotInGraveyard(player1, "Multani, Yavimaya's Avatar");
         }
 
         @Test

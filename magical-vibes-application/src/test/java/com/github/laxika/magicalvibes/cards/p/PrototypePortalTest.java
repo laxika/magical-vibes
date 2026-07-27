@@ -59,8 +59,7 @@ class PrototypePortalTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Golem's Heart"));
 
         // Golem's Heart should no longer be in hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Golem's Heart"));
+        harness.assertNotInHand(player1, "Golem's Heart");
 
         // Portal should have Golem's Heart imprinted
         Permanent portal = gd.playerBattlefields.get(player1.getId()).stream()
@@ -85,8 +84,7 @@ class PrototypePortalTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Golem's Heart should still be in hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Golem's Heart"));
+        harness.assertInHand(player1, "Golem's Heart");
 
         // Portal should have nothing imprinted
         Permanent portal = gd.playerBattlefields.get(player1.getId()).stream()
@@ -110,8 +108,7 @@ class PrototypePortalTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // GrizzlyBears should still be in hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
 
         // Portal should have nothing imprinted
         Permanent portal = gd.playerBattlefields.get(player1.getId()).stream()

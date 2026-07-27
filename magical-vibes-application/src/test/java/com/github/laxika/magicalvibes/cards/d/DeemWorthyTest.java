@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DeemWorthyTest extends BaseCardTest {
@@ -31,11 +29,8 @@ class DeemWorthyTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Serra Angel"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Serra Angel"));
+        harness.assertNotOnBattlefield(player2, "Serra Angel");
+        harness.assertInGraveyard(player2, "Serra Angel");
     }
 
     @Test
@@ -64,14 +59,10 @@ class DeemWorthyTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // The cycling draw still happens: Deem Worthy discarded, the library card drawn.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Deem Worthy"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Serra Angel"));
+        harness.assertInGraveyard(player1, "Deem Worthy");
+        harness.assertInHand(player1, "Serra Angel");
     }
 
     @Test
@@ -85,13 +76,10 @@ class DeemWorthyTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Declining the reflexive trigger leaves the creature unharmed.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         // The cycling draw still resolves.
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Serra Angel"));
+        harness.assertInHand(player1, "Serra Angel");
     }
 
     private void addCyclingMana(Player player) {

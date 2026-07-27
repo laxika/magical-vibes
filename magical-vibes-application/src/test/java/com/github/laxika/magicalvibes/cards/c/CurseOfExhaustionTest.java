@@ -90,8 +90,7 @@ class CurseOfExhaustionTest extends BaseCardTest {
         // Play a land — not a spell, so it is unaffected by the curse
         gs.playCard(gd, player2, 0, 0, null, null);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Plains"));
+        harness.assertOnBattlefield(player2, "Plains");
     }
 
     // ===== Does NOT limit other players =====

@@ -87,11 +87,9 @@ class TianaShipsCaretakerTest extends BaseCardTest {
         gs.advanceStep(gd);
 
         // Aura should be back in hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Holy Strength"));
+        harness.assertInHand(player1, "Holy Strength");
         // And no longer in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Holy Strength"));
+        harness.assertNotInGraveyard(player1, "Holy Strength");
         // Pending list should be cleared
         assertThat(gd.getDelayedActions(DelayedGraveyardToHandReturn.class)).isEmpty();
     }
@@ -122,8 +120,7 @@ class TianaShipsCaretakerTest extends BaseCardTest {
         assertThat(gd.getDelayedActions(DelayedGraveyardToHandReturn.class)).isEmpty();
 
         // Aura stays in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Holy Strength"));
+        harness.assertInGraveyard(player1, "Holy Strength");
     }
 
     // ===== Orphaned aura (creature dies) =====
@@ -148,10 +145,8 @@ class TianaShipsCaretakerTest extends BaseCardTest {
         harness.passBothPriorities(); // Second Shock kills bears
 
         // Bears should be dead, aura should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Holy Strength"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Holy Strength");
 
         // Tiana's triggered ability should be on the stack
         assertThat(gd.stack).anyMatch(e ->
@@ -189,8 +184,7 @@ class TianaShipsCaretakerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         gs.advanceStep(gd);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Short Sword"));
+        harness.assertInHand(player1, "Short Sword");
     }
 
     // ===== No Tiana = no trigger =====
@@ -248,7 +242,6 @@ class TianaShipsCaretakerTest extends BaseCardTest {
         gs.advanceStep(gd);
 
         // Card should NOT be in hand (it was removed from graveyard)
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Short Sword"));
+        harness.assertNotInHand(player1, "Short Sword");
     }
 }

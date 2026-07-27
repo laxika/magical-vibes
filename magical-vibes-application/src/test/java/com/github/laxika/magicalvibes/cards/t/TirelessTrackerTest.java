@@ -62,8 +62,7 @@ class TirelessTrackerTest extends BaseCardTest {
         harness.castCreature(player2, 0);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Clue"));
+        harness.assertNotOnBattlefield(player1, "Clue");
     }
 
     @Test
@@ -91,8 +90,7 @@ class TirelessTrackerTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Clue"));
+        harness.assertNotOnBattlefield(player1, "Clue");
         assertThat(tracker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 

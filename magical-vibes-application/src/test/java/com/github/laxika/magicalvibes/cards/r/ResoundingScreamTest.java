@@ -67,10 +67,8 @@ class ResoundingScreamTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
         // The cycling draw still happens: Scream discarded, the library card drawn.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Resounding Scream"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Resounding Scream");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test
@@ -88,8 +86,7 @@ class ResoundingScreamTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
         // Cycling draw still resolves.
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Serra Angel"));
+        harness.assertInHand(player1, "Serra Angel");
     }
 
     private void addCyclingMana(Player player) {

@@ -28,12 +28,10 @@ class GlintHawkTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB → auto-sacrifice
 
         // Glint Hawk is NOT on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Glint Hawk"));
+        harness.assertNotOnBattlefield(player1, "Glint Hawk");
 
         // Glint Hawk is in the graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Glint Hawk"));
+        harness.assertInGraveyard(player1, "Glint Hawk");
 
         // No prompt — it was automatic
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -80,16 +78,13 @@ class GlintHawkTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, artifactId);
 
         // Glint Hawk is still on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Glint Hawk"));
+        harness.assertOnBattlefield(player1, "Glint Hawk");
 
         // Spellbook is no longer on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player1, "Spellbook");
 
         // Spellbook is back in hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
+        harness.assertInHand(player1, "Spellbook");
     }
 
     // ===== With artifact — decline bounce =====
@@ -102,16 +97,13 @@ class GlintHawkTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // Glint Hawk is NOT on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Glint Hawk"));
+        harness.assertNotOnBattlefield(player1, "Glint Hawk");
 
         // Glint Hawk is in the graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Glint Hawk"));
+        harness.assertInGraveyard(player1, "Glint Hawk");
 
         // Spellbook is still on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Spellbook"));
+        harness.assertOnBattlefield(player1, "Spellbook");
     }
 
     // ===== Multiple artifacts — only chosen one is bounced =====
@@ -136,18 +128,14 @@ class GlintHawkTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, scimitarId);
 
         // Glint Hawk is on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Glint Hawk"));
+        harness.assertOnBattlefield(player1, "Glint Hawk");
 
         // Spellbook is still on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Spellbook"));
+        harness.assertOnBattlefield(player1, "Spellbook");
 
         // Leonin Scimitar was returned to hand
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
+        harness.assertNotOnBattlefield(player1, "Leonin Scimitar");
+        harness.assertInHand(player1, "Leonin Scimitar");
     }
 
     // ===== Opponent's artifacts don't count =====
@@ -164,14 +152,11 @@ class GlintHawkTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB → auto-sacrifice
 
         // Auto-sacrificed — no prompt
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Glint Hawk"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Glint Hawk"));
+        harness.assertNotOnBattlefield(player1, "Glint Hawk");
+        harness.assertInGraveyard(player1, "Glint Hawk");
 
         // Opponent's Spellbook is untouched
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Spellbook"));
+        harness.assertOnBattlefield(player2, "Spellbook");
     }
 
     // ===== Helpers =====

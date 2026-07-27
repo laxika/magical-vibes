@@ -101,13 +101,10 @@ class AjaniOutlandChaperoneTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
         // Grizzly Bears is 2/2, 4 damage kills it
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -204,11 +201,9 @@ class AjaniOutlandChaperoneTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Ajani should be gone from battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ajani, Outland Chaperone"));
+        harness.assertNotOnBattlefield(player1, "Ajani, Outland Chaperone");
         // Ajani goes to graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ajani, Outland Chaperone"));
+        harness.assertInGraveyard(player1, "Ajani, Outland Chaperone");
         // The ability is still on the stack though
         assertThat(gd.stack).hasSize(1);
     }
@@ -228,18 +223,15 @@ class AjaniOutlandChaperoneTest extends BaseCardTest {
         // Ajani is already gone but the ability is on the stack
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ajani, Outland Chaperone"));
+        harness.assertNotOnBattlefield(player1, "Ajani, Outland Chaperone");
 
         // Now resolve the ability — it should still deal 4 damage and kill Grizzly Bears
         harness.passBothPriorities();
 
         gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Legend rule =====

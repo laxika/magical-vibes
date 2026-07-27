@@ -101,8 +101,7 @@ class StinkdrinkerBanditTest extends BaseCardTest {
         harness.castWithProwl(player1, 0, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Stinkdrinker Bandit"));
+        harness.assertOnBattlefield(player1, "Stinkdrinker Bandit");
     }
 
     @Test

@@ -38,10 +38,8 @@ class StromgaldCabalTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Elite Vanguard is countered — goes to graveyard, 1 life paid
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Elite Vanguard"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elite Vanguard"));
+        harness.assertInGraveyard(player2, "Elite Vanguard");
+        harness.assertNotOnBattlefield(player2, "Elite Vanguard");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }

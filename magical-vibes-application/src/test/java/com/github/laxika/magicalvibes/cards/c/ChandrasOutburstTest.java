@@ -51,10 +51,8 @@ class ChandrasOutburstTest extends BaseCardTest {
         // Damage dealt
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         // Named card moved from graveyard to hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Chandra, Bold Pyromancer"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Chandra, Bold Pyromancer"));
+        harness.assertInHand(player1, "Chandra, Bold Pyromancer");
+        harness.assertNotInGraveyard(player1, "Chandra, Bold Pyromancer");
     }
 
     @Test

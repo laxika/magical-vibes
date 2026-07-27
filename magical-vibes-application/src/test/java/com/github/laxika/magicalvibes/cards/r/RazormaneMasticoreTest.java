@@ -55,12 +55,10 @@ class RazormaneMasticoreTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0); // discard the card
 
         // Masticore is still on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Razormane Masticore"));
+        harness.assertOnBattlefield(player1, "Razormane Masticore");
 
         // Grizzly Bears is in the graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -92,12 +90,10 @@ class RazormaneMasticoreTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // Masticore is NOT on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Razormane Masticore"));
+        harness.assertNotOnBattlefield(player1, "Razormane Masticore");
 
         // Masticore is in the graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Razormane Masticore"));
+        harness.assertInGraveyard(player1, "Razormane Masticore");
     }
 
     @Test
@@ -110,12 +106,10 @@ class RazormaneMasticoreTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger — auto-sacrifice
 
         // Masticore is NOT on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Razormane Masticore"));
+        harness.assertNotOnBattlefield(player1, "Razormane Masticore");
 
         // Masticore is in the graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Razormane Masticore"));
+        harness.assertInGraveyard(player1, "Razormane Masticore");
 
         // No prompt — no cards to discard
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -131,8 +125,7 @@ class RazormaneMasticoreTest extends BaseCardTest {
         advanceToUpkeep(player2);
 
         // Masticore should still be on the battlefield (no trigger)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Razormane Masticore"));
+        harness.assertOnBattlefield(player1, "Razormane Masticore");
     }
 
     // ===== Draw step — may deal 3 damage to target creature =====
@@ -179,10 +172,8 @@ class RazormaneMasticoreTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bearsId);
 
         // Grizzly Bears (2/2) should be destroyed by 3 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -197,8 +188,7 @@ class RazormaneMasticoreTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // Grizzly Bears should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -214,8 +204,7 @@ class RazormaneMasticoreTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Grizzly Bears should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -233,10 +222,8 @@ class RazormaneMasticoreTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, elvesId);
 
         // Llanowar Elves (1/1) should be destroyed by 3 damage
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
     }
 
     @Test

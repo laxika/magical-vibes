@@ -60,8 +60,7 @@ class GhituFireEaterTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ghitu Fire-Eater"));
+        harness.assertNotOnBattlefield(player1, "Ghitu Fire-Eater");
         harness.assertInGraveyard(player1, "Ghitu Fire-Eater");
     }
 

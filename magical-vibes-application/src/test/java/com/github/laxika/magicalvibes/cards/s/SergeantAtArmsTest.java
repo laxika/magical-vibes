@@ -28,8 +28,7 @@ class SergeantAtArmsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
 
         // Creature entered the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sergeant-at-Arms"));
+        harness.assertOnBattlefield(player1, "Sergeant-at-Arms");
         // No ETB trigger on the stack
         assertThat(gd.stack).isEmpty();
         // No tokens created — only Sergeant-at-Arms on the battlefield
@@ -49,8 +48,7 @@ class SergeantAtArmsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
 
         // Creature entered the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sergeant-at-Arms"));
+        harness.assertOnBattlefield(player1, "Sergeant-at-Arms");
         // ETB trigger is on the stack
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);

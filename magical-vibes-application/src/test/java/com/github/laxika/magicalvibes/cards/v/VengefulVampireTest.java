@@ -28,8 +28,7 @@ class VengefulVampireTest extends BaseCardTest {
 
         Permanent returnedVampire = findPermanent(player1, "Vengeful Vampire");
         assertThat(returnedVampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Vengeful Vampire"));
+        harness.assertNotInGraveyard(player1, "Vengeful Vampire");
     }
 
     @Test
@@ -43,10 +42,8 @@ class VengefulVampireTest extends BaseCardTest {
         harness.castInstant(player2, 0, vampire.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Vengeful Vampire"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Vengeful Vampire"));
+        harness.assertNotOnBattlefield(player1, "Vengeful Vampire");
+        harness.assertInGraveyard(player1, "Vengeful Vampire");
         assertThat(gd.stack).isEmpty();
     }
 }

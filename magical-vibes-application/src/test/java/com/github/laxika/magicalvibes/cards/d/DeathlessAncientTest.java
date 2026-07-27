@@ -52,10 +52,8 @@ class DeathlessAncientTest extends BaseCardTest {
             tapVampires(player1, 3);
             harness.passBothPriorities();
 
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Deathless Ancient"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Deathless Ancient"));
+            harness.assertInHand(player1, "Deathless Ancient");
+            harness.assertNotInGraveyard(player1, "Deathless Ancient");
         }
 
         @Test

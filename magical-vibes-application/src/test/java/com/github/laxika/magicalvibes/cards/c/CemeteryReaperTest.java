@@ -128,8 +128,7 @@ class CemeteryReaperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature card exiled from graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
@@ -155,8 +154,7 @@ class CemeteryReaperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Card exiled from opponent's graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
@@ -261,8 +259,7 @@ class CemeteryReaperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No token created since exile fizzled
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Zombie"));
+        harness.assertNotOnBattlefield(player1, "Zombie");
     }
 
     @Test

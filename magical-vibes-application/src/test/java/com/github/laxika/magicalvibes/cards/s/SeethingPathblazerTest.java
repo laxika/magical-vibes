@@ -30,8 +30,7 @@ class SeethingPathblazerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, pathblazer, Keyword.FIRST_STRIKE)).isTrue();
 
         // The Air Elemental was sacrificed
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Air Elemental"));
+        harness.assertInGraveyard(player1, "Air Elemental");
     }
 
     @Test
@@ -61,9 +60,7 @@ class SeethingPathblazerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Pathblazer sacrificed itself; the ability is on the stack but will fizzle
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Seething Pathblazer"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Seething Pathblazer"));
+        harness.assertNotOnBattlefield(player1, "Seething Pathblazer");
+        harness.assertInGraveyard(player1, "Seething Pathblazer");
     }
 }

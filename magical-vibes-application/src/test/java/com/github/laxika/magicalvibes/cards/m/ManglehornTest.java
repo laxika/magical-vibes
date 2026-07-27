@@ -45,10 +45,8 @@ class ManglehornTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ornithopter"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Ornithopter"));
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertInGraveyard(player2, "Ornithopter");
     }
 
     @Test
@@ -66,8 +64,7 @@ class ManglehornTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false); // decline
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Ornithopter"));
+        harness.assertOnBattlefield(player2, "Ornithopter");
     }
 
     @Test
@@ -82,8 +79,7 @@ class ManglehornTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Manglehorn"));
+        harness.assertOnBattlefield(player1, "Manglehorn");
     }
 
     // ===== Static: artifacts your opponents control enter tapped =====

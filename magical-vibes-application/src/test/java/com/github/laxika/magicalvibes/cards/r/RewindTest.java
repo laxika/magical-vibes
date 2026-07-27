@@ -41,8 +41,7 @@ class RewindTest extends BaseCardTest {
 
         gd = harness.getGameData();
         // Countered creature spell goes to owner's graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         long untappedIslands = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Island"))

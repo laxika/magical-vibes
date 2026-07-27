@@ -142,11 +142,8 @@ class FountainOfYouthTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Fountain of Youth"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Fountain of Youth"));
+        harness.assertOnBattlefield(player1, "Fountain of Youth");
+        harness.assertNotInGraveyard(player1, "Fountain of Youth");
     }
 }
 

@@ -28,8 +28,7 @@ class MulldrifterTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger (draw two)
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mulldrifter"));
+        harness.assertOnBattlefield(player1, "Mulldrifter");
     }
 
     // ===== Evoke =====
@@ -47,9 +46,7 @@ class MulldrifterTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger (draw two + evoke sacrifice)
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mulldrifter"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mulldrifter"));
+        harness.assertNotOnBattlefield(player1, "Mulldrifter");
+        harness.assertInGraveyard(player1, "Mulldrifter");
     }
 }

@@ -21,10 +21,8 @@ class DoomgapeTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve the upkeep trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Doomgape"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Doomgape"));
+        harness.assertNotOnBattlefield(player1, "Doomgape");
+        harness.assertInGraveyard(player1, "Doomgape");
         // Doomgape is 10/10
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 10);
     }
@@ -56,12 +54,9 @@ class DoomgapeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, bears.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Doomgape"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Doomgape");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
     }
 
@@ -74,8 +69,7 @@ class DoomgapeTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Doomgape"));
+        harness.assertOnBattlefield(player1, "Doomgape");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 }

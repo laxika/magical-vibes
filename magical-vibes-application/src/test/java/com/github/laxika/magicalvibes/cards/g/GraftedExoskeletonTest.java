@@ -177,8 +177,7 @@ class GraftedExoskeletonTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(creature1.getId()));
         // creature1 went to graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // creature2 is still alive
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(creature2.getId()));
@@ -206,16 +205,13 @@ class GraftedExoskeletonTest extends BaseCardTest {
         harness.passBothPriorities(); // Grizzly Bears resolves
 
         // Exoskeleton is destroyed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grafted Exoskeleton"));
+        harness.assertNotOnBattlefield(player1, "Grafted Exoskeleton");
         // Creature is sacrificed
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(creature.getId()));
         // Both went to graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grafted Exoskeleton"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grafted Exoskeleton");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== Sacrifice on unattach: no sacrifice when equipping from unattached =====
@@ -238,8 +234,7 @@ class GraftedExoskeletonTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(creature2.getId()));
         // No creatures in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== Sacrifice on unattach: re-equip to same creature =====

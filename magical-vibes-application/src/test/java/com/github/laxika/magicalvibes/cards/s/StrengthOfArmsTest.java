@@ -32,8 +32,7 @@ class StrengthOfArmsTest extends BaseCardTest {
         Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getEffectivePower()).isEqualTo(4);
         assertThat(bear.getEffectiveToughness()).isEqualTo(4);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Human Soldier"));
+        harness.assertNotOnBattlefield(player1, "Human Soldier");
     }
 
     @Test
@@ -70,8 +69,7 @@ class StrengthOfArmsTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Human Soldier"));
+        harness.assertNotOnBattlefield(player1, "Human Soldier");
     }
 
     @Test

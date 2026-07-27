@@ -44,10 +44,8 @@ class GlyphKeeperTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the counter trigger
 
         // The bolt was countered — Glyph Keeper survives and the bolt is in its owner's graveyard.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Glyph Keeper"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Lightning Bolt"));
+        harness.assertOnBattlefield(player1, "Glyph Keeper");
+        harness.assertInGraveyard(player2, "Lightning Bolt");
     }
 
     @Test
@@ -89,10 +87,8 @@ class GlyphKeeperTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve the counter trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Glyph Keeper"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lightning Bolt"));
+        harness.assertOnBattlefield(player1, "Glyph Keeper");
+        harness.assertInGraveyard(player1, "Lightning Bolt");
     }
 
     @Test
@@ -106,8 +102,7 @@ class GlyphKeeperTest extends BaseCardTest {
         // First bolt is countered.
         harness.castInstant(player2, 0, gkId);
         harness.passBothPriorities();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Glyph Keeper"));
+        harness.assertOnBattlefield(player1, "Glyph Keeper");
 
         // Second bolt the same turn: the trigger does not fire again — only the bolt is on the stack.
         harness.castInstant(player2, 0, gkId);
@@ -116,10 +111,8 @@ class GlyphKeeperTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve the bolt — 3 damage is lethal to the 5/3
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Glyph Keeper"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Glyph Keeper"));
+        harness.assertNotOnBattlefield(player1, "Glyph Keeper");
+        harness.assertInGraveyard(player1, "Glyph Keeper");
     }
 
     // ===== Embalm =====

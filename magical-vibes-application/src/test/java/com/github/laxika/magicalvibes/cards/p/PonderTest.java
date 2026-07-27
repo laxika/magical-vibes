@@ -171,8 +171,7 @@ class PonderTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ponder"));
+        harness.assertInGraveyard(player1, "Ponder");
     }
 
     // ===== Game log =====

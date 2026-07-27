@@ -48,9 +48,7 @@ class ArmyOfTheDamnedTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Army of the Damned"));
+        harness.assertInGraveyard(player1, "Army of the Damned");
     }
 
     @Test
@@ -85,8 +83,7 @@ class ArmyOfTheDamnedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Army of the Damned"));
+        harness.assertNotInGraveyard(player1, "Army of the Damned");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Army of the Damned"));
     }

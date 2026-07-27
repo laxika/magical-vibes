@@ -44,8 +44,7 @@ class RhoxTest extends BaseCardTest {
         harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 5));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -96,8 +95,7 @@ class RhoxTest extends BaseCardTest {
         harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 5));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Rhox"));
+        harness.assertOnBattlefield(player1, "Rhox");
         Permanent survivingRhox = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Rhox"))
                 .findFirst()

@@ -156,8 +156,7 @@ class ForebearsBladeTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Deathmark — creature dies, no valid target
 
         // Blade should still be on the battlefield but unattached
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forebear's Blade"));
+        harness.assertOnBattlefield(player1, "Forebear's Blade");
         assertThat(blade.getAttachedTo()).isNull();
     }
 
@@ -203,11 +202,9 @@ class ForebearsBladeTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve attach trigger
 
         // Creature1 should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // Blade should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forebear's Blade"));
+        harness.assertOnBattlefield(player1, "Forebear's Blade");
     }
 
     // ===== Equip ability =====

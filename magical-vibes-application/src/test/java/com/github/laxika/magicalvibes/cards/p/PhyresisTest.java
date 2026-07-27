@@ -151,8 +151,7 @@ class PhyresisTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Phyresis should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Phyresis"));
+        harness.assertInGraveyard(player1, "Phyresis");
     }
 
     // ===== Aura destruction: creature loses infect =====

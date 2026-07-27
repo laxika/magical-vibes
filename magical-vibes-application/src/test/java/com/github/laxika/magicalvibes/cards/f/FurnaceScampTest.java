@@ -53,10 +53,8 @@ class FurnaceScampTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Furnace Scamp should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Furnace Scamp"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Furnace Scamp"));
+        harness.assertNotOnBattlefield(player1, "Furnace Scamp");
+        harness.assertInGraveyard(player1, "Furnace Scamp");
 
         // Player 2 takes 1 combat damage + 3 trigger damage = 4 total
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
@@ -75,8 +73,7 @@ class FurnaceScampTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // Furnace Scamp should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Furnace Scamp"));
+        harness.assertOnBattlefield(player1, "Furnace Scamp");
 
         // Player 2 takes only 1 combat damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);

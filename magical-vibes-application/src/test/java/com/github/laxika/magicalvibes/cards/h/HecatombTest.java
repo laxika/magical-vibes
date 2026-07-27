@@ -59,8 +59,7 @@ class HecatombTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, elvesId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
     }
 
     @Test
@@ -96,10 +95,8 @@ class HecatombTest extends BaseCardTest {
         castHecatomb();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hecatomb"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hecatomb"));
+        harness.assertNotOnBattlefield(player1, "Hecatomb");
+        harness.assertInGraveyard(player1, "Hecatomb");
         // The three creatures are untouched.
         assertThat(creaturesControlledBy(player1.getId())).isEqualTo(3);
     }
@@ -117,8 +114,7 @@ class HecatombTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(creaturesControlledBy(player1.getId())).isEqualTo(0);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hecatomb"));
+        harness.assertOnBattlefield(player1, "Hecatomb");
     }
 
     @Test
@@ -132,10 +128,8 @@ class HecatombTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hecatomb"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hecatomb"));
+        harness.assertNotOnBattlefield(player1, "Hecatomb");
+        harness.assertInGraveyard(player1, "Hecatomb");
         assertThat(creaturesControlledBy(player1.getId())).isEqualTo(4);
     }
 }

@@ -37,8 +37,7 @@ class LanternSpiritTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Lantern Spirit"));
+        harness.assertOnBattlefield(player1, "Lantern Spirit");
     }
 
     // ===== Activated ability: return to hand =====
@@ -64,10 +63,8 @@ class LanternSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lantern Spirit"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Lantern Spirit"));
+        harness.assertInHand(player1, "Lantern Spirit");
+        harness.assertNotOnBattlefield(player1, "Lantern Spirit");
     }
 
     @Test
@@ -79,8 +76,7 @@ class LanternSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lantern Spirit"));
+        harness.assertInHand(player1, "Lantern Spirit");
 
         // Re-cast it
         harness.addMana(player1, ManaColor.BLUE, 3);
@@ -95,8 +91,7 @@ class LanternSpiritTest extends BaseCardTest {
         gs.playCard(gd, player1, spiritIndex, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Lantern Spirit"));
+        harness.assertOnBattlefield(player1, "Lantern Spirit");
     }
 
     @Test
@@ -109,8 +104,7 @@ class LanternSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lantern Spirit"));
+        harness.assertInHand(player1, "Lantern Spirit");
 
         // Re-cast
         harness.addMana(player1, ManaColor.BLUE, 3);
@@ -130,9 +124,7 @@ class LanternSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lantern Spirit"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Lantern Spirit"));
+        harness.assertInHand(player1, "Lantern Spirit");
+        harness.assertNotOnBattlefield(player1, "Lantern Spirit");
     }
 }

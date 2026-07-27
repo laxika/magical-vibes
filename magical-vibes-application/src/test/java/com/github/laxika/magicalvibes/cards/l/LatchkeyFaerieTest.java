@@ -28,9 +28,8 @@ class LatchkeyFaerieTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB draw
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Latchkey Faerie"));
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertOnBattlefield(player1, "Latchkey Faerie");
+        harness.assertInHand(player1, "Forest");
     }
 
     @Test
@@ -45,7 +44,7 @@ class LatchkeyFaerieTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
     }
 
     @Test
@@ -63,9 +62,8 @@ class LatchkeyFaerieTest extends BaseCardTest {
 
         // No prowl cost paid — the intervening-if ETB trigger never goes on the stack.
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Latchkey Faerie"));
-        assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getName().equals("Forest"));
+        harness.assertOnBattlefield(player1, "Latchkey Faerie");
+        harness.assertNotInHand(player1, "Forest");
     }
 
     @Test

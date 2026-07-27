@@ -95,8 +95,7 @@ class EldritchEvolutionTest extends BaseCardTest {
                         || p.getCard().getName().equals("Benalish Knight"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Eldritch Evolution"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Eldritch Evolution"));
+        harness.assertNotInGraveyard(player1, "Eldritch Evolution");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

@@ -70,12 +70,10 @@ class BonehoardTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve living weapon ETB — Germ is 0/0, dies to SBA
 
         // Germ should be dead (0/0 toughness with no creatures in graveyards)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phyrexian Germ"));
+        harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
 
         // Bonehoard should remain on the battlefield unattached
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Bonehoard"));
+        harness.assertOnBattlefield(player1, "Bonehoard");
     }
 
     @Test
@@ -217,7 +215,6 @@ class BonehoardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Germ should be dead (0 toughness after losing equipment boost, SBA)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phyrexian Germ"));
+        harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
     }
 }

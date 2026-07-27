@@ -43,8 +43,7 @@ class VampireNocturnusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Vampire Nocturnus"));
+        harness.assertOnBattlefield(player1, "Vampire Nocturnus");
     }
 
     // ===== Conditional static effect: top card is black =====

@@ -35,7 +35,7 @@ class NicolBolasPlaneswalkerTest extends BaseCardTest {
 
         assertThat(bolas.getCounterCount(CounterType.LOYALTY)).isEqualTo(8); // 5 + 3
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(forestId));
-        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player2, "Forest");
     }
 
     @Test
@@ -95,7 +95,7 @@ class NicolBolasPlaneswalkerTest extends BaseCardTest {
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(p2LifeBefore - 7);
         // Fewer permanents than the seven required, so all are sacrificed with no choice.
-        assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player2, "Forest");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -142,7 +142,7 @@ class NicolBolasPlaneswalkerTest extends BaseCardTest {
 
         // Fewer than seven permanents, so the planeswalker's controller (player2) sacrifices all of
         // them with no choice — proving the rider routed to player2, not the caster.
-        assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player2, "Forest");
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }

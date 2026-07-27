@@ -56,11 +56,8 @@ class MarrowShardsTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Eager Cadet"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Eager Cadet"));
+        harness.assertNotOnBattlefield(player2, "Eager Cadet");
+        harness.assertInGraveyard(player2, "Eager Cadet");
     }
 
     @Test
@@ -80,12 +77,9 @@ class MarrowShardsTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Both non-attacking 1/1 creatures survive since they were not damaged
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Eager Cadet"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Eager Cadet"));
+        harness.assertOnBattlefield(player1, "Eager Cadet");
+        harness.assertOnBattlefield(player2, "Eager Cadet");
     }
 
     @Test
@@ -123,11 +117,8 @@ class MarrowShardsTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Eager Cadet"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Eager Cadet"));
+        harness.assertNotOnBattlefield(player1, "Eager Cadet");
+        harness.assertNotOnBattlefield(player2, "Eager Cadet");
     }
 
     // ===== Helpers =====

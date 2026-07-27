@@ -67,8 +67,7 @@ class LeoninRelicWarderTest extends BaseCardTest {
         UUID artifactId = harness.getPermanentId(player2, "Leonin Scimitar");
         castAndExileTarget(artifactId);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
+        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
     }
@@ -82,8 +81,7 @@ class LeoninRelicWarderTest extends BaseCardTest {
         UUID pacifismId = harness.getPermanentId(player2, "Pacifism");
         castAndExileTarget(pacifismId);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Pacifism"));
+        harness.assertNotOnBattlefield(player2, "Pacifism");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Pacifism"));
     }
@@ -103,10 +101,8 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false); // decline
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leonin Relic-Warder"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
+        harness.assertOnBattlefield(player1, "Leonin Relic-Warder");
+        harness.assertOnBattlefield(player2, "Leonin Scimitar");
     }
 
     @Test
@@ -123,8 +119,7 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell -> creature enters; ETB finds no legal target
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leonin Relic-Warder"));
+        harness.assertOnBattlefield(player1, "Leonin Relic-Warder");
         // No may prompt and nothing left on the stack — the ETB never triggered.
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -157,12 +152,10 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Shock
 
         // Leonin Relic-Warder is dead
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Leonin Relic-Warder"));
+        harness.assertNotOnBattlefield(player1, "Leonin Relic-Warder");
 
         // Exiled card returns to battlefield under owner's control
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
+        harness.assertOnBattlefield(player2, "Leonin Scimitar");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Leonin Scimitar"));
     }
@@ -186,12 +179,10 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Unsummon
 
         // Leonin Relic-Warder is back in hand
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Leonin Relic-Warder"));
+        harness.assertNotOnBattlefield(player1, "Leonin Relic-Warder");
 
         // Exiled card returns to battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
+        harness.assertOnBattlefield(player2, "Leonin Scimitar");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Leonin Scimitar"));
     }
@@ -215,11 +206,9 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Card returns under player2's control (the owner)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
+        harness.assertOnBattlefield(player2, "Leonin Scimitar");
         // Not under player1's control
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
+        harness.assertNotOnBattlefield(player1, "Leonin Scimitar");
     }
 
     // ===== Edge cases =====
@@ -250,8 +239,7 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Leonin Scimitar is still on battlefield (was never exiled)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
+        harness.assertOnBattlefield(player2, "Leonin Scimitar");
         // Nothing weird returned
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
     }

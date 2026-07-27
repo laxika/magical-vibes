@@ -44,8 +44,7 @@ class TormentOfScarabsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player2, "Forest");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -64,8 +63,7 @@ class TormentOfScarabsTest extends BaseCardTest {
         harness.handleListChoice(player2, LOSE_LIFE);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
@@ -85,10 +83,8 @@ class TormentOfScarabsTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, bearsId);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -106,8 +102,7 @@ class TormentOfScarabsTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player2, "Forest");
     }
 
     @Test

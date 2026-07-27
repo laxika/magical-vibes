@@ -65,10 +65,8 @@ class FuelForTheCauseTest extends BaseCardTest {
 
         // Counter resolves first; proliferate may await input
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.stack)
                 .noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
     }
@@ -89,8 +87,7 @@ class FuelForTheCauseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Fuel for the Cause"));
+        harness.assertInGraveyard(player2, "Fuel for the Cause");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -188,8 +185,7 @@ class FuelForTheCauseTest extends BaseCardTest {
 
         // Spell countered, no proliferate needed — no eligible permanents
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -217,7 +213,6 @@ class FuelForTheCauseTest extends BaseCardTest {
 
         // Entire spell fizzles — no counter, no proliferate
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Fuel for the Cause"));
+        harness.assertInGraveyard(player2, "Fuel for the Cause");
     }
 }

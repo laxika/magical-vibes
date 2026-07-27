@@ -29,7 +29,7 @@ class OliviasDragoonTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gqs.hasKeyword(gd, dragoon, Keyword.FLYING)).isTrue();
     }
 

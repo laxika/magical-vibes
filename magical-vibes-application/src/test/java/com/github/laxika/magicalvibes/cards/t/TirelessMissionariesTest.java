@@ -32,8 +32,7 @@ class TirelessMissionariesTest extends BaseCardTest {
         castTirelessMissionaries();
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Tireless Missionaries"));
+        harness.assertOnBattlefield(player1, "Tireless Missionaries");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);

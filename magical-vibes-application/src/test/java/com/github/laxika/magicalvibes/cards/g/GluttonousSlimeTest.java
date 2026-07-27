@@ -41,8 +41,7 @@ class GluttonousSlimeTest extends BaseCardTest {
 
         assertThat(slime().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         // Fodder was sacrificed to devour.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -58,8 +57,7 @@ class GluttonousSlimeTest extends BaseCardTest {
 
         assertThat(slime().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         // Choosing to devour nothing keeps the other creature.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test

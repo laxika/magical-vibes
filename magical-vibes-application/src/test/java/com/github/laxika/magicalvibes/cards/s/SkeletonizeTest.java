@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SkeletonizeTest extends BaseCardTest {
@@ -34,11 +33,9 @@ class SkeletonizeTest extends BaseCardTest {
         resolveStack();
 
         // 3 damage kills the 2/2, so its card is in the owner's graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         // Skeletonize's controller (player1) gets a Skeleton token
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Skeleton"));
+        harness.assertOnBattlefield(player1, "Skeleton");
     }
 
     @Test
@@ -53,10 +50,8 @@ class SkeletonizeTest extends BaseCardTest {
         resolveStack();
 
         // 3 damage does not kill the 4/4, so no token is created
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Skeleton"));
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertNotOnBattlefield(player1, "Skeleton");
     }
 
     @Test

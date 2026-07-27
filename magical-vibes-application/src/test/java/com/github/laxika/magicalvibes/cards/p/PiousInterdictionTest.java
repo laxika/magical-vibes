@@ -183,9 +183,7 @@ class PiousInterdictionTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Pious Interdiction"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Pious Interdiction"));
+        harness.assertInGraveyard(player1, "Pious Interdiction");
+        harness.assertNotOnBattlefield(player1, "Pious Interdiction");
     }
 }

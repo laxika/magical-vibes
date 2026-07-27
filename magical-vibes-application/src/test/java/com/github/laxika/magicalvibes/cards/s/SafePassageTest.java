@@ -84,9 +84,7 @@ class SafePassageTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Safe Passage"));
+        harness.assertInGraveyard(player1, "Safe Passage");
     }
 
     // ===== Prevents combat damage to player =====
@@ -136,10 +134,8 @@ class SafePassageTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // 5 damage to blocker is prevented, so Grizzly Bears (2/2) survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Does not prevent damage to opponent =====
@@ -192,10 +188,8 @@ class SafePassageTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Grizzly Bears (2/2) takes 5 damage — not protected, should die
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Prevents spell damage to player =====
@@ -233,10 +227,8 @@ class SafePassageTest extends BaseCardTest {
         harness.castInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Grizzly Bears (2/2) takes 2 damage from Shock, but it's prevented
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Clears at end of turn =====

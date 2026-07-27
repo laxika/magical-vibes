@@ -102,15 +102,11 @@ class ViridianHarvestTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger
 
         // Both artifact and aura should be in graveyards
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ratchet Bomb"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Viridian Harvest"));
+        harness.assertInGraveyard(player1, "Ratchet Bomb");
+        harness.assertInGraveyard(player1, "Viridian Harvest");
         // Neither should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ratchet Bomb"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Viridian Harvest"));
+        harness.assertNotOnBattlefield(player1, "Ratchet Bomb");
+        harness.assertNotOnBattlefield(player1, "Viridian Harvest");
     }
 
     // ===== Helpers =====

@@ -67,10 +67,8 @@ class GraveBrambleTest extends BaseCardTest {
         // Grave Bramble (3/4) deals 3 damage to Walking Corpse (2/2) — kills it
         // Walking Corpse's 2 damage is prevented by protection from Zombies
         // Grave Bramble survives
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Walking Corpse"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grave Bramble"));
+        harness.assertNotOnBattlefield(player1, "Walking Corpse");
+        harness.assertOnBattlefield(player2, "Grave Bramble");
     }
 
     @Test
@@ -95,10 +93,8 @@ class GraveBrambleTest extends BaseCardTest {
 
         // Grave Bramble (3/4) deals 3 damage to Hill Giant (3/3) — kills it
         // Hill Giant deals 3 damage to Grave Bramble (3/4) — survives at 3/1
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hill Giant"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grave Bramble"));
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        harness.assertOnBattlefield(player2, "Grave Bramble");
     }
 
     // ===== Protection - blocking =====

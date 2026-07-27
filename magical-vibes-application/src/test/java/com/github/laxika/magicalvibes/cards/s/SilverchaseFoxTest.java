@@ -30,10 +30,8 @@ class SilverchaseFoxTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Fox is sacrificed as cost (goes to graveyard)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Silverchase Fox"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Silverchase Fox"));
+        harness.assertNotOnBattlefield(player1, "Silverchase Fox");
+        harness.assertInGraveyard(player1, "Silverchase Fox");
         // Ability is on the stack
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -52,12 +50,10 @@ class SilverchaseFoxTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Honor of the Pure"));
+        harness.assertNotOnBattlefield(player2, "Honor of the Pure");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Honor of the Pure"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Honor of the Pure"));
+        harness.assertNotInGraveyard(player2, "Honor of the Pure");
     }
 
     // ===== Target restriction =====
@@ -120,8 +116,7 @@ class SilverchaseFoxTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         // Fox is still in graveyard (cost was already paid)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Silverchase Fox"));
+        harness.assertInGraveyard(player1, "Silverchase Fox");
     }
 
     // ===== Helpers =====

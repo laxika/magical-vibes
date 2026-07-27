@@ -123,10 +123,8 @@ class SerraBestiaryTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Serra Bestiary"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Serra Bestiary"));
+        harness.assertNotOnBattlefield(player1, "Serra Bestiary");
+        harness.assertInGraveyard(player1, "Serra Bestiary");
     }
 
     @Test
@@ -142,8 +140,7 @@ class SerraBestiaryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Serra Bestiary"));
+        harness.assertOnBattlefield(player1, "Serra Bestiary");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
     }
 
@@ -158,8 +155,7 @@ class SerraBestiaryTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Serra Bestiary"));
+        harness.assertOnBattlefield(player1, "Serra Bestiary");
     }
 
     // ===== Targeting =====

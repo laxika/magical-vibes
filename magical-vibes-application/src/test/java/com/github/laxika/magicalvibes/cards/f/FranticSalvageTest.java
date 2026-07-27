@@ -66,9 +66,8 @@ class FranticSalvageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Artifacts should be on top of library, not in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Leonin Scimitar"))
-                .noneMatch(c -> c.getName().equals("Fountain of Youth"));
+        harness.assertNotInGraveyard(player1, "Leonin Scimitar");
+        harness.assertNotInGraveyard(player1, "Fountain of Youth");
 
         // Artifacts are on top of the library (before the draw happened, so one was drawn)
         // The draw picks one of the cards just placed on top
@@ -98,8 +97,7 @@ class FranticSalvageTest extends BaseCardTest {
 
         // One artifact still in graveyard, one was moved. Frantic Salvage also goes to graveyard after resolving.
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Frantic Salvage"));
+        harness.assertInGraveyard(player1, "Frantic Salvage");
 
         // Drew a card (hand was emptied by casting, then drew 1)
         // The spell was removed from hand, so handSizeBefore - 1 + 1 draw = handSizeBefore
@@ -125,13 +123,11 @@ class FranticSalvageTest extends BaseCardTest {
 
         // Artifact still in graveyard (not moved). Frantic Salvage also goes to graveyard after resolving.
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Leonin Scimitar"))
-                .anyMatch(c -> c.getName().equals("Frantic Salvage"));
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+        harness.assertInGraveyard(player1, "Frantic Salvage");
 
         // Drew the Grizzly Bears from top of library
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     // ===== Casting with no artifact cards in graveyard =====
@@ -155,14 +151,12 @@ class FranticSalvageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Drew a card
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
 
         // Non-artifact card still in graveyard (untouched). Frantic Salvage also goes to graveyard.
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Frantic Salvage"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Frantic Salvage");
     }
 
     @Test
@@ -182,8 +176,7 @@ class FranticSalvageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Drew a card
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     // ===== Only artifact cards are selectable =====
@@ -225,7 +218,6 @@ class FranticSalvageTest extends BaseCardTest {
         // The artifact was placed on top, then drawn. Only Frantic Salvage is in graveyard.
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId()).getFirst().getName()).isEqualTo("Frantic Salvage");
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
+        harness.assertInHand(player1, "Leonin Scimitar");
     }
 }

@@ -24,8 +24,7 @@ class CaoRenWeiCommanderTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Cao Ren, Wei Commander"));
+        harness.assertOnBattlefield(player1, "Cao Ren, Wei Commander");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 3);
     }
 }

@@ -43,10 +43,8 @@ class GrimBackwoodsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handlePermanentChosen(player1, bear.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Chosen Bear"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Chosen Bear"));
+        harness.assertNotOnBattlefield(player1, "Chosen Bear");
+        harness.assertInGraveyard(player1, "Chosen Bear");
         assertThat(backwoods.isTapped()).isTrue();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
@@ -69,10 +67,8 @@ class GrimBackwoodsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Only Creature"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Only Creature"));
+        harness.assertNotOnBattlefield(player1, "Only Creature");
+        harness.assertInGraveyard(player1, "Only Creature");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
     }
 
@@ -123,10 +119,8 @@ class GrimBackwoodsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Test Enchantment"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Only Creature"));
+        harness.assertOnBattlefield(player1, "Test Enchantment");
+        harness.assertNotOnBattlefield(player1, "Only Creature");
     }
 
     private Permanent addReadyBackwoods(Player player) {

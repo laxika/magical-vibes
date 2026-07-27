@@ -80,10 +80,8 @@ class HopefulInitiateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(initiate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
+        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
     }
 
     @Test
@@ -105,8 +103,7 @@ class HopefulInitiateTest extends BaseCardTest {
 
         assertThat(initiate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
+        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
     }
 
     @Test
@@ -123,8 +120,7 @@ class HopefulInitiateTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Glorious Anthem"));
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
     }
 
     @Test

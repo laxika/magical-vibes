@@ -37,10 +37,8 @@ class HullbreakerHorrorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hullbreaker Horror"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Cancel"));
+        harness.assertOnBattlefield(player1, "Hullbreaker Horror");
+        harness.assertInGraveyard(player2, "Cancel");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -60,10 +58,8 @@ class HullbreakerHorrorTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd)); // bounce effect
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     @Test
@@ -88,10 +84,8 @@ class HullbreakerHorrorTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd)); // bounce spell
 
         assertThat(gd.stack.stream().noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"))).isTrue();
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -107,7 +101,6 @@ class HullbreakerHorrorTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleListChoice(player1, ChoiceContext.HullbreakerHorrorModeChoice.NONE);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 }

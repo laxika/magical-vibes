@@ -259,9 +259,7 @@ class ArrestTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Arrest"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Arrest"));
+        harness.assertInGraveyard(player1, "Arrest");
+        harness.assertNotOnBattlefield(player1, "Arrest");
     }
 }

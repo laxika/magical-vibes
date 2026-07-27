@@ -32,10 +32,8 @@ class WitchbaneOrbTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Curse should be destroyed (moved to graveyard)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Curse of the Pierced Heart"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Curse of the Pierced Heart"));
+        harness.assertNotOnBattlefield(player2, "Curse of the Pierced Heart");
+        harness.assertInGraveyard(player2, "Curse of the Pierced Heart");
     }
 
     @Test
@@ -51,9 +49,8 @@ class WitchbaneOrbTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve artifact
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Curse of the Pierced Heart"))
-                .noneMatch(p -> p.getCard().getName().equals("Curse of the Bloody Tome"));
+        harness.assertNotOnBattlefield(player2, "Curse of the Pierced Heart");
+        harness.assertNotOnBattlefield(player2, "Curse of the Bloody Tome");
     }
 
     @Test
@@ -69,8 +66,7 @@ class WitchbaneOrbTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Curse on opponent should remain
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Curse of the Pierced Heart"));
+        harness.assertOnBattlefield(player1, "Curse of the Pierced Heart");
     }
 
     // ===== Static: controller has hexproof =====

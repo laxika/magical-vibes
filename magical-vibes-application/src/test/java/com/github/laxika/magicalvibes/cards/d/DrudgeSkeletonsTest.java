@@ -48,9 +48,7 @@ class DrudgeSkeletonsTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Drudge Skeletons"));
+        harness.assertOnBattlefield(player1, "Drudge Skeletons");
     }
 
     // ===== Activate regeneration ability =====
@@ -235,8 +233,7 @@ class DrudgeSkeletonsTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Drudge Skeletons should survive via regeneration
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Drudge Skeletons"));
+        harness.assertOnBattlefield(player1, "Drudge Skeletons");
         // Regeneration should tap the creature
         Permanent skele = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Drudge Skeletons"))
@@ -245,8 +242,7 @@ class DrudgeSkeletonsTest extends BaseCardTest {
         // Regeneration shield should be consumed
         assertThat(skele.getRegenerationShield()).isEqualTo(0);
         // Grizzly Bears should also die (1 damage from skeletons >= ... no, 1 < 2, so bears live)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -269,12 +265,9 @@ class DrudgeSkeletonsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Drudge Skeletons should be dead
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Drudge Skeletons"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Drudge Skeletons"));
+        harness.assertNotOnBattlefield(player1, "Drudge Skeletons");
+        harness.assertInGraveyard(player1, "Drudge Skeletons");
     }
 
     @Test
@@ -300,8 +293,7 @@ class DrudgeSkeletonsTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Drudge Skeletons survives via regeneration
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Drudge Skeletons"));
+        harness.assertOnBattlefield(player1, "Drudge Skeletons");
         Permanent skele = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Drudge Skeletons"))
                 .findFirst().orElseThrow();
@@ -366,12 +358,9 @@ class DrudgeSkeletonsTest extends BaseCardTest {
         harness.activateAbility(player2, 0, 1, skelePerm2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Drudge Skeletons survives via regeneration
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Drudge Skeletons"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Drudge Skeletons"));
+        harness.assertOnBattlefield(player1, "Drudge Skeletons");
+        harness.assertNotInGraveyard(player1, "Drudge Skeletons");
     }
 
     @Test
@@ -390,11 +379,8 @@ class DrudgeSkeletonsTest extends BaseCardTest {
         harness.activateAbility(player2, 0, 1, skelePerm.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Drudge Skeletons"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Drudge Skeletons"));
+        harness.assertNotOnBattlefield(player1, "Drudge Skeletons");
+        harness.assertInGraveyard(player1, "Drudge Skeletons");
     }
 
     // ===== Wrath of God cannot be regenerated =====
@@ -416,11 +402,8 @@ class DrudgeSkeletonsTest extends BaseCardTest {
         harness.castSorcery(player2, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Drudge Skeletons"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Drudge Skeletons"));
+        harness.assertNotOnBattlefield(player1, "Drudge Skeletons");
+        harness.assertInGraveyard(player1, "Drudge Skeletons");
     }
 
     // ===== Regeneration shield clears at end of turn =====

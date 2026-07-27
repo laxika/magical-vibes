@@ -46,8 +46,7 @@ class MegrimTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Megrim"));
+        harness.assertOnBattlefield(player1, "Megrim");
     }
 
     // ===== Triggered ability: opponent discards via Distress (revealed hand path) =====
@@ -70,8 +69,7 @@ class MegrimTest extends BaseCardTest {
 
         // Megrim trigger should have resolved, dealing 2 damage to player2
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Triggered ability: opponent discards via handleDiscardCardChosen path =====
@@ -196,8 +194,7 @@ class MegrimTest extends BaseCardTest {
         // Total: 20 - 2 (combat) - 2 (Megrim) = 16
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== No trigger when Megrim is not on the battlefield =====

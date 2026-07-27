@@ -132,8 +132,7 @@ class RuleOfLawTest extends BaseCardTest {
         // Play land — should succeed even after casting a spell
         gs.playCard(gd, player1, 0, 0, null, null);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Plains"));
+        harness.assertOnBattlefield(player1, "Plains");
     }
 }
 

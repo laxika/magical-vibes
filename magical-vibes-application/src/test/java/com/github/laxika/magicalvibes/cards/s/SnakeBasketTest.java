@@ -40,10 +40,8 @@ class SnakeBasketTest extends BaseCardTest {
                 });
 
         // Basket sacrificed as a cost
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Snake Basket"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Snake Basket"));
+        harness.assertNotOnBattlefield(player1, "Snake Basket");
+        harness.assertInGraveyard(player1, "Snake Basket");
     }
 
     @Test
@@ -59,10 +57,8 @@ class SnakeBasketTest extends BaseCardTest {
         harness.activateAbility(player1, idx, 0, 0, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Snake"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Snake Basket"));
+        harness.assertNotOnBattlefield(player1, "Snake");
+        harness.assertInGraveyard(player1, "Snake Basket");
     }
 
     @Test

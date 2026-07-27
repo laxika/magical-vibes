@@ -47,8 +47,7 @@ class TormentOfHailfireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -68,8 +67,7 @@ class TormentOfHailfireTest extends BaseCardTest {
 
         // 2 iterations x 3 life, no prompt needed, land untouched.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player2, "Forest");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -91,8 +89,7 @@ class TormentOfHailfireTest extends BaseCardTest {
         harness.handleListChoice(player2, LOSE_LIFE);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
@@ -113,10 +110,8 @@ class TormentOfHailfireTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, bearsId);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -135,8 +130,7 @@ class TormentOfHailfireTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player2, "Forest");
     }
 
     // ===== Repetition =====
@@ -197,8 +191,7 @@ class TormentOfHailfireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Torment of Hailfire"));
+        harness.assertInGraveyard(player1, "Torment of Hailfire");
     }
 
     private UUID nonlandPermanentId(UUID playerId, String cardName) {

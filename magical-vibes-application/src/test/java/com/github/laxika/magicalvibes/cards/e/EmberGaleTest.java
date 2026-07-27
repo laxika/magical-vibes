@@ -58,10 +58,8 @@ class EmberGaleTest extends BaseCardTest {
 
         castEmberGale();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Squire"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Squire"));
+        harness.assertNotOnBattlefield(player2, "Squire");
+        harness.assertInGraveyard(player2, "Squire");
     }
 
     @Test

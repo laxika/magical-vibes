@@ -34,8 +34,7 @@ class KeldonOverseerTest extends BaseCardTest {
             harness.castCreature(player1, 0);
             harness.passBothPriorities(); // resolve creature spell
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Keldon Overseer"));
+            harness.assertOnBattlefield(player1, "Keldon Overseer");
             assertThat(gd.stack).isEmpty();
         }
 
@@ -68,8 +67,7 @@ class KeldonOverseerTest extends BaseCardTest {
             Permanent target = addCreature(player2);
             castKicked(target.getId());
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Keldon Overseer"));
+            harness.assertOnBattlefield(player1, "Keldon Overseer");
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         }

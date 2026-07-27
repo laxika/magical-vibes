@@ -43,9 +43,7 @@ class NightwingShadeTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Nightwing Shade"));
+        harness.assertOnBattlefield(player1, "Nightwing Shade");
     }
 
     // ===== Activate ability =====

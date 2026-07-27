@@ -45,8 +45,7 @@ class CloudSpriteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Cloud Sprite"));
+        harness.assertOnBattlefield(player1, "Cloud Sprite");
     }
 
     @Test
@@ -153,10 +152,8 @@ class CloudSpriteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both should be dead
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Cloud Sprite"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Cloud Sprite"));
+        harness.assertInGraveyard(player1, "Cloud Sprite");
+        harness.assertInGraveyard(player2, "Cloud Sprite");
 
         // No damage to player
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);

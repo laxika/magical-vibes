@@ -43,10 +43,8 @@ class DaringArchaeologistTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Spellbook"));
+        harness.assertInHand(player1, "Spellbook");
+        harness.assertNotInGraveyard(player1, "Spellbook");
     }
 
     @Test
@@ -57,10 +55,8 @@ class DaringArchaeologistTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Spellbook"));
+        harness.assertInGraveyard(player1, "Spellbook");
+        harness.assertNotInHand(player1, "Spellbook");
     }
 
     @Test

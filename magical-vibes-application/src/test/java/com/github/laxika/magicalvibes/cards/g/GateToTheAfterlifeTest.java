@@ -50,8 +50,7 @@ class GateToTheAfterlifeTest extends BaseCardTest {
             harness.handleCardChosen(player1, 0);           // discard it
 
             assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Forest"));
+            harness.assertInGraveyard(player1, "Forest");
         }
 
         @Test
@@ -133,10 +132,8 @@ class GateToTheAfterlifeTest extends BaseCardTest {
             harness.activateAbility(player1, 0, 0, null); // paying {2}, {T}, sacrifice
             harness.passBothPriorities();                 // resolve the search (finds nothing)
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Gate to the Afterlife"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Gate to the Afterlife"));
+            harness.assertNotOnBattlefield(player1, "Gate to the Afterlife");
+            harness.assertInGraveyard(player1, "Gate to the Afterlife");
         }
 
         private List<Card> creatureCards(int count) {

@@ -41,8 +41,7 @@ class MortisDogsTest extends BaseCardTest {
         harness.passBothPriorities(); // Combat damage — Mortis Dogs dies
 
         // Mortis Dogs should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mortis Dogs"));
+        harness.assertInGraveyard(player1, "Mortis Dogs");
 
         // Player1 should be prompted to choose a target player
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);

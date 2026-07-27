@@ -66,8 +66,7 @@ class SirensCallTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .doesNotContain(lazy)
                 .contains(attacker, wall, fresh);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test

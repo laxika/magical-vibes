@@ -31,8 +31,7 @@ class ZahidDjinnOfTheLampTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Zahid should be on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Zahid, Djinn of the Lamp"));
+        harness.assertOnBattlefield(player1, "Zahid, Djinn of the Lamp");
 
         // The artifact should be tapped (not sacrificed)
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -51,8 +50,7 @@ class ZahidDjinnOfTheLampTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Zahid, Djinn of the Lamp"));
+        harness.assertOnBattlefield(player1, "Zahid, Djinn of the Lamp");
     }
 
     @Test
@@ -122,12 +120,10 @@ class ZahidDjinnOfTheLampTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Artifact should still be on battlefield (tapped, not sacrificed)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Darksteel Relic"));
+        harness.assertOnBattlefield(player1, "Darksteel Relic");
 
         // Graveyard should NOT contain the artifact
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Darksteel Relic"));
+        harness.assertNotInGraveyard(player1, "Darksteel Relic");
     }
 
     @Test
@@ -142,8 +138,7 @@ class ZahidDjinnOfTheLampTest extends BaseCardTest {
         harness.castCreatureWithAlternateCost(player1, 0, List.of(sword));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Zahid, Djinn of the Lamp"));
+        harness.assertOnBattlefield(player1, "Zahid, Djinn of the Lamp");
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Short Sword") && p.isTapped());
     }

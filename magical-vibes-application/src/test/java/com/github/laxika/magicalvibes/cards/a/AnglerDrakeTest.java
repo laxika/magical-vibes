@@ -40,10 +40,8 @@ class AnglerDrakeTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true);
             harness.handlePermanentChosen(player1, bearsId);
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerHands.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+            harness.assertInHand(player2, "Grizzly Bears");
         }
 
         @Test
@@ -56,8 +54,7 @@ class AnglerDrakeTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, false);
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player2, "Grizzly Bears");
         }
 
         @Test
@@ -71,8 +68,7 @@ class AnglerDrakeTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true);
             harness.handlePermanentChosen(player1, bearsId);
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Angler Drake"));
+            harness.assertOnBattlefield(player1, "Angler Drake");
         }
     }
 

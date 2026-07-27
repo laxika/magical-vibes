@@ -55,10 +55,8 @@ class WhisperingSpecterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Whispering Specter should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Whispering Specter"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Whispering Specter"));
+        harness.assertNotOnBattlefield(player1, "Whispering Specter");
+        harness.assertInGraveyard(player1, "Whispering Specter");
 
         // Player2 should be prompted to discard cards equal to their poison counter count
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -79,8 +77,7 @@ class WhisperingSpecterTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // Whispering Specter should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Whispering Specter"));
+        harness.assertOnBattlefield(player1, "Whispering Specter");
 
         // No cards discarded
         assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(handSizeBefore);
@@ -118,8 +115,7 @@ class WhisperingSpecterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Specter is sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Whispering Specter"));
+        harness.assertNotOnBattlefield(player1, "Whispering Specter");
 
         // Player2 has 1 poison counter from infect combat damage, so they should discard 1 card
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -140,9 +136,7 @@ class WhisperingSpecterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Specter should be sacrificed even though opponent has no cards
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Whispering Specter"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Whispering Specter"));
+        harness.assertNotOnBattlefield(player1, "Whispering Specter");
+        harness.assertInGraveyard(player1, "Whispering Specter");
     }
 }

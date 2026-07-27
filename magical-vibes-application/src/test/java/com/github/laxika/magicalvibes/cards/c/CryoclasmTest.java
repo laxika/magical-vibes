@@ -53,10 +53,8 @@ class CryoclasmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Plains"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Plains"));
+        harness.assertNotOnBattlefield(player2, "Plains");
+        harness.assertInGraveyard(player2, "Plains");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
@@ -72,10 +70,8 @@ class CryoclasmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Island"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Island"));
+        harness.assertNotOnBattlefield(player2, "Island");
+        harness.assertInGraveyard(player2, "Island");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
@@ -91,8 +87,7 @@ class CryoclasmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Plains"));
+        harness.assertNotOnBattlefield(player1, "Plains");
         // Damage dealt to self (player1 is the land's controller)
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
     }
@@ -144,8 +139,7 @@ class CryoclasmTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Cryoclasm"));
+        harness.assertInGraveyard(player1, "Cryoclasm");
     }
 }
 

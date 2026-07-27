@@ -42,8 +42,7 @@ class IncreasingDevotionTest extends BaseCardTest {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
             assertThat(token.getCard().getSubtypes()).contains(CardSubtype.HUMAN);
         }
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Increasing Devotion"));
+        harness.assertInGraveyard(player1, "Increasing Devotion");
     }
 
     @Test
@@ -56,8 +55,7 @@ class IncreasingDevotionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(humanTokens()).hasSize(10);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Increasing Devotion"));
+        harness.assertNotInGraveyard(player1, "Increasing Devotion");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Increasing Devotion"));
     }

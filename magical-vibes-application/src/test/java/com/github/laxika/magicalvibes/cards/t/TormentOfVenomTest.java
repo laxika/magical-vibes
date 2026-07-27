@@ -33,8 +33,7 @@ class TormentOfVenomTest extends BaseCardTest {
         castTormentOfVenom(bearsId);
 
         // 2/2 with three -1/-1 counters → -1/-1, dies to the trailing SBA.
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         // Only option was to lose life (the countered creature is excluded, empty hand) — no prompt.
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -72,8 +71,7 @@ class TormentOfVenomTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, bearsId);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         // The targeted creature is untouched by the sacrifice and still bears its counters.
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(target.getId()));
@@ -94,8 +92,7 @@ class TormentOfVenomTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player2, "Forest");
     }
 
     @Test
@@ -111,8 +108,7 @@ class TormentOfVenomTest extends BaseCardTest {
         harness.handleListChoice(player2, LOSE_LIFE);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 

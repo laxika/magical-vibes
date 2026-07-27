@@ -76,10 +76,8 @@ class LordOfThePitTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // No damage dealt
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
@@ -93,8 +91,7 @@ class LordOfThePitTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Lord of the Pit"));
+        harness.assertOnBattlefield(player1, "Lord of the Pit");
     }
 
     // ===== Multiple other creatures — player chooses =====
@@ -145,14 +142,10 @@ class LordOfThePitTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, bears.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Lord of the Pit"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Giant Spider");
+        harness.assertOnBattlefield(player1, "Lord of the Pit");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // No damage dealt when sacrifice succeeds
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
@@ -192,8 +185,7 @@ class LordOfThePitTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(c -> c.getName().equals("Lord of the Pit")).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Lord of the Pit"));
+        harness.assertOnBattlefield(player1, "Lord of the Pit");
 
         // Second trigger's source is already gone; the remaining Lord is a different
         // card so it's not excluded by "other than" — gets auto-sacrificed too
@@ -201,8 +193,7 @@ class LordOfThePitTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(c -> c.getName().equals("Lord of the Pit")).hasSize(2);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Lord of the Pit"));
+        harness.assertNotOnBattlefield(player1, "Lord of the Pit");
         // No damage dealt — both triggers found a creature to sacrifice
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
@@ -220,8 +211,7 @@ class LordOfThePitTest extends BaseCardTest {
         // Lord sees no OTHER creatures controller owns — deals damage
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 7);
         // Opponent's creature is untouched
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test

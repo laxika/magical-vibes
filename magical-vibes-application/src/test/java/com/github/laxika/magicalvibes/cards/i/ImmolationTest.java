@@ -96,10 +96,8 @@ class ImmolationTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(giant);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Immolation"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Immolation"));
+        harness.assertInGraveyard(player1, "Immolation");
+        harness.assertNotOnBattlefield(player1, "Immolation");
     }
 
     @Test

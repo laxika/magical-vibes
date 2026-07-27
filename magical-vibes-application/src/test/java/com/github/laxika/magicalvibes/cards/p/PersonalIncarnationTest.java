@@ -57,8 +57,7 @@ class PersonalIncarnationTest extends BaseCardTest {
         harness.passBothPriorities(); // combat damage — Incarnation dies
         harness.passBothPriorities(); // resolve the death trigger
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Personal Incarnation"));
+        harness.assertInGraveyard(player1, "Personal Incarnation");
         // 15 / 2 rounded up = 8; 15 - 8 = 7
         assertThat(gd.getLife(player1.getId())).isEqualTo(7);
     }

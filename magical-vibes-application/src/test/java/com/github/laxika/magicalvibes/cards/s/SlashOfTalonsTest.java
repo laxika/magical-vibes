@@ -135,12 +135,9 @@ class SlashOfTalonsTest extends BaseCardTest {
         harness.castInstant(player2, 0, attacker.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Grizzly Bears is 2/2, 2 damage kills it
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -187,8 +184,7 @@ class SlashOfTalonsTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Slash of Talons"));
+        harness.assertInGraveyard(player2, "Slash of Talons");
     }
 
     // ===== Fizzle =====
@@ -218,7 +214,6 @@ class SlashOfTalonsTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Slash of Talons still goes to graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Slash of Talons"));
+        harness.assertInGraveyard(player2, "Slash of Talons");
     }
 }

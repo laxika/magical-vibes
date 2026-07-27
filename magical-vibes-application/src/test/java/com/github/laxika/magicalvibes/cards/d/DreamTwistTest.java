@@ -71,8 +71,7 @@ class DreamTwistTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Dream Twist"));
+        harness.assertInGraveyard(player1, "Dream Twist");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -103,8 +102,7 @@ class DreamTwistTest extends BaseCardTest {
         harness.castFlashback(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Dream Twist"));
+        harness.assertNotInGraveyard(player1, "Dream Twist");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Dream Twist"));
     }
@@ -118,8 +116,7 @@ class DreamTwistTest extends BaseCardTest {
 
         harness.castFlashback(player1, 0, player2.getId());
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Dream Twist"));
+        harness.assertNotInGraveyard(player1, "Dream Twist");
     }
 
     @Test

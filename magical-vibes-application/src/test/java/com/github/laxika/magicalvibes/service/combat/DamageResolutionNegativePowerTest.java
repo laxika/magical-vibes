@@ -82,8 +82,7 @@ class DamageResolutionNegativePowerTest extends BaseCardTest {
         assertThat(blocker2.getMarkedDamage()).isZero();
 
         // Blockers deal lethal back to the 1-toughness attacker (1+1 marked damage).
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Stronghold Confessor"));
+        harness.assertNotOnBattlefield(player1, "Stronghold Confessor");
 
         // Defending player took no combat damage.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);

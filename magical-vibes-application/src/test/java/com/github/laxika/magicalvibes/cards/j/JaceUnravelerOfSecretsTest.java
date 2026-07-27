@@ -53,11 +53,9 @@ class JaceUnravelerOfSecretsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, bearsId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(oppHandBefore + 1);
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player2, "Grizzly Bears");
         assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 5 - 2
     }
 
@@ -88,8 +86,7 @@ class JaceUnravelerOfSecretsTest extends BaseCardTest {
         assertThat(emblem.staticEffects()).hasSize(1);
         assertThat(emblem.staticEffects().getFirst())
                 .isInstanceOf(CounterOpponentFirstSpellEachTurnEffect.class);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Jace, Unraveler of Secrets"));
+        harness.assertNotOnBattlefield(player1, "Jace, Unraveler of Secrets");
     }
 
     @Test
@@ -110,8 +107,7 @@ class JaceUnravelerOfSecretsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player2, "Shock");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20); // Shock never resolved
     }
 
@@ -156,8 +152,7 @@ class JaceUnravelerOfSecretsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player1, "Shock");
     }
 
     @Test

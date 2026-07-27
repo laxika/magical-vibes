@@ -108,7 +108,6 @@ class InciteTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Incite"));
+        harness.assertInGraveyard(player1, "Incite");
     }
 }

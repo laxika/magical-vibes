@@ -41,8 +41,7 @@ class BenalishMarshalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Benalish Marshal"));
+        harness.assertOnBattlefield(player1, "Benalish Marshal");
     }
 
     // ===== Static effect: buffs other own creatures =====

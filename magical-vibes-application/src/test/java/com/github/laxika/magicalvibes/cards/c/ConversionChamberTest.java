@@ -50,8 +50,7 @@ class ConversionChamberTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Rod removed from graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Rod of Ruin"));
+        harness.assertNotInGraveyard(player1, "Rod of Ruin");
 
         // Rod is in player's exiled cards
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -75,8 +74,7 @@ class ConversionChamberTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Rod removed from opponent's graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Rod of Ruin"));
+        harness.assertNotInGraveyard(player2, "Rod of Ruin");
 
         // Rod is in opponent's exiled cards (cards owned by graveyard owner)
         assertThat(gd.getPlayerExiledCards(player2.getId()))

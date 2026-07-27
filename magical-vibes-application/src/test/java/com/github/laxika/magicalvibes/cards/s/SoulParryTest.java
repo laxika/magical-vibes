@@ -155,8 +155,7 @@ class SoulParryTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, List.of(bear.getId()));
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Soul Parry"));
+        harness.assertInGraveyard(player1, "Soul Parry");
     }
 
     private Permanent addCreature(Player player) {

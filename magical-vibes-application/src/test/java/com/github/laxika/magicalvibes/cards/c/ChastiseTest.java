@@ -48,10 +48,8 @@ class ChastiseTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Grizzly Bears (2/2) destroyed -> into owner's graveyard
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // Caster gains life equal to power (2): 15 + 2 = 17
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -103,7 +101,6 @@ class ChastiseTest extends BaseCardTest {
         // No life gain when the spell fizzles
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Chastise"));
+        harness.assertInGraveyard(player2, "Chastise");
     }
 }

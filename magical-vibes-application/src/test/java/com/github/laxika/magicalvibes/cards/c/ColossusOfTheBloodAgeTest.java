@@ -61,8 +61,7 @@ class ColossusOfTheBloodAgeTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(c -> c.getName().equals("Grizzly Bears"))
                 .hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Colossus of the Blood Age"));
+        harness.assertInGraveyard(player1, "Colossus of the Blood Age");
     }
 
     @Test
@@ -100,8 +99,7 @@ class ColossusOfTheBloodAgeTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Colossus of the Blood Age"));
+        harness.assertInGraveyard(player1, "Colossus of the Blood Age");
     }
 
     // ===== Helpers =====

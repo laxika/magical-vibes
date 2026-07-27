@@ -77,7 +77,6 @@ class PainfulMemoriesTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Painful Memories"));
+        harness.assertInGraveyard(player1, "Painful Memories");
     }
 }

@@ -28,10 +28,8 @@ class GoreVassalTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
 
         // Gore Vassal should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Gore Vassal"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Gore Vassal"));
+        harness.assertNotOnBattlefield(player1, "Gore Vassal");
+        harness.assertInGraveyard(player1, "Gore Vassal");
 
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -74,10 +72,8 @@ class GoreVassalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Llanowar Elves should be dead (0 toughness, no regen shield to save it)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
     }
 
     // ===== Can target own creature =====

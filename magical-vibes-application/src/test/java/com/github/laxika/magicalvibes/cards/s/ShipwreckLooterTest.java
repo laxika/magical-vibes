@@ -82,8 +82,7 @@ class ShipwreckLooterTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         // Creature is still on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Shipwreck Looter"));
+        harness.assertOnBattlefield(player1, "Shipwreck Looter");
     }
 
     // ===== Raid lost before resolution (intervening-if) =====
@@ -111,8 +110,7 @@ class ShipwreckLooterTest extends BaseCardTest {
         castShipwreckLooter();
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Shipwreck Looter"));
+        harness.assertOnBattlefield(player1, "Shipwreck Looter");
     }
 
     // ===== Stack is empty after full resolution =====

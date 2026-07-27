@@ -139,8 +139,7 @@ class ElaborateFirecannonTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         // Card should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Firecannon should now be untapped
         assertThat(perm.isTapped()).isFalse();
@@ -162,8 +161,7 @@ class ElaborateFirecannonTest extends BaseCardTest {
         // Firecannon should remain tapped
         assertThat(perm.isTapped()).isTrue();
         // Hand should still have the Grizzly Bears (no discard happened)
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test

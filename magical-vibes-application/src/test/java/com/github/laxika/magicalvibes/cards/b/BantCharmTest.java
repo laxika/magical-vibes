@@ -39,8 +39,7 @@ class BantCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 0, targetId);
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Millstone"));
+            harness.assertNotOnBattlefield(player2, "Millstone");
         }
 
         @Test
@@ -73,10 +72,8 @@ class BantCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, targetId);
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+            harness.assertNotInGraveyard(player2, "Grizzly Bears");
             List<Card> deck = gd.playerDecks.get(player2.getId());
             assertThat(deck).hasSize(deckSizeBefore + 1);
             assertThat(deck.getLast().getName()).isEqualTo("Grizzly Bears");
@@ -117,8 +114,7 @@ class BantCharmTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Shock"));
+            harness.assertInGraveyard(player2, "Shock");
         }
 
         @Test

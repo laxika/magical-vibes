@@ -45,9 +45,7 @@ class HonorGuardTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Honor Guard"));
+        harness.assertOnBattlefield(player1, "Honor Guard");
     }
 
     // ===== Activate ability =====

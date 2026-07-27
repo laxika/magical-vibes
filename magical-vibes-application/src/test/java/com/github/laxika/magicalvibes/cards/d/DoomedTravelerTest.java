@@ -39,8 +39,7 @@ class DoomedTravelerTest extends BaseCardTest {
             GameData gd = harness.getGameData();
 
             // Doomed Traveler should be in the graveyard
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Doomed Traveler"));
+            harness.assertInGraveyard(player1, "Doomed Traveler");
 
             // Death trigger should be on the stack
             assertThat(gd.stack).hasSize(1);

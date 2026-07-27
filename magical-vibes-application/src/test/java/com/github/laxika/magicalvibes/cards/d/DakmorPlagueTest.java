@@ -42,12 +42,8 @@ class DakmorPlagueTest extends BaseCardTest {
 
         castDakmorPlague();
 
-        GameData gd = harness.getGameData();
-
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Giant Spider");
     }
 
     @Test

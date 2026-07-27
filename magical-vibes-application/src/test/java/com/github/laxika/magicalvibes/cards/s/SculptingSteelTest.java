@@ -99,8 +99,7 @@ class SculptingSteelTest extends BaseCardTest {
 
         // No artifacts on battlefield, so no may prompt — enters as Sculpting Steel
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sculpting Steel"));
+        harness.assertOnBattlefield(player1, "Sculpting Steel");
     }
 
     // ===== Declining / no artifacts =====
@@ -114,11 +113,8 @@ class SculptingSteelTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // No artifacts on battlefield — enters without copy prompt
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sculpting Steel"));
+        harness.assertOnBattlefield(player1, "Sculpting Steel");
     }
 
     @Test
@@ -171,10 +167,8 @@ class SculptingSteelTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(steelPerm.getOriginalCard());
 
         // In graveyard it should be "Sculpting Steel", not "Jayemdae Tome"
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Sculpting Steel"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Jayemdae Tome"));
+        harness.assertInGraveyard(player1, "Sculpting Steel");
+        harness.assertNotInGraveyard(player1, "Jayemdae Tome");
     }
 
     // ===== Legend rule =====

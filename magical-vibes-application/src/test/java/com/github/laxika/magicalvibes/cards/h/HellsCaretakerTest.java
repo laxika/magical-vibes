@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HellsCaretakerTest extends BaseCardTest {
@@ -35,11 +34,9 @@ class HellsCaretakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Sacrificed creature is in the graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // Reanimated creature is on the battlefield, no longer in the graveyard
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
         harness.assertNotInGraveyard(player1, "Llanowar Elves");
     }
 

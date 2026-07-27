@@ -71,8 +71,7 @@ class EarwigSquadTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(4);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Earwig Squad"));
+        harness.assertOnBattlefield(player1, "Earwig Squad");
     }
 
     @Test

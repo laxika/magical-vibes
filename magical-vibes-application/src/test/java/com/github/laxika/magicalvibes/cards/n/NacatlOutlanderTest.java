@@ -112,8 +112,7 @@ class NacatlOutlanderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Blue creature's 3 damage to Nacatl is prevented (protection); Nacatl survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Nacatl Outlander"));
+        harness.assertOnBattlefield(player2, "Nacatl Outlander");
     }
 
     // ===== Protection - targeting =====

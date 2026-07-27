@@ -35,8 +35,7 @@ class GraspingCurrentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerHands.get(player2.getId()).stream()
                 .filter(c -> c.getName().equals("Grizzly Bears")).count()).isEqualTo(2);
     }
@@ -55,11 +54,8 @@ class GraspingCurrentTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(targetId));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     // ===== Cannot target non-creatures =====
@@ -98,17 +94,12 @@ class GraspingCurrentTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(targetId));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Creature bounced
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
         // Jace moved from graveyard to hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Jace, Ingenious Mind-Mage"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Jace, Ingenious Mind-Mage"));
+        harness.assertInHand(player1, "Jace, Ingenious Mind-Mage");
+        harness.assertNotInGraveyard(player1, "Jace, Ingenious Mind-Mage");
     }
 
     // ===== Search when Jace not present =====
@@ -127,8 +118,7 @@ class GraspingCurrentTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Creature still bounced
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // No Jace found
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }

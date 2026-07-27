@@ -144,7 +144,6 @@ class ForeseeTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0, 1, 2, 3), List.of()));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Foresee"));
+        harness.assertInGraveyard(player1, "Foresee");
     }
 }

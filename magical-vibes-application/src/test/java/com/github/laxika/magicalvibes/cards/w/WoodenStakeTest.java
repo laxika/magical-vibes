@@ -53,14 +53,11 @@ class WoodenStakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Vampire destroyed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Vampire Aristocrat"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Vampire Aristocrat"));
+        harness.assertNotOnBattlefield(player1, "Vampire Aristocrat");
+        harness.assertInGraveyard(player1, "Vampire Aristocrat");
 
         // Equipped creature still alive
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -119,10 +116,8 @@ class WoodenStakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Vampire destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Vampire Aristocrat"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Vampire Aristocrat"));
+        harness.assertNotOnBattlefield(player2, "Vampire Aristocrat");
+        harness.assertInGraveyard(player2, "Vampire Aristocrat");
     }
 
     @Test

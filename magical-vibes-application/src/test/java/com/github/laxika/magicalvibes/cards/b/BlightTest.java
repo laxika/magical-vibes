@@ -92,8 +92,7 @@ class BlightTest extends BaseCardTest {
         harness.tapPermanent(player1, 0);
         resolveStackFully();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player1, "Forest");
     }
 
     @Test
@@ -107,8 +106,7 @@ class BlightTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Blight"));
         assertThat(gd.pendingManaAbilityTriggers)
                 .noneMatch(entry -> entry.getCard().getName().equals("Blight"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player1, "Forest");
     }
 
     // ===== Helpers =====

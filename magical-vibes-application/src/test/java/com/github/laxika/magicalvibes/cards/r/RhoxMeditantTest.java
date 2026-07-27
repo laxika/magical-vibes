@@ -23,8 +23,7 @@ class RhoxMeditantTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Rhox Meditant"));
+        harness.assertOnBattlefield(player1, "Rhox Meditant");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1); // drew a card
     }
 
@@ -38,8 +37,7 @@ class RhoxMeditantTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve (conditional no-op) ETB trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Rhox Meditant"));
+        harness.assertOnBattlefield(player1, "Rhox Meditant");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty(); // no draw
     }
 

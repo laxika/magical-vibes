@@ -64,8 +64,7 @@ class LockjawSnapperTest extends BaseCardTest {
         harness.passBothPriorities(); // Combat damage — Snapper dies, trigger goes on stack
         harness.passBothPriorities(); // Resolve the death trigger
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lockjaw Snapper"));
+        harness.assertInGraveyard(player1, "Lockjaw Snapper");
         assertThat(wounded.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
 
         Permanent healthy = gd.playerBattlefields.get(player2.getId()).stream()
@@ -92,7 +91,6 @@ class LockjawSnapperTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(woundedId));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }

@@ -32,8 +32,7 @@ class LabyrinthGuardianTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(guardian.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Labyrinth Guardian"));
+        harness.assertInGraveyard(player1, "Labyrinth Guardian");
     }
 
     // ===== Embalm =====
@@ -53,8 +52,7 @@ class LabyrinthGuardianTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Labyrinth Guardian"));
+        harness.assertNotInGraveyard(player1, "Labyrinth Guardian");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Labyrinth Guardian"));
     }

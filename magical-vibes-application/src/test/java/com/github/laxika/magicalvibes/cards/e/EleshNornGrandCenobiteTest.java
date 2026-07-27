@@ -42,8 +42,7 @@ class EleshNornGrandCenobiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Elesh Norn, Grand Cenobite"));
+        harness.assertOnBattlefield(player1, "Elesh Norn, Grand Cenobite");
     }
 
     // ===== Static effect: does not buff itself =====

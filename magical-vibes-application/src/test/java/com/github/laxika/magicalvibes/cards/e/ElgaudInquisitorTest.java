@@ -39,8 +39,7 @@ class ElgaudInquisitorTest extends BaseCardTest {
             GameData gd = harness.getGameData();
 
             // Elgaud Inquisitor should be in the graveyard
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Elgaud Inquisitor"));
+            harness.assertInGraveyard(player1, "Elgaud Inquisitor");
 
             // Death trigger should be on the stack
             assertThat(gd.stack).hasSize(1);

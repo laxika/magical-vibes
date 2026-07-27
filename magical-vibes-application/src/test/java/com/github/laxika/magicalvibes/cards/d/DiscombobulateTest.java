@@ -66,10 +66,8 @@ class DiscombobulateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.stack)
                 .noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
     }
@@ -111,8 +109,7 @@ class DiscombobulateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Discombobulate"));
+        harness.assertInGraveyard(player2, "Discombobulate");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -198,8 +195,7 @@ class DiscombobulateTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         assertThat(gd.interaction.activeInteraction()).isNull();
         // Discombobulate still goes to graveyard when fizzling
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Discombobulate"));
+        harness.assertInGraveyard(player2, "Discombobulate");
     }
 
     // ===== Library edge cases =====

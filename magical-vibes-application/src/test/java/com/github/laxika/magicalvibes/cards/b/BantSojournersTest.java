@@ -72,10 +72,8 @@ class BantSojournersTest extends BaseCardTest {
 
         assertThat(soldierTokenCount(player1)).isEqualTo(1);
         // The cycling draw still happens: Bant Sojourners discarded, the library card drawn.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bant Sojourners"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Bant Sojourners");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test
@@ -93,8 +91,7 @@ class BantSojournersTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(soldierTokenCount(player1)).isZero();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     private void killWithFlameJavelin() {

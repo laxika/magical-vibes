@@ -140,8 +140,7 @@ class VulshokRefugeeTest extends BaseCardTest {
 
         // Fire Elemental's 3 damage to Refugee is prevented (protection from red)
         // Refugee's 3 damage kills Fire Elemental
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Vulshok Refugee"));
+        harness.assertOnBattlefield(player2, "Vulshok Refugee");
         harness.assertInGraveyard(player1, "Fire Elemental");
     }
 
@@ -166,8 +165,7 @@ class VulshokRefugeeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Craw Wurm deals 6 damage to Refugee (toughness 2) — dies
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Vulshok Refugee"));
+        harness.assertNotOnBattlefield(player2, "Vulshok Refugee");
         harness.assertInGraveyard(player2, "Vulshok Refugee");
     }
 

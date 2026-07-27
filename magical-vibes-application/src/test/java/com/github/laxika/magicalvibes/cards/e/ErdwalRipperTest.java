@@ -87,7 +87,6 @@ class ErdwalRipperTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
 
         // No counter placed (and Ripper died to the 4/4)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Erdwal Ripper"));
+        harness.assertInGraveyard(player1, "Erdwal Ripper");
     }
 }

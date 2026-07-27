@@ -36,8 +36,7 @@ class RootgrappleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player2, "Spellbook");
         // No draw (hand = before - 1 spell cast)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore - 1);
     }
@@ -57,8 +56,7 @@ class RootgrappleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player2, "Spellbook");
         // Drew a card (hand = before - 1 spell cast + 1 draw)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
     }
@@ -78,8 +76,7 @@ class RootgrappleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player2, "Spellbook");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore - 1);
     }
 

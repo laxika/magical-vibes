@@ -69,8 +69,7 @@ class InquisitorsFlailTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Serra Angel (4/4) takes 2*2=4 — exactly lethal
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Serra Angel"));
+        harness.assertInGraveyard(player2, "Serra Angel");
     }
 
     // ===== Doubles incoming combat damage to equipped creature =====
@@ -102,11 +101,9 @@ class InquisitorsFlailTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 2/4 attacker takes 2*2=4 doubled incoming damage — exactly lethal
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // Blocker takes 2*2=4 doubled outgoing damage — also dies
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Unequipped Flail has no combat effect =====
@@ -152,11 +149,9 @@ class InquisitorsFlailTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Blocker deals 2*2=4 to attacker (2/2) — attacker dies
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // Blocker receives 2*2=4 incoming damage — exactly lethal for 4 toughness, dies
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Stacks with Furnace of Rath =====
@@ -213,8 +208,7 @@ class InquisitorsFlailTest extends BaseCardTest {
         // it only affects equipped creatures' combat damage
         // (Spell damage uses applyDamageMultiplier, not applyCombatDamageMultiplier)
         // Just verify the card can be put on the battlefield as an artifact
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Inquisitor's Flail"));
+        harness.assertOnBattlefield(player1, "Inquisitor's Flail");
     }
 
     // ===== First strike + Flail: doubled first-strike damage kills blocker before regular damage =====
@@ -245,11 +239,9 @@ class InquisitorsFlailTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 3/3 blocker takes 2*2=4 first-strike doubled damage — dies
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         // Knight survives since blocker died in first strike phase
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Benalish Knight"));
+        harness.assertOnBattlefield(player1, "Benalish Knight");
     }
 
     // ===== Helpers =====

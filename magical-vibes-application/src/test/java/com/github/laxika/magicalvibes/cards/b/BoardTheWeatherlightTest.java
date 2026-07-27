@@ -134,7 +134,7 @@ class BoardTheWeatherlightTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Arvad the Cursed"));
+        harness.assertInHand(player1, "Arvad the Cursed");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(4);
     }
@@ -223,8 +223,7 @@ class BoardTheWeatherlightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Board the Weatherlight"));
+        harness.assertInGraveyard(player1, "Board the Weatherlight");
         assertThat(gd.stack).isEmpty();
     }
 

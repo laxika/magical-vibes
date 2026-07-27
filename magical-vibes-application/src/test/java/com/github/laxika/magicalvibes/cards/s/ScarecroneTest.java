@@ -36,8 +36,7 @@ class ScarecroneTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Scarecrone"));
+        harness.assertInGraveyard(player1, "Scarecrone");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 
@@ -58,10 +57,8 @@ class ScarecroneTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Ornithopter"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Ornithopter"));
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        harness.assertNotInGraveyard(player1, "Ornithopter");
     }
 
     @Test

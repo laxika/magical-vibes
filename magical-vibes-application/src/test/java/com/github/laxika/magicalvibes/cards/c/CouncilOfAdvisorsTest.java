@@ -28,6 +28,6 @@ class CouncilOfAdvisorsTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore);
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
     }
 }

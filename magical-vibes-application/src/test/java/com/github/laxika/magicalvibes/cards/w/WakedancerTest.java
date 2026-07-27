@@ -35,8 +35,7 @@ class WakedancerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(zombieTokens()).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Wakedancer"));
+        harness.assertOnBattlefield(player1, "Wakedancer");
     }
 
     // ===== With morbid =====
@@ -85,16 +84,14 @@ class WakedancerTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearsId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(zombieTokens()).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Wakedancer"));
+        harness.assertOnBattlefield(player1, "Wakedancer");
     }
 
     private List<Permanent> zombieTokens() {

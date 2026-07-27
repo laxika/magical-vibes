@@ -51,9 +51,9 @@ class MalfegorTest extends BaseCardTest {
 
         // One card left in hand after casting -> discarded; opponent's only creature auto-sacrificed.
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player1, "Forest");
         assertThat(creatureCount(player2)).isZero();
-        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

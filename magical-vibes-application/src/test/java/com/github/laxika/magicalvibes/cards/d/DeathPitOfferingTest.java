@@ -22,8 +22,7 @@ class DeathPitOfferingTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         castAndResolveOffering();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(c -> c.getName().equals("Grizzly Bears"))
                 .hasSize(2);
@@ -35,8 +34,7 @@ class DeathPitOfferingTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         castAndResolveOffering();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 

@@ -30,10 +30,8 @@ class UrzasRuinousBlastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Nonlegendary creatures should be exiled
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         // Exiled, not in graveyard
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -54,8 +52,7 @@ class UrzasRuinousBlastTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Arvad the Cursed"));
+        harness.assertOnBattlefield(player1, "Arvad the Cursed");
     }
 
     @Test
@@ -71,10 +68,8 @@ class UrzasRuinousBlastTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Plains"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Plains");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -89,8 +84,7 @@ class UrzasRuinousBlastTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Honor of the Pure"));
+        harness.assertNotOnBattlefield(player1, "Honor of the Pure");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Honor of the Pure"));
     }
@@ -119,7 +113,6 @@ class UrzasRuinousBlastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Urza's Ruinous Blast"));
+        harness.assertInGraveyard(player1, "Urza's Ruinous Blast");
     }
 }

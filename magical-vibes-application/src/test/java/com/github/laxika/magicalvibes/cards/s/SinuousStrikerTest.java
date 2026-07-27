@@ -86,11 +86,9 @@ class SinuousStrikerTest extends BaseCardTest {
 
         // Discard cost: the hand card went to the graveyard.
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // Exile cost: the source card left the graveyard for exile.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Sinuous Striker"));
+        harness.assertNotInGraveyard(player1, "Sinuous Striker");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Sinuous Striker"));
 
@@ -112,8 +110,7 @@ class SinuousStrikerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Sinuous Striker"));
+        harness.assertInGraveyard(player1, "Sinuous Striker");
     }
 
     @Test
@@ -131,7 +128,6 @@ class SinuousStrikerTest extends BaseCardTest {
         Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Sinuous Striker"));
+        harness.assertInGraveyard(player1, "Sinuous Striker");
     }
 }

@@ -193,8 +193,7 @@ class BatterskullTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phyrexian Germ"));
+        harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
     }
 
     // ===== Return to hand ability =====
@@ -210,8 +209,7 @@ class BatterskullTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Batterskull and Germ are on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Batterskull"));
+        harness.assertOnBattlefield(player1, "Batterskull");
 
         // Activate {3}: Return to hand
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -219,10 +217,8 @@ class BatterskullTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Batterskull should be in hand
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Batterskull"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Batterskull"));
+        harness.assertNotOnBattlefield(player1, "Batterskull");
+        harness.assertInHand(player1, "Batterskull");
     }
 
     @Test
@@ -241,8 +237,7 @@ class BatterskullTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Germ should be dead (0/0 without equipment)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phyrexian Germ"));
+        harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
     }
 
     // ===== Equipment stays when Germ is removed =====
@@ -262,7 +257,6 @@ class BatterskullTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         gd.playerBattlefields.get(player1.getId()).remove(germ);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Batterskull"));
+        harness.assertOnBattlefield(player1, "Batterskull");
     }
 }

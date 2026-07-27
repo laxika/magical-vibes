@@ -80,10 +80,8 @@ class EsperSojournersTest extends BaseCardTest {
 
         assertThat(forest.isTapped()).isTrue();
         // The cycling draw still happens: Esper Sojourners discarded, the library card drawn.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Esper Sojourners"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Esper Sojourners");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     private void killWithFlameJavelin() {

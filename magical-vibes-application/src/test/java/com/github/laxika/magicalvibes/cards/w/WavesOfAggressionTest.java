@@ -90,12 +90,10 @@ class WavesOfAggressionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Retrace is not a flashback: the card returns to the graveyard, not exile.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Waves of Aggression"));
+        harness.assertInGraveyard(player1, "Waves of Aggression");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Waves of Aggression"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Plains"));
+        harness.assertInGraveyard(player1, "Plains");
     }
 
     private void markAttacking(Player attacker, List<Integer> attackers) {

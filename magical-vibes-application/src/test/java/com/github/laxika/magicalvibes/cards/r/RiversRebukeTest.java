@@ -49,10 +49,9 @@ class RiversRebukeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // All nonland permanents should be gone from battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .noneMatch(p -> p.getCard().getName().equals("Angel's Feather"))
-                .noneMatch(p -> p.getCard().getName().equals("Glorious Anthem"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Angel's Feather");
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
 
         // All should be in hand
         assertThat(gd.playerHands.get(player2.getId()))
@@ -72,8 +71,7 @@ class RiversRebukeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Land should still be on battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player2, "Forest");
 
         // Creature should be in hand
         assertThat(gd.playerHands.get(player2.getId()))
@@ -94,9 +92,8 @@ class RiversRebukeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Player1's permanents should still be on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Angel's Feather"))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Angel's Feather");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
 
         // Player2's creature should be in hand
         assertThat(gd.playerHands.get(player2.getId()))
@@ -117,8 +114,7 @@ class RiversRebukeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Land should still be on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player1, "Forest");
 
         // Nonland permanents should be in hand
         assertThat(gd.playerHands.get(player1.getId()))
@@ -137,8 +133,7 @@ class RiversRebukeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Land should still be on battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player2, "Forest");
 
         assertThat(gd.stack).isEmpty();
     }
@@ -167,7 +162,6 @@ class RiversRebukeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("River's Rebuke"));
+        harness.assertInGraveyard(player1, "River's Rebuke");
     }
 }

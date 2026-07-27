@@ -119,8 +119,7 @@ class IncandescentSoulstokeTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Air Elemental"));
+        harness.assertNotOnBattlefield(player1, "Air Elemental");
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
     }
 

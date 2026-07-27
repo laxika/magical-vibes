@@ -200,7 +200,6 @@ class VerdantRebirthTest extends BaseCardTest {
         harness.castInstant(player1, 0, creature.getId());
         harness.passBothPriorities(); // resolve Verdant Rebirth
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Verdant Rebirth"));
+        harness.assertInGraveyard(player1, "Verdant Rebirth");
     }
 }

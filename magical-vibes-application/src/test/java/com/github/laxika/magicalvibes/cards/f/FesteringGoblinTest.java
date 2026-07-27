@@ -62,8 +62,7 @@ class FesteringGoblinTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Festering Goblin should be dead
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Festering Goblin"));
+        harness.assertInGraveyard(player1, "Festering Goblin");
 
         // Player1 should be prompted to choose a target creature
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -167,8 +166,7 @@ class FesteringGoblinTest extends BaseCardTest {
         // The weak bear should now be dead from SBA (0 toughness)
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(weakBearId));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -220,12 +218,9 @@ class FesteringGoblinTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Both creatures should be dead
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Festering Goblin"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Festering Goblin"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Festering Goblin");
+        harness.assertInGraveyard(player1, "Festering Goblin");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // No permanent choice should be prompted (no valid creature targets after Wrath)
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();

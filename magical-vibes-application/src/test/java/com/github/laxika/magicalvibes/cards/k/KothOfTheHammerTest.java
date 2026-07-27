@@ -68,7 +68,6 @@ class KothOfTheHammerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, mountain.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(koth.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
         assertThat(mountain.isTapped()).isFalse();
         assertThat(mountain.isAnimatedUntilEndOfTurn()).isTrue();
@@ -214,8 +213,7 @@ class KothOfTheHammerTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Koth should be gone
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Koth of the Hammer"));
+        harness.assertNotOnBattlefield(player1, "Koth of the Hammer");
         // But emblem persists
         assertThat(gd.emblems).hasSize(1);
         assertThat(gd.emblems.getFirst().controllerId()).isEqualTo(player1.getId());
@@ -241,10 +239,8 @@ class KothOfTheHammerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
 
-        GameData gd = harness.getGameData();
         // 3 - 2 = 1, Koth should survive
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Koth of the Hammer"));
+        harness.assertOnBattlefield(player1, "Koth of the Hammer");
         assertThat(koth.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
     }
 

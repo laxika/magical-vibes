@@ -97,8 +97,7 @@ class ThraximundarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The defending player's creature is gone; the attacker's own creature is untouched.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Suntail Hawk"));
+        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
 
         // The sacrifice also triggers the +1/+1 counter ability for the attacker.
@@ -128,10 +127,8 @@ class ThraximundarTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, hawk.getId());
 
         // The chosen creature is sacrificed; the other survives.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Suntail Hawk"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
 
         // Resolve the queued sacrifice trigger so its "you may" surfaces.
         harness.passBothPriorities();

@@ -52,13 +52,9 @@ class DestructiveForceTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // All lands should be sacrificed (both players had ≤5)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mountain"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertNotOnBattlefield(player2, "Forest");
     }
 
     @Test
@@ -107,8 +103,7 @@ class DestructiveForceTest extends BaseCardTest {
         assertThat(p1Remaining).isEqualTo(2);
 
         // Player2's lands should now be gone too
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player2, "Forest");
     }
 
     @Test
@@ -180,15 +175,11 @@ class DestructiveForceTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Player1's land is sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mountain"));
+        harness.assertNotOnBattlefield(player1, "Mountain");
 
         // Player2's creature is killed by the 5 damage, but no lands to sacrifice
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Damage to creatures =====
@@ -205,12 +196,8 @@ class DestructiveForceTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -223,8 +210,6 @@ class DestructiveForceTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
 
         // Big Creature (6/6) survives with 5 damage marked
         harness.assertOnBattlefield(player2, "Big Creature");
@@ -262,11 +247,8 @@ class DestructiveForceTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Mountains are sacrificed (both, since <5)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mountain"));
+        harness.assertNotOnBattlefield(player1, "Mountain");
 
         // Big Creature survives — not sacrificed and survives 5 damage (6 toughness)
         harness.assertOnBattlefield(player1, "Big Creature");

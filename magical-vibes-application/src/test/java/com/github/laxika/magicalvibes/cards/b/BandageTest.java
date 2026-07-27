@@ -106,11 +106,9 @@ class BandageTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         // Attacker dealt 2 damage, but defender has 1 prevention → 1 effective damage
         // 1 < 2 toughness → defender survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         // Attacker took 2 damage with no shield → 2 >= 2 toughness → attacker dies
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         // Prevention shield was consumed
         Permanent surviving = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
@@ -231,9 +229,7 @@ class BandageTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bandage"));
+        harness.assertInGraveyard(player1, "Bandage");
     }
 
     // ===== Prevention with spell damage =====
@@ -262,10 +258,8 @@ class BandageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, target.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // 2 damage - 1 prevented = 1 effective damage. 1 < 2 toughness → survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Fizzle =====
@@ -292,8 +286,7 @@ class BandageTest extends BaseCardTest {
         // Entire spell fizzles — no draw happens
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         // Fizzled spell still goes to graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bandage"));
+        harness.assertInGraveyard(player1, "Bandage");
     }
 
     // ===== End of turn cleanup =====

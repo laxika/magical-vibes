@@ -44,14 +44,10 @@ class DinOfTheFireherdTest extends BaseCardTest {
         castDin(player2.getId());
 
         // Token counts as both a black and a red creature you control -> 1 creature + 1 land.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Swamp"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Swamp"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Swamp");
+        harness.assertInGraveyard(player2, "Swamp");
     }
 
     @Test
@@ -69,12 +65,9 @@ class DinOfTheFireherdTest extends BaseCardTest {
 
         // Black creatures you control = ScatheZombies + token = 2 -> 2 creatures sacrificed.
         // Red creatures you control = HillGiant + token = 2 -> 2 lands sacrificed.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Swamp"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Swamp");
+        harness.assertNotOnBattlefield(player2, "Forest");
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .filteredOn(c -> c.getName().equals("Grizzly Bears"))
                 .hasSize(2);
@@ -106,10 +99,8 @@ class DinOfTheFireherdTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .filteredOn(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .hasSize(1);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Swamp"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Swamp"));
+        harness.assertNotOnBattlefield(player2, "Swamp");
+        harness.assertInGraveyard(player2, "Swamp");
     }
 
     // ===== Targeting =====

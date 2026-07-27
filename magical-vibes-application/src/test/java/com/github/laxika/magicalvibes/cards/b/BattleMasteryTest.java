@@ -154,10 +154,8 @@ class BattleMasteryTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Battle Mastery"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Battle Mastery"));
+        harness.assertInGraveyard(player1, "Battle Mastery");
+        harness.assertNotOnBattlefield(player1, "Battle Mastery");
     }
 
     // ===== Targeting restriction =====

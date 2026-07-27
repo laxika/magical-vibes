@@ -30,8 +30,7 @@ class SearchForAzcantaTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept: put into graveyard
 
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(graveyardBefore + 1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== Upkeep surveil: decline (leave on top) =====

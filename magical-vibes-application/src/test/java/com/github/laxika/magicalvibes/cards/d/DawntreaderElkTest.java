@@ -29,8 +29,7 @@ class DawntreaderElkTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Dawntreader Elk"));
+        harness.assertNotOnBattlefield(player1, "Dawntreader Elk");
     }
 
     @Test

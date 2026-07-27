@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 class LandLeechesTest extends BaseCardTest {
 
     // ===== First strike =====
@@ -34,10 +32,8 @@ class LandLeechesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Land Leeches deals 2 first strike damage, killing the 2/2 before it can deal damage back.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Land Leeches"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Land Leeches");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -64,9 +60,7 @@ class LandLeechesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 2 first strike damage doesn't kill a 3/3; it deals 3 back and the 2/2 dies.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Land Leeches"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Land Leeches");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 }

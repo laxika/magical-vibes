@@ -29,11 +29,9 @@ class CompellingDeterrenceTest extends BaseCardTest {
         castAt(targetId);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Peek"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Peek");
     }
 
     @Test
@@ -58,8 +56,7 @@ class CompellingDeterrenceTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId()))
                 .hasSize(1)
                 .anyMatch(c -> c.getName().equals("Peek"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -74,11 +71,9 @@ class CompellingDeterrenceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Diregraf Ghoul"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Diregraf Ghoul"))
-                .anyMatch(c -> c.getName().equals("Peek"));
+        harness.assertNotOnBattlefield(player1, "Diregraf Ghoul");
+        harness.assertInHand(player1, "Diregraf Ghoul");
+        harness.assertInHand(player1, "Peek");
     }
 
     @Test

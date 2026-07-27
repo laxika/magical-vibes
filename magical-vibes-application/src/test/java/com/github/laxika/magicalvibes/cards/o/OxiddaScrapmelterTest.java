@@ -58,8 +58,7 @@ class OxiddaScrapmelterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Oxidda Scrapmelter"));
+        harness.assertOnBattlefield(player1, "Oxidda Scrapmelter");
 
         // ETB triggered ability should be on stack
         assertThat(gd.stack).hasSize(1);
@@ -86,10 +85,8 @@ class OxiddaScrapmelterTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
+        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
     }
 
     @Test
@@ -107,11 +104,8 @@ class OxiddaScrapmelterTest extends BaseCardTest {
         // Resolve ETB triggered ability
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Bottle Gnomes"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Bottle Gnomes"));
+        harness.assertNotOnBattlefield(player2, "Bottle Gnomes");
+        harness.assertInGraveyard(player2, "Bottle Gnomes");
     }
 
     // ===== Target restrictions =====
@@ -155,8 +149,7 @@ class OxiddaScrapmelterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
+        harness.assertOnBattlefield(player2, "Leonin Scimitar");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("indestructible"));
     }
 
@@ -213,8 +206,7 @@ class OxiddaScrapmelterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Oxidda Scrapmelter"));
+        harness.assertOnBattlefield(player1, "Oxidda Scrapmelter");
         assertThat(gd.stack).isEmpty();
     }
 }

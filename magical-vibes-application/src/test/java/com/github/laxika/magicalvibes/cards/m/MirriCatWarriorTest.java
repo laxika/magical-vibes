@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MirriCatWarriorTest extends BaseCardTest {
 
-
     @Test
     @DisplayName("Mirri, Cat Warrior has correct card properties")
     void hasCorrectProperties() {
@@ -129,9 +128,7 @@ class MirriCatWarriorTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mirri, Cat Warrior"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Mirri, Cat Warrior");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }

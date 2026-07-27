@@ -31,10 +31,8 @@ class GnathosaurTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Artifact should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        harness.assertInGraveyard(player1, "Spellbook");
 
         // Gnathosaur should have trample
         assertThat(gnathosaur.getGrantedKeywords()).contains(Keyword.TRAMPLE);
@@ -86,10 +84,8 @@ class GnathosaurTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        harness.assertOnBattlefield(player1, "Leonin Scimitar");
     }
 
     @Test
@@ -139,9 +135,8 @@ class GnathosaurTest extends BaseCardTest {
         assertThat(gnathosaur.getGrantedKeywords()).contains(Keyword.TRAMPLE);
 
         // Both artifacts should be gone
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"))
-                .noneMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        harness.assertNotOnBattlefield(player1, "Leonin Scimitar");
     }
 
     // ===== Helpers =====

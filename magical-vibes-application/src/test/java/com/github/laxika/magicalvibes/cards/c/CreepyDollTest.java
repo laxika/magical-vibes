@@ -65,10 +65,8 @@ class CreepyDollTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve triggered ability
 
         // Creepy Doll should still be on the battlefield (indestructible)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Creepy Doll"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Creepy Doll"));
+        harness.assertOnBattlefield(player1, "Creepy Doll");
+        harness.assertNotInGraveyard(player1, "Creepy Doll");
     }
 
     @Test

@@ -50,10 +50,8 @@ class VexingShusherTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Cancel resolved but couldn't counter — Grizzly Bears entered the battlefield.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Cancel"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Cancel");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -81,10 +79,8 @@ class VexingShusherTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Vexing Shusher"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Cancel"));
+        harness.assertOnBattlefield(player1, "Vexing Shusher");
+        harness.assertInGraveyard(player2, "Cancel");
         assertThat(gd.stack).isEmpty();
     }
 

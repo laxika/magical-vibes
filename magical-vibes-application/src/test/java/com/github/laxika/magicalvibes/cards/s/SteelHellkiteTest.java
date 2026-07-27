@@ -234,8 +234,7 @@ class SteelHellkiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both Llanowar Elves should be destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         // Memnite (MV 0) should survive
         harness.assertOnBattlefield(player2, "Memnite");
     }

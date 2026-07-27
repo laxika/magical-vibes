@@ -165,10 +165,8 @@ class EliteInquisitorTest extends BaseCardTest {
         // Elite Inquisitor has first strike: deals 2 damage first (Vampire survives at 4/2)
         // Vampire's 4 damage to Elite Inquisitor is prevented (protection from Vampires)
         // Both creatures survive
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sengir Vampire"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Elite Inquisitor"));
+        harness.assertOnBattlefield(player1, "Sengir Vampire");
+        harness.assertOnBattlefield(player2, "Elite Inquisitor");
     }
 
     @Test
@@ -193,9 +191,7 @@ class EliteInquisitorTest extends BaseCardTest {
 
         // Elite Inquisitor deals 2 first strike damage (Hill Giant survives at 3/1)
         // Hill Giant deals 3 regular damage (kills 2/2 Elite Inquisitor)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hill Giant"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elite Inquisitor"));
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertNotOnBattlefield(player2, "Elite Inquisitor");
     }
 }

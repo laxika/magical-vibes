@@ -43,8 +43,7 @@ class ObstinateBalothTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Obstinate Baloth"));
+        harness.assertOnBattlefield(player1, "Obstinate Baloth");
     }
 
     // ===== Replacement effect — opponent forces discard via Distress (revealed hand choice) =====
@@ -65,12 +64,10 @@ class ObstinateBalothTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         // Obstinate Baloth should be on player2's battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Obstinate Baloth"));
+        harness.assertOnBattlefield(player2, "Obstinate Baloth");
 
         // Should NOT be in graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Obstinate Baloth"));
+        harness.assertNotInGraveyard(player2, "Obstinate Baloth");
     }
 
     @Test
@@ -113,12 +110,10 @@ class ObstinateBalothTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         // Obstinate Baloth should be on player2's battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Obstinate Baloth"));
+        harness.assertOnBattlefield(player2, "Obstinate Baloth");
 
         // Should NOT be in graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Obstinate Baloth"));
+        harness.assertNotInGraveyard(player2, "Obstinate Baloth");
     }
 
     @Test
@@ -167,10 +162,8 @@ class ObstinateBalothTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         // Should be in graveyard, NOT on battlefield
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Obstinate Baloth"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Obstinate Baloth"));
+        harness.assertInGraveyard(player1, "Obstinate Baloth");
+        harness.assertNotOnBattlefield(player1, "Obstinate Baloth");
 
         // Life should not change (no ETB)
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);

@@ -97,8 +97,7 @@ class WretchedThrongTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Wretched Throng"));
+        harness.assertInHand(player1, "Wretched Throng");
     }
 
     @Test

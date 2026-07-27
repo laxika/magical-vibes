@@ -60,11 +60,9 @@ class GruesomeEncoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature should be on player1's battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         // Creature should be removed from player2's graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
 
         // Creature should have haste
         Permanent creature = findCreatureOnBattlefield(player1.getId(), "Grizzly Bears");
@@ -99,8 +97,7 @@ class GruesomeEncoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature should no longer be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         // Creature should be in exile (original owner's)
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -132,10 +129,8 @@ class GruesomeEncoreTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, creatureId);
 
         // Creature should NOT be in any graveyard (replacement redirects to exile)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
         // Creature should be in exile (original owner's)
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -167,10 +162,8 @@ class GruesomeEncoreTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, creatureId);
 
         // Creature should NOT be in any hand (replacement redirects to exile)
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
         // Creature should be in exile (original owner's)
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -204,8 +197,7 @@ class GruesomeEncoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 

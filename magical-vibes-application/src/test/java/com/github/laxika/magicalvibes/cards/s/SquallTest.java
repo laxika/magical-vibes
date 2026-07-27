@@ -31,9 +31,7 @@ class SquallTest extends BaseCardTest {
 
         castSquall();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Suntail Hawk"));
+        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
     }
 
     @Test

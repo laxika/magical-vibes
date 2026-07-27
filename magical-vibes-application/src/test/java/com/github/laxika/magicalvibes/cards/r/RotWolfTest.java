@@ -52,12 +52,10 @@ class RotWolfTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Blocker should be dead (from -1/-1 counters via infect)
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // Rot Wolf should still be alive
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Rot Wolf"));
+        harness.assertOnBattlefield(player1, "Rot Wolf");
 
         // May ability prompt for Rot Wolf's controller
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
@@ -100,8 +98,7 @@ class RotWolfTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // Decline the may ability
         harness.handleMayAbilityChosen(player1, false);
@@ -144,8 +141,7 @@ class RotWolfTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Blocker should still be alive with -1/-1 counters
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
 
         // Now kill the blocker with a Cruel Edict later in the turn
@@ -164,8 +160,7 @@ class RotWolfTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Blocker should be dead
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         // May ability prompt for Rot Wolf's controller (creature dealt damage by Rot Wolf died)
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
@@ -198,8 +193,7 @@ class RotWolfTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature died but was not damaged by Rot Wolf - no trigger
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore - 1);
     }

@@ -32,8 +32,7 @@ class FacevaulterTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, token.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Goblin"));
+        harness.assertInGraveyard(player1, "Goblin");
 
         Permanent facevaulter = findByName(gd, player1, "Facevaulter");
         assertThat(facevaulter.getPowerModifier()).isEqualTo(2);
@@ -50,10 +49,8 @@ class FacevaulterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Facevaulter"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Facevaulter"));
+        harness.assertNotOnBattlefield(player1, "Facevaulter");
+        harness.assertInGraveyard(player1, "Facevaulter");
     }
 
     @Test

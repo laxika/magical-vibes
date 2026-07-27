@@ -28,12 +28,9 @@ class FoulSpiritTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        GameData gd = harness.getGameData();
-
         // Creature entered, its only land was sacrificed
         harness.assertOnBattlefield(player1, "Foul Spirit");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player1, "Forest");
     }
 
     @Test
@@ -64,8 +61,7 @@ class FoulSpiritTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
 
         // Chosen land gone, the other remains
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player1, "Forest");
         harness.assertOnBattlefield(player1, "Mountain");
     }
 

@@ -12,8 +12,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 /**
  * End-to-end CR 704.5n check: an aura whose enchanted creature gains protection from the
  * aura's color is put into its owner's graveyard by state-based actions.
@@ -36,12 +34,9 @@ class AttachmentLegalityIntegrationTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "WHITE");
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spirit Link"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spirit Link"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Spirit Link");
+        harness.assertInGraveyard(player1, "Spirit Link");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -60,9 +55,7 @@ class AttachmentLegalityIntegrationTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "RED");
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Spirit Link"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Spirit Link"));
+        harness.assertOnBattlefield(player1, "Spirit Link");
+        harness.assertNotInGraveyard(player1, "Spirit Link");
     }
 }

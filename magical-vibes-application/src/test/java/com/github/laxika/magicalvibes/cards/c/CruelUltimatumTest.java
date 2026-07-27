@@ -74,17 +74,14 @@ class CruelUltimatumTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
 
         // Opponent lost its only creature and three cards, and lost 5 life.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.getLife(player2.getId())).isEqualTo(15);
 
         // Controller returned the creature to hand, drew three, and gained 5 life.
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4); // returned creature + three drawn
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.getLife(player1.getId())).isEqualTo(25);
         assertThat(gd.stack).isEmpty();
     }
@@ -104,10 +101,8 @@ class CruelUltimatumTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player2, bears.getId());
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Giant Spider");
     }
 
     @Test
@@ -125,8 +120,7 @@ class CruelUltimatumTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
         assertThat(gd.getLife(player1.getId())).isEqualTo(25);
         assertThat(gd.stack).isEmpty();

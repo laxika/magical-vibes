@@ -42,8 +42,7 @@ class BanefireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== "If X is 5 or more, this spell can't be countered" =====
@@ -66,8 +65,7 @@ class BanefireTest extends BaseCardTest {
 
         // Countered: no damage dealt and Banefire is in its owner's graveyard.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Banefire"));
+        harness.assertInGraveyard(player1, "Banefire");
     }
 
     @Test
@@ -88,8 +86,7 @@ class BanefireTest extends BaseCardTest {
 
         // Cancel resolved but couldn't counter — Banefire still dealt its 5 damage.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Cancel"));
+        harness.assertInGraveyard(player2, "Cancel");
     }
 
     // ===== "If X is 5 or more, the damage can't be prevented" =====

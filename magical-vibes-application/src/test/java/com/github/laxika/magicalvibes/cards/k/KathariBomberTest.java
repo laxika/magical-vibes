@@ -48,10 +48,8 @@ class KathariBomberTest extends BaseCardTest {
                     assertThat(p.getCard().getPower()).isEqualTo(1);
                     assertThat(p.getCard().getToughness()).isEqualTo(1);
                 });
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Kathari Bomber"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Kathari Bomber"));
+        harness.assertNotOnBattlefield(player1, "Kathari Bomber");
+        harness.assertInGraveyard(player1, "Kathari Bomber");
     }
 
     @Test
@@ -74,8 +72,7 @@ class KathariBomberTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Goblin"));
+        harness.assertNotOnBattlefield(player1, "Goblin");
     }
 
     // ===== Unearth {3}{B}{R} =====
@@ -94,8 +91,7 @@ class KathariBomberTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Kathari Bomber"))
                 .findFirst().orElseThrow();
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Kathari Bomber"));
+        harness.assertNotInGraveyard(player1, "Kathari Bomber");
     }
 
     @Test
@@ -112,8 +108,7 @@ class KathariBomberTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Kathari Bomber"));
+        harness.assertNotOnBattlefield(player1, "Kathari Bomber");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Kathari Bomber"));
     }

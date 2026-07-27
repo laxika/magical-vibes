@@ -27,8 +27,7 @@ class KrosanDruidTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Krosan Druid"));
+        harness.assertOnBattlefield(player1, "Krosan Druid");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE);
     }
@@ -40,8 +39,7 @@ class KrosanDruidTest extends BaseCardTest {
     void castWithKickerPutsEtbOnStack() {
         castKicked();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Krosan Druid"));
+        harness.assertOnBattlefield(player1, "Krosan Druid");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
     }

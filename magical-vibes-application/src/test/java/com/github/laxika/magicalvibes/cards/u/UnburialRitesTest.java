@@ -108,9 +108,7 @@ class UnburialRitesTest extends BaseCardTest {
         harness.castSorcery(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Unburial Rites"));
+        harness.assertInGraveyard(player1, "Unburial Rites");
     }
 
     // ===== Flashback =====
@@ -143,8 +141,7 @@ class UnburialRitesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Unburial Rites"));
+        harness.assertNotInGraveyard(player1, "Unburial Rites");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Unburial Rites"));
     }

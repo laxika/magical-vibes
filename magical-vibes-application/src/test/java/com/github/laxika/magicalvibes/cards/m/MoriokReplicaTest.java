@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -27,10 +26,8 @@ class MoriokReplicaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Moriok Replica should be sacrificed immediately (cost)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Moriok Replica"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Moriok Replica"));
+        harness.assertNotOnBattlefield(player1, "Moriok Replica");
+        harness.assertInGraveyard(player1, "Moriok Replica");
 
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);

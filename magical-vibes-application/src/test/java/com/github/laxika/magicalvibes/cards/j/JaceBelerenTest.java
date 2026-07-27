@@ -153,9 +153,7 @@ class JaceBelerenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Jace Beleren"));
+        harness.assertNotOnBattlefield(player1, "Jace Beleren");
     }
 
     @Test

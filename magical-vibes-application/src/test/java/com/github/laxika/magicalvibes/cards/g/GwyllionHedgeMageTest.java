@@ -111,8 +111,7 @@ class GwyllionHedgeMageTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Gwyllion Hedge-Mage"));
+        harness.assertOnBattlefield(player1, "Gwyllion Hedge-Mage");
     }
 
     // ===== Both gates met =====

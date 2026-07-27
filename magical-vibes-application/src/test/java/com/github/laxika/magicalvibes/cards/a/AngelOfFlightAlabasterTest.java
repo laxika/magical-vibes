@@ -35,10 +35,8 @@ class AngelOfFlightAlabasterTest extends BaseCardTest {
         // Choose Spirit
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ghost Warden"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Ghost Warden"));
+        harness.assertInHand(player1, "Ghost Warden");
+        harness.assertNotInGraveyard(player1, "Ghost Warden");
     }
 
     @Test
@@ -53,12 +51,9 @@ class AngelOfFlightAlabasterTest extends BaseCardTest {
         // Choose Howling Banshee (index 1)
         harness.handleGraveyardCardChosen(player1, 1);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Howling Banshee"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ghost Warden"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Howling Banshee"));
+        harness.assertInHand(player1, "Howling Banshee");
+        harness.assertInGraveyard(player1, "Ghost Warden");
+        harness.assertNotInGraveyard(player1, "Howling Banshee");
     }
 
     @Test
@@ -87,8 +82,7 @@ class AngelOfFlightAlabasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -100,7 +94,6 @@ class AngelOfFlightAlabasterTest extends BaseCardTest {
         advanceToUpkeep(player2);
 
         // No trigger should fire for player 1's graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ghost Warden"));
+        harness.assertInGraveyard(player1, "Ghost Warden");
     }
 }

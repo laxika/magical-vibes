@@ -62,8 +62,7 @@ class CrawlFromTheCellarTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(creature.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Crawl from the Cellar"));
+        harness.assertInGraveyard(player1, "Crawl from the Cellar");
     }
 
     @Test
@@ -122,8 +121,7 @@ class CrawlFromTheCellarTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(creature.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Crawl from the Cellar"));
+        harness.assertNotInGraveyard(player1, "Crawl from the Cellar");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Crawl from the Cellar"));
     }

@@ -55,8 +55,7 @@ class DeadeyeTormentorTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -88,8 +87,7 @@ class DeadeyeTormentorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Creature is still on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Deadeye Tormentor"));
+        harness.assertOnBattlefield(player1, "Deadeye Tormentor");
 
         // Opponent hand unchanged — still has the card
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -126,8 +124,7 @@ class DeadeyeTormentorTest extends BaseCardTest {
         castDeadeyeTormentor();
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Deadeye Tormentor"));
+        harness.assertOnBattlefield(player1, "Deadeye Tormentor");
     }
 
     @Test

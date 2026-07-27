@@ -28,8 +28,7 @@ class GhituChroniclerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Ghitu Chronicler"));
+        harness.assertOnBattlefield(player1, "Ghitu Chronicler");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -45,8 +44,7 @@ class GhituChroniclerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lightning Bolt"));
+        harness.assertInGraveyard(player1, "Lightning Bolt");
     }
 
     // ===== Cast with kicker =====
@@ -57,8 +55,7 @@ class GhituChroniclerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new LightningBolt()));
         castKicked();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Ghitu Chronicler"));
+        harness.assertOnBattlefield(player1, "Ghitu Chronicler");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
     }
@@ -74,10 +71,8 @@ class GhituChroniclerTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lightning Bolt"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Lightning Bolt"));
+        harness.assertInHand(player1, "Lightning Bolt");
+        harness.assertNotInGraveyard(player1, "Lightning Bolt");
     }
 
     @Test
@@ -91,10 +86,8 @@ class GhituChroniclerTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Divination"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Divination"));
+        harness.assertInHand(player1, "Divination");
+        harness.assertNotInGraveyard(player1, "Divination");
     }
 
     @Test

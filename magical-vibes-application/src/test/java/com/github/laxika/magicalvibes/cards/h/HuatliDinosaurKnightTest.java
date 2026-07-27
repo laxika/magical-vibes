@@ -151,12 +151,9 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
         harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(raptor.getId(), bear.getId()));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(huatli.getCounterCount(CounterType.LOYALTY)).isEqualTo(1); // 4 - 3
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -180,11 +177,8 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
         harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(raptor.getId(), opponentDino.getId()));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Frenzied Raptor"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Frenzied Raptor"));
+        harness.assertNotOnBattlefield(player2, "Frenzied Raptor");
+        harness.assertInGraveyard(player2, "Frenzied Raptor");
     }
 
     // ===== -7 ability: Dinosaurs you control get +4/+4 until end of turn =====
@@ -305,10 +299,8 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Huatli should be in graveyard
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Huatli, Dinosaur Knight"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Huatli, Dinosaur Knight"));
+        harness.assertNotOnBattlefield(player1, "Huatli, Dinosaur Knight");
+        harness.assertInGraveyard(player1, "Huatli, Dinosaur Knight");
 
         // Ability is still on the stack
         assertThat(gd.stack).hasSize(1);
@@ -320,10 +312,8 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         // Grizzly Bears should be dead (4 damage from Frenzied Raptor)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Helpers =====

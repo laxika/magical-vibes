@@ -32,8 +32,7 @@ class SentinelTotemTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve artifact
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sentinel Totem"));
+        harness.assertOnBattlefield(player1, "Sentinel Totem");
 
         // ETB triggered ability should be on stack
         assertThat(gd.stack).hasSize(1);
@@ -68,8 +67,7 @@ class SentinelTotemTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Totem is exiled as cost
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Sentinel Totem"));
+        harness.assertNotOnBattlefield(player1, "Sentinel Totem");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Sentinel Totem"));
         // Ability is on the stack
@@ -125,8 +123,7 @@ class SentinelTotemTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Sentinel Totem"));
+        harness.assertNotInGraveyard(player1, "Sentinel Totem");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Sentinel Totem"));
     }

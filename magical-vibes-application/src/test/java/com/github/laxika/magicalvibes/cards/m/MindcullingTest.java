@@ -110,7 +110,6 @@ class MindcullingTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mindculling"));
+        harness.assertInGraveyard(player1, "Mindculling");
     }
 }

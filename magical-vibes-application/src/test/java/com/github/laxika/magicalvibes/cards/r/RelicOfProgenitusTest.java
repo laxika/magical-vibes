@@ -48,7 +48,6 @@ class RelicOfProgenitusTest extends BaseCardTest {
         // Controller drew a card
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         // Relic itself was exiled (no longer on the battlefield)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Relic of Progenitus"));
+        harness.assertNotOnBattlefield(player1, "Relic of Progenitus");
     }
 }

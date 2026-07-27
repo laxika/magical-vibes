@@ -29,10 +29,7 @@ class YawningFissureTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player2, "Forest");
     }
 
     @Test
@@ -57,8 +54,7 @@ class YawningFissureTest extends BaseCardTest {
         assertThat(p1Lands).isEqualTo(2);
 
         // Opponent's land should be sacrificed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player2, "Forest");
     }
 
     @Test
@@ -90,8 +86,7 @@ class YawningFissureTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player2, List.of(forest.getId()));
 
         // Forest is gone, Mountain remains
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player2, "Forest");
         harness.assertOnBattlefield(player2, "Mountain");
     }
 
@@ -105,8 +100,6 @@ class YawningFissureTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
 
         // Creature is unaffected — only lands are sacrificed
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -124,11 +117,8 @@ class YawningFissureTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Only the land is sacrificed, creature remains
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player2, "Forest");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 }

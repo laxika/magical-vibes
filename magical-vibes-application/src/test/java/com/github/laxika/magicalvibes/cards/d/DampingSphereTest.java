@@ -31,8 +31,7 @@ class DampingSphereTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Damping Sphere"));
+        harness.assertOnBattlefield(player1, "Damping Sphere");
     }
 
     // ===== Spell tax: costs {1} more per previously cast spell this turn =====

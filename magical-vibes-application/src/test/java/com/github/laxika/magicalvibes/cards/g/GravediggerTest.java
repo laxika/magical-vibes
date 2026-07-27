@@ -70,8 +70,7 @@ class GravediggerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Gravedigger"));
+        harness.assertOnBattlefield(player1, "Gravedigger");
     }
 
     // ===== ETB may ability =====
@@ -116,11 +115,9 @@ class GravediggerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         // Gravedigger still on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Gravedigger"));
+        harness.assertOnBattlefield(player1, "Gravedigger");
         // Grizzly Bears still in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== Graveyard return to hand =====
@@ -138,10 +135,8 @@ class GravediggerTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
 
         // Grizzly Bears moved from graveyard to hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.gameLog)
                 .extracting(GameLogEntry::plainText)
                 .contains("Alice returns Grizzly Bears from graveyard to hand.");
@@ -159,10 +154,8 @@ class GravediggerTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, -1);
 
         // Grizzly Bears stays in graveyard, not in hand
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
     }
 
     @Test
@@ -175,12 +168,9 @@ class GravediggerTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 1);
 
         // Angel of Mercy returned to hand, Grizzly Bears stays in graveyard
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Angel of Mercy"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Angel of Mercy"));
+        harness.assertInHand(player1, "Angel of Mercy");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Angel of Mercy");
     }
 
     // ===== Empty / no creatures in graveyard =====
@@ -206,8 +196,7 @@ class GravediggerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no creature cards in graveyard"));
         // Holy Day stays in graveyard untouched
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Holy Day"));
+        harness.assertInGraveyard(player1, "Holy Day");
     }
 
     // ===== Invalid choices =====
@@ -258,8 +247,7 @@ class GravediggerTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Gravedigger"));
+        harness.assertOnBattlefield(player1, "Gravedigger");
     }
 }
 

@@ -84,8 +84,7 @@ class NightTerrorsTest extends BaseCardTest {
         // Grizzly Bears should be in player2's exile zone, NOT graveyard
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
 
         // Peek should remain in player2's hand
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -280,8 +279,7 @@ class NightTerrorsTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Night Terrors"));
+        harness.assertInGraveyard(player1, "Night Terrors");
     }
 
     // ===== Logging =====

@@ -80,12 +80,10 @@ class MausoleumWandererTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player2, "Shock");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mausoleum Wanderer"));
+        harness.assertInGraveyard(player1, "Mausoleum Wanderer");
     }
 
     @Test
@@ -112,12 +110,9 @@ class MausoleumWandererTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, shock.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Can't afford {2} with 1 mana left → auto-countered
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     private void castChapelGeist(com.github.laxika.magicalvibes.model.Player controller) {
@@ -154,8 +149,7 @@ class MausoleumWandererTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test

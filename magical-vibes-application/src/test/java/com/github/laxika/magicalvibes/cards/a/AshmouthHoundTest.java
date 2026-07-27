@@ -37,8 +37,7 @@ class AshmouthHoundTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Attacker (2/2) takes 1 damage but survives
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         Permanent damagedAttacker = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
@@ -65,8 +64,7 @@ class AshmouthHoundTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Blocker (2/2) takes 1 damage but survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         Permanent damagedBlocker = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();

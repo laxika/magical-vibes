@@ -25,8 +25,7 @@ class MindslicerTest extends BaseCardTest {
         setupCombatWhereMindslicerDies();
         harness.passBothPriorities(); // Combat damage — Mindslicer dies
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mindslicer"));
+        harness.assertInGraveyard(player1, "Mindslicer");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Mindslicer");
@@ -63,8 +62,7 @@ class MindslicerTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve death trigger
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to discard"));
     }
 

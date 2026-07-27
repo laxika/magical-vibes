@@ -30,8 +30,7 @@ class AvenInitiateTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Aven Initiate"));
+        harness.assertNotInGraveyard(player1, "Aven Initiate");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Aven Initiate"));
     }
@@ -68,7 +67,6 @@ class AvenInitiateTest extends BaseCardTest {
         Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Aven Initiate"));
+        harness.assertInGraveyard(player1, "Aven Initiate");
     }
 }

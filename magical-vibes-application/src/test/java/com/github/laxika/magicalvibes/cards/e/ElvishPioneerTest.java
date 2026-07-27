@@ -40,8 +40,7 @@ class ElvishPioneerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         harness.passBothPriorities(); // resolve creature spell → may on stack
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Elvish Pioneer"));
+        harness.assertOnBattlefield(player1, "Elvish Pioneer");
 
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -94,9 +93,7 @@ class ElvishPioneerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
     }
 }

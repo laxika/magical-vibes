@@ -153,7 +153,6 @@ class ArgentMutationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Argent Mutation"));
+        harness.assertInGraveyard(player1, "Argent Mutation");
     }
 }

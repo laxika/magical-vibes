@@ -58,10 +58,8 @@ class WickerboughElderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(elder.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Angel's Feather"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Angel's Feather"));
+        harness.assertNotOnBattlefield(player2, "Angel's Feather");
+        harness.assertInGraveyard(player2, "Angel's Feather");
     }
 
     @Test
@@ -78,10 +76,8 @@ class WickerboughElderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Angelic Chorus"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Angelic Chorus"));
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertInGraveyard(player2, "Angelic Chorus");
     }
 
     // ===== Cannot activate without a counter =====

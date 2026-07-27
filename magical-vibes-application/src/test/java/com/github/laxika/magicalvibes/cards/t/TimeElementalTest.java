@@ -39,10 +39,8 @@ class TimeElementalTest extends BaseCardTest {
         gs.declareAttackers(gd, player1, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Time Elemental"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Time Elemental"));
+        harness.assertNotOnBattlefield(player1, "Time Elemental");
+        harness.assertInGraveyard(player1, "Time Elemental");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
     }
 
@@ -70,10 +68,8 @@ class TimeElementalTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Time Elemental"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Time Elemental"));
+        harness.assertNotOnBattlefield(player2, "Time Elemental");
+        harness.assertInGraveyard(player2, "Time Elemental");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
 
@@ -94,10 +90,8 @@ class TimeElementalTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     @Test

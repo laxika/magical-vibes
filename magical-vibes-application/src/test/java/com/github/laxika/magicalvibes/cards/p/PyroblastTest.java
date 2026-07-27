@@ -36,10 +36,8 @@ class PyroblastTest extends BaseCardTest {
 
             GameData gd = harness.getGameData();
             assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Fugitive Wizard"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Fugitive Wizard"));
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Fugitive Wizard"));
+            harness.assertInGraveyard(player1, "Fugitive Wizard");
+            harness.assertNotOnBattlefield(player1, "Fugitive Wizard");
         }
 
         @Test
@@ -58,11 +56,8 @@ class PyroblastTest extends BaseCardTest {
             harness.passBothPriorities(); // Pyroblast resolves, does nothing
             harness.passBothPriorities(); // Grizzly Bears resolves onto the battlefield
 
-            GameData gd = harness.getGameData();
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Pyroblast"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
+            harness.assertInGraveyard(player2, "Pyroblast");
         }
     }
 
@@ -81,11 +76,8 @@ class PyroblastTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, harness.getPermanentId(player2, "Fugitive Wizard"));
             harness.passBothPriorities();
 
-            GameData gd = harness.getGameData();
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Fugitive Wizard"));
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Fugitive Wizard"));
+            harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
+            harness.assertInGraveyard(player2, "Fugitive Wizard");
         }
 
         @Test
@@ -99,11 +91,8 @@ class PyroblastTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, harness.getPermanentId(player2, "Grizzly Bears"));
             harness.passBothPriorities();
 
-            GameData gd = harness.getGameData();
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Pyroblast"));
+            harness.assertOnBattlefield(player2, "Grizzly Bears");
+            harness.assertInGraveyard(player1, "Pyroblast");
         }
     }
 }

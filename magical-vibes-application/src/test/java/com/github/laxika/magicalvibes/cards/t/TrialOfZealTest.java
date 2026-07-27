@@ -29,10 +29,8 @@ class TrialOfZealTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB damage
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -66,10 +64,8 @@ class TrialOfZealTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve a triggered ability
         harness.passBothPriorities(); // resolve the other triggered ability
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Trial of Zeal"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Trial of Zeal"));
+        harness.assertNotOnBattlefield(player1, "Trial of Zeal");
+        harness.assertInHand(player1, "Trial of Zeal");
     }
 
     @Test
@@ -91,7 +87,6 @@ class TrialOfZealTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve aura
         harness.passBothPriorities(); // resolve aura's ETB token trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Trial of Zeal"));
+        harness.assertOnBattlefield(player1, "Trial of Zeal");
     }
 }

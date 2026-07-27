@@ -95,8 +95,7 @@ class PastInFlamesTest extends BaseCardTest {
         harness.castFlashback(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Shock"));
+        harness.assertNotInGraveyard(player1, "Shock");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Shock"));
     }
@@ -199,7 +198,6 @@ class PastInFlamesTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Past in Flames"));
+        harness.assertInGraveyard(player1, "Past in Flames");
     }
 }

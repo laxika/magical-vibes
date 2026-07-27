@@ -88,12 +88,9 @@ class FlowstoneSlideTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Both 2/2 bears get +2/-2 → 4/0 → die to SBA
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -108,13 +105,10 @@ class FlowstoneSlideTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 3);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // 2/2 bear gets +3/-3 → 5/-1 → dies
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         // 4/5 gets +3/-3 → 7/2 → survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Big Creature"));
+        harness.assertOnBattlefield(player2, "Big Creature");
         assertThat(bigCreature.getPowerModifier()).isEqualTo(3);
         assertThat(bigCreature.getToughnessModifier()).isEqualTo(-3);
     }

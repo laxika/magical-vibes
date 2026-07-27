@@ -119,8 +119,7 @@ class AbbeyGargoylesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 3/4 Gargoyles: red creature's 3 damage is prevented (protection), survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Abbey Gargoyles"));
+        harness.assertOnBattlefield(player2, "Abbey Gargoyles");
     }
 
     // ===== Protection - targeting =====

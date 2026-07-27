@@ -70,17 +70,14 @@ class PistusStrikeTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Creature is destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Serra Angel"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Serra Angel"));
+        harness.assertNotOnBattlefield(player2, "Serra Angel");
+        harness.assertInGraveyard(player2, "Serra Angel");
         // Controller gets a poison counter
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
         // Caster does NOT get a poison counter
         assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();
         // Pistus Strike goes to graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Pistus Strike"));
+        harness.assertInGraveyard(player1, "Pistus Strike");
     }
 
     @Test
@@ -101,7 +98,6 @@ class PistusStrikeTest extends BaseCardTest {
         // No poison counter since spell fizzled
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
         // Pistus Strike goes to graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Pistus Strike"));
+        harness.assertInGraveyard(player1, "Pistus Strike");
     }
 }

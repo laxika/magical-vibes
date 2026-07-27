@@ -57,10 +57,8 @@ class FlameJabTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mountain"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Flame Jab"));
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Flame Jab");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Flame Jab"));
     }

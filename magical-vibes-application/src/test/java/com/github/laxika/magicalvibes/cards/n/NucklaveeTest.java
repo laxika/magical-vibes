@@ -34,8 +34,7 @@ class NucklaveeTest extends BaseCardTest {
     void resolvingPutsOnBattlefield() {
         castAndResolve();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Nucklavee"));
+        harness.assertOnBattlefield(player1, "Nucklavee");
     }
 
     @Test
@@ -58,9 +57,8 @@ class NucklaveeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
         harness.handleGraveyardCardChosen(player1, 0); // Lava Axe
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Opt"))
-                .anyMatch(c -> c.getName().equals("Lava Axe"));
+        harness.assertInHand(player1, "Opt");
+        harness.assertInHand(player1, "Lava Axe");
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
@@ -75,9 +73,8 @@ class NucklaveeTest extends BaseCardTest {
         harness.passBothPriorities(); // red trigger
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lava Axe"))
-                .anyMatch(c -> c.getName().equals("Opt"));
+        harness.assertInGraveyard(player1, "Lava Axe");
+        harness.assertInGraveyard(player1, "Opt");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -112,7 +109,6 @@ class NucklaveeTest extends BaseCardTest {
         harness.passBothPriorities(); // blue-instant trigger
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ponder"));
+        harness.assertInGraveyard(player1, "Ponder");
     }
 }

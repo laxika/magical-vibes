@@ -37,7 +37,7 @@ class MysticRetrievalTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(instant.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getId().equals(instant.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Mystic Retrieval"));
+        harness.assertInGraveyard(player1, "Mystic Retrieval");
     }
 
     @Test

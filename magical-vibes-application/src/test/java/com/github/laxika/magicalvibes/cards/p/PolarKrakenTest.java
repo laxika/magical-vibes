@@ -56,8 +56,7 @@ class PolarKrakenTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(kraken);
         assertThat(landsControlledBy(player1.getId())).isEqualTo(0);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Island"));
+        harness.assertInGraveyard(player1, "Island");
     }
 
     @Test
@@ -71,8 +70,7 @@ class PolarKrakenTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(kraken);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Polar Kraken"));
+        harness.assertInGraveyard(player1, "Polar Kraken");
         assertThat(landsControlledBy(player1.getId())).isEqualTo(1);
     }
 
@@ -86,8 +84,7 @@ class PolarKrakenTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(kraken);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Polar Kraken"));
+        harness.assertInGraveyard(player1, "Polar Kraken");
     }
 
     @Test

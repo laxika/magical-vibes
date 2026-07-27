@@ -159,10 +159,8 @@ class LifelinkTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lifelink"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Lifelink"));
+        harness.assertInGraveyard(player1, "Lifelink");
+        harness.assertNotOnBattlefield(player1, "Lifelink");
     }
 
     // ===== Targeting restriction =====

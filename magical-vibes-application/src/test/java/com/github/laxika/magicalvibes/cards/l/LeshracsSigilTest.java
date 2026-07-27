@@ -51,10 +51,8 @@ class LeshracsSigilTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Lightning Bolt"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Lightning Bolt"));
+        harness.assertInGraveyard(player2, "Lightning Bolt");
+        harness.assertNotInHand(player2, "Lightning Bolt");
     }
 
     @Test
@@ -70,10 +68,8 @@ class LeshracsSigilTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Lightning Bolt"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Lightning Bolt"));
+        harness.assertInHand(player2, "Lightning Bolt");
+        harness.assertNotInGraveyard(player2, "Lightning Bolt");
     }
 
     @Test
@@ -112,9 +108,7 @@ class LeshracsSigilTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Leshrac's Sigil"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Leshrac's Sigil"));
+        harness.assertInHand(player1, "Leshrac's Sigil");
+        harness.assertNotOnBattlefield(player1, "Leshrac's Sigil");
     }
 }

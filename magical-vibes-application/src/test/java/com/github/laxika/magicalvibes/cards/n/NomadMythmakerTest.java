@@ -51,9 +51,7 @@ class NomadMythmakerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Nomad Mythmaker"));
+        harness.assertOnBattlefield(player1, "Nomad Mythmaker");
     }
 
     // ===== Activate ability =====
@@ -130,8 +128,7 @@ class NomadMythmakerTest extends BaseCardTest {
         assertThat(gd.interaction.pendingAuraCard().getName()).isEqualTo("Holy Strength");
 
         // Aura removed from graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Holy Strength"));
+        harness.assertNotInGraveyard(player2, "Holy Strength");
     }
 
     @Test
@@ -202,8 +199,7 @@ class NomadMythmakerTest extends BaseCardTest {
         assertThat(battlefield)
                 .anyMatch(p -> p.getCard().getName().equals("Pacifism") && p.getAttachedTo().equals(creature.getId()));
         // Removed from player2's graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Pacifism"));
+        harness.assertNotInGraveyard(player2, "Pacifism");
     }
 
     @Test

@@ -62,11 +62,9 @@ class KnightOfMeadowgrainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Knight's 2 first strike damage kills the 2/2 Grizzly Bears before it can deal damage.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Knight survives unharmed.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Knight of Meadowgrain"));
+        harness.assertOnBattlefield(player1, "Knight of Meadowgrain");
         // Lifelink gains 2 life from the combat damage dealt to the blocker.
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
     }

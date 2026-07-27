@@ -234,9 +234,7 @@ class GarrukWildspeakerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Garruk Wildspeaker"));
+        harness.assertNotOnBattlefield(player1, "Garruk Wildspeaker");
     }
 
     // ===== Helpers =====

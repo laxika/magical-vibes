@@ -45,7 +45,6 @@ class RadjanSpiritTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
-        assertThat(harness.getGameData().playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 }

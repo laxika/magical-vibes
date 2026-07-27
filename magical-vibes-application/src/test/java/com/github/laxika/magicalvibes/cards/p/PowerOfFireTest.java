@@ -78,8 +78,7 @@ class PowerOfFireTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, elfPerm.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
     }
 
     @Test

@@ -99,8 +99,7 @@ class DanceOfManyTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve LTB trigger -> sacrifice the enchantment
 
         assertThat(danceOfMany(player1)).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Dance of Many"));
+        harness.assertInGraveyard(player1, "Dance of Many");
     }
 
     // ===== Upkeep sacrifice-unless-pay =====

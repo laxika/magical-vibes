@@ -50,7 +50,6 @@ class SporeSwarmTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spore Swarm"));
+        harness.assertInGraveyard(player1, "Spore Swarm");
     }
 }

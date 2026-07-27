@@ -24,8 +24,7 @@ class ThunderingWurmTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Thundering Wurm"));
+        harness.assertOnBattlefield(player1, "Thundering Wurm");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -42,10 +41,8 @@ class ThunderingWurmTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0); // discard the Forest
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Thundering Wurm"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertOnBattlefield(player1, "Thundering Wurm");
+        harness.assertInGraveyard(player1, "Forest");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -56,12 +53,9 @@ class ThunderingWurmTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Thundering Wurm"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Thundering Wurm"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player1, "Thundering Wurm");
+        harness.assertInGraveyard(player1, "Thundering Wurm");
+        harness.assertInHand(player1, "Forest");
     }
 
     // ===== ETB with only non-land cards — auto-sacrifice =====
@@ -77,10 +71,8 @@ class ThunderingWurmTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB → auto-sacrifice
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Thundering Wurm"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Thundering Wurm"));
+        harness.assertNotOnBattlefield(player1, "Thundering Wurm");
+        harness.assertInGraveyard(player1, "Thundering Wurm");
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }

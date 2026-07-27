@@ -188,8 +188,7 @@ class StrandwalkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Germ should be dead (0 toughness, state-based action)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phyrexian Germ"));
+        harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
     }
 
     // ===== Equipment stays when Germ is removed =====
@@ -211,7 +210,6 @@ class StrandwalkerTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(germ);
 
         // Equipment should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Strandwalker"));
+        harness.assertOnBattlefield(player1, "Strandwalker");
     }
 }

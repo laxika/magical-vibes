@@ -38,8 +38,7 @@ class ButcherGhoulTest extends BaseCardTest {
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(returned.getEffectivePower()).isEqualTo(2);
         assertThat(returned.getEffectiveToughness()).isEqualTo(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Butcher Ghoul"));
+        harness.assertNotInGraveyard(player1, "Butcher Ghoul");
     }
 
     @Test
@@ -53,10 +52,8 @@ class ButcherGhoulTest extends BaseCardTest {
         harness.castInstant(player1, 0, ghoul.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Butcher Ghoul"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Butcher Ghoul"));
+        harness.assertNotOnBattlefield(player1, "Butcher Ghoul");
+        harness.assertInGraveyard(player1, "Butcher Ghoul");
         assertThat(gd.stack).isEmpty();
     }
 }

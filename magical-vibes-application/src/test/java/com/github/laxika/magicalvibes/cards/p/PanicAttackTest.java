@@ -152,7 +152,6 @@ class PanicAttackTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(creature.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Panic Attack"));
+        harness.assertInGraveyard(player1, "Panic Attack");
     }
 }

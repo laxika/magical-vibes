@@ -67,8 +67,7 @@ class AngelicChorusTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Angelic Chorus"));
+        harness.assertOnBattlefield(player1, "Angelic Chorus");
     }
 
     @Test

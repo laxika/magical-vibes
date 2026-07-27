@@ -62,10 +62,8 @@ class ContagionClaspTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Bears (1/1) got another -1/-1 counter making it 0/0, dies to SBA
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Proliferate activated ability =====
@@ -179,10 +177,8 @@ class ContagionClaspTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
         // Bears should be dead (0/0 from SBA)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test

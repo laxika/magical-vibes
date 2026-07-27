@@ -41,10 +41,8 @@ class TalarasBaneTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         // Giant Spider is 2/4 — gain 4 life.
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 4);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Giant Spider"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Giant Spider"));
+        harness.assertInGraveyard(player2, "Giant Spider");
+        harness.assertNotInHand(player2, "Giant Spider");
     }
 
     @Test

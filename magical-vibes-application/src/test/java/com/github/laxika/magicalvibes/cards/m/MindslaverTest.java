@@ -146,8 +146,7 @@ class MindslaverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The creature should be on player2's battlefield (controlled player's resources)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Memnite"));
+        harness.assertOnBattlefield(player2, "Memnite");
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 

@@ -135,8 +135,7 @@ class WarriorsHonorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Warrior's Honor"));
+        harness.assertInGraveyard(player1, "Warrior's Honor");
     }
 }
 

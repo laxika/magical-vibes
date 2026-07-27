@@ -48,8 +48,7 @@ class NamelessInversionTest extends BaseCardTest {
         castOn(bears);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== Loses all creature types =====
@@ -66,8 +65,7 @@ class NamelessInversionTest extends BaseCardTest {
 
         // Base 2/2, loses Goblin type (King buff gone), then +3/-3 => 5/-1 => dies.
         assertThat(goblin.isLosesAllCreatureTypesUntilEndOfTurn()).isTrue();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Goblin Elite Infantry"));
+        harness.assertInGraveyard(player1, "Goblin Elite Infantry");
     }
 
     // ===== Wears off =====

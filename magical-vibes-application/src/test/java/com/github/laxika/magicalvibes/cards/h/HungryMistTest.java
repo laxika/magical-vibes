@@ -21,10 +21,8 @@ class HungryMistTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hungry Mist"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hungry Mist"));
+        harness.assertNotOnBattlefield(player1, "Hungry Mist");
+        harness.assertInGraveyard(player1, "Hungry Mist");
     }
 
     @Test
@@ -37,8 +35,7 @@ class HungryMistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hungry Mist"));
+        harness.assertOnBattlefield(player1, "Hungry Mist");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }
 
@@ -52,8 +49,7 @@ class HungryMistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1); // one short
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hungry Mist"));
+        harness.assertNotOnBattlefield(player1, "Hungry Mist");
     }
 
     @Test
@@ -64,7 +60,6 @@ class HungryMistTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hungry Mist"));
+        harness.assertOnBattlefield(player1, "Hungry Mist");
     }
 }

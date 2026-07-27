@@ -49,10 +49,8 @@ class RepeatingBarrageTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // 3 damage kills Grizzly Bears (2/2)
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+            harness.assertInGraveyard(player2, "Grizzly Bears");
         }
 
         @Test
@@ -65,8 +63,7 @@ class RepeatingBarrageTest extends BaseCardTest {
             harness.castInstant(player1, 0, player2.getId());
             harness.passBothPriorities();
 
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Repeating Barrage"));
+            harness.assertInGraveyard(player1, "Repeating Barrage");
         }
     }
 
@@ -104,10 +101,8 @@ class RepeatingBarrageTest extends BaseCardTest {
             harness.activateGraveyardAbility(player1, 0);
             harness.passBothPriorities();
 
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Repeating Barrage"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Repeating Barrage"));
+            harness.assertInHand(player1, "Repeating Barrage");
+            harness.assertNotInGraveyard(player1, "Repeating Barrage");
         }
 
         @Test
@@ -169,8 +164,7 @@ class RepeatingBarrageTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Repeating Barrage"));
+            harness.assertInGraveyard(player1, "Repeating Barrage");
 
             // Return from graveyard with raid
             markAttackedThisTurn();
@@ -180,8 +174,7 @@ class RepeatingBarrageTest extends BaseCardTest {
             harness.activateGraveyardAbility(player1, 0);
             harness.passBothPriorities();
 
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Repeating Barrage"));
+            harness.assertInHand(player1, "Repeating Barrage");
 
             // Re-cast: deal 3 more damage
             harness.addMana(player1, ManaColor.RED, 2);

@@ -63,8 +63,7 @@ class LureboundScarecrowTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(controlsScarecrow(player1)).isFalse();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lurebound Scarecrow"));
+        harness.assertInGraveyard(player1, "Lurebound Scarecrow");
     }
 
     @Test
@@ -88,8 +87,7 @@ class LureboundScarecrowTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertThat(controlsScarecrow(player1)).isFalse();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lurebound Scarecrow"));
+        harness.assertInGraveyard(player1, "Lurebound Scarecrow");
     }
 
     @Test
@@ -107,7 +105,6 @@ class LureboundScarecrowTest extends BaseCardTest {
         harness.passBothPriorities(); // state trigger onto the stack
         harness.passBothPriorities(); // resolve it
         assertThat(controlsScarecrow(player1)).isFalse();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lurebound Scarecrow"));
+        harness.assertInGraveyard(player1, "Lurebound Scarecrow");
     }
 }

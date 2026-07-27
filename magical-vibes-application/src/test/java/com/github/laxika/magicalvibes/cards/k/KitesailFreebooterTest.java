@@ -151,17 +151,14 @@ class KitesailFreebooterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Freebooter is dead
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Kitesail Freebooter"));
+        harness.assertNotOnBattlefield(player1, "Kitesail Freebooter");
 
         // Card returns to opponent's hand, NOT the battlefield
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Peek"));
+        harness.assertInHand(player2, "Peek");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Peek"));
         // Should NOT be on the battlefield (it's an instant, not a permanent)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Peek"));
+        harness.assertNotOnBattlefield(player2, "Peek");
     }
 
     @Test
@@ -184,8 +181,7 @@ class KitesailFreebooterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Card returns to opponent's hand
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Peek"));
+        harness.assertInHand(player2, "Peek");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Peek"));
     }

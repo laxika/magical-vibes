@@ -43,8 +43,7 @@ class MakeAWishTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
         // Only Make a Wish itself in graveyard after resolution
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Make a Wish");
@@ -62,9 +61,8 @@ class MakeAWishTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Llanowar Elves");
         // Only Make a Wish itself in graveyard after resolution
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Make a Wish");

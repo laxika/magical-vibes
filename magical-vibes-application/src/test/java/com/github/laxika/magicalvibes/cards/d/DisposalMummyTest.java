@@ -41,8 +41,7 @@ class DisposalMummyTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities(); // resolve the ETB triggered ability
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getId().equals(bears.getId()));
     }
@@ -60,8 +59,7 @@ class DisposalMummyTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve the 0-target trigger
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 

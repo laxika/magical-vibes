@@ -80,8 +80,7 @@ class CacklingCounterpartTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Cackling Counterpart"));
+        harness.assertInGraveyard(player1, "Cackling Counterpart");
     }
 
     @Test
@@ -119,8 +118,7 @@ class CacklingCounterpartTest extends BaseCardTest {
         harness.castFlashback(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Cackling Counterpart"));
+        harness.assertNotInGraveyard(player1, "Cackling Counterpart");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Cackling Counterpart"));
     }
@@ -289,8 +287,7 @@ class CacklingCounterpartTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve ETB trigger
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -322,8 +319,7 @@ class CacklingCounterpartTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         // Grizzly Bears survives (not targeted).
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -467,8 +463,7 @@ class CacklingCounterpartTest extends BaseCardTest {
                 .toList();
         assertThat(mirris).hasSize(1);
         assertThat(mirris.getFirst().getId()).isEqualTo(tokenId);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mirri, Cat Warrior"));
+        harness.assertInGraveyard(player1, "Mirri, Cat Warrior");
     }
 
     @Test

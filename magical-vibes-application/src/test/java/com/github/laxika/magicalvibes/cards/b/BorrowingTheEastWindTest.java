@@ -42,11 +42,8 @@ class BorrowingTheEastWindTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Wu Scout (2/2) takes 2 damage and dies.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Wu Scout"));
+        harness.assertNotOnBattlefield(player2, "Wu Scout");
     }
 
     @Test
@@ -60,11 +57,8 @@ class BorrowingTheEastWindTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Grizzly Bears has no horsemanship, so it survives.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -95,8 +89,7 @@ class BorrowingTheEastWindTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Wu Scout"));
+        harness.assertOnBattlefield(player2, "Wu Scout");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }

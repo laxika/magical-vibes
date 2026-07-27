@@ -106,12 +106,9 @@ class SandblastTest extends BaseCardTest {
         harness.castInstant(player2, 0, blocker.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Giant Spider is 2/4, 5 damage kills it
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Giant Spider"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Giant Spider"));
+        harness.assertNotOnBattlefield(player1, "Giant Spider");
+        harness.assertInGraveyard(player1, "Giant Spider");
     }
 
     // ===== Fizzle =====

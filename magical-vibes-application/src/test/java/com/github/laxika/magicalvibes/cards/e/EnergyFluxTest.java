@@ -36,10 +36,8 @@ class EnergyFluxTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fountain of Youth"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fountain of Youth"));
+        harness.assertNotOnBattlefield(player1, "Fountain of Youth");
+        harness.assertInGraveyard(player1, "Fountain of Youth");
     }
 
     @Test
@@ -53,8 +51,7 @@ class EnergyFluxTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Fountain of Youth"));
+        harness.assertOnBattlefield(player1, "Fountain of Youth");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 
@@ -70,8 +67,7 @@ class EnergyFluxTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fountain of Youth"));
+        harness.assertNotOnBattlefield(player1, "Fountain of Youth");
     }
 
     @Test

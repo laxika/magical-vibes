@@ -86,8 +86,7 @@ class RegenerateTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Bears should survive via regeneration
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         Permanent survivedBear = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();

@@ -46,8 +46,7 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Goblin Elite Infantry"));
+        harness.assertOnBattlefield(player1, "Goblin Elite Infantry");
     }
 
     // ===== Block trigger (when this creature blocks) =====

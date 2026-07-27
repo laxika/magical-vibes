@@ -53,10 +53,8 @@ class BatteringRamTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Wall of Wood"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Wall of Wood"));
+        harness.assertNotOnBattlefield(player2, "Wall of Wood");
+        harness.assertInGraveyard(player2, "Wall of Wood");
     }
 
     @Test

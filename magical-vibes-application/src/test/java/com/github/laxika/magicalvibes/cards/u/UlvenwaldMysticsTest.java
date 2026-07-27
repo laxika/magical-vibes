@@ -201,8 +201,7 @@ class UlvenwaldMysticsTest extends BaseCardTest {
         harness.passBothPriorities(); // combat damage
 
         // Ulvenwald Primordials should survive via regeneration
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Ulvenwald Primordials"));
+        harness.assertOnBattlefield(player1, "Ulvenwald Primordials");
         assertThat(mystics.isTapped()).isTrue();
         assertThat(mystics.getRegenerationShield()).isEqualTo(0);
     }

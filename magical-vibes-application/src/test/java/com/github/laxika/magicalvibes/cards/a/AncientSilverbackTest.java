@@ -103,11 +103,8 @@ class AncientSilverbackTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ancient Silverback"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ancient Silverback"));
+        harness.assertNotOnBattlefield(player1, "Ancient Silverback");
+        harness.assertInGraveyard(player1, "Ancient Silverback");
     }
 
     private Permanent addSilverbackReady(Player player) {

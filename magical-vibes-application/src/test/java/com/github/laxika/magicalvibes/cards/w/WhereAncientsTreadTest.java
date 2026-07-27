@@ -54,8 +54,7 @@ class WhereAncientsTreadTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, angelId);
 
         // Serra Angel (4/4) dies to 5 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Serra Angel"));
+        harness.assertNotOnBattlefield(player2, "Serra Angel");
     }
 
     @Test

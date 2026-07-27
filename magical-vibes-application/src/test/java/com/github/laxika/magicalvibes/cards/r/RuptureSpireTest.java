@@ -52,8 +52,7 @@ class RuptureSpireTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(ruptureSpire()).isNotNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Rupture Spire"));
+        harness.assertNotInGraveyard(player1, "Rupture Spire");
     }
 
     @Test
@@ -65,8 +64,7 @@ class RuptureSpireTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(ruptureSpire()).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Rupture Spire"));
+        harness.assertInGraveyard(player1, "Rupture Spire");
     }
 
     @Test

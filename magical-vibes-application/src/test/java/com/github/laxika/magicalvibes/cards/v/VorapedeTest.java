@@ -72,8 +72,7 @@ class VorapedeTest extends BaseCardTest {
         ));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -91,8 +90,7 @@ class VorapedeTest extends BaseCardTest {
         assertThat(returnedVorapede.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(returnedVorapede.getEffectivePower()).isEqualTo(6);
         assertThat(returnedVorapede.getEffectiveToughness()).isEqualTo(5);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Vorapede"));
+        harness.assertNotInGraveyard(player1, "Vorapede");
     }
 
     @Test
@@ -106,10 +104,8 @@ class VorapedeTest extends BaseCardTest {
         harness.castInstant(player2, 0, vorapede.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Vorapede"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Vorapede"));
+        harness.assertNotOnBattlefield(player1, "Vorapede");
+        harness.assertInGraveyard(player1, "Vorapede");
         assertThat(gd.stack).isEmpty();
     }
 }

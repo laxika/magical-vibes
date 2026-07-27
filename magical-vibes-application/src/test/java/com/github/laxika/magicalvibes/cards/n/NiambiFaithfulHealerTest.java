@@ -41,10 +41,8 @@ class NiambiFaithfulHealerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect -> may prompt
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Teferi, Timebender"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Teferi, Timebender"));
+        harness.assertInHand(player1, "Teferi, Timebender");
+        harness.assertNotInGraveyard(player1, "Teferi, Timebender");
     }
 
     // ===== Accept may: finds in library =====
@@ -97,8 +95,7 @@ class NiambiFaithfulHealerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // Teferi stays in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Teferi, Timebender"));
+        harness.assertInGraveyard(player1, "Teferi, Timebender");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -111,8 +108,7 @@ class NiambiFaithfulHealerTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Niambi, Faithful Healer"));
+        harness.assertOnBattlefield(player1, "Niambi, Faithful Healer");
     }
 
     // ===== Helpers =====

@@ -67,8 +67,7 @@ class FiendHunterTest extends BaseCardTest {
         UUID creatureId = harness.getPermanentId(player2, "Goblin Piker");
         castAndExileTarget(creatureId);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Goblin Piker"));
+        harness.assertNotOnBattlefield(player2, "Goblin Piker");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Goblin Piker"));
     }
@@ -88,10 +87,8 @@ class FiendHunterTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false); // decline
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Fiend Hunter"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Goblin Piker"));
+        harness.assertOnBattlefield(player1, "Fiend Hunter");
+        harness.assertOnBattlefield(player2, "Goblin Piker");
     }
 
     // ===== LTB return =====
@@ -119,12 +116,10 @@ class FiendHunterTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Shock
 
         // Fiend Hunter is dead
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fiend Hunter"));
+        harness.assertNotOnBattlefield(player1, "Fiend Hunter");
 
         // Exiled card returns to battlefield under owner's control
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Goblin Piker"));
+        harness.assertOnBattlefield(player2, "Goblin Piker");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Goblin Piker"));
     }
@@ -148,12 +143,10 @@ class FiendHunterTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Unsummon
 
         // Fiend Hunter is back in hand
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fiend Hunter"));
+        harness.assertNotOnBattlefield(player1, "Fiend Hunter");
 
         // Exiled card returns to battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Goblin Piker"));
+        harness.assertOnBattlefield(player2, "Goblin Piker");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Goblin Piker"));
     }
@@ -177,11 +170,9 @@ class FiendHunterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Card returns under player2's control (the owner)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Goblin Piker"));
+        harness.assertOnBattlefield(player2, "Goblin Piker");
         // Not under player1's control
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Goblin Piker"));
+        harness.assertNotOnBattlefield(player1, "Goblin Piker");
     }
 
     // ===== Edge cases =====
@@ -212,8 +203,7 @@ class FiendHunterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Goblin Piker is still on battlefield (was never exiled)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Goblin Piker"));
+        harness.assertOnBattlefield(player2, "Goblin Piker");
         // Nothing weird returned
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
     }

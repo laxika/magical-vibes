@@ -95,7 +95,7 @@ class BlackmailTest extends BaseCardTest {
         harness.handleCardChosen(player1, 1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getName().equals("Peek"));
+        harness.assertInGraveyard(player2, "Peek");
         // The other revealed cards and the unrevealed Forest remain in hand.
         assertThat(gd.playerHands.get(player2.getId()))
                 .extracting(Card::getName)
@@ -142,7 +142,7 @@ class BlackmailTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId()).getFirst().getName()).isEqualTo("Peek");
     }

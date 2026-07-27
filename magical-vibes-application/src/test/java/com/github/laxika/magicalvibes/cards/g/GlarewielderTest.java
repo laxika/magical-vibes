@@ -33,8 +33,7 @@ class GlarewielderTest extends BaseCardTest {
 
         assertThat(bear1.isCantBlockThisTurn()).isTrue();
         assertThat(bear2.isCantBlockThisTurn()).isTrue();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Glarewielder"));
+        harness.assertOnBattlefield(player1, "Glarewielder");
     }
 
     @Test
@@ -50,10 +49,8 @@ class GlarewielderTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger (can't block + evoke sacrifice)
 
         assertThat(bear.isCantBlockThisTurn()).isTrue();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Glarewielder"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Glarewielder"));
+        harness.assertNotOnBattlefield(player1, "Glarewielder");
+        harness.assertInGraveyard(player1, "Glarewielder");
     }
 
     @Test
@@ -67,7 +64,6 @@ class GlarewielderTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Glarewielder"));
+        harness.assertOnBattlefield(player1, "Glarewielder");
     }
 }

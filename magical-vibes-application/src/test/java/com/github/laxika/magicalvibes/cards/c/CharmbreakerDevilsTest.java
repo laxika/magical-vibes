@@ -36,10 +36,8 @@ class CharmbreakerDevilsTest extends BaseCardTest {
         // Resolve trigger — random return (no graveyard choice prompt since it's random)
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lightning Bolt"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Lightning Bolt"));
+        harness.assertInHand(player1, "Lightning Bolt");
+        harness.assertNotInGraveyard(player1, "Lightning Bolt");
     }
 
     @Test
@@ -75,10 +73,8 @@ class CharmbreakerDevilsTest extends BaseCardTest {
         // Trigger fires but should resolve without returning anything
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -107,11 +103,9 @@ class CharmbreakerDevilsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Lightning Bolt should be returned (it's the only instant/sorcery)
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lightning Bolt"));
+        harness.assertInHand(player1, "Lightning Bolt");
         // Grizzly Bears should stay in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -123,10 +117,8 @@ class CharmbreakerDevilsTest extends BaseCardTest {
         advanceToUpkeep(player2);
 
         // No trigger should fire
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lightning Bolt"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Lightning Bolt"));
+        harness.assertInGraveyard(player1, "Lightning Bolt");
+        harness.assertNotInHand(player1, "Lightning Bolt");
     }
 
     // ===== Spell cast trigger: +4/+0 =====

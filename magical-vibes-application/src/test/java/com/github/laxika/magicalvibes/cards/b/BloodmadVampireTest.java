@@ -76,8 +76,7 @@ class BloodmadVampireTest extends BaseCardTest {
         harness.passBothPriorities(); // combat damage
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bloodmad Vampire"));
+        harness.assertInGraveyard(player1, "Bloodmad Vampire");
     }
 
     @Test

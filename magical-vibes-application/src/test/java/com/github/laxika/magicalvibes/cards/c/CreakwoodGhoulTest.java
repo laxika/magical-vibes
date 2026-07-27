@@ -31,8 +31,7 @@ class CreakwoodGhoulTest extends BaseCardTest {
         harness.activateAbility(player1, index, 0, null, bears.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startLife + 1);

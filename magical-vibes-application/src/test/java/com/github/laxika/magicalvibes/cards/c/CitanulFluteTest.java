@@ -53,9 +53,7 @@ class CitanulFluteTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Citanul Flute"));
+        harness.assertOnBattlefield(player1, "Citanul Flute");
     }
 
     // ===== Activate ability =====

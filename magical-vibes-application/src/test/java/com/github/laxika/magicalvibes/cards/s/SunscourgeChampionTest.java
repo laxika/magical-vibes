@@ -57,8 +57,7 @@ class SunscourgeChampionTest extends BaseCardTest {
 
         // Discard cost: the hand card went to the graveyard.
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // Exile cost: the source card left the graveyard for exile.
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Sunscourge Champion"));
@@ -88,8 +87,7 @@ class SunscourgeChampionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Sunscourge Champion"));
+        harness.assertInGraveyard(player1, "Sunscourge Champion");
     }
 
     @Test
@@ -107,8 +105,7 @@ class SunscourgeChampionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Sunscourge Champion"));
+        harness.assertInGraveyard(player1, "Sunscourge Champion");
     }
 
     private Permanent eternalizedToken() {

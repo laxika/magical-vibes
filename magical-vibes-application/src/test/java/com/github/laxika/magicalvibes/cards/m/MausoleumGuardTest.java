@@ -39,8 +39,7 @@ class MausoleumGuardTest extends BaseCardTest {
             GameData gd = harness.getGameData();
 
             // Mausoleum Guard should be in the graveyard
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Mausoleum Guard"));
+            harness.assertInGraveyard(player1, "Mausoleum Guard");
 
             // Death trigger should be on the stack
             assertThat(gd.stack).hasSize(1);

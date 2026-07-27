@@ -38,16 +38,13 @@ class CursecatcherTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Shock is countered — player1 takes no damage
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player2, "Shock");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.stack).isEmpty();
 
         // Cursecatcher is sacrificed
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Cursecatcher"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Cursecatcher"));
+        harness.assertInGraveyard(player1, "Cursecatcher");
+        harness.assertNotOnBattlefield(player1, "Cursecatcher");
     }
 
     // ===== Spell survives when controller pays {1} =====
@@ -82,8 +79,7 @@ class CursecatcherTest extends BaseCardTest {
 
         // Shock resolves and kills the Grizzly Bears
         harness.passBothPriorities();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Counters a sorcery too =====
@@ -111,10 +107,8 @@ class CursecatcherTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Cruel Edict is countered — Grizzly Bears survives
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Cruel Edict"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Cruel Edict");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.stack).isEmpty();
     }
 

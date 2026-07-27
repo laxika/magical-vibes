@@ -79,10 +79,8 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -96,8 +94,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Guerrilla Tactics"));
+        harness.assertInGraveyard(player1, "Guerrilla Tactics");
     }
 
     // ===== Discard trigger — opponent forces discard via Distress (revealed hand choice) =====
@@ -174,10 +171,8 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears (2/2) should be destroyed by 4 damage
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -282,8 +277,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Guerrilla Tactics should be in player2's graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Guerrilla Tactics"));
+        harness.assertInGraveyard(player2, "Guerrilla Tactics");
         // Player2's hand should be empty
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }

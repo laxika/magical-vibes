@@ -95,8 +95,7 @@ class AngelfireIgnitionTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Angelfire Ignition"));
+        harness.assertInGraveyard(player1, "Angelfire Ignition");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -135,8 +134,7 @@ class AngelfireIgnitionTest extends BaseCardTest {
         harness.castFlashback(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Angelfire Ignition"));
+        harness.assertNotInGraveyard(player1, "Angelfire Ignition");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Angelfire Ignition"));
     }

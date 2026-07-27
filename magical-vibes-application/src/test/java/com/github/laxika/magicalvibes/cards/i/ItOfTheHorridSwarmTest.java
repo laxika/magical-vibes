@@ -28,8 +28,7 @@ class ItOfTheHorridSwarmTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve cast trigger
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("It of the Horrid Swarm"));
+        harness.assertOnBattlefield(player1, "It of the Horrid Swarm");
         List<Permanent> insects = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Insect"))
                 .toList();
@@ -60,8 +59,7 @@ class ItOfTheHorridSwarmTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("It of the Horrid Swarm"))
                 .noneMatch(p -> p.getId().equals(bearsId));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
         long insects = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Insect") && p.getCard().isToken())
@@ -102,8 +100,7 @@ class ItOfTheHorridSwarmTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Insect") && p.getCard().isToken())
                 .count();
         assertThat(insects).isEqualTo(2);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("It of the Horrid Swarm"));
+        harness.assertNotOnBattlefield(player1, "It of the Horrid Swarm");
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("It of the Horrid Swarm");
     }
 }

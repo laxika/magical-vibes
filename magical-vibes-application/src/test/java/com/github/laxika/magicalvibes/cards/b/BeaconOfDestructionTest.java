@@ -107,12 +107,9 @@ class BeaconOfDestructionTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Grizzly Bears (2/2) should be destroyed by 5 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Shuffle into library =====
@@ -131,8 +128,7 @@ class BeaconOfDestructionTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Not in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Beacon of Destruction"));
+        harness.assertNotInGraveyard(player1, "Beacon of Destruction");
         // In library (deck size increased by 1)
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore + 1);
         // Card exists somewhere in the deck
@@ -157,8 +153,7 @@ class BeaconOfDestructionTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Not in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Beacon of Destruction"));
+        harness.assertNotInGraveyard(player1, "Beacon of Destruction");
         // In library
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId()))

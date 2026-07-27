@@ -29,8 +29,7 @@ class RamunapExcavatorTest extends BaseCardTest {
         harness.playGraveyardLand(player1, 0);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player1, "Forest");
     }
 
     @Test

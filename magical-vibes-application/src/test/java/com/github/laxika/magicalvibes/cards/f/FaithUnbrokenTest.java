@@ -67,8 +67,7 @@ class FaithUnbrokenTest extends BaseCardTest {
         harness.castInstant(player2, 0, auraId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();

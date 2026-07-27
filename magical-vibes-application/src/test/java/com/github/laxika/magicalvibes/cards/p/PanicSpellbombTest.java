@@ -26,10 +26,8 @@ class PanicSpellbombTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bearsId);
 
         // Spellbomb should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Panic Spellbomb"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Panic Spellbomb"));
+        harness.assertNotOnBattlefield(player1, "Panic Spellbomb");
+        harness.assertInGraveyard(player1, "Panic Spellbomb");
 
         // Resolve the death trigger MayEffect (on top of stack per CR 603.3)
         harness.passBothPriorities();

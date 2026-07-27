@@ -100,8 +100,7 @@ class AntiquitiesOnTheLooseTest extends BaseCardTest {
         harness.castFlashback(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Antiquities on the Loose"));
+        harness.assertNotInGraveyard(player1, "Antiquities on the Loose");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Antiquities on the Loose"));
     }

@@ -42,10 +42,8 @@ class NightmareTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Nightmare"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Nightmare"));
+        harness.assertNotOnBattlefield(player1, "Nightmare");
+        harness.assertInGraveyard(player1, "Nightmare");
     }
 
     @Test
@@ -58,8 +56,7 @@ class NightmareTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Nightmare"));
+        harness.assertOnBattlefield(player1, "Nightmare");
     }
 
     @Test

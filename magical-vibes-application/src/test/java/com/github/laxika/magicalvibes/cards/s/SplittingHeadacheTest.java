@@ -78,8 +78,7 @@ class SplittingHeadacheTest extends BaseCardTest {
 
             harness.handleCardChosen(player1, 0);
 
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Peek"));
+            harness.assertInGraveyard(player2, "Peek");
             assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
             assertThat(gd.playerHands.get(player2.getId()).get(0).getName()).isEqualTo("Grizzly Bears");
         }

@@ -29,8 +29,7 @@ class SproutingThrinaxTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Sprouting Thrinax"));
+        harness.assertInGraveyard(player1, "Sprouting Thrinax");
 
         // Death trigger should be on the stack
         assertThat(gd.stack).hasSize(1);

@@ -41,12 +41,9 @@ class CarnageTyrantTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Carnage Tyrant"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Carnage Tyrant"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Cancel"));
+        harness.assertOnBattlefield(player1, "Carnage Tyrant");
+        harness.assertNotInGraveyard(player1, "Carnage Tyrant");
+        harness.assertInGraveyard(player2, "Cancel");
     }
 
     @Test
@@ -66,8 +63,7 @@ class CarnageTyrantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Carnage Tyrant"));
+        harness.assertOnBattlefield(player1, "Carnage Tyrant");
     }
 
     // ===== Hexproof =====
@@ -138,8 +134,7 @@ class CarnageTyrantTest extends BaseCardTest {
         ));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Helper methods =====

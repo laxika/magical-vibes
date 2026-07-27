@@ -44,7 +44,7 @@ class ArnjlotsAscentTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ascent);
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Arnjlot's Ascent"));
+        harness.assertInGraveyard(player1, "Arnjlot's Ascent");
     }
 
     @Test

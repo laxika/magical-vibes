@@ -46,8 +46,7 @@ class JayemdaeTomeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Jayemdae Tome"));
+        harness.assertOnBattlefield(player1, "Jayemdae Tome");
     }
 
     @Test
@@ -233,10 +232,8 @@ class JayemdaeTomeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Jayemdae Tome"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Jayemdae Tome"));
+        harness.assertOnBattlefield(player1, "Jayemdae Tome");
+        harness.assertNotInGraveyard(player1, "Jayemdae Tome");
     }
 
     // ===== Helpers =====

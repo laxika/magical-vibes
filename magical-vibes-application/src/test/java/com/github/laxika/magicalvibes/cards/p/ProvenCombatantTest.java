@@ -37,8 +37,7 @@ class ProvenCombatantTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Proven Combatant"));
+        harness.assertNotInGraveyard(player1, "Proven Combatant");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Proven Combatant"));
     }
@@ -76,7 +75,6 @@ class ProvenCombatantTest extends BaseCardTest {
         Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Proven Combatant"));
+        harness.assertInGraveyard(player1, "Proven Combatant");
     }
 }

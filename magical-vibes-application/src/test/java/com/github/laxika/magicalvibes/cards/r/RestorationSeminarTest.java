@@ -76,8 +76,7 @@ class RestorationSeminarTest extends BaseCardTest {
         harness.castSorcery(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Restoration Seminar"));
+        harness.assertNotInGraveyard(player1, "Restoration Seminar");
         assertThat(gd.exiledCards.stream().anyMatch(e -> e.card().getName().equals("Restoration Seminar"))).isTrue();
         assertThat(gd.paradigmDelayedTriggers).hasSize(1);
         assertThat(gd.paradigmResolvedSpellNames.get(player1.getId())).contains("Restoration Seminar");

@@ -77,12 +77,9 @@ class SkirsdagFlayerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(flayer.isTapped()).isTrue();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Human"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Human");
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(flayer);
     }
 
@@ -99,12 +96,9 @@ class SkirsdagFlayerTest extends BaseCardTest {
         harness.activateAbility(player1, flayerIdx, null, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Skirsdag Flayer"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Skirsdag Flayer"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Skirsdag Flayer");
+        harness.assertInGraveyard(player1, "Skirsdag Flayer");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -150,8 +144,7 @@ class SkirsdagFlayerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Skirsdag Flayer"));
+        harness.assertInGraveyard(player1, "Skirsdag Flayer");
     }
 
     // ===== Helpers =====

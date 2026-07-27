@@ -33,10 +33,8 @@ class LightningCrafterTest extends BaseCardTest {
         castLightningCrafter();
         harness.passBothPriorities(); // resolve champion ETB -> auto-sacrifice
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Lightning Crafter"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lightning Crafter"));
+        harness.assertNotOnBattlefield(player1, "Lightning Crafter");
+        harness.assertInGraveyard(player1, "Lightning Crafter");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -52,10 +50,8 @@ class LightningCrafterTest extends BaseCardTest {
         UUID goblinId = harness.getPermanentId(player1, "Mogg Fanatic");
         harness.handlePermanentChosen(player1, goblinId);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Lightning Crafter"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mogg Fanatic"));
+        harness.assertOnBattlefield(player1, "Lightning Crafter");
+        harness.assertNotOnBattlefield(player1, "Mogg Fanatic");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Mogg Fanatic"));
     }
@@ -72,8 +68,7 @@ class LightningCrafterTest extends BaseCardTest {
         UUID shamanId = harness.getPermanentId(player1, "Anaba Shaman");
         harness.handlePermanentChosen(player1, shamanId);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Lightning Crafter"));
+        harness.assertOnBattlefield(player1, "Lightning Crafter");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Anaba Shaman"));
     }

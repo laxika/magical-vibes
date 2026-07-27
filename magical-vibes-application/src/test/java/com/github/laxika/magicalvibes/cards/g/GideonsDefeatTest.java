@@ -35,10 +35,8 @@ class GideonsDefeatTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Exiled — gone from the battlefield and not in the graveyard (exile, not destroy).
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elite Vanguard"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Elite Vanguard"));
+        harness.assertNotOnBattlefield(player1, "Elite Vanguard");
+        harness.assertNotInGraveyard(player1, "Elite Vanguard");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Elite Vanguard"));
         harness.assertLife(player2, 20);
@@ -68,8 +66,7 @@ class GideonsDefeatTest extends BaseCardTest {
         harness.castInstant(player2, 0, gideon.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Gideon of the Trials"));
+        harness.assertNotOnBattlefield(player1, "Gideon of the Trials");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Gideon of the Trials"));
         harness.assertLife(player2, 25);

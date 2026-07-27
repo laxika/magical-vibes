@@ -29,8 +29,7 @@ class BlistergrubTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Blistergrub"));
+        harness.assertOnBattlefield(player1, "Blistergrub");
     }
 
     // ===== Death trigger =====
@@ -45,8 +44,7 @@ class BlistergrubTest extends BaseCardTest {
         harness.passBothPriorities(); // Combat damage — Blistergrub dies
 
         // Blistergrub should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Blistergrub"));
+        harness.assertInGraveyard(player1, "Blistergrub");
 
         // Death trigger should be on the stack
         assertThat(gd.stack).hasSize(1);

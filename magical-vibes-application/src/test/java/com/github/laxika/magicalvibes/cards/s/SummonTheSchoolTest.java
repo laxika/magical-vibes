@@ -65,10 +65,8 @@ class SummonTheSchoolTest extends BaseCardTest {
 
             harness.passBothPriorities();
 
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Summon the School"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Summon the School"));
+            harness.assertInHand(player1, "Summon the School");
+            harness.assertNotInGraveyard(player1, "Summon the School");
         }
 
         @Test

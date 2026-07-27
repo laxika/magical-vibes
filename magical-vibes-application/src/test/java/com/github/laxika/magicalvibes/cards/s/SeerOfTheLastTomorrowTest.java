@@ -38,7 +38,7 @@ class SeerOfTheLastTomorrowTest extends BaseCardTest {
         assertThat(seer.isTapped()).isTrue();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore - 3);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyElementsOf(topThree);
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test

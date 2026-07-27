@@ -115,11 +115,9 @@ class CondemnTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Creature removed from battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         // Creature NOT in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
         // Creature on bottom of library (last element)
         List<com.github.laxika.magicalvibes.model.Card> deck = gd.playerDecks.get(player1.getId());
         assertThat(deck).hasSize(deckSizeBefore + 1);
@@ -195,8 +193,7 @@ class CondemnTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Condemn"));
+        harness.assertInGraveyard(player2, "Condemn");
     }
 
     // ===== Fizzle =====
@@ -230,8 +227,7 @@ class CondemnTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Condemn still goes to graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Condemn"));
+        harness.assertInGraveyard(player2, "Condemn");
     }
 }
 

@@ -60,8 +60,7 @@ class LightwielderPaladinTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of(blackKnight.getId()));
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Black Knight"));
+        harness.assertNotOnBattlefield(player2, "Black Knight");
         assertThat(gd.getPlayerExiledCards(player2.getId())).anyMatch(c -> c.getName().equals("Black Knight"));
     }
 
@@ -79,8 +78,7 @@ class LightwielderPaladinTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of(dragon.getId()));
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Shivan Dragon"));
+        harness.assertNotOnBattlefield(player2, "Shivan Dragon");
         assertThat(gd.getPlayerExiledCards(player2.getId())).anyMatch(c -> c.getName().equals("Shivan Dragon"));
     }
 
@@ -95,8 +93,7 @@ class LightwielderPaladinTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect trigger -> may prompt
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Black Knight"));
+        harness.assertOnBattlefield(player2, "Black Knight");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declines"));
     }
 

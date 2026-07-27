@@ -25,8 +25,7 @@ class WuWarshipTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Wu Warship"));
+        harness.assertOnBattlefield(player1, "Wu Warship");
     }
 
     @Test

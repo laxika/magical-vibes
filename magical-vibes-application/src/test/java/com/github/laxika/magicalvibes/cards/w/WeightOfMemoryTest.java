@@ -99,8 +99,7 @@ class WeightOfMemoryTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Weight of Memory"));
+        harness.assertInGraveyard(player1, "Weight of Memory");
         assertThat(gd.stack).isEmpty();
     }
 }

@@ -2,12 +2,10 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.ArcaneSanctum;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -53,7 +51,7 @@ class FieldmistBorderpostTest extends BaseCardTest {
         assertThat(borderpost(player1).isTapped()).isTrue();
         // The basic land is returned to its owner's hand, not sacrificed.
         harness.assertInHand(player1, "Plains");
-        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getName().equals("Plains"));
+        harness.assertNotInGraveyard(player1, "Plains");
         // Only {1} was paid.
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }

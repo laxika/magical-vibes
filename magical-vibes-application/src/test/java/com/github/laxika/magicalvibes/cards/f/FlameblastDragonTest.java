@@ -27,8 +27,7 @@ class FlameblastDragonTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger -> prompts for X
         harness.handleXValueChosen(player1, 2);
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -61,8 +60,7 @@ class FlameblastDragonTest extends BaseCardTest {
         harness.handleXValueChosen(player1, 0);
 
         assertThat(bears.getMarkedDamage()).isZero();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -77,8 +75,7 @@ class FlameblastDragonTest extends BaseCardTest {
         harness.passBothPriorities(); // trigger resolves, but no X can be paid
 
         assertThat(bears.getMarkedDamage()).isZero();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test

@@ -35,10 +35,8 @@ class HydroblastTest extends BaseCardTest {
 
             GameData gd = harness.getGameData();
             assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Hill Giant"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Hill Giant"));
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Hill Giant"));
+            harness.assertInGraveyard(player1, "Hill Giant");
+            harness.assertNotOnBattlefield(player1, "Hill Giant");
         }
 
         @Test
@@ -57,11 +55,8 @@ class HydroblastTest extends BaseCardTest {
             harness.passBothPriorities(); // Hydroblast resolves, does nothing
             harness.passBothPriorities(); // Grizzly Bears resolves onto the battlefield
 
-            GameData gd = harness.getGameData();
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Hydroblast"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
+            harness.assertInGraveyard(player2, "Hydroblast");
         }
     }
 
@@ -80,11 +75,8 @@ class HydroblastTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, harness.getPermanentId(player2, "Hill Giant"));
             harness.passBothPriorities();
 
-            GameData gd = harness.getGameData();
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Hill Giant"));
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Hill Giant"));
+            harness.assertNotOnBattlefield(player2, "Hill Giant");
+            harness.assertInGraveyard(player2, "Hill Giant");
         }
 
         @Test
@@ -98,11 +90,8 @@ class HydroblastTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, harness.getPermanentId(player2, "Grizzly Bears"));
             harness.passBothPriorities();
 
-            GameData gd = harness.getGameData();
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Hydroblast"));
+            harness.assertOnBattlefield(player2, "Grizzly Bears");
+            harness.assertInGraveyard(player1, "Hydroblast");
         }
     }
 }

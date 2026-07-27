@@ -32,10 +32,10 @@ class BronzeTabletTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(10);
         // Bronze Tablet leaves exile for its owner's graveyard; the target permanent stays exiled.
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Bronze Tablet"));
+        harness.assertInGraveyard(player1, "Bronze Tablet");
         assertThat(inExile("Bronze Tablet")).isFalse();
         assertThat(inExile("Grizzly Bears")).isTrue();
-        assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -55,7 +55,7 @@ class BronzeTabletTest extends BaseCardTest {
         // Both remain exiled; Bronze Tablet is not put into a graveyard.
         assertThat(inExile("Bronze Tablet")).isTrue();
         assertThat(inExile("Grizzly Bears")).isTrue();
-        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getName().equals("Bronze Tablet"));
+        harness.assertNotInGraveyard(player1, "Bronze Tablet");
     }
 
     @Test

@@ -90,10 +90,8 @@ class DawnrayArcherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fugitive Wizard"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Fugitive Wizard"));
+        harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
+        harness.assertInGraveyard(player2, "Fugitive Wizard");
     }
 
     @Test

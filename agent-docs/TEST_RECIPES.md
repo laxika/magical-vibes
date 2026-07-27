@@ -498,6 +498,22 @@ void deathTriggerAfterWrathTargetsPlayer() {
 | `assertInHand` | `(Player, String cardName)` | Card is in hand |
 | `assertNotInHand` | `(Player, String cardName)` | Card is NOT in hand |
 
+Use these instead of asserting on the zone list by hand. They are exactly the raw
+form, so the failure message is identical:
+
+```java
+harness.assertInGraveyard(player2, "Grizzly Bears");                     // do this
+assertThat(gd.playerGraveyards.get(player2.getId()))                     // not this
+        .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+```
+
+Reach for a raw `assertThat` on the zone only when the helpers genuinely do not
+cover the check — matching a specific card instance by id, `hasSize`, `isEmpty`,
+or `contains(someCard)`.
+
+Note also that `gd` is already an inherited field: a local
+`GameData gd = harness.getGameData();` is a shadow of it, not a different game.
+
 ### Getters
 
 | Getter | Returns | Use when |

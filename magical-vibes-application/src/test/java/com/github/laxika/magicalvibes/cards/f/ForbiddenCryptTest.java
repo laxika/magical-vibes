@@ -33,8 +33,7 @@ class ForbiddenCryptTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
 
         // The graveyard card is now in hand; the library was untouched (no draw happened).
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId()))
                 .singleElement()
@@ -52,8 +51,7 @@ class ForbiddenCryptTest extends BaseCardTest {
 
         // Can't return a card — player1 loses; no card was drawn from the library.
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Island"));
+        harness.assertNotInHand(player1, "Island");
     }
 
     // ===== Graveyard replacement: cards are exiled instead of entering the graveyard =====
@@ -71,8 +69,7 @@ class ForbiddenCryptTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
@@ -90,8 +87,7 @@ class ForbiddenCryptTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
     }

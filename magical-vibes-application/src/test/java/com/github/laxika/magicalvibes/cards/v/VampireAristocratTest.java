@@ -35,14 +35,11 @@ class VampireAristocratTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Grizzly Bears should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Vampire Aristocrat should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Vampire Aristocrat"));
+        harness.assertOnBattlefield(player1, "Vampire Aristocrat");
 
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -111,10 +108,8 @@ class VampireAristocratTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Vampire should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Vampire Aristocrat"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Vampire Aristocrat"));
+        harness.assertNotOnBattlefield(player1, "Vampire Aristocrat");
+        harness.assertInGraveyard(player1, "Vampire Aristocrat");
 
         // Ability should still be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -134,10 +129,8 @@ class VampireAristocratTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         // Vampire is in the graveyard, ability fizzled — no crash
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Vampire Aristocrat"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Vampire Aristocrat"));
+        harness.assertNotOnBattlefield(player1, "Vampire Aristocrat");
+        harness.assertInGraveyard(player1, "Vampire Aristocrat");
     }
 
     // ===== No mana cost =====
@@ -208,10 +201,8 @@ class VampireAristocratTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Vampire auto-sacrificed (only creature on battlefield)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Vampire Aristocrat"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Vampire Aristocrat"));
+        harness.assertNotOnBattlefield(player1, "Vampire Aristocrat");
+        harness.assertInGraveyard(player1, "Vampire Aristocrat");
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
     }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -42,8 +41,7 @@ class DemigodOfRevengeTest extends BaseCardTest {
 
         // Both copies are now on the battlefield.
         assertThat(demigodsOnBattlefield()).isEqualTo(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Demigod of Revenge"));
+        harness.assertNotInGraveyard(player1, "Demigod of Revenge");
     }
 
     @Test
@@ -59,10 +57,8 @@ class DemigodOfRevengeTest extends BaseCardTest {
 
         assertThat(demigodsOnBattlefield()).isEqualTo(2);
         // Grizzly Bears stays in the graveyard.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test

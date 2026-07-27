@@ -40,8 +40,7 @@ class BrackwaterElementalTest extends BaseCardTest {
         // Reaching the end step sacrifices it.
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Brackwater Elemental");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Brackwater Elemental"));
+        harness.assertInGraveyard(player1, "Brackwater Elemental");
     }
 
     @Test
@@ -69,8 +68,7 @@ class BrackwaterElementalTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player2, "Brackwater Elemental");
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Brackwater Elemental"));
+        harness.assertInGraveyard(player2, "Brackwater Elemental");
     }
 
     @Test
@@ -87,8 +85,7 @@ class BrackwaterElementalTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Brackwater Elemental"))
                 .findFirst().orElseThrow();
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Brackwater Elemental"));
+        harness.assertNotInGraveyard(player1, "Brackwater Elemental");
     }
 
     @Test

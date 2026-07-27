@@ -49,8 +49,7 @@ class KeldonRaiderTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         // The Grizzly Bears should be in the graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Should have drawn a card (Forest from deck) — hand size = 1
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);

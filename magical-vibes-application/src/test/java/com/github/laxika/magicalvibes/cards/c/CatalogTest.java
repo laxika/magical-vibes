@@ -38,8 +38,7 @@ class CatalogTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         // The discarded card plus the resolved Catalog spell itself.
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Catalog"));
+        harness.assertInGraveyard(player1, "Catalog");
     }
 
     private void setDeck(Player player, List<Card> cards) {

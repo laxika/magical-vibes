@@ -66,8 +66,7 @@ class CerebralEruptionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears (2/2) takes 2 damage = lethal, should die
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Player also takes 2 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -86,8 +85,7 @@ class CerebralEruptionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Controller's creature should be unharmed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -119,10 +117,8 @@ class CerebralEruptionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should be in hand, not graveyard
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Cerebral Eruption"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Cerebral Eruption"));
+        harness.assertInHand(player1, "Cerebral Eruption");
+        harness.assertNotInGraveyard(player1, "Cerebral Eruption");
         // Land has mana value 0 — no damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
@@ -139,10 +135,8 @@ class CerebralEruptionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should be in graveyard, not hand
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Cerebral Eruption"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Cerebral Eruption"));
+        harness.assertInGraveyard(player1, "Cerebral Eruption");
+        harness.assertNotInHand(player1, "Cerebral Eruption");
     }
 
     // ===== Empty library =====
@@ -160,8 +154,7 @@ class CerebralEruptionTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         // Goes to graveyard (no land revealed)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Cerebral Eruption"));
+        harness.assertInGraveyard(player1, "Cerebral Eruption");
     }
 
     // ===== Helper methods =====

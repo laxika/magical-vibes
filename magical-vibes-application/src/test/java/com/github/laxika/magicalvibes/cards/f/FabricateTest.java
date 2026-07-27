@@ -90,8 +90,7 @@ class FabricateTest extends BaseCardTest {
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Ornithopter"));
+        harness.assertNotInHand(player1, "Ornithopter");
     }
 
     @Test
@@ -131,8 +130,7 @@ class FabricateTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.getGameService().handleInteractionAnswer(harness.getGameData(), player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(harness.getGameData().playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fabricate"));
+        harness.assertInGraveyard(player1, "Fabricate");
     }
 
     private void setupAndCast() {

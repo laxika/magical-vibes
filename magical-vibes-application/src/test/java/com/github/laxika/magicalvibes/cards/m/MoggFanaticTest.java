@@ -38,8 +38,7 @@ class MoggFanaticTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mogg Fanatic"));
+        harness.assertOnBattlefield(player1, "Mogg Fanatic");
     }
 
     @Test
@@ -62,10 +61,8 @@ class MoggFanaticTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
 
         // Mogg Fanatic should be sacrificed (not on battlefield, in graveyard)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mogg Fanatic"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mogg Fanatic"));
+        harness.assertNotOnBattlefield(player1, "Mogg Fanatic");
+        harness.assertInGraveyard(player1, "Mogg Fanatic");
 
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -128,10 +125,8 @@ class MoggFanaticTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
     }
 
     @Test
@@ -144,8 +139,7 @@ class MoggFanaticTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== No tap required, no mana required =====
@@ -215,10 +209,8 @@ class MoggFanaticTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
 
         // Before resolution, Mogg Fanatic should already be in the graveyard
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mogg Fanatic"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mogg Fanatic"));
+        harness.assertNotOnBattlefield(player1, "Mogg Fanatic");
+        harness.assertInGraveyard(player1, "Mogg Fanatic");
     }
 
     // ===== Helpers =====

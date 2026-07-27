@@ -75,11 +75,9 @@ class ExcommunicateTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Creature removed from battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Creature NOT in graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
         // Creature on top of library (first element)
         List<Card> deck = gd.playerDecks.get(player2.getId());
         assertThat(deck).hasSize(deckSizeBefore + 1);
@@ -102,8 +100,7 @@ class ExcommunicateTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Excommunicate"));
+        harness.assertInGraveyard(player1, "Excommunicate");
     }
 
     // ===== Fizzle =====
@@ -131,7 +128,6 @@ class ExcommunicateTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Excommunicate still goes to graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Excommunicate"));
+        harness.assertInGraveyard(player1, "Excommunicate");
     }
 }

@@ -24,8 +24,7 @@ class AtogTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Artifact was sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player1, "Spellbook");
         assertThat(atog.getPowerModifier()).isEqualTo(2);
         assertThat(atog.getToughnessModifier()).isEqualTo(2);
     }

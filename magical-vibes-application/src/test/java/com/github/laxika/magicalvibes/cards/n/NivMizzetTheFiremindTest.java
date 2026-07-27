@@ -26,7 +26,7 @@ class NivMizzetTheFiremindTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Card was drawn
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Fugitive Wizard"));
+        harness.assertInHand(player1, "Fugitive Wizard");
 
         // Draw trigger awaits a target choice
         harness.handlePermanentChosen(player1, player2.getId());
@@ -52,10 +52,8 @@ class NivMizzetTheFiremindTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The 1/1 target dies; the 2/2 is unharmed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fugitive Wizard"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     private Permanent addReadyNiv(Player player) {

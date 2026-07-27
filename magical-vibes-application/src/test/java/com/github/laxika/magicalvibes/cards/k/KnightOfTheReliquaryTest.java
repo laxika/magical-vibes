@@ -85,10 +85,8 @@ class KnightOfTheReliquaryTest extends BaseCardTest {
             gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
             // The Forest was sacrificed to pay the cost, the Island is fetched to the battlefield.
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Forest"));
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Island"));
+            harness.assertInGraveyard(player1, "Forest");
+            harness.assertOnBattlefield(player1, "Island");
         }
 
         @Test

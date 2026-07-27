@@ -57,8 +57,7 @@ class VithianRenegadesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Vithian Renegades"));
+        harness.assertOnBattlefield(player1, "Vithian Renegades");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
@@ -80,10 +79,8 @@ class VithianRenegadesTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Rod of Ruin"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Rod of Ruin"));
+        harness.assertNotOnBattlefield(player2, "Rod of Ruin");
+        harness.assertInGraveyard(player2, "Rod of Ruin");
     }
 
     // ===== Target restrictions =====
@@ -116,9 +113,7 @@ class VithianRenegadesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature -> ETB on stack
         harness.passBothPriorities(); // resolve ETB
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Darksteel Plate"));
+        harness.assertOnBattlefield(player2, "Darksteel Plate");
     }
 
     // ===== Fizzle =====
@@ -155,8 +150,7 @@ class VithianRenegadesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Vithian Renegades"));
+        harness.assertOnBattlefield(player1, "Vithian Renegades");
         assertThat(gd.stack).isEmpty();
     }
 }

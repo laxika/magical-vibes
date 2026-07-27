@@ -80,10 +80,8 @@ class AetherStormTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Aether Storm"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Aether Storm"));
+        harness.assertNotOnBattlefield(player1, "Aether Storm");
+        harness.assertInGraveyard(player1, "Aether Storm");
     }
 
     @Test
@@ -121,7 +119,6 @@ class AetherStormTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Aether Storm"));
+        harness.assertNotOnBattlefield(player1, "Aether Storm");
     }
 }

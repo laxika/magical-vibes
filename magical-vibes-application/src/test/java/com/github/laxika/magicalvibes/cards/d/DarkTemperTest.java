@@ -31,8 +31,7 @@ class DarkTemperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 3/3 survives 2 damage, which is marked (not destroyed).
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hill Giant"));
+        harness.assertOnBattlefield(player2, "Hill Giant");
         assertThat(target.getMarkedDamage()).isEqualTo(2);
     }
 
@@ -50,10 +49,8 @@ class DarkTemperTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hill Giant"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player2, "Hill Giant");
     }
 
     // ===== Illegal target =====

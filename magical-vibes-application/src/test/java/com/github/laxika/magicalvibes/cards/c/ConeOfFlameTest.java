@@ -119,21 +119,15 @@ class ConeOfFlameTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(spiderId, bearsId, elementalId));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // GiantSpider took 1 damage (survives: 1 < 4 toughness)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
+        harness.assertOnBattlefield(player2, "Giant Spider");
 
         // GrizzlyBears took 2 damage (dies: 2 >= 2 toughness)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // AirElemental took 3 damage (survives: 3 < 4 toughness)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));
+        harness.assertOnBattlefield(player2, "Air Elemental");
     }
 
     @Test
@@ -149,13 +143,9 @@ class ConeOfFlameTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(bf.get(0).getId(), bf.get(1).getId(), bf.get(2).getId()));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Damage to players =====
@@ -181,8 +171,7 @@ class ConeOfFlameTest extends BaseCardTest {
         // Player 1 took 3 damage
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
         // GrizzlyBears took 2 damage (dies: 2 >= 2)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -204,8 +193,7 @@ class ConeOfFlameTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         // GiantSpider took 3 damage (survives: 3 < 4)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
+        harness.assertOnBattlefield(player2, "Giant Spider");
     }
 
     // ===== Targeting own creatures =====
@@ -226,16 +214,12 @@ class ConeOfFlameTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(ownBearsId, ownSpiderId, oppElementalId));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Own GrizzlyBears took 1 damage (survives: 1 < 2)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         // Own GiantSpider took 2 damage (survives: 2 < 4)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
+        harness.assertOnBattlefield(player1, "Giant Spider");
         // Opponent AirElemental took 3 damage (survives: 3 < 4)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));
+        harness.assertOnBattlefield(player2, "Air Elemental");
     }
 
     // ===== Partial resolution =====
@@ -264,8 +248,7 @@ class ConeOfFlameTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         // Bears was removed before resolution — skipped
         // GiantSpider took 2 damage (survives: 2 < 4)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
+        harness.assertOnBattlefield(player2, "Giant Spider");
         // Player 2 took 3 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -328,8 +311,7 @@ class ConeOfFlameTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(bf.get(0).getId(), bf.get(1).getId(), bf.get(2).getId()));
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Cone of Flame"));
+        harness.assertInGraveyard(player1, "Cone of Flame");
     }
 }
 

@@ -36,8 +36,7 @@ class IgniteDisorderTest extends BaseCardTest {
         // SoulWarden is 1/1, 3 damage kills it
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(target.getId()));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Soul Warden"));
+        harness.assertInGraveyard(player2, "Soul Warden");
     }
 
     @Test

@@ -35,10 +35,8 @@ class RagManTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Only creature in hand — deterministically discarded, non-creatures untouched.
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
     }
 
@@ -52,9 +50,8 @@ class RagManTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Whichever creature is picked, the noncreature cards must all remain in hand.
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"))
-                .anyMatch(c -> c.getName().equals("Peek"));
+        harness.assertInHand(player2, "Forest");
+        harness.assertInHand(player2, "Peek");
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .allMatch(c -> c.getName().equals("Grizzly Bears"));
     }

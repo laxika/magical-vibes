@@ -32,8 +32,7 @@ class SirensRuseTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve
 
         // Creature should be back on battlefield (new permanent)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         // Should not be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -57,8 +56,7 @@ class SirensRuseTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve
 
         // Pirate should be back on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Dire Fleet Captain"));
+        harness.assertOnBattlefield(player1, "Dire Fleet Captain");
         // Should not be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Dire Fleet Captain"));
@@ -120,10 +118,8 @@ class SirensRuseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should return under player2's control (the owner)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Fizzles if target is removed =====

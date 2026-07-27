@@ -45,8 +45,7 @@ class VizierOfTheAnointedTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Adorned Pouncer"));
+        harness.assertInGraveyard(player1, "Adorned Pouncer");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -81,8 +80,7 @@ class VizierOfTheAnointedTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0); // Eternalize {3}{W}{W}
         harness.passBothPriorities(); // resolve the draw trigger
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test

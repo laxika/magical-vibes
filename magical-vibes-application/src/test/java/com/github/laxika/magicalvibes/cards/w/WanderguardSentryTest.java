@@ -23,8 +23,7 @@ class WanderguardSentryTest extends BaseCardTest {
         castWanderguardSentry(player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Wanderguard Sentry"));
+        harness.assertOnBattlefield(player1, "Wanderguard Sentry");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());

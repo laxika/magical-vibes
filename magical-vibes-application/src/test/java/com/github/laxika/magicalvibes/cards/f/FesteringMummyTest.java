@@ -51,8 +51,7 @@ class FesteringMummyTest extends BaseCardTest {
 
         harness.passBothPriorities(); // Combat damage — Mummy dies, target selection prompt
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Festering Mummy"));
+        harness.assertInGraveyard(player1, "Festering Mummy");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -101,10 +100,8 @@ class FesteringMummyTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true); // Accept may -> effect resolves
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
     }
 
     @Test

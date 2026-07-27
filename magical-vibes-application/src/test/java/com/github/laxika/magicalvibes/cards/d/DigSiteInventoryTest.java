@@ -41,8 +41,7 @@ class DigSiteInventoryTest extends BaseCardTest {
         harness.castFlashback(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Dig Site Inventory"));
+        harness.assertNotInGraveyard(player1, "Dig Site Inventory");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Dig Site Inventory"));
     }

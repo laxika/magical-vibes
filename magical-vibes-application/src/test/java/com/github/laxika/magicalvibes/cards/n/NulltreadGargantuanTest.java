@@ -30,10 +30,8 @@ class NulltreadGargantuanTest extends BaseCardTest {
         castNulltreadGargantuan();
         harness.passBothPriorities(); // resolve ETB -> forced self-top
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Nulltread Gargantuan"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Nulltread Gargantuan"));
+        harness.assertNotOnBattlefield(player1, "Nulltread Gargantuan");
+        harness.assertNotInGraveyard(player1, "Nulltread Gargantuan");
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         assertThat(deck.getFirst().getName()).isEqualTo("Nulltread Gargantuan");
@@ -48,8 +46,7 @@ class NulltreadGargantuanTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB -> permanent choice
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Nulltread Gargantuan"));
+        harness.assertOnBattlefield(player1, "Nulltread Gargantuan");
     }
 
     @Test
@@ -62,10 +59,8 @@ class NulltreadGargantuanTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.handlePermanentChosen(player1, bearsId);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Nulltread Gargantuan"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Nulltread Gargantuan");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
     }
 
@@ -79,10 +74,8 @@ class NulltreadGargantuanTest extends BaseCardTest {
         UUID nulltreadId = harness.getPermanentId(player1, "Nulltread Gargantuan");
         harness.handlePermanentChosen(player1, nulltreadId);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Nulltread Gargantuan"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Nulltread Gargantuan");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Nulltread Gargantuan");
     }
 }

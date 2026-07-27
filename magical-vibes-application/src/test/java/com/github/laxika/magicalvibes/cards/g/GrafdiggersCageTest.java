@@ -66,10 +66,8 @@ class GrafdiggersCageTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
 
         // The creature card could not enter the battlefield and stays in the graveyard.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -84,10 +82,8 @@ class GrafdiggersCageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== Players can't cast spells from libraries =====

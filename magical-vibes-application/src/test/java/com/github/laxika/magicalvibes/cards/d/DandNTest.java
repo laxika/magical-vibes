@@ -30,10 +30,8 @@ class DandNTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
 
         harness.passBothPriorities(); // resolve state trigger → sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Dandân"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Dandân"));
+        harness.assertNotOnBattlefield(player1, "Dandân");
+        harness.assertInGraveyard(player1, "Dandân");
     }
 
     @Test
@@ -47,8 +45,7 @@ class DandNTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Dandân"));
+        harness.assertOnBattlefield(player1, "Dandân");
     }
 
     // ===== Attack restriction =====

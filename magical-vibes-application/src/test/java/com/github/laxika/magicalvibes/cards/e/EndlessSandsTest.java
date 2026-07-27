@@ -34,8 +34,7 @@ class EndlessSandsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getCardsExiledByPermanent(sands.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
@@ -69,12 +68,9 @@ class EndlessSandsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Endless Sands"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Endless Sands"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Endless Sands");
+        harness.assertInGraveyard(player1, "Endless Sands");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getCardsExiledByPermanent(sands.getId())).isEmpty();
     }
 
@@ -87,9 +83,7 @@ class EndlessSandsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Endless Sands"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Endless Sands"));
+        harness.assertNotOnBattlefield(player1, "Endless Sands");
+        harness.assertInGraveyard(player1, "Endless Sands");
     }
 }

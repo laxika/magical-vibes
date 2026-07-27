@@ -83,7 +83,6 @@ class StabbingPainTest extends BaseCardTest {
         harness.castInstant(player1, 0, giantId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Stabbing Pain"));
+        harness.assertInGraveyard(player1, "Stabbing Pain");
     }
 }

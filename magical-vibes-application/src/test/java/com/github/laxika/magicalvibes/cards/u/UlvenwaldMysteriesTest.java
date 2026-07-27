@@ -70,8 +70,7 @@ class UlvenwaldMysteriesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Clue"));
+        harness.assertNotOnBattlefield(player1, "Clue");
     }
 
     @Test
@@ -99,8 +98,7 @@ class UlvenwaldMysteriesTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Clue"));
+        harness.assertNotOnBattlefield(player1, "Clue");
 
         List<Permanent> soldiers = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Human Soldier"))
@@ -138,8 +136,7 @@ class UlvenwaldMysteriesTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Human Soldier"));
+        harness.assertNotOnBattlefield(player1, "Human Soldier");
     }
 
     private void addClueToken(Player player) {

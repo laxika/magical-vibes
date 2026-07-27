@@ -79,10 +79,8 @@ class TrialOfSolidarityTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve a triggered ability
         harness.passBothPriorities(); // resolve the other triggered ability
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Trial of Solidarity"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Trial of Solidarity"));
+        harness.assertNotOnBattlefield(player1, "Trial of Solidarity");
+        harness.assertInHand(player1, "Trial of Solidarity");
     }
 
     @Test
@@ -104,7 +102,6 @@ class TrialOfSolidarityTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve aura
         harness.passBothPriorities(); // resolve aura's ETB token trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Trial of Solidarity"));
+        harness.assertOnBattlefield(player1, "Trial of Solidarity");
     }
 }

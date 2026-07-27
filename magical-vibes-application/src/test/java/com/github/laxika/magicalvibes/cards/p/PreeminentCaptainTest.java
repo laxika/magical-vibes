@@ -51,8 +51,7 @@ class PreeminentCaptainTest extends BaseCardTest {
         harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Bishop's Soldier"));
+        harness.assertNotOnBattlefield(player1, "Bishop's Soldier");
     }
 
     @Test

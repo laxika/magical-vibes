@@ -28,8 +28,7 @@ class SimulacrumTest extends BaseCardTest {
         // 2 damage dealt to player1 this turn -> gain 2 life (18 -> 20) and deal 2 to the 2/4 spider.
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(spider.getMarkedDamage()).isEqualTo(2);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
+        harness.assertOnBattlefield(player1, "Giant Spider");
     }
 
     @Test

@@ -74,8 +74,7 @@ class SlayerOfTheWickedTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Slayer of the Wicked"));
+        harness.assertOnBattlefield(player1, "Slayer of the Wicked");
     }
 
     // ===== ETB may ability =====
@@ -122,10 +121,8 @@ class SlayerOfTheWickedTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Scathe Zombies"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Scathe Zombies"));
+        harness.assertNotOnBattlefield(player2, "Scathe Zombies");
+        harness.assertInGraveyard(player2, "Scathe Zombies");
     }
 
     @Test
@@ -138,10 +135,8 @@ class SlayerOfTheWickedTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Vampire Interloper"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Vampire Interloper"));
+        harness.assertNotOnBattlefield(player2, "Vampire Interloper");
+        harness.assertInGraveyard(player2, "Vampire Interloper");
     }
 
     @Test
@@ -154,10 +149,8 @@ class SlayerOfTheWickedTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Reckless Waif"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Reckless Waif"));
+        harness.assertNotOnBattlefield(player2, "Reckless Waif");
+        harness.assertInGraveyard(player2, "Reckless Waif");
     }
 
     // ===== Declining may =====
@@ -177,10 +170,8 @@ class SlayerOfTheWickedTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false); // decline
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Slayer of the Wicked"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Scathe Zombies"));
+        harness.assertOnBattlefield(player1, "Slayer of the Wicked");
+        harness.assertOnBattlefield(player2, "Scathe Zombies");
     }
 
     // ===== No valid targets =====
@@ -200,8 +191,7 @@ class SlayerOfTheWickedTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Slayer of the Wicked"));
+        harness.assertOnBattlefield(player1, "Slayer of the Wicked");
     }
 
     // ===== Can target own creatures =====
@@ -215,10 +205,8 @@ class SlayerOfTheWickedTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Scathe Zombies"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Scathe Zombies"));
+        harness.assertNotOnBattlefield(player1, "Scathe Zombies");
+        harness.assertInGraveyard(player1, "Scathe Zombies");
     }
 
     // ===== Slayer remains on battlefield =====
@@ -232,8 +220,7 @@ class SlayerOfTheWickedTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Slayer of the Wicked"));
+        harness.assertOnBattlefield(player1, "Slayer of the Wicked");
     }
 
     // ===== Stack is empty after full resolution =====

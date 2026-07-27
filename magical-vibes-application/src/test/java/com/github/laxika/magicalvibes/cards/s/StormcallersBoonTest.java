@@ -23,10 +23,8 @@ class StormcallersBoonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The enchantment is sacrificed as a cost of the ability.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Stormcaller's Boon"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Stormcaller's Boon"));
+        harness.assertNotOnBattlefield(player1, "Stormcaller's Boon");
+        harness.assertInGraveyard(player1, "Stormcaller's Boon");
 
         assertThat(findPermanent(player1, "Grizzly Bears").hasKeyword(Keyword.FLYING)).isTrue();
         assertThat(findPermanent(player2, "Grizzly Bears").hasKeyword(Keyword.FLYING)).isFalse();

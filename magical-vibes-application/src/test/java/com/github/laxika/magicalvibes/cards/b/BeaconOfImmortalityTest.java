@@ -104,8 +104,7 @@ class BeaconOfImmortalityTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Not in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Beacon of Immortality"));
+        harness.assertNotInGraveyard(player1, "Beacon of Immortality");
         // In library (deck size increased by 1)
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore + 1);
         // Card exists somewhere in the deck

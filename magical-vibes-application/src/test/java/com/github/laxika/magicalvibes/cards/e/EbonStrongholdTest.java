@@ -32,8 +32,7 @@ class EbonStrongholdTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Ebon Stronghold"));
+        harness.assertOnBattlefield(player1, "Ebon Stronghold");
     }
 
     @Test
@@ -44,9 +43,7 @@ class EbonStrongholdTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ebon Stronghold"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ebon Stronghold"));
+        harness.assertNotOnBattlefield(player1, "Ebon Stronghold");
+        harness.assertInGraveyard(player1, "Ebon Stronghold");
     }
 }

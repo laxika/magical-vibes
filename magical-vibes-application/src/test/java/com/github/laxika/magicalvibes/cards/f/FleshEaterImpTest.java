@@ -31,14 +31,11 @@ class FleshEaterImpTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bearsId);
 
         // Grizzly Bears should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Flesh-Eater Imp should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Flesh-Eater Imp"));
+        harness.assertOnBattlefield(player1, "Flesh-Eater Imp");
 
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -97,10 +94,8 @@ class FleshEaterImpTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Imp should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Flesh-Eater Imp"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Flesh-Eater Imp"));
+        harness.assertNotOnBattlefield(player1, "Flesh-Eater Imp");
+        harness.assertInGraveyard(player1, "Flesh-Eater Imp");
 
         // Ability should still be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -172,10 +167,8 @@ class FleshEaterImpTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Imp should be auto-sacrificed (only creature available)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Flesh-Eater Imp"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Flesh-Eater Imp"));
+        harness.assertNotOnBattlefield(player1, "Flesh-Eater Imp");
+        harness.assertInGraveyard(player1, "Flesh-Eater Imp");
 
         // Ability should still be on the stack
         assertThat(gd.stack).hasSize(1);

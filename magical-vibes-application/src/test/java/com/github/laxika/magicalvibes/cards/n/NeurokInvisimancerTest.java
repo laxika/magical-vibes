@@ -33,8 +33,7 @@ class NeurokInvisimancerTest extends BaseCardTest {
         // Resolve creature spell → enters battlefield, ETB triggers
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Neurok Invisimancer"));
+        harness.assertOnBattlefield(player1, "Neurok Invisimancer");
 
         // ETB triggered ability should be on stack
         assertThat(gd.stack).hasSize(1);
@@ -86,8 +85,7 @@ class NeurokInvisimancerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Neurok Invisimancer"));
+        harness.assertOnBattlefield(player1, "Neurok Invisimancer");
         assertThat(gd.stack).isEmpty();
     }
 

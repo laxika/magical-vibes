@@ -63,8 +63,7 @@ class HauntedDeadTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(haunted.isTapped()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Haunted Dead"));
+        harness.assertNotInGraveyard(player1, "Haunted Dead");
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken()).count()).isEqualTo(1);
     }
@@ -83,7 +82,6 @@ class HauntedDeadTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Haunted Dead"));
+        harness.assertInGraveyard(player1, "Haunted Dead");
     }
 }

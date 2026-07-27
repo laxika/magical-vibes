@@ -99,10 +99,8 @@ class SangriteBacklashTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(bears);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Sangrite Backlash"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Sangrite Backlash"));
+        harness.assertInGraveyard(player1, "Sangrite Backlash");
+        harness.assertNotOnBattlefield(player1, "Sangrite Backlash");
     }
 
     @Test

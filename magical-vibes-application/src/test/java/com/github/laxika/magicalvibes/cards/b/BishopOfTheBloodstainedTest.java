@@ -26,8 +26,7 @@ class BishopOfTheBloodstainedTest extends BaseCardTest {
         castBishop();
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Bishop of the Bloodstained"));
+        harness.assertOnBattlefield(player1, "Bishop of the Bloodstained");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());

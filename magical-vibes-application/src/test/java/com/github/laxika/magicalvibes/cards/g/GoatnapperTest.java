@@ -49,8 +49,7 @@ class GoatnapperTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Goatnapper"));
+        harness.assertOnBattlefield(player1, "Goatnapper");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(targetId);
@@ -115,8 +114,7 @@ class GoatnapperTest extends BaseCardTest {
         castGoatnapper(null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Goatnapper"));
+        harness.assertOnBattlefield(player1, "Goatnapper");
         assertThat(gd.stack).isEmpty();
     }
 }

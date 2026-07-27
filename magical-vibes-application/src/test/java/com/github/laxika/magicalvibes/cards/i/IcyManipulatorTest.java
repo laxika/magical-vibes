@@ -51,8 +51,7 @@ class IcyManipulatorTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Icy Manipulator"));
+        harness.assertOnBattlefield(player1, "Icy Manipulator");
     }
 
     // ===== Activated ability: targeting creatures =====

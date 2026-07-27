@@ -42,10 +42,8 @@ class ZombieApocalypseTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         assertThat(battlefield).anyMatch(p -> p.getCard().getName().equals("Gravecrawler") && p.isTapped());
         assertThat(battlefield).anyMatch(p -> p.getCard().getName().equals("Zombie Goliath") && p.isTapped());
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Gravecrawler"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Zombie Goliath"));
+        harness.assertNotInGraveyard(player1, "Gravecrawler");
+        harness.assertNotInGraveyard(player1, "Zombie Goliath");
     }
 
     @Test
@@ -62,8 +60,7 @@ class ZombieApocalypseTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Gravecrawler");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -79,8 +76,7 @@ class ZombieApocalypseTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Gravecrawler");
         harness.assertNotOnBattlefield(player2, "Gravecrawler");
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Gravecrawler"));
+        harness.assertInGraveyard(player2, "Gravecrawler");
     }
 
     @Test
@@ -98,10 +94,8 @@ class ZombieApocalypseTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Gravecrawler");
         harness.assertNotOnBattlefield(player1, "Champion of the Parish");
         harness.assertNotOnBattlefield(player2, "Champion of the Parish");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Champion of the Parish"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Champion of the Parish"));
+        harness.assertInGraveyard(player1, "Champion of the Parish");
+        harness.assertInGraveyard(player2, "Champion of the Parish");
     }
 
     @Test
@@ -115,12 +109,9 @@ class ZombieApocalypseTest extends BaseCardTest {
 
         castZombieApocalypse();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Gravecrawler"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Zombie Goliath"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Champion of the Parish"));
+        harness.assertOnBattlefield(player1, "Gravecrawler");
+        harness.assertOnBattlefield(player1, "Zombie Goliath");
+        harness.assertNotOnBattlefield(player1, "Champion of the Parish");
     }
 
     @Test
@@ -132,7 +123,6 @@ class ZombieApocalypseTest extends BaseCardTest {
         castZombieApocalypse();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Zombie Apocalypse"));
+        harness.assertInGraveyard(player1, "Zombie Apocalypse");
     }
 }

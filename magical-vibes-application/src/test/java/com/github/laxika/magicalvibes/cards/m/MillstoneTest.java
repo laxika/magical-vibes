@@ -46,8 +46,7 @@ class MillstoneTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Millstone"));
+        harness.assertOnBattlefield(player1, "Millstone");
     }
 
     // ===== Activating ability =====

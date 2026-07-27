@@ -37,7 +37,7 @@ class YawgmothDemonTest extends BaseCardTest {
         assertThat(demon(player1).isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
         // Artifact was not sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getCard().getName().equals("Ornithopter"));
+        harness.assertOnBattlefield(player1, "Ornithopter");
     }
 
     @Test
@@ -51,7 +51,7 @@ class YawgmothDemonTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger → may prompt
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getCard().getName().equals("Ornithopter"));
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
         assertThat(demon(player1).isTapped()).isFalse();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
@@ -105,6 +105,6 @@ class YawgmothDemonTest extends BaseCardTest {
 
         assertThat(demon(player1).isTapped()).isFalse();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
-        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getCard().getName().equals("Ornithopter"));
+        harness.assertOnBattlefield(player1, "Ornithopter");
     }
 }

@@ -49,8 +49,7 @@ class LambholtElderTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lambholt Elder"));
+        harness.assertInGraveyard(player1, "Lambholt Elder");
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
     }
 

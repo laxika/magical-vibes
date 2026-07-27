@@ -37,8 +37,7 @@ class ValleymakerTest extends BaseCardTest {
         Permanent target = findPermanent(player2, "Air Elemental");
         assertThat(target).isNotNull();
         assertThat(target.getMarkedDamage()).isEqualTo(3);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mountain"));
+        harness.assertInGraveyard(player1, "Mountain");
     }
 
     @Test
@@ -74,8 +73,7 @@ class ValleymakerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player1.getId());
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player1, "Forest");
     }
 
     @Test

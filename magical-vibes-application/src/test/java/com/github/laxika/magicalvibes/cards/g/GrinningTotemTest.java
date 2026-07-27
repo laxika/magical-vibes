@@ -60,10 +60,8 @@ class GrinningTotemTest extends BaseCardTest {
         assertThat(scheduled.getFirst().cardId()).isEqualTo(swamp.getId());
 
         // Grinning Totem was sacrificed as a cost.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grinning Totem"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grinning Totem"));
+        harness.assertNotOnBattlefield(player1, "Grinning Totem");
+        harness.assertInGraveyard(player1, "Grinning Totem");
     }
 
     @Test
@@ -121,15 +119,13 @@ class GrinningTotemTest extends BaseCardTest {
 
         // Caster plays the exiled land.
         gs.playCardFromExile(gd, player1, swamp.getId(), null, null);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Swamp"));
+        harness.assertOnBattlefield(player1, "Swamp");
 
         // The caster's upkeep cleanup finds nothing to move — the card stays on the battlefield.
         gd.activePlayerId = player1.getId();
         harness.inMutationScope(() -> stepTriggerService().handleUpkeepTriggers(gd));
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Swamp"));
+        harness.assertOnBattlefield(player1, "Swamp");
         assertThat(gd.playerGraveyards.getOrDefault(player2.getId(), List.of()))
                 .noneMatch(c -> c.getId().equals(swamp.getId()));
     }

@@ -63,11 +63,9 @@ class JundCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, null);
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"))
-                    .anyMatch(p -> p.getCard().getName().equals("Hill Giant"));
+            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+            harness.assertOnBattlefield(player2, "Hill Giant");
             // Players take no damage.
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(player2Life);
         }

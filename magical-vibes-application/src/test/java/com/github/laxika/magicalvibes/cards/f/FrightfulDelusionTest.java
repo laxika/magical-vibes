@@ -45,10 +45,8 @@ class FrightfulDelusionTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         // Spell is countered (opponent had no mana left to pay {1})
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Opponent can pay and pays — spell not countered, opponent discards =====
@@ -82,14 +80,12 @@ class FrightfulDelusionTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Elves should not be countered
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
 
         // Resolve the elves spell
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
     }
 
     // ===== Opponent can pay but declines — spell countered, opponent discards =====
@@ -111,16 +107,13 @@ class FrightfulDelusionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Discard first
-        GameData gd = harness.getGameData();
         harness.handleCardChosen(player1, 0);
 
         // Decline to pay
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
     }
 
     // ===== Opponent has no cards in hand — discard does nothing, spell still countered =====
@@ -142,11 +135,8 @@ class FrightfulDelusionTest extends BaseCardTest {
 
         // Opponent has no cards in hand (elves was cast), no mana to pay
         // Both effects resolve without interaction
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
     }
 
     // ===== Fizzle =====
@@ -196,8 +186,7 @@ class FrightfulDelusionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Frightful Delusion"));
+        harness.assertInGraveyard(player2, "Frightful Delusion");
         assertThat(gd.stack).isEmpty();
     }
 }

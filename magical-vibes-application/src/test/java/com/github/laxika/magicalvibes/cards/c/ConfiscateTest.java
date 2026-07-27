@@ -92,8 +92,7 @@ class ConfiscateTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Confiscate"));
+        harness.assertInGraveyard(player1, "Confiscate");
     }
 
     @Test

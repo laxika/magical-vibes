@@ -38,8 +38,7 @@ class DisintegrateTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
@@ -55,8 +54,7 @@ class DisintegrateTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 1, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Serra Angel"));
+        harness.assertOnBattlefield(player2, "Serra Angel");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Serra Angel"));
     }

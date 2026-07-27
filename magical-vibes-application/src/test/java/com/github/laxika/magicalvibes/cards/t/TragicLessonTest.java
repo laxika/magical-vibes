@@ -41,13 +41,10 @@ class TragicLessonTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, landId);
 
         // The land is back in hand (2 drawn + returned land), the battlefield lost it, nothing discarded.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Plains"));
+        harness.assertNotOnBattlefield(player1, "Plains");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Plains"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Plains");
+        harness.assertNotInGraveyard(player1, "Forest");
     }
 
     @Test
@@ -67,10 +64,8 @@ class TragicLessonTest extends BaseCardTest {
 
         // One of the two drawn cards was discarded; the land stayed on the battlefield.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Plains"));
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Plains");
     }
 
     @Test
@@ -85,7 +80,6 @@ class TragicLessonTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player1, "Forest");
     }
 }

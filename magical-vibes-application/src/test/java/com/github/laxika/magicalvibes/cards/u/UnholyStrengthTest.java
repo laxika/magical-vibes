@@ -98,10 +98,8 @@ class UnholyStrengthTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(bears);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Unholy Strength"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Unholy Strength"));
+        harness.assertInGraveyard(player1, "Unholy Strength");
+        harness.assertNotOnBattlefield(player1, "Unholy Strength");
     }
 
     // ===== Targeting restriction =====

@@ -34,8 +34,7 @@ class TorporOrbTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Priest is on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Priest of Urabrask"));
+        harness.assertOnBattlefield(player1, "Priest of Urabrask");
         // Stack is empty — no triggered ability was placed on it
         assertThat(gd.stack).isEmpty();
         // No mana was awarded (ETB suppressed)
@@ -124,8 +123,7 @@ class TorporOrbTest extends BaseCardTest {
         // Resolve ETB trigger — 3 red mana is added
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Priest of Urabrask"));
+        harness.assertOnBattlefield(player1, "Priest of Urabrask");
         // Mana was awarded (ETB not suppressed)
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(3);
     }

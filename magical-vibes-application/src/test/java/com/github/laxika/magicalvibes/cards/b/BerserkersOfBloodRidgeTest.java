@@ -27,8 +27,7 @@ class BerserkersOfBloodRidgeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Berserkers of Blood Ridge"));
+        harness.assertOnBattlefield(player1, "Berserkers of Blood Ridge");
     }
 
     // ===== Must attack =====

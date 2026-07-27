@@ -31,10 +31,8 @@ class NeurokReplicaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
 
         // Neurok Replica should be sacrificed immediately (cost)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Neurok Replica"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Neurok Replica"));
+        harness.assertNotOnBattlefield(player1, "Neurok Replica");
+        harness.assertInGraveyard(player1, "Neurok Replica");
 
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -58,10 +56,8 @@ class NeurokReplicaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Target creature should be back in owner's hand
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     @Test
@@ -75,8 +71,7 @@ class NeurokReplicaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -90,10 +85,8 @@ class NeurokReplicaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     // ===== Mana requirements =====

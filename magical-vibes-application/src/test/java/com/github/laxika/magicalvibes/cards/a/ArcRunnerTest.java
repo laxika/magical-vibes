@@ -56,9 +56,7 @@ class ArcRunnerTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Arc Runner"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Arc Runner"));
+        harness.assertNotOnBattlefield(player1, "Arc Runner");
+        harness.assertInGraveyard(player1, "Arc Runner");
     }
 }

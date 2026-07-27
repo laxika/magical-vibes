@@ -50,8 +50,7 @@ class GeralfsMindcrusherTest extends BaseCardTest {
         castMindcrusher(player2.getId());
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Geralf's Mindcrusher"));
+        harness.assertOnBattlefield(player1, "Geralf's Mindcrusher");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -175,9 +174,7 @@ class GeralfsMindcrusherTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Geralf's Mindcrusher"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Geralf's Mindcrusher"));
+        harness.assertInGraveyard(player1, "Geralf's Mindcrusher");
+        harness.assertNotOnBattlefield(player1, "Geralf's Mindcrusher");
     }
 }

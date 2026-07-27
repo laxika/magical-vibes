@@ -118,8 +118,7 @@ class BoneyardParleyTest extends BaseCardTest {
         // Cards should be exiled from graveyards
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears") || c.getName().equals("Llanowar Elves"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
 
         // Opponent (player2) should be prompted to separate into piles
         assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isTrue();
@@ -142,8 +141,7 @@ class BoneyardParleyTest extends BaseCardTest {
         // bears2 and elves should be back in their owners' graveyards
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears") && c.getId().equals(bears2.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
 
         // Pending state should be cleaned up
         assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
@@ -170,12 +168,10 @@ class BoneyardParleyTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // Elves should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
 
         // Bears should be back in owner's graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
     }
@@ -201,9 +197,8 @@ class BoneyardParleyTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Both should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
     }
 
     @Test
@@ -227,9 +222,8 @@ class BoneyardParleyTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // Both should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
     }
 
     @Test
@@ -248,8 +242,7 @@ class BoneyardParleyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Only bears should be exiled; elves should still be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
 
         // Opponent separates the single card (Pile 1 = bears, Pile 2 = empty)
         harness.handleMultipleCardsChosen(player2, List.of(bears.getId()));
@@ -257,8 +250,7 @@ class BoneyardParleyTest extends BaseCardTest {
         // Controller chooses Pile 1
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -285,8 +277,7 @@ class BoneyardParleyTest extends BaseCardTest {
                         && p.getCard().getId().equals(opponentCreature.getId()));
 
         // Player2's graveyard should be empty
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test

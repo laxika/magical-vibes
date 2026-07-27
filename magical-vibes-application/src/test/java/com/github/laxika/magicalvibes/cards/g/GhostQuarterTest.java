@@ -41,10 +41,8 @@ class GhostQuarterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, targetId);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ghost Quarter"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ghost Quarter"));
+        harness.assertNotOnBattlefield(player1, "Ghost Quarter");
+        harness.assertInGraveyard(player1, "Ghost Quarter");
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
@@ -63,10 +61,8 @@ class GhostQuarterTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Target land is destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
 
         // Player 2 (the land's controller) is prompted to search
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -135,8 +131,7 @@ class GhostQuarterTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Own land is destroyed
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player1, "Forest");
 
         // Player 1 is prompted to search their own library
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);

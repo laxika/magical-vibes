@@ -45,8 +45,7 @@ class BackFromTheBrinkTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
 
         // Creature card should be exiled from graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
 

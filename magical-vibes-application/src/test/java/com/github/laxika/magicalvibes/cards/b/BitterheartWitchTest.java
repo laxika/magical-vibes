@@ -37,8 +37,7 @@ class BitterheartWitchTest extends BaseCardTest {
         harness.passBothPriorities(); // combat damage — witch dies
 
         // Witch should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bitterheart Witch"));
+        harness.assertInGraveyard(player1, "Bitterheart Witch");
 
         // Player1 should be prompted to choose a target player
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -267,8 +266,7 @@ class BitterheartWitchTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Wrath — all creatures die
 
         // Witch should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bitterheart Witch"));
+        harness.assertInGraveyard(player1, "Bitterheart Witch");
 
         // Player1 should be prompted to choose a target player
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);

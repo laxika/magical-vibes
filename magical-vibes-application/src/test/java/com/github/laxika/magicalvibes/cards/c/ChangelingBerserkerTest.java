@@ -31,10 +31,8 @@ class ChangelingBerserkerTest extends BaseCardTest {
         castChangelingBerserker();
         harness.passBothPriorities(); // resolve champion ETB -> auto-sacrifice
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Changeling Berserker"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Changeling Berserker"));
+        harness.assertNotOnBattlefield(player1, "Changeling Berserker");
+        harness.assertInGraveyard(player1, "Changeling Berserker");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -46,8 +44,7 @@ class ChangelingBerserkerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve champion ETB -> permanent choice
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Changeling Berserker"));
+        harness.assertOnBattlefield(player1, "Changeling Berserker");
     }
 
     @Test
@@ -60,10 +57,8 @@ class ChangelingBerserkerTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.handlePermanentChosen(player1, bearsId);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Changeling Berserker"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Changeling Berserker");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.exileReturnOnPermanentLeave).isNotEmpty();
@@ -89,10 +84,8 @@ class ChangelingBerserkerTest extends BaseCardTest {
         harness.castInstant(player1, 0, berserkerId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Changeling Berserker"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Changeling Berserker");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();

@@ -209,13 +209,10 @@ class WildRicochetTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Wild Ricochet"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Lava Axe"));
+        harness.assertInGraveyard(player2, "Wild Ricochet");
+        harness.assertNotInGraveyard(player2, "Lava Axe");
         // The original Lava Axe belongs to player1's graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lava Axe"));
+        harness.assertInGraveyard(player1, "Lava Axe");
         assertThat(gd.stack).isEmpty();
     }
 }

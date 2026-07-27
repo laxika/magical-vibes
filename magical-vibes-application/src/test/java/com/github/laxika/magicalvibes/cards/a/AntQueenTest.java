@@ -125,8 +125,7 @@ class AntQueenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Ant Queen"));
+        harness.assertOnBattlefield(player1, "Ant Queen");
     }
 
     // ===== Helper methods =====

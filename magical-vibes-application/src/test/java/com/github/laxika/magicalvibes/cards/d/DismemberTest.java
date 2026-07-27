@@ -73,8 +73,7 @@ class DismemberTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(harness.getGameData().playerBattlefields.get(player2.getId())).isEmpty();
-        assertThat(harness.getGameData().playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test

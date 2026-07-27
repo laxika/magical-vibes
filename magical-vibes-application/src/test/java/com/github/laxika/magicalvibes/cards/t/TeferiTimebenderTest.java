@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -113,8 +112,7 @@ class TeferiTimebenderTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Teferi should have 0 loyalty (9 - 9) and be in graveyard
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Teferi, Timebender"));
+        harness.assertNotOnBattlefield(player1, "Teferi, Timebender");
         // Controller should have an extra turn queued
         assertThat(gd.extraTurns).contains(player1.getId());
     }

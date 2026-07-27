@@ -127,7 +127,6 @@ class CompulsoryRestTest extends BaseCardTest {
 
         harness.assertLife(player1, 22);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 }

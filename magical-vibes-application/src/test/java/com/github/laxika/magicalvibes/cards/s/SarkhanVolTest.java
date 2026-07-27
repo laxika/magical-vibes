@@ -131,8 +131,7 @@ class SarkhanVolTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Sarkhan dies (6 - 6 = 0)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Sarkhan Vol"));
+        harness.assertNotOnBattlefield(player1, "Sarkhan Vol");
 
         List<Permanent> dragons = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Dragon"))

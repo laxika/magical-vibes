@@ -30,7 +30,7 @@ class OonasProwlerTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, prowler)).isEqualTo(basePower - 2);
         assertThat(gqs.getEffectiveToughness(gd, prowler)).isEqualTo(baseToughness);
     }
@@ -63,7 +63,7 @@ class OonasProwlerTest extends BaseCardTest {
 
         // The activating opponent pays the discard cost from their own hand.
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         // The effect still applies to the Prowler its controller owns.
         assertThat(gqs.getEffectivePower(gd, prowler)).isEqualTo(basePower - 2);

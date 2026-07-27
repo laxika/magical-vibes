@@ -36,10 +36,8 @@ class TemporalMachinationsTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Creature bounced
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
         // No card drawn (hand size = before - 1 spell cast)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore - 1);
     }
@@ -63,10 +61,8 @@ class TemporalMachinationsTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Creature bounced
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
         // Drew a card (hand size = before - 1 spell cast + 1 draw = same as before)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
     }
@@ -85,11 +81,8 @@ class TemporalMachinationsTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     // ===== Cannot target non-creatures =====
@@ -128,8 +121,7 @@ class TemporalMachinationsTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Creature bounced
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // No card drawn — opponent's artifact doesn't count
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore - 1);
     }
@@ -154,7 +146,6 @@ class TemporalMachinationsTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Temporal Machinations"));
+        harness.assertInGraveyard(player1, "Temporal Machinations");
     }
 }

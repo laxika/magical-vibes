@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BogImp;
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,8 +28,7 @@ class GloomwidowsFeastTest extends BaseCardTest {
         UUID target = addCreature(player2, new AirElemental()); // blue, flying
         castFeast(target);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Air Elemental"));
+        harness.assertNotOnBattlefield(player2, "Air Elemental");
 
         Permanent spider = spiderToken().orElseThrow();
         assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(1);
@@ -46,8 +44,7 @@ class GloomwidowsFeastTest extends BaseCardTest {
         UUID target = addCreature(player2, new BogImp()); // black, flying
         castFeast(target);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Bog Imp"));
+        harness.assertNotOnBattlefield(player2, "Bog Imp");
         assertThat(spiderToken()).isPresent();
     }
 
@@ -59,8 +56,7 @@ class GloomwidowsFeastTest extends BaseCardTest {
         UUID target = addCreature(player2, new SerraAngel()); // white, flying
         castFeast(target);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Serra Angel"));
+        harness.assertNotOnBattlefield(player2, "Serra Angel");
         assertThat(spiderToken()).isEmpty();
     }
 

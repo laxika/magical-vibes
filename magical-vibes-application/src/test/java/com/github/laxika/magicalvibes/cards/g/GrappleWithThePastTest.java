@@ -57,8 +57,7 @@ class GrappleWithThePastTest extends BaseCardTest {
         // Graveyard order: milled cards then Grapple; bears is index 0 among legal picks
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test
@@ -72,8 +71,7 @@ class GrappleWithThePastTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
     }
 
     @Test
@@ -88,8 +86,7 @@ class GrappleWithThePastTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4); // 3 milled + Grapple
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Forest"));
+        harness.assertNotInHand(player1, "Forest");
     }
 
     @Test

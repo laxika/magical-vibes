@@ -53,8 +53,7 @@ class VerixBladewingTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Verix Bladewing"));
+        harness.assertOnBattlefield(player1, "Verix Bladewing");
         // No ETB trigger on the stack
         assertThat(gd.stack).isEmpty();
         // Only Verix on the battlefield
@@ -70,8 +69,7 @@ class VerixBladewingTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Verix Bladewing"));
+        harness.assertOnBattlefield(player1, "Verix Bladewing");
         // ETB trigger is on the stack
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);

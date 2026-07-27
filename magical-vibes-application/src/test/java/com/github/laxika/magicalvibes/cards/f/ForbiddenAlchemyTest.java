@@ -66,8 +66,7 @@ class ForbiddenAlchemyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forbidden Alchemy"));
+        harness.assertInGraveyard(player1, "Forbidden Alchemy");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -291,8 +290,7 @@ class ForbiddenAlchemyTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(card0.getId()));
 
         // Should NOT be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Forbidden Alchemy"));
+        harness.assertNotInGraveyard(player1, "Forbidden Alchemy");
         // Should be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Forbidden Alchemy"));

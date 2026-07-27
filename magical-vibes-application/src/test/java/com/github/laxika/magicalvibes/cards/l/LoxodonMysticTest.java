@@ -48,8 +48,7 @@ class LoxodonMysticTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Loxodon Mystic"));
+        harness.assertOnBattlefield(player1, "Loxodon Mystic");
     }
 
     // ===== Activated ability =====

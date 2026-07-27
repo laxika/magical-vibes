@@ -24,8 +24,7 @@ class SuicidalChargeTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, enemyBear)).isEqualTo(1);
         assertThat(enemyBear.isMustAttackThisTurn()).isTrue();
         // The enchantment was sacrificed as the cost.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Suicidal Charge"));
+        harness.assertInGraveyard(player1, "Suicidal Charge");
     }
 
     @Test

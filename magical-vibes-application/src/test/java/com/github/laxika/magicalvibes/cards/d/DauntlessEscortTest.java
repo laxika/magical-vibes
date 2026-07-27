@@ -26,8 +26,7 @@ class DauntlessEscortTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
         // Sacrifice cost paid: the Escort is gone.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Dauntless Escort"));
+        harness.assertNotOnBattlefield(player1, "Dauntless Escort");
     }
 
     @Test
@@ -45,8 +44,7 @@ class DauntlessEscortTest extends BaseCardTest {
         harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test

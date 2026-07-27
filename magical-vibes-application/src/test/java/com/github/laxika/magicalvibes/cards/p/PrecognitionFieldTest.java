@@ -48,8 +48,7 @@ class PrecognitionFieldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Precognition Field"));
+        harness.assertOnBattlefield(player1, "Precognition Field");
     }
 
     // ===== Activated ability: {3}: Exile the top card of your library =====
@@ -148,12 +147,10 @@ class PrecognitionFieldTest extends BaseCardTest {
             harness.castAndResolveFromLibraryTop(player1, bearsId);
 
             // Shock resolved: Grizzly Bears should be dead
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
             // Shock should be in graveyard
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Shock"));
+            harness.assertInGraveyard(player1, "Shock");
 
             // Card should no longer be on top of library
             assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(shock);
@@ -252,8 +249,7 @@ class PrecognitionFieldTest extends BaseCardTest {
             assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
 
             // Not yet resolved - Bears still alive
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player2, "Grizzly Bears");
         }
     }
 

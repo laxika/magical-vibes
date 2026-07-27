@@ -40,8 +40,7 @@ class StormFleetAerialistTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Storm Fleet Aerialist"));
+        harness.assertOnBattlefield(player1, "Storm Fleet Aerialist");
     }
 
     // ===== Casting with raid =====

@@ -139,7 +139,6 @@ class IllusionaryTerrainTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(terrain);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Illusionary Terrain"));
+        harness.assertInGraveyard(player1, "Illusionary Terrain");
     }
 }

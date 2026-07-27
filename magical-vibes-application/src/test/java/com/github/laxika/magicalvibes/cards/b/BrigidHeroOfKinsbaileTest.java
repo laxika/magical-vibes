@@ -58,10 +58,8 @@ class BrigidHeroOfKinsbaileTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Eager Cadet"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Eager Cadet"));
+        harness.assertNotOnBattlefield(player2, "Eager Cadet");
+        harness.assertInGraveyard(player2, "Eager Cadet");
     }
 
     @Test

@@ -59,9 +59,7 @@ class TangleHulkTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Tangle Hulk"));
+        harness.assertOnBattlefield(player1, "Tangle Hulk");
     }
 
     // ===== Activate regeneration ability =====
@@ -163,16 +161,14 @@ class TangleHulkTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Tangle Hulk survives via regeneration
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Tangle Hulk"));
+        harness.assertOnBattlefield(player1, "Tangle Hulk");
         Permanent hulk = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Tangle Hulk"))
                 .findFirst().orElseThrow();
         assertThat(hulk.isTapped()).isTrue();
         assertThat(hulk.getRegenerationShield()).isEqualTo(0);
         // Hill Giant should also die (5 damage from Tangle Hulk >= 3 toughness)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hill Giant"));
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
     }
 
     @Test
@@ -196,11 +192,8 @@ class TangleHulkTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Tangle Hulk"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Tangle Hulk"));
+        harness.assertNotOnBattlefield(player1, "Tangle Hulk");
+        harness.assertInGraveyard(player1, "Tangle Hulk");
     }
 
     @Test
@@ -226,8 +219,7 @@ class TangleHulkTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Tangle Hulk survives via regeneration
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Tangle Hulk"));
+        harness.assertOnBattlefield(player1, "Tangle Hulk");
         Permanent hulk = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Tangle Hulk"))
                 .findFirst().orElseThrow();

@@ -133,10 +133,8 @@ class SeasingerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature → state trigger fires
         harness.passBothPriorities(); // resolve state trigger → sacrificed
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Seasinger"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Seasinger"));
+        harness.assertNotOnBattlefield(player1, "Seasinger");
+        harness.assertInGraveyard(player1, "Seasinger");
     }
 
     // ===== Helpers =====

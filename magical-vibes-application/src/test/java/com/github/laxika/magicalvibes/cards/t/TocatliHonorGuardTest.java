@@ -32,8 +32,7 @@ class TocatliHonorGuardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Priest is on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Priest of Urabrask"));
+        harness.assertOnBattlefield(player1, "Priest of Urabrask");
         // Stack is empty — no triggered ability was placed on it
         assertThat(gd.stack).isEmpty();
         // No mana was awarded (ETB suppressed)
@@ -106,8 +105,7 @@ class TocatliHonorGuardTest extends BaseCardTest {
         // Resolve ETB trigger — 3 red mana is added
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Priest of Urabrask"));
+        harness.assertOnBattlefield(player1, "Priest of Urabrask");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(3);
     }
 
@@ -130,8 +128,7 @@ class TocatliHonorGuardTest extends BaseCardTest {
         // Resolve creature spell — Priest enters but ETB does not trigger
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Priest of Urabrask"));
+        harness.assertOnBattlefield(player2, "Priest of Urabrask");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(0);
     }

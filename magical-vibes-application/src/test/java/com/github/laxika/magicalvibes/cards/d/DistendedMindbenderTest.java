@@ -77,8 +77,7 @@ class DistendedMindbenderTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player2, "Shock");
         assertThat(gd.playerHands.get(player2.getId()))
                 .extracting(c -> c.getName())
                 .containsExactly("Forest");
@@ -102,8 +101,7 @@ class DistendedMindbenderTest extends BaseCardTest {
         assertThat(choice.followUpFilter()).isNull();
         harness.handleCardChosen(player1, 1);
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Air Elemental"));
+        harness.assertInGraveyard(player2, "Air Elemental");
         assertThat(gd.playerHands.get(player2.getId()))
                 .extracting(c -> c.getName())
                 .containsExactly("Forest");
@@ -128,9 +126,8 @@ class DistendedMindbenderTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0); // discard Shock
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Distended Mindbender"))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Distended Mindbender");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
 

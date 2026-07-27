@@ -37,9 +37,8 @@ class PullFromTheGraveTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Llanowar Elves");
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
     }
 
@@ -57,8 +56,7 @@ class PullFromTheGraveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
     }
 
@@ -76,8 +74,7 @@ class PullFromTheGraveTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
     }
 

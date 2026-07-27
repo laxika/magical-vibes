@@ -27,8 +27,7 @@ class SquadronHawkTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve creature → ETB MayEffect on stack
         harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Squadron Hawk"));
+        harness.assertOnBattlefield(player1, "Squadron Hawk");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
@@ -77,8 +76,7 @@ class SquadronHawkTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Squadron Hawk"));
+        harness.assertInHand(player1, "Squadron Hawk");
     }
 
     @Test

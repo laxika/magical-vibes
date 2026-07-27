@@ -148,10 +148,8 @@ class GlisteningOilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Glistening Oil should be in owner's hand, not in graveyard
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Glistening Oil"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Glistening Oil"));
+        harness.assertInHand(player1, "Glistening Oil");
+        harness.assertNotInGraveyard(player1, "Glistening Oil");
     }
 
     // ===== Helper methods =====

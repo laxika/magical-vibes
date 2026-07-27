@@ -283,9 +283,7 @@ class QuicksilverGargantuanTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(clonePerm);
         gd.playerGraveyards.get(player1.getId()).add(clonePerm.getOriginalCard());
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Quicksilver Gargantuan"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Quicksilver Gargantuan");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 }

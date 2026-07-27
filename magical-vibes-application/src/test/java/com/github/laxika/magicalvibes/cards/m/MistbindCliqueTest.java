@@ -37,9 +37,8 @@ class MistbindCliqueTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         // Championed creature is exiled; Mistbind Clique stays.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mistbind Clique"))
-                .noneMatch(p -> p.getCard().getName().equals("Avian Changeling"));
+        harness.assertOnBattlefield(player1, "Mistbind Clique");
+        harness.assertNotOnBattlefield(player1, "Avian Changeling");
     }
 
     @Test
@@ -102,8 +101,7 @@ class MistbindCliqueTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve champion ETB -> no Faerie -> sacrifice, no trigger
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mistbind Clique"));
+        harness.assertNotOnBattlefield(player1, "Mistbind Clique");
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .filteredOn(p -> p.getCard().getName().equals("Island"))
                 .noneMatch(Permanent::isTapped);

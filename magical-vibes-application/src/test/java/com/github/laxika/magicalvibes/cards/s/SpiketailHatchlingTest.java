@@ -38,8 +38,7 @@ class SpiketailHatchlingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Spiketail Hatchling"));
+        harness.assertOnBattlefield(player1, "Spiketail Hatchling");
     }
 
     // ===== Activating ability =====
@@ -64,10 +63,8 @@ class SpiketailHatchlingTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Spiketail Hatchling should be sacrificed (not on battlefield, in graveyard)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spiketail Hatchling"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Spiketail Hatchling"));
+        harness.assertNotOnBattlefield(player2, "Spiketail Hatchling");
+        harness.assertInGraveyard(player2, "Spiketail Hatchling");
 
         // Ability should be on the stack above the creature spell
         assertThat(gd.stack).hasSize(2);
@@ -97,10 +94,8 @@ class SpiketailHatchlingTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Elves should be countered (in player1's graveyard, not on battlefield)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
 
         // Stack should be empty
         assertThat(gd.stack).isEmpty();
@@ -133,15 +128,13 @@ class SpiketailHatchlingTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Elves should still be on the stack (it hasn't resolved yet), not countered
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
 
         // Resolve the elves spell
         harness.passBothPriorities();
 
         // Elves should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
     }
 
     // ===== Counter-unless-pays: opponent declines to pay =====
@@ -170,10 +163,8 @@ class SpiketailHatchlingTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // Spell should be countered
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
     }
 
     // ===== Fizzle =====
@@ -298,11 +289,8 @@ class SpiketailHatchlingTest extends BaseCardTest {
         // Resolve — player 1 has 0 mana left, cannot pay
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 }
 

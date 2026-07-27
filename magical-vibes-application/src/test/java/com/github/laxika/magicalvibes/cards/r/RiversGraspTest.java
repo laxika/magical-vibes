@@ -34,11 +34,9 @@ class RiversGraspTest extends BaseCardTest {
         // No discard interaction because {B} was not spent
         assertThat(gd.interaction.activeInteraction()).isNull();
         // Creature bounced to owner's hand; Peek untouched
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Peek"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Peek");
     }
 
     @Test
@@ -59,10 +57,8 @@ class RiversGraspTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         // Peek discarded; creature never bounced ({U} not spent)
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Peek"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Peek");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -85,10 +81,8 @@ class RiversGraspTest extends BaseCardTest {
         // Choose Peek to discard (index 0 was the original hand card).
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Peek"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Peek");
     }
 
     @Test

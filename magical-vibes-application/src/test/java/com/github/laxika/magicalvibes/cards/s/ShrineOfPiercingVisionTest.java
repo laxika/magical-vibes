@@ -134,10 +134,8 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Shrine should be in graveyard immediately (sacrifice is a cost)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Shrine of Piercing Vision"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shrine of Piercing Vision"));
+        harness.assertNotOnBattlefield(player1, "Shrine of Piercing Vision");
+        harness.assertInGraveyard(player1, "Shrine of Piercing Vision");
     }
 
     @Test

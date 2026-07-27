@@ -119,8 +119,7 @@ class SnapcasterMageTest extends BaseCardTest {
         harness.castFlashback(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Shock"));
+        harness.assertNotInGraveyard(player1, "Shock");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Shock"));
     }

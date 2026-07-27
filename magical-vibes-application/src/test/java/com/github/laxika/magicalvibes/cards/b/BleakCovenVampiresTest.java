@@ -110,8 +110,7 @@ class BleakCovenVampiresTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Creature is still on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Bleak Coven Vampires"));
+        harness.assertOnBattlefield(player1, "Bleak Coven Vampires");
 
         // Life totals unchanged
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -167,8 +166,7 @@ class BleakCovenVampiresTest extends BaseCardTest {
         castBleakCovenVampires();
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Bleak Coven Vampires"));
+        harness.assertOnBattlefield(player1, "Bleak Coven Vampires");
     }
 
     @Test

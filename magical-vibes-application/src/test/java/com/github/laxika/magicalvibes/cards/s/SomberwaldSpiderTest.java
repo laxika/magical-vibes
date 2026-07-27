@@ -89,8 +89,7 @@ class SomberwaldSpiderTest extends BaseCardTest {
 
         // Bears should be dead
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         // Now cast Somberwald Spider — morbid should be active
         harness.castCreature(player1, 0);

@@ -156,8 +156,7 @@ class SkirsdagHighPriestTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Demon token created
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Demon"));
+        harness.assertOnBattlefield(player1, "Demon");
 
         // Chosen creatures tapped, unchosen creature untapped
         assertThat(creature1.isTapped()).isTrue();

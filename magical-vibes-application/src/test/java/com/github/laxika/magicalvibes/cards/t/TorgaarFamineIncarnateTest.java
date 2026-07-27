@@ -27,8 +27,7 @@ class TorgaarFamineIncarnateTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(10);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Torgaar, Famine Incarnate"));
+        harness.assertOnBattlefield(player1, "Torgaar, Famine Incarnate");
     }
 
     @Test
@@ -48,8 +47,7 @@ class TorgaarFamineIncarnateTest extends BaseCardTest {
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(10);
         // Sacrificed creature should be gone
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Tolarian Scholar"));
+        harness.assertNotOnBattlefield(player1, "Tolarian Scholar");
     }
 
     @Test
@@ -154,7 +152,6 @@ class TorgaarFamineIncarnateTest extends BaseCardTest {
         harness.castCreatureWithSacrificeForReduction(player1, 0, player2.getId(), List.of(creature1.getId()));
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Tolarian Scholar"));
+        harness.assertInGraveyard(player1, "Tolarian Scholar");
     }
 }

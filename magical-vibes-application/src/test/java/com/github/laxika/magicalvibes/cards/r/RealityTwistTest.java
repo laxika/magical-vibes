@@ -29,8 +29,7 @@ class RealityTwistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Reality Twist"));
+        harness.assertOnBattlefield(player1, "Reality Twist");
     }
 
     @Test
@@ -145,7 +144,6 @@ class RealityTwistTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(twist);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Reality Twist"));
+        harness.assertInGraveyard(player1, "Reality Twist");
     }
 }

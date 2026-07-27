@@ -92,7 +92,6 @@ class OketrasMonumentTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Warrior"));
+        harness.assertNotOnBattlefield(player1, "Warrior");
     }
 }

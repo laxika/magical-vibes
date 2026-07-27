@@ -89,8 +89,7 @@ class NitaForumConciliatorTest extends BaseCardTest {
         assertThat(gd.exilePlayAnyManaType).contains(target.getId());
         assertThat(gd.exileInsteadOfGraveyard).contains(target.getId());
         // The other creature was sacrificed to pay the cost.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test

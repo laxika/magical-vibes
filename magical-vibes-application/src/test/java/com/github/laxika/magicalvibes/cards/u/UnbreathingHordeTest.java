@@ -31,8 +31,7 @@ class UnbreathingHordeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 0/0 creature dies to SBA
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Unbreathing Horde"));
+        harness.assertNotOnBattlefield(player1, "Unbreathing Horde");
     }
 
     @Test
@@ -109,8 +108,7 @@ class UnbreathingHordeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 0 counters from player1's perspective, dies to SBA
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Unbreathing Horde"));
+        harness.assertNotOnBattlefield(player1, "Unbreathing Horde");
     }
 
     @Test
@@ -127,8 +125,7 @@ class UnbreathingHordeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 0 counters, dies to SBA
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Unbreathing Horde"));
+        harness.assertNotOnBattlefield(player1, "Unbreathing Horde");
     }
 
     // ===== Damage prevention =====
@@ -190,8 +187,7 @@ class UnbreathingHordeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 0/0, dies to SBA
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Unbreathing Horde"));
+        harness.assertNotOnBattlefield(player2, "Unbreathing Horde");
     }
 
     @Test

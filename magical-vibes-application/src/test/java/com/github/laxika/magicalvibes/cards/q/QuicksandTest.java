@@ -47,10 +47,8 @@ class QuicksandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Quicksand should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Quicksand"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Quicksand"));
+        harness.assertNotOnBattlefield(player1, "Quicksand");
+        harness.assertInGraveyard(player1, "Quicksand");
 
         // Attacker should have -1/-2
         assertThat(attacker.getPowerModifier()).isEqualTo(-1);
@@ -93,10 +91,8 @@ class QuicksandTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, attacker.getId());
 
         // Before resolution, Quicksand should already be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Quicksand"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Quicksand"));
+        harness.assertNotOnBattlefield(player1, "Quicksand");
+        harness.assertInGraveyard(player1, "Quicksand");
     }
 
     // ===== Target restrictions =====

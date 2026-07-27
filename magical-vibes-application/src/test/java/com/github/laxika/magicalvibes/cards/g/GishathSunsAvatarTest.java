@@ -49,10 +49,8 @@ class GishathSunsAvatarTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(dino1.getId(), dino2.getId()));
 
         // Both Dinosaurs should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Colossal Dreadmaw"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Ancient Brontodon"));
+        harness.assertOnBattlefield(player1, "Colossal Dreadmaw");
+        harness.assertOnBattlefield(player1, "Ancient Brontodon");
 
         // Remaining cards (Forest + Shock) should be on the bottom of the library
         List<Card> deck = gd.playerDecks.get(player1.getId());
@@ -79,8 +77,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of());
 
         // No new creatures on battlefield (only Gishath itself)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Colossal Dreadmaw"));
+        harness.assertNotOnBattlefield(player1, "Colossal Dreadmaw");
 
         // All 3 cards should be on the bottom of the library
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
@@ -159,8 +156,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(dino.getId()));
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Colossal Dreadmaw"));
+        harness.assertOnBattlefield(player1, "Colossal Dreadmaw");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
@@ -221,10 +217,8 @@ class GishathSunsAvatarTest extends BaseCardTest {
         // Choose only dino1
         harness.handleMultipleCardsChosen(player1, List.of(dino1.getId()));
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Colossal Dreadmaw"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ancient Brontodon"));
+        harness.assertOnBattlefield(player1, "Colossal Dreadmaw");
+        harness.assertNotOnBattlefield(player1, "Ancient Brontodon");
 
         // dino2 and forest should be on the bottom of the library
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);

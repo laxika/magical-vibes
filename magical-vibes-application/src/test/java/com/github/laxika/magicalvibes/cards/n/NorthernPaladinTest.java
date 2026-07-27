@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NorthernPaladinTest extends BaseCardTest {
@@ -23,10 +22,8 @@ class NorthernPaladinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Scathe Zombies"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Scathe Zombies"));
+        harness.assertNotOnBattlefield(player2, "Scathe Zombies");
+        harness.assertInGraveyard(player2, "Scathe Zombies");
     }
 
     @Test

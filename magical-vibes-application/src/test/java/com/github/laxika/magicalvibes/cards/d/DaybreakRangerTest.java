@@ -31,8 +31,7 @@ class DaybreakRangerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Stormfront Pegasus is 2/1, 2 damage kills it
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Stormfront Pegasus"));
+        harness.assertNotOnBattlefield(player2, "Stormfront Pegasus");
     }
 
     @Test
@@ -183,10 +182,8 @@ class DaybreakRangerTest extends BaseCardTest {
 
         // Nightfall Predator is 4/4, Runeclaw Bear is 2/2
         // Bear takes 4 damage → dies. Predator takes 2 damage → survives (4 toughness - 2 = 2 left).
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Runeclaw Bear"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Nightfall Predator"));
+        harness.assertNotOnBattlefield(player2, "Runeclaw Bear");
+        harness.assertOnBattlefield(player1, "Nightfall Predator");
     }
 
     // ===== Transform triggers on every upkeep (not just controller's) =====

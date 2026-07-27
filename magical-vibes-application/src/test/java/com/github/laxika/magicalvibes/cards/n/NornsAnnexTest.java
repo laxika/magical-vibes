@@ -29,8 +29,7 @@ class NornsAnnexTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Norn's Annex"));
+        harness.assertOnBattlefield(player1, "Norn's Annex");
     }
 
     // ===== Attack tax — pay with white mana =====

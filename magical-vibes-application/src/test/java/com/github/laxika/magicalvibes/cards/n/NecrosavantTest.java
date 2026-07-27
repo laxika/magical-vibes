@@ -34,16 +34,14 @@ class NecrosavantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears was sacrificed to pay the cost
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
         // Necrosavant is on the battlefield untapped and no longer in the graveyard
         Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Necrosavant"))
                 .findFirst().orElseThrow();
         assertThat(perm.isTapped()).isFalse();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Necrosavant"));
+        harness.assertNotInGraveyard(player1, "Necrosavant");
     }
 
     @Test

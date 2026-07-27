@@ -32,10 +32,8 @@ class WanderersTwigTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Twig should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Wanderer's Twig"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Wanderer's Twig"));
+        harness.assertNotOnBattlefield(player1, "Wanderer's Twig");
+        harness.assertInGraveyard(player1, "Wanderer's Twig");
 
         // Should be awaiting library search with only basic lands offered
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -72,10 +70,8 @@ class WanderersTwigTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Twig should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Wanderer's Twig"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Wanderer's Twig"));
+        harness.assertNotOnBattlefield(player1, "Wanderer's Twig");
+        harness.assertInGraveyard(player1, "Wanderer's Twig");
     }
 
     private void setupLibraryWithBasicLands() {

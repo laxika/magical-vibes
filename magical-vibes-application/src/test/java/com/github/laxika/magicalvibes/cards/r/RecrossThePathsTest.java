@@ -53,10 +53,8 @@ class RecrossThePathsTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()).getLast()).isSameAs(shock);
 
         // Winning the clash returned Recross the Paths to its owner's hand.
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Recross the Paths"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Recross the Paths"));
+        harness.assertInHand(player1, "Recross the Paths");
+        harness.assertNotInGraveyard(player1, "Recross the Paths");
     }
 
     @Test
@@ -75,10 +73,8 @@ class RecrossThePathsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard() == land);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Recross the Paths"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Recross the Paths"));
+        harness.assertInGraveyard(player1, "Recross the Paths");
+        harness.assertNotInHand(player1, "Recross the Paths");
     }
 
     @Test
@@ -105,7 +101,6 @@ class RecrossThePathsTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bears, shock);
 
         // The clash was made with an empty library, so player1 loses and the spell is in the graveyard.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Recross the Paths"));
+        harness.assertInGraveyard(player1, "Recross the Paths");
     }
 }

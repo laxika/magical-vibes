@@ -37,7 +37,7 @@ class BurningFistMinotaurTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0); // pay the discard cost
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, minotaur)).isEqualTo(basePower + 2);
         assertThat(gqs.getEffectiveToughness(gd, minotaur)).isEqualTo(baseToughness);
     }

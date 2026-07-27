@@ -73,15 +73,13 @@ class VenserTheSojournerTest extends BaseCardTest {
         // Loyalty should be 3 + 2 = 5
         assertThat(venser.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         // Bears should be exiled
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getDelayedActions(PendingExileReturn.class)).hasSize(1);
 
         // Advance to end step — bears should return
         advanceToEndStep();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
     }
 
@@ -110,8 +108,7 @@ class VenserTheSojournerTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(venser.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Gold Myr"));
+        harness.assertNotOnBattlefield(player1, "Gold Myr");
         assertThat(gd.getDelayedActions(PendingExileReturn.class)).hasSize(1);
     }
 
@@ -186,8 +183,7 @@ class VenserTheSojournerTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Venser should be gone (8 - 8 = 0 loyalty)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Venser, the Sojourner"));
+        harness.assertNotOnBattlefield(player1, "Venser, the Sojourner");
         // Emblem persists
         assertThat(gd.emblems).hasSize(1);
     }
@@ -224,8 +220,7 @@ class VenserTheSojournerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Opponent's bears should be exiled
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }

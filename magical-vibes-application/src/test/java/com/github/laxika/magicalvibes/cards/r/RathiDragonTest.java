@@ -37,10 +37,8 @@ class RathiDragonTest extends BaseCardTest {
 
         // No choice — the cost can't be paid, so Rathi Dragon is sacrificed automatically.
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Rathi Dragon"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Rathi Dragon"));
+        harness.assertNotOnBattlefield(player1, "Rathi Dragon");
+        harness.assertInGraveyard(player1, "Rathi Dragon");
         // The lone Mountain is untouched.
         assertThat(mountainsControlledBy(player1.getId())).isEqualTo(1);
     }
@@ -69,8 +67,7 @@ class RathiDragonTest extends BaseCardTest {
         // Both Mountains sacrificed without a further choice; Rathi Dragon stays.
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(mountainsControlledBy(player1.getId())).isEqualTo(0);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Rathi Dragon"));
+        harness.assertOnBattlefield(player1, "Rathi Dragon");
     }
 
     @Test
@@ -95,8 +92,7 @@ class RathiDragonTest extends BaseCardTest {
 
         // Two Mountains sacrificed, one remains; Rathi Dragon stays.
         assertThat(mountainsControlledBy(player1.getId())).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Rathi Dragon"));
+        harness.assertOnBattlefield(player1, "Rathi Dragon");
     }
 
     @Test
@@ -108,10 +104,8 @@ class RathiDragonTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Rathi Dragon"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Rathi Dragon"));
+        harness.assertNotOnBattlefield(player1, "Rathi Dragon");
+        harness.assertInGraveyard(player1, "Rathi Dragon");
         assertThat(mountainsControlledBy(player1.getId())).isEqualTo(2);
     }
 
@@ -123,10 +117,8 @@ class RathiDragonTest extends BaseCardTest {
         castRathiDragon();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Rathi Dragon"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Rathi Dragon"));
+        harness.assertNotOnBattlefield(player1, "Rathi Dragon");
+        harness.assertInGraveyard(player1, "Rathi Dragon");
         assertThat(mountainsControlledBy(player2.getId())).isEqualTo(2);
     }
 }

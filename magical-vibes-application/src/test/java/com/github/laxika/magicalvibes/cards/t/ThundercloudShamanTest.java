@@ -47,10 +47,8 @@ class ThundercloudShamanTest extends BaseCardTest {
 
         castShaman(player1);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Goblin"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Goblin"));
+        harness.assertNotOnBattlefield(player2, "Goblin");
+        harness.assertInGraveyard(player2, "Goblin");
     }
 
     // ===== Helpers =====

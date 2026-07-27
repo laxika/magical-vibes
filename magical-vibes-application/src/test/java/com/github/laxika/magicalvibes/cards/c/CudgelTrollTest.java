@@ -60,9 +60,7 @@ class CudgelTrollTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Cudgel Troll"));
+        harness.assertOnBattlefield(player1, "Cudgel Troll");
     }
 
     // ===== Activate regeneration ability =====
@@ -150,8 +148,7 @@ class CudgelTrollTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Cudgel Troll should survive via regeneration
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Cudgel Troll"));
+        harness.assertOnBattlefield(player1, "Cudgel Troll");
         Permanent troll = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Cudgel Troll"))
                 .findFirst().orElseThrow();
@@ -179,11 +176,8 @@ class CudgelTrollTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Cudgel Troll"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Cudgel Troll"));
+        harness.assertNotOnBattlefield(player1, "Cudgel Troll");
+        harness.assertInGraveyard(player1, "Cudgel Troll");
     }
 
     @Test
@@ -206,12 +200,9 @@ class CudgelTrollTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Troll survives (2 damage < 3 toughness), Bears die (4 damage > 2 toughness)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Cudgel Troll"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Cudgel Troll");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Helper methods =====

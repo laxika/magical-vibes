@@ -108,8 +108,7 @@ class StunTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Stun"));
+        harness.assertInGraveyard(player1, "Stun");
     }
 
     @Test

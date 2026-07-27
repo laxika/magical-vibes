@@ -134,7 +134,6 @@ class GloriousChargeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Glorious Charge"));
+        harness.assertInGraveyard(player1, "Glorious Charge");
     }
 }

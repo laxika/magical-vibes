@@ -31,9 +31,7 @@ class FleetingImageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fleeting Image"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fleeting Image"));
+        harness.assertInHand(player1, "Fleeting Image");
+        harness.assertNotOnBattlefield(player1, "Fleeting Image");
     }
 }

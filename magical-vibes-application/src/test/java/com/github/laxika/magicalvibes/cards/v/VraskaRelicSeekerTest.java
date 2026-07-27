@@ -126,10 +126,8 @@ class VraskaRelicSeekerTest extends BaseCardTest {
         assertThat(vraska.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 6 - 3
 
         // Bear should be destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // Treasure token created for Vraska's controller
         Permanent treasure = gd.playerBattlefields.get(player1.getId()).stream()
@@ -157,8 +155,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
         assertThat(vraska.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 6 - 3
 
         // Enchantment should be destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Pacifism"));
+        harness.assertNotOnBattlefield(player2, "Pacifism");
 
         // Treasure token should exist
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
@@ -196,8 +193,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
         assertThat(vraska.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 6 - 3
 
         // Own bear should be destroyed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
         // Treasure token should still be created for controller
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
@@ -225,8 +221,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
         assertThat(lifeAfter).isEqualTo(1);
 
         // Vraska goes to graveyard at 0 loyalty
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Vraska, Relic Seeker"));
+        harness.assertNotOnBattlefield(player1, "Vraska, Relic Seeker");
     }
 
     @Test

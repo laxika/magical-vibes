@@ -149,10 +149,8 @@ class CloneTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(clonePerm.getOriginalCard());
 
         // In graveyard it should be "Clone", not "Grizzly Bears"
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Clone"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Clone");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -184,8 +182,7 @@ class CloneTest extends BaseCardTest {
         gd.playerHands.get(player1.getId()).add(clonePerm.getOriginalCard());
 
         // In hand it should be "Clone", not "Grizzly Bears"
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Clone"));
+        harness.assertInHand(player1, "Clone");
     }
 
     // ===== Legend rule =====
@@ -242,8 +239,7 @@ class CloneTest extends BaseCardTest {
                 .noneMatch(p -> p.getOriginalCard().getName().equals("Clone"));
 
         // Clone should be in graveyard as "Clone"
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Clone"));
+        harness.assertInGraveyard(player1, "Clone");
     }
 
     @Test
@@ -264,8 +260,7 @@ class CloneTest extends BaseCardTest {
                 .noneMatch(p -> p.getOriginalCard().getName().equals("Clone"));
 
         // Clone should be in graveyard as "Clone"
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Clone"));
+        harness.assertInGraveyard(player1, "Clone");
     }
 
     // ===== Copied creature's ETB effects =====

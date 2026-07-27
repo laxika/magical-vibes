@@ -28,8 +28,7 @@ class LoyalCatharUnhallowedCatharTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve death trigger and register delayed return
 
         assertThat(findPermanentOrNull(player1, "Loyal Cathar")).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Loyal Cathar"));
+        harness.assertInGraveyard(player1, "Loyal Cathar");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passBothPriorities(); // advance to end step and process delayed return
@@ -37,8 +36,7 @@ class LoyalCatharUnhallowedCatharTest extends BaseCardTest {
         Permanent returned = findPermanent(player1, "Unhallowed Cathar");
         assertThat(returned).isNotNull();
         assertThat(returned.isTransformed()).isTrue();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Loyal Cathar"));
+        harness.assertNotInGraveyard(player1, "Loyal Cathar");
     }
 
     @Test

@@ -163,10 +163,8 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
 
         // Shrine should be in graveyard immediately (sacrifice is a cost)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Shrine of Limitless Power"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shrine of Limitless Power"));
+        harness.assertNotOnBattlefield(player1, "Shrine of Limitless Power");
+        harness.assertInGraveyard(player1, "Shrine of Limitless Power");
     }
 
     @Test

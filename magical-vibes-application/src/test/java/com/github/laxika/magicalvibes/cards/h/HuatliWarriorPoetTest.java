@@ -176,7 +176,6 @@ class HuatliWarriorPoetTest extends BaseCardTest {
         harness.activateAbilityWithDamageAssignments(player1, 0, 2, 2, assignments);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(huatli.getCounterCount(CounterType.LOYALTY)).isEqualTo(1); // 3 - 2
 
         // Both bears should still be alive (1 damage to 2/2) but can't block
@@ -199,17 +198,13 @@ class HuatliWarriorPoetTest extends BaseCardTest {
         harness.activateAbilityWithDamageAssignments(player1, 0, 2, 3, assignments);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(huatli.getCounterCount(CounterType.LOYALTY)).isEqualTo(0); // 3 - 3
         // Huatli should be in graveyard too (0 loyalty)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Huatli, Warrior Poet"));
+        harness.assertNotOnBattlefield(player1, "Huatli, Warrior Poet");
 
         // Bear should be dead
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test

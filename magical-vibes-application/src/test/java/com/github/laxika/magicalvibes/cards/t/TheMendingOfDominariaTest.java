@@ -68,8 +68,7 @@ class TheMendingOfDominariaTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // The 2 cards should have been milled to graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Should be awaiting graveyard choice for the creature
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);

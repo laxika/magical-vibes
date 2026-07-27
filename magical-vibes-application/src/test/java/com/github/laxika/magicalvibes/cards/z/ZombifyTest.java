@@ -92,7 +92,6 @@ class ZombifyTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Zombify"));
+        harness.assertInGraveyard(player1, "Zombify");
     }
 }

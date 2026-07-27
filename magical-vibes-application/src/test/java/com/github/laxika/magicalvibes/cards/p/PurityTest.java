@@ -41,10 +41,8 @@ class PurityTest extends BaseCardTest {
 
         // Triggered ability (not a replacement): Purity actually enters the graveyard and its
         // "put into graveyard from anywhere" ability is waiting on the stack.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Purity"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Purity"));
+        harness.assertNotOnBattlefield(player2, "Purity");
+        harness.assertInGraveyard(player2, "Purity");
         assertThat(gd.stack).isNotEmpty();
 
         harness.passBothPriorities();

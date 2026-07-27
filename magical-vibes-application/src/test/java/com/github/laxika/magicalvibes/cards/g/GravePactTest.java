@@ -92,8 +92,7 @@ class GravePactTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grave Pact"));
+        harness.assertOnBattlefield(player1, "Grave Pact");
     }
 
     // ===== Triggering =====
@@ -114,8 +113,7 @@ class GravePactTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
@@ -143,10 +141,8 @@ class GravePactTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Giant Spider"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Giant Spider"));
+        harness.assertNotOnBattlefield(player2, "Giant Spider");
+        harness.assertInGraveyard(player2, "Giant Spider");
     }
 
     @Test
@@ -192,13 +188,9 @@ class GravePactTest extends BaseCardTest {
         // Player2 chooses to sacrifice Giant Spider
         harness.handlePermanentChosen(player2, spiderId);
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Giant Spider"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Giant Spider"));
+        harness.assertNotOnBattlefield(player2, "Giant Spider");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Giant Spider");
     }
 
     @Test
@@ -239,8 +231,7 @@ class GravePactTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         // No Grave Pact trigger on the stack
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Multiple Grave Pacts =====
@@ -286,8 +277,7 @@ class GravePactTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Player1's Grizzly Bears should be dead
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Grave Pact's triggered ability should be on the stack
         assertThat(gd.stack).anyMatch(e ->
@@ -321,8 +311,7 @@ class GravePactTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().hasType(CardType.CREATURE));
 
         // Grave Pact should still be on the battlefield (it's an enchantment)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grave Pact"));
+        harness.assertOnBattlefield(player1, "Grave Pact");
 
         // Two Grave Pact triggers (one for each of player1's creatures that died)
         long gravePactTriggers = gd.stack.stream()

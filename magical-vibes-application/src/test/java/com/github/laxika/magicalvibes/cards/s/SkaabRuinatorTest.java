@@ -205,8 +205,7 @@ class SkaabRuinatorTest extends BaseCardTest {
 
         // CR 601.2h: the rejected cast leaks nothing — mana unspent, the card still in the graveyard.
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Skaab Ruinator"));
+        harness.assertInGraveyard(player1, "Skaab Ruinator");
     }
 
     @Test

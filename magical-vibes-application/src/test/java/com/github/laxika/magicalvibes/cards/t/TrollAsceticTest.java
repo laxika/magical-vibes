@@ -38,8 +38,7 @@ class TrollAsceticTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Troll Ascetic"));
+        harness.assertOnBattlefield(player1, "Troll Ascetic");
     }
 
     // ===== Hexproof: opponent cannot target =====
@@ -181,8 +180,7 @@ class TrollAsceticTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Troll Ascetic"));
+        harness.assertOnBattlefield(player1, "Troll Ascetic");
         Permanent troll = findPermanent(player1, "Troll Ascetic");
         assertThat(troll.isTapped()).isTrue();
         assertThat(troll.getRegenerationShield()).isEqualTo(0);
@@ -204,10 +202,8 @@ class TrollAsceticTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Troll Ascetic"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Troll Ascetic"));
+        harness.assertNotOnBattlefield(player1, "Troll Ascetic");
+        harness.assertInGraveyard(player1, "Troll Ascetic");
     }
 
     // ===== Regeneration shield clears at end of turn =====

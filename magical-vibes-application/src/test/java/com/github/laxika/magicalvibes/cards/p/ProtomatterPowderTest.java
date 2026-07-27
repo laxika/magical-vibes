@@ -30,20 +30,16 @@ class ProtomatterPowderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Powder is sacrificed as a cost
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Protomatter Powder"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Protomatter Powder"));
+        harness.assertNotOnBattlefield(player1, "Protomatter Powder");
+        harness.assertInGraveyard(player1, "Protomatter Powder");
 
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Ornithopter"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Ornithopter"));
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        harness.assertNotInGraveyard(player1, "Ornithopter");
         assertThat(gd.stack).isEmpty();
     }
 

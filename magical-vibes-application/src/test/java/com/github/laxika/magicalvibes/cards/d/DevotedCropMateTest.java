@@ -53,10 +53,8 @@ class DevotedCropMateTest extends BaseCardTest {
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
             harness.handleGraveyardCardChosen(player1, 0);
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
+            harness.assertNotInGraveyard(player1, "Grizzly Bears");
         }
 
         @Test
@@ -109,8 +107,7 @@ class DevotedCropMateTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, false);
 
             assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertInGraveyard(player1, "Grizzly Bears");
         }
 
         @Test
@@ -145,8 +142,7 @@ class DevotedCropMateTest extends BaseCardTest {
             // Only Grizzly Bears should be a valid choice (index 0 in the graveyard).
             harness.handleGraveyardCardChosen(player1, 0);
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
         }
     }
 

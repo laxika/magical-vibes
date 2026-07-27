@@ -94,8 +94,7 @@ class RaidersWakeTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         // Grizzly Bears should have been discarded to graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -115,8 +114,7 @@ class RaidersWakeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
 
         // Grizzly Bears should still be in hand (not forced to discard)
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     @Test

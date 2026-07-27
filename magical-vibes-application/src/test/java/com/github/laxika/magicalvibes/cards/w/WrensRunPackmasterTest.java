@@ -31,8 +31,7 @@ class WrensRunPackmasterTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> champion ETB on stack
         harness.passBothPriorities(); // resolve champion ETB -> no Elf -> sacrifice
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Wren's Run Packmaster"));
+        harness.assertNotOnBattlefield(player1, "Wren's Run Packmaster");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -47,8 +46,7 @@ class WrensRunPackmasterTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve champion ETB -> permanent choice
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Wren's Run Packmaster"));
+        harness.assertOnBattlefield(player1, "Wren's Run Packmaster");
     }
 
     @Test

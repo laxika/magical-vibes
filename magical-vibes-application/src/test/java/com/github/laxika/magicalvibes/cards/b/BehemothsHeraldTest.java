@@ -81,13 +81,11 @@ class BehemothsHeraldTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, giantId);
         harness.handlePermanentChosen(player1, bearsId);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Elite Vanguard"));
+        harness.assertInGraveyard(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Elite Vanguard");
         // The Herald itself was not sacrificed and the ability is on the stack.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Behemoth's Herald"));
+        harness.assertOnBattlefield(player1, "Behemoth's Herald");
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.ACTIVATED_ABILITY);
     }
 
@@ -114,7 +112,6 @@ class BehemothsHeraldTest extends BaseCardTest {
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Godsire"));
+        harness.assertOnBattlefield(player1, "Godsire");
     }
 }

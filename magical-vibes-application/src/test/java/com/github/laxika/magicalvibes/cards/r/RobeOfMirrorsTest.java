@@ -184,10 +184,8 @@ class RobeOfMirrorsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Robe of Mirrors"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Robe of Mirrors"));
+        harness.assertInGraveyard(player1, "Robe of Mirrors");
+        harness.assertNotOnBattlefield(player1, "Robe of Mirrors");
     }
 
     // ===== Can be cast on own creature =====

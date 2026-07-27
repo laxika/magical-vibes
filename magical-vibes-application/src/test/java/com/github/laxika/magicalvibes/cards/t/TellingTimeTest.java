@@ -67,8 +67,7 @@ class TellingTimeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Telling Time"));
+        harness.assertInGraveyard(player1, "Telling Time");
         assertThat(gd.stack).isEmpty();
     }
 

@@ -45,10 +45,8 @@ class SerpentOfTheEndlessSeaTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Serpent of the Endless Sea"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Serpent of the Endless Sea"));
+        harness.assertNotOnBattlefield(player1, "Serpent of the Endless Sea");
+        harness.assertInGraveyard(player1, "Serpent of the Endless Sea");
     }
 
     @Test
@@ -61,8 +59,7 @@ class SerpentOfTheEndlessSeaTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Serpent of the Endless Sea"));
+        harness.assertOnBattlefield(player1, "Serpent of the Endless Sea");
     }
 
     @Test

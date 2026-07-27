@@ -45,10 +45,8 @@ class NoggleBridgebreakerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInHand(player1, "Forest");
     }
 
     @Test
@@ -66,9 +64,7 @@ class NoggleBridgebreakerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> enters battlefield
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Noggle Bridgebreaker"));
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertOnBattlefield(player1, "Noggle Bridgebreaker");
     }
 }

@@ -94,10 +94,8 @@ class BrightReprisalTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Creature destroyed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // Card drawn
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handSizeAfterCast + 1);
     }
@@ -122,8 +120,7 @@ class BrightReprisalTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Bright Reprisal"));
+        harness.assertInGraveyard(player2, "Bright Reprisal");
     }
 
     // ===== Fizzle =====
@@ -154,8 +151,7 @@ class BrightReprisalTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Bright Reprisal still goes to graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Bright Reprisal"));
+        harness.assertInGraveyard(player2, "Bright Reprisal");
         // No card drawn when fizzled
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handSizeAfterCast);
     }

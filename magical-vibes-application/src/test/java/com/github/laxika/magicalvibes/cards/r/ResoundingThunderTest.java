@@ -44,11 +44,8 @@ class ResoundingThunderTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Cycling reflexive trigger: 6 damage to any target, then draw =====
@@ -67,10 +64,8 @@ class ResoundingThunderTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
         // The cycling draw still happens: Thunder discarded, the library card drawn.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Resounding Thunder"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Resounding Thunder");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test
@@ -85,13 +80,9 @@ class ResoundingThunderTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Serra Angel"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Resounding Thunder"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Serra Angel");
+        harness.assertInGraveyard(player1, "Resounding Thunder");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     private void addCyclingMana(Player player) {

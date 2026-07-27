@@ -38,8 +38,7 @@ class PhyrexianIngesterTest extends BaseCardTest {
 
         castIngesterAndAcceptMay(bearsId);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
@@ -106,8 +105,7 @@ class PhyrexianIngesterTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, ingester)).isEqualTo(3);
 
         // Grizzly Bears still on battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Can exile own creature =====
@@ -120,8 +118,7 @@ class PhyrexianIngesterTest extends BaseCardTest {
 
         castIngesterAndAcceptMay(bearsId);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 

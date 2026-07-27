@@ -38,8 +38,7 @@ class BrutalizerExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             GameData gd = harness.getGameData();
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Brutalizer Exarch"));
+            harness.assertOnBattlefield(player1, "Brutalizer Exarch");
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
             // Only creature cards should be shown
             assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
@@ -119,8 +118,7 @@ class BrutalizerExarchTest extends BaseCardTest {
 
             GameData gd = harness.getGameData();
             // The Plains should no longer be on the battlefield
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Plains"));
+            harness.assertNotOnBattlefield(player2, "Plains");
             // It should be on the bottom of the owner's library
             List<Card> deck = gd.playerDecks.get(player2.getId());
             assertThat(deck.getLast().getName()).isEqualTo("Plains");
@@ -136,9 +134,7 @@ class BrutalizerExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
-            GameData gd = harness.getGameData();
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Barbed Battlegear"));
+            harness.assertNotOnBattlefield(player2, "Barbed Battlegear");
         }
 
         @Test
@@ -150,9 +146,7 @@ class BrutalizerExarchTest extends BaseCardTest {
             castWithMode2(targetId);
             harness.passBothPriorities(); // resolve creature
 
-            GameData gd = harness.getGameData();
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Brutalizer Exarch"));
+            harness.assertOnBattlefield(player1, "Brutalizer Exarch");
         }
     }
 

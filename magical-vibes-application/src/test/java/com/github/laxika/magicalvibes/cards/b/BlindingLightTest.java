@@ -55,7 +55,6 @@ class BlindingLightTest extends BaseCardTest {
         castBlindingLight(0);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Blinding Light"));
+        harness.assertInGraveyard(player1, "Blinding Light");
     }
 }

@@ -70,8 +70,7 @@ class NissasDefeatTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Nissa, Steward of Elements");
         harness.assertInGraveyard(player2, "Nissa, Steward of Elements");
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test

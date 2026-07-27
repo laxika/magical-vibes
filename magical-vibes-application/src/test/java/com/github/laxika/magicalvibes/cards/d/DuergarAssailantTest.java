@@ -51,8 +51,7 @@ class DuergarAssailantTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, attacker.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Duergar Assailant"));
+        harness.assertNotOnBattlefield(player1, "Duergar Assailant");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }

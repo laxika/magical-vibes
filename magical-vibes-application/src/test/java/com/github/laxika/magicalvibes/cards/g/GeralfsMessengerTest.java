@@ -130,9 +130,7 @@ class GeralfsMessengerTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Geralf's Messenger"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Geralf's Messenger"));
+        harness.assertInGraveyard(player1, "Geralf's Messenger");
+        harness.assertNotOnBattlefield(player1, "Geralf's Messenger");
     }
 }

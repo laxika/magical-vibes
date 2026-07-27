@@ -163,17 +163,12 @@ class ElspethTirelTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Elspeth should still be on the battlefield (she's the source — "other")
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Elspeth Tirel"));
+        harness.assertOnBattlefield(player1, "Elspeth Tirel");
 
         // Both Grizzly Bears should be destroyed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -192,12 +187,9 @@ class ElspethTirelTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Check that any token permanents survived - add tokens manually for this test
         // Elspeth should survive (source), non-token creatures should be destroyed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -236,8 +228,7 @@ class ElspethTirelTest extends BaseCardTest {
         assertThat(survivingTokens).isEqualTo(3);
 
         // Non-token creature should be destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -330,10 +321,8 @@ class ElspethTirelTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elspeth Tirel"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Elspeth Tirel"));
+        harness.assertNotOnBattlefield(player1, "Elspeth Tirel");
+        harness.assertInGraveyard(player1, "Elspeth Tirel");
         // Ability is still on the stack
         assertThat(gd.stack).hasSize(1);
     }

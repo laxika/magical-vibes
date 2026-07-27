@@ -48,12 +48,9 @@ class SlinnVodaTheRisingDeepTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         // All creatures remain on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Slinn Voda, the Rising Deep"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Serra Angel"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Slinn Voda, the Rising Deep");
+        harness.assertOnBattlefield(player2, "Serra Angel");
     }
 
     // ===== Cast with kicker — bounces non-exempt creatures =====
@@ -80,10 +77,8 @@ class SlinnVodaTheRisingDeepTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Non-exempt creatures should be bounced
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Serra Angel"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Serra Angel");
 
         // Bounced creatures go to their owners' hands
         assertThat(gd.playerHands.get(player1.getId()))
@@ -108,8 +103,7 @@ class SlinnVodaTheRisingDeepTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Slinn Voda is a Leviathan so it stays
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Slinn Voda, the Rising Deep"));
+        harness.assertOnBattlefield(player1, "Slinn Voda, the Rising Deep");
     }
 
     @Test
@@ -132,12 +126,10 @@ class SlinnVodaTheRisingDeepTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Merfolk Sovereign should stay on battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Merfolk Sovereign"));
+        harness.assertOnBattlefield(player2, "Merfolk Sovereign");
 
         // Grizzly Bears should be bounced
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerHands.get(player2.getId()))
                 .extracting(c -> c.getName())
                 .contains("Grizzly Bears");

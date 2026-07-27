@@ -54,8 +54,7 @@ class BloodwaterEntityTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Shock");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Shock"));
+        harness.assertNotInGraveyard(player1, "Shock");
     }
 
     @Test
@@ -69,8 +68,7 @@ class BloodwaterEntityTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player1, "Shock");
     }
 
     @Test
@@ -89,8 +87,7 @@ class BloodwaterEntityTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, 1);
         assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Shock");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test

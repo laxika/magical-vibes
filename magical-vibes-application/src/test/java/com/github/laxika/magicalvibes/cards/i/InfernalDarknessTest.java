@@ -27,8 +27,7 @@ class InfernalDarknessTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Infernal Darkness"));
+        harness.assertOnBattlefield(player1, "Infernal Darkness");
     }
 
     @Test
@@ -116,7 +115,6 @@ class InfernalDarknessTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(darkness);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Infernal Darkness"));
+        harness.assertInGraveyard(player1, "Infernal Darkness");
     }
 }

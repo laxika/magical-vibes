@@ -105,8 +105,7 @@ class AvenWindGuideTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Aven Wind Guide"));
+        harness.assertNotInGraveyard(player1, "Aven Wind Guide");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Aven Wind Guide"));
     }
@@ -143,7 +142,6 @@ class AvenWindGuideTest extends BaseCardTest {
         Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Aven Wind Guide"));
+        harness.assertInGraveyard(player1, "Aven Wind Guide");
     }
 }

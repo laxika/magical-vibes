@@ -41,10 +41,8 @@ class BorrowedKnowledgeTest extends BaseCardTest {
             assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
             assertThat(gd.playerHands.get(player1.getId()))
                     .allMatch(c -> c.getName().equals("Island"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Borrowed Knowledge"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertInGraveyard(player1, "Borrowed Knowledge");
+            harness.assertInGraveyard(player1, "Grizzly Bears");
         }
 
         @Test

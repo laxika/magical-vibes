@@ -40,8 +40,7 @@ class PrinceOfThrallsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         harness.assertLife(player2, 20);
     }
@@ -56,8 +55,7 @@ class PrinceOfThrallsTest extends BaseCardTest {
 
         harness.assertLife(player2, 17);
         harness.assertInGraveyard(player2, "Grizzly Bears");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -77,8 +75,7 @@ class PrinceOfThrallsTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertLife(player2, 2);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -118,8 +115,7 @@ class PrinceOfThrallsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Fountain of Youth"));
+        harness.assertOnBattlefield(player1, "Fountain of Youth");
         harness.assertNotInGraveyard(player2, "Fountain of Youth");
     }
 }

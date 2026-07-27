@@ -102,8 +102,7 @@ class UnwindTest extends BaseCardTest {
 
         gd = harness.getGameData();
         // Countered spell goes to owner's graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Might of Oaks"));
+        harness.assertInGraveyard(player1, "Might of Oaks");
 
         // All 3 islands should be untapped
         long untappedIslands = gd.playerBattlefields.get(player2.getId()).stream()
@@ -215,8 +214,7 @@ class UnwindTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Unwind"));
+        harness.assertInGraveyard(player2, "Unwind");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -247,7 +245,6 @@ class UnwindTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Unwind still goes to graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Unwind"));
+        harness.assertInGraveyard(player2, "Unwind");
     }
 }

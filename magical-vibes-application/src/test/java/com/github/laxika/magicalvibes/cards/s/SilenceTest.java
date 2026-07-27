@@ -185,8 +185,7 @@ class SilenceTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Bears should enter the battlefield
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player2, "Grizzly Bears");
         }
 
         @Test
@@ -197,8 +196,7 @@ class SilenceTest extends BaseCardTest {
             harness.castAndResolveInstant(player1, 0);
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Silence"));
+            harness.assertInGraveyard(player1, "Silence");
         }
     }
 

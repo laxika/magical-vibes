@@ -32,8 +32,7 @@ class GutturalResponseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Opt"));
+        harness.assertInGraveyard(player1, "Opt");
         assertThat(gd.stack).isEmpty();
     }
 

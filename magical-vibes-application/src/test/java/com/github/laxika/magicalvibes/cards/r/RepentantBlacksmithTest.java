@@ -106,8 +106,7 @@ class RepentantBlacksmithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Red creature's damage is prevented by protection; Blacksmith survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Repentant Blacksmith"));
+        harness.assertOnBattlefield(player2, "Repentant Blacksmith");
     }
 
     @Test

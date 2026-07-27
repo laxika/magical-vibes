@@ -26,8 +26,7 @@ class LesserGargadonTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mountain"));
+        harness.assertNotOnBattlefield(player1, "Mountain");
     }
 
     @Test
@@ -42,8 +41,7 @@ class LesserGargadonTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mountain"));
+        harness.assertNotOnBattlefield(player2, "Mountain");
     }
 
     @Test

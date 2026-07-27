@@ -28,8 +28,7 @@ class LightningAxeTest extends BaseCardTest {
         harness.castInstantWithDiscard(player1, 0, target.getId(), 1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player1, "Forest");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }

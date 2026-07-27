@@ -124,8 +124,7 @@ class PraetorsGraspTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Praetor's Grasp"));
+        harness.assertInGraveyard(player1, "Praetor's Grasp");
     }
 
     // ===== Play from exile =====
@@ -151,8 +150,7 @@ class PraetorsGraspTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bears should be on player1's battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
 
         // Play permission should be removed
         assertThat(gd.exilePlayPermissions).doesNotContainKey(bears.getId());
@@ -180,8 +178,7 @@ class PraetorsGraspTest extends BaseCardTest {
         gs.playCardFromExile(gd, player1, swamp.getId(), null, null);
 
         // Land should be on player1's battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Swamp"));
+        harness.assertOnBattlefield(player1, "Swamp");
 
         // Should count as a land play
         assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);

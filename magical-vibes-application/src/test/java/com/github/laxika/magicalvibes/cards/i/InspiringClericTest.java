@@ -32,8 +32,7 @@ class InspiringClericTest extends BaseCardTest {
         castInspiringCleric();
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Inspiring Cleric"));
+        harness.assertOnBattlefield(player1, "Inspiring Cleric");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);

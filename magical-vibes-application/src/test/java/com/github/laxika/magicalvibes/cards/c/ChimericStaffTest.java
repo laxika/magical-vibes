@@ -46,8 +46,7 @@ class ChimericStaffTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Chimeric Staff"));
+        harness.assertOnBattlefield(player1, "Chimeric Staff");
     }
 
     // ===== Activate ability — basic animation =====

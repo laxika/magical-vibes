@@ -75,12 +75,10 @@ class ShapeAnewTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // Target artifact should be sacrificed (in graveyard)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fountain of Youth"));
+        harness.assertInGraveyard(player1, "Fountain of Youth");
 
         // The found artifact should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mox Opal"));
+        harness.assertOnBattlefield(player1, "Mox Opal");
 
         // Revealed non-artifact card should be shuffled back into library
         assertThat(gd.playerDecks.get(player1.getId()))
@@ -106,8 +104,7 @@ class ShapeAnewTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // The artifact should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mox Opal"));
+        harness.assertOnBattlefield(player1, "Mox Opal");
 
         // Library should be empty (only had the one artifact)
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -133,12 +130,10 @@ class ShapeAnewTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // Target was still sacrificed
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fountain of Youth"));
+        harness.assertInGraveyard(player1, "Fountain of Youth");
 
         // No new artifact on battlefield (the target was sacrificed)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mox Opal"));
+        harness.assertNotOnBattlefield(player1, "Mox Opal");
 
         // All non-artifact cards should be back in library
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
@@ -162,8 +157,7 @@ class ShapeAnewTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // Target was sacrificed
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fountain of Youth"));
+        harness.assertInGraveyard(player1, "Fountain of Youth");
 
         // Library should still be empty
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -189,12 +183,10 @@ class ShapeAnewTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // Opponent's artifact was sacrificed
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Fountain of Youth"));
+        harness.assertInGraveyard(player2, "Fountain of Youth");
 
         // The found artifact enters the battlefield under opponent's control
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mox Opal"));
+        harness.assertOnBattlefield(player2, "Mox Opal");
 
         // Opponent's non-artifact cards are shuffled back into their library
         assertThat(gd.playerDecks.get(player2.getId()))
@@ -218,8 +210,7 @@ class ShapeAnewTest extends BaseCardTest {
 
         gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shape Anew"));
+        harness.assertInGraveyard(player1, "Shape Anew");
     }
 
     @Test
@@ -244,8 +235,7 @@ class ShapeAnewTest extends BaseCardTest {
         gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Shape Anew still goes to graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shape Anew"));
+        harness.assertInGraveyard(player1, "Shape Anew");
         // No artifact was put onto the battlefield (library wasn't searched)
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         // Library was not touched

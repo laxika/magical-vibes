@@ -98,6 +98,6 @@ class ColdSnapTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(snap);
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Cold Snap"));
+        harness.assertInGraveyard(player1, "Cold Snap");
     }
 }

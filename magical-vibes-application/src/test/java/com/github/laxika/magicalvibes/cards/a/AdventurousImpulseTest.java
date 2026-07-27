@@ -79,7 +79,7 @@ class AdventurousImpulseTest extends BaseCardTest {
         // Choose Llanowar Elves
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInHand(player1, "Llanowar Elves");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(2);
     }
@@ -101,7 +101,7 @@ class AdventurousImpulseTest extends BaseCardTest {
         // Choose Plains (index 1 since only Llanowar Elves and Plains are offered)
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
 
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Plains"));
+        harness.assertInHand(player1, "Plains");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(2);
     }
@@ -180,8 +180,7 @@ class AdventurousImpulseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Adventurous Impulse"));
+        harness.assertInGraveyard(player1, "Adventurous Impulse");
         assertThat(gd.stack).isEmpty();
     }
 

@@ -47,8 +47,7 @@ class ApothecaryGeistTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Apothecary Geist"));
+        harness.assertOnBattlefield(player1, "Apothecary Geist");
     }
 
     @Test

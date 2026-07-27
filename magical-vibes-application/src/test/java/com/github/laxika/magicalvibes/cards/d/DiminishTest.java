@@ -272,8 +272,7 @@ class DiminishTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Diminish"));
+        harness.assertInGraveyard(player1, "Diminish");
     }
 
     private Permanent addVillageReady(Player player) {

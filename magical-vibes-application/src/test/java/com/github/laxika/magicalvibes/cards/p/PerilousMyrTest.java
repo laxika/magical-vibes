@@ -60,8 +60,7 @@ class PerilousMyrTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Perilous Myr"));
+        harness.assertOnBattlefield(player1, "Perilous Myr");
     }
 
     // ===== Death trigger — target creature =====
@@ -77,8 +76,7 @@ class PerilousMyrTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Perilous Myr"));
+        harness.assertInGraveyard(player1, "Perilous Myr");
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
@@ -109,8 +107,7 @@ class PerilousMyrTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(bearsId));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Death trigger — target player =====
@@ -170,8 +167,7 @@ class PerilousMyrTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Perilous Myr"));
+        harness.assertInGraveyard(player1, "Perilous Myr");
 
         // Any-target trigger should still fire (can target players)
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);

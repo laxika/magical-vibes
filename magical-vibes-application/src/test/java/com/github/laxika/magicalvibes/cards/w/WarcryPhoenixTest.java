@@ -142,8 +142,7 @@ class WarcryPhoenixTest extends BaseCardTest {
         // Phoenix should still be in the graveyard
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(phoenix.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Warcry Phoenix"));
+        harness.assertNotOnBattlefield(player1, "Warcry Phoenix");
     }
 
     @Test
@@ -225,7 +224,6 @@ class WarcryPhoenixTest extends BaseCardTest {
         // Phoenix stays in graveyard because mana cannot be paid
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(phoenix.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Warcry Phoenix"));
+        harness.assertNotOnBattlefield(player1, "Warcry Phoenix");
     }
 }

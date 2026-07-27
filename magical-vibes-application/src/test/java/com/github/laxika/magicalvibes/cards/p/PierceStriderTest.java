@@ -25,8 +25,7 @@ class PierceStriderTest extends BaseCardTest {
         castPierceStrider();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Pierce Strider"));
+        harness.assertOnBattlefield(player1, "Pierce Strider");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());

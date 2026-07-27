@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AppealToEirduTest extends BaseCardTest {
 
-
     @Test
     @DisplayName("Single target gets +2/+1")
     void singleTargetGetsBoost() {
@@ -174,8 +173,7 @@ class AppealToEirduTest extends BaseCardTest {
         assertThat(harness.getGameData().stack).isEmpty();
         assertThat(harness.getGameData().gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Card should go to graveyard even when fizzled
-        assertThat(harness.getGameData().playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Appeal to Eirdu"));
+        harness.assertInGraveyard(player1, "Appeal to Eirdu");
     }
 
     @Test

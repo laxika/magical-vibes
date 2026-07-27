@@ -28,10 +28,8 @@ class SolemnityTest extends BaseCardTest {
 
         // Fertilid is printed 0/0 and normally enters with two +1/+1 counters. Solemnity prevents
         // those counters, so it enters as a 0/0 and dies to state-based actions.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fertilid"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fertilid"));
+        harness.assertNotOnBattlefield(player1, "Fertilid");
+        harness.assertInGraveyard(player1, "Fertilid");
     }
 
     @Test

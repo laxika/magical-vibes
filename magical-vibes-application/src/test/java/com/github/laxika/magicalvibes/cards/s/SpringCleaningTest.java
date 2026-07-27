@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.d.DeathPitsOfRath;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SpringCleaningTest extends BaseCardTest {
@@ -51,13 +49,10 @@ class SpringCleaningTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Angelic Chorus"))
-                .noneMatch(p -> p.getCard().getName().equals("Death Pits of Rath"));
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertNotOnBattlefield(player2, "Death Pits of Rath");
         // The caster's own enchantment is untouched.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Angelic Chorus"));
+        harness.assertOnBattlefield(player1, "Angelic Chorus");
     }
 
     @Test
@@ -72,12 +67,9 @@ class SpringCleaningTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Angelic Chorus"))
-                .anyMatch(p -> p.getCard().getName().equals("Death Pits of Rath"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Angelic Chorus"));
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertOnBattlefield(player2, "Death Pits of Rath");
+        harness.assertInGraveyard(player2, "Angelic Chorus");
     }
 
     @Test

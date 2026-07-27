@@ -29,10 +29,8 @@ class ChromaticStarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // The permanent should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Chromatic Star"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Chromatic Star"));
+        harness.assertNotOnBattlefield(player1, "Chromatic Star");
+        harness.assertInGraveyard(player1, "Chromatic Star");
 
         // CR 603.3: the death trigger from the sacrifice-as-cost waits in
         // pendingManaAbilityTriggers — not on the stack — so it doesn't block
@@ -127,15 +125,12 @@ class ChromaticStarTest extends BaseCardTest {
     void cannotActivateWithoutMana() {
         harness.addToBattlefield(player1, new ChromaticStar());
 
-        GameData gd = harness.getGameData();
-
         // No mana in pool — activation should fail
         org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () ->
                 harness.activateAbility(player1, 0, null, null));
 
         // Chromatic Star should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Chromatic Star"));
+        harness.assertOnBattlefield(player1, "Chromatic Star");
     }
 }
 

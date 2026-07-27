@@ -96,7 +96,6 @@ class VillageBellRingerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Village Bell-Ringer"));
+        harness.assertOnBattlefield(player1, "Village Bell-Ringer");
     }
 }

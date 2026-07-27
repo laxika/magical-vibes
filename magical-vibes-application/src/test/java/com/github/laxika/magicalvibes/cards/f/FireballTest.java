@@ -47,10 +47,8 @@ class FireballTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 4, List.of(bearsId));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -99,8 +97,7 @@ class FireballTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         // Giant Spider (2/4) survives 2 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
+        harness.assertOnBattlefield(player2, "Giant Spider");
     }
 
     // ===== Rounding down =====
@@ -138,8 +135,7 @@ class FireballTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         // GrizzlyBears (2/2) survives 1 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Additional cost per target =====
@@ -161,10 +157,8 @@ class FireballTest extends BaseCardTest {
 
         // floor(4/2) = 2 damage each
         // GrizzlyBears (2/2) dies, GiantSpider (2/4) survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Giant Spider");
     }
 
     @Test
@@ -202,10 +196,8 @@ class FireballTest extends BaseCardTest {
         // floor(3/3) = 1 damage each
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         // Both creatures survive 1 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Giant Spider");
     }
 
     // ===== Stack and graveyard =====
@@ -237,8 +229,7 @@ class FireballTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fireball"));
+        harness.assertInGraveyard(player1, "Fireball");
     }
 
     // ===== Target removed before resolution =====
@@ -279,10 +270,8 @@ class FireballTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature, planeswalker, or player");
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Plains"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fireball"));
+        harness.assertOnBattlefield(player2, "Plains");
+        harness.assertInHand(player1, "Fireball");
     }
 
     @Test
@@ -299,8 +288,7 @@ class FireballTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 4, List.of(bearsId, plainsId)))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Plains"));
+        harness.assertOnBattlefield(player2, "Plains");
     }
 
     @Test
@@ -314,8 +302,7 @@ class FireballTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 4, bearsId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -346,8 +333,7 @@ class FireballTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Plains"));
+        harness.assertOnBattlefield(player2, "Plains");
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
@@ -370,11 +356,9 @@ class FireballTest extends BaseCardTest {
 
         // floor(6/3) = 2 damage each
         // GrizzlyBears (2/2) dies
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // AirElemental (4/4) survives 2 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));
+        harness.assertOnBattlefield(player2, "Air Elemental");
         // Player 2 takes 2 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }

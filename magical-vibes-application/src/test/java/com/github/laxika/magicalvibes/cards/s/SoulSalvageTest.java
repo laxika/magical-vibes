@@ -62,18 +62,15 @@ class SoulSalvageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both creatures should be in hand, not in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"))
-                .noneMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
 
         // Soul Salvage goes to graveyard after resolution
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Soul Salvage"));
+        harness.assertInGraveyard(player1, "Soul Salvage");
 
         // Both creatures should be in hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Llanowar Elves");
 
         // Log should mention returning from graveyard
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("from graveyard to hand"));
@@ -98,8 +95,7 @@ class SoulSalvageTest extends BaseCardTest {
 
         // One creature returned to hand, one still in graveyard (plus Soul Salvage)
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Soul Salvage"));
+        harness.assertInGraveyard(player1, "Soul Salvage");
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
@@ -120,9 +116,8 @@ class SoulSalvageTest extends BaseCardTest {
 
         // Creature still in graveyard, Soul Salvage also in graveyard
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Soul Salvage"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Soul Salvage");
 
         // Hand should be empty
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -148,9 +143,8 @@ class SoulSalvageTest extends BaseCardTest {
 
         // Non-creature card untouched in graveyard. Soul Salvage also goes to graveyard.
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Leonin Scimitar"))
-                .anyMatch(c -> c.getName().equals("Soul Salvage"));
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+        harness.assertInGraveyard(player1, "Soul Salvage");
     }
 
     @Test

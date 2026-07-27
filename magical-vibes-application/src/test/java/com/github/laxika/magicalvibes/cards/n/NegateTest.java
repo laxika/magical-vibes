@@ -84,10 +84,8 @@ class NegateTest extends BaseCardTest {
         harness.castInstant(player2, 0, might.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Countered spell goes to owner's graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Might of Oaks"));
+        harness.assertInGraveyard(player1, "Might of Oaks");
     }
 
     @Test
@@ -109,8 +107,7 @@ class NegateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Negate"));
+        harness.assertInGraveyard(player2, "Negate");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -141,7 +138,6 @@ class NegateTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Negate still goes to graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Negate"));
+        harness.assertInGraveyard(player2, "Negate");
     }
 }

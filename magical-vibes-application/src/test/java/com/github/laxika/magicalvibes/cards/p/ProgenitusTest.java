@@ -94,10 +94,8 @@ class ProgenitusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Progenitus survives the 12 damage (prevented) and deals 10 back (attacker survives at 12/2).
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Progenitus"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Colossus"));
+        harness.assertOnBattlefield(player2, "Progenitus");
+        harness.assertOnBattlefield(player1, "Colossus");
     }
 
     // ===== Shuffle-into-library replacement =====

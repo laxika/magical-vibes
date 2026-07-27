@@ -40,10 +40,8 @@ class DreamFractureTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Spell was countered — in its controller's graveyard, not on the battlefield.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Its controller (player1) drew a card; the caster (player2) also drew a card.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -67,8 +65,7 @@ class DreamFractureTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // player1 is both the countered spell's controller and the caster → two draws.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }

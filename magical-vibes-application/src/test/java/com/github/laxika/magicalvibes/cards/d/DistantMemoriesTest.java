@@ -190,8 +190,7 @@ class DistantMemoriesTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Distant Memories"));
+        harness.assertInGraveyard(player1, "Distant Memories");
     }
 
     // ===== Unrestricted search — cannot fail to find =====

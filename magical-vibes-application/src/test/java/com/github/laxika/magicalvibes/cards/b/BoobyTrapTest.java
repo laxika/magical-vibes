@@ -68,8 +68,7 @@ class BoobyTrapTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Booby Trap trigger
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(10);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Booby Trap"));
+        harness.assertNotOnBattlefield(player1, "Booby Trap");
         harness.assertInGraveyard(player1, "Booby Trap");
     }
 
@@ -84,8 +83,7 @@ class BoobyTrapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Booby Trap"));
+        harness.assertOnBattlefield(player1, "Booby Trap");
     }
 
     @Test
@@ -99,8 +97,7 @@ class BoobyTrapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Booby Trap"));
+        harness.assertOnBattlefield(player1, "Booby Trap");
     }
 
     @Test

@@ -181,7 +181,6 @@ class SickleslicerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Germ should be dead (0 toughness, state-based action)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phyrexian Germ"));
+        harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
     }
 }

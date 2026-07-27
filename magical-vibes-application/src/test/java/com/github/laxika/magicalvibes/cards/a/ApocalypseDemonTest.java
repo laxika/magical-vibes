@@ -64,8 +64,7 @@ class ApocalypseDemonTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(demon(player1).isTapped()).isTrue();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -79,8 +78,7 @@ class ApocalypseDemonTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger → may prompt
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(demon(player1).isTapped()).isFalse();
     }
 
@@ -107,8 +105,7 @@ class ApocalypseDemonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(demon(player1).isTapped()).isFalse();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Helpers =====

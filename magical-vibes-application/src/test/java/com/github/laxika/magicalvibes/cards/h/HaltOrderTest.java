@@ -77,13 +77,10 @@ class HaltOrderTest extends BaseCardTest {
         harness.castInstant(player2, 0, millstone.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Countered artifact goes to owner's graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Millstone"));
+        harness.assertInGraveyard(player1, "Millstone");
         // Does not enter the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Millstone"));
+        harness.assertNotOnBattlefield(player1, "Millstone");
     }
 
     @Test
@@ -123,8 +120,7 @@ class HaltOrderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Halt Order"));
+        harness.assertInGraveyard(player2, "Halt Order");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -152,7 +148,6 @@ class HaltOrderTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Halt Order still goes to graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Halt Order"));
+        harness.assertInGraveyard(player2, "Halt Order");
     }
 }

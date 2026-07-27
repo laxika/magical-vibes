@@ -38,10 +38,8 @@ class BriarhornTest extends BaseCardTest {
         assertThat(bears.getEffectivePower()).isEqualTo(5);
         assertThat(bears.getEffectiveToughness()).isEqualTo(5);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Briarhorn"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Briarhorn"));
+        harness.assertOnBattlefield(player1, "Briarhorn");
+        harness.assertNotInGraveyard(player1, "Briarhorn");
     }
 
     @Test
@@ -92,10 +90,8 @@ class BriarhornTest extends BaseCardTest {
         assertThat(bears.getEffectiveToughness()).isEqualTo(5);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Briarhorn"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Briarhorn"));
+        harness.assertNotOnBattlefield(player1, "Briarhorn");
+        harness.assertInGraveyard(player1, "Briarhorn");
     }
 
     // ===== Fizzle =====

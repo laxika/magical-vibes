@@ -51,10 +51,8 @@ class ExileTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Grizzly Bears (2/2) exiled -> not on battlefield, not in graveyard, in exile
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.exiledCards)
                 .anyMatch(e -> e.card().getName().equals("Grizzly Bears"));
         // Caster gains life equal to toughness (2): 15 + 2 = 17

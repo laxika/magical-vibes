@@ -86,8 +86,7 @@ class MindControlTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Mind Control should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mind Control"));
+        harness.assertInGraveyard(player1, "Mind Control");
     }
 
     @Test

@@ -43,8 +43,7 @@ class SpearbreakerBehemothTest extends BaseCardTest {
         avatar.setMarkedDamage(20);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Avatar of Might"));
+        harness.assertOnBattlefield(player1, "Avatar of Might");
     }
 
     // ===== Wears off =====

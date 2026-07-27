@@ -62,8 +62,7 @@ class MortivoreTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mortivore"));
+        harness.assertOnBattlefield(player1, "Mortivore");
     }
 
     @Test
@@ -76,10 +75,8 @@ class MortivoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 0/0 creature dies to SBA
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mortivore"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mortivore"));
+        harness.assertNotOnBattlefield(player1, "Mortivore");
+        harness.assertInGraveyard(player1, "Mortivore");
     }
 
     // ===== Dynamic power/toughness =====
@@ -280,16 +277,14 @@ class MortivoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Mortivore should survive via regeneration
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mortivore"));
+        harness.assertOnBattlefield(player1, "Mortivore");
         Permanent mort = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Mortivore"))
                 .findFirst().orElseThrow();
         assertThat(mort.isTapped()).isTrue();
         assertThat(mort.getRegenerationShield()).isEqualTo(0);
         // Grizzly Bears also takes 2 lethal damage from Mortivore and dies
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -314,10 +309,8 @@ class MortivoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both creatures trade — Mortivore has no regeneration shield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mortivore"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mortivore"));
+        harness.assertNotOnBattlefield(player1, "Mortivore");
+        harness.assertInGraveyard(player1, "Mortivore");
     }
 
     @Test

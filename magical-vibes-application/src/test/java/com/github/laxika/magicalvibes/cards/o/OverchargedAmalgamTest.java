@@ -35,8 +35,7 @@ class OverchargedAmalgamTest extends BaseCardTest {
         castAmalgamToExploitPrompt();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Overcharged Amalgam"));
+        harness.assertOnBattlefield(player1, "Overcharged Amalgam");
     }
 
     @Test
@@ -62,12 +61,9 @@ class OverchargedAmalgamTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve counter
 
         assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Lightning Bolt"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lightning Bolt"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Overcharged Amalgam"));
+        harness.assertInGraveyard(player1, "Lightning Bolt");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Overcharged Amalgam");
     }
 
     @Test
@@ -91,10 +87,8 @@ class OverchargedAmalgamTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Lightning Bolt"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lightning Bolt"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Overcharged Amalgam"));
+        harness.assertInGraveyard(player1, "Lightning Bolt");
+        harness.assertNotOnBattlefield(player1, "Overcharged Amalgam");
     }
 
     @Test
@@ -143,9 +137,7 @@ class OverchargedAmalgamTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Overcharged Amalgam"));
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Overcharged Amalgam"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Overcharged Amalgam"));
+        harness.assertNotOnBattlefield(player1, "Overcharged Amalgam");
+        harness.assertInGraveyard(player1, "Overcharged Amalgam");
     }
 }

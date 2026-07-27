@@ -31,8 +31,7 @@ class EtheriumAbominationTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Etherium Abomination"))
                 .findFirst().orElseThrow();
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Etherium Abomination"));
+        harness.assertNotInGraveyard(player1, "Etherium Abomination");
     }
 
     @Test
@@ -51,8 +50,7 @@ class EtheriumAbominationTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Etherium Abomination"));
+        harness.assertNotOnBattlefield(player1, "Etherium Abomination");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Etherium Abomination"));
     }

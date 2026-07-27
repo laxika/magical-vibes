@@ -33,10 +33,8 @@ class VisceraSeerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bears should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Should be in scry state
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
@@ -93,8 +91,7 @@ class VisceraSeerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Seer should be sacrificed, ability on stack
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Viscera Seer"));
+        harness.assertNotOnBattlefield(player1, "Viscera Seer");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }
@@ -121,8 +118,7 @@ class VisceraSeerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Seer should be auto-sacrificed (only creature available)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Viscera Seer"));
+        harness.assertNotOnBattlefield(player1, "Viscera Seer");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }

@@ -65,8 +65,7 @@ class WarrenScourgeElfTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Goblin Piker's 2 damage is prevented by protection from Goblins — Elf survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Warren-Scourge Elf"));
+        harness.assertOnBattlefield(player2, "Warren-Scourge Elf");
     }
 
     @Test
@@ -90,8 +89,7 @@ class WarrenScourgeElfTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Hill Giant's 3 damage kills the 1/1 Elf
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Warren-Scourge Elf"));
+        harness.assertNotOnBattlefield(player2, "Warren-Scourge Elf");
     }
 
     // ===== Protection - blocking =====

@@ -71,10 +71,8 @@ class BontuTheGlorifiedTest extends BaseCardTest {
                 new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         // The other creature was sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Opponent loses 1, controller gains 1
         assertThat(gd.getLife(player2.getId())).isEqualTo(19);

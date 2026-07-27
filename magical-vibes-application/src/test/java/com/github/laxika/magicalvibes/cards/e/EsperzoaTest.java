@@ -80,7 +80,6 @@ class EsperzoaTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(artifact.getId()));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fire Diamond"));
+        harness.assertInHand(player1, "Fire Diamond");
     }
 }

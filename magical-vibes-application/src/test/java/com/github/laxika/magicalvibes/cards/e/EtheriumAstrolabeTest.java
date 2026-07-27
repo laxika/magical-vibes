@@ -30,8 +30,7 @@ class EtheriumAstrolabeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player1, "Spellbook");
     }
 
     @Test
@@ -46,8 +45,7 @@ class EtheriumAstrolabeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Etherium Astrolabe"));
+        harness.assertNotOnBattlefield(player1, "Etherium Astrolabe");
     }
 
     @Test
@@ -105,7 +103,6 @@ class EtheriumAstrolabeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Etherium Astrolabe"));
+        harness.assertNotOnBattlefield(player1, "Etherium Astrolabe");
     }
 }

@@ -67,8 +67,7 @@ class TimeWarpTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Time Warp"));
+        harness.assertInGraveyard(player1, "Time Warp");
         assertThat(gd.stack).isEmpty();
     }
 

@@ -83,10 +83,7 @@ class KarplusanStriderTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, strider.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Karplusan Strider"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Karplusan Strider"));
+        harness.assertNotOnBattlefield(player1, "Karplusan Strider");
+        harness.assertInGraveyard(player1, "Karplusan Strider");
     }
 }

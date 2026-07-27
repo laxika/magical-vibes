@@ -106,8 +106,8 @@ class DispossessTest extends BaseCardTest {
                 .count();
         assertThat(exiledCount).isEqualTo(3);
 
-        assertThat(gd.playerHands.get(player2.getId())).noneMatch(c -> c.getName().equals("Ornithopter"));
-        assertThat(gd.playerGraveyards.get(player2.getId())).noneMatch(c -> c.getName().equals("Ornithopter"));
+        harness.assertNotInHand(player2, "Ornithopter");
+        harness.assertNotInGraveyard(player2, "Ornithopter");
         assertThat(gd.playerDecks.get(player2.getId())).noneMatch(c -> c.getName().equals("Ornithopter"));
     }
 
@@ -145,7 +145,6 @@ class DispossessTest extends BaseCardTest {
         harness.handleListChoice(player1, "Ornithopter");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Dispossess"));
+        harness.assertInGraveyard(player1, "Dispossess");
     }
 }

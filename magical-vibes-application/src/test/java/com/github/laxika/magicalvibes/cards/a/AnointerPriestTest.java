@@ -82,8 +82,7 @@ class AnointerPriestTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Anointer Priest"));
+        harness.assertNotInGraveyard(player1, "Anointer Priest");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Anointer Priest"));
     }
@@ -120,7 +119,6 @@ class AnointerPriestTest extends BaseCardTest {
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Anointer Priest"));
+        harness.assertInGraveyard(player1, "Anointer Priest");
     }
 }

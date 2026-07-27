@@ -97,7 +97,6 @@ class ChartACourseTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Chart a Course"));
+        harness.assertInGraveyard(player1, "Chart a Course");
     }
 }

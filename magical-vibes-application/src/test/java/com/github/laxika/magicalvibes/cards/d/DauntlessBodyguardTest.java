@@ -74,10 +74,8 @@ class DauntlessBodyguardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Dauntless Bodyguard"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Dauntless Bodyguard"));
+        harness.assertNotOnBattlefield(player1, "Dauntless Bodyguard");
+        harness.assertInGraveyard(player1, "Dauntless Bodyguard");
     }
 
     @Test
@@ -91,8 +89,7 @@ class DauntlessBodyguardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Dauntless Bodyguard"));
+        harness.assertNotOnBattlefield(player1, "Dauntless Bodyguard");
     }
 
     @Test
@@ -109,8 +106,7 @@ class DauntlessBodyguardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bodyguard was sacrificed but chosen creature is gone — nothing to grant indestructible to
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Dauntless Bodyguard"));
+        harness.assertNotOnBattlefield(player1, "Dauntless Bodyguard");
     }
 
     // ===== Full flow: cast + choose + sacrifice =====
@@ -139,8 +135,7 @@ class DauntlessBodyguardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Dauntless Bodyguard"));
+        harness.assertNotOnBattlefield(player1, "Dauntless Bodyguard");
     }
 
     // ===== Helpers =====

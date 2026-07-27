@@ -168,8 +168,7 @@ class PhyrexianCrusaderTest extends BaseCardTest {
         // Fire Elemental's 3 damage to Crusader is prevented (protection from red)
         // Regular damage: Fire Elemental deals 0 (prevention), Crusader has no regular damage (first strike only)
         // Fire Elemental survives with -1/-1 counters
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Phyrexian Crusader"));
+        harness.assertOnBattlefield(player2, "Phyrexian Crusader");
     }
 
     @Test
@@ -194,8 +193,7 @@ class PhyrexianCrusaderTest extends BaseCardTest {
 
         // Serra Angel's 4 damage to Crusader is prevented (protection from white)
         // Crusader survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Phyrexian Crusader"));
+        harness.assertOnBattlefield(player2, "Phyrexian Crusader");
     }
 
     @Test
@@ -221,8 +219,7 @@ class PhyrexianCrusaderTest extends BaseCardTest {
         // Crusader deals 2 first strike as -1/-1 counters (Sengir becomes 2/2)
         // Regular damage: Sengir deals 4 damage to Crusader (kills 2/2), Crusader doesn't deal again (first strike only)
         // Crusader dies from black damage (no protection)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phyrexian Crusader"));
+        harness.assertNotOnBattlefield(player2, "Phyrexian Crusader");
         harness.assertInGraveyard(player2, "Phyrexian Crusader");
     }
 

@@ -40,8 +40,7 @@ class MitoticSlimeTest extends BaseCardTest {
             GameData gd = harness.getGameData();
 
             // Mitotic Slime should be in the graveyard
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Mitotic Slime"));
+            harness.assertInGraveyard(player1, "Mitotic Slime");
 
             // Death trigger should be on the stack
             assertThat(gd.stack).hasSize(1);

@@ -31,8 +31,7 @@ class FireFieldOgreTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Fire-Field Ogre"))
                 .findFirst().orElseThrow();
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Fire-Field Ogre"));
+        harness.assertNotInGraveyard(player1, "Fire-Field Ogre");
     }
 
     @Test
@@ -51,8 +50,7 @@ class FireFieldOgreTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fire-Field Ogre"));
+        harness.assertNotOnBattlefield(player1, "Fire-Field Ogre");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Fire-Field Ogre"));
     }

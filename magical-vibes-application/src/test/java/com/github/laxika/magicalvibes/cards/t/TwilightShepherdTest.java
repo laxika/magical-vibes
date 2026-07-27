@@ -112,9 +112,7 @@ class TwilightShepherdTest extends BaseCardTest {
         resolveUntilInputOrEmpty();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Twilight Shepherd"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Twilight Shepherd"));
+        harness.assertNotOnBattlefield(player1, "Twilight Shepherd");
+        harness.assertInGraveyard(player1, "Twilight Shepherd");
     }
 }

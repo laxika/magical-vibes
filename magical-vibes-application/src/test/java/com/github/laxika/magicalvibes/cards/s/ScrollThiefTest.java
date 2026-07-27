@@ -60,8 +60,7 @@ class ScrollThiefTest extends BaseCardTest {
         resolveCombat();
 
         // Scroll Thief should be dead
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Scroll Thief"));
+        harness.assertInGraveyard(player1, "Scroll Thief");
 
         // No card drawn (didn't deal damage to a player)
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);

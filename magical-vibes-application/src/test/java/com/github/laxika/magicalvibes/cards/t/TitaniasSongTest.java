@@ -74,8 +74,7 @@ class TitaniasSongTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Sacrifice is a cost, so the Bottle leaves the battlefield when the ability is used.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Bottle of Suleiman"));
+        harness.assertNotOnBattlefield(player1, "Bottle of Suleiman");
     }
 
     // ===== Effect ends when Titania's Song leaves =====

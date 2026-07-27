@@ -81,8 +81,7 @@ class MoorlandHauntTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
     }

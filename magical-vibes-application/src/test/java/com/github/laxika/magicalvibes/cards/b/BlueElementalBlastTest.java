@@ -38,8 +38,7 @@ class BlueElementalBlastTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Shock"));
+            harness.assertInGraveyard(player2, "Shock");
         }
 
         @Test
@@ -75,10 +74,8 @@ class BlueElementalBlastTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, targetId);
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Hill Giant"));
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Hill Giant"));
+            harness.assertNotOnBattlefield(player2, "Hill Giant");
+            harness.assertInGraveyard(player2, "Hill Giant");
         }
 
         @Test

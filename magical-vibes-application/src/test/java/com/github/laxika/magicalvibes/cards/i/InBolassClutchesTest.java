@@ -98,8 +98,7 @@ class InBolassClutchesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // In Bolas's Clutches should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("In Bolas's Clutches"));
+        harness.assertInGraveyard(player1, "In Bolas's Clutches");
     }
 
     // ===== Permanent returns when aura leaves =====

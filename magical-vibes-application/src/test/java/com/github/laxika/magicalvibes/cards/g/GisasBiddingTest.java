@@ -95,7 +95,6 @@ class GisasBiddingTest extends BaseCardTest {
         List<Permanent> zombies = zombiesOnBattlefield();
         assertThat(zombies).hasSize(2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Gisa's Bidding"));
+        harness.assertInGraveyard(player1, "Gisa's Bidding");
     }
 }

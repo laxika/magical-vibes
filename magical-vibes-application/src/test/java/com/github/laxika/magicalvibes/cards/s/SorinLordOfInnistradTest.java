@@ -147,8 +147,7 @@ class SorinLordOfInnistradTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(sorin.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .count()).isEqualTo(3);
@@ -168,11 +167,8 @@ class SorinLordOfInnistradTest extends BaseCardTest {
         harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of(bearsId));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -204,8 +200,7 @@ class SorinLordOfInnistradTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Liliana of the Veil"));
+        harness.assertNotOnBattlefield(player2, "Liliana of the Veil");
         Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Liliana of the Veil"))
                 .findFirst().orElseThrow();
@@ -231,8 +226,7 @@ class SorinLordOfInnistradTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 

@@ -36,20 +36,17 @@ class DemonOfDeathsGateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Demon should be on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Demon of Death's Gate"));
+        harness.assertOnBattlefield(player1, "Demon of Death's Gate");
 
         // Three creatures should be gone from battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Child of Night"))
-                .noneMatch(p -> p.getCard().getName().equals("Black Knight"))
-                .noneMatch(p -> p.getCard().getName().equals("Nantuko Husk"));
+        harness.assertNotOnBattlefield(player1, "Child of Night");
+        harness.assertNotOnBattlefield(player1, "Black Knight");
+        harness.assertNotOnBattlefield(player1, "Nantuko Husk");
 
         // Three creatures should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Child of Night"))
-                .anyMatch(c -> c.getName().equals("Black Knight"))
-                .anyMatch(c -> c.getName().equals("Nantuko Husk"));
+        harness.assertInGraveyard(player1, "Child of Night");
+        harness.assertInGraveyard(player1, "Black Knight");
+        harness.assertInGraveyard(player1, "Nantuko Husk");
 
         // Life should be reduced by 6
         assertThat(gd.getLife(player1.getId())).isEqualTo(14);
@@ -63,8 +60,7 @@ class DemonOfDeathsGateTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Demon of Death's Gate"));
+        harness.assertOnBattlefield(player1, "Demon of Death's Gate");
     }
 
     @Test
@@ -141,8 +137,7 @@ class DemonOfDeathsGateTest extends BaseCardTest {
         harness.castCreatureWithAlternateCost(player1, 0, List.of(child, knight, husk));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Demon of Death's Gate"));
+        harness.assertOnBattlefield(player1, "Demon of Death's Gate");
         assertThat(gd.getLife(player1.getId())).isEqualTo(0);
     }
 

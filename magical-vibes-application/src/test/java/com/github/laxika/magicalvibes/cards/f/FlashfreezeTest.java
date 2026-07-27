@@ -79,13 +79,10 @@ class FlashfreezeTest extends BaseCardTest {
         harness.castInstant(player2, 0, elves.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Countered spell goes to owner's graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
         // Does not enter the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
     }
 
     @Test
@@ -106,10 +103,8 @@ class FlashfreezeTest extends BaseCardTest {
         harness.castInstant(player2, 0, might.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Might of Oaks countered and in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Might of Oaks"));
+        harness.assertInGraveyard(player1, "Might of Oaks");
     }
 
     @Test
@@ -128,8 +123,7 @@ class FlashfreezeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Flashfreeze"));
+        harness.assertInGraveyard(player2, "Flashfreeze");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -157,8 +151,7 @@ class FlashfreezeTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Flashfreeze still goes to graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Flashfreeze"));
+        harness.assertInGraveyard(player2, "Flashfreeze");
     }
 }
 

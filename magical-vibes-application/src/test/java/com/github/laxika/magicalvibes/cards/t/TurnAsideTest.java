@@ -113,13 +113,10 @@ class TurnAsideTest extends BaseCardTest {
         harness.castInstant(player1, 0, shock.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Countered spell goes to owner's graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player2, "Shock");
         // Creature is still alive
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -142,8 +139,7 @@ class TurnAsideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Turn Aside"));
+        harness.assertInGraveyard(player1, "Turn Aside");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -175,7 +171,6 @@ class TurnAsideTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Turn Aside still goes to graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Turn Aside"));
+        harness.assertInGraveyard(player1, "Turn Aside");
     }
 }

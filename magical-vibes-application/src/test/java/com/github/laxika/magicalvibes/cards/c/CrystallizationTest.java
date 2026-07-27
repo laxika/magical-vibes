@@ -118,16 +118,13 @@ class CrystallizationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The enchanted creature is exiled to its owner's exile zone
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // The now-orphaned Aura goes to its controller's graveyard
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Crystallization"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Crystallization"));
+        harness.assertNotOnBattlefield(player1, "Crystallization");
+        harness.assertInGraveyard(player1, "Crystallization");
     }
 
     // ===== Exiles enchanted creature when it becomes target of an ability =====

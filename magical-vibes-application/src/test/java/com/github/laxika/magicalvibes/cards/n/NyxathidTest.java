@@ -66,10 +66,8 @@ class NyxathidTest extends BaseCardTest {
 
         harness.runStateBasedActions();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Nyxathid"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Nyxathid"));
+        harness.assertNotOnBattlefield(player1, "Nyxathid");
+        harness.assertInGraveyard(player1, "Nyxathid");
     }
 
     // ===== Helpers =====

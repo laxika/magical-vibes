@@ -51,11 +51,8 @@ class WrackWithMadnessTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -112,8 +109,7 @@ class WrackWithMadnessTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
 
-        assertThat(harness.getGameData().playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Plains"));
+        harness.assertOnBattlefield(player2, "Plains");
     }
 
     // Step 4 (targeting unification): the UI/AI enumeration path (ValidTargetService) must judge a
@@ -154,7 +150,6 @@ class WrackWithMadnessTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Wrack with Madness"));
+        harness.assertInGraveyard(player1, "Wrack with Madness");
     }
 }

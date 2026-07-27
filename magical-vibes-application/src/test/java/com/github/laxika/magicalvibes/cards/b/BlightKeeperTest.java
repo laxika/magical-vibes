@@ -27,8 +27,7 @@ class BlightKeeperTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Blight Keeper"));
+        harness.assertNotOnBattlefield(player1, "Blight Keeper");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }
@@ -57,8 +56,7 @@ class BlightKeeperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Blight Keeper"));
+        harness.assertInGraveyard(player1, "Blight Keeper");
     }
 
     @Test

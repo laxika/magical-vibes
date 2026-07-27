@@ -31,13 +31,9 @@ class WispmareTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> ETB trigger on stack
         harness.passBothPriorities(); // resolve ETB trigger
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Angelic Chorus"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Angelic Chorus"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Wispmare"));
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertInGraveyard(player2, "Angelic Chorus");
+        harness.assertOnBattlefield(player1, "Wispmare");
     }
 
     // ===== Evoke =====
@@ -55,8 +51,7 @@ class WispmareTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger (destroy + evoke sacrifice)
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Angelic Chorus"));
+        harness.assertInGraveyard(player2, "Angelic Chorus");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
 
@@ -72,11 +67,8 @@ class WispmareTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Wispmare"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Wispmare"));
+        harness.assertNotOnBattlefield(player1, "Wispmare");
+        harness.assertInGraveyard(player1, "Wispmare");
     }
 
     // ===== Illegal target =====

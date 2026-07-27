@@ -30,8 +30,7 @@ class DeathbloomThallidTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Deathbloom Thallid"));
+        harness.assertOnBattlefield(player1, "Deathbloom Thallid");
     }
 
     // ===== Death trigger =====
@@ -50,8 +49,7 @@ class DeathbloomThallidTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Deathbloom Thallid should be in the graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Deathbloom Thallid"));
+        harness.assertInGraveyard(player1, "Deathbloom Thallid");
 
         // One death trigger should be on the stack
         assertThat(gd.stack).hasSize(1);

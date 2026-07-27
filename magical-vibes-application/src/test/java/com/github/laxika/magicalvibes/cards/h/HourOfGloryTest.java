@@ -32,14 +32,12 @@ class HourOfGloryTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .filteredOn(c -> c.getName().equals("Grizzly Bears"))
                 .hasSize(1);
         // Not a God: same-name cards in hand are not touched.
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     @Test
@@ -59,12 +57,10 @@ class HourOfGloryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The God is gone from the battlefield.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Both same-name hand cards are exiled; the non-matching card stays.
-        assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Llanowar Elves");
         // God itself plus the two hand copies land in exile.
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .filteredOn(c -> c.getName().equals("Grizzly Bears"))

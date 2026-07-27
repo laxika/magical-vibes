@@ -127,10 +127,8 @@ class CuriosityTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Curiosity"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Curiosity"));
+        harness.assertInGraveyard(player1, "Curiosity");
+        harness.assertNotOnBattlefield(player1, "Curiosity");
     }
 
     // ===== Helpers =====

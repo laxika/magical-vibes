@@ -98,8 +98,7 @@ class KarnLiberatedTest extends BaseCardTest {
             // Card should be in exile, not graveyard
             assertThat(gd.getPlayerExiledCards(player2.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertNotInGraveyard(player2, "Grizzly Bears");
         }
 
         @Test
@@ -183,8 +182,7 @@ class KarnLiberatedTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 6 - 3
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
             assertThat(gd.getPlayerExiledCards(player2.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         }
@@ -215,8 +213,7 @@ class KarnLiberatedTest extends BaseCardTest {
             harness.activateAbility(player1, 0, 1, null, bears.getId());
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         }
 
         @Test
@@ -274,8 +271,7 @@ class KarnLiberatedTest extends BaseCardTest {
             harness.skipMulligan();
 
             // Grizzly Bears should be on player1's battlefield (controller of Karn)
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
 
             // ...and must have LEFT exile — a card can only exist in one zone
             assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -363,10 +359,8 @@ class KarnLiberatedTest extends BaseCardTest {
         // -3 ability: 3 - 3 = 0, Karn dies to state-based actions
         harness.activateAbility(player1, 0, 1, null, bears.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Karn Liberated"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Karn Liberated"));
+        harness.assertNotOnBattlefield(player1, "Karn Liberated");
+        harness.assertInGraveyard(player1, "Karn Liberated");
         // Ability is still on the stack
         assertThat(gd.stack).hasSize(1);
     }
@@ -384,8 +378,7 @@ class KarnLiberatedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bears should still be exiled even though Karn died
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }

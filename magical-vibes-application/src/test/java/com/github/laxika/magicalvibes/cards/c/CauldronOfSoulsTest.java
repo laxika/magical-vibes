@@ -76,8 +76,7 @@ class CauldronOfSoulsTest extends BaseCardTest {
         resolveUntilInputOrEmpty();
 
         assertThat(findOnBattlefield("Grizzly Bears")).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test

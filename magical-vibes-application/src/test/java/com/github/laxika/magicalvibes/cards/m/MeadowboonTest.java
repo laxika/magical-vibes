@@ -36,10 +36,8 @@ class MeadowboonTest extends BaseCardTest {
         assertThat(ally1.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(ally2.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         // Meadowboon itself was sacrificed as it entered.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Meadowboon"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Meadowboon"));
+        harness.assertNotOnBattlefield(player1, "Meadowboon");
+        harness.assertInGraveyard(player1, "Meadowboon");
     }
 
     // ===== Leaves the battlefield (non-evoke) — target opponent =====

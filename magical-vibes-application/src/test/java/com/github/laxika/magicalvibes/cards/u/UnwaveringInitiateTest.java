@@ -31,8 +31,7 @@ class UnwaveringInitiateTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Unwavering Initiate"));
+        harness.assertNotInGraveyard(player1, "Unwavering Initiate");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Unwavering Initiate"));
     }
@@ -70,7 +69,6 @@ class UnwaveringInitiateTest extends BaseCardTest {
         Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Unwavering Initiate"));
+        harness.assertInGraveyard(player1, "Unwavering Initiate");
     }
 }

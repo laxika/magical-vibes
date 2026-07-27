@@ -33,8 +33,7 @@ class RavenousDemonTest extends BaseCardTest {
 
         assertThat(demon.isTransformed()).isFalse();
         assertThat(demon.isTapped()).isFalse();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Doomed Human"));
+        harness.assertNotInGraveyard(player1, "Doomed Human");
     }
 
     @Test
@@ -49,8 +48,7 @@ class RavenousDemonTest extends BaseCardTest {
 
         assertThat(demon.isTransformed()).isTrue();
         assertThat(demon.getCard().getName()).isEqualTo("Archdemon of Greed");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Doomed Human"));
+        harness.assertInGraveyard(player1, "Doomed Human");
     }
 
     @Test
@@ -63,8 +61,7 @@ class RavenousDemonTest extends BaseCardTest {
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(demon.isTransformed()).isFalse();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Bear"));
+        harness.assertOnBattlefield(player1, "Bear");
     }
 
     @Test
@@ -98,10 +95,8 @@ class RavenousDemonTest extends BaseCardTest {
 
         assertThat(demon.isTransformed()).isTrue();
         assertThat(demon.getCard().getName()).isEqualTo("Archdemon of Greed");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("First Human"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Second Human"));
+        harness.assertInGraveyard(player1, "First Human");
+        harness.assertOnBattlefield(player1, "Second Human");
     }
 
     @Test
@@ -131,8 +126,7 @@ class RavenousDemonTest extends BaseCardTest {
         assertThat(archdemon.getCard().getName()).isEqualTo("Archdemon of Greed");
         assertThat(archdemon.isTapped()).isFalse();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Doomed Human"));
+        harness.assertInGraveyard(player1, "Doomed Human");
     }
 
     @Test

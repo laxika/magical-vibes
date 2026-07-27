@@ -29,8 +29,7 @@ class CausticHoundTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Caustic Hound"));
+        harness.assertOnBattlefield(player1, "Caustic Hound");
     }
 
     // ===== Death trigger =====
@@ -45,8 +44,7 @@ class CausticHoundTest extends BaseCardTest {
         harness.passBothPriorities(); // Combat damage — Caustic Hound dies
 
         // Caustic Hound should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Caustic Hound"));
+        harness.assertInGraveyard(player1, "Caustic Hound");
 
         // Death trigger should be on the stack
         assertThat(gd.stack).hasSize(1);

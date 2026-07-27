@@ -43,8 +43,7 @@ class ColfenorsUrnTest extends BaseCardTest {
 
             assertThat(gd.getCardsExiledByPermanent(urn.getId()))
                     .extracting(Card::getName).containsExactly("Giant Spider");
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Giant Spider"));
+            harness.assertNotInGraveyard(player1, "Giant Spider");
         }
 
         @Test
@@ -56,8 +55,7 @@ class ColfenorsUrnTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, false);
 
             assertThat(gd.getCardsExiledByPermanent(urn.getId())).isEmpty();
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Giant Spider"));
+            harness.assertInGraveyard(player1, "Giant Spider");
         }
 
         @Test
@@ -86,8 +84,7 @@ class ColfenorsUrnTest extends BaseCardTest {
             assertThat(gd.stack).hasSize(1);
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Colfenor's Urn"));
+            harness.assertNotOnBattlefield(player1, "Colfenor's Urn");
             assertThat(gd.playerBattlefields.get(player1.getId()))
                     .filteredOn(p -> p.getCard().getName().equals("Giant Spider"))
                     .hasSize(3);
@@ -103,8 +100,7 @@ class ColfenorsUrnTest extends BaseCardTest {
             fireEndStep();
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Colfenor's Urn"));
+            harness.assertOnBattlefield(player1, "Colfenor's Urn");
             assertThat(gd.getCardsExiledByPermanent(urn.getId())).hasSize(2);
         }
     }

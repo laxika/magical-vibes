@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.x;
 import com.github.laxika.magicalvibes.cards.c.Coercion;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -30,10 +29,8 @@ class XiahouDunTheOneEyedTest extends BaseCardTest {
         harness.assertInHand(player1, "Coercion");
         harness.assertNotInGraveyard(player1, "Coercion");
         // Xiahou Dun was sacrificed as a cost.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Xiahou Dun, the One-Eyed"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Xiahou Dun, the One-Eyed"));
+        harness.assertNotOnBattlefield(player1, "Xiahou Dun, the One-Eyed");
+        harness.assertInGraveyard(player1, "Xiahou Dun, the One-Eyed");
     }
 
     @Test

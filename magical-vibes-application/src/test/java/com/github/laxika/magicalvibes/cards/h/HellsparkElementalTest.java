@@ -28,10 +28,8 @@ class HellsparkElementalTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hellspark Elemental"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hellspark Elemental"));
+        harness.assertNotOnBattlefield(player1, "Hellspark Elemental");
+        harness.assertInGraveyard(player1, "Hellspark Elemental");
     }
 
     @Test
@@ -49,8 +47,7 @@ class HellsparkElementalTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Hellspark Elemental"))
                 .findFirst().orElseThrow();
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Hellspark Elemental"));
+        harness.assertNotInGraveyard(player1, "Hellspark Elemental");
     }
 
     @Test
@@ -68,8 +65,7 @@ class HellsparkElementalTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hellspark Elemental"));
+        harness.assertNotOnBattlefield(player1, "Hellspark Elemental");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Hellspark Elemental"));
     }

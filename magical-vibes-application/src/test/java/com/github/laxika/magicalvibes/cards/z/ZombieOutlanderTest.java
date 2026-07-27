@@ -112,8 +112,7 @@ class ZombieOutlanderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Green creature's 3 damage to the Outlander is prevented (protection); Outlander survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Zombie Outlander"));
+        harness.assertOnBattlefield(player2, "Zombie Outlander");
     }
 
     @Test
@@ -138,10 +137,8 @@ class ZombieOutlanderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Black creature's 3 damage kills the 2/2 Outlander — no protection from black
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Zombie Outlander"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Zombie Outlander"));
+        harness.assertNotOnBattlefield(player2, "Zombie Outlander");
+        harness.assertInGraveyard(player2, "Zombie Outlander");
     }
 
     // ===== Protection from green - targeting =====

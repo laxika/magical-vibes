@@ -66,8 +66,7 @@ class KnollspineDragonTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .hasSize(2)
                 .allMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test

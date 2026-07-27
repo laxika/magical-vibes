@@ -51,8 +51,7 @@ class VulshokHeartstokerTest extends BaseCardTest {
         // Resolve creature spell — enters battlefield, ETB triggers
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Vulshok Heartstoker"));
+        harness.assertOnBattlefield(player1, "Vulshok Heartstoker");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
@@ -190,8 +189,7 @@ class VulshokHeartstokerTest extends BaseCardTest {
         // Resolve creature spell
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Vulshok Heartstoker"));
+        harness.assertOnBattlefield(player1, "Vulshok Heartstoker");
         assertThat(gd.stack).isEmpty();
     }
 }

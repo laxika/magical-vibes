@@ -78,8 +78,7 @@ class StormboundGeistTest extends BaseCardTest {
 
         Permanent returnedGeist = findPermanent(player1, "Stormbound Geist");
         assertThat(returnedGeist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Stormbound Geist"));
+        harness.assertNotInGraveyard(player1, "Stormbound Geist");
     }
 
     @Test
@@ -93,10 +92,8 @@ class StormboundGeistTest extends BaseCardTest {
         harness.castInstant(player2, 0, geist.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Stormbound Geist"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Stormbound Geist"));
+        harness.assertNotOnBattlefield(player1, "Stormbound Geist");
+        harness.assertInGraveyard(player1, "Stormbound Geist");
         assertThat(gd.stack).isEmpty();
     }
 }

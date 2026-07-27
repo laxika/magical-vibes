@@ -141,8 +141,7 @@ class NightbirdsClutchesTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(creature.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Nightbird's Clutches"));
+        harness.assertInGraveyard(player1, "Nightbird's Clutches");
     }
 
     @Test
@@ -175,8 +174,7 @@ class NightbirdsClutchesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Nightbird's Clutches"));
+        harness.assertNotInGraveyard(player1, "Nightbird's Clutches");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Nightbird's Clutches"));
     }
@@ -220,8 +218,6 @@ class NightbirdsClutchesTest extends BaseCardTest {
 
         harness.castFlashback(player1, 0, List.of(creature.getId()));
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Nightbird's Clutches"));
+        harness.assertNotInGraveyard(player1, "Nightbird's Clutches");
     }
 }

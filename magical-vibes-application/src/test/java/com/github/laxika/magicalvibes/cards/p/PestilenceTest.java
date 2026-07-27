@@ -29,10 +29,8 @@ class PestilenceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fugitive Wizard"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
@@ -56,10 +54,8 @@ class PestilenceTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Pestilence"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Pestilence"));
+        harness.assertNotOnBattlefield(player1, "Pestilence");
+        harness.assertInGraveyard(player1, "Pestilence");
     }
 
     @Test
@@ -78,7 +74,6 @@ class PestilenceTest extends BaseCardTest {
         // The intervening-if fails (a creature is present), so no sacrifice trigger is put on the
         // stack and Pestilence survives past the end step.
         assertThat(gd.stack).noneMatch(e -> e.getCard().getName().equals("Pestilence"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Pestilence"));
+        harness.assertOnBattlefield(player1, "Pestilence");
     }
 }

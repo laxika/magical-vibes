@@ -25,8 +25,7 @@ class SoulGuideGryffTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve creature → ETB target prompt
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Soul-Guide Gryff"));
+        harness.assertOnBattlefield(player1, "Soul-Guide Gryff");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount())
                 .isEqualTo(1);
@@ -44,8 +43,7 @@ class SoulGuideGryffTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities(); // resolve ETB
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
@@ -61,8 +59,7 @@ class SoulGuideGryffTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Shock"));
+        harness.assertNotInGraveyard(player1, "Shock");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Shock"));
     }
@@ -78,8 +75,7 @@ class SoulGuideGryffTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 
@@ -96,8 +92,7 @@ class SoulGuideGryffTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Soul-Guide Gryff"));
+        harness.assertOnBattlefield(player1, "Soul-Guide Gryff");
     }
 
     private void castSoulGuideGryff() {

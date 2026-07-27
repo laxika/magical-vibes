@@ -83,8 +83,7 @@ class DesperateRavingsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Desperate Ravings"));
+        harness.assertInGraveyard(player1, "Desperate Ravings");
     }
 
     // ===== Flashback =====
@@ -117,8 +116,7 @@ class DesperateRavingsTest extends BaseCardTest {
         harness.castFlashback(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Desperate Ravings"));
+        harness.assertNotInGraveyard(player1, "Desperate Ravings");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Desperate Ravings"));
     }

@@ -81,9 +81,7 @@ class LuminesceTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Luminesce"));
+        harness.assertInGraveyard(player1, "Luminesce");
     }
 
     // ===== Combat damage prevention - black source =====
@@ -133,13 +131,10 @@ class LuminesceTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Black attacker's 3 damage is prevented, so blocker (2/2) survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         // Blocker still deals 2 damage to attacker (green is not prevented), but 2 < 3 toughness → survives
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Black Knight"));
+        harness.assertOnBattlefield(player1, "Black Knight");
     }
 
     // ===== Combat damage prevention - red source =====

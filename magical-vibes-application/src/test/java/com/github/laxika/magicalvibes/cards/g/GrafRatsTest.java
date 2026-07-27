@@ -43,8 +43,7 @@ class GrafRatsTest extends BaseCardTest {
 
         advanceToBeginningOfCombat();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Graf Rats"));
+        harness.assertOnBattlefield(player1, "Graf Rats");
     }
 
     @Test
@@ -72,8 +71,7 @@ class GrafRatsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(grafRats.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Chittering Host"));
+        harness.assertNotOnBattlefield(player1, "Chittering Host");
     }
 
     @Test
@@ -94,8 +92,7 @@ class GrafRatsTest extends BaseCardTest {
 
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, host);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Chittering Host"));
+        harness.assertNotOnBattlefield(player1, "Chittering Host");
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .contains(grafRatsCard, scavengersCard);
     }

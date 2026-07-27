@@ -79,13 +79,11 @@ class SphinxsHeraldTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, hawkId);
         harness.handlePermanentChosen(player1, wizardId);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Suntail Hawk"))
-                .anyMatch(c -> c.getName().equals("Fugitive Wizard"))
-                .anyMatch(c -> c.getName().equals("Scathe Zombies"));
+        harness.assertInGraveyard(player1, "Suntail Hawk");
+        harness.assertInGraveyard(player1, "Fugitive Wizard");
+        harness.assertInGraveyard(player1, "Scathe Zombies");
         // The Herald itself was not sacrificed and the ability is on the stack.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sphinx's Herald"));
+        harness.assertOnBattlefield(player1, "Sphinx's Herald");
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.ACTIVATED_ABILITY);
     }
 
@@ -112,7 +110,6 @@ class SphinxsHeraldTest extends BaseCardTest {
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sphinx Sovereign"));
+        harness.assertOnBattlefield(player1, "Sphinx Sovereign");
     }
 }

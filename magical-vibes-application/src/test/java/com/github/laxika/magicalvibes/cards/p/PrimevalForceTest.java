@@ -38,10 +38,8 @@ class PrimevalForceTest extends BaseCardTest {
 
         // The cost can't be paid, so Primeval Force is sacrificed automatically.
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Primeval Force"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Primeval Force"));
+        harness.assertNotOnBattlefield(player1, "Primeval Force");
+        harness.assertInGraveyard(player1, "Primeval Force");
         // The Forests are untouched.
         assertThat(forestsControlledBy(player1.getId())).isEqualTo(2);
     }
@@ -72,8 +70,7 @@ class PrimevalForceTest extends BaseCardTest {
         // All three Forests sacrificed without a further choice; Primeval Force stays.
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(forestsControlledBy(player1.getId())).isEqualTo(0);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Primeval Force"));
+        harness.assertOnBattlefield(player1, "Primeval Force");
     }
 
     @Test
@@ -99,8 +96,7 @@ class PrimevalForceTest extends BaseCardTest {
 
         // Three Forests sacrificed, one remains; Primeval Force stays.
         assertThat(forestsControlledBy(player1.getId())).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Primeval Force"));
+        harness.assertOnBattlefield(player1, "Primeval Force");
     }
 
     @Test
@@ -113,10 +109,8 @@ class PrimevalForceTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Primeval Force"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Primeval Force"));
+        harness.assertNotOnBattlefield(player1, "Primeval Force");
+        harness.assertInGraveyard(player1, "Primeval Force");
         assertThat(forestsControlledBy(player1.getId())).isEqualTo(3);
     }
 
@@ -129,10 +123,8 @@ class PrimevalForceTest extends BaseCardTest {
         castPrimevalForce();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Primeval Force"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Primeval Force"));
+        harness.assertNotOnBattlefield(player1, "Primeval Force");
+        harness.assertInGraveyard(player1, "Primeval Force");
         assertThat(forestsControlledBy(player2.getId())).isEqualTo(3);
     }
 }

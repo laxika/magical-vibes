@@ -26,8 +26,7 @@ class BrainWeevilTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Brain Weevil"));
+        harness.assertNotOnBattlefield(player1, "Brain Weevil");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }
@@ -64,8 +63,7 @@ class BrainWeevilTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Brain Weevil"));
+        harness.assertInGraveyard(player1, "Brain Weevil");
     }
 
     @Test

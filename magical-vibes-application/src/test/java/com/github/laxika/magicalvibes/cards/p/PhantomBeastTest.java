@@ -34,10 +34,8 @@ class PhantomBeastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Phantom Beast should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phantom Beast"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Phantom Beast"));
+        harness.assertNotOnBattlefield(player1, "Phantom Beast");
+        harness.assertInGraveyard(player1, "Phantom Beast");
     }
 
     // ===== Sacrifice when targeted by own controller's spell =====
@@ -60,10 +58,8 @@ class PhantomBeastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Phantom Beast should be sacrificed even when targeted by own controller
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phantom Beast"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Phantom Beast"));
+        harness.assertNotOnBattlefield(player1, "Phantom Beast");
+        harness.assertInGraveyard(player1, "Phantom Beast");
     }
 
     // ===== Sacrifice when targeted by an ability =====
@@ -92,9 +88,7 @@ class PhantomBeastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Phantom Beast should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Phantom Beast"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Phantom Beast"));
+        harness.assertNotOnBattlefield(player1, "Phantom Beast");
+        harness.assertInGraveyard(player1, "Phantom Beast");
     }
 }

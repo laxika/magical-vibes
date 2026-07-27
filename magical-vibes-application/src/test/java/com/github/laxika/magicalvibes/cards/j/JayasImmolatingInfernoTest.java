@@ -73,21 +73,15 @@ class JayasImmolatingInfernoTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 3, List.of(bearsId, spiderId, elementalId));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // GrizzlyBears took 3 damage (dies: 3 >= 2 toughness)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // GiantSpider took 3 damage (survives: 3 < 4 toughness)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
+        harness.assertOnBattlefield(player2, "Giant Spider");
 
         // AirElemental took 3 damage (survives: 3 < 4 toughness)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));
+        harness.assertOnBattlefield(player2, "Air Elemental");
     }
 
     @Test
@@ -103,10 +97,8 @@ class JayasImmolatingInfernoTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2, List.of(bearsId));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // GrizzlyBears took 2 damage (dies: 2 >= 2 toughness)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Damage to players =====
@@ -143,8 +135,7 @@ class JayasImmolatingInfernoTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // GrizzlyBears took 3 damage (dies)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Player 2 took 3 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -175,8 +166,7 @@ class JayasImmolatingInfernoTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         // Bears was removed — skipped
         // GiantSpider took 3 damage (survives: 3 < 4 toughness)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Giant Spider"));
+        harness.assertOnBattlefield(player2, "Giant Spider");
         // Player 2 took 3 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -196,7 +186,6 @@ class JayasImmolatingInfernoTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Jaya's Immolating Inferno"));
+        harness.assertInGraveyard(player1, "Jaya's Immolating Inferno");
     }
 }

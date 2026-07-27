@@ -123,8 +123,7 @@ class ThrabenSentryTest extends BaseCardTest {
         // No trigger — Sentry is no longer on the battlefield
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Thraben Sentry"));
+        harness.assertInGraveyard(player1, "Thraben Sentry");
     }
 
 }

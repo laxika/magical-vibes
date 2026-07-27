@@ -28,10 +28,8 @@ class LoyalRetainersTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Loyal Retainers"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Loyal Retainers"));
+        harness.assertNotOnBattlefield(player1, "Loyal Retainers");
+        harness.assertInGraveyard(player1, "Loyal Retainers");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }
@@ -50,10 +48,8 @@ class LoyalRetainersTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Guan Yu, Sainted Warrior"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Guan Yu, Sainted Warrior"));
+        harness.assertOnBattlefield(player1, "Guan Yu, Sainted Warrior");
+        harness.assertNotInGraveyard(player1, "Guan Yu, Sainted Warrior");
     }
 
     @Test

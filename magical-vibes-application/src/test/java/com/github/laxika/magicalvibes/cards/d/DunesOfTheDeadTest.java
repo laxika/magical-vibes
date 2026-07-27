@@ -40,8 +40,7 @@ class DunesOfTheDeadTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities(); // Resolve Stone Rain — land to graveyard
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Dunes of the Dead"));
+        harness.assertInGraveyard(player1, "Dunes of the Dead");
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities(); // Resolve graveyard trigger

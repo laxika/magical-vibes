@@ -44,8 +44,7 @@ class FieldMarshalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Field Marshal"));
+        harness.assertOnBattlefield(player1, "Field Marshal");
     }
 
     @Test
@@ -246,10 +245,8 @@ class FieldMarshalTest extends BaseCardTest {
 
         // Cloudchaser (3/3 with first strike) deals 3 first strike damage → kills 3/3 blocker
         // Blocker dies before dealing regular damage → Cloudchaser survives
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Aven Cloudchaser"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Aven Cloudchaser");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Static bonus survives end-of-turn reset =====

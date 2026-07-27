@@ -52,8 +52,7 @@ class SilklashSpiderTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Wind Drake"));
+        harness.assertNotOnBattlefield(player2, "Wind Drake");
     }
 
     @Test
@@ -66,9 +65,7 @@ class SilklashSpiderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 3, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -96,9 +93,7 @@ class SilklashSpiderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Wind Drake"));
+        harness.assertOnBattlefield(player2, "Wind Drake");
     }
 
     @Test

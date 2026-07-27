@@ -127,10 +127,8 @@ class ForcedWorshipTest extends BaseCardTest {
         harness.activateAbility(player1, auraIndex, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forced Worship"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forced Worship"));
+        harness.assertNotOnBattlefield(player1, "Forced Worship");
+        harness.assertInHand(player1, "Forced Worship");
     }
 
     // ===== Casting =====

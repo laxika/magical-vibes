@@ -100,8 +100,7 @@ class KuldothaPhoenixTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(phoenix.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Kuldotha Phoenix"));
+        harness.assertNotOnBattlefield(player1, "Kuldotha Phoenix");
     }
 
     @Test
@@ -122,7 +121,6 @@ class KuldothaPhoenixTest extends BaseCardTest {
         // Phoenix stays in graveyard because mana cannot be paid
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(phoenix.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Kuldotha Phoenix"));
+        harness.assertNotOnBattlefield(player1, "Kuldotha Phoenix");
     }
 }

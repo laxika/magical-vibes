@@ -57,8 +57,7 @@ class PlagiarizeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Plagiarize"));
+        harness.assertInGraveyard(player1, "Plagiarize");
     }
 
     // ===== Draw step replacement =====

@@ -41,8 +41,7 @@ class MournwhelkTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mournwhelk"));
+        harness.assertOnBattlefield(player1, "Mournwhelk");
     }
 
     @Test
@@ -82,10 +81,8 @@ class MournwhelkTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mournwhelk"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mournwhelk"));
+        harness.assertNotOnBattlefield(player1, "Mournwhelk");
+        harness.assertInGraveyard(player1, "Mournwhelk");
     }
 
     @Test
@@ -101,7 +98,6 @@ class MournwhelkTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }

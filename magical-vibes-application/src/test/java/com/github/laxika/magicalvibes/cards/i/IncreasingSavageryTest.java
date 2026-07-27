@@ -35,8 +35,7 @@ class IncreasingSavageryTest extends BaseCardTest {
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Increasing Savagery"));
+        harness.assertInGraveyard(player1, "Increasing Savagery");
     }
 
     @Test
@@ -52,8 +51,7 @@ class IncreasingSavageryTest extends BaseCardTest {
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(10);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Increasing Savagery"));
+        harness.assertNotInGraveyard(player1, "Increasing Savagery");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Increasing Savagery"));
     }

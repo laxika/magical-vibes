@@ -25,8 +25,7 @@ class SoulReapTest extends BaseCardTest {
 
         castSoulReap(target);
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertInGraveyard(player2, "Hill Giant");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
@@ -58,8 +57,7 @@ class SoulReapTest extends BaseCardTest {
 
         castSoulReap(target);
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertInGraveyard(player2, "Hill Giant");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 

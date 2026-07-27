@@ -57,10 +57,8 @@ class CorrosiveOozeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Equipment should be destroyed at end of combat
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Warlord's Axe"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Warlord's Axe"));
+        harness.assertNotOnBattlefield(player1, "Warlord's Axe");
+        harness.assertInGraveyard(player1, "Warlord's Axe");
     }
 
     @Test
@@ -122,10 +120,8 @@ class CorrosiveOozeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Equipment should be destroyed at end of combat
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Warlord's Axe"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Warlord's Axe"));
+        harness.assertNotOnBattlefield(player2, "Warlord's Axe");
+        harness.assertInGraveyard(player2, "Warlord's Axe");
     }
 
     @Test

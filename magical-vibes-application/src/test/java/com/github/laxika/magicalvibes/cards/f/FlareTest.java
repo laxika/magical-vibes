@@ -48,8 +48,7 @@ class FlareTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 1 damage does not destroy a 2/2, which survives on the battlefield.
-        assertThat(harness.getGameData().playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test

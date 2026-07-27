@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.e.EnormousBaloth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -57,11 +56,8 @@ class SplatterTechniqueTest extends BaseCardTest {
             harness.castSorcery(player1, 0, 1);
             harness.passBothPriorities();
 
-            GameData gd = harness.getGameData();
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         }
 
         @Test
@@ -74,8 +70,7 @@ class SplatterTechniqueTest extends BaseCardTest {
             harness.castSorcery(player1, 0, 1);
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Enormous Baloth"));
+            harness.assertOnBattlefield(player2, "Enormous Baloth");
         }
     }
 }

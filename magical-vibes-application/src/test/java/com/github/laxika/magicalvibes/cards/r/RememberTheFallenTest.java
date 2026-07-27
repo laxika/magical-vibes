@@ -50,10 +50,8 @@ class RememberTheFallenTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, validIds);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -102,10 +100,8 @@ class RememberTheFallenTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, validIds);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Leonin Scimitar"));
+        harness.assertInHand(player1, "Leonin Scimitar");
+        harness.assertNotInGraveyard(player1, "Leonin Scimitar");
     }
 
     @Test
@@ -155,12 +151,10 @@ class RememberTheFallenTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, validIds);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"))
-                .noneMatch(c -> c.getName().equals("Leonin Scimitar"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Leonin Scimitar");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Leonin Scimitar");
     }
 
     @Test
@@ -195,7 +189,6 @@ class RememberTheFallenTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, validIds);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Remember the Fallen"));
+        harness.assertInGraveyard(player1, "Remember the Fallen");
     }
 }

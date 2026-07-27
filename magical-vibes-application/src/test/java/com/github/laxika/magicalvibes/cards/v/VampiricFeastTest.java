@@ -41,8 +41,7 @@ class VampiricFeastTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hill Giant"));
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
     }
 
@@ -57,7 +56,6 @@ class VampiricFeastTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Avatar of Might"));
+        harness.assertOnBattlefield(player2, "Avatar of Might");
     }
 }

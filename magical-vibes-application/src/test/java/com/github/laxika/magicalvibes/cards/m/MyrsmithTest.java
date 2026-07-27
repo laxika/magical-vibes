@@ -86,8 +86,7 @@ class MyrsmithTest extends BaseCardTest {
                 && e.getCard().getName().equals("Myrsmith"));
 
         // No Myr token created
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Myr"));
+        harness.assertNotOnBattlefield(player1, "Myr");
 
         // Mana not spent
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
@@ -155,7 +154,6 @@ class MyrsmithTest extends BaseCardTest {
                 && e.getCard().getName().equals("Myrsmith"));
 
         // No token created
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Myr"));
+        harness.assertNotOnBattlefield(player1, "Myr");
     }
 }

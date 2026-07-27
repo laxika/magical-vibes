@@ -65,7 +65,7 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
         // Choose the first creature (Bear)
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Bear"));
+        harness.assertInHand(player1, "Bear");
         // Remaining 3 cards should be offered for reorder
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(3);

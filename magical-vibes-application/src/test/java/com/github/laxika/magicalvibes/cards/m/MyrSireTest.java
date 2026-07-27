@@ -29,8 +29,7 @@ class MyrSireTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Myr Sire"));
+        harness.assertOnBattlefield(player1, "Myr Sire");
     }
 
     // ===== Death trigger =====
@@ -49,8 +48,7 @@ class MyrSireTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Myr Sire should be in the graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Myr Sire"));
+        harness.assertInGraveyard(player1, "Myr Sire");
 
         // One death trigger should be on the stack
         assertThat(gd.stack).hasSize(1);

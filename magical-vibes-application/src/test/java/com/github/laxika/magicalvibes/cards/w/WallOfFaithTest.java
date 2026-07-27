@@ -43,9 +43,7 @@ class WallOfFaithTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Wall of Faith"));
+        harness.assertOnBattlefield(player1, "Wall of Faith");
     }
 
     // ===== Activate ability =====

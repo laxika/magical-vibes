@@ -132,10 +132,8 @@ class DryadsFavorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Dryad's Favor should go to graveyard (fizzle)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Dryad's Favor"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Dryad's Favor"));
+        harness.assertInGraveyard(player1, "Dryad's Favor");
+        harness.assertNotOnBattlefield(player1, "Dryad's Favor");
     }
 
     // ===== Orphaned aura =====
@@ -166,10 +164,8 @@ class DryadsFavorTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Dryad's Favor"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Dryad's Favor"));
+        harness.assertNotOnBattlefield(player2, "Dryad's Favor");
+        harness.assertInGraveyard(player2, "Dryad's Favor");
     }
 
     // ===== Targeting restriction =====

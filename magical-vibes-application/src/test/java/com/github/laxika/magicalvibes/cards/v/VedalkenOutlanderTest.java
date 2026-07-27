@@ -111,8 +111,7 @@ class VedalkenOutlanderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Red creature's 3 damage to the Outlander is prevented (protection from red)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Vedalken Outlander"));
+        harness.assertOnBattlefield(player2, "Vedalken Outlander");
     }
 
     @Test
@@ -136,10 +135,8 @@ class VedalkenOutlanderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 3 damage from green (no protection) kills the 2/2 Outlander
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Vedalken Outlander"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Vedalken Outlander"));
+        harness.assertNotOnBattlefield(player2, "Vedalken Outlander");
+        harness.assertInGraveyard(player2, "Vedalken Outlander");
     }
 
     // ===== Protection - targeting =====

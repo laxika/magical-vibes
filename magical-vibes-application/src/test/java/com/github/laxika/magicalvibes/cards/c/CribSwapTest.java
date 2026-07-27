@@ -38,10 +38,8 @@ class CribSwapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Target creature exiled (not to graveyard)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
 
         // Its controller (player2) gets a 1/1 colorless Shapeshifter token with changeling
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -69,8 +67,7 @@ class CribSwapTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
         // Controller (player1) gets the token
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -118,7 +115,6 @@ class CribSwapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Shapeshifter"));
+        harness.assertNotOnBattlefield(player2, "Shapeshifter");
     }
 }

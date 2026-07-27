@@ -27,10 +27,8 @@ class IslandFishJasconiusTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature → state trigger fires
         harness.passBothPriorities(); // resolve state trigger → sacrificed
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Island Fish Jasconius"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Island Fish Jasconius"));
+        harness.assertNotOnBattlefield(player1, "Island Fish Jasconius");
+        harness.assertInGraveyard(player1, "Island Fish Jasconius");
     }
 
     @Test
@@ -44,8 +42,7 @@ class IslandFishJasconiusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Island Fish Jasconius"));
+        harness.assertOnBattlefield(player1, "Island Fish Jasconius");
     }
 
     // ===== Doesn't untap during untap step =====

@@ -27,13 +27,11 @@ class DissipationFieldTest extends BaseCardTest {
         resolveCombat(player1, player2);
 
         // Attacker should be bounced off the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
         // Attacker should be returned to owner's hand
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(defenderHandBefore + 1);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test
@@ -48,8 +46,7 @@ class DissipationFieldTest extends BaseCardTest {
         resolveCombat(player1, player2);
 
         // Both attackers should be bounced
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId()))
                 .filteredOn(c -> c.getName().equals("Grizzly Bears"))
                 .hasSize(2);
@@ -78,10 +75,8 @@ class DissipationFieldTest extends BaseCardTest {
         resolveCombat(player1, player2);
 
         // Attacker should be dead (in graveyard), not bounced to hand
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== Spell/ability damage bounce =====
@@ -97,10 +92,8 @@ class DissipationFieldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Orcish Artillery should be bounced to owner's hand
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Orcish Artillery"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Orcish Artillery"));
+        harness.assertNotOnBattlefield(player1, "Orcish Artillery");
+        harness.assertInHand(player1, "Orcish Artillery");
     }
 
     // ===== No trigger without Dissipation Field =====
@@ -114,8 +107,7 @@ class DissipationFieldTest extends BaseCardTest {
         resolveCombat(player1, player2);
 
         // Attacker should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Dissipation Field itself is not bounced by combat damage =====
@@ -130,8 +122,7 @@ class DissipationFieldTest extends BaseCardTest {
         resolveCombat(player1, player2);
 
         // Dissipation Field should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Dissipation Field"));
+        harness.assertOnBattlefield(player2, "Dissipation Field");
     }
 
     // ===== Helpers =====

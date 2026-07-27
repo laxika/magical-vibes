@@ -84,7 +84,6 @@ class MedicineRunnerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Medicine Runner"));
+        harness.assertOnBattlefield(player1, "Medicine Runner");
     }
 }

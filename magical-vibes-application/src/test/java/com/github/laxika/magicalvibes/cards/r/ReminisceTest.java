@@ -68,8 +68,7 @@ class ReminisceTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Graveyard should be empty (Reminisce itself goes to graveyard after resolution)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
         // Deck size should increase by 2 (the two bears from graveyard)
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore + 2);
         // Bears should be in library
@@ -133,10 +132,8 @@ class ReminisceTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Reminisce should be in graveyard (it resolves first, shuffling the empty graveyard, then goes to graveyard itself)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Reminisce"));
+        harness.assertInGraveyard(player1, "Reminisce");
     }
 
     @Test

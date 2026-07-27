@@ -66,10 +66,8 @@ class DaydreamTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(bearPermId));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -100,8 +98,7 @@ class DaydreamTest extends BaseCardTest {
         harness.castFlashback(player1, 0, List.of(bearId));
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Daydream"));
+        harness.assertNotInGraveyard(player1, "Daydream");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Daydream"));
     }

@@ -71,10 +71,8 @@ class SunkenCityTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Sunken City"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Sunken City"));
+        harness.assertNotOnBattlefield(player1, "Sunken City");
+        harness.assertInGraveyard(player1, "Sunken City");
     }
 
     @Test
@@ -87,8 +85,7 @@ class SunkenCityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sunken City"));
+        harness.assertOnBattlefield(player1, "Sunken City");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 
@@ -100,7 +97,6 @@ class SunkenCityTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sunken City"));
+        harness.assertOnBattlefield(player1, "Sunken City");
     }
 }

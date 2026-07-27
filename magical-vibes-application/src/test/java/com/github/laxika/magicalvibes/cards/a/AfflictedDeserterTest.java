@@ -80,8 +80,7 @@ class AfflictedDeserterTest extends BaseCardTest {
         // Ornithopter should be destroyed
         assertThat(gd.playerBattlefields.get(player2.getId()).stream()
                 .noneMatch(p -> p.getCard().getName().equals("Ornithopter"))).isTrue();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Ornithopter"));
+        harness.assertInGraveyard(player2, "Ornithopter");
 
         // Player 2 should take 3 damage
         assertThat(gd.getLife(player2.getId())).isEqualTo(player2LifeBefore - 3);

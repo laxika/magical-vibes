@@ -227,10 +227,8 @@ class FearTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Fear should go to graveyard, not battlefield
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fear"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fear"));
+        harness.assertInGraveyard(player1, "Fear");
+        harness.assertNotOnBattlefield(player1, "Fear");
     }
 
     // ===== Creature with innate fear keyword =====

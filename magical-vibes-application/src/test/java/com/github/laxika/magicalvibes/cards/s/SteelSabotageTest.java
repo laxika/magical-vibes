@@ -39,11 +39,8 @@ class SteelSabotageTest extends BaseCardTest {
             harness.castInstant(player2, 0, 0, millstone.getId());
             harness.passBothPriorities();
 
-            GameData gd = harness.getGameData();
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Millstone"));
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Millstone"));
+            harness.assertInGraveyard(player1, "Millstone");
+            harness.assertNotOnBattlefield(player1, "Millstone");
         }
 
         @Test
@@ -80,8 +77,7 @@ class SteelSabotageTest extends BaseCardTest {
 
             GameData gd = harness.getGameData();
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Steel Sabotage"));
+            harness.assertInGraveyard(player2, "Steel Sabotage");
         }
     }
 
@@ -108,11 +104,8 @@ class SteelSabotageTest extends BaseCardTest {
             harness.castInstant(player2, 0, 1, millstonePermanent.getId());
             harness.passBothPriorities();
 
-            GameData gd = harness.getGameData();
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Millstone"));
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Millstone"));
+            harness.assertNotOnBattlefield(player1, "Millstone");
+            harness.assertInHand(player1, "Millstone");
         }
 
         @Test
@@ -156,8 +149,7 @@ class SteelSabotageTest extends BaseCardTest {
 
             GameData gd = harness.getGameData();
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Steel Sabotage"));
+            harness.assertInGraveyard(player2, "Steel Sabotage");
         }
     }
 

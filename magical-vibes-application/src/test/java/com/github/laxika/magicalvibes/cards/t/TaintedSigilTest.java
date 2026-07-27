@@ -49,10 +49,8 @@ class TaintedSigilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Tainted Sigil"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Tainted Sigil"));
+        harness.assertNotOnBattlefield(player1, "Tainted Sigil");
+        harness.assertInGraveyard(player1, "Tainted Sigil");
     }
 
     @Test
@@ -70,10 +68,8 @@ class TaintedSigilTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Cost paid immediately: Sigil already sacrificed, ability waiting on the stack.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Tainted Sigil"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Tainted Sigil"));
+        harness.assertNotOnBattlefield(player1, "Tainted Sigil");
+        harness.assertInGraveyard(player1, "Tainted Sigil");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
 

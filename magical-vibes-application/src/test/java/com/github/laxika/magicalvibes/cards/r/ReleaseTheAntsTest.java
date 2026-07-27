@@ -69,10 +69,8 @@ class ReleaseTheAntsTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Release the Ants"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Release the Ants"));
+        harness.assertInHand(player1, "Release the Ants");
+        harness.assertNotInGraveyard(player1, "Release the Ants");
     }
 
     @Test
@@ -84,9 +82,7 @@ class ReleaseTheAntsTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Release the Ants"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Release the Ants"));
+        harness.assertInGraveyard(player1, "Release the Ants");
+        harness.assertNotInHand(player1, "Release the Ants");
     }
 }

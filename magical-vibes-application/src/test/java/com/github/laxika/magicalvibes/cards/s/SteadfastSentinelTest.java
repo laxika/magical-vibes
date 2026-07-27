@@ -38,8 +38,7 @@ class SteadfastSentinelTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Steadfast Sentinel"));
+        harness.assertNotInGraveyard(player1, "Steadfast Sentinel");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Steadfast Sentinel"));
     }
@@ -87,7 +86,6 @@ class SteadfastSentinelTest extends BaseCardTest {
         Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Steadfast Sentinel"));
+        harness.assertInGraveyard(player1, "Steadfast Sentinel");
     }
 }

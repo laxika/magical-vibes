@@ -61,8 +61,7 @@ class ChampionOfRhonasTest extends BaseCardTest {
 
         assertThat(champion.getSkipUntapCount()).isGreaterThan(0);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Stone Golem"));
+        harness.assertNotOnBattlefield(player1, "Stone Golem");
     }
 
     @Test

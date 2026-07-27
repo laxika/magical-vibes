@@ -71,10 +71,8 @@ class FinalRevelsTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hill Giant"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Hill Giant");
         assertThat(giant.getPowerModifier()).isEqualTo(0);
         assertThat(giant.getToughnessModifier()).isEqualTo(-2);
     }

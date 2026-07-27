@@ -60,8 +60,7 @@ class BogardanFirefiendTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Bogardan Firefiend"));
+        harness.assertOnBattlefield(player1, "Bogardan Firefiend");
     }
 
     // ===== Death trigger with target selection =====
@@ -78,8 +77,7 @@ class BogardanFirefiendTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Bogardan Firefiend should be dead
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bogardan Firefiend"));
+        harness.assertInGraveyard(player1, "Bogardan Firefiend");
 
         // Player1 should be prompted to choose a target creature
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -115,8 +113,7 @@ class BogardanFirefiendTest extends BaseCardTest {
         // Grizzly Bears should be destroyed
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(bearsId));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -171,8 +168,7 @@ class BogardanFirefiendTest extends BaseCardTest {
         // Own Grizzly Bears (2/2) should be destroyed by 2 damage
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(ownBearsId));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -191,12 +187,9 @@ class BogardanFirefiendTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Both creatures should be dead
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Bogardan Firefiend"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bogardan Firefiend"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Bogardan Firefiend");
+        harness.assertInGraveyard(player1, "Bogardan Firefiend");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // No permanent choice should be prompted (no valid creature targets after Wrath)
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();

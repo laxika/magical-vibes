@@ -29,10 +29,8 @@ class GoblinRazerunnersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(razerunners.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
     }
 
     // ===== End step: deal damage equal to +1/+1 counters to target player or planeswalker =====

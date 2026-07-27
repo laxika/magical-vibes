@@ -31,10 +31,8 @@ class NovaChaserTest extends BaseCardTest {
         castNovaChaser();
         harness.passBothPriorities(); // resolve champion ETB -> auto-sacrifice
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Nova Chaser"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Nova Chaser"));
+        harness.assertNotOnBattlefield(player1, "Nova Chaser");
+        harness.assertInGraveyard(player1, "Nova Chaser");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -45,12 +43,9 @@ class NovaChaserTest extends BaseCardTest {
         castNovaChaser();
         harness.passBothPriorities(); // resolve champion ETB -> auto-sacrifice (no valid Elemental)
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Nova Chaser"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Nova Chaser"));
+        harness.assertNotOnBattlefield(player1, "Nova Chaser");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Nova Chaser");
     }
 
     @Test
@@ -61,8 +56,7 @@ class NovaChaserTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve champion ETB -> permanent choice
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Nova Chaser"));
+        harness.assertOnBattlefield(player1, "Nova Chaser");
     }
 
     @Test
@@ -75,10 +69,8 @@ class NovaChaserTest extends BaseCardTest {
         UUID elementalId = harness.getPermanentId(player1, "Flamekin Bladewhirl");
         harness.handlePermanentChosen(player1, elementalId);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Nova Chaser"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Flamekin Bladewhirl"));
+        harness.assertOnBattlefield(player1, "Nova Chaser");
+        harness.assertNotOnBattlefield(player1, "Flamekin Bladewhirl");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Flamekin Bladewhirl"));
         assertThat(gd.exileReturnOnPermanentLeave).isNotEmpty();
@@ -104,10 +96,8 @@ class NovaChaserTest extends BaseCardTest {
         harness.castInstant(player1, 0, novaId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Nova Chaser"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Flamekin Bladewhirl"));
+        harness.assertNotOnBattlefield(player1, "Nova Chaser");
+        harness.assertOnBattlefield(player1, "Flamekin Bladewhirl");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Flamekin Bladewhirl"));
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();

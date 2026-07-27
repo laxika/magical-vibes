@@ -56,8 +56,7 @@ class ThinkTwiceTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Think Twice"));
+        harness.assertInGraveyard(player1, "Think Twice");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -87,8 +86,7 @@ class ThinkTwiceTest extends BaseCardTest {
         harness.castFlashback(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Think Twice"));
+        harness.assertNotInGraveyard(player1, "Think Twice");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Think Twice"));
     }

@@ -37,12 +37,10 @@ class SoldeviSageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(sage.isTapped()).isTrue();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"))
-                .noneMatch(p -> p.getCard().getName().equals("Island"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"))
-                .anyMatch(c -> c.getName().equals("Island"));
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Island");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Island");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }
@@ -63,8 +61,7 @@ class SoldeviSageTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -99,12 +96,10 @@ class SoldeviSageTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, islandId);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Plains"))
-                .anyMatch(p -> p.getCard().getName().equals("Soldevi Sage"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"))
-                .anyMatch(c -> c.getName().equals("Island"));
+        harness.assertOnBattlefield(player1, "Plains");
+        harness.assertOnBattlefield(player1, "Soldevi Sage");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Island");
     }
 
     @Test

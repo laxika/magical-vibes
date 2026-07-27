@@ -30,10 +30,8 @@ class SleeperAgentTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Sleeper Agent"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sleeper Agent"));
+        harness.assertNotOnBattlefield(player1, "Sleeper Agent");
+        harness.assertOnBattlefield(player2, "Sleeper Agent");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("gains control of Sleeper Agent"));
     }
 

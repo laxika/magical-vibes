@@ -109,8 +109,7 @@ class BreakOfDayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Break of Day"));
+        harness.assertInGraveyard(player1, "Break of Day");
     }
 
     @Test

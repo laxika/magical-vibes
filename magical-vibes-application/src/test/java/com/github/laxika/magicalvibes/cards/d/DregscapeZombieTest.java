@@ -29,8 +29,7 @@ class DregscapeZombieTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Dregscape Zombie"))
                 .findFirst().orElseThrow();
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Dregscape Zombie"));
+        harness.assertNotInGraveyard(player1, "Dregscape Zombie");
     }
 
     @Test
@@ -47,8 +46,7 @@ class DregscapeZombieTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Dregscape Zombie"));
+        harness.assertNotOnBattlefield(player1, "Dregscape Zombie");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Dregscape Zombie"));
     }

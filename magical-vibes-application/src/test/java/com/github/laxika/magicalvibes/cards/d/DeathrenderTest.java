@@ -85,8 +85,7 @@ class DeathrenderTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, -1); // decline
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Air Elemental"));
+        harness.assertInHand(player1, "Air Elemental");
         Permanent deathrenderPerm = findPermanent(player1, "Deathrender");
         assertThat(deathrenderPerm.getAttachedTo()).isNull();
     }

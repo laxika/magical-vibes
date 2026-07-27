@@ -27,8 +27,7 @@ class GuanYuSaintedWarriorTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         // It first enters the graveyard, then its death trigger waits on the stack.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Guan Yu, Sainted Warrior"));
+        harness.assertInGraveyard(player1, "Guan Yu, Sainted Warrior");
 
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, true);
@@ -50,8 +49,7 @@ class GuanYuSaintedWarriorTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Guan Yu, Sainted Warrior"));
+        harness.assertInGraveyard(player1, "Guan Yu, Sainted Warrior");
         assertThat(gd.playerDecks.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Guan Yu, Sainted Warrior"));
     }

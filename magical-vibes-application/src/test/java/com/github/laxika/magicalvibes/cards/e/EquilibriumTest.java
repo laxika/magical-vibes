@@ -45,11 +45,8 @@ class EquilibriumTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, giantId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hill Giant"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertInHand(player2, "Hill Giant");
     }
 
     @Test
@@ -63,9 +60,7 @@ class EquilibriumTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.handleMayAbilityChosen(player1, false);
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hill Giant"));
+        harness.assertOnBattlefield(player2, "Hill Giant");
     }
 
     @Test

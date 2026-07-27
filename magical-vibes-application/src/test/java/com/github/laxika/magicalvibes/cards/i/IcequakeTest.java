@@ -26,10 +26,8 @@ class IcequakeTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
         castIcequake(harness.getPermanentId(player2, "Forest"));
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
@@ -40,8 +38,7 @@ class IcequakeTest extends BaseCardTest {
         castIcequake(snow.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(snow);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player2, "Forest");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 

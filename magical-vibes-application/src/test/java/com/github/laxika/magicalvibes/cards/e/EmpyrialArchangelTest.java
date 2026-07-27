@@ -26,8 +26,7 @@ class EmpyrialArchangelTest extends BaseCardTest {
 
         // Controller takes no damage; the 5/8 Archangel absorbs 2 and survives.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Empyrial Archangel"));
+        harness.assertOnBattlefield(player2, "Empyrial Archangel");
     }
 
     @Test
@@ -43,9 +42,7 @@ class EmpyrialArchangelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Empyrial Archangel"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Empyrial Archangel"));
+        harness.assertNotOnBattlefield(player2, "Empyrial Archangel");
+        harness.assertInGraveyard(player2, "Empyrial Archangel");
     }
 }

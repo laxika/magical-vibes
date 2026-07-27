@@ -46,8 +46,7 @@ class LoyalSentryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Loyal Sentry"));
+        harness.assertOnBattlefield(player1, "Loyal Sentry");
     }
 
     @Test
@@ -116,16 +115,12 @@ class LoyalSentryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both creatures should be in their graveyards
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Loyal Sentry"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Loyal Sentry");
 
         // Neither should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Loyal Sentry"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Loyal Sentry");
     }
 
     @Test
@@ -153,10 +148,8 @@ class LoyalSentryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Even the 10/10 is destroyed by the trigger
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Loyal Sentry"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Loyal Sentry");
     }
 
     // ===== No damage to player when attacker is destroyed =====
@@ -218,10 +211,8 @@ class LoyalSentryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Loyal Sentry is still destroyed (self-destruct part still applies)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Loyal Sentry"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Loyal Sentry"));
+        harness.assertNotOnBattlefield(player2, "Loyal Sentry");
+        harness.assertInGraveyard(player2, "Loyal Sentry");
     }
 
     @Test
@@ -249,10 +240,8 @@ class LoyalSentryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Attacker is still destroyed by the trigger
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== Game log =====

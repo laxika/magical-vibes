@@ -46,8 +46,7 @@ class VertigoTest extends BaseCardTest {
         harness.castInstant(player1, 0, elemental.getId());
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));
+        harness.assertOnBattlefield(player2, "Air Elemental");
         assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);

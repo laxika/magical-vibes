@@ -53,8 +53,7 @@ class UktabiWildcatsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(wildcats.getRegenerationShield()).isEqualTo(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player1, "Forest");
         // One Forest left → still on the battlefield as a 1/1
         assertThat(gqs.getEffectivePower(gd, wildcats)).isEqualTo(1);
     }

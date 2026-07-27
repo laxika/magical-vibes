@@ -55,9 +55,8 @@ class MoldgrafMonstrosityTest extends BaseCardTest {
             assertThat(creatures).hasSize(2);
 
             // Graveyard should only have Wrath of God
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Grizzly Bears"))
-                    .noneMatch(c -> c.getName().equals("Llanowar Elves"));
+            harness.assertNotInGraveyard(player1, "Grizzly Bears");
+            harness.assertNotInGraveyard(player1, "Llanowar Elves");
         }
 
         @Test
@@ -99,8 +98,7 @@ class MoldgrafMonstrosityTest extends BaseCardTest {
                     .anyMatch(c -> c.getName().equals("Moldgraf Monstrosity"));
 
             // Grizzly Bears should be on the battlefield
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
         }
 
         @Test
@@ -118,8 +116,7 @@ class MoldgrafMonstrosityTest extends BaseCardTest {
             harness.passBothPriorities(); // Resolve death trigger
 
             // Grizzly Bears should be on the battlefield
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
 
             // Wrath of God (non-creature) should still be in graveyard
             harness.assertInGraveyard(player1, "Wrath of God");

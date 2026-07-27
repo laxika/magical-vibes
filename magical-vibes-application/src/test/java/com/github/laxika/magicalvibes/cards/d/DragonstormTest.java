@@ -48,10 +48,8 @@ class DragonstormTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Dragon Whelp"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Dragon Whelp"));
+        harness.assertOnBattlefield(player1, "Dragon Whelp");
+        harness.assertNotInHand(player1, "Dragon Whelp");
     }
 
     // ===== Storm =====

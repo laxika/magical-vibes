@@ -40,7 +40,7 @@ class AmbitiousFarmhandTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Plains"));
+        harness.assertInHand(player1, "Plains");
     }
 
     @Test
@@ -54,7 +54,7 @@ class AmbitiousFarmhandTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getName().equals("Plains"));
+        harness.assertNotInHand(player1, "Plains");
     }
 
     @Test

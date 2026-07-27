@@ -142,7 +142,6 @@ class GrimAfflictionTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grim Affliction"));
+        harness.assertInGraveyard(player1, "Grim Affliction");
     }
 }

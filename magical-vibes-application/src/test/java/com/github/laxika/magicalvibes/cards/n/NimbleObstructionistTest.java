@@ -56,10 +56,8 @@ class NimbleObstructionistTest extends BaseCardTest {
                 .isZero();
 
         // Cycling still draws: Nimble Obstructionist is discarded, the top of library is drawn.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Nimble Obstructionist"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Serra Angel"));
+        harness.assertInGraveyard(player1, "Nimble Obstructionist");
+        harness.assertInHand(player1, "Serra Angel");
 
         assertThat(gd.stack).isEmpty();
     }
@@ -76,11 +74,8 @@ class NimbleObstructionistTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Nimble Obstructionist"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Serra Angel"));
+        harness.assertInGraveyard(player1, "Nimble Obstructionist");
+        harness.assertInHand(player1, "Serra Angel");
     }
 
     // ===== Cannot counter an ability you control =====

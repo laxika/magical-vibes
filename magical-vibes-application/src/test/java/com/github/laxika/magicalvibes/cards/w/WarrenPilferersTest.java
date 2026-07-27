@@ -48,10 +48,8 @@ class WarrenPilferersTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== Conditional haste =====
@@ -64,8 +62,7 @@ class WarrenPilferersTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Goblin Piker"));
+        harness.assertInHand(player1, "Goblin Piker");
         assertThat(findPilferers().getGrantedKeywords()).contains(Keyword.HASTE);
     }
 
@@ -88,8 +85,7 @@ class WarrenPilferersTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, 1); // Goblin Piker
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Goblin Piker"));
+        harness.assertInHand(player1, "Goblin Piker");
         assertThat(findPilferers().getGrantedKeywords()).contains(Keyword.HASTE);
     }
 
@@ -119,8 +115,7 @@ class WarrenPilferersTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         assertThat(findPilferers().getGrantedKeywords()).doesNotContain(Keyword.HASTE);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Warren Pilferers"));
+        harness.assertOnBattlefield(player1, "Warren Pilferers");
     }
 
     // ===== Invalid choice =====

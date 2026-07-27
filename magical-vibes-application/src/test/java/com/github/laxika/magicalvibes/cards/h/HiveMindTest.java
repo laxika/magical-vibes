@@ -279,10 +279,8 @@ class HiveMindTest extends BaseCardTest {
         // Resolve original
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Copy should not appear in any graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Counsel of the Soratami"));
+        harness.assertNotInGraveyard(player2, "Counsel of the Soratami");
     }
 
     // ===== Opponent casting triggers too =====
@@ -378,8 +376,7 @@ class HiveMindTest extends BaseCardTest {
 
         // Copy ceases to exist per CR 707.10a — must NOT be in player2's library
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(p2DeckBefore);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Black Sun's Zenith"));
+        harness.assertNotInGraveyard(player2, "Black Sun's Zenith");
 
         // Resolve original → shuffled into player1's library (correct behavior)
         harness.passBothPriorities();

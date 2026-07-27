@@ -37,10 +37,8 @@ class BeastWithinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Target creature destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // Opponent gets a 3/3 green Beast token
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -69,8 +67,7 @@ class BeastWithinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Own creature destroyed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
         // Controller (player1) gets a 3/3 Beast token
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -97,8 +94,7 @@ class BeastWithinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Land destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player2, "Forest");
 
         // Opponent gets a Beast token
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -120,8 +116,7 @@ class BeastWithinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Artifact destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player2, "Spellbook");
 
         // Opponent gets a Beast token
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -150,8 +145,7 @@ class BeastWithinTest extends BaseCardTest {
 
         // Spell fizzles — no Beast token created
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Beast"));
+        harness.assertNotOnBattlefield(player2, "Beast");
     }
 
     // ===== Goes to graveyard =====
@@ -171,7 +165,6 @@ class BeastWithinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Beast Within"));
+        harness.assertInGraveyard(player1, "Beast Within");
     }
 }

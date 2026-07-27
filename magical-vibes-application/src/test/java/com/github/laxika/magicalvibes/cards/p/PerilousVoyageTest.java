@@ -39,10 +39,8 @@ class PerilousVoyageTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Creature bounced
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
 
         // Scry triggered
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
@@ -63,8 +61,7 @@ class PerilousVoyageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
     }
 
@@ -84,8 +81,7 @@ class PerilousVoyageTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Perilous Voyage"));
+        harness.assertInGraveyard(player1, "Perilous Voyage");
     }
 
     // ===== Bounce without scry (MV > 2) =====
@@ -105,16 +101,13 @@ class PerilousVoyageTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Creature bounced
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hill Giant"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertInHand(player2, "Hill Giant");
 
         // No scry — spell should fully resolve
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Perilous Voyage"));
+        harness.assertInGraveyard(player1, "Perilous Voyage");
     }
 
     // ===== Targeting restrictions =====
@@ -170,7 +163,6 @@ class PerilousVoyageTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Perilous Voyage"));
+        harness.assertInGraveyard(player1, "Perilous Voyage");
     }
 }

@@ -40,10 +40,8 @@ class ConsignToDreamTest extends BaseCardTest {
         castOn(targetId);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fugitive Wizard"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Fugitive Wizard"));
+        harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
+        harness.assertInHand(player2, "Fugitive Wizard");
         // Not put on library
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore);
     }
@@ -56,9 +54,7 @@ class ConsignToDreamTest extends BaseCardTest {
 
         castOn(targetId);
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Ornithopter"));
+        harness.assertInHand(player2, "Ornithopter");
     }
 
     // ===== Red/green permanents: put on top of library instead =====
@@ -73,10 +69,8 @@ class ConsignToDreamTest extends BaseCardTest {
         castOn(targetId);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
         List<Card> deck = gd.playerDecks.get(player2.getId());
         assertThat(deck).hasSize(deckBefore + 1);
         assertThat(deck.getFirst().getName()).isEqualTo("Grizzly Bears");
@@ -92,8 +86,7 @@ class ConsignToDreamTest extends BaseCardTest {
         castOn(targetId);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertNotInHand(player2, "Hill Giant");
         List<Card> deck = gd.playerDecks.get(player2.getId());
         assertThat(deck).hasSize(deckBefore + 1);
         assertThat(deck.getFirst().getName()).isEqualTo("Hill Giant");
@@ -119,7 +112,6 @@ class ConsignToDreamTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Consign to Dream"));
+        harness.assertInGraveyard(player1, "Consign to Dream");
     }
 }

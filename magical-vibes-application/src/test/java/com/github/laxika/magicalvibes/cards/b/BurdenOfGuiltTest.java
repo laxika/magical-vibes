@@ -147,7 +147,6 @@ class BurdenOfGuiltTest extends BaseCardTest {
 
         // Bears should not be tappable via the ability anymore
         // Bears has no activated ability of its own
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Burden of Guilt"));
+        harness.assertNotOnBattlefield(player1, "Burden of Guilt");
     }
 }

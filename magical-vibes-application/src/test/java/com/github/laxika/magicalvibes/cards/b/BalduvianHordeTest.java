@@ -38,12 +38,10 @@ class BalduvianHordeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Balduvian Horde stays on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Balduvian Horde"));
+        harness.assertOnBattlefield(player1, "Balduvian Horde");
 
         // The lone card was discarded at random
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -56,12 +54,9 @@ class BalduvianHordeTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Balduvian Horde"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Balduvian Horde"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Balduvian Horde");
+        harness.assertInGraveyard(player1, "Balduvian Horde");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     // ===== Empty hand — auto-sacrifice =====
@@ -77,10 +72,8 @@ class BalduvianHordeTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB → auto-sacrifice
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Balduvian Horde"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Balduvian Horde"));
+        harness.assertNotOnBattlefield(player1, "Balduvian Horde");
+        harness.assertInGraveyard(player1, "Balduvian Horde");
 
         // No prompt — it was automatic
         assertThat(gd.interaction.activeInteraction()).isNull();

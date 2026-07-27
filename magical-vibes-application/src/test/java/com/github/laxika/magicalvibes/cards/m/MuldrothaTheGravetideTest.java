@@ -44,8 +44,7 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Muldrotha, the Gravetide"));
+        harness.assertOnBattlefield(player1, "Muldrotha, the Gravetide");
     }
 
     // ===== Playing lands from graveyard =====
@@ -64,8 +63,7 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         harness.playGraveyardLand(player1, 0);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player1, "Forest");
     }
 
     // ===== Casting creatures from graveyard =====
@@ -91,8 +89,7 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Casting artifacts from graveyard =====
@@ -116,8 +113,7 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Darksteel Relic"));
+        harness.assertOnBattlefield(player1, "Darksteel Relic");
     }
 
     // ===== Casting enchantments from graveyard =====
@@ -142,8 +138,7 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Levitation"));
+        harness.assertOnBattlefield(player1, "Levitation");
     }
 
     // ===== One of each type per turn =====
@@ -169,10 +164,8 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Darksteel Relic"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Darksteel Relic");
     }
 
     @Test
@@ -243,10 +236,8 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Stone Golem"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Darksteel Relic"));
+        harness.assertOnBattlefield(player1, "Stone Golem");
+        harness.assertOnBattlefield(player1, "Darksteel Relic");
     }
 
     @Test
@@ -269,10 +260,8 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Stone Golem"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Stone Golem");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -512,10 +501,8 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Postcombat main phase =====
@@ -534,7 +521,6 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Darksteel Relic"));
+        harness.assertOnBattlefield(player1, "Darksteel Relic");
     }
 }

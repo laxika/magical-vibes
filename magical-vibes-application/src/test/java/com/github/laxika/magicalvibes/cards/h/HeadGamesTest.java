@@ -281,8 +281,7 @@ class HeadGamesTest extends BaseCardTest {
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Head Games"));
+        harness.assertInGraveyard(player1, "Head Games");
     }
 
     // ===== Cards not added to caster's hand =====

@@ -39,7 +39,6 @@ class IllusionaryWallTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(wall);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Illusionary Wall"));
+        harness.assertInGraveyard(player1, "Illusionary Wall");
     }
 }

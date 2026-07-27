@@ -56,8 +56,7 @@ class GrimoireThiefTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player2, "Shock");
         harness.assertLife(player1, 20); // Shock was countered, no damage
         harness.assertInGraveyard(player1, "Grimoire Thief");
     }

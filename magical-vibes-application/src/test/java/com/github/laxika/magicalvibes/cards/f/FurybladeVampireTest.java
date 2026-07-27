@@ -44,8 +44,7 @@ class FurybladeVampireTest extends BaseCardTest {
 
         assertThat(vampire.getPowerModifier()).isEqualTo(3);
         assertThat(vampire.getToughnessModifier()).isEqualTo(0);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -59,8 +58,7 @@ class FurybladeVampireTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(vampire.getPowerModifier()).isEqualTo(0);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test

@@ -51,7 +51,7 @@ class FirewildBorderpostTest extends BaseCardTest {
         assertThat(borderpost(player1).isTapped()).isTrue();
         // The basic land is returned to its owner's hand, not sacrificed.
         harness.assertInHand(player1, "Mountain");
-        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getName().equals("Mountain"));
+        harness.assertNotInGraveyard(player1, "Mountain");
         // Only {1} was paid.
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }

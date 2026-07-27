@@ -25,8 +25,7 @@ class LlanowarSentinelTest extends BaseCardTest {
         setupAndCast(3);
 
         harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Llanowar Sentinel"));
+        harness.assertOnBattlefield(player1, "Llanowar Sentinel");
 
         harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

@@ -35,8 +35,7 @@ class ViridianRevelTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Memnite"));
+        harness.assertInGraveyard(player2, "Memnite");
 
         // Viridian Revel's may ability should prompt
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
@@ -57,8 +56,7 @@ class ViridianRevelTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Mind Stone"));
+        harness.assertInGraveyard(player2, "Mind Stone");
 
         // Viridian Revel's may ability should prompt
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
@@ -82,8 +80,7 @@ class ViridianRevelTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Naturalize
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mind Stone"));
+        harness.assertInGraveyard(player1, "Mind Stone");
 
         // No trigger — own artifact, not opponent's
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
@@ -102,8 +99,7 @@ class ViridianRevelTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Cruel Edict
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // No trigger — not an artifact
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
@@ -195,10 +191,8 @@ class ViridianRevelTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // The key assertion: both triggers fired and both drew cards
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Memnite"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Mind Stone"));
+        harness.assertInGraveyard(player2, "Memnite");
+        harness.assertInGraveyard(player2, "Mind Stone");
         assertThat(gd.stack).isEmpty();
     }
 }

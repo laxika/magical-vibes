@@ -61,8 +61,7 @@ class JadeGuardianTest extends BaseCardTest {
             // Resolve creature spell — enters battlefield, ETB triggers
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Jade Guardian"));
+            harness.assertOnBattlefield(player1, "Jade Guardian");
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -121,8 +120,7 @@ class JadeGuardianTest extends BaseCardTest {
             // Resolve creature spell
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Jade Guardian"));
+            harness.assertOnBattlefield(player1, "Jade Guardian");
             assertThat(gd.stack).isEmpty();
         }
 

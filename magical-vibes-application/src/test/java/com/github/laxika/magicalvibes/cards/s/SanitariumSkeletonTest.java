@@ -27,10 +27,8 @@ class SanitariumSkeletonTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Sanitarium Skeleton"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Sanitarium Skeleton"));
+        harness.assertInHand(player1, "Sanitarium Skeleton");
+        harness.assertNotInGraveyard(player1, "Sanitarium Skeleton");
     }
 
     @Test

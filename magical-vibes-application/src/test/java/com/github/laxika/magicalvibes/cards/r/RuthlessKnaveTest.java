@@ -38,8 +38,7 @@ class RuthlessKnaveTest extends BaseCardTest {
         // Knave is excluded as source, so Llanowar Elves is the only valid target — auto-sacrifice
         harness.activateAbility(player1, 0, 0, null, null);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
         harness.assertInGraveyard(player1, "Llanowar Elves");
 
         assertThat(gd.stack).hasSize(1);
@@ -86,10 +85,8 @@ class RuthlessKnaveTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, elvesId);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test

@@ -61,8 +61,7 @@ class CinderbonesTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Cinderbones"));
+        harness.assertOnBattlefield(player1, "Cinderbones");
         Permanent cinderbones = findPermanent(player1, "Cinderbones");
         assertThat(cinderbones.isTapped()).isTrue();
         assertThat(cinderbones.getRegenerationShield()).isEqualTo(0);
@@ -84,10 +83,8 @@ class CinderbonesTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Cinderbones"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Cinderbones"));
+        harness.assertNotOnBattlefield(player1, "Cinderbones");
+        harness.assertInGraveyard(player1, "Cinderbones");
     }
 
     private Permanent addCinderbonesReady(Player player) {

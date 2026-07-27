@@ -57,8 +57,7 @@ class RooftopPercherTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature → ETB triggers → target selection prompt
 
         // Rooftop Percher is on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Rooftop Percher"));
+        harness.assertOnBattlefield(player1, "Rooftop Percher");
 
         // Graveyard target selection is pending (at trigger time, before ability goes on stack)
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
@@ -290,8 +289,6 @@ class RooftopPercherTest extends BaseCardTest {
     void invalidCardIdThrows() {
         setupGraveyards();
         setupAndCast();
-
-        GameData gd = harness.getGameData();
 
         harness.passBothPriorities(); // resolve creature → target prompt
 

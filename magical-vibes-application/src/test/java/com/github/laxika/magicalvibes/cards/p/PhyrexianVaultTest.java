@@ -49,8 +49,7 @@ class PhyrexianVaultTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Phyrexian Vault"));
+        harness.assertOnBattlefield(player1, "Phyrexian Vault");
     }
 
     @Test
@@ -77,14 +76,11 @@ class PhyrexianVaultTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Grizzly Bears should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Phyrexian Vault should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Phyrexian Vault"));
+        harness.assertOnBattlefield(player1, "Phyrexian Vault");
 
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -169,10 +165,8 @@ class PhyrexianVaultTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Phyrexian Vault"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Phyrexian Vault"));
+        harness.assertOnBattlefield(player1, "Phyrexian Vault");
+        harness.assertNotInGraveyard(player1, "Phyrexian Vault");
     }
 
     @Test

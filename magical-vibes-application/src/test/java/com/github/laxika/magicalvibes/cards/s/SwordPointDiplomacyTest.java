@@ -57,10 +57,9 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         // Opponent selects no cards to deny
         harness.handleMultipleCardsChosen(player2, List.of());
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Forest"))
-                .anyMatch(c -> c.getName().equals("Island"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Forest");
+        harness.assertInHand(player1, "Island");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         // Opponent life unchanged
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -85,10 +84,9 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         // Opponent denies Grizzly Bears
         harness.handleMultipleCardsChosen(player2, List.of(card1.getId()));
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Forest"))
-                .anyMatch(c -> c.getName().equals("Island"));
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Forest");
+        harness.assertInHand(player1, "Island");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -137,10 +135,9 @@ class SwordPointDiplomacyTest extends BaseCardTest {
 
         // No choice presented — all go to hand automatically
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Forest"))
-                .anyMatch(c -> c.getName().equals("Island"));
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Forest");
+        harness.assertInHand(player1, "Island");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(2);
     }
 
@@ -169,9 +166,8 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(0);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"))
-                .anyMatch(c -> c.getName().equals("Island"));
+        harness.assertInHand(player1, "Forest");
+        harness.assertInHand(player1, "Island");
     }
 
     @Test
@@ -256,7 +252,6 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         // Opponent makes choice
         harness.handleMultipleCardsChosen(player2, List.of());
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Sword-Point Diplomacy"));
+        harness.assertInGraveyard(player1, "Sword-Point Diplomacy");
     }
 }

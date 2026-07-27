@@ -34,8 +34,7 @@ class ClaimFameTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getId().equals(creature.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Claim"));
+        harness.assertInGraveyard(player1, "Claim");
     }
 
     @Test

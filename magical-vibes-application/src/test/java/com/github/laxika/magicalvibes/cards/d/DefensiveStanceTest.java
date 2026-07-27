@@ -96,10 +96,8 @@ class DefensiveStanceTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(bears);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Defensive Stance"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Defensive Stance"));
+        harness.assertInGraveyard(player1, "Defensive Stance");
+        harness.assertNotOnBattlefield(player1, "Defensive Stance");
     }
 
     @Test

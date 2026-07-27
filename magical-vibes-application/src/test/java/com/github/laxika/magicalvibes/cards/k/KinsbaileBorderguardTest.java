@@ -83,8 +83,7 @@ class KinsbaileBorderguardTest extends BaseCardTest {
         gs.playCard(gd, player1, 0, 0, null, null);
         harness.passBothPriorities(); // Wrath resolves — Borderguard dies
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Kinsbaile Borderguard"));
+        harness.assertInGraveyard(player1, "Kinsbaile Borderguard");
         assertThat(gd.stack).hasSize(1); // death trigger on the stack
 
         harness.passBothPriorities(); // resolve death trigger

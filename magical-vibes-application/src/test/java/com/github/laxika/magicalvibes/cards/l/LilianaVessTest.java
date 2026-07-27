@@ -95,8 +95,7 @@ class LilianaVessTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -198,8 +197,7 @@ class LilianaVessTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Liliana should have 0 loyalty (8 - 8) and be in graveyard
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Liliana Vess"));
+        harness.assertNotOnBattlefield(player1, "Liliana Vess");
 
         // All three creatures should be on player1's battlefield
         long bearsOnBf = gd.playerBattlefields.get(player1.getId()).stream()
@@ -208,10 +206,8 @@ class LilianaVessTest extends BaseCardTest {
         assertThat(bearsOnBf).isEqualTo(3);
 
         // Both graveyards should have no creature cards remaining
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -227,16 +223,12 @@ class LilianaVessTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Only the creature should be on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Plains"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Plains");
 
         // Plains should still be in opponent's graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Plains"));
+        harness.assertInGraveyard(player2, "Plains");
     }
 
     @Test

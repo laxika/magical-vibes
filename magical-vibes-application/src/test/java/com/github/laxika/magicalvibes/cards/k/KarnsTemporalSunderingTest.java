@@ -139,11 +139,8 @@ class KarnsTemporalSunderingTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(player1.getId(), bearsId));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     @Test
@@ -206,8 +203,7 @@ class KarnsTemporalSunderingTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Karn's Temporal Sundering"));
+        harness.assertNotInGraveyard(player1, "Karn's Temporal Sundering");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Karn's Temporal Sundering"));
     }
@@ -236,14 +232,11 @@ class KarnsTemporalSunderingTest extends BaseCardTest {
         assertThat(gd.extraTurns).containsExactly(player1.getId());
 
         // Bears bounced to hand
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
 
         // Spell exiled
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Karn's Temporal Sundering"));
+        harness.assertNotInGraveyard(player1, "Karn's Temporal Sundering");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Karn's Temporal Sundering"));
     }

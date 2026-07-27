@@ -48,8 +48,7 @@ class CunningGiantTest extends BaseCardTest {
         harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 4));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(giant.getMarkedDamage()).isZero();
     }
 
@@ -69,8 +68,7 @@ class CunningGiantTest extends BaseCardTest {
         harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 4));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test

@@ -28,8 +28,7 @@ class ExcavationElephantTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Excavation Elephant"));
+        harness.assertOnBattlefield(player1, "Excavation Elephant");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -45,8 +44,7 @@ class ExcavationElephantTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
+        harness.assertInGraveyard(player1, "Spellbook");
     }
 
     // ===== Cast with kicker =====
@@ -57,8 +55,7 @@ class ExcavationElephantTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new Spellbook()));
         castKicked();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Excavation Elephant"));
+        harness.assertOnBattlefield(player1, "Excavation Elephant");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
     }
@@ -74,10 +71,8 @@ class ExcavationElephantTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Spellbook"));
+        harness.assertInHand(player1, "Spellbook");
+        harness.assertNotInGraveyard(player1, "Spellbook");
     }
 
     @Test

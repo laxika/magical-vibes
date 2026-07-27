@@ -39,8 +39,7 @@ class HypnoticSpecterTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("discards") && log.contains("at random"));
     }
 
@@ -56,8 +55,7 @@ class HypnoticSpecterTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test

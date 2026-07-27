@@ -48,10 +48,8 @@ class WalkerOfTheGroveTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve LTB trigger -> token
 
         // Walker itself was sacrificed as it entered.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Walker of the Grove"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Walker of the Grove"));
+        harness.assertNotOnBattlefield(player1, "Walker of the Grove");
+        harness.assertInGraveyard(player1, "Walker of the Grove");
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken())

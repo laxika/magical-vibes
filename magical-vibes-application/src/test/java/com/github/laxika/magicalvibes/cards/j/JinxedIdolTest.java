@@ -55,10 +55,8 @@ class JinxedIdolTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Jinxed Idol should now be on player2's battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Jinxed Idol"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Jinxed Idol"));
+        harness.assertOnBattlefield(player2, "Jinxed Idol");
+        harness.assertNotOnBattlefield(player1, "Jinxed Idol");
     }
 
     @Test
@@ -104,8 +102,7 @@ class JinxedIdolTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Idol should be on player2's battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Jinxed Idol"));
+        harness.assertOnBattlefield(player2, "Jinxed Idol");
         // One Grizzly Bears should remain
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getCard().getName().equals("Grizzly Bears"))

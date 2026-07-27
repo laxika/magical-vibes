@@ -56,8 +56,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Changeling Wayfinder is on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Changeling Wayfinder"));
+        harness.assertOnBattlefield(player1, "Changeling Wayfinder");
 
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 

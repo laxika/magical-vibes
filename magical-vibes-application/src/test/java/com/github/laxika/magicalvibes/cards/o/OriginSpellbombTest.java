@@ -66,10 +66,8 @@ class OriginSpellbombTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Spellbomb should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Origin Spellbomb"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Origin Spellbomb"));
+        harness.assertNotOnBattlefield(player1, "Origin Spellbomb");
+        harness.assertInGraveyard(player1, "Origin Spellbomb");
     }
 
     // ===== Death trigger: may pay {W} to draw =====

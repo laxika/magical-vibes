@@ -46,8 +46,7 @@ class InundateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Blue creature stays; nonblue creature bounced
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));
+        harness.assertOnBattlefield(player1, "Air Elemental");
         assertThat(gd.playerHands.get(player2.getId()))
                 .extracting(c -> c.getName())
                 .contains("Grizzly Bears");
@@ -64,8 +63,7 @@ class InundateTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Glorious Anthem"));
+        harness.assertOnBattlefield(player1, "Glorious Anthem");
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(c -> c.getName())
                 .containsExactly("Grizzly Bears");

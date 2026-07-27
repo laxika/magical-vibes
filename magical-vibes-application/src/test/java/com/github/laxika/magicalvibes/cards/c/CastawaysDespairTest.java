@@ -128,10 +128,8 @@ class CastawaysDespairTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Castaway's Despair"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Castaway's Despair"));
+        harness.assertInGraveyard(player1, "Castaway's Despair");
+        harness.assertNotOnBattlefield(player1, "Castaway's Despair");
     }
 
     // ===== Full integration =====

@@ -49,9 +49,7 @@ class NantukoHuskTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Nantuko Husk"));
+        harness.assertOnBattlefield(player1, "Nantuko Husk");
     }
 
     // ===== Activation: sacrificing a creature =====
@@ -69,14 +67,11 @@ class NantukoHuskTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Grizzly Bears should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Nantuko Husk should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Nantuko Husk"));
+        harness.assertOnBattlefield(player1, "Nantuko Husk");
 
         // Ability should be on the stack referencing the Husk (non-targeting per MTG rules)
         assertThat(gd.stack).hasSize(1);
@@ -134,10 +129,8 @@ class NantukoHuskTest extends BaseCardTest {
         assertThat(husk.getEffectiveToughness()).isEqualTo(6);
 
         // Both sacrificed creatures should be in the graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Saproling Token"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Saproling Token");
     }
 
     @Test
@@ -150,10 +143,8 @@ class NantukoHuskTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Husk should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Nantuko Husk"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Nantuko Husk"));
+        harness.assertNotOnBattlefield(player1, "Nantuko Husk");
+        harness.assertInGraveyard(player1, "Nantuko Husk");
 
         // Ability should still be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -172,10 +163,8 @@ class NantukoHuskTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         // Husk is in the graveyard, ability fizzled — no crash
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Nantuko Husk"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Nantuko Husk"));
+        harness.assertNotOnBattlefield(player1, "Nantuko Husk");
+        harness.assertInGraveyard(player1, "Nantuko Husk");
     }
 
     // ===== No mana cost =====
@@ -302,10 +291,8 @@ class NantukoHuskTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Nantuko Husk"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Nantuko Husk"));
+        harness.assertNotOnBattlefield(player1, "Nantuko Husk");
+        harness.assertInGraveyard(player1, "Nantuko Husk");
         assertThat(gd.stack).hasSize(1);
     }
 
@@ -323,13 +310,9 @@ class NantukoHuskTest extends BaseCardTest {
         // Only one creature (Husk) — auto-pay sacrifices Husk, not the enchantment
         harness.activateAbility(player1, 0, null, null);
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Nantuko Husk"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Test Enchantment"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Nantuko Husk"));
+        harness.assertNotOnBattlefield(player1, "Nantuko Husk");
+        harness.assertOnBattlefield(player1, "Test Enchantment");
+        harness.assertInGraveyard(player1, "Nantuko Husk");
     }
 
     // ===== Logging =====

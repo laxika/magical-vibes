@@ -76,7 +76,6 @@ class IllusionsOfGrandeurTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(illusions);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Illusions of Grandeur"));
+        harness.assertInGraveyard(player1, "Illusions of Grandeur");
     }
 }

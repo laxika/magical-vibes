@@ -111,10 +111,8 @@ class AryelKnightOfWindgraceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears (2/2) should be destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // Knights should be tapped as cost
         assertThat(knight1.isTapped()).isTrue();
@@ -241,8 +239,7 @@ class AryelKnightOfWindgraceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bears destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         // Chosen knights tapped, unchosen untapped
         assertThat(knight1.isTapped()).isTrue();

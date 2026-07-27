@@ -241,8 +241,7 @@ class MitoticManipulationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Mitotic Manipulation"));
+        harness.assertInGraveyard(player1, "Mitotic Manipulation");
         assertThat(gd.stack).isEmpty();
     }
 

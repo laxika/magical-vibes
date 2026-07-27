@@ -31,8 +31,7 @@ class WretchedGryffTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
 
         harness.passBothPriorities(); // resolve creature spell
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Wretched Gryff"));
+        harness.assertOnBattlefield(player1, "Wretched Gryff");
     }
 
     @Test
@@ -53,11 +52,9 @@ class WretchedGryffTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Grizzly Bears");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Wretched Gryff"))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Wretched Gryff");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
 

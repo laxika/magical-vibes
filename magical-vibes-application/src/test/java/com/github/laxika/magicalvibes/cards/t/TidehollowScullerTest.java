@@ -140,9 +140,8 @@ class TidehollowScullerTest extends BaseCardTest {
         harness.castInstant(player2, 0, scullerId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Tidehollow Sculler"));
-        assertThat(gd.playerHands.get(player2.getId())).anyMatch(c -> c.getName().equals("Peek"));
+        harness.assertNotOnBattlefield(player1, "Tidehollow Sculler");
+        harness.assertInHand(player2, "Peek");
         assertThat(gd.getPlayerExiledCards(player2.getId())).noneMatch(c -> c.getName().equals("Peek"));
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
     }
@@ -164,7 +163,7 @@ class TidehollowScullerTest extends BaseCardTest {
         harness.castInstant(player2, 0, scullerId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player2.getId())).anyMatch(c -> c.getName().equals("Peek"));
+        harness.assertInHand(player2, "Peek");
         assertThat(gd.getPlayerExiledCards(player2.getId())).noneMatch(c -> c.getName().equals("Peek"));
     }
 }

@@ -41,10 +41,8 @@ class LoreholdCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 0, null);
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Fountain of Youth"));
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Fountain of Youth"));
+            harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+            harness.assertInGraveyard(player2, "Fountain of Youth");
         }
     }
 
@@ -63,10 +61,8 @@ class LoreholdCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, bears.getId());
             harness.passBothPriorities();
 
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            harness.assertNotInGraveyard(player1, "Grizzly Bears");
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
         }
 
         @Test

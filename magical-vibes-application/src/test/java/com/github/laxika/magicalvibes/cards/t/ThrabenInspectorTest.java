@@ -57,8 +57,7 @@ class ThrabenInspectorTest extends BaseCardTest {
         harness.activateAbility(player1, clueIdx, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Clue"));
+        harness.assertNotOnBattlefield(player1, "Clue");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 }

@@ -37,16 +37,12 @@ class DaringApprenticeTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Grizzly Bears is countered (into player2's graveyard, not on battlefield)
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         // Daring Apprentice sacrificed as a cost
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Daring Apprentice"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Daring Apprentice"));
+        harness.assertInGraveyard(player1, "Daring Apprentice");
+        harness.assertNotOnBattlefield(player1, "Daring Apprentice");
 
         assertThat(gd.stack).isEmpty();
     }
@@ -92,7 +88,6 @@ class DaringApprenticeTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         // Daring Apprentice is still sacrificed (cost was already paid)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Daring Apprentice"));
+        harness.assertInGraveyard(player1, "Daring Apprentice");
     }
 }

@@ -194,8 +194,7 @@ class MagebaneArmorTest extends BaseCardTest {
         // 2/2 creature takes 3 damage and dies
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(creature.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== Re-equip =====

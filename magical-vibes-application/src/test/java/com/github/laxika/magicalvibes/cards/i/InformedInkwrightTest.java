@@ -52,7 +52,6 @@ class InformedInkwrightTest extends BaseCardTest {
         assertThat(gd.stack.stream()
                 .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
                 .count()).isZero();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Inkling"));
+        harness.assertNotOnBattlefield(player1, "Inkling");
     }
 }

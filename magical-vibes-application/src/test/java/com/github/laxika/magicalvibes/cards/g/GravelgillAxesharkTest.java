@@ -61,9 +61,7 @@ class GravelgillAxesharkTest extends BaseCardTest {
         resolveUntilInputOrEmpty();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Gravelgill Axeshark"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Gravelgill Axeshark"));
+        harness.assertNotOnBattlefield(player1, "Gravelgill Axeshark");
+        harness.assertInGraveyard(player1, "Gravelgill Axeshark");
     }
 }

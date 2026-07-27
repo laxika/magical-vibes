@@ -42,8 +42,7 @@ class ManabarbsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Manabarbs"));
+        harness.assertOnBattlefield(player1, "Manabarbs");
     }
 
     // ===== Trigger: controller taps a land =====

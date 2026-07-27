@@ -104,7 +104,6 @@ class SavingGraceTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, opponentCreature))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Saving Grace"));
+        harness.assertNotOnBattlefield(player2, "Saving Grace");
     }
 }

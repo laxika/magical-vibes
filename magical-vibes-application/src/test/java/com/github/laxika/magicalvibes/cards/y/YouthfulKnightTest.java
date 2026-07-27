@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class YouthfulKnightTest extends BaseCardTest {
 
-
     // ===== Casting =====
 
     @Test
@@ -60,8 +59,7 @@ class YouthfulKnightTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Youthful Knight"));
+        harness.assertOnBattlefield(player1, "Youthful Knight");
     }
 
     @Test
@@ -115,13 +113,10 @@ class YouthfulKnightTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Youthful Knight deals 2 first strike damage → kills 1/1 before it can deal damage
         // Youthful Knight survives
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Youthful Knight"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Youthful Knight");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -152,15 +147,11 @@ class YouthfulKnightTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // First strike deals 2 → blocker survives (2 < 3 toughness)
         // Regular damage: blocker deals 2 → Youthful Knight dies (2 >= 1 toughness)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Youthful Knight"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Youthful Knight"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Youthful Knight");
+        harness.assertInGraveyard(player1, "Youthful Knight");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 }
 

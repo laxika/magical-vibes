@@ -18,8 +18,7 @@ class VampiricSpiritTest extends BaseCardTest {
         castVampiricSpirit();
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Vampiric Spirit"));
+        harness.assertOnBattlefield(player1, "Vampiric Spirit");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
     }

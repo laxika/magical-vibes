@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BenalishKnightTest extends BaseCardTest {
 
-
     // ===== Casting during main phase =====
 
     @Test
@@ -114,8 +113,7 @@ class BenalishKnightTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Benalish Knight"));
+        harness.assertOnBattlefield(player1, "Benalish Knight");
     }
 
     @Test
@@ -153,15 +151,11 @@ class BenalishKnightTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Benalish Knight deals 2 first strike damage → kills Grizzly Bears before it can deal damage
         // Benalish Knight survives with 0 damage
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Benalish Knight"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Benalish Knight");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -192,15 +186,11 @@ class BenalishKnightTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Blocker survives first strike (2 < 3 toughness), then deals 3 damage → knight dies
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Benalish Knight"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Benalish Knight"));
+        harness.assertNotOnBattlefield(player1, "Benalish Knight");
+        harness.assertInGraveyard(player1, "Benalish Knight");
         // Blocker survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test

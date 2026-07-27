@@ -30,12 +30,10 @@ class OffalsnoutTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities(); // resolve LTB trigger -> exile
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.exiledCards.stream().anyMatch(e -> e.card().getId().equals(bears.getId()))).isTrue();
         // Offalsnout itself was sacrificed as it entered.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Offalsnout"));
+        harness.assertNotOnBattlefield(player1, "Offalsnout");
     }
 
     @Test
@@ -56,8 +54,7 @@ class OffalsnoutTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities(); // resolve LTB trigger -> exile
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.exiledCards.stream().anyMatch(e -> e.card().getId().equals(bears.getId()))).isTrue();
     }
 }

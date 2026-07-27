@@ -36,8 +36,7 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, ornithopterId); // choose Ornithopter
 
         // Ornithopter should be exiled
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ornithopter"));
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Ornithopter"));
     }
@@ -59,8 +58,7 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, kembaId);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Kemba, Kha Regent"));
+        harness.assertNotOnBattlefield(player1, "Kemba, Kha Regent");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Kemba, Kha Regent"));
     }
@@ -94,10 +92,8 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false); // decline
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sentinel of the Pearl Trident"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Ornithopter"));
+        harness.assertOnBattlefield(player1, "Sentinel of the Pearl Trident");
+        harness.assertOnBattlefield(player1, "Ornithopter");
     }
 
     // ===== Return at end step =====
@@ -118,15 +114,13 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, ornithopterId);
 
         // Ornithopter is exiled
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ornithopter"));
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
 
         // Advance to end step
         advanceToEndStep();
 
         // Ornithopter should be back on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Ornithopter"));
+        harness.assertOnBattlefield(player1, "Ornithopter");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Ornithopter"));
     }
@@ -171,10 +165,8 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sentinel of the Pearl Trident"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Sentinel of the Pearl Trident");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -192,8 +184,7 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Ornithopter"));
+        harness.assertOnBattlefield(player2, "Ornithopter");
     }
 
     // ===== Helpers =====

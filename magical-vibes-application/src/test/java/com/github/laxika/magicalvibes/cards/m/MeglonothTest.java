@@ -38,8 +38,7 @@ class MeglonothTest extends BaseCardTest {
 
         // 6 damage goes to the attacker's controller (a player) — the 2/2 attacker itself is unharmed.
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 6);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test

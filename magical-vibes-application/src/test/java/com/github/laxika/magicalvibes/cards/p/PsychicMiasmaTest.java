@@ -52,13 +52,10 @@ class PsychicMiasmaTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0); // discard Grizzly Bears
 
         // Psychic Miasma should be in caster's graveyard (not returned to hand)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Psychic Miasma"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Psychic Miasma"));
+        harness.assertInGraveyard(player1, "Psychic Miasma");
+        harness.assertNotInHand(player1, "Psychic Miasma");
         // Target discarded their card
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 
@@ -77,13 +74,10 @@ class PsychicMiasmaTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0); // discard Forest (a land)
 
         // Psychic Miasma should be returned to caster's hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Psychic Miasma"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Psychic Miasma"));
+        harness.assertInHand(player1, "Psychic Miasma");
+        harness.assertNotInGraveyard(player1, "Psychic Miasma");
         // Target discarded the land
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player2, "Forest");
     }
 
     @Test
@@ -113,10 +107,8 @@ class PsychicMiasmaTest extends BaseCardTest {
 
         // While awaiting discard choice, spell should NOT be in any zone yet
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Psychic Miasma"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Psychic Miasma"));
+        harness.assertNotInGraveyard(player1, "Psychic Miasma");
+        harness.assertNotInHand(player1, "Psychic Miasma");
     }
 
     // ===== Target with empty hand =====
@@ -134,10 +126,8 @@ class PsychicMiasmaTest extends BaseCardTest {
         // No discard prompt
         assertThat(gd.interaction.activeInteraction()).isNull();
         // Psychic Miasma goes to graveyard (no land was discarded)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Psychic Miasma"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Psychic Miasma"));
+        harness.assertInGraveyard(player1, "Psychic Miasma");
+        harness.assertNotInHand(player1, "Psychic Miasma");
     }
 
     // ===== Discarding from multiple options =====
@@ -154,10 +144,8 @@ class PsychicMiasmaTest extends BaseCardTest {
 
         harness.handleCardChosen(player2, 0); // discard Grizzly Bears (non-land)
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Psychic Miasma"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Psychic Miasma"));
+        harness.assertInGraveyard(player1, "Psychic Miasma");
+        harness.assertNotInHand(player1, "Psychic Miasma");
         // One card remains in opponent's hand
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId()).getFirst().getName()).isEqualTo("Forest");
@@ -175,10 +163,8 @@ class PsychicMiasmaTest extends BaseCardTest {
 
         harness.handleCardChosen(player2, 1); // discard Forest (land)
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Psychic Miasma"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Psychic Miasma"));
+        harness.assertInHand(player1, "Psychic Miasma");
+        harness.assertNotInGraveyard(player1, "Psychic Miasma");
         // One card remains in opponent's hand
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");

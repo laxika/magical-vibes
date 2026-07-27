@@ -82,8 +82,7 @@ class AnnexTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Annex"));
+        harness.assertInGraveyard(player1, "Annex");
     }
 
     @Test

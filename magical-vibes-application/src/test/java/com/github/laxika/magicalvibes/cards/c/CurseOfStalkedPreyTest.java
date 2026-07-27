@@ -27,8 +27,7 @@ class CurseOfStalkedPreyTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, player2.getId());
         harness.passBothPriorities(); // resolve
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Curse of Stalked Prey"));
+        harness.assertOnBattlefield(player1, "Curse of Stalked Prey");
 
         Permanent curse = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Curse of Stalked Prey"))
@@ -155,8 +154,7 @@ class CurseOfStalkedPreyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Curse should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Curse of Stalked Prey"));
+        harness.assertOnBattlefield(player1, "Curse of Stalked Prey");
     }
 
     @Test

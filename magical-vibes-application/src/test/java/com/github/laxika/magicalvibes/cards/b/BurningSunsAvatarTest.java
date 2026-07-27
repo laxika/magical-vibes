@@ -55,10 +55,8 @@ class BurningSunsAvatarTest extends BaseCardTest {
         // Opponent takes 3 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         // Grizzly Bears (2/2) takes 3 damage and dies
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== ETB deals damage to opponent only (no creature target) =====
@@ -103,8 +101,7 @@ class BurningSunsAvatarTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         // 4/4 creature survives 3 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== ETB trigger goes on stack =====
@@ -120,8 +117,7 @@ class BurningSunsAvatarTest extends BaseCardTest {
         // Resolve creature spell → enters battlefield, ETB triggers
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Burning Sun's Avatar"));
+        harness.assertOnBattlefield(player1, "Burning Sun's Avatar");
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -141,7 +137,6 @@ class BurningSunsAvatarTest extends BaseCardTest {
         // Resolve creature spell
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Burning Sun's Avatar"));
+        harness.assertOnBattlefield(player1, "Burning Sun's Avatar");
     }
 }

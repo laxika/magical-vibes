@@ -30,8 +30,7 @@ class IncreasingConfusionTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(p2DeckBefore - 3);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Increasing Confusion"));
+        harness.assertInGraveyard(player1, "Increasing Confusion");
     }
 
     @Test
@@ -79,8 +78,7 @@ class IncreasingConfusionTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(p2DeckBefore - 8);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(8);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Increasing Confusion"));
+        harness.assertNotInGraveyard(player1, "Increasing Confusion");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Increasing Confusion"));
     }

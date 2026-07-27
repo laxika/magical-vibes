@@ -39,8 +39,7 @@ class WhisperBloodLiturgistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Whisper, Blood Liturgist"));
+        harness.assertOnBattlefield(player1, "Whisper, Blood Liturgist");
     }
 
     @Test
@@ -100,12 +99,9 @@ class WhisperBloodLiturgistTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.ACTIVATED_ABILITY);
 
         // Sacrificed creatures should be gone, Angel of Mercy remains
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Angel of Mercy"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertOnBattlefield(player1, "Angel of Mercy");
     }
 
     // ===== Resolution — returning creature from graveyard =====
@@ -132,10 +128,8 @@ class WhisperBloodLiturgistTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Angel of Mercy"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Angel of Mercy"));
+        harness.assertOnBattlefield(player1, "Angel of Mercy");
+        harness.assertNotInGraveyard(player1, "Angel of Mercy");
     }
 
     @Test
@@ -160,8 +154,7 @@ class WhisperBloodLiturgistTest extends BaseCardTest {
         // Choose Angel of Mercy at index 0
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Angel of Mercy"));
+        harness.assertOnBattlefield(player1, "Angel of Mercy");
     }
 
     @Test
@@ -351,8 +344,7 @@ class WhisperBloodLiturgistTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Angel of Mercy"));
+        harness.assertOnBattlefield(player1, "Angel of Mercy");
     }
 
     // ===== Helpers =====

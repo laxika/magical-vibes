@@ -10,8 +10,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 class FirecannonBlastTest extends BaseCardTest {
 
     // ===== Without raid =====
@@ -28,10 +26,8 @@ class FirecannonBlastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 3 damage kills a 2/2
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -46,8 +42,7 @@ class FirecannonBlastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 3 damage does not kill a 4/4
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));
+        harness.assertOnBattlefield(player2, "Air Elemental");
     }
 
     // ===== With raid =====
@@ -67,10 +62,8 @@ class FirecannonBlastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 6 damage kills a 4/4
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Air Elemental"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Air Elemental"));
+        harness.assertNotOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player2, "Air Elemental");
     }
 
     // ===== Raid only checks controller =====
@@ -90,8 +83,7 @@ class FirecannonBlastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Only 3 damage — 4/4 survives
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));
+        harness.assertOnBattlefield(player2, "Air Elemental");
     }
 
     // ===== Raid checked at resolution time =====
@@ -114,7 +106,6 @@ class FirecannonBlastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should deal 6 since raid is met at resolution time
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Air Elemental"));
+        harness.assertNotOnBattlefield(player2, "Air Elemental");
     }
 }

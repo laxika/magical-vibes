@@ -52,8 +52,7 @@ class ViridianEmissaryTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Emissary (2/1) should die after blocking a 2/2
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Viridian Emissary"));
+        harness.assertInGraveyard(player1, "Viridian Emissary");
 
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
@@ -101,8 +100,7 @@ class ViridianEmissaryTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Viridian Emissary"));
+        harness.assertInGraveyard(player1, "Viridian Emissary");
 
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
@@ -131,8 +129,7 @@ class ViridianEmissaryTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Viridian Emissary"));
+        harness.assertInGraveyard(player1, "Viridian Emissary");
 
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 

@@ -49,10 +49,8 @@ class PathOfPeaceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         // The creature's owner (player2) gains 4 life, not the caster.
         assertThat(gd.getLife(player2.getId())).isEqualTo(ownerLifeBefore + 4);
         assertThat(gd.getLife(player1.getId())).isEqualTo(casterLifeBefore);

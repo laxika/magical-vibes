@@ -172,7 +172,6 @@ class DiligentExcavatorTest extends BaseCardTest {
 
         gd = harness.getGameData();
         // Spellbook should now be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Spellbook"));
+        harness.assertOnBattlefield(player1, "Spellbook");
     }
 }

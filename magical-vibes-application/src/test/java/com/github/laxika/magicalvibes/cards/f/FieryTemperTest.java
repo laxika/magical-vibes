@@ -103,7 +103,6 @@ class FieryTemperTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fiery Temper"));
+        harness.assertInGraveyard(player1, "Fiery Temper");
     }
 }

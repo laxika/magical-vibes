@@ -20,10 +20,8 @@ class BloodPetTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // The creature is sacrificed to the graveyard
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Blood Pet"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Blood Pet"));
+        harness.assertNotOnBattlefield(player1, "Blood Pet");
+        harness.assertInGraveyard(player1, "Blood Pet");
 
         // Mana ability resolves immediately — no stack entry
         assertThat(gd.stack).isEmpty();
@@ -42,8 +40,7 @@ class BloodPetTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Blood Pet"));
+        harness.assertNotOnBattlefield(player1, "Blood Pet");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
     }
 }

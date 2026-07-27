@@ -28,12 +28,10 @@ class FeldonsCaneTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Feldon's Cane"));
+        harness.assertNotOnBattlefield(player1, "Feldon's Cane");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Feldon's Cane"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Feldon's Cane"));
+        harness.assertNotInGraveyard(player1, "Feldon's Cane");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -77,8 +75,7 @@ class FeldonsCaneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Giant Spider"));
+        harness.assertInGraveyard(player2, "Giant Spider");
     }
 
     // ===== Helpers =====

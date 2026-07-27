@@ -67,8 +67,7 @@ class GluttonousGuestTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Blood"));
+        harness.assertNotOnBattlefield(player1, "Blood");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);

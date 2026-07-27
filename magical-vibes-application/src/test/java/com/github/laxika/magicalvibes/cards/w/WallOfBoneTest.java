@@ -60,9 +60,7 @@ class WallOfBoneTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Wall of Bone"));
+        harness.assertOnBattlefield(player1, "Wall of Bone");
     }
 
     // ===== Activate regeneration ability =====
@@ -133,8 +131,7 @@ class WallOfBoneTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Wall of Bone should survive via regeneration
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Wall of Bone"));
+        harness.assertOnBattlefield(player1, "Wall of Bone");
         Permanent wall = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Wall of Bone"))
                 .findFirst().orElseThrow();
@@ -162,10 +159,8 @@ class WallOfBoneTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Wall of Bone survives — 2 damage < 4 toughness
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Wall of Bone"));
+        harness.assertOnBattlefield(player1, "Wall of Bone");
     }
 
     @Test
@@ -188,11 +183,8 @@ class WallOfBoneTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Wall of Bone"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Wall of Bone"));
+        harness.assertNotOnBattlefield(player1, "Wall of Bone");
+        harness.assertInGraveyard(player1, "Wall of Bone");
     }
 
     // ===== Helper methods =====

@@ -47,8 +47,7 @@ class AuguryOwlTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Augury Owl"));
+        harness.assertOnBattlefield(player1, "Augury Owl");
 
         // ETB triggered ability should be on stack
         assertThat(gd.stack).hasSize(1);

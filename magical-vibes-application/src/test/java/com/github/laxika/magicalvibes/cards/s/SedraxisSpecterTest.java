@@ -68,8 +68,7 @@ class SedraxisSpecterTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Sedraxis Specter"))
                 .findFirst().orElseThrow();
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Sedraxis Specter"));
+        harness.assertNotInGraveyard(player1, "Sedraxis Specter");
     }
 
     @Test
@@ -87,8 +86,7 @@ class SedraxisSpecterTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Sedraxis Specter"));
+        harness.assertNotOnBattlefield(player1, "Sedraxis Specter");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Sedraxis Specter"));
     }

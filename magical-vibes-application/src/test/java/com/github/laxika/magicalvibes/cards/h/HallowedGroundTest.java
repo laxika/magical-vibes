@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.EnumSet;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HallowedGroundTest extends BaseCardTest {
@@ -28,10 +27,8 @@ class HallowedGroundTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, plains.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Plains"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Plains"));
+        harness.assertNotOnBattlefield(player1, "Plains");
+        harness.assertInHand(player1, "Plains");
     }
 
     @Test

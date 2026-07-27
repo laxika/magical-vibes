@@ -40,9 +40,7 @@ class BrindleBoarTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Brindle Boar"));
+        harness.assertOnBattlefield(player1, "Brindle Boar");
     }
 
     // ===== Sacrifice ability =====
@@ -57,10 +55,8 @@ class BrindleBoarTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Brindle Boar should be sacrificed (moved to graveyard as a cost)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Brindle Boar"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Brindle Boar"));
+        harness.assertNotOnBattlefield(player1, "Brindle Boar");
+        harness.assertInGraveyard(player1, "Brindle Boar");
 
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);

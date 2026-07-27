@@ -118,8 +118,7 @@ class GhostlyPossessionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Blocker survives because the enchanted attacker's combat damage is prevented
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Gold Myr"));
+        harness.assertOnBattlefield(player2, "Gold Myr");
     }
 
     // ===== Combat damage prevention — enchanted creature takes no combat damage =====
@@ -150,8 +149,7 @@ class GhostlyPossessionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Blocker survives because combat damage to it is prevented
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Gold Myr"));
+        harness.assertOnBattlefield(player2, "Gold Myr");
     }
 
     // ===== Non-combat damage is NOT prevented =====
@@ -176,8 +174,7 @@ class GhostlyPossessionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bears should be dead — non-combat damage is not prevented
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Effects stop when aura is removed =====

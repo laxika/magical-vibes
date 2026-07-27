@@ -48,8 +48,7 @@ class ChoMannoRevolutionaryTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Cho-Manno, Revolutionary"));
+        harness.assertOnBattlefield(player1, "Cho-Manno, Revolutionary");
     }
 
     @Test
@@ -90,13 +89,10 @@ class ChoMannoRevolutionaryTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Cho-Manno survives — all damage prevented
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Cho-Manno, Revolutionary"));
+        harness.assertOnBattlefield(player2, "Cho-Manno, Revolutionary");
         // Attacker takes 2 damage from Cho-Manno (2 < 5 toughness) → survives too
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -122,15 +118,11 @@ class ChoMannoRevolutionaryTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Cho-Manno survives (all damage prevented)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Cho-Manno, Revolutionary"));
+        harness.assertOnBattlefield(player1, "Cho-Manno, Revolutionary");
         // Grizzly Bears dies (took 2 damage, toughness 2)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -196,8 +188,7 @@ class ChoMannoRevolutionaryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Cho-Manno survived, Bears died
-        assertThat(harness.getGameData().playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Cho-Manno, Revolutionary"));
+        harness.assertOnBattlefield(player2, "Cho-Manno, Revolutionary");
 
         // Add a new attacker for second combat
         GrizzlyBears bears2 = new GrizzlyBears();
@@ -216,8 +207,7 @@ class ChoMannoRevolutionaryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Cho-Manno still survives second combat
-        assertThat(harness.getGameData().playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Cho-Manno, Revolutionary"));
+        harness.assertOnBattlefield(player2, "Cho-Manno, Revolutionary");
     }
 
     @Test

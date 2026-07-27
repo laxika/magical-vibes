@@ -77,11 +77,9 @@ class GraspOfPhantomsTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Creature removed from battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Creature NOT in graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
         // Creature on top of library (first element)
         List<Card> deck = gd.playerDecks.get(player2.getId());
         assertThat(deck).hasSize(deckSizeBefore + 1);
@@ -105,8 +103,7 @@ class GraspOfPhantomsTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grasp of Phantoms"));
+        harness.assertInGraveyard(player1, "Grasp of Phantoms");
     }
 
     // ===== Fizzle =====
@@ -135,8 +132,7 @@ class GraspOfPhantomsTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Grasp of Phantoms still goes to graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grasp of Phantoms"));
+        harness.assertInGraveyard(player1, "Grasp of Phantoms");
     }
 
     // ===== Flashback =====
@@ -158,8 +154,7 @@ class GraspOfPhantomsTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Creature removed from battlefield and on top of library
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         List<Card> deck = gd.playerDecks.get(player2.getId());
         assertThat(deck).hasSize(deckSizeBefore + 1);
         assertThat(deck.getFirst().getName()).isEqualTo("Grizzly Bears");
@@ -180,8 +175,7 @@ class GraspOfPhantomsTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Should NOT be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grasp of Phantoms"));
+        harness.assertNotInGraveyard(player1, "Grasp of Phantoms");
         // Should be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grasp of Phantoms"));

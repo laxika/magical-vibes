@@ -133,10 +133,8 @@ class FinalPartingTest extends BaseCardTest {
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(bearsIndex));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Plains"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Plains");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== Unrestricted search — cannot fail to find =====
@@ -187,8 +185,7 @@ class FinalPartingTest extends BaseCardTest {
 
         // Library is now empty — no second pick, just finishes
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Plains"));
+        harness.assertInHand(player1, "Plains");
     }
 
     @Test
@@ -220,8 +217,7 @@ class FinalPartingTest extends BaseCardTest {
         // Second pick: graveyard
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Final Parting"));
+        harness.assertInGraveyard(player1, "Final Parting");
     }
 
     @Test

@@ -46,10 +46,8 @@ class PowerSinkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Spell countered (player1 could not pay {3}).
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         // Rider: all of player1's lands are tapped and their mana pool is emptied.
         assertThat(p1Battlefield).allMatch(Permanent::isTapped);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
@@ -78,8 +76,7 @@ class PowerSinkTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false); // decline to pay
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(p1Battlefield).allMatch(Permanent::isTapped);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
@@ -107,12 +104,10 @@ class PowerSinkTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // pay {1}
 
         // Not countered and the rider did not fire.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(land.isTapped()).isFalse();
 
         harness.passBothPriorities(); // resolve Grizzly Bears
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }

@@ -39,8 +39,7 @@ class CoralHelmTest extends BaseCardTest {
         assertThat(bear.getEffectiveToughness()).isEqualTo(4);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player1, "Forest");
     }
 
     @Test

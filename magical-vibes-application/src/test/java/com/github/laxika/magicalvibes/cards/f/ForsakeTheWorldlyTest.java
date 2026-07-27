@@ -36,8 +36,7 @@ class ForsakeTheWorldlyTest extends BaseCardTest {
         castForsake(targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ornithopter"));
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Ornithopter"));
     }
@@ -50,8 +49,7 @@ class ForsakeTheWorldlyTest extends BaseCardTest {
         castForsake(targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Aura of Silence"));
+        harness.assertNotOnBattlefield(player2, "Aura of Silence");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Aura of Silence"));
     }

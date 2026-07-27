@@ -82,9 +82,7 @@ class SpittingImageTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears") && p.getCard().isToken())
                 .count();
         assertThat(tokenCount).isEqualTo(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mountain"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spitting Image"));
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Spitting Image");
     }
 }

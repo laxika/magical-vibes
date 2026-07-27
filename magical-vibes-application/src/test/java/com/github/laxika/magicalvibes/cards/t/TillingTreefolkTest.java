@@ -50,12 +50,10 @@ class TillingTreefolkTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, validIds);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"))
-                .anyMatch(c -> c.getName().equals("Mountain"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Forest"))
-                .noneMatch(c -> c.getName().equals("Mountain"));
+        harness.assertInHand(player1, "Forest");
+        harness.assertInHand(player1, "Mountain");
+        harness.assertNotInGraveyard(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Mountain");
     }
 
     @Test
@@ -83,8 +81,7 @@ class TillingTreefolkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInGraveyard(player1, "Forest");
     }
 
     @Test
@@ -97,8 +94,7 @@ class TillingTreefolkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Tilling Treefolk"));
+        harness.assertOnBattlefield(player1, "Tilling Treefolk");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }

@@ -33,10 +33,8 @@ class ThroneOfGethTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Throne auto-sacrificed itself (the only artifact)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Throne of Geth"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Throne of Geth"));
+        harness.assertNotOnBattlefield(player1, "Throne of Geth");
+        harness.assertInGraveyard(player1, "Throne of Geth");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }
@@ -70,11 +68,9 @@ class ThroneOfGethTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, spellbookId);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
+        harness.assertNotOnBattlefield(player1, "Spellbook");
         // Throne should still be on battlefield (chose to sacrifice Spellbook instead)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Throne of Geth"));
+        harness.assertOnBattlefield(player1, "Throne of Geth");
     }
 
     // ===== Proliferate on resolution =====

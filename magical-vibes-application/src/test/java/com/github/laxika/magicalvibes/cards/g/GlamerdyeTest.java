@@ -104,8 +104,7 @@ class GlamerdyeTest extends BaseCardTest {
         assertThat(paladin(player2.getId()).getTextReplacements())
                 .containsExactly(new TextReplacement("black", "white"));
         // Retrace keeps the normal graveyard disposition — not exiled, so it can be retraced again.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Glamerdye"));
+        harness.assertInGraveyard(player1, "Glamerdye");
     }
 
     @Test

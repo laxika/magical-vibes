@@ -59,8 +59,7 @@ class GryffsBoonTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Gryff's Boon"));
+        harness.assertNotInGraveyard(player1, "Gryff's Boon");
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Gryff's Boon")
                         && p.isAttached()
@@ -85,10 +84,8 @@ class GryffsBoonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Gryff's Boon"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Gryff's Boon"));
+        harness.assertInGraveyard(player1, "Gryff's Boon");
+        harness.assertNotOnBattlefield(player1, "Gryff's Boon");
     }
 
     @Test

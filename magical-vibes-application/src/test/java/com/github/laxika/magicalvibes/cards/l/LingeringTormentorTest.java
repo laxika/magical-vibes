@@ -61,9 +61,7 @@ class LingeringTormentorTest extends BaseCardTest {
         resolveUntilInputOrEmpty();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Lingering Tormentor"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lingering Tormentor"));
+        harness.assertNotOnBattlefield(player1, "Lingering Tormentor");
+        harness.assertInGraveyard(player1, "Lingering Tormentor");
     }
 }

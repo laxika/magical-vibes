@@ -22,10 +22,8 @@ class MercenaryKnightTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0); // discard the creature
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mercenary Knight"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Mercenary Knight");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -36,12 +34,9 @@ class MercenaryKnightTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mercenary Knight"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mercenary Knight"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Mercenary Knight");
+        harness.assertInGraveyard(player1, "Mercenary Knight");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test
@@ -55,10 +50,8 @@ class MercenaryKnightTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB → auto-sacrifice
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mercenary Knight"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mercenary Knight"));
+        harness.assertNotOnBattlefield(player1, "Mercenary Knight");
+        harness.assertInGraveyard(player1, "Mercenary Knight");
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }

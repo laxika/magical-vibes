@@ -42,10 +42,8 @@ class ForumNecroscribeTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve return trigger
         harness.passBothPriorities(); // resolve Shock
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -91,7 +89,7 @@ class ForumNecroscribeTest extends BaseCardTest {
         harness.castInstant(player2, 0, necroscribe.getId());
         harness.passBothPriorities(); // resolve Ward trigger — no cards to discard
 
-        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player2, "Shock");
         assertThat(necroscribe.getMarkedDamage()).isZero();
     }
 
@@ -110,8 +108,8 @@ class ForumNecroscribeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, false); // decline to discard
 
-        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getName().equals("Shock"));
-        assertThat(gd.playerGraveyards.get(player2.getId())).noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(necroscribe.getMarkedDamage()).isZero();
     }
 
@@ -134,7 +132,7 @@ class ForumNecroscribeTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0); // discard Grizzly Bears
 
         // Discard happened (not a counter) — Shock is not countered
-        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Helpers =====

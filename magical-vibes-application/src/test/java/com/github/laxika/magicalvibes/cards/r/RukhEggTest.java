@@ -27,14 +27,12 @@ class RukhEggTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Lightning Bolt — egg dies
         harness.passBothPriorities(); // resolve death trigger — register delayed token creation
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Rukh Egg"));
+        harness.assertInGraveyard(player1, "Rukh Egg");
         assertThat(gd.getDelayedActions(DelayedCreateToken.class)).hasSize(1);
         assertThat(gd.getDelayedActions(DelayedCreateToken.class).getFirst().controllerId())
                 .isEqualTo(player1.getId());
         // No token yet — it only appears at the next end step.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Bird"));
+        harness.assertNotOnBattlefield(player1, "Bird");
     }
 
     @Test

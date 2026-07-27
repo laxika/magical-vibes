@@ -76,8 +76,7 @@ class PrimevalsGloriousRebirthTest extends BaseCardTest {
         castPrimevalsGloriousRebirth();
 
         harness.assertOnBattlefield(player1, "Arvad the Cursed");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Arvad the Cursed"));
+        harness.assertNotInGraveyard(player1, "Arvad the Cursed");
     }
 
     @Test
@@ -93,8 +92,7 @@ class PrimevalsGloriousRebirthTest extends BaseCardTest {
         castPrimevalsGloriousRebirth();
 
         harness.assertOnBattlefield(player1, "Mox Amber");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Mox Amber"));
+        harness.assertNotInGraveyard(player1, "Mox Amber");
     }
 
     @Test
@@ -110,8 +108,7 @@ class PrimevalsGloriousRebirthTest extends BaseCardTest {
         castPrimevalsGloriousRebirth();
 
         harness.assertOnBattlefield(player1, "Oath of Teferi");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Oath of Teferi"));
+        harness.assertNotInGraveyard(player1, "Oath of Teferi");
     }
 
     @Test
@@ -131,9 +128,8 @@ class PrimevalsGloriousRebirthTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Mox Amber");
         harness.assertOnBattlefield(player1, "Oath of Teferi");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Mox Amber"))
-                .noneMatch(c -> c.getName().equals("Oath of Teferi"));
+        harness.assertNotInGraveyard(player1, "Mox Amber");
+        harness.assertNotInGraveyard(player1, "Oath of Teferi");
     }
 
     // ===== Filter: does not return non-matching cards =====
@@ -151,8 +147,7 @@ class PrimevalsGloriousRebirthTest extends BaseCardTest {
         castPrimevalsGloriousRebirth();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -168,8 +163,7 @@ class PrimevalsGloriousRebirthTest extends BaseCardTest {
         castPrimevalsGloriousRebirth();
 
         harness.assertNotOnBattlefield(player1, "Karn's Temporal Sundering");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Karn's Temporal Sundering"));
+        harness.assertInGraveyard(player1, "Karn's Temporal Sundering");
     }
 
     @Test
@@ -191,10 +185,9 @@ class PrimevalsGloriousRebirthTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Mox Amber");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Karn's Temporal Sundering");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Karn's Temporal Sundering"))
-                .noneMatch(c -> c.getName().equals("Mox Amber"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Karn's Temporal Sundering");
+        harness.assertNotInGraveyard(player1, "Mox Amber");
     }
 
     // ===== Edge cases =====
@@ -228,7 +221,6 @@ class PrimevalsGloriousRebirthTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Mox Amber");
         harness.assertNotOnBattlefield(player2, "Mox Amber");
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Mox Amber"));
+        harness.assertInGraveyard(player2, "Mox Amber");
     }
 }

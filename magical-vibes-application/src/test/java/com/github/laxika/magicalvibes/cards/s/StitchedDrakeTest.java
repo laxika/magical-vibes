@@ -126,7 +126,6 @@ class StitchedDrakeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Stitched Drake");
         // Shock and first Grizzly Bears remain in graveyard
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player1, "Shock");
     }
 }

@@ -24,8 +24,7 @@ class TempestCallerTest extends BaseCardTest {
         castTempestCaller();
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Tempest Caller"));
+        harness.assertOnBattlefield(player1, "Tempest Caller");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
@@ -94,8 +93,7 @@ class TempestCallerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Tempest Caller"));
+        harness.assertOnBattlefield(player1, "Tempest Caller");
     }
 
     @Test
@@ -117,8 +115,7 @@ class TempestCallerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Tempest Caller"));
+        harness.assertOnBattlefield(player1, "Tempest Caller");
     }
 
     // ===== Helpers =====

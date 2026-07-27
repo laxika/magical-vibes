@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -25,10 +24,8 @@ class FencerCliqueTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fencer Clique"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Fencer Clique"));
+        harness.assertNotOnBattlefield(player1, "Fencer Clique");
+        harness.assertNotInHand(player1, "Fencer Clique");
         assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Fencer Clique");
     }
 

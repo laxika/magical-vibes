@@ -61,8 +61,7 @@ class EyesOfTheWisentTest extends BaseCardTest {
         harness.castInstant(player2, 0, bearsId);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elemental"));
+        harness.assertNotOnBattlefield(player1, "Elemental");
     }
 
     @Test
@@ -76,8 +75,7 @@ class EyesOfTheWisentTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elemental"));
+        harness.assertNotOnBattlefield(player1, "Elemental");
     }
 
     @Test
@@ -97,8 +95,7 @@ class EyesOfTheWisentTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elemental"));
+        harness.assertNotOnBattlefield(player1, "Elemental");
     }
 
     @Test
@@ -112,7 +109,6 @@ class EyesOfTheWisentTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elemental"));
+        harness.assertNotOnBattlefield(player1, "Elemental");
     }
 }

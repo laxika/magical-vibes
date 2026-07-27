@@ -99,11 +99,8 @@ class OdiousTrowTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Odious Trow"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Odious Trow"));
+        harness.assertNotOnBattlefield(player1, "Odious Trow");
+        harness.assertInGraveyard(player1, "Odious Trow");
     }
 
     private Permanent addOdiousTrowReady(Player player) {

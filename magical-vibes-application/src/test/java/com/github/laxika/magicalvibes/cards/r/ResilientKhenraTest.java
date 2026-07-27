@@ -103,8 +103,7 @@ class ResilientKhenraTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Resilient Khenra"));
+        harness.assertNotInGraveyard(player1, "Resilient Khenra");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Resilient Khenra"));
     }

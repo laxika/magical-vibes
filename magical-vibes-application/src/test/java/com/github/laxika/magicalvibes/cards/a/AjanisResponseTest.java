@@ -33,10 +33,8 @@ class AjanisResponseTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -74,8 +72,7 @@ class AjanisResponseTest extends BaseCardTest {
 
         // CR 730: the illegal cast rewinds — the card must return to hand, not vanish
         GameData gd = harness.getGameData();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ajani's Response"));
+        harness.assertInHand(player1, "Ajani's Response");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -93,8 +90,7 @@ class AjanisResponseTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test

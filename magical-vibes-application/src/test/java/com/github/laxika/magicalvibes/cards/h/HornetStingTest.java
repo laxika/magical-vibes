@@ -89,8 +89,7 @@ class HornetStingTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Grizzly Bears is 2/2, 1 damage shouldn't kill it
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .filteredOn(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .allMatch(p -> p.getMarkedDamage() == 1);
@@ -107,7 +106,6 @@ class HornetStingTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hornet Sting"));
+        harness.assertInGraveyard(player1, "Hornet Sting");
     }
 }

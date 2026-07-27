@@ -45,7 +45,7 @@ class EvershrikeTest extends BaseCardTest {
                 .findFirst().orElse(null);
         assertThat(aura).isNotNull();
         assertThat(aura.getAttachedTo()).isEqualTo(evershrike1.getId());
-        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getName().equals("Evershrike"));
+        harness.assertNotInGraveyard(player1, "Evershrike");
     }
 
     @Test
@@ -101,7 +101,7 @@ class EvershrikeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.TargetedHandCardChoice.class)).isNull();
         assertThat(evershrikeOnBattlefield()).isNull();
         assertThat(gd.exiledCards).anyMatch(e -> e.card().getName().equals("Evershrike"));
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Pacifism"));
+        harness.assertInHand(player1, "Pacifism");
     }
 
     @Test

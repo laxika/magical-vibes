@@ -45,8 +45,7 @@ class FalkenrathTorturerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Human Soldier"));
+        harness.assertInGraveyard(player1, "Human Soldier");
 
         assertThat(torturer.getGrantedKeywords()).contains(Keyword.FLYING);
         assertThat(torturer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -64,8 +63,7 @@ class FalkenrathTorturerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         assertThat(torturer.getGrantedKeywords()).contains(Keyword.FLYING);
         assertThat(torturer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

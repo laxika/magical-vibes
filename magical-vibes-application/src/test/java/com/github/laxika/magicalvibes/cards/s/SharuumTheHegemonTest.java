@@ -42,10 +42,8 @@ class SharuumTheHegemonTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(wall.getId()));
         harness.passBothPriorities(); // resolve the ETB triggered ability
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Amaranthine Wall"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Amaranthine Wall"));
+        harness.assertOnBattlefield(player1, "Amaranthine Wall");
+        harness.assertNotInGraveyard(player1, "Amaranthine Wall");
     }
 
     @Test
@@ -56,8 +54,7 @@ class SharuumTheHegemonTest extends BaseCardTest {
         castSharuum();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -74,10 +71,8 @@ class SharuumTheHegemonTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Amaranthine Wall"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Amaranthine Wall"));
+        harness.assertInGraveyard(player1, "Amaranthine Wall");
+        harness.assertNotOnBattlefield(player1, "Amaranthine Wall");
     }
 
     @Test

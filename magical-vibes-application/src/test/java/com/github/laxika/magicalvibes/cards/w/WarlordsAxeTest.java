@@ -198,10 +198,8 @@ class WarlordsAxeTest extends BaseCardTest {
         harness.castSorcery(player2, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Warlord's Axe"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Warlord's Axe");
         assertThat(axe.getAttachedTo()).isNull();
     }
 

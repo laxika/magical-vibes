@@ -46,8 +46,7 @@ class BanishingKnackTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bounceTarget);
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player2, "Grizzly Bears");
         // Using the tap ability taps the creature it was granted to.
         assertThat(creature.isTapped()).isTrue();
     }

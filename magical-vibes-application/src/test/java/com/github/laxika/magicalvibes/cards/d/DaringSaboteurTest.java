@@ -185,8 +185,7 @@ class DaringSaboteurTest extends BaseCardTest {
         resolveCombat();
 
         // Daring Saboteur should be dead
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Daring Saboteur"));
+        harness.assertInGraveyard(player1, "Daring Saboteur");
 
         // No trigger — didn't deal combat damage to a player
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);

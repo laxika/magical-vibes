@@ -39,8 +39,7 @@ class FossilFindTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
         // Only Fossil Find itself in graveyard after resolution.
         harness.assertInGraveyard(player1, "Fossil Find");
     }

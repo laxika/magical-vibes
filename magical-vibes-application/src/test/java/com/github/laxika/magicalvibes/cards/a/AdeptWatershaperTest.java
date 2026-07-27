@@ -46,8 +46,7 @@ class AdeptWatershaperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Adept Watershaper"));
+        harness.assertOnBattlefield(player1, "Adept Watershaper");
     }
 
     @Test
@@ -218,10 +217,8 @@ class AdeptWatershaperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature should survive — still on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
 
         // Log should indicate indestructible
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("indestructible"));
@@ -253,16 +250,13 @@ class AdeptWatershaperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The tapped bears should survive (indestructible)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
 
         // Watershaper was untapped → NOT indestructible → should be destroyed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Adept Watershaper"));
+        harness.assertNotOnBattlefield(player1, "Adept Watershaper");
 
         // Opponent's bears should be destroyed (not protected)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -286,10 +280,8 @@ class AdeptWatershaperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature should be destroyed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== Indestructible prevents lethal combat damage death =====
@@ -330,14 +322,11 @@ class AdeptWatershaperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Attacker should survive (indestructible)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
 
         // Blocker should survive too (5/5, took only 1 damage)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -378,10 +367,8 @@ class AdeptWatershaperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Blocker should survive (indestructible)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Attacking creatures get tapped and thus become indestructible =====

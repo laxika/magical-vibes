@@ -90,13 +90,9 @@ class LegionsJudgmentTest extends BaseCardTest {
         harness.castSorcery(player1, 0, wurm.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Craw Wurm"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Craw Wurm"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Legion's Judgment"));
+        harness.assertNotOnBattlefield(player2, "Craw Wurm");
+        harness.assertInGraveyard(player2, "Craw Wurm");
+        harness.assertInGraveyard(player1, "Legion's Judgment");
     }
 
     @Test
@@ -113,9 +109,7 @@ class LegionsJudgmentTest extends BaseCardTest {
         harness.castSorcery(player1, 0, wurm.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Craw Wurm"));
+        harness.assertOnBattlefield(player2, "Craw Wurm");
     }
 
     @Test
@@ -134,7 +128,6 @@ class LegionsJudgmentTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Legion's Judgment"));
+        harness.assertInGraveyard(player1, "Legion's Judgment");
     }
 }

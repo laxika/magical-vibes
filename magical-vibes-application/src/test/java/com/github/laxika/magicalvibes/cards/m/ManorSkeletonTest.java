@@ -59,9 +59,7 @@ class ManorSkeletonTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Manor Skeleton"));
+        harness.assertOnBattlefield(player1, "Manor Skeleton");
     }
 
     // ===== Haste — can attack immediately =====
@@ -164,8 +162,7 @@ class ManorSkeletonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Manor Skeleton"));
+        harness.assertOnBattlefield(player1, "Manor Skeleton");
         Permanent skele = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Manor Skeleton"))
                 .findFirst().orElseThrow();
@@ -192,11 +189,8 @@ class ManorSkeletonTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Manor Skeleton"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Manor Skeleton"));
+        harness.assertNotOnBattlefield(player1, "Manor Skeleton");
+        harness.assertInGraveyard(player1, "Manor Skeleton");
     }
 
     // ===== Helper methods =====

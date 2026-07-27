@@ -40,8 +40,7 @@ class BirthingPodTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Elves should be sacrificed
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
 
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -57,8 +56,7 @@ class BirthingPodTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Gold Myr should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Gold Myr"));
+        harness.assertOnBattlefield(player1, "Gold Myr");
     }
 
     @Test
@@ -85,8 +83,7 @@ class BirthingPodTest extends BaseCardTest {
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hill Giant"));
+        harness.assertOnBattlefield(player1, "Hill Giant");
     }
 
     @Test
@@ -239,8 +236,7 @@ class BirthingPodTest extends BaseCardTest {
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));
+        harness.assertOnBattlefield(player1, "Air Elemental");
     }
 
     @Test

@@ -69,13 +69,9 @@ class PierceTheSkyTest extends BaseCardTest {
         harness.castInstant(player1, 0, airElemental.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Air Elemental"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Air Elemental"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Pierce the Sky"));
+        harness.assertNotOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player2, "Air Elemental");
+        harness.assertInGraveyard(player1, "Pierce the Sky");
     }
 
     @Test
@@ -93,7 +89,6 @@ class PierceTheSkyTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Pierce the Sky"));
+        harness.assertInGraveyard(player1, "Pierce the Sky");
     }
 }

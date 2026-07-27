@@ -68,8 +68,7 @@ class UndeadLeotauTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Undead Leotau"))
                 .findFirst().orElseThrow();
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Undead Leotau"));
+        harness.assertNotInGraveyard(player1, "Undead Leotau");
     }
 
     @Test
@@ -87,8 +86,7 @@ class UndeadLeotauTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Undead Leotau"));
+        harness.assertNotOnBattlefield(player1, "Undead Leotau");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Undead Leotau"));
     }

@@ -63,8 +63,7 @@ class MorkrutBansheeTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         // Grizzly Bears (2/2) gets -4/-4 → lethal, should be destroyed by SBA
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -86,8 +85,7 @@ class MorkrutBansheeTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         // Grizzly Bears (2/2) with -4/-4 should be destroyed (0 or less toughness)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -117,8 +115,7 @@ class MorkrutBansheeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears2Id); // ETB trigger on stack
         harness.passBothPriorities(); // resolve ETB — -4/-4 kills Bears
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -182,8 +179,7 @@ class MorkrutBansheeTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Morkrut Banshee"));
+        harness.assertOnBattlefield(player1, "Morkrut Banshee");
         assertThat(gd.stack).isEmpty();
     }
 }

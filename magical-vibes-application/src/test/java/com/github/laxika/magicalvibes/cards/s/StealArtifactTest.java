@@ -77,8 +77,7 @@ class StealArtifactTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Steal Artifact"));
+        harness.assertInGraveyard(player1, "Steal Artifact");
     }
 
     @Test

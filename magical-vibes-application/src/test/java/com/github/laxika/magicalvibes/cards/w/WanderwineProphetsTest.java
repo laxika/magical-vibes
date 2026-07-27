@@ -36,8 +36,7 @@ class WanderwineProphetsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, prophets.getId());
         harness.passBothPriorities(); // resolve the "take an extra turn" effect
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Wanderwine Prophets"));
+        harness.assertInGraveyard(player1, "Wanderwine Prophets");
         assertThat(gd.extraTurns).contains(player1.getId());
     }
 
@@ -52,7 +51,6 @@ class WanderwineProphetsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.extraTurns).doesNotContain(player1.getId());
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Wanderwine Prophets"));
+        harness.assertOnBattlefield(player1, "Wanderwine Prophets");
     }
 }

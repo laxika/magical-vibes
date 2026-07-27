@@ -98,10 +98,8 @@ class TimberProtectorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Battlewand Oak is indestructible from the Protector and survives.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Battlewand Oak"));
+        harness.assertOnBattlefield(player1, "Battlewand Oak");
         // Timber Protector does not protect itself and is destroyed.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Timber Protector"));
+        harness.assertNotOnBattlefield(player1, "Timber Protector");
     }
 }

@@ -30,10 +30,8 @@ class DrossHopperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bears should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Hopper should have flying
         assertThat(hopper.getGrantedKeywords()).contains(Keyword.FLYING);
@@ -68,8 +66,7 @@ class DrossHopperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Hopper should be sacrificed, ability on stack
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Dross Hopper"));
+        harness.assertNotOnBattlefield(player1, "Dross Hopper");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
 

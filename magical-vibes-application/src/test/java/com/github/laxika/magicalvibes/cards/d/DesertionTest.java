@@ -31,12 +31,9 @@ class DesertionTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // The countered creature enters under player2's control, not into player1's graveyard/library.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
         // player1 is still the owner (recorded so the card returns to them when it leaves play).
         assertThat(gd.stolenCreatures).containsValue(player1.getId());
         assertThat(gd.stack).isEmpty();
@@ -61,10 +58,8 @@ class DesertionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Angel's Mercy"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Angel's Mercy"));
+        harness.assertInGraveyard(player1, "Angel's Mercy");
+        harness.assertNotOnBattlefield(player2, "Angel's Mercy");
         // Countered, so its life-gain effect never resolved.
         assertThat(gd.getLife(player1.getId())).isEqualTo(startingLife);
         assertThat(gd.stack).isEmpty();
@@ -89,9 +84,7 @@ class DesertionTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Desertion"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Desertion");
     }
 }

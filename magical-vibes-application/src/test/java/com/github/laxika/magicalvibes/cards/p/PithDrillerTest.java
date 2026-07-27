@@ -80,8 +80,7 @@ class PithDrillerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Pith Driller"));
+        harness.assertOnBattlefield(player1, "Pith Driller");
     }
 
     // ===== Targeting =====

@@ -122,8 +122,7 @@ class SturmgeistTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Sturmgeist"));
+        harness.assertInGraveyard(player1, "Sturmgeist");
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
     }
 

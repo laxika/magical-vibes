@@ -22,10 +22,8 @@ class BoggartForagerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player1.getId());
 
         // Boggart Forager is sacrificed as a cost
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Boggart Forager"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Boggart Forager"));
+        harness.assertNotOnBattlefield(player1, "Boggart Forager");
+        harness.assertInGraveyard(player1, "Boggart Forager");
 
         // Ability is on the stack targeting the chosen player
         assertThat(gd.stack).hasSize(1);

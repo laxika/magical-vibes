@@ -57,8 +57,7 @@ class SyphonLifeTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Swamp"));
+        harness.assertInGraveyard(player1, "Swamp");
     }
 
     @Test
@@ -71,8 +70,7 @@ class SyphonLifeTest extends BaseCardTest {
         harness.castRetrace(player1, 0, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Syphon Life"));
+        harness.assertInGraveyard(player1, "Syphon Life");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Syphon Life"));
     }

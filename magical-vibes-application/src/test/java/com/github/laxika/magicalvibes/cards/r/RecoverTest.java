@@ -59,7 +59,7 @@ class RecoverTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(target.getId()));
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getId().equals(target.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Recover"));
+        harness.assertInGraveyard(player1, "Recover");
     }
 
     @Test

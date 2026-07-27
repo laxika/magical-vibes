@@ -46,8 +46,7 @@ class TelepathyTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Telepathy"));
+        harness.assertOnBattlefield(player1, "Telepathy");
     }
 
     // ===== Static ability: reveal opponent's hand =====

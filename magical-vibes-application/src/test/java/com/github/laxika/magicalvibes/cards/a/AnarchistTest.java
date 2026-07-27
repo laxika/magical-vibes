@@ -70,8 +70,7 @@ class AnarchistTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false); // decline
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Disentomb"));
+        harness.assertInGraveyard(player1, "Disentomb");
     }
 
     // ===== Graveyard return =====
@@ -87,10 +86,8 @@ class AnarchistTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Disentomb"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Disentomb"));
+        harness.assertInHand(player1, "Disentomb");
+        harness.assertNotInGraveyard(player1, "Disentomb");
     }
 
     @Test
@@ -102,12 +99,9 @@ class AnarchistTest extends BaseCardTest {
         // Choose Recollect (index 1)
         harness.handleGraveyardCardChosen(player1, 1);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Recollect"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Disentomb"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Recollect"));
+        harness.assertInHand(player1, "Recollect");
+        harness.assertInGraveyard(player1, "Disentomb");
+        harness.assertNotInGraveyard(player1, "Recollect");
     }
 
     // ===== Filtering =====
@@ -142,9 +136,7 @@ class AnarchistTest extends BaseCardTest {
 
         harness.handleGraveyardCardChosen(player1, -1);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Disentomb"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Disentomb"));
+        harness.assertInGraveyard(player1, "Disentomb");
+        harness.assertNotInHand(player1, "Disentomb");
     }
 }

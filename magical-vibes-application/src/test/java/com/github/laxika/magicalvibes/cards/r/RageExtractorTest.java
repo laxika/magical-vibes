@@ -71,10 +71,8 @@ class RageExtractorTest extends BaseCardTest {
         // Resolve triggered ability — 5 damage kills the 1/1
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Suntail Hawk"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Suntail Hawk"));
+        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
+        harness.assertInGraveyard(player2, "Suntail Hawk");
     }
 
     @Test

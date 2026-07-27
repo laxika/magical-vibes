@@ -35,10 +35,8 @@ class IllusionaryServantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Illusionary Servant should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Illusionary Servant"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Illusionary Servant"));
+        harness.assertNotOnBattlefield(player1, "Illusionary Servant");
+        harness.assertInGraveyard(player1, "Illusionary Servant");
     }
 
     // ===== Sacrifice when targeted by own controller's spell =====
@@ -61,10 +59,8 @@ class IllusionaryServantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Illusionary Servant should be sacrificed even when targeted by own controller
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Illusionary Servant"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Illusionary Servant"));
+        harness.assertNotOnBattlefield(player1, "Illusionary Servant");
+        harness.assertInGraveyard(player1, "Illusionary Servant");
     }
 
     // ===== Sacrifice when targeted by an ability =====
@@ -93,9 +89,7 @@ class IllusionaryServantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Illusionary Servant should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Illusionary Servant"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Illusionary Servant"));
+        harness.assertNotOnBattlefield(player1, "Illusionary Servant");
+        harness.assertInGraveyard(player1, "Illusionary Servant");
     }
 }

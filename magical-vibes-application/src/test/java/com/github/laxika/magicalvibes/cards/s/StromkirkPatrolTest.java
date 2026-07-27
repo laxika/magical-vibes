@@ -83,7 +83,6 @@ class StromkirkPatrolTest extends BaseCardTest {
         harness.passBothPriorities(); // combat damage
 
         // Patrol should be dead
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Stromkirk Patrol"));
+        harness.assertInGraveyard(player1, "Stromkirk Patrol");
     }
 }

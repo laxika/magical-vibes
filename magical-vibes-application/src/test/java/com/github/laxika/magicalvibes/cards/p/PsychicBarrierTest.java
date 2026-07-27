@@ -58,12 +58,9 @@ class PsychicBarrierTest extends BaseCardTest {
         harness.castInstant(player2, 0, elves.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Creature spell is countered
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
         // Its controller loses 1 life
         harness.assertLife(player1, 19);
     }
@@ -84,8 +81,7 @@ class PsychicBarrierTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Psychic Barrier"));
+        harness.assertInGraveyard(player2, "Psychic Barrier");
         assertThat(gd.stack).isEmpty();
     }
 

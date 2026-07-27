@@ -39,10 +39,8 @@ class BanishingBetrayalTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // surveil: put top card into graveyard
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
         // The surveiled top card went to the controller's graveyard
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard);
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(topCard);
@@ -89,11 +87,8 @@ class BanishingBetrayalTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Angelic Chorus"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Angelic Chorus"));
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertInHand(player2, "Angelic Chorus");
     }
 
     // ===== Cannot target lands =====
@@ -131,7 +126,6 @@ class BanishingBetrayalTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Banishing Betrayal"));
+        harness.assertInGraveyard(player1, "Banishing Betrayal");
     }
 }

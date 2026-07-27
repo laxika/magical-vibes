@@ -81,7 +81,7 @@ class CommuneWithDinosaursTest extends BaseCardTest {
         // Choose Charging Monstrosaur
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Charging Monstrosaur"));
+        harness.assertInHand(player1, "Charging Monstrosaur");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(4);
     }
@@ -106,7 +106,7 @@ class CommuneWithDinosaursTest extends BaseCardTest {
         // Choose Plains (index 1)
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
 
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Plains"));
+        harness.assertInHand(player1, "Plains");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(4);
     }
@@ -174,8 +174,7 @@ class CommuneWithDinosaursTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Commune with Dinosaurs"));
+        harness.assertInGraveyard(player1, "Commune with Dinosaurs");
         assertThat(gd.stack).isEmpty();
     }
 

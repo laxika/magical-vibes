@@ -56,7 +56,6 @@ class CallToTheFeastTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Call to the Feast"));
+        harness.assertInGraveyard(player1, "Call to the Feast");
     }
 }

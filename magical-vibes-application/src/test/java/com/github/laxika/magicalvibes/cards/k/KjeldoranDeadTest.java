@@ -30,11 +30,8 @@ class KjeldoranDeadTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Kjeldoran Dead"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Kjeldoran Dead"));
+        harness.assertNotOnBattlefield(player1, "Kjeldoran Dead");
+        harness.assertInGraveyard(player1, "Kjeldoran Dead");
     }
 
     @Test
@@ -61,10 +58,8 @@ class KjeldoranDeadTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
 
         harness.assertOnBattlefield(player1, "Kjeldoran Dead");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     // ===== {B}: Regenerate =====

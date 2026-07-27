@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MirrorMadPhantasmTest extends BaseCardTest {
@@ -34,8 +33,7 @@ class MirrorMadPhantasmTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // A Mirror-Mad Phantasm should be on the battlefield (the one shuffled in, found by name)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mirror-Mad Phantasm"));
+        harness.assertOnBattlefield(player1, "Mirror-Mad Phantasm");
 
         // Total cards: 2 non-matching + 1 Phantasm shuffled in = 3 in library after shuffle
         // After reveal: Phantasm goes to battlefield, revealed non-matching go to graveyard,
@@ -68,8 +66,7 @@ class MirrorMadPhantasmTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // A Mirror-Mad Phantasm should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mirror-Mad Phantasm"));
+        harness.assertOnBattlefield(player1, "Mirror-Mad Phantasm");
     }
 
     // ===== Resolving — empty library =====
@@ -90,13 +87,11 @@ class MirrorMadPhantasmTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // The Phantasm should be back on the battlefield (shuffled in, found immediately)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mirror-Mad Phantasm"));
+        harness.assertOnBattlefield(player1, "Mirror-Mad Phantasm");
 
         // Library and graveyard should be empty
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Mirror-Mad Phantasm"));
+        harness.assertNotInGraveyard(player1, "Mirror-Mad Phantasm");
     }
 
     // ===== Source leaves battlefield before resolution =====

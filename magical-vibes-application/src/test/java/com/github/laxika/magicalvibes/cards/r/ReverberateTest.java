@@ -164,9 +164,7 @@ class ReverberateTest extends BaseCardTest {
         // Resolve Reverberate
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Reverberate"));
+        harness.assertInGraveyard(player2, "Reverberate");
     }
 
     // ===== Stack is empty after everything resolves =====

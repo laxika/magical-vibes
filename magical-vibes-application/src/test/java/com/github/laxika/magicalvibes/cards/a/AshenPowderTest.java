@@ -53,8 +53,7 @@ class AshenPowderTest extends BaseCardTest {
         Permanent creature = findCreatureOnBattlefield(player1.getId(), "Grizzly Bears");
         assertThat(creature.isTapped()).isFalse();
         // Removed from the opponent's graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
         // Tracked as stolen so it returns to its owner on leaving the battlefield
         assertThat(gd.stolenCreatures).containsKey(creature.getId());
     }
@@ -83,10 +82,8 @@ class AshenPowderTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, creatureId);
 
         // Owner (player2) receives the dead creature, not the controller (player1)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -128,8 +125,7 @@ class AshenPowderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 

@@ -41,10 +41,8 @@ class SunBlessedMountTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect -> may prompt
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Huatli, Dinosaur Knight"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Huatli, Dinosaur Knight"));
+        harness.assertInHand(player1, "Huatli, Dinosaur Knight");
+        harness.assertNotInGraveyard(player1, "Huatli, Dinosaur Knight");
     }
 
     // ===== Accept may: finds in library =====
@@ -97,8 +95,7 @@ class SunBlessedMountTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // Huatli stays in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Huatli, Dinosaur Knight"));
+        harness.assertInGraveyard(player1, "Huatli, Dinosaur Knight");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -111,8 +108,7 @@ class SunBlessedMountTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sun-Blessed Mount"));
+        harness.assertOnBattlefield(player1, "Sun-Blessed Mount");
     }
 
     // ===== Helpers =====

@@ -28,10 +28,8 @@ class FlightSpellbombTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bearsId);
 
         // Spellbomb should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Flight Spellbomb"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Flight Spellbomb"));
+        harness.assertNotOnBattlefield(player1, "Flight Spellbomb");
+        harness.assertInGraveyard(player1, "Flight Spellbomb");
 
         // Resolve death trigger MayPayManaEffect (on top per CR 603.3) — shows may prompt
         harness.passBothPriorities();

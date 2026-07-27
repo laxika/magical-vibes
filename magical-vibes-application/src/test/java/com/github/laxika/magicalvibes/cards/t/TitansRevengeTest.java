@@ -43,10 +43,8 @@ class TitansRevengeTest extends BaseCardTest {
 
         castAtPlayer2(3);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Titan's Revenge"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Titan's Revenge"));
+        harness.assertInHand(player1, "Titan's Revenge");
+        harness.assertNotInGraveyard(player1, "Titan's Revenge");
     }
 
     @Test
@@ -58,9 +56,7 @@ class TitansRevengeTest extends BaseCardTest {
 
         castAtPlayer2(3);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Titan's Revenge"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Titan's Revenge"));
+        harness.assertInGraveyard(player1, "Titan's Revenge");
+        harness.assertNotInHand(player1, "Titan's Revenge");
     }
 }

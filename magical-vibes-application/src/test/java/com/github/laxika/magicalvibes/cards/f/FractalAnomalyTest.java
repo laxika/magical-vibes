@@ -54,7 +54,6 @@ class FractalAnomalyTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fractal"));
+        harness.assertNotOnBattlefield(player1, "Fractal");
     }
 }

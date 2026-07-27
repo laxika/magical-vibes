@@ -35,8 +35,7 @@ class StrandsOfNightTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(creature.getId()));
         // Swamp sacrificed, 2 life paid.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Swamp"));
+        harness.assertNotOnBattlefield(player1, "Swamp");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 

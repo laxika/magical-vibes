@@ -38,10 +38,8 @@ class StormFleetPyromancerTest extends BaseCardTest {
 
         // 2 damage to a 2/2 kills it
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== ETB with raid met — damage to player =====
@@ -76,8 +74,7 @@ class StormFleetPyromancerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Creature is on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Storm Fleet Pyromancer"));
+        harness.assertOnBattlefield(player1, "Storm Fleet Pyromancer");
 
         // Opponent life unchanged
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -91,8 +88,7 @@ class StormFleetPyromancerTest extends BaseCardTest {
         castStormFleetPyromancer();
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Storm Fleet Pyromancer"));
+        harness.assertOnBattlefield(player1, "Storm Fleet Pyromancer");
     }
 
     // ===== Raid lost before resolution (intervening-if) =====

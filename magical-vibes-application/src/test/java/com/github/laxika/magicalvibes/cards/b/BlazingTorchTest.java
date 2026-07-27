@@ -60,8 +60,7 @@ class BlazingTorchTest extends BaseCardTest {
                 .anyMatch(p -> p.getId().equals(creature.getId()));
 
         // Blazing Torch should be sacrificed (gone from battlefield)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Blazing Torch"));
+        harness.assertNotOnBattlefield(player1, "Blazing Torch");
     }
 
     // ===== Granted ability: deal 2 damage to player =====
@@ -82,8 +81,7 @@ class BlazingTorchTest extends BaseCardTest {
         assertThat(creature.isTapped()).isTrue();
 
         // Blazing Torch should be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Blazing Torch"));
+        harness.assertNotOnBattlefield(player1, "Blazing Torch");
     }
 
     // ===== Creature survives sacrifice of equipment =====
@@ -118,8 +116,7 @@ class BlazingTorchTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Blazing Torch"));
+        harness.assertInGraveyard(player1, "Blazing Torch");
     }
 
     // ===== Summoning sickness prevents activation =====

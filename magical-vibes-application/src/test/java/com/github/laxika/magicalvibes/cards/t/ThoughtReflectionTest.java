@@ -31,10 +31,8 @@ class ThoughtReflectionTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Forest"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Forest");
+        harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Island");
     }
@@ -53,8 +51,7 @@ class ThoughtReflectionTest extends BaseCardTest {
         harness.castInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Forest"));
+        harness.assertInHand(player2, "Forest");
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player2.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
     }

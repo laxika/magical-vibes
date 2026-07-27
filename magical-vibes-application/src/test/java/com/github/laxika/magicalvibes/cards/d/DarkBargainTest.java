@@ -70,8 +70,7 @@ class DarkBargainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Dark Bargain"));
+        harness.assertInGraveyard(player1, "Dark Bargain");
         assertThat(gd.stack).isEmpty();
     }
 

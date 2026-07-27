@@ -43,8 +43,7 @@ class HeartlessSummoningTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Heartless Summoning"));
+        harness.assertOnBattlefield(player1, "Heartless Summoning");
     }
 
     // ===== Static effect: -1/-1 to own creatures =====
@@ -87,10 +86,8 @@ class HeartlessSummoningTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         // EliteVanguard is 2/1, with -1/-1 becomes 1/0 and should die to SBA
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elite Vanguard"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Elite Vanguard"));
+        harness.assertNotOnBattlefield(player1, "Elite Vanguard");
+        harness.assertInGraveyard(player1, "Elite Vanguard");
     }
 
     // ===== Cost reduction: creature spells cost {2} less =====
@@ -146,10 +143,8 @@ class HeartlessSummoningTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         // 2/2 base - 2/2 from two Heartless = 0/0 -> should die to SBA
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test

@@ -46,11 +46,9 @@ class TrialOfAmbitionTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player2, giant.getId()); // opponent keeps bears, sacrifices giant
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Giant Spider"))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Giant Spider"));
+        harness.assertNotOnBattlefield(player2, "Giant Spider");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Giant Spider");
     }
 
     @Test
@@ -64,10 +62,8 @@ class TrialOfAmbitionTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -96,10 +92,8 @@ class TrialOfAmbitionTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve a triggered ability
         harness.passBothPriorities(); // resolve the other triggered ability
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Trial of Ambition"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Trial of Ambition"));
+        harness.assertNotOnBattlefield(player1, "Trial of Ambition");
+        harness.assertInHand(player1, "Trial of Ambition");
     }
 
     @Test
@@ -121,7 +115,6 @@ class TrialOfAmbitionTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve aura
         harness.passBothPriorities(); // resolve aura's ETB token trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Trial of Ambition"));
+        harness.assertOnBattlefield(player1, "Trial of Ambition");
     }
 }

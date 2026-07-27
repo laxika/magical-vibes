@@ -33,8 +33,7 @@ class GrixisSojournersTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(baitId));
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Lightning Bolt"));
+        harness.assertNotInGraveyard(player2, "Lightning Bolt");
         assertThat(gd.exiledCards).anyMatch(e -> e.card().getName().equals("Lightning Bolt"));
     }
 
@@ -50,8 +49,7 @@ class GrixisSojournersTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of());
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Lightning Bolt"));
+        harness.assertInGraveyard(player2, "Lightning Bolt");
         assertThat(gd.exiledCards).noneMatch(e -> e.card().getName().equals("Lightning Bolt"));
     }
 
@@ -89,10 +87,8 @@ class GrixisSojournersTest extends BaseCardTest {
 
         assertThat(gd.exiledCards).anyMatch(e -> e.card().getName().equals("Lightning Bolt"));
         // The cycling draw still happens: Grixis Sojourners discarded, the library card drawn.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grixis Sojourners"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grixis Sojourners");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test
@@ -111,10 +107,8 @@ class GrixisSojournersTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.exiledCards).noneMatch(e -> e.card().getName().equals("Lightning Bolt"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Lightning Bolt"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Lightning Bolt");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     private void killWithFlameJavelin() {

@@ -66,8 +66,7 @@ class NightmareIncursionTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Nightmare Incursion"));
+        harness.assertInGraveyard(player1, "Nightmare Incursion");
     }
 
     @Test

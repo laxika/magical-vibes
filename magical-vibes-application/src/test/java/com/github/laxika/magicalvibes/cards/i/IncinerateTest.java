@@ -95,11 +95,8 @@ class IncinerateTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -119,9 +116,7 @@ class IncinerateTest extends BaseCardTest {
         harness.castInstant(player1, 0, hillGiant.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hill Giant"));
+        harness.assertOnBattlefield(player2, "Hill Giant");
     }
 
     // ===== Can't be regenerated =====
@@ -142,12 +137,9 @@ class IncinerateTest extends BaseCardTest {
         harness.castInstant(player1, 0, skelePerm.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Drudge Skeletons should be destroyed despite regeneration shield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Drudge Skeletons"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Drudge Skeletons"));
+        harness.assertNotOnBattlefield(player2, "Drudge Skeletons");
+        harness.assertInGraveyard(player2, "Drudge Skeletons");
     }
 
     @Test
@@ -165,11 +157,8 @@ class IncinerateTest extends BaseCardTest {
         harness.castInstant(player1, 0, skelePerm.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Drudge Skeletons"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Drudge Skeletons"));
+        harness.assertNotOnBattlefield(player2, "Drudge Skeletons");
+        harness.assertInGraveyard(player2, "Drudge Skeletons");
     }
 
     // ===== Incinerate goes to graveyard =====
@@ -186,8 +175,7 @@ class IncinerateTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Incinerate"));
+        harness.assertInGraveyard(player1, "Incinerate");
     }
 }
 

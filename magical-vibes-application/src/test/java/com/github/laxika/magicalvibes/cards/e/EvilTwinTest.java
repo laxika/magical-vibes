@@ -110,10 +110,8 @@ class EvilTwinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Original Grizzly Bears should be destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // Evil Twin should still be on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -191,7 +189,6 @@ class EvilTwinTest extends BaseCardTest {
         // Evil Twin should be dead (0/0 killed by SBA)
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getOriginalCard().getName().equals("Evil Twin"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Evil Twin"));
+        harness.assertInGraveyard(player1, "Evil Twin");
     }
 }

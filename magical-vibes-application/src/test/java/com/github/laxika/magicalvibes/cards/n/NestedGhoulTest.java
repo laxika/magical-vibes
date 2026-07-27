@@ -42,8 +42,7 @@ class NestedGhoulTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Nested Ghoul should be in the graveyard (2 damage is lethal for toughness 2)
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Nested Ghoul"));
+        harness.assertInGraveyard(player2, "Nested Ghoul");
 
         // A 2/2 Zombie token should be on player2's battlefield
         List<Permanent> tokens = gd.playerBattlefields.get(player2.getId()).stream()

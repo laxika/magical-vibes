@@ -44,8 +44,7 @@ class CoatOfArmsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Coat of Arms"));
+        harness.assertOnBattlefield(player1, "Coat of Arms");
     }
 
     // ===== No bonus when creatures don't share a type =====

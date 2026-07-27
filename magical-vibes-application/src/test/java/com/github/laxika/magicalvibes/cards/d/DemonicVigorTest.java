@@ -67,13 +67,10 @@ class DemonicVigorTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger
 
         // Aura should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Demonic Vigor"));
+        harness.assertInGraveyard(player1, "Demonic Vigor");
         // Neither creature nor aura should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Demonic Vigor"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Demonic Vigor");
     }
 
     @Test

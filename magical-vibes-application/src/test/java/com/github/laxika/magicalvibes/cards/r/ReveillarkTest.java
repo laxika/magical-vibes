@@ -56,8 +56,7 @@ class ReveillarkTest extends BaseCardTest {
 
         assertThat(battlefieldCount(player1, "Grizzly Bears")).isEqualTo(1);
         assertThat(battlefieldCount(player1, "Hill Giant")).isZero();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hill Giant"));
+        harness.assertInGraveyard(player1, "Hill Giant");
     }
 
     @Test
@@ -69,8 +68,7 @@ class ReveillarkTest extends BaseCardTest {
         killReveillark(reveillark);
 
         assertThat(battlefieldCount(player1, "Reveillark")).isZero();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Reveillark"));
+        harness.assertInGraveyard(player1, "Reveillark");
     }
 
     @Test
@@ -110,7 +108,6 @@ class ReveillarkTest extends BaseCardTest {
 
         assertThat(battlefieldCount(player1, "Reveillark")).isZero();
         assertThat(battlefieldCount(player1, "Grizzly Bears")).isEqualTo(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Reveillark"));
+        harness.assertInGraveyard(player1, "Reveillark");
     }
 }

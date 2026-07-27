@@ -55,12 +55,10 @@ class PolymorphTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // Target creature should be destroyed (in graveyard)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
 
         // The found creature should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
 
         // Revealed non-creature card should be shuffled back into library
         assertThat(gd.playerDecks.get(player1.getId()))
@@ -86,8 +84,7 @@ class PolymorphTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // The creature should be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
 
         // Library should be empty (only had the one creature)
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -113,12 +110,10 @@ class PolymorphTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // Target was still destroyed
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
 
         // No new creature on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
         // All non-creature cards should be back in library
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
@@ -142,8 +137,7 @@ class PolymorphTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // Target was destroyed
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player1, "Llanowar Elves");
 
         // Library should still be empty
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -169,12 +163,10 @@ class PolymorphTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // Opponent's creature was destroyed
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // The found creature enters the battlefield under opponent's control
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player2, "Llanowar Elves");
 
         // Opponent's non-creature cards are shuffled back into their library
         assertThat(gd.playerDecks.get(player2.getId()))
@@ -198,8 +190,7 @@ class PolymorphTest extends BaseCardTest {
 
         gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Polymorph"));
+        harness.assertInGraveyard(player1, "Polymorph");
     }
 
     @Test
@@ -224,8 +215,7 @@ class PolymorphTest extends BaseCardTest {
         gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Polymorph still goes to graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Polymorph"));
+        harness.assertInGraveyard(player1, "Polymorph");
         // No creature was put onto the battlefield (library wasn't searched)
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         // Library was not touched

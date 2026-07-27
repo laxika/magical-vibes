@@ -98,10 +98,8 @@ class RunAgroundTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
         List<Card> deck = gd.playerDecks.get(player1.getId());
         assertThat(deck).hasSize(deckSizeBefore + 1);
         assertThat(deck.getFirst().getName()).isEqualTo("Grizzly Bears");
@@ -125,10 +123,8 @@ class RunAgroundTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ornithopter"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Ornithopter"));
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
+        harness.assertNotInGraveyard(player1, "Ornithopter");
         List<Card> deck = gd.playerDecks.get(player1.getId());
         assertThat(deck).hasSize(deckSizeBefore + 1);
         assertThat(deck.getFirst().getName()).isEqualTo("Ornithopter");
@@ -151,8 +147,7 @@ class RunAgroundTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Run Aground"));
+        harness.assertInGraveyard(player2, "Run Aground");
     }
 
     // ===== Fizzle =====
@@ -179,7 +174,6 @@ class RunAgroundTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Run Aground"));
+        harness.assertInGraveyard(player2, "Run Aground");
     }
 }

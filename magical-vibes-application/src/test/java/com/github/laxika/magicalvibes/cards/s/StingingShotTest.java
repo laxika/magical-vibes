@@ -32,10 +32,8 @@ class StingingShotTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Stinging Shot
 
         // Suntail Hawk (1/1) with 3 -1/-1 counters dies to SBA
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Suntail Hawk"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Suntail Hawk"));
+        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
+        harness.assertInGraveyard(player2, "Suntail Hawk");
     }
 
     @Test

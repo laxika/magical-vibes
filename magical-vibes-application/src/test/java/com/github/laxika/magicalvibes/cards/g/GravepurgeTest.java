@@ -114,8 +114,7 @@ class GravepurgeTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(topCard.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Holy Day"))
-                .anyMatch(c -> c.getName().equals("Gravepurge"));
+        harness.assertInGraveyard(player1, "Holy Day");
+        harness.assertInGraveyard(player1, "Gravepurge");
     }
 }

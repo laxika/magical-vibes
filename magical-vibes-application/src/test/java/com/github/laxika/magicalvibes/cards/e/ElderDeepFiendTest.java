@@ -43,8 +43,7 @@ class ElderDeepFiendTest extends BaseCardTest {
         assertThat(b.isTapped()).isTrue();
         assertThat(c.isTapped()).isTrue();
         assertThat(d.isTapped()).isTrue();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Elder Deep-Fiend"));
+        harness.assertOnBattlefield(player1, "Elder Deep-Fiend");
     }
 
     @Test
@@ -82,8 +81,7 @@ class ElderDeepFiendTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.isTapped()).isFalse();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Elder Deep-Fiend"));
+        harness.assertOnBattlefield(player1, "Elder Deep-Fiend");
     }
 
     @Test
@@ -108,11 +106,9 @@ class ElderDeepFiendTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(opponent.isTapped()).isTrue();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Elder Deep-Fiend"))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Elder Deep-Fiend");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
 
@@ -153,8 +149,7 @@ class ElderDeepFiendTest extends BaseCardTest {
 
         assertThat(bears.isTapped()).isTrue();
         assertThat(spare.isTapped()).isFalse();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elder Deep-Fiend"));
+        harness.assertNotOnBattlefield(player1, "Elder Deep-Fiend");
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Elder Deep-Fiend");
     }
 }

@@ -61,10 +61,9 @@ class GaeasBlessingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Cards should no longer be in graveyard (only Gaea's Blessing itself goes to graveyard)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"))
-                .noneMatch(c -> c.getName().equals("Lightning Bolt"))
-                .anyMatch(c -> c.getName().equals("Gaea's Blessing"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Lightning Bolt");
+        harness.assertInGraveyard(player1, "Gaea's Blessing");
 
         // Library should have gained 2 cards (shuffled back) minus 1 drawn
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(libSizeBefore + 2 - 1);
@@ -102,8 +101,7 @@ class GaeasBlessingTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
 
         // Gaea's Blessing goes to caster's graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Gaea's Blessing"));
+        harness.assertInGraveyard(player1, "Gaea's Blessing");
     }
 
     @Test
@@ -204,9 +202,8 @@ class GaeasBlessingTest extends BaseCardTest {
 
         // Graveyard should remain intact — no shuffle trigger
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Gaea's Blessing"))
-                .anyMatch(c -> c.getName().equals("Lightning Bolt"));
+        harness.assertInGraveyard(player1, "Gaea's Blessing");
+        harness.assertInGraveyard(player1, "Lightning Bolt");
     }
 
     @Test

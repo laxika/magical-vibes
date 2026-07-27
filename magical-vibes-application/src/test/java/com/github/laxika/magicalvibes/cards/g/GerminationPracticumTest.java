@@ -90,8 +90,7 @@ class GerminationPracticumTest extends BaseCardTest {
         // named Germination Practicum landed in the graveyard or is stuck on the stack.
         assertThat(gd.exiledCards.stream()
                 .filter(e -> e.card().getName().equals("Germination Practicum")).count()).isEqualTo(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Germination Practicum"));
+        harness.assertNotInGraveyard(player1, "Germination Practicum");
         assertThat(gd.stack.stream().anyMatch(e -> e.getCard() != null
                 && e.getCard().getName().equals("Germination Practicum"))).isFalse();
     }

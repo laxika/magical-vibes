@@ -93,8 +93,7 @@ class ConundrumSphinxTest extends BaseCardTest {
 
         // Player1 guessed correctly — Lightning Bolt should be in hand
         assertThat(gd.playerHands.get(player1.getId())).hasSize(p1HandBefore + 1);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Lightning Bolt"));
+        harness.assertInHand(player1, "Lightning Bolt");
         // Lightning Bolt should no longer be on top of deck
         assertThat(gd.playerDecks.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(knownCard.getId()));
@@ -181,8 +180,7 @@ class ConundrumSphinxTest extends BaseCardTest {
         // Player1 had empty library — hand unchanged
         assertThat(gd.playerHands.get(player1.getId())).hasSize(p1HandBefore);
         // Player2 guessed correctly
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     // ===== Game log =====

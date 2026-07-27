@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -40,10 +39,8 @@ class JacesDefeatTest extends BaseCardTest {
                 gd, player2, new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
 
         // Resolution resumes and the Jace planeswalker is countered.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Jace Beleren"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Jace Beleren"));
+        harness.assertInGraveyard(player1, "Jace Beleren");
+        harness.assertNotOnBattlefield(player1, "Jace Beleren");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -64,10 +61,8 @@ class JacesDefeatTest extends BaseCardTest {
 
         // Not a Jace planeswalker spell, so no scry — resolution completes in one pass.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Air Elemental"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Air Elemental"));
+        harness.assertInGraveyard(player1, "Air Elemental");
+        harness.assertNotOnBattlefield(player1, "Air Elemental");
     }
 
     @Test

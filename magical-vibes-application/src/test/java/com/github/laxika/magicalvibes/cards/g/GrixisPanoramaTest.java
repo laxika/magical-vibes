@@ -37,10 +37,8 @@ class GrixisPanoramaTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grixis Panorama"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grixis Panorama"));
+        harness.assertNotOnBattlefield(player1, "Grixis Panorama");
+        harness.assertInGraveyard(player1, "Grixis Panorama");
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())

@@ -108,8 +108,7 @@ class SleepTest extends BaseCardTest {
 
             castAndResolveSleep(player2.getId());
 
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Sleep"));
+            harness.assertInGraveyard(player1, "Sleep");
         }
     }
 
@@ -183,8 +182,7 @@ class SleepTest extends BaseCardTest {
             castAndResolveSleep(player2.getId());
 
             // No error, Sleep goes to graveyard
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Sleep"));
+            harness.assertInGraveyard(player1, "Sleep");
         }
     }
 

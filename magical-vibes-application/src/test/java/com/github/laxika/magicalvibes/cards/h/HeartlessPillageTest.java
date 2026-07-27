@@ -68,10 +68,8 @@ class HeartlessPillageTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Peek"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Peek");
 
         // No treasure tokens without raid
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
@@ -218,8 +216,7 @@ class HeartlessPillageTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Heartless Pillage"));
+        harness.assertInGraveyard(player1, "Heartless Pillage");
     }
 
     // ===== Helpers =====

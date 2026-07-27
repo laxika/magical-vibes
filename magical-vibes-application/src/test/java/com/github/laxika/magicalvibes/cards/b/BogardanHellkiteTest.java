@@ -48,8 +48,7 @@ class BogardanHellkiteTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve creature spell
             harness.passBothPriorities(); // resolve ETB trigger
 
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertInGraveyard(player2, "Grizzly Bears");
         }
 
         @Test
@@ -66,8 +65,7 @@ class BogardanHellkiteTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             // Bears took 2 damage — lethal for 2/2
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            harness.assertInGraveyard(player2, "Grizzly Bears");
 
             // Player took 3 damage
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);

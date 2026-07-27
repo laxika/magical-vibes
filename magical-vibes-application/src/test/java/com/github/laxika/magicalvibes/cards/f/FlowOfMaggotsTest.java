@@ -46,8 +46,7 @@ class FlowOfMaggotsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(maggots);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Flow of Maggots"));
+        harness.assertInGraveyard(player1, "Flow of Maggots");
     }
 
     @Test

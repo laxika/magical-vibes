@@ -63,10 +63,8 @@ class DissipateTest extends BaseCardTest {
         // Countered creature is exiled, not in graveyard
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -91,8 +89,7 @@ class DissipateTest extends BaseCardTest {
         // Countered spell is exiled, not in graveyard
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Might of Oaks"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Might of Oaks"));
+        harness.assertNotInGraveyard(player1, "Might of Oaks");
         assertThat(gd.stack)
                 .noneMatch(se -> se.getCard().getName().equals("Might of Oaks"));
     }
@@ -114,8 +111,7 @@ class DissipateTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Dissipate itself goes to its caster's graveyard (not exiled)
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Dissipate"));
+        harness.assertInGraveyard(player2, "Dissipate");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -145,10 +141,8 @@ class DissipateTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Fizzle =====
@@ -173,7 +167,6 @@ class DissipateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Dissipate"));
+        harness.assertInGraveyard(player2, "Dissipate");
     }
 }

@@ -84,10 +84,8 @@ class GhastlordOfFugueTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Lightning Bolt"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Lightning Bolt"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Lightning Bolt"));
+        harness.assertNotInGraveyard(player2, "Lightning Bolt");
+        harness.assertNotInHand(player2, "Lightning Bolt");
     }
 
     @Test

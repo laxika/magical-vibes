@@ -151,8 +151,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bears should be gone from battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Bears should be third from top of opponent's library (index 2)
         List<Card> library = gd.playerDecks.get(player2.getId());
         assertThat(library).hasSizeGreaterThanOrEqualTo(3);
@@ -171,8 +170,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, bearsId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         // Third from top of player1's library
         assertThat(gd.playerDecks.get(player1.getId()).get(2).getName()).isEqualTo("Grizzly Bears");
     }
@@ -239,8 +237,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Teferi should be gone (8 - 8 = 0 loyalty)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Teferi, Hero of Dominaria"));
+        harness.assertNotOnBattlefield(player1, "Teferi, Hero of Dominaria");
         // Emblem persists
         assertThat(gd.emblems).hasSize(1);
     }
@@ -275,8 +272,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Opponent's bears should be exiled
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }

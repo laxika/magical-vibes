@@ -61,9 +61,7 @@ class RendclawTrowTest extends BaseCardTest {
         resolveUntilInputOrEmpty();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Rendclaw Trow"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Rendclaw Trow"));
+        harness.assertNotOnBattlefield(player1, "Rendclaw Trow");
+        harness.assertInGraveyard(player1, "Rendclaw Trow");
     }
 }

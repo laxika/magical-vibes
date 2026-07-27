@@ -124,10 +124,8 @@ class BelligerentBrontodonTest extends BaseCardTest {
         // Goblin Piker (2/1) blocks Grizzly Bears (2/2)
         // Piker deals 1 damage (toughness via Brontodon) → Bears survives (2 toughness, 1 damage)
         // Bears deals 2 damage → Piker dies (1 toughness, 2 damage)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Goblin Piker"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Goblin Piker");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     // ===== Effect disappears when Brontodon leaves =====

@@ -28,10 +28,8 @@ class FeralProwlerTest extends BaseCardTest {
         gs.playCard(gd, player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Feral Prowler"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Feral Prowler"));
+        harness.assertNotOnBattlefield(player1, "Feral Prowler");
+        harness.assertInGraveyard(player1, "Feral Prowler");
 
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Feral Prowler"));

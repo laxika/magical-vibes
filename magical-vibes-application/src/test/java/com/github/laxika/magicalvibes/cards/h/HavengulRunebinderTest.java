@@ -83,8 +83,7 @@ class HavengulRunebinderTest extends BaseCardTest {
         harness.activateAbility(player1, idx, null, null);
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(runebinder.isTapped()).isTrue();

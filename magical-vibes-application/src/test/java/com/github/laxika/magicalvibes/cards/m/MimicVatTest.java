@@ -57,8 +57,7 @@ class MimicVatTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Grizzly Bears should no longer be in graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
 
         // Grizzly Bears should be exiled (in its owner's exile zone)
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -89,8 +88,7 @@ class MimicVatTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Grizzly Bears should remain in graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // Mimic Vat should have nothing imprinted
         Permanent vat = gd.playerBattlefields.get(player1.getId()).stream()

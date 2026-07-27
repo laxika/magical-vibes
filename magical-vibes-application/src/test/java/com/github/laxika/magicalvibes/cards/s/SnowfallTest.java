@@ -144,6 +144,6 @@ class SnowfallTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(snowfall);
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Snowfall"));
+        harness.assertInGraveyard(player1, "Snowfall");
     }
 }

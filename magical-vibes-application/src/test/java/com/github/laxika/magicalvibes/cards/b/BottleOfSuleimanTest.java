@@ -22,10 +22,8 @@ class BottleOfSuleimanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Sacrifice is a cost, so the Bottle is always gone from the battlefield.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Bottle of Suleiman"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Bottle of Suleiman"));
+        harness.assertNotOnBattlefield(player1, "Bottle of Suleiman");
+        harness.assertInGraveyard(player1, "Bottle of Suleiman");
 
         boolean hasDjinn = gd.playerBattlefields.get(player1.getId()).stream()
                 .anyMatch(p -> p.getCard().getName().equals("Djinn"));

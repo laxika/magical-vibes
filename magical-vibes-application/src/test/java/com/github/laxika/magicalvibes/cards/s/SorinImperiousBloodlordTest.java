@@ -94,8 +94,7 @@ class SorinImperiousBloodlordTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(sorin.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Captivating Vampire"));
+        harness.assertNotOnBattlefield(player1, "Captivating Vampire");
         assertThat(gd.getLife(player2.getId())).isEqualTo(oppLifeBefore - 3);
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 3);
     }
@@ -114,8 +113,7 @@ class SorinImperiousBloodlordTest extends BaseCardTest {
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(oppLifeBefore);
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Captivating Vampire"));
+        harness.assertOnBattlefield(player1, "Captivating Vampire");
     }
 
     @Test
@@ -151,8 +149,7 @@ class SorinImperiousBloodlordTest extends BaseCardTest {
 
         assertThat(sorin.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Captivating Vampire"));
+        harness.assertOnBattlefield(player1, "Captivating Vampire");
     }
 
     @Test

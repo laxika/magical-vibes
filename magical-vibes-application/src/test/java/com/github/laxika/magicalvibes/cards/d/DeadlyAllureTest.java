@@ -116,8 +116,7 @@ class DeadlyAllureTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Deadly Allure"));
+        harness.assertInGraveyard(player1, "Deadly Allure");
     }
 
     // ===== Fizzle =====
@@ -140,8 +139,7 @@ class DeadlyAllureTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Deadly Allure"));
+        harness.assertInGraveyard(player1, "Deadly Allure");
     }
 
     // ===== Flashback =====
@@ -175,8 +173,7 @@ class DeadlyAllureTest extends BaseCardTest {
         harness.castFlashback(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Deadly Allure"));
+        harness.assertNotInGraveyard(player1, "Deadly Allure");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Deadly Allure"));
     }

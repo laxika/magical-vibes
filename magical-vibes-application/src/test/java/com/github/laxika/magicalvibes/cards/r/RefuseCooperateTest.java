@@ -37,8 +37,7 @@ class RefuseCooperateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Refuse"));
+        harness.assertInGraveyard(player2, "Refuse");
     }
 
     @Test

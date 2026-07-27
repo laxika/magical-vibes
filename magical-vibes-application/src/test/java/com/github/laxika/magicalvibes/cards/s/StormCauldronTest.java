@@ -41,10 +41,8 @@ class StormCauldronTest extends BaseCardTest {
 
         harness.tapPermanent(player1, 1);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInHand(player1, "Forest");
     }
 
     @Test
@@ -66,10 +64,8 @@ class StormCauldronTest extends BaseCardTest {
 
         harness.tapPermanent(player2, 0);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInHand(player2, "Forest");
     }
 
     @Test
@@ -79,7 +75,6 @@ class StormCauldronTest extends BaseCardTest {
 
         harness.tapPermanent(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player1, "Forest");
     }
 }

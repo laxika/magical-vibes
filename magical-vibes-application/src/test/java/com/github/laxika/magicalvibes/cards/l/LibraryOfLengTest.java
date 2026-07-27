@@ -32,10 +32,8 @@ class LibraryOfLengTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         // The discarded Grizzly Bears is put on top of the library, not into the graveyard.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Catalog"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Catalog");
         assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
     }
 

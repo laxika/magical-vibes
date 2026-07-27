@@ -59,8 +59,7 @@ class SealAwayTest extends BaseCardTest {
         Permanent creature = addTappedOpponentCreature();
         castAndResolve(creature.getId());
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Goblin Piker"));
+        harness.assertNotOnBattlefield(player2, "Goblin Piker");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Goblin Piker"));
     }
@@ -128,12 +127,10 @@ class SealAwayTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Naturalize
 
         // Seal Away is gone
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Seal Away"));
+        harness.assertNotOnBattlefield(player1, "Seal Away");
 
         // Exiled creature returns to battlefield under owner's control
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Goblin Piker"));
+        harness.assertOnBattlefield(player2, "Goblin Piker");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Goblin Piker"));
     }
@@ -155,12 +152,10 @@ class SealAwayTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Disperse
 
         // Seal Away is back in hand
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Seal Away"));
+        harness.assertNotOnBattlefield(player1, "Seal Away");
 
         // Exiled creature returns to battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Goblin Piker"));
+        harness.assertOnBattlefield(player2, "Goblin Piker");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Goblin Piker"));
     }
@@ -204,11 +199,9 @@ class SealAwayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Returns under player2's control (the owner)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Goblin Piker"));
+        harness.assertOnBattlefield(player2, "Goblin Piker");
         // Not under player1's control
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Goblin Piker"));
+        harness.assertNotOnBattlefield(player1, "Goblin Piker");
     }
 
     @Test

@@ -266,10 +266,8 @@ class AjaniGoldmaneTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Ajani should be in graveyard
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Ajani Goldmane"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ajani Goldmane"));
+        harness.assertNotOnBattlefield(player1, "Ajani Goldmane");
+        harness.assertInGraveyard(player1, "Ajani Goldmane");
 
         // Ability is still on the stack
         assertThat(gd.stack).hasSize(1);

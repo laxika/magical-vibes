@@ -237,8 +237,7 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Tezzeret should be dead (0 loyalty)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Tezzeret, Agent of Bolas"));
+        harness.assertNotOnBattlefield(player1, "Tezzeret, Agent of Bolas");
         // But ability still resolved: 2 artifacts × 2 = 4
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);

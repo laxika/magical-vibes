@@ -39,8 +39,7 @@ class PhageTheUntouchableTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Phage the Untouchable"));
+        harness.assertOnBattlefield(player1, "Phage the Untouchable");
     }
 
     @Test
@@ -91,9 +90,7 @@ class PhageTheUntouchableTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Mahamoti Djinn"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Mahamoti Djinn"));
+        harness.assertInGraveyard(player2, "Mahamoti Djinn");
+        harness.assertNotOnBattlefield(player2, "Mahamoti Djinn");
     }
 }

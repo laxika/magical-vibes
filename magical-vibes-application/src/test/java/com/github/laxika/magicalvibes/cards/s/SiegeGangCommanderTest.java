@@ -92,8 +92,7 @@ class SiegeGangCommanderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, getAnyGoblinTokenId(player1));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
     }
 
     @Test
@@ -108,8 +107,7 @@ class SiegeGangCommanderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, commanderId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Siege-Gang Commander"));
+        harness.assertNotOnBattlefield(player1, "Siege-Gang Commander");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 

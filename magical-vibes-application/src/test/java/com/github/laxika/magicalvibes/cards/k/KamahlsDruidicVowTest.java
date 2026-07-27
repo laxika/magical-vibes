@@ -92,8 +92,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
         // Choose the forest
         harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player1, "Forest");
     }
 
     @Test
@@ -110,8 +109,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
         // Choose Arvad
         harness.handleMultipleCardsChosen(player1, List.of(arvad.getId()));
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Arvad the Cursed"));
+        harness.assertOnBattlefield(player1, "Arvad the Cursed");
     }
 
     @Test
@@ -159,7 +157,6 @@ class KamahlsDruidicVowTest extends BaseCardTest {
 
         castAndResolve(5);
 
-        GameData gd = harness.getGameData();
         // Shock should not be selectable
         assertThatThrownBy(() ->
                 harness.handleMultipleCardsChosen(player1, List.of(shock.getId())))
@@ -179,21 +176,16 @@ class KamahlsDruidicVowTest extends BaseCardTest {
 
         castAndResolve(5);
 
-        GameData gd = harness.getGameData();
         // Choose both forest and arvad
         harness.handleMultipleCardsChosen(player1, List.of(forest.getId(), arvad.getId()));
 
         // Forest and Arvad should be on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Arvad the Cursed"));
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Arvad the Cursed");
 
         // Bears and Shock should be in graveyard (along with the Vow itself)
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Shock");
     }
 
     @Test
@@ -206,21 +198,16 @@ class KamahlsDruidicVowTest extends BaseCardTest {
 
         castAndResolve(5);
 
-        GameData gd = harness.getGameData();
         // Choose nothing
         harness.handleMultipleCardsChosen(player1, List.of());
 
         // All three should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Arvad the Cursed"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Arvad the Cursed");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Nothing extra on battlefield (only the legendary creature we used for casting)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertNotOnBattlefield(player1, "Forest");
     }
 
     // ===== Resolution: no eligible cards =====
@@ -239,10 +226,8 @@ class KamahlsDruidicVowTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Both should be in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Shock");
     }
 
     // ===== Edge cases =====
@@ -291,8 +276,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
         // Choose the forest
         harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player1, "Forest");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
@@ -304,8 +288,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
         castAndResolve(5);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Kamahl's Druidic Vow"));
+        harness.assertInGraveyard(player1, "Kamahl's Druidic Vow");
         assertThat(gd.stack).isEmpty();
     }
 

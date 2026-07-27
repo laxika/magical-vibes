@@ -67,8 +67,7 @@ class EssenceDrainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 3 damage kills Grizzly Bears (2 toughness)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Controller gains 3 life
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
@@ -87,8 +86,7 @@ class EssenceDrainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 3 damage does not kill Air Elemental (4/4)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));
+        harness.assertOnBattlefield(player2, "Air Elemental");
         // Controller still gains 3 life
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }

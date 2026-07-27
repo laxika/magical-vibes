@@ -29,8 +29,7 @@ class DireFleetHoarderTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Dire Fleet Hoarder"));
+        harness.assertOnBattlefield(player1, "Dire Fleet Hoarder");
     }
 
     // ===== Death trigger =====
@@ -49,8 +48,7 @@ class DireFleetHoarderTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Dire Fleet Hoarder should be in the graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Dire Fleet Hoarder"));
+        harness.assertInGraveyard(player1, "Dire Fleet Hoarder");
 
         // One death trigger should be on the stack
         assertThat(gd.stack).hasSize(1);

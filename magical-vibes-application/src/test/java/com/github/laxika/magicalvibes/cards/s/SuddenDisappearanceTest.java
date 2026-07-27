@@ -48,10 +48,9 @@ class SuddenDisappearanceTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .noneMatch(p -> p.getCard().getName().equals("Gold Myr"))
-                .noneMatch(p -> p.getCard().getName().equals("Glorious Anthem"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Gold Myr");
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(c -> c.getName())
@@ -70,8 +69,7 @@ class SuddenDisappearanceTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player2, "Forest");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(c -> c.getName())
                 .contains("Grizzly Bears")
@@ -91,9 +89,8 @@ class SuddenDisappearanceTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Gold Myr"))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Gold Myr");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(c -> c.getName())
                 .contains("Grizzly Bears");
@@ -115,9 +112,8 @@ class SuddenDisappearanceTest extends BaseCardTest {
 
         advanceToEndStep();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .anyMatch(p -> p.getCard().getName().equals("Gold Myr"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Gold Myr");
         assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
     }
 
@@ -133,10 +129,9 @@ class SuddenDisappearanceTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .noneMatch(p -> p.getCard().getName().equals("Gold Myr"));
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Gold Myr");
         assertThat(gd.getDelayedActions(PendingExileReturn.class)).hasSize(2);
     }
 
@@ -150,8 +145,7 @@ class SuddenDisappearanceTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player2, "Forest");
         assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
@@ -167,8 +161,7 @@ class SuddenDisappearanceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Sudden Disappearance"));
+        harness.assertInGraveyard(player1, "Sudden Disappearance");
     }
 
     private void advanceToEndStep() {

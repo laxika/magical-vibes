@@ -106,8 +106,7 @@ class DeathSpeakersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Black Beast's damage to Death Speakers is prevented (protection from black)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Death Speakers"));
+        harness.assertOnBattlefield(player2, "Death Speakers");
     }
 
     @Test

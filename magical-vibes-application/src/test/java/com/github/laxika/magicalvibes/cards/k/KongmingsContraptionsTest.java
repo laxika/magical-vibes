@@ -27,8 +27,7 @@ class KongmingsContraptionsTest extends BaseCardTest {
         assertThat(contraptions.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(attacker.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test

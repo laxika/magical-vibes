@@ -39,8 +39,7 @@ class CounterboreTest extends BaseCardTest {
 
         // Spell countered — not on the stack, not on the battlefield.
         assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
         // All four Grizzly Bears (cast + hand + graveyard + library) exiled.
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -48,10 +47,8 @@ class CounterboreTest extends BaseCardTest {
                 .hasSize(4);
 
         // None remain in any of the searched zones.
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
     }
@@ -99,7 +96,6 @@ class CounterboreTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Counterbore"));
+        harness.assertInGraveyard(player2, "Counterbore");
     }
 }

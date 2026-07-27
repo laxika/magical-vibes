@@ -30,10 +30,8 @@ class FallenAngelTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         // Grizzly Bears is sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         Permanent angel = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(angel.getCard().getName()).isEqualTo("Fallen Angel");
@@ -72,10 +70,8 @@ class FallenAngelTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fallen Angel"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fallen Angel"));
+        harness.assertNotOnBattlefield(player1, "Fallen Angel");
+        harness.assertInGraveyard(player1, "Fallen Angel");
         assertThat(gd.stack).hasSize(1);
     }
 

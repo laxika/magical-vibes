@@ -39,8 +39,7 @@ class MasterTransmuterTest extends BaseCardTest {
         Permanent goldMyr = findPermanent(player1, "Gold Myr");
         assertThat(goldMyr).isNotNull();
         assertThat(goldMyr.isTapped()).isFalse();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Gold Myr"));
+        harness.assertNotInHand(player1, "Gold Myr");
     }
 
     @Test
@@ -53,10 +52,8 @@ class MasterTransmuterTest extends BaseCardTest {
         // Transmuter is the only artifact you control, so it is returned automatically.
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Master Transmuter"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Master Transmuter"));
+        harness.assertInHand(player1, "Master Transmuter");
+        harness.assertNotOnBattlefield(player1, "Master Transmuter");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }
@@ -97,10 +94,8 @@ class MasterTransmuterTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Gold Myr"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Gold Myr"));
+        harness.assertInHand(player1, "Gold Myr");
+        harness.assertNotOnBattlefield(player1, "Gold Myr");
     }
 
     @Test

@@ -30,8 +30,7 @@ class DAvenantArcherTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(attacker.getId()));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Fugitive Wizard"));
+        harness.assertInGraveyard(player2, "Fugitive Wizard");
     }
 
     @Test
@@ -43,8 +42,7 @@ class DAvenantArcherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Fugitive Wizard"));
+        harness.assertInGraveyard(player2, "Fugitive Wizard");
     }
 
     @Test

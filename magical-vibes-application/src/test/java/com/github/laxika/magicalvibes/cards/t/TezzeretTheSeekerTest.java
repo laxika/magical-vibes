@@ -75,8 +75,7 @@ class TezzeretTheSeekerTest extends BaseCardTest {
 
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mind Stone"));
+        harness.assertOnBattlefield(player1, "Mind Stone");
         assertThat(tezzeret.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 5 - 2
     }
 

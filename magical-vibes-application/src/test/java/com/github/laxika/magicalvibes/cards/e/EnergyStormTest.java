@@ -125,6 +125,6 @@ class EnergyStormTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(storm);
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Energy Storm"));
+        harness.assertInGraveyard(player1, "Energy Storm");
     }
 }

@@ -56,10 +56,8 @@ class MemoryLapseTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         // Countered creature sits on top of its owner's library, not in graveyard or battlefield.
         assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
     }
@@ -80,8 +78,7 @@ class MemoryLapseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Memory Lapse"));
+        harness.assertInGraveyard(player2, "Memory Lapse");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -105,7 +102,6 @@ class MemoryLapseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Memory Lapse"));
+        harness.assertInGraveyard(player2, "Memory Lapse");
     }
 }

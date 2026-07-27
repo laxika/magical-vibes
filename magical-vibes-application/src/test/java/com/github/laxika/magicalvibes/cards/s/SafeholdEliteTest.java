@@ -61,9 +61,7 @@ class SafeholdEliteTest extends BaseCardTest {
         resolveUntilInputOrEmpty();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Safehold Elite"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Safehold Elite"));
+        harness.assertNotOnBattlefield(player1, "Safehold Elite");
+        harness.assertInGraveyard(player1, "Safehold Elite");
     }
 }

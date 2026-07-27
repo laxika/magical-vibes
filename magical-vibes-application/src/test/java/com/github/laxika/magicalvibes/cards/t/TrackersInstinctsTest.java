@@ -104,8 +104,7 @@ class TrackersInstinctsTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Tracker's Instincts"));
+        harness.assertInGraveyard(player1, "Tracker's Instincts");
     }
 
     @Test
@@ -121,7 +120,7 @@ class TrackersInstinctsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(bears);
-        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getName().equals("Tracker's Instincts"));
+        harness.assertNotInGraveyard(player1, "Tracker's Instincts");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Tracker's Instincts"));
     }

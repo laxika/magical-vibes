@@ -96,8 +96,7 @@ class TrueheartDuelistTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Trueheart Duelist"));
+        harness.assertNotInGraveyard(player1, "Trueheart Duelist");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Trueheart Duelist"));
     }
@@ -134,7 +133,6 @@ class TrueheartDuelistTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Trueheart Duelist"));
+        harness.assertInGraveyard(player1, "Trueheart Duelist");
     }
 }

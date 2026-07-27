@@ -27,8 +27,7 @@ class NearheathStalkerTest extends BaseCardTest {
 
         Permanent returnedStalker = findPermanent(player1, "Nearheath Stalker");
         assertThat(returnedStalker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Nearheath Stalker"));
+        harness.assertNotInGraveyard(player1, "Nearheath Stalker");
     }
 
     @Test
@@ -42,10 +41,8 @@ class NearheathStalkerTest extends BaseCardTest {
         harness.castInstant(player2, 0, stalker.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Nearheath Stalker"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Nearheath Stalker"));
+        harness.assertNotOnBattlefield(player1, "Nearheath Stalker");
+        harness.assertInGraveyard(player1, "Nearheath Stalker");
         assertThat(gd.stack).isEmpty();
     }
 }

@@ -18,8 +18,7 @@ class FoulImpTest extends BaseCardTest {
         castFoulImp();
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Foul Imp"));
+        harness.assertOnBattlefield(player1, "Foul Imp");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
     }

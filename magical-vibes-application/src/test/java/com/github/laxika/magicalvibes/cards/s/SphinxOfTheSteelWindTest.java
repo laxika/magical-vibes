@@ -140,8 +140,7 @@ class SphinxOfTheSteelWindTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Sphinx deals 6 first strike (7/7 survives); red's 7 damage is prevented (protection)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sphinx of the Steel Wind"));
+        harness.assertOnBattlefield(player2, "Sphinx of the Steel Wind");
     }
 
     @Test
@@ -165,8 +164,7 @@ class SphinxOfTheSteelWindTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Sphinx deals 6 first strike (7/7 survives); green's 7 damage is prevented (protection)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sphinx of the Steel Wind"));
+        harness.assertOnBattlefield(player2, "Sphinx of the Steel Wind");
     }
 
     @Test
@@ -190,10 +188,8 @@ class SphinxOfTheSteelWindTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Sphinx deals 6 first strike (7/7 survives); blue's 7 damage kills the 6/6 Sphinx (no protection)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Sphinx of the Steel Wind"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Sphinx of the Steel Wind"));
+        harness.assertNotOnBattlefield(player2, "Sphinx of the Steel Wind");
+        harness.assertInGraveyard(player2, "Sphinx of the Steel Wind");
     }
 
     // ===== Protection - targeting =====

@@ -46,8 +46,7 @@ class ProteanHydraTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 0/0 creature dies to SBA
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Protean Hydra"));
+        harness.assertNotOnBattlefield(player1, "Protean Hydra");
     }
 
     // ===== Damage prevention removes +1/+1 counters =====
@@ -119,8 +118,7 @@ class ProteanHydraTest extends BaseCardTest {
         // All damage is prevented, but only 1 counter can be removed (Shock deals 2)
         // Hydra survives as 0/0 but should die to state-based actions
         // Actually, with 0 +1/+1 counters it's 0/0 and dies
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Protean Hydra"));
+        harness.assertNotOnBattlefield(player2, "Protean Hydra");
     }
 
     // ===== Delayed regrowth trigger =====

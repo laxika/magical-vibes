@@ -38,7 +38,7 @@ class NaturesSpiralTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(creature.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getId().equals(creature.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Nature's Spiral"));
+        harness.assertInGraveyard(player1, "Nature's Spiral");
     }
 
     @Test

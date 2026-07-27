@@ -119,8 +119,7 @@ class EmrakulThePromisedEndTest extends BaseCardTest {
             UUID opponentId = player2.getId();
             assertThat(gd.pendingTurnControl).containsEntry(opponentId, player1.getId());
             assertThat(gd.pendingTurnControlExtraTurn).contains(opponentId);
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Emrakul, the Promised End"));
+            harness.assertOnBattlefield(player1, "Emrakul, the Promised End");
         }
 
         @Test

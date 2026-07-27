@@ -76,8 +76,7 @@ class EvacuationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Enchantment should still be on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Glorious Anthem"));
+        harness.assertOnBattlefield(player1, "Glorious Anthem");
 
         // Creature should be in hand
         assertThat(gd.playerHands.get(player1.getId()))
@@ -107,8 +106,7 @@ class EvacuationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Evacuation"));
+        harness.assertInGraveyard(player1, "Evacuation");
     }
 
     @Test

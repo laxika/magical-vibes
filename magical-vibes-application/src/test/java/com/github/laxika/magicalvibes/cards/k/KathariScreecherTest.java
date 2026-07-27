@@ -32,8 +32,7 @@ class KathariScreecherTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Kathari Screecher"))
                 .findFirst().orElseThrow();
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Kathari Screecher"));
+        harness.assertNotInGraveyard(player1, "Kathari Screecher");
     }
 
     @Test
@@ -51,8 +50,7 @@ class KathariScreecherTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Kathari Screecher"));
+        harness.assertNotOnBattlefield(player1, "Kathari Screecher");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Kathari Screecher"));
     }
@@ -71,8 +69,7 @@ class KathariScreecherTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Kathari Screecher"));
+        harness.assertInGraveyard(player1, "Kathari Screecher");
     }
 
     @Test
@@ -96,10 +93,8 @@ class KathariScreecherTest extends BaseCardTest {
         harness.castInstant(player2, 0, perm.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Kathari Screecher"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Kathari Screecher"));
+        harness.assertNotOnBattlefield(player1, "Kathari Screecher");
+        harness.assertNotInGraveyard(player1, "Kathari Screecher");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Kathari Screecher"));
     }

@@ -97,12 +97,10 @@ class GalvanothTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears (2/2) should be dead from 2 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         // Pyroclasm goes to graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Pyroclasm"));
+        harness.assertInGraveyard(player1, "Pyroclasm");
 
         // No mana was spent
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
@@ -147,12 +145,10 @@ class GalvanothTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears should be dead from 2 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         // Shock goes to graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player1, "Shock");
     }
 
     // ===== Declining to cast =====

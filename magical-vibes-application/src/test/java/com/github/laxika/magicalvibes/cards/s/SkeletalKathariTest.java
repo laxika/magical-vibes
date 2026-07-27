@@ -29,10 +29,8 @@ class SkeletalKathariTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         // Grizzly Bears is sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // Skeletal Kathari has a regeneration shield
         assertThat(kathari.getRegenerationShield()).isGreaterThan(0);
     }

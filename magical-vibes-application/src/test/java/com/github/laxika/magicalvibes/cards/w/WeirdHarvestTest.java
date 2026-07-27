@@ -142,7 +142,6 @@ class WeirdHarvestTest extends BaseCardTest {
 
         assertThat(activeSearch()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Weird Harvest"));
+        harness.assertInGraveyard(player1, "Weird Harvest");
     }
 }

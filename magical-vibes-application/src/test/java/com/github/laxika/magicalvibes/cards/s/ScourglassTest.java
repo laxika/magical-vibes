@@ -40,16 +40,14 @@ class ScourglassTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature destroyed
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         // Artifact survives
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(icy);
         // Land survives
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(plains);
         // Scourglass sacrificed as cost
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(scourglass);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Scourglass"));
+        harness.assertInGraveyard(player1, "Scourglass");
     }
 
     @Test
@@ -101,8 +99,7 @@ class ScourglassTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(ornithopter);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(pacifism);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Pacifism"));
+        harness.assertInGraveyard(player2, "Pacifism");
     }
 
     private Permanent addScourglassReady(Player player) {

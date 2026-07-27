@@ -55,8 +55,7 @@ class ManicVandalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Manic Vandal"));
+        harness.assertOnBattlefield(player1, "Manic Vandal");
 
         // ETB triggered ability should be on stack
         assertThat(gd.stack).hasSize(1);
@@ -83,10 +82,8 @@ class ManicVandalTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("The Hive"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("The Hive"));
+        harness.assertNotOnBattlefield(player2, "The Hive");
+        harness.assertInGraveyard(player2, "The Hive");
     }
 
     @Test
@@ -104,11 +101,8 @@ class ManicVandalTest extends BaseCardTest {
         // Resolve ETB triggered ability
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("The Hive"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("The Hive"));
+        harness.assertNotOnBattlefield(player1, "The Hive");
+        harness.assertInGraveyard(player1, "The Hive");
     }
 
     @Test
@@ -178,8 +172,7 @@ class ManicVandalTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Creature should be on battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Manic Vandal"));
+        harness.assertOnBattlefield(player1, "Manic Vandal");
         // No triggered ability on stack
         assertThat(gd.stack).isEmpty();
     }

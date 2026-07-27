@@ -60,8 +60,7 @@ class MidnightHauntingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Midnight Haunting"));
+        harness.assertInGraveyard(player1, "Midnight Haunting");
     }
 
     @Test

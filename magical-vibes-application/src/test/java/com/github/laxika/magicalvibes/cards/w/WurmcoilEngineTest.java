@@ -29,8 +29,7 @@ class WurmcoilEngineTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Wurmcoil Engine"));
+        harness.assertOnBattlefield(player1, "Wurmcoil Engine");
     }
 
     // ===== Death trigger =====
@@ -50,8 +49,7 @@ class WurmcoilEngineTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Wurmcoil Engine should be in the graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Wurmcoil Engine"));
+        harness.assertInGraveyard(player1, "Wurmcoil Engine");
 
         // Two death triggers should be on the stack
         assertThat(gd.stack).hasSize(2);

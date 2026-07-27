@@ -51,7 +51,6 @@ class FogTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Fog"));
+        harness.assertInGraveyard(player1, "Fog");
     }
 }

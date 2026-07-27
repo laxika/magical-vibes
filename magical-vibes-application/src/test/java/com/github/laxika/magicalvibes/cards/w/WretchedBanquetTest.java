@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class WretchedBanquetTest extends BaseCardTest {
@@ -27,10 +26,8 @@ class WretchedBanquetTest extends BaseCardTest {
         addCreature(player2, new HillGiant()); // power 3
         castWretchedBanquet(target);
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hill Giant"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Hill Giant");
     }
 
     // ===== Tied for least power: still destroyed =====
@@ -43,8 +40,7 @@ class WretchedBanquetTest extends BaseCardTest {
         addCreature(player2, new HillGiant()); // power 3
         castWretchedBanquet(target);
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Not least power: nothing happens =====
@@ -57,10 +53,8 @@ class WretchedBanquetTest extends BaseCardTest {
         castWretchedBanquet(target);
 
         // Hill Giant is not tied for least power, so the destroy is skipped at resolution.
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Hill Giant"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hill Giant"));
+        harness.assertNotInGraveyard(player2, "Hill Giant");
+        harness.assertOnBattlefield(player2, "Hill Giant");
     }
 
     // ===== Targeting =====

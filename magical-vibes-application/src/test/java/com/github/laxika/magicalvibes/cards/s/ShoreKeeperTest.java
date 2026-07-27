@@ -26,10 +26,8 @@ class ShoreKeeperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Shore Keeper should be sacrificed immediately (cost)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Shore Keeper"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shore Keeper"));
+        harness.assertNotOnBattlefield(player1, "Shore Keeper");
+        harness.assertInGraveyard(player1, "Shore Keeper");
 
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);

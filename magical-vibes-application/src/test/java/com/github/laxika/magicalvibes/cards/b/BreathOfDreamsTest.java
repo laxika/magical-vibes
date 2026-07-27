@@ -41,8 +41,7 @@ class BreathOfDreamsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(breath);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Breath of Dreams"));
+        harness.assertInGraveyard(player1, "Breath of Dreams");
     }
 
     @Test

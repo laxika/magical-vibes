@@ -30,8 +30,7 @@ class SacredCatTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Sacred Cat"));
+        harness.assertNotInGraveyard(player1, "Sacred Cat");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Sacred Cat"));
     }
@@ -67,7 +66,6 @@ class SacredCatTest extends BaseCardTest {
         Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Sacred Cat"));
+        harness.assertInGraveyard(player1, "Sacred Cat");
     }
 }

@@ -44,8 +44,7 @@ class HiddenHorrorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Hidden Horror is on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hidden Horror"));
+        harness.assertOnBattlefield(player1, "Hidden Horror");
 
         // ETB triggered ability is on the stack
         assertThat(gd.stack).hasSize(1);
@@ -91,12 +90,10 @@ class HiddenHorrorTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0); // discard the creature
 
         // Hidden Horror is still on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Hidden Horror"));
+        harness.assertOnBattlefield(player1, "Hidden Horror");
 
         // Grizzly Bears is in the graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Hand is empty
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -112,16 +109,13 @@ class HiddenHorrorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // Hidden Horror is NOT on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hidden Horror"));
+        harness.assertNotOnBattlefield(player1, "Hidden Horror");
 
         // Hidden Horror is in the graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hidden Horror"));
+        harness.assertInGraveyard(player1, "Hidden Horror");
 
         // Grizzly Bears is still in hand (was not discarded)
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     // ===== ETB with no creature card in hand — auto-sacrifice =====
@@ -139,12 +133,10 @@ class HiddenHorrorTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB → auto-sacrifice
 
         // Hidden Horror is NOT on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hidden Horror"));
+        harness.assertNotOnBattlefield(player1, "Hidden Horror");
 
         // Hidden Horror is in the graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hidden Horror"));
+        harness.assertInGraveyard(player1, "Hidden Horror");
 
         // No may ability prompt — it was automatic
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -169,10 +161,8 @@ class HiddenHorrorTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         // Auto-sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hidden Horror"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Hidden Horror"));
+        harness.assertNotOnBattlefield(player1, "Hidden Horror");
+        harness.assertInGraveyard(player1, "Hidden Horror");
     }
 
     // ===== Filtered discard — only creature cards =====
@@ -246,8 +236,7 @@ class HiddenHorrorTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 0); // discard Grizzly Bears
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 

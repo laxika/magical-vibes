@@ -85,8 +85,7 @@ class BriarpackAlphaTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Briarpack Alpha"));
+        harness.assertOnBattlefield(player1, "Briarpack Alpha");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
@@ -217,8 +216,7 @@ class BriarpackAlphaTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Briarpack Alpha"));
+        harness.assertOnBattlefield(player1, "Briarpack Alpha");
         assertThat(gd.stack).isEmpty();
     }
 }

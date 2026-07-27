@@ -99,7 +99,7 @@ class DiaryOfDreamsTest extends BaseCardTest {
 
         assertThat(diary.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
     }
 
     @Test
@@ -117,7 +117,7 @@ class DiaryOfDreamsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
     }
 
     @Test
@@ -150,7 +150,7 @@ class DiaryOfDreamsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(diary.isTapped()).isTrue();
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
     }
 
     private void setDeck(Player player, List<Card> cards) {

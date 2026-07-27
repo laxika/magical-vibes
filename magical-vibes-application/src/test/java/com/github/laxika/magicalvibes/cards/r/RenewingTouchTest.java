@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -51,9 +50,8 @@ class RenewingTouchTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creatures gone from graveyard; only Renewing Touch itself remains
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Renewing Touch"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Renewing Touch");
         // Library gained the two creatures
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(libSizeBefore + 2);
     }
@@ -93,7 +91,6 @@ class RenewingTouchTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Renewing Touch"));
+        harness.assertInGraveyard(player1, "Renewing Touch");
     }
 }

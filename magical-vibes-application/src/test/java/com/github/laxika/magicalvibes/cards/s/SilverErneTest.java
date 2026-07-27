@@ -73,7 +73,7 @@ class SilverErneTest extends BaseCardTest {
         ));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getName().equals("Suntail Hawk"));
+        harness.assertInGraveyard(player2, "Suntail Hawk");
     }
 
     private Permanent attackingErne() {

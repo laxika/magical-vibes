@@ -51,11 +51,9 @@ class DoubleNegativeTest extends BaseCardTest {
 
         assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Grizzly Bears")
                 || se.getCard().getName().equals("Angel's Mercy"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                .anyMatch(c -> c.getName().equals("Angel's Mercy"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Angel's Mercy");
         // Angel's Mercy was countered, so no life was gained.
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(initialLife);
     }
@@ -75,10 +73,8 @@ class DoubleNegativeTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(initialLife + 7);
     }
 

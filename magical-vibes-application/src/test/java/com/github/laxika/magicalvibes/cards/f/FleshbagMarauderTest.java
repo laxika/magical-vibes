@@ -27,17 +27,12 @@ class FleshbagMarauderTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve creature → ETB trigger on stack
         harness.passBothPriorities(); // Resolve ETB → each player sacrifices
 
-        GameData gd = harness.getGameData();
         // Controller's only creature is Fleshbag Marauder itself, so it is sacrificed.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fleshbag Marauder"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fleshbag Marauder"));
+        harness.assertNotOnBattlefield(player1, "Fleshbag Marauder");
+        harness.assertInGraveyard(player1, "Fleshbag Marauder");
         // Opponent's only creature is sacrificed too.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -108,10 +103,8 @@ class FleshbagMarauderTest extends BaseCardTest {
         assertThat(gd.pendingEffectResolutionEntry)
                 .withFailMessage("dangling pendingEffectResolutionEntry after ETB sacrifice flow")
                 .isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fleshbag Marauder"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Fleshbag Marauder");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     private void setupAndCast() {

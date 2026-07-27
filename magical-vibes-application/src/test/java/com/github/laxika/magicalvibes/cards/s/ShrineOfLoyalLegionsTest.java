@@ -122,8 +122,7 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve activated ability
 
         // Shrine is sacrificed (no longer on battlefield)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Shrine of Loyal Legions"));
+        harness.assertNotOnBattlefield(player1, "Shrine of Loyal Legions");
 
         // 3 Myr tokens created
         long myrCount = gd.playerBattlefields.get(player1.getId()).stream()
@@ -162,12 +161,10 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Shrine is sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Shrine of Loyal Legions"));
+        harness.assertNotOnBattlefield(player1, "Shrine of Loyal Legions");
 
         // No tokens
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Myr"));
+        harness.assertNotOnBattlefield(player1, "Myr");
     }
 
     // ===== Combined: upkeep + spell + sacrifice =====

@@ -131,8 +131,7 @@ class CurseOfTheBloodyTomeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Curse should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Curse of the Bloody Tome"));
+        harness.assertOnBattlefield(player1, "Curse of the Bloody Tome");
     }
 
     // ===== Can curse self =====

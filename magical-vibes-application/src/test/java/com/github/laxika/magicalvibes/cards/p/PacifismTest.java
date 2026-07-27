@@ -318,10 +318,8 @@ class PacifismTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Pacifism should be in graveyard, not on battlefield
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Pacifism"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Pacifism"));
+        harness.assertInGraveyard(player1, "Pacifism");
+        harness.assertNotOnBattlefield(player1, "Pacifism");
     }
 
     // ===== Targeting restriction =====

@@ -32,10 +32,8 @@ class HoardSmelterDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Rod of Ruin is destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Rod of Ruin"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Rod of Ruin"));
+        harness.assertNotOnBattlefield(player2, "Rod of Ruin");
+        harness.assertInGraveyard(player2, "Rod of Ruin");
 
         // Dragon gets +4/+0 (Rod of Ruin MV = 4), so effective power = 5 + 4 = 9
         assertThat(dragon.getEffectivePower()).isEqualTo(9);
@@ -54,8 +52,7 @@ class HoardSmelterDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Fountain of Youth is destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Fountain of Youth"));
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
 
         // Dragon power unchanged (MV = 0)
         assertThat(dragon.getEffectivePower()).isEqualTo(5);
@@ -134,8 +131,7 @@ class HoardSmelterDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Artifact survives (indestructible)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Rod of Ruin"));
+        harness.assertOnBattlefield(player2, "Rod of Ruin");
 
         // Dragon still gets the boost
         assertThat(dragon.getEffectivePower()).isEqualTo(9); // 5 + 4

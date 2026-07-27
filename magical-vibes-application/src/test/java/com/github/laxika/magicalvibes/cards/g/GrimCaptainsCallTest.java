@@ -37,11 +37,10 @@ class GrimCaptainsCallTest extends BaseCardTest {
 
         // All four creature cards should be in hand
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fathom Fleet Firebrand"))
-                .anyMatch(c -> c.getName().equals("Barony Vampire"))
-                .anyMatch(c -> c.getName().equals("Frenzied Raptor"))
-                .anyMatch(c -> c.getName().equals("Coral Merfolk"));
+        harness.assertInHand(player1, "Fathom Fleet Firebrand");
+        harness.assertInHand(player1, "Barony Vampire");
+        harness.assertInHand(player1, "Frenzied Raptor");
+        harness.assertInHand(player1, "Coral Merfolk");
 
         // Graveyard should only contain Grim Captain's Call itself
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
@@ -67,9 +66,8 @@ class GrimCaptainsCallTest extends BaseCardTest {
 
         // Only Pirate and Dinosaur should be in hand
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fathom Fleet Firebrand"))
-                .anyMatch(c -> c.getName().equals("Frenzied Raptor"));
+        harness.assertInHand(player1, "Fathom Fleet Firebrand");
+        harness.assertInHand(player1, "Frenzied Raptor");
     }
 
     // ===== Resolution: no matches =====
@@ -87,8 +85,7 @@ class GrimCaptainsCallTest extends BaseCardTest {
 
         // Grizzly Bears stays in graveyard, nothing returned to hand
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -153,9 +150,8 @@ class GrimCaptainsCallTest extends BaseCardTest {
 
         // Vampire and Dinosaur auto-returned; Pirate requires choice
         // Vampire and Dinosaur should already be in hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Barony Vampire"))
-                .anyMatch(c -> c.getName().equals("Frenzied Raptor"));
+        harness.assertInHand(player1, "Barony Vampire");
+        harness.assertInHand(player1, "Frenzied Raptor");
 
         // Should be awaiting graveyard choice for Pirate
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
@@ -191,12 +187,10 @@ class GrimCaptainsCallTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, -1);
 
         // Dinosaur should still be in hand even though Pirate was declined
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Frenzied Raptor"));
+        harness.assertInHand(player1, "Frenzied Raptor");
         // Both Pirates should remain in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fathom Fleet Firebrand"))
-                .anyMatch(c -> c.getName().equals("Fathom Fleet Cutthroat"));
+        harness.assertInGraveyard(player1, "Fathom Fleet Firebrand");
+        harness.assertInGraveyard(player1, "Fathom Fleet Cutthroat");
     }
 
     // ===== Resolution: does not return cards from opponent's graveyard =====

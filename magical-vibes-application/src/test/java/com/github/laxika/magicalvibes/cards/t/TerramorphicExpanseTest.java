@@ -37,10 +37,8 @@ class TerramorphicExpanseTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Terramorphic Expanse"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Terramorphic Expanse"));
+        harness.assertNotOnBattlefield(player1, "Terramorphic Expanse");
+        harness.assertInGraveyard(player1, "Terramorphic Expanse");
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
@@ -138,8 +136,7 @@ class TerramorphicExpanseTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Terramorphic Expanse"));
+        harness.assertOnBattlefield(player1, "Terramorphic Expanse");
     }
 
     private void activateExpanse() {

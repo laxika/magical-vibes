@@ -51,8 +51,7 @@ class FiresongAndSunspeakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Shock deals 2 damage to Grizzly Bears (kills it)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // Spell lifelink: player1 gains 2 life
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
     }

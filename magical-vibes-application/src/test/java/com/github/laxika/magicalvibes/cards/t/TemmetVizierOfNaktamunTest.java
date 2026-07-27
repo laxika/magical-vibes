@@ -118,8 +118,7 @@ class TemmetVizierOfNaktamunTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities(); // resolve the Embalm ability
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Temmet, Vizier of Naktamun"));
+        harness.assertNotInGraveyard(player1, "Temmet, Vizier of Naktamun");
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Temmet, Vizier of Naktamun"))

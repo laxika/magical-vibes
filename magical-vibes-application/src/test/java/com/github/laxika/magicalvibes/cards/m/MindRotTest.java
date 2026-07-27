@@ -93,10 +93,8 @@ class MindRotTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId()).getFirst().getName()).isEqualTo("Forest");
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Peek"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Peek");
     }
 
     @Test
@@ -132,8 +130,7 @@ class MindRotTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mind Rot"));
+        harness.assertInGraveyard(player1, "Mind Rot");
     }
 
     // ===== Resolving — target has exactly 1 card =====
@@ -155,8 +152,7 @@ class MindRotTest extends BaseCardTest {
         // Hand is now empty, so the second discard is skipped
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Resolving — target has empty hand =====

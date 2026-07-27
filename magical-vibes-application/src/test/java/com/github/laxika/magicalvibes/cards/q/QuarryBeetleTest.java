@@ -40,10 +40,8 @@ class QuarryBeetleTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
         harness.passBothPriorities(); // resolve the ETB triggered ability
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Forest"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Forest"));
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Forest");
     }
 
     @Test
@@ -54,8 +52,7 @@ class QuarryBeetleTest extends BaseCardTest {
         castQuarryBeetle();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -71,10 +68,8 @@ class QuarryBeetleTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
     }
 
     @Test

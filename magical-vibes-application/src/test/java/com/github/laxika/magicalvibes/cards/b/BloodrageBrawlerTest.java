@@ -37,8 +37,7 @@ class BloodrageBrawlerTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0); // only Grizzly Bears remains in hand
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -53,7 +52,6 @@ class BloodrageBrawlerTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
         // Brawler is on the battlefield.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Bloodrage Brawler"));
+        harness.assertOnBattlefield(player1, "Bloodrage Brawler");
     }
 }

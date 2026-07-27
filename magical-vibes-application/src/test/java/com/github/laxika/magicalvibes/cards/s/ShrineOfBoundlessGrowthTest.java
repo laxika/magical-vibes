@@ -134,10 +134,8 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
         assertThat(colorlessAfter - colorlessBefore).isEqualTo(4);
 
         // Shrine should be in graveyard
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Shrine of Boundless Growth"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shrine of Boundless Growth"));
+        harness.assertNotOnBattlefield(player1, "Shrine of Boundless Growth");
+        harness.assertInGraveyard(player1, "Shrine of Boundless Growth");
     }
 
     @Test
@@ -154,8 +152,7 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
         assertThat(colorlessAfter - colorlessBefore).isEqualTo(0);
 
         // Shrine should still be sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Shrine of Boundless Growth"));
+        harness.assertNotOnBattlefield(player1, "Shrine of Boundless Growth");
     }
 
     @Test

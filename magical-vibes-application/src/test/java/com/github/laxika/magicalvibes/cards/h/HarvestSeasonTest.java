@@ -86,7 +86,6 @@ class HarvestSeasonTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().hasType(CardType.LAND));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Harvest Season"));
+        harness.assertInGraveyard(player1, "Harvest Season");
     }
 }

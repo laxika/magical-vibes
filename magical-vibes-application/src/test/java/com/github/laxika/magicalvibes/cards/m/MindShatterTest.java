@@ -121,8 +121,7 @@ class MindShatterTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mind Shatter"));
+        harness.assertInGraveyard(player1, "Mind Shatter");
     }
 
     @Test

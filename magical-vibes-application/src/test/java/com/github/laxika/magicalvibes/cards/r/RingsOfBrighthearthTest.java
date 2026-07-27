@@ -87,8 +87,7 @@ class RingsOfBrighthearthTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         // Copy killed the 1/1; the original ability still hit player2 for 1.
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertInGraveyard(player2, "Llanowar Elves");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 

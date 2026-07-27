@@ -25,10 +25,8 @@ class ArmillarySphereTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Armillary Sphere"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Armillary Sphere"));
+        harness.assertNotOnBattlefield(player1, "Armillary Sphere");
+        harness.assertInGraveyard(player1, "Armillary Sphere");
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())

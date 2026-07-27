@@ -53,7 +53,7 @@ class UncageTheMenagerieTest extends BaseCardTest {
         int bearsIndex = indexOf(offeredNames(gd), "Grizzly Bears");
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(bearsIndex));
 
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
         assertThat(offeredNames(gd)).containsExactlyInAnyOrder("Ambush Viper", "Runeclaw Bear");
         assertThat(offeredNames(gd)).doesNotContain("Grizzly Bears");
         assertThat(activeSearch().params().remainingCount()).isEqualTo(1);
@@ -61,7 +61,7 @@ class UncageTheMenagerieTest extends BaseCardTest {
         int viperIndex = indexOf(offeredNames(gd), "Ambush Viper");
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(viperIndex));
 
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Ambush Viper"));
+        harness.assertInHand(player1, "Ambush Viper");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -77,7 +77,7 @@ class UncageTheMenagerieTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Uncage the Menagerie"));
+        harness.assertInGraveyard(player1, "Uncage the Menagerie");
     }
 
     @Test

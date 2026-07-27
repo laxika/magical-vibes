@@ -84,8 +84,7 @@ class SanguineSacramentTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         // Not in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Sanguine Sacrament"));
+        harness.assertNotInGraveyard(player1, "Sanguine Sacrament");
         // On the bottom of the library (last element in the deck list)
         List<?> deck = gd.playerDecks.get(player1.getId());
         assertThat(deck).isNotEmpty();

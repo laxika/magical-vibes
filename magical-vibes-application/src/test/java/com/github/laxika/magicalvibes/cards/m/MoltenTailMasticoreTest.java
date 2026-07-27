@@ -43,10 +43,8 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Molten-Tail Masticore"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Molten-Tail Masticore");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -59,10 +57,8 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Molten-Tail Masticore"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Molten-Tail Masticore"));
+        harness.assertNotOnBattlefield(player1, "Molten-Tail Masticore");
+        harness.assertInGraveyard(player1, "Molten-Tail Masticore");
     }
 
     @Test
@@ -74,10 +70,8 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Molten-Tail Masticore"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Molten-Tail Masticore"));
+        harness.assertNotOnBattlefield(player1, "Molten-Tail Masticore");
+        harness.assertInGraveyard(player1, "Molten-Tail Masticore");
     }
 
     // ===== Damage ability — exile creature from graveyard + deal 4 damage =====
@@ -116,8 +110,7 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
 
         // Creature card should be exiled from graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Llanowar Elves"));
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
 
@@ -125,10 +118,8 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears (2/2) should be destroyed by 4 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -217,8 +208,7 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
         // Shock should remain in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player1, "Shock");
     }
 
     @Test

@@ -48,10 +48,8 @@ class FathomFleetCutthroatTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     // ===== Target restrictions =====
@@ -115,8 +113,7 @@ class FathomFleetCutthroatTest extends BaseCardTest {
         // Resolve creature spell
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Fathom Fleet Cutthroat"));
+        harness.assertOnBattlefield(player1, "Fathom Fleet Cutthroat");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -173,8 +170,7 @@ class FathomFleetCutthroatTest extends BaseCardTest {
         // Resolve ETB → creature survives
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("indestructible"));
     }
 }

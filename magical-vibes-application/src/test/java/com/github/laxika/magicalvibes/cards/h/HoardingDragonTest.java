@@ -139,8 +139,7 @@ class HoardingDragonTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         // Spellbook should be in player1's hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spellbook"));
+        harness.assertInHand(player1, "Spellbook");
 
         // Spellbook should no longer be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -180,8 +179,7 @@ class HoardingDragonTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Spellbook"));
 
         // Spellbook should NOT be in hand
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Spellbook"));
+        harness.assertNotInHand(player1, "Spellbook");
     }
 
     @Test

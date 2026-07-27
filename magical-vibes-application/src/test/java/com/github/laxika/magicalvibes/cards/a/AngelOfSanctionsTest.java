@@ -38,8 +38,7 @@ class AngelOfSanctionsTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
 
         // The card leaves the graveyard immediately (cost), before the ability resolves.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Angel of Sanctions"));
+        harness.assertNotInGraveyard(player1, "Angel of Sanctions");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Angel of Sanctions"));
     }
@@ -77,8 +76,7 @@ class AngelOfSanctionsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         // The card is still in the graveyard — no cost was paid.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Angel of Sanctions"));
+        harness.assertInGraveyard(player1, "Angel of Sanctions");
     }
 
     // ===== ETB exile (O-ring) =====
@@ -105,8 +103,7 @@ class AngelOfSanctionsTest extends BaseCardTest {
 
         castAngelAndExile(bearsId);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
@@ -132,8 +129,7 @@ class AngelOfSanctionsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears returns under its owner's control.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
@@ -151,8 +147,7 @@ class AngelOfSanctionsTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature -> enters; ETB finds no legal target
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Angel of Sanctions"));
+        harness.assertOnBattlefield(player1, "Angel of Sanctions");
         // No prompt, nothing exiled — a land is not a legal target.
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();

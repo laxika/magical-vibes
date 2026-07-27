@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.ApothecaryGeist;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -10,7 +9,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SpectralShepherdTest extends BaseCardTest {
@@ -25,11 +23,8 @@ class SpectralShepherdTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, spirit.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Apothecary Geist"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Apothecary Geist"));
+        harness.assertNotOnBattlefield(player1, "Apothecary Geist");
+        harness.assertInHand(player1, "Apothecary Geist");
     }
 
     @Test
@@ -41,11 +36,8 @@ class SpectralShepherdTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, shepherd.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Spectral Shepherd"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spectral Shepherd"));
+        harness.assertNotOnBattlefield(player1, "Spectral Shepherd");
+        harness.assertInHand(player1, "Spectral Shepherd");
     }
 
     @Test

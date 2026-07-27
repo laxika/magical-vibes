@@ -54,8 +54,7 @@ class VerduranEnchantressTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Forest"));
+        harness.assertInHand(player1, "Forest");
     }
 
     // ===== Decline =====

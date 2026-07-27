@@ -103,7 +103,6 @@ class BlessingOfBelzenlokTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Blessing of Belzenlok"));
+        harness.assertInGraveyard(player1, "Blessing of Belzenlok");
     }
 }

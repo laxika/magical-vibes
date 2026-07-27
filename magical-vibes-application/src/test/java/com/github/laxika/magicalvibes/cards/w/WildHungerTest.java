@@ -130,8 +130,7 @@ class WildHungerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Wild Hunger"));
+        harness.assertInGraveyard(player1, "Wild Hunger");
     }
 
     @Test
@@ -146,8 +145,7 @@ class WildHungerTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Wild Hunger"));
+        harness.assertInGraveyard(player1, "Wild Hunger");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -181,8 +179,7 @@ class WildHungerTest extends BaseCardTest {
         harness.castFlashback(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Wild Hunger"));
+        harness.assertNotInGraveyard(player1, "Wild Hunger");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Wild Hunger"));
     }

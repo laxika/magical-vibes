@@ -50,7 +50,6 @@ class BlindZealotTest extends BaseCardTest {
 
         resolveCombat();
 
-        GameData gd = harness.getGameData();
         // Accept the may ability
         harness.handleMayAbilityChosen(player1, true);
         // Resolve the inner effect from the stack
@@ -59,16 +58,12 @@ class BlindZealotTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
         // Blind Zealot should be sacrificed (removed from battlefield, in graveyard)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Blind Zealot"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Blind Zealot"));
+        harness.assertNotOnBattlefield(player1, "Blind Zealot");
+        harness.assertInGraveyard(player1, "Blind Zealot");
 
         // Target creature should be destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -84,12 +79,10 @@ class BlindZealotTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // Blind Zealot should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Blind Zealot"));
+        harness.assertOnBattlefield(player1, "Blind Zealot");
 
         // Target creature should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declines"));
     }

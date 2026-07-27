@@ -39,7 +39,7 @@ class PeaceOfMindTest extends BaseCardTest {
 
         // Discard was paid as a cost
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
 
         harness.passBothPriorities(); // resolve the ability
 

@@ -30,11 +30,9 @@ class DisorderTest extends BaseCardTest {
 
         castDisorder();
 
-        GameData gd = harness.getGameData();
         // The 2/1 white creature dies; the green creature is untouched.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elite Vanguard"))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Elite Vanguard");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -51,8 +49,7 @@ class DisorderTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         // 4/4 white survives 2 damage.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Serra Angel"));
+        harness.assertOnBattlefield(player2, "Serra Angel");
     }
 
     @Test
@@ -65,8 +62,7 @@ class DisorderTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Elite Vanguard"));
+        harness.assertNotOnBattlefield(player2, "Elite Vanguard");
     }
 
     @Test
@@ -76,7 +72,6 @@ class DisorderTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Disorder"));
+        harness.assertInGraveyard(player1, "Disorder");
     }
 }

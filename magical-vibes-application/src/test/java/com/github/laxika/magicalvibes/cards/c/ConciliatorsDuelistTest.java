@@ -68,8 +68,7 @@ class ConciliatorsDuelistTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getDelayedActions(PendingExileReturn.class))
                 .anyMatch(per -> per.card().getName().equals("Grizzly Bears"));
     }
