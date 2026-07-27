@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
 import java.util.Set;
@@ -23,9 +24,10 @@ public class Aggression extends Card {
 
     public Aggression() {
         // Enchant non-Wall creature
-        target(new PermanentAllOfPredicate(List.of(
+        target(new PermanentPredicateTargetFilter(new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
-                new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.WALL)))))
+                new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.WALL)))),
+                "Target must be a creature that isn't a Wall"))
                 // Enchanted creature has first strike and trample.
                 .addEffect(EffectSlot.STATIC,
                         new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE),

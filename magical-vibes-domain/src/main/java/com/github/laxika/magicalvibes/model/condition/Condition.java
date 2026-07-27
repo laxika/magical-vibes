@@ -53,6 +53,7 @@ public sealed interface Condition permits
         DidntAttack,
         DidntGainLifeThisTurn,
         Enchanted,
+        EnchantedCreatureDidntAttack,
         FirstCombatPhase,
         EndStepPlayerDidntCastCreatureSpell,
         Equipped,
