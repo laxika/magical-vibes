@@ -193,10 +193,8 @@ class PhyrexianScripturesTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // Both nonartifact creatures should be destroyed
-        long p1Creatures = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears")).count();
-        long p2Creatures = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears")).count();
+        long p1Creatures = countPermanents(player1, "Grizzly Bears");
+        long p2Creatures = countPermanents(player2, "Grizzly Bears");
         assertThat(p1Creatures).isZero();
         assertThat(p2Creatures).isZero();
     }

@@ -77,9 +77,7 @@ class TowerOfCalamitiesTest extends BaseCardTest {
         clearSummoningSickness(player1, "Tower of Calamities");
 
         // Boost Air Elemental toughness with +1/+1 counters so it survives 12 damage (4/4 + 9 = 4/13)
-        Permanent airElemental = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Air Elemental"))
-                .findFirst().orElseThrow();
+        Permanent airElemental = findPermanent(player2, "Air Elemental");
         airElemental.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 9);
 
         harness.addMana(player1, ManaColor.COLORLESS, 8);
@@ -122,9 +120,7 @@ class TowerOfCalamitiesTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, targetId);
 
-        Permanent tower = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Tower of Calamities"))
-                .findFirst().orElseThrow();
+        Permanent tower = findPermanent(player1, "Tower of Calamities");
         assertThat(tower.isTapped()).isTrue();
     }
 
@@ -154,9 +150,7 @@ class TowerOfCalamitiesTest extends BaseCardTest {
     // ===== Helpers =====
 
     private void clearSummoningSickness(com.github.laxika.magicalvibes.model.Player player, String cardName) {
-        Permanent perm = gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(cardName))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player, cardName);
         perm.setSummoningSick(false);
     }
 }

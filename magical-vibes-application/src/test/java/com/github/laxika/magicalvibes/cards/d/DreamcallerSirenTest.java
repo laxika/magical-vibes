@@ -117,9 +117,7 @@ class DreamcallerSirenTest extends BaseCardTest {
                     gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
             assertThat(choice).isNotNull();
 
-            UUID landId = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Forest"))
-                    .findFirst().orElseThrow().getId();
+            UUID landId = findPermanent(player2, "Forest").getId();
             assertThatThrownBy(() -> harness.handlePermanentChosen(player1, landId))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Invalid permanent");

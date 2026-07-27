@@ -56,8 +56,6 @@ class SoulSnuffersTest extends BaseCardTest {
     }
 
     private Permanent findSnuffers(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Soul Snuffers"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Soul Snuffers");
     }
 }

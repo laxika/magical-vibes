@@ -21,9 +21,7 @@ class JoinerAdeptTest extends BaseCardTest {
         harness.addToBattlefield(player1, new JoinerAdept());
         harness.addToBattlefield(player1, new Forest());
 
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst().orElseThrow();
+        Permanent forest = findPermanent(player1, "Forest");
         int forestIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forest);
 
         harness.activateAbility(player1, forestIndex, null, null);

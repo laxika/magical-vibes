@@ -27,9 +27,7 @@ class MorbidBloomTest extends BaseCardTest {
     }
 
     private long saprolingCount() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Saproling"))
-                .count();
+        return countPermanents(player1, "Saproling");
     }
 
     @Test

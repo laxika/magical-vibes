@@ -129,12 +129,9 @@ class WallOfBoneTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Wall of Bone should survive via regeneration
         harness.assertOnBattlefield(player1, "Wall of Bone");
-        Permanent wall = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wall of Bone"))
-                .findFirst().orElseThrow();
+        Permanent wall = findPermanent(player1, "Wall of Bone");
         assertThat(wall.isTapped()).isTrue();
         assertThat(wall.getRegenerationShield()).isEqualTo(0);
     }

@@ -31,9 +31,7 @@ class SilvergillDouserTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        Permanent target = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Grizzly Bears");
         assertThat(target.getPowerModifier()).isEqualTo(-3);
         assertThat(target.getToughnessModifier()).isEqualTo(0);
     }
@@ -50,9 +48,7 @@ class SilvergillDouserTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        Permanent target = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Grizzly Bears");
         assertThat(target.getPowerModifier()).isEqualTo(-1);
         assertThat(target.getToughnessModifier()).isEqualTo(0);
     }
@@ -70,9 +66,7 @@ class SilvergillDouserTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent target = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Grizzly Bears");
         assertThat(target.getPowerModifier()).isEqualTo(0);
     }
 

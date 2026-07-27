@@ -25,9 +25,7 @@ class LuxCannonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent cannon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Lux Cannon"))
-                .findFirst().orElseThrow();
+        Permanent cannon = findPermanent(player1, "Lux Cannon");
         assertThat(cannon.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
@@ -36,9 +34,7 @@ class LuxCannonTest extends BaseCardTest {
     void accumulatesChargeCounters() {
         harness.addToBattlefield(player1, new LuxCannon());
 
-        Permanent cannon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Lux Cannon"))
-                .findFirst().orElseThrow();
+        Permanent cannon = findPermanent(player1, "Lux Cannon");
 
         // Activate three times (untapping between uses)
         harness.activateAbility(player1, 0, null, null);
@@ -63,9 +59,7 @@ class LuxCannonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LuxCannon());
         harness.addToBattlefield(player2, new LuxCannon()); // target
 
-        Permanent cannon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Lux Cannon"))
-                .findFirst().orElseThrow();
+        Permanent cannon = findPermanent(player1, "Lux Cannon");
         cannon.setCounterCount(CounterType.CHARGE, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Lux Cannon");
@@ -87,9 +81,7 @@ class LuxCannonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LuxCannon());
         harness.addToBattlefield(player2, new LuxCannon());
 
-        Permanent cannon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Lux Cannon"))
-                .findFirst().orElseThrow();
+        Permanent cannon = findPermanent(player1, "Lux Cannon");
         cannon.setCounterCount(CounterType.CHARGE, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Lux Cannon");
@@ -104,9 +96,7 @@ class LuxCannonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LuxCannon());
         harness.addToBattlefield(player2, new LuxCannon());
 
-        Permanent cannon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Lux Cannon"))
-                .findFirst().orElseThrow();
+        Permanent cannon = findPermanent(player1, "Lux Cannon");
         cannon.setCounterCount(CounterType.CHARGE, 5);
 
         UUID targetId = harness.getPermanentId(player2, "Lux Cannon");
@@ -123,9 +113,7 @@ class LuxCannonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LuxCannon());
         harness.addToBattlefield(player2, new LuxCannon());
 
-        Permanent cannon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Lux Cannon"))
-                .findFirst().orElseThrow();
+        Permanent cannon = findPermanent(player1, "Lux Cannon");
         cannon.setCounterCount(CounterType.CHARGE, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Lux Cannon");
@@ -151,9 +139,7 @@ class LuxCannonTest extends BaseCardTest {
     void cannotUseBothAbilitiesSameTurn() {
         harness.addToBattlefield(player1, new LuxCannon());
 
-        Permanent cannon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Lux Cannon"))
-                .findFirst().orElseThrow();
+        Permanent cannon = findPermanent(player1, "Lux Cannon");
         cannon.setCounterCount(CounterType.CHARGE, 3);
 
         // Use first ability (tap to add counter)

@@ -181,8 +181,6 @@ class RazorvergeThicketTest extends BaseCardTest {
     }
 
     private Permanent findThicket(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Razorverge Thicket"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Razorverge Thicket");
     }
 }

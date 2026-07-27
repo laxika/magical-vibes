@@ -21,9 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DeathbringerThoctarTest extends BaseCardTest {
 
     private Permanent thoctar(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Deathbringer Thoctar"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Deathbringer Thoctar");
     }
 
     private Permanent addReadyThoctar(Player player, int counters) {
@@ -113,9 +111,7 @@ class DeathbringerThoctarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
         assertThat(thoctar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }

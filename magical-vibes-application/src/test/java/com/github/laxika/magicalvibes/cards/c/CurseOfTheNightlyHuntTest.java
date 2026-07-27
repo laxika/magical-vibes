@@ -43,9 +43,7 @@ class CurseOfTheNightlyHuntTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        Permanent curse = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Curse of the Nightly Hunt"))
-                .findFirst().orElseThrow();
+        Permanent curse = findPermanent(player1, "Curse of the Nightly Hunt");
         assertThat(curse.getAttachedTo()).isEqualTo(player2.getId());
     }
 

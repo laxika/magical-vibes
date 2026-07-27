@@ -64,9 +64,7 @@ class PainsmithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears should have +2/+0 and deathtouch
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getPowerModifier()).isEqualTo(2);
         assertThat(bears.getToughnessModifier()).isEqualTo(0);
         assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
@@ -90,9 +88,7 @@ class PainsmithTest extends BaseCardTest {
                 && e.getCard().getName().equals("Painsmith"));
 
         // Grizzly Bears should not be boosted
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getPowerModifier()).isEqualTo(0);
         assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
     }
@@ -151,9 +147,7 @@ class PainsmithTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getPowerModifier()).isEqualTo(2);
         assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
 
@@ -180,9 +174,7 @@ class PainsmithTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getPowerModifier()).isEqualTo(2);
         assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
     }

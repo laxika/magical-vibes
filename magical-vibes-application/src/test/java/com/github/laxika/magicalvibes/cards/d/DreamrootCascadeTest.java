@@ -151,8 +151,6 @@ class DreamrootCascadeTest extends BaseCardTest {
     }
 
     private Permanent findCascade(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Dreamroot Cascade"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Dreamroot Cascade");
     }
 }

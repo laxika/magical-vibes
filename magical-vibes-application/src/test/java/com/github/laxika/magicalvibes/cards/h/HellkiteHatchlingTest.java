@@ -27,9 +27,7 @@ class HellkiteHatchlingTest extends BaseCardTest {
     }
 
     private Permanent hellkite() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hellkite Hatchling"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Hellkite Hatchling");
     }
 
     @Test

@@ -81,9 +81,7 @@ class ThistledownLiegeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ThistledownLiege());
 
         // The second Liege is both white and blue, so it receives +1/+1 twice from the first.
-        Permanent boosted = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Thistledown Liege"))
-                .findFirst().orElseThrow();
+        Permanent boosted = findPermanent(player1, "Thistledown Liege");
 
         // Base 1/3 + 1/1 (white) + 1/1 (blue) = 3/5
         assertThat(gqs.getEffectivePower(gd, boosted)).isEqualTo(3);

@@ -18,9 +18,7 @@ class WellgabberApothecaryTest extends BaseCardTest {
 
     private Permanent addTappedKnight() {
         harness.addToBattlefield(player1, new KnightOfMeadowgrain());
-        Permanent knight = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Knight of Meadowgrain"))
-                .findFirst().orElseThrow();
+        Permanent knight = findPermanent(player1, "Knight of Meadowgrain");
         knight.tap();
         return knight;
     }
@@ -63,9 +61,7 @@ class WellgabberApothecaryTest extends BaseCardTest {
     void rejectsWrongSubtype() {
         harness.addToBattlefield(player1, new WellgabberApothecary());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         bears.tap();
 
         harness.addMana(player1, ManaColor.WHITE, 2);

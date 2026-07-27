@@ -18,9 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class VizierOfRemediesTest extends BaseCardTest {
 
     private Permanent airElemental(com.github.laxika.magicalvibes.model.Player owner) {
-        return gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Air Elemental"))
-                .findFirst().orElseThrow();
+        return findPermanent(owner, "Air Elemental");
     }
 
     @Test

@@ -104,9 +104,7 @@ class BlightMambaTest extends BaseCardTest {
 
         // Blight Mamba should survive via regeneration
         harness.assertOnBattlefield(player1, "Blight Mamba");
-        Permanent survivedMamba = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blight Mamba"))
-                .findFirst().orElseThrow();
+        Permanent survivedMamba = findPermanent(player1, "Blight Mamba");
         assertThat(survivedMamba.isTapped()).isTrue();
         assertThat(survivedMamba.getRegenerationShield()).isEqualTo(0);
     }
@@ -178,9 +176,7 @@ class BlightMambaTest extends BaseCardTest {
         // Grizzly Bears (2/2) gets 1 -1/-1 counter from 1-power Blight Mamba
         // Should survive as a 1/1
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
@@ -206,9 +202,7 @@ class BlightMambaTest extends BaseCardTest {
         // Blight Mamba should survive via regeneration
         harness.assertOnBattlefield(player1, "Blight Mamba");
         // Grizzly Bears should have -1/-1 counters from infect
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 

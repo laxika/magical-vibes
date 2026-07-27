@@ -26,9 +26,7 @@ class MemorialToGeniusTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        Permanent memorial = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Memorial to Genius"))
-                .findFirst().orElseThrow();
+        Permanent memorial = findPermanent(player1, "Memorial to Genius");
         assertThat(memorial.isTapped()).isTrue();
     }
 

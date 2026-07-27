@@ -181,8 +181,6 @@ class BlackcleaveCliffsTest extends BaseCardTest {
     }
 
     private Permanent findCliffs(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blackcleave Cliffs"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Blackcleave Cliffs");
     }
 }

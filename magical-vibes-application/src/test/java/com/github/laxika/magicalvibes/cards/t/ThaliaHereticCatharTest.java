@@ -29,9 +29,7 @@ class ThaliaHereticCatharTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.isTapped()).isTrue();
     }
 
@@ -45,9 +43,7 @@ class ThaliaHereticCatharTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.isTapped()).isFalse();
     }
 
@@ -62,9 +58,7 @@ class ThaliaHereticCatharTest extends BaseCardTest {
 
         gs.playCard(gd, player2, 0, 0, null, null);
 
-        Permanent land = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Field of Ruin"))
-                .findFirst().orElseThrow();
+        Permanent land = findPermanent(player2, "Field of Ruin");
         assertThat(land.isTapped()).isTrue();
     }
 
@@ -79,9 +73,7 @@ class ThaliaHereticCatharTest extends BaseCardTest {
 
         gs.playCard(gd, player2, 0, 0, null, null);
 
-        Permanent forest = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst().orElseThrow();
+        Permanent forest = findPermanent(player2, "Forest");
         assertThat(forest.isTapped()).isFalse();
     }
 }

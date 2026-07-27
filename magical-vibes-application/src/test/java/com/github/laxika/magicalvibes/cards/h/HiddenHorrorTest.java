@@ -201,9 +201,7 @@ class HiddenHorrorTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
 
         // Manually remove Hidden Horror from the battlefield (simulating it being destroyed)
-        Permanent horror = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hidden Horror"))
-                .findFirst().orElseThrow();
+        Permanent horror = findPermanent(player1, "Hidden Horror");
         gd.playerBattlefields.get(player1.getId()).remove(horror);
 
         harness.passBothPriorities(); // resolve ETB → may ability prompt (creature gone but still offered)
@@ -224,9 +222,7 @@ class HiddenHorrorTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
 
         // Remove Hidden Horror
-        Permanent horror = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hidden Horror"))
-                .findFirst().orElseThrow();
+        Permanent horror = findPermanent(player1, "Hidden Horror");
         gd.playerBattlefields.get(player1.getId()).remove(horror);
 
         harness.passBothPriorities(); // resolve ETB
@@ -251,9 +247,7 @@ class HiddenHorrorTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
 
         // Remove Hidden Horror
-        Permanent horror = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hidden Horror"))
-                .findFirst().orElseThrow();
+        Permanent horror = findPermanent(player1, "Hidden Horror");
         gd.playerBattlefields.get(player1.getId()).remove(horror);
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
@@ -276,9 +270,7 @@ class HiddenHorrorTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
 
         // Remove Hidden Horror
-        Permanent horror = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hidden Horror"))
-                .findFirst().orElseThrow();
+        Permanent horror = findPermanent(player1, "Hidden Horror");
         gd.playerBattlefields.get(player1.getId()).remove(horror);
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();

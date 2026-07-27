@@ -31,9 +31,7 @@ class TreetopVillageTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        Permanent village = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treetop Village"))
-                .findFirst().orElseThrow();
+        Permanent village = findPermanent(player1, "Treetop Village");
         assertThat(village.isTapped()).isTrue();
     }
 

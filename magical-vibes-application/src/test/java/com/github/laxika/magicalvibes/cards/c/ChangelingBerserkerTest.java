@@ -97,10 +97,7 @@ class ChangelingBerserkerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FieldMarshal());
         harness.addToBattlefield(player1, new ChangelingBerserker());
 
-        Permanent berserker = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Changeling Berserker"))
-                .findFirst()
-                .orElseThrow();
+        Permanent berserker = findPermanent(player1, "Changeling Berserker");
 
         assertThat(gqs.getEffectivePower(gd, berserker)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, berserker)).isEqualTo(4);

@@ -96,10 +96,7 @@ class RhoxTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
         harness.assertOnBattlefield(player1, "Rhox");
-        Permanent survivingRhox = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rhox"))
-                .findFirst()
-                .orElseThrow();
+        Permanent survivingRhox = findPermanent(player1, "Rhox");
         assertThat(survivingRhox.getRegenerationShield()).isZero();
         assertThat(survivingRhox.isTapped()).isTrue();
     }

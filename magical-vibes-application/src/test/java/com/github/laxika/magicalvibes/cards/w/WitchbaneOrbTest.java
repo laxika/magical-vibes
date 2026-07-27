@@ -110,9 +110,7 @@ class WitchbaneOrbTest extends BaseCardTest {
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isTrue();
 
         // Remove the orb
-        Permanent orbPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Witchbane Orb"))
-                .findFirst().orElseThrow();
+        Permanent orbPerm = findPermanent(player1, "Witchbane Orb");
         gd.playerBattlefields.get(player1.getId()).remove(orbPerm);
 
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isFalse();

@@ -146,8 +146,6 @@ class DrownedCatacombTest extends BaseCardTest {
     }
 
     private Permanent findCatacomb(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Drowned Catacomb"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Drowned Catacomb");
     }
 }

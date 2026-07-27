@@ -139,9 +139,7 @@ class ChokingFumesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Non-attacking creature is unaffected
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
     }
 }

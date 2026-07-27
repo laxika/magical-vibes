@@ -216,9 +216,7 @@ class PhylacteryLichTest extends BaseCardTest {
         harness.addToBattlefield(player1, secondArtifact);
 
         // Manually put a phylactery counter on the second artifact
-        Permanent secondPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Second Artifact"))
-                .findFirst().orElseThrow();
+        Permanent secondPerm = findPermanent(player1, "Second Artifact");
         secondPerm.setCounterCount(CounterType.PHYLACTERY, 1);
 
         // Cast Lich choosing the first artifact

@@ -108,9 +108,7 @@ class BlistergrubTest extends BaseCardTest {
      * Blistergrub will die from combat damage.
      */
     private void setupCombatWhereBlistergrubDies() {
-        Permanent blistergrubPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blistergrub"))
-                .findFirst().orElseThrow();
+        Permanent blistergrubPerm = findPermanent(player1, "Blistergrub");
         blistergrubPerm.setSummoningSick(false);
         blistergrubPerm.setAttacking(true);
 

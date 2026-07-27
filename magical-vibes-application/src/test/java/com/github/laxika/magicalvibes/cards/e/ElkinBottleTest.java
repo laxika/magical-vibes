@@ -24,9 +24,7 @@ class ElkinBottleTest extends BaseCardTest {
 
     private void addBottleReady() {
         harness.addToBattlefield(player1, new ElkinBottle());
-        Permanent bottle = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elkin Bottle"))
-                .findFirst().orElseThrow();
+        Permanent bottle = findPermanent(player1, "Elkin Bottle");
         bottle.setSummoningSick(false);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
     }

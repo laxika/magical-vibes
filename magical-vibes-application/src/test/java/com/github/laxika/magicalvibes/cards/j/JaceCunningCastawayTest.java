@@ -107,10 +107,7 @@ class JaceCunningCastawayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        Permanent illusionToken = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Illusion"))
-                .findFirst()
-                .orElseThrow();
+        Permanent illusionToken = findPermanent(player1, "Illusion");
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);

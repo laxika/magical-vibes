@@ -76,9 +76,7 @@ class DrogskolCaptainTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DrogskolCaptain());
         harness.addToBattlefield(player1, new DrogskolCaptain());
 
-        List<Permanent> captains = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Drogskol Captain"))
-                .toList();
+        List<Permanent> captains = findPermanents(player1, "Drogskol Captain");
 
         assertThat(captains).hasSize(2);
         for (Permanent captain : captains) {

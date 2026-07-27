@@ -53,10 +53,7 @@ class WingSplicerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent golemToken = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .findFirst()
-                .orElseThrow();
+        Permanent golemToken = findPermanent(player1, "Phyrexian Golem");
 
         assertThat(gqs.hasKeyword(gd, golemToken, Keyword.FLYING)).isTrue();
     }
@@ -66,10 +63,7 @@ class WingSplicerTest extends BaseCardTest {
     void wingSplicerDoesNotHaveFlying() {
         harness.addToBattlefield(player1, new WingSplicer());
 
-        Permanent wingSplicer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wing Splicer"))
-                .findFirst()
-                .orElseThrow();
+        Permanent wingSplicer = findPermanent(player1, "Wing Splicer");
 
         assertThat(gqs.hasKeyword(gd, wingSplicer, Keyword.FLYING)).isFalse();
     }
@@ -110,10 +104,7 @@ class WingSplicerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent p2WingSplicer = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wing Splicer"))
-                .findFirst()
-                .orElseThrow();
+        Permanent p2WingSplicer = findPermanent(player2, "Wing Splicer");
 
         // Player 2's Wing Splicer should not get flying from Player 1's Wing Splicer
         assertThat(gqs.hasKeyword(gd, p2WingSplicer, Keyword.FLYING)).isFalse();
@@ -130,19 +121,13 @@ class WingSplicerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent golemToken = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .findFirst()
-                .orElseThrow();
+        Permanent golemToken = findPermanent(player1, "Phyrexian Golem");
 
         // Verify golem has flying
         assertThat(gqs.hasKeyword(gd, golemToken, Keyword.FLYING)).isTrue();
 
         // Remove Wing Splicer from battlefield
-        Permanent wingSplicer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wing Splicer"))
-                .findFirst()
-                .orElseThrow();
+        Permanent wingSplicer = findPermanent(player1, "Wing Splicer");
         gd.playerBattlefields.get(player1.getId()).remove(wingSplicer);
 
         // Golem should no longer have flying

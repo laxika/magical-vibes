@@ -29,9 +29,7 @@ class TatterkiteTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent tatterkite = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Tatterkite"))
-                .findFirst().orElseThrow();
+        Permanent tatterkite = findPermanent(player1, "Tatterkite");
         assertThat(tatterkite.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         assertThat(tatterkite.getEffectivePower()).isEqualTo(2);
         assertThat(tatterkite.getEffectiveToughness()).isEqualTo(1);
@@ -42,9 +40,7 @@ class TatterkiteTest extends BaseCardTest {
     void cantHaveCountersReported() {
         harness.addToBattlefield(player1, new Tatterkite());
 
-        Permanent tatterkite = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Tatterkite"))
-                .findFirst().orElseThrow();
+        Permanent tatterkite = findPermanent(player1, "Tatterkite");
         assertThat(gqs.cantHaveCounters(gd, tatterkite)).isTrue();
     }
 }

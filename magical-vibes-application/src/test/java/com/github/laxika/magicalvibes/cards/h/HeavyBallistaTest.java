@@ -66,9 +66,7 @@ class HeavyBallistaTest extends BaseCardTest {
 
     private Permanent addAttacker(Player owner) {
         harness.addToBattlefield(owner, new GrizzlyBears());
-        Permanent attacker = harness.getGameData().playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent attacker = findPermanent(owner, "Grizzly Bears");
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());
@@ -77,9 +75,7 @@ class HeavyBallistaTest extends BaseCardTest {
 
     private Permanent addBlocker(Player owner) {
         harness.addToBattlefield(owner, new GrizzlyBears());
-        Permanent blocker = harness.getGameData().playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent blocker = findPermanent(owner, "Grizzly Bears");
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTargetId(UUID.randomUUID());

@@ -136,9 +136,6 @@ class MoldAdderTest extends BaseCardTest {
     }
 
     private Permanent getMoldAdder() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mold Adder"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Mold Adder");
     }
 }

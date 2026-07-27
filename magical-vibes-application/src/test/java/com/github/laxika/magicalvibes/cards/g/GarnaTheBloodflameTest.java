@@ -170,9 +170,7 @@ class GarnaTheBloodflameTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GarnaTheBloodflame());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
@@ -182,9 +180,7 @@ class GarnaTheBloodflameTest extends BaseCardTest {
     void garnaDoesNotGrantHasteToItself() {
         harness.addToBattlefield(player1, new GarnaTheBloodflame());
 
-        Permanent garna = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Garna, the Bloodflame"))
-                .findFirst().orElseThrow();
+        Permanent garna = findPermanent(player1, "Garna, the Bloodflame");
 
         assertThat(gqs.hasKeyword(gd, garna, Keyword.HASTE)).isFalse();
     }
@@ -196,9 +192,7 @@ class GarnaTheBloodflameTest extends BaseCardTest {
         harness.addToBattlefield(player1, garnaCard);
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
 
         // Remove Garna via Shock

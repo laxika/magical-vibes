@@ -52,9 +52,7 @@ class GoblinChieftainTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GoblinEliteInfantry());
         harness.addToBattlefield(player1, new GoblinChieftain());
 
-        Permanent goblin = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Elite Infantry"))
-                .findFirst().orElseThrow();
+        Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
 
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(3);
@@ -66,9 +64,7 @@ class GoblinChieftainTest extends BaseCardTest {
     void doesNotBuffItself() {
         harness.addToBattlefield(player1, new GoblinChieftain());
 
-        Permanent chieftain = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Chieftain"))
-                .findFirst().orElseThrow();
+        Permanent chieftain = findPermanent(player1, "Goblin Chieftain");
 
         assertThat(gqs.getEffectivePower(gd, chieftain)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, chieftain)).isEqualTo(2);
@@ -81,9 +77,7 @@ class GoblinChieftainTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GoblinChieftain());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -96,9 +90,7 @@ class GoblinChieftainTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GoblinChieftain());
         harness.addToBattlefield(player2, new GoblinEliteInfantry());
 
-        Permanent opponentGoblin = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Elite Infantry"))
-                .findFirst().orElseThrow();
+        Permanent opponentGoblin = findPermanent(player2, "Goblin Elite Infantry");
 
         assertThat(gqs.getEffectivePower(gd, opponentGoblin)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentGoblin)).isEqualTo(2);
@@ -113,9 +105,7 @@ class GoblinChieftainTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GoblinChieftain());
         harness.addToBattlefield(player1, new GoblinChieftain());
 
-        List<Permanent> chieftains = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Chieftain"))
-                .toList();
+        List<Permanent> chieftains = findPermanents(player1, "Goblin Chieftain");
 
         assertThat(chieftains).hasSize(2);
         for (Permanent chieftain : chieftains) {
@@ -131,9 +121,7 @@ class GoblinChieftainTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GoblinChieftain());
         harness.addToBattlefield(player1, new GoblinEliteInfantry());
 
-        Permanent goblin = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Elite Infantry"))
-                .findFirst().orElseThrow();
+        Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
 
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(4);
@@ -147,9 +135,7 @@ class GoblinChieftainTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GoblinChieftain());
         harness.addToBattlefield(player1, new GoblinEliteInfantry());
 
-        Permanent goblin = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Elite Infantry"))
-                .findFirst().orElseThrow();
+        Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
 
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.HASTE)).isTrue();
@@ -169,9 +155,7 @@ class GoblinChieftainTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GoblinChieftain()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        Permanent goblin = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Elite Infantry"))
-                .findFirst().orElseThrow();
+        Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
 
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
 
@@ -189,9 +173,7 @@ class GoblinChieftainTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GoblinChieftain());
         harness.addToBattlefield(player1, new GoblinEliteInfantry());
 
-        Permanent goblin = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Elite Infantry"))
-                .findFirst().orElseThrow();
+        Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
 
         goblin.setPowerModifier(goblin.getPowerModifier() + 5);
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(8); // 2 base + 5 spell + 1 static

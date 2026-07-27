@@ -23,9 +23,7 @@ class GluttonousSlimeTest extends BaseCardTest {
     }
 
     private Permanent slime() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gluttonous Slime"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Gluttonous Slime");
     }
 
     @Test

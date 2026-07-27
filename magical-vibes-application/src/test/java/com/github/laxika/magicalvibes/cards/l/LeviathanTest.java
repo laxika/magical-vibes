@@ -97,8 +97,6 @@ class LeviathanTest extends BaseCardTest {
     }
 
     private int islandCount(Player player) {
-        return (int) gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Island"))
-                .count();
+        return (int) countPermanents(player, "Island");
     }
 }

@@ -75,9 +75,7 @@ class KnightOfMaliceTest extends BaseCardTest {
         harness.addToBattlefield(player2, new BenalishKnight());
 
         GameData gd = harness.getGameData();
-        Permanent knight = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Knight of Malice"))
-                .findFirst().orElseThrow();
+        Permanent knight = findPermanent(player1, "Knight of Malice");
 
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3); // 2 base + 1 boost
         assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2); // no toughness boost
@@ -90,9 +88,7 @@ class KnightOfMaliceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BenalishKnight());
 
         GameData gd = harness.getGameData();
-        Permanent knight = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Knight of Malice"))
-                .findFirst().orElseThrow();
+        Permanent knight = findPermanent(player1, "Knight of Malice");
 
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3); // 2 base + 1 boost
     }
@@ -104,9 +100,7 @@ class KnightOfMaliceTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         GameData gd = harness.getGameData();
-        Permanent knight = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Knight of Malice"))
-                .findFirst().orElseThrow();
+        Permanent knight = findPermanent(player1, "Knight of Malice");
 
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2); // base only
     }
@@ -119,9 +113,7 @@ class KnightOfMaliceTest extends BaseCardTest {
         harness.addToBattlefield(player2, new BenalishKnight());
 
         GameData gd = harness.getGameData();
-        Permanent knight = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Knight of Malice"))
-                .findFirst().orElseThrow();
+        Permanent knight = findPermanent(player1, "Knight of Malice");
 
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3); // 2 base + 1 (not stacking)
     }

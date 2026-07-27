@@ -44,9 +44,7 @@ class VolitionReinsTest extends BaseCardTest {
     @DisplayName("Resolving Volition Reins steals opponent's artifact")
     void stealsArtifact() {
         harness.addToBattlefield(player2, new FountainOfYouth());
-        Permanent artifact = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fountain of Youth"))
-                .findFirst().orElseThrow();
+        Permanent artifact = findPermanent(player2, "Fountain of Youth");
 
         harness.setHand(player1, List.of(new VolitionReins()));
         harness.addMana(player1, ManaColor.BLUE, 6);
@@ -139,9 +137,7 @@ class VolitionReinsTest extends BaseCardTest {
                 .anyMatch(p -> p.getId().equals(creature.getId()));
 
         // Destroy Volition Reins with Demystify
-        Permanent volitionReinsPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Volition Reins"))
-                .findFirst().orElseThrow();
+        Permanent volitionReinsPerm = findPermanent(player1, "Volition Reins");
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

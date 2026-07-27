@@ -20,9 +20,7 @@ class AmuletOfKroogTest extends BaseCardTest {
     }
 
     private Permanent amulet() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Amulet of Kroog"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Amulet of Kroog");
     }
 
     @Test
@@ -36,9 +34,7 @@ class AmuletOfKroogTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
     }
 

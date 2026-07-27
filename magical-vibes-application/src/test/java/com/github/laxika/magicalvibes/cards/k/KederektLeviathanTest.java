@@ -80,9 +80,7 @@ class KederektLeviathanTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Kederekt Leviathan"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Kederekt Leviathan");
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
         harness.assertNotInGraveyard(player1, "Kederekt Leviathan");
     }
@@ -131,9 +129,7 @@ class KederektLeviathanTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve unearth
         harness.passBothPriorities(); // resolve ETB
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Kederekt Leviathan"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Kederekt Leviathan");
 
         harness.setHand(player2, List.of(new Terminate()));
         harness.addMana(player2, ManaColor.BLACK, 1);

@@ -119,10 +119,7 @@ class ChangelingHeroTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FieldMarshal());
         harness.addToBattlefield(player1, new ChangelingHero());
 
-        Permanent hero = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Changeling Hero"))
-                .findFirst()
-                .orElseThrow();
+        Permanent hero = findPermanent(player1, "Changeling Hero");
 
         assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(5);

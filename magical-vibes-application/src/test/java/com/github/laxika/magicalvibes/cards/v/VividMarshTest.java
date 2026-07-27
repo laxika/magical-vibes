@@ -98,8 +98,6 @@ class VividMarshTest extends BaseCardTest {
     }
 
     private Permanent marsh(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vivid Marsh"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Vivid Marsh");
     }
 }

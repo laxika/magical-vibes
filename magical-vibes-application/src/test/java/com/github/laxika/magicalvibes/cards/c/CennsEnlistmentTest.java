@@ -102,8 +102,6 @@ class CennsEnlistmentTest extends BaseCardTest {
     }
 
     private List<Permanent> kithkinSoldiers() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Kithkin Soldier"))
-                .toList();
+        return findPermanents(player1, "Kithkin Soldier");
     }
 }

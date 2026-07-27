@@ -39,9 +39,7 @@ class BlowflyInfestationTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, giantId);
         harness.passBothPriorities(); // Blowfly's ability resolves
 
-        Permanent giant = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hill Giant"))
-                .findFirst().orElseThrow();
+        Permanent giant = findPermanent(player2, "Hill Giant");
         assertThat(giant.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
@@ -61,9 +59,7 @@ class BlowflyInfestationTest extends BaseCardTest {
 
         // Intervening-if fails, so nothing is queued and the other creature is untouched.
         assertThat(gd.interaction.activeInteraction()).isNull();
-        Permanent giant = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hill Giant"))
-                .findFirst().orElseThrow();
+        Permanent giant = findPermanent(player2, "Hill Giant");
         assertThat(giant.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 

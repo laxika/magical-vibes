@@ -33,9 +33,7 @@ class LeoninArmorguardTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB boost
 
-        Permanent armorguard = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Leonin Armorguard"))
-                .findFirst().orElseThrow();
+        Permanent armorguard = findPermanent(player1, "Leonin Armorguard");
 
         assertThat(bears.getPowerModifier()).isEqualTo(1);
         assertThat(bears.getToughnessModifier()).isEqualTo(1);

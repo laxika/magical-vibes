@@ -65,9 +65,7 @@ class IvoryMaskTest extends BaseCardTest {
         harness.addToBattlefield(player1, mask);
 
         GameData gd = harness.getGameData();
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ivory Mask"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Ivory Mask");
         gd.playerBattlefields.get(player1.getId()).remove(perm);
         gd.playerGraveyards.get(player1.getId()).add(mask);
 

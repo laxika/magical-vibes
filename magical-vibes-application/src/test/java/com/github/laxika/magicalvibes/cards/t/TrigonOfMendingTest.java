@@ -67,9 +67,7 @@ class TrigonOfMendingTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Mending"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Mending");
         assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
@@ -80,9 +78,7 @@ class TrigonOfMendingTest extends BaseCardTest {
     void firstAbilityAddsChargeCounter() {
         harness.addToBattlefield(player1, new TrigonOfMending());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Mending"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Mending");
         trigon.setCounterCount(CounterType.CHARGE, 1);
 
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -99,9 +95,7 @@ class TrigonOfMendingTest extends BaseCardTest {
     void secondAbilityGainsLife() {
         harness.addToBattlefield(player1, new TrigonOfMending());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Mending"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Mending");
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         int initialLife = gd.playerLifeTotals.get(player1.getId());
@@ -119,9 +113,7 @@ class TrigonOfMendingTest extends BaseCardTest {
     void canTargetOpponentToGainLife() {
         harness.addToBattlefield(player1, new TrigonOfMending());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Mending"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Mending");
         trigon.setCounterCount(CounterType.CHARGE, 1);
 
         int initialLife = gd.playerLifeTotals.get(player2.getId());
@@ -139,9 +131,7 @@ class TrigonOfMendingTest extends BaseCardTest {
     void canActivateMultipleTimes() {
         harness.addToBattlefield(player1, new TrigonOfMending());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Mending"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Mending");
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         int initialLife = gd.playerLifeTotals.get(player1.getId());
@@ -166,9 +156,7 @@ class TrigonOfMendingTest extends BaseCardTest {
     void cannotActivateWithNoCounters() {
         harness.addToBattlefield(player1, new TrigonOfMending());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Mending"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Mending");
         trigon.setCounterCount(CounterType.CHARGE, 0);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -181,9 +169,7 @@ class TrigonOfMendingTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         harness.addToBattlefield(player1, new TrigonOfMending());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Mending"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Mending");
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         // First activation taps it

@@ -57,9 +57,7 @@ class BreedingPitTest extends BaseCardTest {
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         harness.passBothPriorities(); // resolve trigger -> token created
 
-        var thrulls = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Thrull"))
-                .toList();
+        var thrulls = findPermanents(player1, "Thrull");
         assertThat(thrulls).hasSize(1);
         assertThat(thrulls).allSatisfy(t -> {
             assertThat(t.getCard().getPower()).isEqualTo(0);

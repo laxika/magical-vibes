@@ -56,9 +56,7 @@ class MaulSplicerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        List<Permanent> golemTokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .toList();
+        List<Permanent> golemTokens = findPermanents(player1, "Phyrexian Golem");
 
         assertThat(golemTokens).hasSize(2);
         for (Permanent golem : golemTokens) {
@@ -71,10 +69,7 @@ class MaulSplicerTest extends BaseCardTest {
     void maulSplicerDoesNotHaveTrample() {
         harness.addToBattlefield(player1, new MaulSplicer());
 
-        Permanent maulSplicer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Maul Splicer"))
-                .findFirst()
-                .orElseThrow();
+        Permanent maulSplicer = findPermanent(player1, "Maul Splicer");
 
         assertThat(gqs.hasKeyword(gd, maulSplicer, Keyword.TRAMPLE)).isFalse();
     }
@@ -118,10 +113,7 @@ class MaulSplicerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Player 2's Maul Splicer should not get trample from Player 1's Maul Splicer
-        Permanent p2MaulSplicer = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Maul Splicer"))
-                .findFirst()
-                .orElseThrow();
+        Permanent p2MaulSplicer = findPermanent(player2, "Maul Splicer");
         assertThat(gqs.hasKeyword(gd, p2MaulSplicer, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -136,19 +128,13 @@ class MaulSplicerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent golemToken = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .findFirst()
-                .orElseThrow();
+        Permanent golemToken = findPermanent(player1, "Phyrexian Golem");
 
         // Verify golem has trample
         assertThat(gqs.hasKeyword(gd, golemToken, Keyword.TRAMPLE)).isTrue();
 
         // Remove Maul Splicer from battlefield
-        Permanent maulSplicer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Maul Splicer"))
-                .findFirst()
-                .orElseThrow();
+        Permanent maulSplicer = findPermanent(player1, "Maul Splicer");
         gd.playerBattlefields.get(player1.getId()).remove(maulSplicer);
 
         // Golem should no longer have trample

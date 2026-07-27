@@ -18,9 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AlgaeGharialTest extends BaseCardTest {
 
     private Permanent gharial() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Algae Gharial"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Algae Gharial");
     }
 
     @Test

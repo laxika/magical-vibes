@@ -71,9 +71,7 @@ class DuergarAssailantTest extends BaseCardTest {
 
     private Permanent addAttacker(Player owner) {
         harness.addToBattlefield(owner, new LlanowarElves());
-        Permanent attacker = gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent attacker = findPermanent(owner, "Llanowar Elves");
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());
@@ -82,9 +80,7 @@ class DuergarAssailantTest extends BaseCardTest {
 
     private Permanent addBlocker(Player owner) {
         harness.addToBattlefield(owner, new LlanowarElves());
-        Permanent blocker = gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent blocker = findPermanent(owner, "Llanowar Elves");
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTargetId(UUID.randomUUID());

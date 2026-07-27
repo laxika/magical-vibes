@@ -68,8 +68,6 @@ class InfestTest extends BaseCardTest {
     }
 
     private Permanent giant(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hill Giant"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Hill Giant");
     }
 }

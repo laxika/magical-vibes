@@ -133,9 +133,7 @@ class VoldarenAmbusherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getMarkedDamage()).isEqualTo(0);
     }
 

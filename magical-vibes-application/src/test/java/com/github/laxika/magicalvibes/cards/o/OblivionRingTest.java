@@ -106,9 +106,7 @@ class OblivionRingTest extends BaseCardTest {
         harness.castInstant(player2, 0, ringId);
         harness.passBothPriorities();
 
-        Permanent returned = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent returned = findPermanent(player2, "Grizzly Bears");
         assertThat(returned.isSummoningSick()).isTrue();
     }
 

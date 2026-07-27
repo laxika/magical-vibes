@@ -71,9 +71,7 @@ class GallowsWardenTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GallowsWarden());
         harness.addToBattlefield(player1, new GallowsWarden());
 
-        List<Permanent> wardens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gallows Warden"))
-                .toList();
+        List<Permanent> wardens = findPermanents(player1, "Gallows Warden");
 
         assertThat(wardens).hasSize(2);
         for (Permanent warden : wardens) {

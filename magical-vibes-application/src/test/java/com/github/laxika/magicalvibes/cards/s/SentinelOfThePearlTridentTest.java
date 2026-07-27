@@ -142,9 +142,7 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
 
         advanceToEndStep();
 
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Kemba, Kha Regent"))
-                .findFirst().orElseThrow();
+        Permanent returned = findPermanent(player1, "Kemba, Kha Regent");
         assertThat(returned.isSummoningSick()).isTrue();
     }
 

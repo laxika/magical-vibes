@@ -27,9 +27,7 @@ class BogardanFirefiendTest extends BaseCardTest {
      * Firefiend (2/1) will die from combat damage.
      */
     private void setupCombatWhereFirefiendDies() {
-        Permanent firefiendPerm = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bogardan Firefiend"))
-                .findFirst().orElseThrow();
+        Permanent firefiendPerm = findPermanent(player1, "Bogardan Firefiend");
         firefiendPerm.setSummoningSick(false);
         firefiendPerm.setAttacking(true);
 

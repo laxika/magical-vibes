@@ -81,9 +81,7 @@ class FatestitcherTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fatestitcher"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Fatestitcher");
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
         harness.assertNotInGraveyard(player1, "Fatestitcher");
     }
@@ -133,9 +131,7 @@ class FatestitcherTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fatestitcher"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Fatestitcher");
 
         harness.setHand(player2, List.of(new Terminate()));
         harness.addMana(player2, ManaColor.BLACK, 1);

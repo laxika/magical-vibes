@@ -124,9 +124,7 @@ class MidnightRitualTest extends BaseCardTest {
                 .containsOnly("Grizzly Bears");
 
         // Two Zombie tokens on the battlefield
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Zombie");
         assertThat(tokens).hasSize(2);
 
         // Stack is empty after resolution
@@ -148,10 +146,7 @@ class MidnightRitualTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .findFirst()
-                .orElseThrow();
+        Permanent token = findPermanent(player1, "Zombie");
 
         assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(token.getCard().getPower()).isEqualTo(2);
@@ -273,9 +268,7 @@ class MidnightRitualTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()).getFirst().getName()).isEqualTo("Midnight Ritual");
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
 
-        long zombieCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .count();
+        long zombieCount = countPermanents(player1, "Zombie");
         assertThat(zombieCount).isEqualTo(3);
     }
 
@@ -302,9 +295,7 @@ class MidnightRitualTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
 
         // Only one Zombie token created
-        long zombieCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .count();
+        long zombieCount = countPermanents(player1, "Zombie");
         assertThat(zombieCount).isEqualTo(1);
     }
 

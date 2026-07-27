@@ -53,9 +53,7 @@ class VigorTest extends BaseCardTest {
         harness.castInstant(player1, 0, vigorId);
         harness.passBothPriorities();
 
-        Permanent vigor = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vigor"))
-                .findFirst().orElseThrow();
+        Permanent vigor = findPermanent(player2, "Vigor");
         // "Another creature" — Vigor's own damage lands as marked damage, no +1/+1 counters.
         assertThat(vigor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(vigor.getMarkedDamage()).isEqualTo(2);

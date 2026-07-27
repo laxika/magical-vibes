@@ -29,9 +29,7 @@ class HowlOfTheNightPackTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        List<Permanent> wolves = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wolf"))
-                .toList();
+        List<Permanent> wolves = findPermanents(player1, "Wolf");
         assertThat(wolves).hasSize(3);
         for (Permanent wolf : wolves) {
             assertThat(wolf.getCard().getPower()).isEqualTo(2);
@@ -50,9 +48,7 @@ class HowlOfTheNightPackTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        List<Permanent> wolves = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wolf"))
-                .toList();
+        List<Permanent> wolves = findPermanents(player1, "Wolf");
         assertThat(wolves).isEmpty();
     }
 
@@ -69,9 +65,7 @@ class HowlOfTheNightPackTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        List<Permanent> wolves = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wolf"))
-                .toList();
+        List<Permanent> wolves = findPermanents(player1, "Wolf");
         assertThat(wolves).hasSize(1);
     }
 }

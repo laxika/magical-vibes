@@ -67,9 +67,7 @@ class CloudSpriteTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Cloud Sprite"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Cloud Sprite");
         assertThat(perm.isSummoningSick()).isTrue();
     }
 

@@ -53,9 +53,7 @@ class RustrazorButcherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Rustrazor Butcher (1 power) deals its damage as one -1/-1 counter; 3/3 becomes 2/2.
-        Permanent survivor = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Big Bear"))
-                .findFirst().orElseThrow();
+        Permanent survivor = findPermanent(player2, "Big Bear");
         assertThat(survivor.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 

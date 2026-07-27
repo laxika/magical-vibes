@@ -15,9 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SunkenCityTest extends BaseCardTest {
 
     private Permanent find(Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst().orElseThrow();
+        return findPermanent(player, name);
     }
 
     // ===== Buffs blue creatures (all controllers) =====

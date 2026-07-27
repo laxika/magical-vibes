@@ -125,9 +125,7 @@ class FertilidTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent fertilid(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fertilid"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Fertilid");
     }
 
     private Permanent readyFertilid(Player player) {

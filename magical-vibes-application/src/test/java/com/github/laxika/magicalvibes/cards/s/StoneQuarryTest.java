@@ -25,9 +25,7 @@ class StoneQuarryTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        Permanent quarry = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Stone Quarry"))
-                .findFirst().orElseThrow();
+        Permanent quarry = findPermanent(player1, "Stone Quarry");
         assertThat(quarry.isTapped()).isTrue();
     }
 

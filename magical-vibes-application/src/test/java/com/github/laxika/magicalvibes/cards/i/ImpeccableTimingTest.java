@@ -90,9 +90,7 @@ class ImpeccableTimingTest extends BaseCardTest {
 
     private Permanent combatCreature(Player owner, Card card, String name) {
         harness.addToBattlefield(owner, card);
-        Permanent permanent = harness.getGameData().playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst().orElseThrow();
+        Permanent permanent = findPermanent(owner, name);
         permanent.setSummoningSick(false);
         return permanent;
     }

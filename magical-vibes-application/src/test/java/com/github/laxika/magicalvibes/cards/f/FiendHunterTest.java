@@ -227,9 +227,7 @@ class FiendHunterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The returned creature should have summoning sickness
-        Permanent returned = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Piker"))
-                .findFirst().orElseThrow();
+        Permanent returned = findPermanent(player2, "Goblin Piker");
         assertThat(returned.isSummoningSick()).isTrue();
     }
 

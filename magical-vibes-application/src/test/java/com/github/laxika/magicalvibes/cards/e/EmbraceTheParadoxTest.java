@@ -43,8 +43,7 @@ class EmbraceTheParadoxTest extends BaseCardTest {
         // Hand is now [Forest, drawn1, drawn2, drawn3]; put the Forest (index 0) onto the battlefield.
         harness.handleCardChosen(player1, 0);
 
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest")).findFirst().orElseThrow();
+        Permanent forest = findPermanent(player1, "Forest");
         assertThat(forest.isTapped()).isTrue();
         // Started with 1 (Forest) + drew 3 - 1 put onto battlefield = 3 cards in hand.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);

@@ -81,9 +81,6 @@ class QuirionDryadTest extends BaseCardTest {
     }
     
     private Permanent getDryad() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Quirion Dryad"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Quirion Dryad");
     }
 }

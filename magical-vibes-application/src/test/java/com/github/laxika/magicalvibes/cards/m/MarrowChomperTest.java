@@ -25,9 +25,7 @@ class MarrowChomperTest extends BaseCardTest {
     }
 
     private Permanent marrowChomper() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Marrow Chomper"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Marrow Chomper");
     }
 
     @Test

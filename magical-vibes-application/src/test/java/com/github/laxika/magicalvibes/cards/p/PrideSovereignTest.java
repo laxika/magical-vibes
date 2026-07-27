@@ -70,9 +70,7 @@ class PrideSovereignTest extends BaseCardTest {
 
         assertThat(sovereign.getSkipUntapCount()).isGreaterThan(0);
 
-        var cats = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Cat"))
-                .toList();
+        var cats = findPermanents(player1, "Cat");
         assertThat(cats).hasSize(2);
         assertThat(cats).allSatisfy(cat -> {
             assertThat(cat.getCard().getPower()).isEqualTo(1);

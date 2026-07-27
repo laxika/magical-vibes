@@ -90,9 +90,7 @@ class DinOfTheFireherdTest extends BaseCardTest {
         assertThat(choice.playerId()).isEqualTo(player2.getId());
         assertThat(choice.context()).isInstanceOf(MultiPermanentChoiceContext.ForcedSacrifice.class);
 
-        Permanent chosen = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent chosen = findPermanent(player2, "Grizzly Bears");
         harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
 
         // One creature remains; the land is auto-sacrificed by the red count of 1 (the token).

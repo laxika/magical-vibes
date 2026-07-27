@@ -91,9 +91,7 @@ class NightRevelersTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, revelers, Keyword.HASTE)).isTrue();
 
         // Remove one Human
-        Permanent firstVanguard = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elite Vanguard"))
-                .findFirst().orElseThrow();
+        Permanent firstVanguard = findPermanent(player2, "Elite Vanguard");
         gd.playerBattlefields.get(player2.getId()).remove(firstVanguard);
 
         // Still has opponent's Human — haste remains

@@ -101,9 +101,7 @@ class ImperiousPerfectTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elf Warrior"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Elf Warrior");
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);
         assertThat(token.getCard().getSubtypes())
@@ -119,9 +117,7 @@ class ImperiousPerfectTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elf Warrior"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Elf Warrior");
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
     }
@@ -173,9 +169,7 @@ class ImperiousPerfectTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent elf(Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst().orElseThrow();
+        return findPermanent(player, name);
     }
 
     private Permanent addPerfectReady(Player player) {

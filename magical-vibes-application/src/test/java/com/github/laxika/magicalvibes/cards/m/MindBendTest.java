@@ -105,9 +105,7 @@ class MindBendTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
 
-        Permanent perm = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Paladin en-Vec"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player2, "Paladin en-Vec");
         assertThat(perm.getTextReplacements()).hasSize(1);
         assertThat(perm.getTextReplacements().getFirst()).isEqualTo(new TextReplacement("black", "green"));
     }
@@ -149,9 +147,7 @@ class MindBendTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isNull();
 
-        Permanent perm = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player2, "Grizzly Bears");
         assertThat(perm.getTextReplacements()).hasSize(1);
         assertThat(perm.getTextReplacements().getFirst()).isEqualTo(new TextReplacement("Swamp", "Forest"));
     }
@@ -182,9 +178,7 @@ class MindBendTest extends BaseCardTest {
     void updatesChosenColorWhenMatching() {
         harness.addToBattlefield(player2, new VoiceOfAll());
         // Manually set chosen color to simulate Voice of All's ETB
-        Permanent voiceOfAll = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Voice of All"))
-                .findFirst().orElseThrow();
+        Permanent voiceOfAll = findPermanent(player2, "Voice of All");
         voiceOfAll.setChosenColor(CardColor.BLACK);
 
         harness.setHand(player1, List.of(new MindBend()));
@@ -204,9 +198,7 @@ class MindBendTest extends BaseCardTest {
     @DisplayName("Mind Bend does not update chosenColor when from-color does not match")
     void doesNotUpdateChosenColorWhenNotMatching() {
         harness.addToBattlefield(player2, new VoiceOfAll());
-        Permanent voiceOfAll = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Voice of All"))
-                .findFirst().orElseThrow();
+        Permanent voiceOfAll = findPermanent(player2, "Voice of All");
         voiceOfAll.setChosenColor(CardColor.BLACK);
 
         harness.setHand(player1, List.of(new MindBend()));
@@ -289,9 +281,7 @@ class MindBendTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
         harness.handleListChoice(player1, "BLUE");
 
-        Permanent perm = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Paladin en-Vec"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player2, "Paladin en-Vec");
         assertThat(perm.getTextReplacements()).hasSize(2);
         assertThat(perm.getTextReplacements().get(0)).isEqualTo(new TextReplacement("black", "green"));
         assertThat(perm.getTextReplacements().get(1)).isEqualTo(new TextReplacement("red", "blue"));
@@ -311,9 +301,7 @@ class MindBendTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
         harness.handleListChoice(player1, "WHITE");
 
-        Permanent perm = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Paladin en-Vec"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Paladin en-Vec");
         assertThat(perm.getTextReplacements()).hasSize(1);
         assertThat(perm.getTextReplacements().getFirst()).isEqualTo(new TextReplacement("red", "white"));
     }

@@ -40,9 +40,7 @@ class MerfolkSovereignTest extends BaseCardTest {
         addSovereignReady(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -145,9 +143,7 @@ class MerfolkSovereignTest extends BaseCardTest {
         Permanent sovereign = addSovereignReady(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);

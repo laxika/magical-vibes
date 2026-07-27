@@ -45,9 +45,7 @@ class OriginSpellbombTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities(); // Resolve token creation ability
 
-        Permanent myrToken = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Myr"))
-                .findFirst().orElseThrow();
+        Permanent myrToken = findPermanent(player1, "Myr");
 
         assertThat(myrToken.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(myrToken.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);

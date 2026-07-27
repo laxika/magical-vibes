@@ -54,9 +54,7 @@ class VeteranSwordsmithTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AvenCloudchaser());
         harness.addToBattlefield(player1, new VeteranSwordsmith());
 
-        Permanent soldier = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Aven Cloudchaser"))
-                .findFirst().orElseThrow();
+        Permanent soldier = findPermanent(player1, "Aven Cloudchaser");
 
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(2);
@@ -67,9 +65,7 @@ class VeteranSwordsmithTest extends BaseCardTest {
     void doesNotBuffItself() {
         harness.addToBattlefield(player1, new VeteranSwordsmith());
 
-        Permanent swordsmith = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Veteran Swordsmith"))
-                .findFirst().orElseThrow();
+        Permanent swordsmith = findPermanent(player1, "Veteran Swordsmith");
 
         assertThat(gqs.getEffectivePower(gd, swordsmith)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, swordsmith)).isEqualTo(2);
@@ -81,9 +77,7 @@ class VeteranSwordsmithTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new VeteranSwordsmith());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -95,9 +89,7 @@ class VeteranSwordsmithTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VeteranSwordsmith());
         harness.addToBattlefield(player2, new AvenCloudchaser());
 
-        Permanent opponentSoldier = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Aven Cloudchaser"))
-                .findFirst().orElseThrow();
+        Permanent opponentSoldier = findPermanent(player2, "Aven Cloudchaser");
 
         assertThat(gqs.getEffectivePower(gd, opponentSoldier)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentSoldier)).isEqualTo(2);
@@ -111,9 +103,7 @@ class VeteranSwordsmithTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VeteranSwordsmith());
         harness.addToBattlefield(player1, new VeteranSwordsmith());
 
-        List<Permanent> swordsmiths = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Veteran Swordsmith"))
-                .toList();
+        List<Permanent> swordsmiths = findPermanents(player1, "Veteran Swordsmith");
 
         assertThat(swordsmiths).hasSize(2);
         for (Permanent swordsmith : swordsmiths) {
@@ -130,9 +120,7 @@ class VeteranSwordsmithTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VeteranSwordsmith());
         harness.addToBattlefield(player1, new AvenCloudchaser());
 
-        Permanent soldier = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Aven Cloudchaser"))
-                .findFirst().orElseThrow();
+        Permanent soldier = findPermanent(player1, "Aven Cloudchaser");
 
         // 2/2 base + 2/0 from two sources = 4/2
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(4);
@@ -147,9 +135,7 @@ class VeteranSwordsmithTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VeteranSwordsmith());
         harness.addToBattlefield(player1, new AvenCloudchaser());
 
-        Permanent soldier = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Aven Cloudchaser"))
-                .findFirst().orElseThrow();
+        Permanent soldier = findPermanent(player1, "Aven Cloudchaser");
 
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(3);
 
@@ -167,9 +153,7 @@ class VeteranSwordsmithTest extends BaseCardTest {
         harness.setHand(player1, List.of(new VeteranSwordsmith()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        Permanent soldier = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Aven Cloudchaser"))
-                .findFirst().orElseThrow();
+        Permanent soldier = findPermanent(player1, "Aven Cloudchaser");
 
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(2);
 
@@ -186,9 +170,7 @@ class VeteranSwordsmithTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VeteranSwordsmith());
         harness.addToBattlefield(player1, new AvenCloudchaser());
 
-        Permanent soldier = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Aven Cloudchaser"))
-                .findFirst().orElseThrow();
+        Permanent soldier = findPermanent(player1, "Aven Cloudchaser");
 
         soldier.setPowerModifier(soldier.getPowerModifier() + 5);
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(8); // 2 base + 5 spell + 1 static

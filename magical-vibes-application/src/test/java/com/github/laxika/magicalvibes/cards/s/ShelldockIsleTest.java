@@ -20,9 +20,7 @@ class ShelldockIsleTest extends BaseCardTest {
     private Permanent addIsleWithImprint(Card imprinted) {
         harness.addToBattlefield(player1, new ShelldockIsle());
         GameData gd = harness.getGameData();
-        Permanent isle = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Shelldock Isle"))
-                .findFirst().orElseThrow();
+        Permanent isle = findPermanent(player1, "Shelldock Isle");
         gd.setImprintedCard(isle.getCard(), imprinted);
         gd.addToExile(player1.getId(), imprinted);
         return isle;
@@ -52,9 +50,7 @@ class ShelldockIsleTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.getImprintedCard(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Shelldock Isle"))
-                .findFirst().orElseThrow().getCard())).isNull();
+        assertThat(gd.getImprintedCard(findPermanent(player1, "Shelldock Isle").getCard())).isNull();
     }
 
     @Test

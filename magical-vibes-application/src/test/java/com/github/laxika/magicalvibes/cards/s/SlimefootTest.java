@@ -70,9 +70,7 @@ class SlimefootTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Saproling"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Saproling");
         assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);
@@ -148,9 +146,7 @@ class SlimefootTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        long saprolingCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Saproling"))
-                .count();
+        long saprolingCount = countPermanents(player1, "Saproling");
         assertThat(saprolingCount).isEqualTo(2);
 
         int p1LifeBefore = gd.getLife(player1.getId());

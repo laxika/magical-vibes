@@ -56,9 +56,7 @@ class PillarOfOriginsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "VAMPIRE");
 
-        Permanent pillar = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Pillar of Origins"))
-                .findFirst().orElseThrow();
+        Permanent pillar = findPermanent(player1, "Pillar of Origins");
         assertThat(pillar.getChosenSubtype()).isEqualTo(CardSubtype.VAMPIRE);
     }
 

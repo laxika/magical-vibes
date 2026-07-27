@@ -55,9 +55,7 @@ class FoulSpiritTest extends BaseCardTest {
         assertThat(choice.maxCount()).isEqualTo(1);
         assertThat(choice.context()).isInstanceOf(MultiPermanentChoiceContext.ForcedSacrifice.class);
 
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst().orElseThrow();
+        Permanent forest = findPermanent(player1, "Forest");
         harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
 
         // Chosen land gone, the other remains

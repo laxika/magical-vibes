@@ -72,9 +72,6 @@ class GrislySurvivorTest extends BaseCardTest {
     }
 
     private Permanent getGrislySurvivor() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grisly Survivor"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Grisly Survivor");
     }
 }

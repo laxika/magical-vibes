@@ -24,9 +24,7 @@ class GrinningTotemTest extends BaseCardTest {
 
     private void activateGrinningTotem() {
         harness.addToBattlefield(player1, new GrinningTotem());
-        Permanent totem = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grinning Totem"))
-                .findFirst().orElseThrow();
+        Permanent totem = findPermanent(player1, "Grinning Totem");
         totem.setSummoningSick(false);
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.activateAbility(player1, 0, null, player2.getId());

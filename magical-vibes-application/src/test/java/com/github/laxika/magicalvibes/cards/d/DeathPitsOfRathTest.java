@@ -67,15 +67,11 @@ class DeathPitsOfRathTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears()); // 2/2 attacker
         harness.addToBattlefield(player2, new HillGiant());    // 3/3 blocker, survives combat
 
-        Permanent attacker = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent attacker = findPermanent(player1, "Grizzly Bears");
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
 
-        Permanent blocker = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hill Giant"))
-                .findFirst().orElseThrow();
+        Permanent blocker = findPermanent(player2, "Hill Giant");
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(1); // Grizzly Bears is index 1 on player1's battlefield

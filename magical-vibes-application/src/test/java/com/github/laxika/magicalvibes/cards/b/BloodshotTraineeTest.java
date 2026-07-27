@@ -73,9 +73,7 @@ class BloodshotTraineeTest extends BaseCardTest {
         harness.addToBattlefield(player2, new AirElemental());
         harness.forceActivePlayer(player1);
 
-        Permanent trainee = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bloodshot Trainee"))
-                .findFirst().orElseThrow();
+        Permanent trainee = findPermanent(player1, "Bloodshot Trainee");
         trainee.setSummoningSick(false);
 
         UUID targetId = harness.getPermanentId(player2, "Air Elemental");
@@ -106,9 +104,7 @@ class BloodshotTraineeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, targetId);
 
-        Permanent trainee = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bloodshot Trainee"))
-                .findFirst().orElseThrow();
+        Permanent trainee = findPermanent(player1, "Bloodshot Trainee");
         assertThat(trainee.isTapped()).isTrue();
     }
 
@@ -120,9 +116,7 @@ class BloodshotTraineeTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
 
         // Bloodshot Trainee has base power 2; add +1/+1 counters to reach desired power
-        Permanent trainee = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bloodshot Trainee"))
-                .findFirst().orElseThrow();
+        Permanent trainee = findPermanent(player1, "Bloodshot Trainee");
         trainee.setSummoningSick(false);
         int countersNeeded = desiredPower - 2;
         if (countersNeeded > 0) {

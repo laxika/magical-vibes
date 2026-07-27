@@ -189,9 +189,7 @@ class HuatliWarriorPoetTest extends BaseCardTest {
         Permanent huatli = addReadyHuatli(player1);
         harness.addToBattlefield(player2, new GrizzlyBears()); // 2/2
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
 
         // X=3: assign 3 damage to the bear (lethal for 2/2)
         Map<java.util.UUID, Integer> assignments = Map.of(bear.getId(), 3);
@@ -213,9 +211,7 @@ class HuatliWarriorPoetTest extends BaseCardTest {
         Permanent huatli = addReadyHuatli(player1);
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
 
         // X=4 but Huatli only has 3 loyalty
         Map<java.util.UUID, Integer> assignments = Map.of(bear.getId(), 4);

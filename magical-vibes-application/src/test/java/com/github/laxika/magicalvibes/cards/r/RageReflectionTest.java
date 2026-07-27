@@ -17,9 +17,7 @@ class RageReflectionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RageReflection());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isTrue();
     }
@@ -30,9 +28,7 @@ class RageReflectionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RageReflection());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isFalse();
     }

@@ -24,9 +24,7 @@ class MyrGalvanizerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MyrGalvanizer());
         harness.addToBattlefield(player1, new CopperMyr());
 
-        Permanent copperMyr = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Copper Myr"))
-                .findFirst().orElseThrow();
+        Permanent copperMyr = findPermanent(player1, "Copper Myr");
 
         // Copper Myr is 1/1 base, should be 2/2 with Galvanizer
         assertThat(gqs.getEffectivePower(gd, copperMyr)).isEqualTo(2);
@@ -38,9 +36,7 @@ class MyrGalvanizerTest extends BaseCardTest {
     void doesNotBuffItself() {
         harness.addToBattlefield(player1, new MyrGalvanizer());
 
-        Permanent galvanizer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Myr Galvanizer"))
-                .findFirst().orElseThrow();
+        Permanent galvanizer = findPermanent(player1, "Myr Galvanizer");
 
         // 2/2 base, no self-buff
         assertThat(gqs.getEffectivePower(gd, galvanizer)).isEqualTo(2);
@@ -53,9 +49,7 @@ class MyrGalvanizerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MyrGalvanizer());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -67,9 +61,7 @@ class MyrGalvanizerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MyrGalvanizer());
         harness.addToBattlefield(player2, new CopperMyr());
 
-        Permanent opponentMyr = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Copper Myr"))
-                .findFirst().orElseThrow();
+        Permanent opponentMyr = findPermanent(player2, "Copper Myr");
 
         // Should remain 1/1 — only buffs YOUR Myr
         assertThat(gqs.getEffectivePower(gd, opponentMyr)).isEqualTo(1);
@@ -82,9 +74,7 @@ class MyrGalvanizerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MyrGalvanizer());
         harness.addToBattlefield(player1, new MyrGalvanizer());
 
-        List<Permanent> galvanizers = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Myr Galvanizer"))
-                .toList();
+        List<Permanent> galvanizers = findPermanents(player1, "Myr Galvanizer");
 
         assertThat(galvanizers).hasSize(2);
         for (Permanent g : galvanizers) {
@@ -100,9 +90,7 @@ class MyrGalvanizerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MyrGalvanizer());
         harness.addToBattlefield(player1, new CopperMyr());
 
-        Permanent copperMyr = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Copper Myr"))
-                .findFirst().orElseThrow();
+        Permanent copperMyr = findPermanent(player1, "Copper Myr");
 
         assertThat(gqs.getEffectivePower(gd, copperMyr)).isEqualTo(2);
 

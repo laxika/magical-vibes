@@ -24,9 +24,7 @@ class TitaniasSongTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AngelsFeather());
         harness.addToBattlefield(player1, new TitaniasSong());
 
-        Permanent feather = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Angel's Feather"))
-                .findFirst().orElseThrow();
+        Permanent feather = findPermanent(player1, "Angel's Feather");
 
         assertThat(gqs.isCreature(gd, feather)).isTrue();
         assertThat(gqs.getEffectivePower(gd, feather)).isEqualTo(2);
@@ -39,9 +37,7 @@ class TitaniasSongTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new TitaniasSong());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -85,9 +81,7 @@ class TitaniasSongTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AngelsFeather());
         harness.addToBattlefield(player1, new TitaniasSong());
 
-        Permanent feather = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Angel's Feather"))
-                .findFirst().orElseThrow();
+        Permanent feather = findPermanent(player1, "Angel's Feather");
 
         assertThat(gqs.isCreature(gd, feather)).isTrue();
 
@@ -106,9 +100,7 @@ class TitaniasSongTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TitaniasSong());
         harness.addToBattlefield(player2, new AngelsFeather());
 
-        Permanent opponentFeather = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Angel's Feather"))
-                .findFirst().orElseThrow();
+        Permanent opponentFeather = findPermanent(player2, "Angel's Feather");
 
         assertThat(gqs.isCreature(gd, opponentFeather)).isTrue();
         assertThat(gqs.getEffectivePower(gd, opponentFeather)).isEqualTo(2);

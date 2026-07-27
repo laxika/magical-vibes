@@ -119,10 +119,7 @@ class AcademyResearchersTest extends BaseCardTest {
         assertThat(auraPerm).isNotNull();
 
         // It's attached to Academy Researchers
-        Permanent researchers = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Academy Researchers"))
-                .findFirst()
-                .orElseThrow();
+        Permanent researchers = findPermanent(player1, "Academy Researchers");
         assertThat(auraPerm.getAttachedTo()).isEqualTo(researchers.getId());
 
         // Hand is now empty
@@ -141,10 +138,7 @@ class AcademyResearchersTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        Permanent researchers = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Academy Researchers"))
-                .findFirst()
-                .orElseThrow();
+        Permanent researchers = findPermanent(player1, "Academy Researchers");
 
         // Holy Strength gives +1/+2, Academy Researchers is 2/2 → should be 3/4
         assertThat(harness.getGameQueryService().getEffectivePower(gd, researchers)).isEqualTo(3);
@@ -249,10 +243,7 @@ class AcademyResearchersTest extends BaseCardTest {
                 .orElse(null);
         assertThat(auraPerm).isNotNull();
 
-        Permanent researchers = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Academy Researchers"))
-                .findFirst()
-                .orElseThrow();
+        Permanent researchers = findPermanent(player1, "Academy Researchers");
         assertThat(auraPerm.getAttachedTo()).isEqualTo(researchers.getId());
 
         // Holy Strength remains in hand

@@ -77,9 +77,7 @@ class DakmorLancerTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        Permanent target = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Grizzly Bears");
         target.setRegenerationShield(1);
 
         harness.passBothPriorities();

@@ -73,9 +73,7 @@ class HowlingMineTest extends BaseCardTest {
     @DisplayName("Does not trigger when tapped")
     void doesNotTriggerWhenTapped() {
         harness.addToBattlefield(player1, new HowlingMine());
-        Permanent howlingMine = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Howling Mine"))
-                .findFirst().orElseThrow();
+        Permanent howlingMine = findPermanent(player1, "Howling Mine");
         howlingMine.tap();
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
@@ -92,9 +90,7 @@ class HowlingMineTest extends BaseCardTest {
     @DisplayName("Tapping after trigger but before resolution prevents the extra draw (intervening-if)")
     void interveningIfPreventsDrawWhenTappedBeforeResolution() {
         harness.addToBattlefield(player1, new HowlingMine());
-        Permanent howlingMine = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Howling Mine"))
-                .findFirst().orElseThrow();
+        Permanent howlingMine = findPermanent(player1, "Howling Mine");
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
@@ -113,9 +109,7 @@ class HowlingMineTest extends BaseCardTest {
     @DisplayName("Removing source from battlefield after trigger still allows the draw (last known state was untapped)")
     void triggerStillResolvesWhenSourceLeavesTheBattlefield() {
         harness.addToBattlefield(player1, new HowlingMine());
-        Permanent howlingMine = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Howling Mine"))
-                .findFirst().orElseThrow();
+        Permanent howlingMine = findPermanent(player1, "Howling Mine");
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();

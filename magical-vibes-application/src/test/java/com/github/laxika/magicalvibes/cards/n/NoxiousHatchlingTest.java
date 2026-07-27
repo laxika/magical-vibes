@@ -121,8 +121,6 @@ class NoxiousHatchlingTest extends BaseCardTest {
     }
 
     private Permanent findHatchling(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Noxious Hatchling"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Noxious Hatchling");
     }
 }

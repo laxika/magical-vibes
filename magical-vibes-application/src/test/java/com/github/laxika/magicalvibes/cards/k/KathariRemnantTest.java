@@ -122,9 +122,7 @@ class KathariRemnantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Kathari Remnant");
-        Permanent kathari = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Kathari Remnant"))
-                .findFirst().orElseThrow();
+        Permanent kathari = findPermanent(player1, "Kathari Remnant");
         assertThat(kathari.isTapped()).isTrue();
         assertThat(kathari.getRegenerationShield()).isEqualTo(0);
     }

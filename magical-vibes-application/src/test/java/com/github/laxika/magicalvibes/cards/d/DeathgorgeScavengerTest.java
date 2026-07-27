@@ -63,9 +63,7 @@ class DeathgorgeScavengerTest extends BaseCardTest {
             assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
             assertThat(gd.exiledCards.stream().anyMatch(e -> e.card().getName().equals("Shock"))).isTrue();
 
-            Permanent scavenger = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Deathgorge Scavenger"))
-                    .findFirst().orElseThrow();
+            Permanent scavenger = findPermanent(player1, "Deathgorge Scavenger");
             assertThat(scavenger.getPowerModifier()).isEqualTo(1);
             assertThat(scavenger.getToughnessModifier()).isEqualTo(1);
         }
@@ -212,9 +210,7 @@ class DeathgorgeScavengerTest extends BaseCardTest {
             assertThat(gd.exiledCards.stream().anyMatch(e -> e.card().getName().equals("Shock"))).isTrue();
             assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
 
-            Permanent scavenger = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Deathgorge Scavenger"))
-                    .findFirst().orElseThrow();
+            Permanent scavenger = findPermanent(player1, "Deathgorge Scavenger");
             assertThat(scavenger.getPowerModifier()).isEqualTo(1);
             assertThat(scavenger.getToughnessModifier()).isEqualTo(1);
         }

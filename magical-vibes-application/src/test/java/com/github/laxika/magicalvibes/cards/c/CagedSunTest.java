@@ -72,9 +72,7 @@ class CagedSunTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "GREEN");
 
-        Permanent cagedSun = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Caged Sun"))
-                .findFirst().orElseThrow();
+        Permanent cagedSun = findPermanent(player1, "Caged Sun");
         assertThat(cagedSun.getChosenColor()).isEqualTo(CardColor.GREEN);
     }
 
@@ -92,9 +90,7 @@ class CagedSunTest extends BaseCardTest {
         cagedSunPerm.setChosenColor(CardColor.GREEN);
         gd.playerBattlefields.get(player1.getId()).add(cagedSunPerm);
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Green Bear"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Green Bear");
 
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
@@ -111,9 +107,7 @@ class CagedSunTest extends BaseCardTest {
         cagedSunPerm.setChosenColor(CardColor.GREEN);
         gd.playerBattlefields.get(player1.getId()).add(cagedSunPerm);
 
-        Permanent goblin = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Red Goblin"))
-                .findFirst().orElseThrow();
+        Permanent goblin = findPermanent(player1, "Red Goblin");
 
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
@@ -130,9 +124,7 @@ class CagedSunTest extends BaseCardTest {
         cagedSunPerm.setChosenColor(CardColor.GREEN);
         gd.playerBattlefields.get(player1.getId()).add(cagedSunPerm);
 
-        Permanent bear = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Green Bear"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player2, "Green Bear");
 
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
@@ -147,9 +139,7 @@ class CagedSunTest extends BaseCardTest {
         // Add Caged Sun without setting chosen color
         harness.addToBattlefield(player1, new CagedSun());
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Green Bear"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Green Bear");
 
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
@@ -262,9 +252,7 @@ class CagedSunTest extends BaseCardTest {
         harness.handleListChoice(player1, "GREEN");
 
         // Verify creature is boosted
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Green Bear"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Green Bear");
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
 

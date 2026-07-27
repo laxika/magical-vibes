@@ -146,8 +146,6 @@ class WoodlandCemeteryTest extends BaseCardTest {
     }
 
     private Permanent findCemetery(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Woodland Cemetery"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Woodland Cemetery");
     }
 }

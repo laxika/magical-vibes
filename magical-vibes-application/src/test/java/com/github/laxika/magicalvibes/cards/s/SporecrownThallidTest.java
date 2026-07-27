@@ -41,9 +41,7 @@ class SporecrownThallidTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        List<Permanent> saprolings = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Saproling"))
-                .toList();
+        List<Permanent> saprolings = findPermanents(player1, "Saproling");
 
         assertThat(saprolings).hasSize(2);
         for (Permanent saproling : saprolings) {
@@ -98,9 +96,7 @@ class SporecrownThallidTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SporecrownThallid());
         harness.addToBattlefield(player1, new SporecrownThallid());
 
-        List<Permanent> sporecrowns = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sporecrown Thallid"))
-                .toList();
+        List<Permanent> sporecrowns = findPermanents(player1, "Sporecrown Thallid");
 
         assertThat(sporecrowns).hasSize(2);
         for (Permanent sporecrown : sporecrowns) {

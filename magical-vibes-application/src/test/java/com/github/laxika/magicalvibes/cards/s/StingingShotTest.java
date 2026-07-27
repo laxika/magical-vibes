@@ -49,9 +49,7 @@ class StingingShotTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Stinging Shot
 
         // Air Elemental (4/4) with 3 -1/-1 counters → 1/1
-        Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Air Elemental"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Air Elemental");
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
         assertThat(target.getEffectivePower()).isEqualTo(1);
         assertThat(target.getEffectiveToughness()).isEqualTo(1);

@@ -22,9 +22,7 @@ class HornetHarasserTest extends BaseCardTest {
      * so the Harasser dies from combat damage.
      */
     private void setupCombatWhereHarasserDies() {
-        Permanent harasserPerm = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hornet Harasser"))
-                .findFirst().orElseThrow();
+        Permanent harasserPerm = findPermanent(player1, "Hornet Harasser");
         harasserPerm.setSummoningSick(false);
         harasserPerm.setAttacking(true);
 

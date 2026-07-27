@@ -31,9 +31,7 @@ class GhalmasWardenTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent warden = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ghalma's Warden"))
-                .findFirst().orElseThrow();
+        Permanent warden = findPermanent(player1, "Ghalma's Warden");
         assertThat(gqs.getEffectivePower(gd, warden)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, warden)).isEqualTo(4);
     }
@@ -48,9 +46,7 @@ class GhalmasWardenTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
 
-        Permanent warden = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ghalma's Warden"))
-                .findFirst().orElseThrow();
+        Permanent warden = findPermanent(player1, "Ghalma's Warden");
         assertThat(gqs.getEffectivePower(gd, warden)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, warden)).isEqualTo(6);
     }
@@ -65,9 +61,7 @@ class GhalmasWardenTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
 
-        Permanent warden = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ghalma's Warden"))
-                .findFirst().orElseThrow();
+        Permanent warden = findPermanent(player1, "Ghalma's Warden");
         assertThat(gqs.getEffectivePower(gd, warden)).isEqualTo(4);
 
         // Remove one artifact — now only 2

@@ -32,9 +32,7 @@ class GrixisSlavedriverTest extends BaseCardTest {
         harness.passBothPriorities(); // Unsummon resolves → Slavedriver returns to hand, trigger onto stack
         harness.passBothPriorities(); // leaves-battlefield trigger resolves → token created
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Zombie");
         assertThat(tokens).hasSize(1);
         assertThat(tokens.get(0).getCard().getPower()).isEqualTo(2);
         assertThat(tokens.get(0).getCard().getToughness()).isEqualTo(2);
@@ -76,9 +74,7 @@ class GrixisSlavedriverTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grixis Slavedriver"));
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Zombie");
         assertThat(tokens).hasSize(1);
     }
 }

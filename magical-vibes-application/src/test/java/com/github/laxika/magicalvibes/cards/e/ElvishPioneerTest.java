@@ -58,10 +58,7 @@ class ElvishPioneerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept → HandCardChoice inline
         harness.handleCardChosen(player1, 0);
 
-        Permanent land = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst()
-                .orElseThrow();
+        Permanent land = findPermanent(player1, "Forest");
         assertThat(land.isTapped()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }

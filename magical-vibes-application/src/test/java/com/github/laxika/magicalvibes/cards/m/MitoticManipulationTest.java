@@ -79,9 +79,7 @@ class MitoticManipulationTest extends BaseCardTest {
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Grizzly Bears should be on the battlefield
-        long bearsCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .count();
+        long bearsCount = countPermanents(player1, "Grizzly Bears");
         assertThat(bearsCount).isEqualTo(2); // original + newly placed
 
         // Should be reordering the remaining 6 cards

@@ -79,9 +79,7 @@ class ControlMagicTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(creature.getId()));
 
-        Permanent auraPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Control Magic"))
-                .findFirst().orElseThrow();
+        Permanent auraPerm = findPermanent(player1, "Control Magic");
 
         // Set up for Demystify: force step to a main phase, give player2 priority
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -112,9 +110,7 @@ class ControlMagicTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ControlMagic()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        Permanent artifact = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fountain of Youth"))
-                .findFirst().orElseThrow();
+        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

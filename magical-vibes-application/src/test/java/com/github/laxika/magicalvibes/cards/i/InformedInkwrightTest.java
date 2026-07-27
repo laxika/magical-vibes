@@ -32,9 +32,7 @@ class InformedInkwrightTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent inkling = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Inkling"))
-                .findFirst().orElseThrow();
+        Permanent inkling = findPermanent(player1, "Inkling");
         assertThat(gqs.getEffectivePower(gd, inkling)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, inkling)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, inkling, Keyword.FLYING)).isTrue();

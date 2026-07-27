@@ -195,14 +195,11 @@ class LilianaVessTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Liliana should have 0 loyalty (8 - 8) and be in graveyard
         harness.assertNotOnBattlefield(player1, "Liliana Vess");
 
         // All three creatures should be on player1's battlefield
-        long bearsOnBf = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .count();
+        long bearsOnBf = countPermanents(player1, "Grizzly Bears");
         assertThat(bearsOnBf).isEqualTo(3);
 
         // Both graveyards should have no creature cards remaining

@@ -36,8 +36,7 @@ class FractalAnomalyTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        Permanent fractal = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fractal")).findFirst().orElseThrow();
+        Permanent fractal = findPermanent(player1, "Fractal");
         assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(fractal.getEffectivePower()).isEqualTo(3);
         assertThat(fractal.getEffectiveToughness()).isEqualTo(3);

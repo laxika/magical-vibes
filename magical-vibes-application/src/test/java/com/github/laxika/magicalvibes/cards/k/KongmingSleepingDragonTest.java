@@ -16,9 +16,7 @@ class KongmingSleepingDragonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new KongmingSleepingDragon());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
@@ -29,9 +27,7 @@ class KongmingSleepingDragonTest extends BaseCardTest {
     void doesNotBuffItself() {
         harness.addToBattlefield(player1, new KongmingSleepingDragon());
 
-        Permanent kongming = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Kongming, \"Sleeping Dragon\""))
-                .findFirst().orElseThrow();
+        Permanent kongming = findPermanent(player1, "Kongming, \"Sleeping Dragon\"");
 
         assertThat(gqs.getEffectivePower(gd, kongming)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, kongming)).isEqualTo(2);
@@ -43,9 +39,7 @@ class KongmingSleepingDragonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KongmingSleepingDragon());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent opponentBears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(2);
@@ -57,9 +51,7 @@ class KongmingSleepingDragonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KongmingSleepingDragon());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
 

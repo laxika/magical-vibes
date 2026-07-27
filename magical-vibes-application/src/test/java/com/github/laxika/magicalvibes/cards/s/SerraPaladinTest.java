@@ -22,9 +22,7 @@ class SerraPaladinTest extends BaseCardTest {
     }
 
     private Permanent paladin() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Serra Paladin"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Serra Paladin");
     }
 
     @Test
@@ -37,9 +35,7 @@ class SerraPaladinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
     }
 
@@ -62,9 +58,7 @@ class SerraPaladinTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         harness.activateAbility(player1, 0, 1, null, bears.getId());
         harness.passBothPriorities();
@@ -80,9 +74,7 @@ class SerraPaladinTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         harness.activateAbility(player1, 0, 1, null, bears.getId());
         harness.passBothPriorities();
@@ -101,9 +93,7 @@ class SerraPaladinTest extends BaseCardTest {
         addPaladinReady();
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);

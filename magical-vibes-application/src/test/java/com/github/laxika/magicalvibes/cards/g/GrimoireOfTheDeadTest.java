@@ -121,11 +121,8 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Both creatures should be on player1's battlefield
-        long creatureCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .count();
+        long creatureCount = countPermanents(player1, "Grizzly Bears");
         assertThat(creatureCount).isEqualTo(2);
 
         // Graveyards should be empty of creatures
@@ -156,10 +153,7 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(bears.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
         // Original subtypes preserved
@@ -176,10 +170,7 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(bears.getGrantedColors()).contains(CardColor.BLACK);
         // Original color preserved on card

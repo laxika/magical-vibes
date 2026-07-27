@@ -138,10 +138,7 @@ class FlamewaveInvokerTest extends BaseCardTest {
         addReadyInvoker(player1);
         harness.addMana(player1, ManaColor.RED, 8);
         harness.addToBattlefield(player2, new GrizzlyBears());
-        GameData gd = harness.getGameData();
-        Permanent bear = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bear.getId()))
                 .isInstanceOf(IllegalStateException.class)

@@ -182,10 +182,8 @@ class SpareFromEvilTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        Permanent ownCreature = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Own Soldier")).findFirst().orElseThrow();
-        Permanent opponentCreature = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Opponent Soldier")).findFirst().orElseThrow();
+        Permanent ownCreature = findPermanent(player1, "Own Soldier");
+        Permanent opponentCreature = findPermanent(player2, "Opponent Soldier");
 
         assertThat(ownCreature.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).contains(CardSubtype.HUMAN);
         assertThat(opponentCreature.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).isEmpty();

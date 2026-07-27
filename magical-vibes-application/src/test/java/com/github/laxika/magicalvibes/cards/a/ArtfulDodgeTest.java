@@ -72,10 +72,7 @@ class ArtfulDodgeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        Permanent target = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player1, "Grizzly Bears");
         assertThat(target.isCantBeBlocked()).isTrue();
     }
 
@@ -91,9 +88,7 @@ class ArtfulDodgeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        Permanent target = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player1, "Grizzly Bears");
         assertThat(target.isCantBeBlocked()).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -115,10 +110,7 @@ class ArtfulDodgeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Grizzly Bears");
         assertThat(target.isCantBeBlocked()).isTrue();
     }
 
@@ -179,10 +171,7 @@ class ArtfulDodgeTest extends BaseCardTest {
         harness.castFlashback(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        Permanent target = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player1, "Grizzly Bears");
         assertThat(target.isCantBeBlocked()).isTrue();
     }
 

@@ -148,8 +148,6 @@ class HuatlisSpurringTest extends BaseCardTest {
     }
 
     private Permanent findPermanent(String cardName) {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(cardName))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, cardName);
     }
 }

@@ -14,9 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DragonFodderTest extends BaseCardTest {
 
     private List<Permanent> goblins() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin"))
-                .toList();
+        return findPermanents(player1, "Goblin");
     }
 
     @Test

@@ -181,9 +181,7 @@ class NavigatorsCompassTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, forestId);
 
-        Permanent compass = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Navigator's Compass"))
-                .findFirst().orElseThrow();
+        Permanent compass = findPermanent(player1, "Navigator's Compass");
         assertThat(compass.isTapped()).isTrue();
     }
 

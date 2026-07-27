@@ -67,9 +67,7 @@ class WizenedCennTest extends BaseCardTest {
         harness.addToBattlefield(player1, new WizenedCenn());
         harness.addToBattlefield(player1, new WizenedCenn());
 
-        List<Permanent> cenns = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wizened Cenn"))
-                .toList();
+        List<Permanent> cenns = findPermanents(player1, "Wizened Cenn");
 
         assertThat(cenns).hasSize(2);
         for (Permanent cenn : cenns) {

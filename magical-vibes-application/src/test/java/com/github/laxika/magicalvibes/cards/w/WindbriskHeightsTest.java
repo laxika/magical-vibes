@@ -21,9 +21,7 @@ class WindbriskHeightsTest extends BaseCardTest {
     private Permanent addHeightsWithImprint(Card imprinted) {
         harness.addToBattlefield(player1, new WindbriskHeights());
         GameData gd = harness.getGameData();
-        Permanent heights = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Windbrisk Heights"))
-                .findFirst().orElseThrow();
+        Permanent heights = findPermanent(player1, "Windbrisk Heights");
         gd.setImprintedCard(heights.getCard(), imprinted);
         gd.addToExile(player1.getId(), imprinted);
         return heights;
@@ -42,9 +40,7 @@ class WindbriskHeightsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the hideaway ETB trigger -> library choice
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        Permanent heights = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Windbrisk Heights"))
-                .findFirst().orElseThrow();
+        Permanent heights = findPermanent(player1, "Windbrisk Heights");
         ExiledCardEntry entry = gd.findExiledCard(pick.getId());
         assertThat(entry).isNotNull();
         assertThat(entry.faceDown()).isTrue();

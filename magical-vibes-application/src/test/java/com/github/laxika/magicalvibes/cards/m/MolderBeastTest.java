@@ -105,9 +105,7 @@ class MolderBeastTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
 
-        Permanent molderBeast = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Molder Beast"))
-                .findFirst().orElseThrow();
+        Permanent molderBeast = findPermanent(player1, "Molder Beast");
         assertThat(molderBeast.getPowerModifier()).isEqualTo(2);
         assertThat(molderBeast.getToughnessModifier()).isEqualTo(0);
     }
@@ -171,9 +169,7 @@ class MolderBeastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         gd = harness.getGameData();
-        Permanent molderBeast = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Molder Beast"))
-                .findFirst().orElseThrow();
+        Permanent molderBeast = findPermanent(player1, "Molder Beast");
 
         // Should have gotten +2/+0 twice = +4/+0
         assertThat(molderBeast.getPowerModifier()).isEqualTo(4);

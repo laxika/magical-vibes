@@ -28,9 +28,7 @@ class GuardianOfPilgrimsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(3);
         assertThat(bears.getEffectiveToughness()).isEqualTo(3);
     }
@@ -52,9 +50,7 @@ class GuardianOfPilgrimsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(2);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
     }
@@ -72,9 +68,7 @@ class GuardianOfPilgrimsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(3);
         assertThat(bears.getEffectiveToughness()).isEqualTo(3);
     }

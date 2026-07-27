@@ -157,8 +157,6 @@ class ObsidianBattleAxeTest extends BaseCardTest {
     }
 
     private Permanent warriorOnBattlefield(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elvish Warrior"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Elvish Warrior");
     }
 }

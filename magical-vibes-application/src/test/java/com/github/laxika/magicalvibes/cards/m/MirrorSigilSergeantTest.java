@@ -25,9 +25,7 @@ class MirrorSigilSergeantTest extends BaseCardTest {
     }
 
     private long sergeantCount(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mirror-Sigil Sergeant"))
-                .count();
+        return countPermanents(player, "Mirror-Sigil Sergeant");
     }
 
     @Test

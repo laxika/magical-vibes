@@ -100,8 +100,6 @@ class SavageConceptionTest extends BaseCardTest {
     }
 
     private List<Permanent> beasts() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Beast"))
-                .toList();
+        return findPermanents(player1, "Beast");
     }
 }

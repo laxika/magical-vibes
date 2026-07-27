@@ -39,9 +39,7 @@ class SnappingSailbackTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Snapping Sailback");
 
         // Sailback should have 1 +1/+1 counter
-        Permanent sailback = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Snapping Sailback"))
-                .findFirst().orElseThrow();
+        Permanent sailback = findPermanent(player2, "Snapping Sailback");
         assertThat(sailback.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -75,9 +73,7 @@ class SnappingSailbackTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Snapping Sailback");
 
         // Sailback should have a +1/+1 counter
-        Permanent sailbackAfter = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Snapping Sailback"))
-                .findFirst().orElseThrow();
+        Permanent sailbackAfter = findPermanent(player2, "Snapping Sailback");
         assertThat(sailbackAfter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Fugitive Wizard should die (1/1 takes 4 damage)
@@ -100,9 +96,7 @@ class SnappingSailbackTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve first Shock
         harness.passBothPriorities(); // Resolve first trigger
 
-        Permanent sailback = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Snapping Sailback"))
-                .findFirst().orElseThrow();
+        Permanent sailback = findPermanent(player2, "Snapping Sailback");
         assertThat(sailback.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Second Shock — 2 more damage (now 5/5 with counter, takes 2 + 2 = 4 damage total, non-lethal)
@@ -118,9 +112,7 @@ class SnappingSailbackTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Snapping Sailback");
 
         // Should have 2 +1/+1 counters
-        Permanent sailbackAfter = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Snapping Sailback"))
-                .findFirst().orElseThrow();
+        Permanent sailbackAfter = findPermanent(player2, "Snapping Sailback");
         assertThat(sailbackAfter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
@@ -137,9 +129,7 @@ class SnappingSailbackTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No counters
-        Permanent sailback = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Snapping Sailback"))
-                .findFirst().orElseThrow();
+        Permanent sailback = findPermanent(player2, "Snapping Sailback");
         assertThat(sailback.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 

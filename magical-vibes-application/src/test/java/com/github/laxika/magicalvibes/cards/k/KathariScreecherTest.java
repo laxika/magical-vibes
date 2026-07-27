@@ -28,9 +28,7 @@ class KathariScreecherTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Kathari Screecher"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Kathari Screecher");
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
         harness.assertNotInGraveyard(player1, "Kathari Screecher");
     }
@@ -83,9 +81,7 @@ class KathariScreecherTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Kathari Screecher"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Kathari Screecher");
 
         harness.setHand(player2, List.of(new Terminate()));
         harness.addMana(player2, ManaColor.BLACK, 1);

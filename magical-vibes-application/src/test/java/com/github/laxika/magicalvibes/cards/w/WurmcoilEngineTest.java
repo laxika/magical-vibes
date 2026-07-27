@@ -59,9 +59,7 @@ class WurmcoilEngineTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Two Phyrexian Wurm tokens should be on the battlefield
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Wurm"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Phyrexian Wurm");
         assertThat(tokens).hasSize(2);
     }
 
@@ -78,11 +76,7 @@ class WurmcoilEngineTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve first death trigger
         harness.passBothPriorities(); // Resolve second death trigger
 
-        GameData gd = harness.getGameData();
-
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Wurm"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Phyrexian Wurm");
 
         for (Permanent token : tokens) {
             assertThat(token.getCard().getPower()).isEqualTo(3);
@@ -109,11 +103,7 @@ class WurmcoilEngineTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve first death trigger
         harness.passBothPriorities(); // Resolve second death trigger
 
-        GameData gd = harness.getGameData();
-
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Wurm"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Phyrexian Wurm");
         assertThat(tokens).hasSize(2);
 
         // One token should have deathtouch, the other lifelink

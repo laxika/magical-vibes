@@ -48,9 +48,7 @@ class ChromeSteedTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ChromeSteed());
         harness.addToBattlefield(player1, new Spellbook());
 
-        Permanent steed = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Chrome Steed"))
-                .findFirst().orElseThrow();
+        Permanent steed = findPermanent(player1, "Chrome Steed");
         assertThat(gqs.getEffectivePower(gd, steed)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, steed)).isEqualTo(2);
     }
@@ -64,9 +62,7 @@ class ChromeSteedTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent steed = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Chrome Steed"))
-                .findFirst().orElseThrow();
+        Permanent steed = findPermanent(player1, "Chrome Steed");
         assertThat(gqs.getEffectivePower(gd, steed)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, steed)).isEqualTo(4);
     }
@@ -80,9 +76,7 @@ class ChromeSteedTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent steed = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Chrome Steed"))
-                .findFirst().orElseThrow();
+        Permanent steed = findPermanent(player1, "Chrome Steed");
         assertThat(gqs.getEffectivePower(gd, steed)).isEqualTo(4);
 
         // Remove one artifact — now only 2

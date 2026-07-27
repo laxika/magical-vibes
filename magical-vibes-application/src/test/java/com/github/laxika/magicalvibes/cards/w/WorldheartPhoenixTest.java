@@ -16,9 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class WorldheartPhoenixTest extends BaseCardTest {
 
     private Permanent phoenixOnBattlefield() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Worldheart Phoenix"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Worldheart Phoenix");
     }
 
     private void addWubrg() {

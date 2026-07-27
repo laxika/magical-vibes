@@ -74,10 +74,7 @@ class NyxathidTest extends BaseCardTest {
 
     private Permanent addNyxathid(Player player) {
         harness.addToBattlefield(player, new Nyxathid());
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Nyxathid"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player, "Nyxathid");
     }
 
     private List<Card> handOf(int count) {

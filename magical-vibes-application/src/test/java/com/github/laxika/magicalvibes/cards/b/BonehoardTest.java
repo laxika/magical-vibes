@@ -90,9 +90,7 @@ class BonehoardTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent germ = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         // 0/0 base + 2/2 boost = 2/2
         assertThat(gqs.getEffectivePower(gd, germ)).isEqualTo(2);
@@ -114,9 +112,7 @@ class BonehoardTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent germ = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         // 0/0 base + 3/3 boost (1 + 2 creature cards) = 3/3
         assertThat(gqs.getEffectivePower(gd, germ)).isEqualTo(3);
@@ -136,9 +132,7 @@ class BonehoardTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent germ = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         // Initially 1/1 (one creature in graveyard)
         assertThat(gqs.getEffectivePower(gd, germ)).isEqualTo(1);
@@ -181,9 +175,7 @@ class BonehoardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        Permanent bonehoard = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bonehoard"))
-                .findFirst().orElseThrow();
+        Permanent bonehoard = findPermanent(player1, "Bonehoard");
 
         assertThat(bonehoard.getAttachedTo()).isEqualTo(bears.getId());
 

@@ -54,9 +54,7 @@ class RestorationAngelTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bearsId);
 
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.isSummoningSick()).isTrue();
     }
 
@@ -132,9 +130,7 @@ class RestorationAngelTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bears.getId());
 
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.stolenCreatures).containsEntry(returned.getId(), player2.getId());
     }

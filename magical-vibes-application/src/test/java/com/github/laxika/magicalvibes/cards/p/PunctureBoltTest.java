@@ -29,9 +29,7 @@ class PunctureBoltTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        Permanent giant = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hill Giant"))
-                .findFirst().orElseThrow();
+        Permanent giant = findPermanent(player2, "Hill Giant");
         assertThat(giant.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(giant.getEffectivePower()).isEqualTo(2);
         assertThat(giant.getEffectiveToughness()).isEqualTo(2);

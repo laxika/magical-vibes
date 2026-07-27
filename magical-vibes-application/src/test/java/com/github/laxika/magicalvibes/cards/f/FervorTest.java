@@ -17,9 +17,7 @@ class FervorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Fervor());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
@@ -30,9 +28,7 @@ class FervorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Fervor());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent opponentBears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
 
         assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.HASTE)).isFalse();
     }

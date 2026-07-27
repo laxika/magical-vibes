@@ -155,9 +155,7 @@ class ChoMannoRevolutionaryTest extends BaseCardTest {
         // Simulate a DealXDamageToTargetCreature resolving against Cho-Manno
         // by using Ballista Squad's ability (deals X damage to target creature)
         // Instead, directly verify through the prevention mechanism
-        Permanent choManno = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Cho-Manno, Revolutionary"))
-                .findFirst().orElseThrow();
+        Permanent choManno = findPermanent(player1, "Cho-Manno, Revolutionary");
 
         assertThat(choManno.getCard().getEffects(EffectSlot.STATIC))
                 .anyMatch(e -> e instanceof PreventAllDamageEffect);
@@ -219,9 +217,7 @@ class ChoMannoRevolutionaryTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Cho-Manno, Revolutionary"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Cho-Manno, Revolutionary");
         assertThat(perm.isSummoningSick()).isTrue();
     }
 }

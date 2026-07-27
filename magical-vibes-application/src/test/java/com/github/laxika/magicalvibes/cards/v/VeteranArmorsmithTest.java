@@ -71,9 +71,7 @@ class VeteranArmorsmithTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VeteranArmorsmith());
         harness.addToBattlefield(player1, new VeteranArmorsmith());
 
-        List<Permanent> armorsmiths = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Veteran Armorsmith"))
-                .toList();
+        List<Permanent> armorsmiths = findPermanents(player1, "Veteran Armorsmith");
 
         assertThat(armorsmiths).hasSize(2);
         for (Permanent armorsmith : armorsmiths) {

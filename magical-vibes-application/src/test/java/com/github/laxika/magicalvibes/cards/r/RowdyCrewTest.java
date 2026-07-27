@@ -70,9 +70,7 @@ class RowdyCrewTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent rowdyCrew = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rowdy Crew"))
-                .findFirst().orElseThrow();
+        Permanent rowdyCrew = findPermanent(player1, "Rowdy Crew");
 
         // Should have 2 +1/+1 counters → 5/5
         assertThat(rowdyCrew.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -100,9 +98,7 @@ class RowdyCrewTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent rowdyCrew = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rowdy Crew"))
-                .findFirst().orElseThrow();
+        Permanent rowdyCrew = findPermanent(player1, "Rowdy Crew");
 
         // No counters — creature and land don't share a card type
         assertThat(rowdyCrew.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
@@ -129,9 +125,7 @@ class RowdyCrewTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent rowdyCrew = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rowdy Crew"))
-                .findFirst().orElseThrow();
+        Permanent rowdyCrew = findPermanent(player1, "Rowdy Crew");
 
         // Only 1 discarded — condition "two cards that share a card type" not met
         assertThat(rowdyCrew.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
@@ -157,9 +151,7 @@ class RowdyCrewTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent rowdyCrew = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rowdy Crew"))
-                .findFirst().orElseThrow();
+        Permanent rowdyCrew = findPermanent(player1, "Rowdy Crew");
 
         assertThat(rowdyCrew.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -190,9 +182,7 @@ class RowdyCrewTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent rowdyCrew = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rowdy Crew"))
-                .findFirst().orElseThrow();
+        Permanent rowdyCrew = findPermanent(player1, "Rowdy Crew");
 
         assertThat(rowdyCrew.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }

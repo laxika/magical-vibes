@@ -45,11 +45,7 @@ class YavimayaSapherdTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve creature — ETB trigger goes on stack
         harness.passBothPriorities(); // Resolve ETB trigger
 
-        GameData gd = harness.getGameData();
-
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Saproling"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Saproling");
         assertThat(tokens).hasSize(1);
     }
 
@@ -63,11 +59,7 @@ class YavimayaSapherdTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve creature
         harness.passBothPriorities(); // Resolve ETB trigger
 
-        GameData gd = harness.getGameData();
-
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Saproling"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Saproling");
 
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);

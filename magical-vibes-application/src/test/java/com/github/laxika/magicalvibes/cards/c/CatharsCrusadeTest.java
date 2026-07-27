@@ -29,9 +29,7 @@ class CatharsCrusadeTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve Crusade trigger
 
-        Permanent entered = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent entered = findPermanent(player1, "Grizzly Bears");
 
         assertThat(existing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(entered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -92,9 +90,7 @@ class CatharsCrusadeTest extends BaseCardTest {
 
         assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
-        Permanent firstBears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent firstBears = findPermanent(player1, "Grizzly Bears");
         assertThat(firstBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         harness.setHand(player1, List.of(new GrizzlyBears()));

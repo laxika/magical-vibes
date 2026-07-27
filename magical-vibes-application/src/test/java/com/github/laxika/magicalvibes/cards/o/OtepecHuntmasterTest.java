@@ -19,9 +19,7 @@ class OtepecHuntmasterTest extends BaseCardTest {
 
     private void addHuntmasterReady() {
         harness.addToBattlefield(player1, new OtepecHuntmaster());
-        Permanent huntmaster = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Otepec Huntmaster"))
-                .findFirst().orElseThrow();
+        Permanent huntmaster = findPermanent(player1, "Otepec Huntmaster");
         huntmaster.setSummoningSick(false);
     }
 
@@ -106,9 +104,7 @@ class OtepecHuntmasterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        Permanent raptor = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Frenzied Raptor"))
-                .findFirst().orElseThrow();
+        Permanent raptor = findPermanent(player1, "Frenzied Raptor");
         assertThat(raptor.getGrantedKeywords()).contains(Keyword.HASTE);
     }
 
@@ -142,9 +138,7 @@ class OtepecHuntmasterTest extends BaseCardTest {
         addHuntmasterReady();
         harness.addToBattlefield(player1, new FrenziedRaptor());
 
-        Permanent huntmaster = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Otepec Huntmaster"))
-                .findFirst().orElseThrow();
+        Permanent huntmaster = findPermanent(player1, "Otepec Huntmaster");
         huntmaster.tap();
 
         UUID targetId = harness.getPermanentId(player1, "Frenzied Raptor");
@@ -163,9 +157,7 @@ class OtepecHuntmasterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        Permanent raptor = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Frenzied Raptor"))
-                .findFirst().orElseThrow();
+        Permanent raptor = findPermanent(player2, "Frenzied Raptor");
         assertThat(raptor.getGrantedKeywords()).contains(Keyword.HASTE);
     }
 }

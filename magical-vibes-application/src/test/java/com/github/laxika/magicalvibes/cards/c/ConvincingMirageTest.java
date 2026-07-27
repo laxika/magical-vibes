@@ -74,9 +74,7 @@ class ConvincingMirageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "ISLAND");
 
-        Permanent mirage = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Convincing Mirage"))
-                .findFirst().orElseThrow();
+        Permanent mirage = findPermanent(player1, "Convincing Mirage");
         assertThat(mirage.getChosenSubtype()).isEqualTo(CardSubtype.ISLAND);
     }
 
@@ -170,9 +168,7 @@ class ConvincingMirageTest extends BaseCardTest {
     void cannotTargetNonLand() {
         harness.addToBattlefield(player1, new Forest()); // valid target so spell is playable
         harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         harness.setHand(player1, List.of(new ConvincingMirage()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

@@ -64,9 +64,7 @@ class SedraxisSpecterTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sedraxis Specter"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Sedraxis Specter");
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
         harness.assertNotInGraveyard(player1, "Sedraxis Specter");
     }

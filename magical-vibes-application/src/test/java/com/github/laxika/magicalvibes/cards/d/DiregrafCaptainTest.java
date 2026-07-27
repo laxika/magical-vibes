@@ -28,9 +28,7 @@ class DiregrafCaptainTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Gravedigger());
         harness.addToBattlefield(player1, new DiregrafCaptain());
 
-        Permanent zombie = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gravedigger"))
-                .findFirst().orElseThrow();
+        Permanent zombie = findPermanent(player1, "Gravedigger");
 
         assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(3);
@@ -41,9 +39,7 @@ class DiregrafCaptainTest extends BaseCardTest {
     void doesNotBuffItself() {
         harness.addToBattlefield(player1, new DiregrafCaptain());
 
-        Permanent captain = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Diregraf Captain"))
-                .findFirst().orElseThrow();
+        Permanent captain = findPermanent(player1, "Diregraf Captain");
 
         assertThat(gqs.getEffectivePower(gd, captain)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, captain)).isEqualTo(2);
@@ -55,9 +51,7 @@ class DiregrafCaptainTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new DiregrafCaptain());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);

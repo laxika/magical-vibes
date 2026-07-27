@@ -31,9 +31,7 @@ class GerminationPracticumTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        List<Permanent> bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .toList();
+        List<Permanent> bears = findPermanents(player1, "Grizzly Bears");
         assertThat(bears).hasSize(2);
         for (Permanent bear : bears) {
             assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -51,9 +49,7 @@ class GerminationPracticumTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        Permanent opponentBear = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent opponentBear = findPermanent(player2, "Grizzly Bears");
         assertThat(opponentBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 

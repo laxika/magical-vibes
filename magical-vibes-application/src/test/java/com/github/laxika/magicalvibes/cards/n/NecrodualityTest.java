@@ -26,9 +26,7 @@ class NecrodualityTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell; Necroduality triggers
         harness.passBothPriorities(); // resolve copy trigger
 
-        long zombies = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Scathe Zombies"))
-                .count();
+        long zombies = countPermanents(player1, "Scathe Zombies");
         assertThat(zombies).isEqualTo(2);
 
         long tokens = gd.playerBattlefields.get(player1.getId()).stream()
@@ -68,9 +66,7 @@ class NecrodualityTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        long bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .count();
+        long bears = countPermanents(player1, "Grizzly Bears");
         assertThat(bears).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
@@ -91,9 +87,7 @@ class NecrodualityTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        long zombies = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Scathe Zombies"))
-                .count();
+        long zombies = countPermanents(player2, "Scathe Zombies");
         assertThat(zombies).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }

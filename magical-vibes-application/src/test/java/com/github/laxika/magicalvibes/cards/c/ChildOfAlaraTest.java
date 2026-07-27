@@ -66,9 +66,7 @@ class ChildOfAlaraTest extends BaseCardTest {
      * wipe resolves. Returns the blocker so the caller can supply Child's trample damage assignment.
      */
     private Permanent setupCombatWhereChildDies() {
-        Permanent childPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Child of Alara"))
-                .findFirst().orElseThrow();
+        Permanent childPerm = findPermanent(player1, "Child of Alara");
         childPerm.setSummoningSick(false);
         childPerm.setAttacking(true);
 

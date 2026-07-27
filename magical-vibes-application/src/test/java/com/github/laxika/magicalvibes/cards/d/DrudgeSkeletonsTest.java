@@ -231,13 +231,10 @@ class DrudgeSkeletonsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Drudge Skeletons should survive via regeneration
         harness.assertOnBattlefield(player1, "Drudge Skeletons");
         // Regeneration should tap the creature
-        Permanent skele = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Drudge Skeletons"))
-                .findFirst().orElseThrow();
+        Permanent skele = findPermanent(player1, "Drudge Skeletons");
         assertThat(skele.isTapped()).isTrue();
         // Regeneration shield should be consumed
         assertThat(skele.getRegenerationShield()).isEqualTo(0);
@@ -291,12 +288,9 @@ class DrudgeSkeletonsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Drudge Skeletons survives via regeneration
         harness.assertOnBattlefield(player1, "Drudge Skeletons");
-        Permanent skele = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Drudge Skeletons"))
-                .findFirst().orElseThrow();
+        Permanent skele = findPermanent(player1, "Drudge Skeletons");
         assertThat(skele.isTapped()).isTrue();
         assertThat(skele.isAttacking()).isFalse();
         assertThat(skele.getRegenerationShield()).isEqualTo(0);
@@ -453,10 +447,7 @@ class DrudgeSkeletonsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        Permanent skele = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Drudge Skeletons"))
-                .findFirst().orElseThrow();
+        Permanent skele = findPermanent(player1, "Drudge Skeletons");
         // Only one shield consumed, two remaining
         assertThat(skele.getRegenerationShield()).isEqualTo(2);
     }
@@ -483,10 +474,7 @@ class DrudgeSkeletonsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        Permanent skele = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Drudge Skeletons"))
-                .findFirst().orElseThrow();
+        Permanent skele = findPermanent(player1, "Drudge Skeletons");
         assertThat(skele.isBlocking()).isFalse();
         assertThat(skele.getBlockingTargets()).isEmpty();
     }

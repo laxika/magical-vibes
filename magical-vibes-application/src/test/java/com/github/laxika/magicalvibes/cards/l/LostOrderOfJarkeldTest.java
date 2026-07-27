@@ -76,9 +76,6 @@ class LostOrderOfJarkeldTest extends BaseCardTest {
 
     private Permanent addLostOrder(Player player) {
         harness.addToBattlefield(player, new LostOrderOfJarkeld());
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Lost Order of Jarkeld"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player, "Lost Order of Jarkeld");
     }
 }

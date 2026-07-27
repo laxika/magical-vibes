@@ -94,9 +94,7 @@ class KnightOfGraceTest extends BaseCardTest {
     void boostWhenAnyPlayerControlsBlackPermanent() {
         harness.addToBattlefield(player1, new KnightOfGrace());
 
-        Permanent knightPerm = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Knight of Grace"))
-                .findFirst().orElseThrow();
+        Permanent knightPerm = findPermanent(player1, "Knight of Grace");
 
         // No black permanent — no bonus
         var bonus = gqs.computeStaticBonus(gd, knightPerm);
@@ -115,9 +113,7 @@ class KnightOfGraceTest extends BaseCardTest {
     void boostWhenControllerControlsBlackPermanent() {
         harness.addToBattlefield(player1, new KnightOfGrace());
 
-        Permanent knightPerm = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Knight of Grace"))
-                .findFirst().orElseThrow();
+        Permanent knightPerm = findPermanent(player1, "Knight of Grace");
 
         // No black permanent — no bonus
         var bonus = gqs.computeStaticBonus(gd, knightPerm);
@@ -137,9 +133,7 @@ class KnightOfGraceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KnightOfGrace());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent knightPerm = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Knight of Grace"))
-                .findFirst().orElseThrow();
+        Permanent knightPerm = findPermanent(player1, "Knight of Grace");
 
         var bonus = gqs.computeStaticBonus(gd, knightPerm);
         assertThat(bonus.power()).isEqualTo(0);

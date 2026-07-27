@@ -57,9 +57,7 @@ class DireFleetHoarderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // A Treasure token should be on the battlefield
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Treasure");
         assertThat(tokens).hasSize(1);
     }
 
@@ -75,11 +73,7 @@ class DireFleetHoarderTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Wrath
         harness.passBothPriorities(); // Resolve death trigger
 
-        GameData gd = harness.getGameData();
-
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Treasure");
 
         assertThat(token.getCard().getType()).isEqualTo(CardType.ARTIFACT);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.TREASURE);

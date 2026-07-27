@@ -47,9 +47,7 @@ class ConquerorsGalleonTest extends BaseCardTest {
             harness.assertOnBattlefield(player1, "Conqueror's Foothold");
 
             // The new permanent should be marked as transformed
-            Permanent foothold = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Conqueror's Foothold"))
-                    .findFirst().orElseThrow();
+            Permanent foothold = findPermanent(player1, "Conqueror's Foothold");
             assertThat(foothold.isTransformed()).isTrue();
         }
 

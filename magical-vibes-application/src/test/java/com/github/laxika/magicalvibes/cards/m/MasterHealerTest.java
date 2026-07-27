@@ -15,9 +15,7 @@ class MasterHealerTest extends BaseCardTest {
 
     private void addHealerReady() {
         harness.addToBattlefield(player1, new MasterHealer());
-        Permanent healer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Master Healer"))
-                .findFirst().orElseThrow();
+        Permanent healer = findPermanent(player1, "Master Healer");
         healer.setSummoningSick(false);
     }
 
@@ -31,9 +29,7 @@ class MasterHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getDamagePreventionShield()).isEqualTo(4);
     }
 
@@ -66,9 +62,7 @@ class MasterHealerTest extends BaseCardTest {
         addHealerReady();
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent healer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Master Healer"))
-                .findFirst().orElseThrow();
+        Permanent healer = findPermanent(player1, "Master Healer");
         healer.tap();
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");

@@ -249,9 +249,7 @@ class WarlordsAxeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        Permanent axe = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Warlord's Axe"))
-                .findFirst().orElseThrow();
+        Permanent axe = findPermanent(player1, "Warlord's Axe");
         assertThat(axe.getAttachedTo()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }

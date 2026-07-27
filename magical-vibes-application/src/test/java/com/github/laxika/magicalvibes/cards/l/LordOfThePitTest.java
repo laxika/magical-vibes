@@ -119,9 +119,7 @@ class LordOfThePitTest extends BaseCardTest {
         Permanent bears = addCreature(player1, new GrizzlyBears());
         Permanent spider = addCreature(player1, new GiantSpider());
 
-        Permanent lordPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Lord of the Pit"))
-                .findFirst().orElseThrow();
+        Permanent lordPerm = findPermanent(player1, "Lord of the Pit");
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger

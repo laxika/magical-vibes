@@ -21,9 +21,7 @@ class KnuckleboneWitchTest extends BaseCardTest {
     //  you may put a +1/+1 counter on this creature."
 
     private Permanent witch() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Knucklebone Witch"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Knucklebone Witch");
     }
 
     private void killWithShock(String targetName) {

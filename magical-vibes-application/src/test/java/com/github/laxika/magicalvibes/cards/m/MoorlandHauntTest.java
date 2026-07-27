@@ -97,9 +97,7 @@ class MoorlandHauntTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleGraveyardCardChosen(player1, 0);
 
-        Permanent land = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Moorland Haunt"))
-                .findFirst().orElseThrow();
+        Permanent land = findPermanent(player1, "Moorland Haunt");
         assertThat(land.isTapped()).isTrue();
     }
 
@@ -133,9 +131,7 @@ class MoorlandHauntTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spirit"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Spirit");
         assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);
@@ -156,9 +152,7 @@ class MoorlandHauntTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spirit"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Spirit");
         assertThat(token.isSummoningSick()).isTrue();
     }
 

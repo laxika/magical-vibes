@@ -51,10 +51,7 @@ class SensorSplicerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent golemToken = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .findFirst()
-                .orElseThrow();
+        Permanent golemToken = findPermanent(player1, "Phyrexian Golem");
 
         assertThat(gqs.hasKeyword(gd, golemToken, Keyword.VIGILANCE)).isTrue();
     }
@@ -64,10 +61,7 @@ class SensorSplicerTest extends BaseCardTest {
     void sensorSplicerDoesNotHaveVigilance() {
         harness.addToBattlefield(player1, new SensorSplicer());
 
-        Permanent sensorSplicer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sensor Splicer"))
-                .findFirst()
-                .orElseThrow();
+        Permanent sensorSplicer = findPermanent(player1, "Sensor Splicer");
 
         assertThat(gqs.hasKeyword(gd, sensorSplicer, Keyword.VIGILANCE)).isFalse();
     }
@@ -84,10 +78,7 @@ class SensorSplicerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent p2SensorSplicer = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sensor Splicer"))
-                .findFirst()
-                .orElseThrow();
+        Permanent p2SensorSplicer = findPermanent(player2, "Sensor Splicer");
 
         // Player 2's Sensor Splicer should not get vigilance from Player 1's Sensor Splicer
         assertThat(gqs.hasKeyword(gd, p2SensorSplicer, Keyword.VIGILANCE)).isFalse();
@@ -103,18 +94,12 @@ class SensorSplicerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent golemToken = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .findFirst()
-                .orElseThrow();
+        Permanent golemToken = findPermanent(player1, "Phyrexian Golem");
 
         assertThat(gqs.hasKeyword(gd, golemToken, Keyword.VIGILANCE)).isTrue();
 
         // Remove Sensor Splicer from battlefield
-        Permanent sensorSplicer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sensor Splicer"))
-                .findFirst()
-                .orElseThrow();
+        Permanent sensorSplicer = findPermanent(player1, "Sensor Splicer");
         gd.playerBattlefields.get(player1.getId()).remove(sensorSplicer);
 
         // Golem should no longer have vigilance

@@ -27,9 +27,7 @@ class MalfegorTest extends BaseCardTest {
     }
 
     private long creatureCount(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .count();
+        return countPermanents(player, "Grizzly Bears");
     }
 
     private void addMalfegorMana(Player player) {

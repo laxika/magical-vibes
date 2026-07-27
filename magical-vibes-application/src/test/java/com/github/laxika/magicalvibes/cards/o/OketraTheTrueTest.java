@@ -90,9 +90,7 @@ class OketraTheTrueTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Warrior"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Warrior");
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);

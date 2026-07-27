@@ -86,9 +86,7 @@ class SnowDevilTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SnowDevil()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        Permanent land = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Plains"))
-                .findFirst().orElseThrow();
+        Permanent land = findPermanent(player1, "Plains");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)

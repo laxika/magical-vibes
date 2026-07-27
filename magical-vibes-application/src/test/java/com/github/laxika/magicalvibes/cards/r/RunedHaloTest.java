@@ -29,9 +29,7 @@ class RunedHaloTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Shock");
 
-        Permanent halo = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Runed Halo"))
-                .findFirst().orElseThrow();
+        Permanent halo = findPermanent(player1, "Runed Halo");
         assertThat(halo.getChosenName()).isEqualTo("Shock");
     }
 

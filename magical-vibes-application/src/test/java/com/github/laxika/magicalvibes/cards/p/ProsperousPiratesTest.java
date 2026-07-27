@@ -44,9 +44,7 @@ class ProsperousPiratesTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve creature
         harness.passBothPriorities(); // Resolve ETB trigger
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Treasure");
         assertThat(tokens).hasSize(2);
     }
 
@@ -61,9 +59,7 @@ class ProsperousPiratesTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve creature
         harness.passBothPriorities(); // Resolve ETB trigger
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Treasure");
 
         assertThat(token.getCard().getType()).isEqualTo(CardType.ARTIFACT);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.TREASURE);
@@ -95,9 +91,7 @@ class ProsperousPiratesTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve creature
         harness.passBothPriorities(); // Resolve ETB trigger
 
-        Permanent treasure = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .findFirst().orElseThrow();
+        Permanent treasure = findPermanent(player1, "Treasure");
 
         assertThat(treasure.getCard().getActivatedAbilities()).hasSize(1);
         assertThat(treasure.getCard().getActivatedAbilities().getFirst().isRequiresTap()).isTrue();

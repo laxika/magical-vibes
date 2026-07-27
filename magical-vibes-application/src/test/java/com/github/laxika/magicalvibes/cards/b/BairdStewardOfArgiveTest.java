@@ -80,9 +80,7 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
         declareAttackers(player2, List.of(0, 1));
 
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(0);
-        List<Permanent> bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .toList();
+        List<Permanent> bears = findPermanents(player2, "Grizzly Bears");
         assertThat(bears).hasSize(2);
         assertThat(bears).allMatch(Permanent::isAttacking);
     }
@@ -341,9 +339,7 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
 
         gs.declareAttackers(gd, player2, List.of(0, 1));
 
-        List<Permanent> bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .toList();
+        List<Permanent> bears = findPermanents(player2, "Grizzly Bears");
         assertThat(bears).hasSize(2);
         assertThat(bears).allMatch(Permanent::isAttacking);
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(0);

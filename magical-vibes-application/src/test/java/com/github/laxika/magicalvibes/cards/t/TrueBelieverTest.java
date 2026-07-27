@@ -84,9 +84,7 @@ class TrueBelieverTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("True Believer"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "True Believer");
         assertThat(perm.isSummoningSick()).isTrue();
     }
 
@@ -144,9 +142,7 @@ class TrueBelieverTest extends BaseCardTest {
 
         // Remove True Believer from battlefield
         GameData gd = harness.getGameData();
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("True Believer"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "True Believer");
         gd.playerBattlefields.get(player1.getId()).remove(perm);
         gd.playerGraveyards.get(player1.getId()).add(believer);
 
@@ -207,9 +203,7 @@ class TrueBelieverTest extends BaseCardTest {
 
         // Remove one True Believer
         GameData gd = harness.getGameData();
-        Permanent firstBeliever = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("True Believer"))
-                .findFirst().orElseThrow();
+        Permanent firstBeliever = findPermanent(player1, "True Believer");
         gd.playerBattlefields.get(player1.getId()).remove(firstBeliever);
 
         // Player still has shroud from the second True Believer

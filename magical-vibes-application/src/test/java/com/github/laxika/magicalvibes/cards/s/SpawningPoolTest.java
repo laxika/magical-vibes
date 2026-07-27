@@ -31,9 +31,7 @@ class SpawningPoolTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        Permanent pool = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spawning Pool"))
-                .findFirst().orElseThrow();
+        Permanent pool = findPermanent(player1, "Spawning Pool");
         assertThat(pool.isTapped()).isTrue();
     }
 

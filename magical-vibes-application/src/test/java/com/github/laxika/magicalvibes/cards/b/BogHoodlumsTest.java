@@ -29,9 +29,7 @@ class BogHoodlumsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell (ETB clash trigger placed)
         harness.passBothPriorities(); // resolve ETB clash effect
 
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bog Hoodlums"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Bog Hoodlums");
     }
 
     // ===== Won clash — put a +1/+1 counter on it =====

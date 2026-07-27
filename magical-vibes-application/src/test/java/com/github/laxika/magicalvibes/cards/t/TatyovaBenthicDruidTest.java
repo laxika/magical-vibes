@@ -81,9 +81,7 @@ class TatyovaBenthicDruidTest extends BaseCardTest {
         // (CR 704.5j, a state-based action): the controller keeps one and the other is put into the
         // graveyard. Both landfall triggers still resolve — they triggered before one Tatyova left.
         harness.passBothPriorities();
-        UUID keptTatyova = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Tatyova, Benthic Druid"))
-                .findFirst().orElseThrow().getId();
+        UUID keptTatyova = findPermanent(player1, "Tatyova, Benthic Druid").getId();
         harness.handlePermanentChosen(player1, keptTatyova);
         harness.passBothPriorities(); // Resolve the second trigger
 
@@ -91,8 +89,7 @@ class TatyovaBenthicDruidTest extends BaseCardTest {
         // Hand: setHand(1) -> play land(0) -> draw 1 + draw 1 = 2
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         // The legend rule leaves exactly one Tatyova on the battlefield.
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Tatyova, Benthic Druid")).count())
+        assertThat(countPermanents(player1, "Tatyova, Benthic Druid"))
                 .isEqualTo(1);
     }
 

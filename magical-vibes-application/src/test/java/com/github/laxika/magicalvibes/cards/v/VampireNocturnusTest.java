@@ -55,9 +55,7 @@ class VampireNocturnusTest extends BaseCardTest {
         // Put a black card on top of library
         gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new VampireAristocrat())));
 
-        Permanent nocturnus = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vampire Nocturnus"))
-                .findFirst().orElseThrow();
+        Permanent nocturnus = findPermanent(player1, "Vampire Nocturnus");
 
         // 3/3 base + 2/1 from effect = 5/4
         assertThat(gqs.getEffectivePower(gd, nocturnus)).isEqualTo(5);
@@ -72,9 +70,7 @@ class VampireNocturnusTest extends BaseCardTest {
         // Put a green card on top of library
         gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new GrizzlyBears())));
 
-        Permanent nocturnus = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vampire Nocturnus"))
-                .findFirst().orElseThrow();
+        Permanent nocturnus = findPermanent(player1, "Vampire Nocturnus");
 
         // 3/3 base, no bonus
         assertThat(gqs.getEffectivePower(gd, nocturnus)).isEqualTo(3);
@@ -88,9 +84,7 @@ class VampireNocturnusTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VampireNocturnus());
         gd.playerDecks.put(player1.getId(), new ArrayList<>());
 
-        Permanent nocturnus = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vampire Nocturnus"))
-                .findFirst().orElseThrow();
+        Permanent nocturnus = findPermanent(player1, "Vampire Nocturnus");
 
         assertThat(gqs.getEffectivePower(gd, nocturnus)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, nocturnus)).isEqualTo(3);
@@ -106,9 +100,7 @@ class VampireNocturnusTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VampireAristocrat());
         gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new VampireAristocrat())));
 
-        Permanent aristocrat = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vampire Aristocrat"))
-                .findFirst().orElseThrow();
+        Permanent aristocrat = findPermanent(player1, "Vampire Aristocrat");
 
         // 2/2 base + 2/1 from Nocturnus = 4/3
         assertThat(gqs.getEffectivePower(gd, aristocrat)).isEqualTo(4);
@@ -123,9 +115,7 @@ class VampireNocturnusTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VampireAristocrat());
         gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new GrizzlyBears())));
 
-        Permanent aristocrat = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vampire Aristocrat"))
-                .findFirst().orElseThrow();
+        Permanent aristocrat = findPermanent(player1, "Vampire Aristocrat");
 
         // 2/2 base, no bonus
         assertThat(gqs.getEffectivePower(gd, aristocrat)).isEqualTo(2);
@@ -142,9 +132,7 @@ class VampireNocturnusTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new VampireAristocrat())));
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         // 2/2 base, no bonus (not a Vampire)
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
@@ -161,9 +149,7 @@ class VampireNocturnusTest extends BaseCardTest {
         harness.addToBattlefield(player2, new VampireAristocrat());
         gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new VampireAristocrat())));
 
-        Permanent opponentVampire = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vampire Aristocrat"))
-                .findFirst().orElseThrow();
+        Permanent opponentVampire = findPermanent(player2, "Vampire Aristocrat");
 
         // 2/2 base, no bonus (opponent's creature, scope is OWN_CREATURES)
         assertThat(gqs.getEffectivePower(gd, opponentVampire)).isEqualTo(2);
@@ -182,12 +168,8 @@ class VampireNocturnusTest extends BaseCardTest {
         // Start with a black card on top
         gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new VampireAristocrat(), new GrizzlyBears())));
 
-        Permanent aristocrat = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vampire Aristocrat"))
-                .findFirst().orElseThrow();
-        Permanent nocturnus = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vampire Nocturnus"))
-                .findFirst().orElseThrow();
+        Permanent aristocrat = findPermanent(player1, "Vampire Aristocrat");
+        Permanent nocturnus = findPermanent(player1, "Vampire Nocturnus");
 
         // Black card on top: buff active
         assertThat(gqs.getEffectivePower(gd, aristocrat)).isEqualTo(4);
@@ -214,9 +196,7 @@ class VampireNocturnusTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VampireAristocrat());
         gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new VampireAristocrat())));
 
-        Permanent aristocrat = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vampire Aristocrat"))
-                .findFirst().orElseThrow();
+        Permanent aristocrat = findPermanent(player1, "Vampire Aristocrat");
 
         // Verify buff is applied
         assertThat(gqs.getEffectivePower(gd, aristocrat)).isEqualTo(4);
@@ -240,9 +220,7 @@ class VampireNocturnusTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VampireAristocrat());
         gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new VampireAristocrat())));
 
-        Permanent aristocrat = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vampire Aristocrat"))
-                .findFirst().orElseThrow();
+        Permanent aristocrat = findPermanent(player1, "Vampire Aristocrat");
 
         // Add temporary boost
         aristocrat.setPowerModifier(aristocrat.getPowerModifier() + 5);
@@ -268,9 +246,7 @@ class VampireNocturnusTest extends BaseCardTest {
         harness.addToBattlefield(player1, nocturnusCard);
         gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new VampireAristocrat())));
 
-        Permanent nocturnus = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vampire Nocturnus"))
-                .findFirst().orElseThrow();
+        Permanent nocturnus = findPermanent(player1, "Vampire Nocturnus");
 
         // Per rulings: Vampire Nocturnus always buffs itself when condition is met,
         // even if it's no longer a Vampire (the card names itself in its text)

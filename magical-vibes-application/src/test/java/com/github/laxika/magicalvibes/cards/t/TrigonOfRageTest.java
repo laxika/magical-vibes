@@ -73,9 +73,7 @@ class TrigonOfRageTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Rage"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Rage");
         assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
@@ -86,9 +84,7 @@ class TrigonOfRageTest extends BaseCardTest {
     void activateFirstAbilityAddsCounter() {
         harness.addToBattlefield(player1, new TrigonOfRage());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Rage"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Rage");
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         harness.addMana(player1, ManaColor.RED, 2);
@@ -104,9 +100,7 @@ class TrigonOfRageTest extends BaseCardTest {
     void firstAbilityRequiresRedMana() {
         harness.addToBattlefield(player1, new TrigonOfRage());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Rage"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Rage");
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         // Only colorless mana, should fail
@@ -124,14 +118,10 @@ class TrigonOfRageTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TrigonOfRage());
         harness.addToBattlefield(player2, new GoblinPiker());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Rage"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Rage");
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
-        Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Piker"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Goblin Piker");
 
         int originalPower = gqs.getEffectivePower(gd, target);
         int originalToughness = gqs.getEffectiveToughness(gd, target);
@@ -155,14 +145,10 @@ class TrigonOfRageTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TrigonOfRage());
         harness.addToBattlefield(player2, new GoblinPiker());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Rage"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Rage");
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
-        Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Piker"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Goblin Piker");
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         int trigonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(trigon);
@@ -186,14 +172,10 @@ class TrigonOfRageTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TrigonOfRage());
         harness.addToBattlefield(player2, new GoblinPiker());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Rage"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Rage");
         trigon.setCounterCount(CounterType.CHARGE, 0);
 
-        Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Piker"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Goblin Piker");
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         int trigonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(trigon);
@@ -207,14 +189,10 @@ class TrigonOfRageTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TrigonOfRage());
         harness.addToBattlefield(player2, new GoblinPiker());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Rage"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Rage");
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
-        Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Piker"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Goblin Piker");
 
         // First activation
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -239,14 +217,10 @@ class TrigonOfRageTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TrigonOfRage());
         harness.addToBattlefield(player2, new GoblinPiker());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Rage"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Rage");
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
-        Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Piker"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Goblin Piker");
 
         // First activation taps it
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -267,14 +241,10 @@ class TrigonOfRageTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TrigonOfRage());
         harness.addToBattlefield(player2, new GoblinPiker());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Rage"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Rage");
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
-        Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Piker"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Goblin Piker");
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         int trigonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(trigon);

@@ -144,9 +144,7 @@ class SilenceTest extends BaseCardTest {
 
             // Give opponent a Prodigal Pyromancer (tap: deal 1 damage to any target)
             harness.addToBattlefield(player2, new ProdigalPyromancer());
-            Permanent pyroPerm = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Prodigal Pyromancer"))
-                    .findFirst().orElseThrow();
+            Permanent pyroPerm = findPermanent(player2, "Prodigal Pyromancer");
             pyroPerm.setSummoningSick(false);
 
             // Opponent should be able to activate the ability even while silenced

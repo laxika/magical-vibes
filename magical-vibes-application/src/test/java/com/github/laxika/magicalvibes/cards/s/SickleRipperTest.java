@@ -53,9 +53,7 @@ class SickleRipperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Sickle Ripper (2 power) deals its damage as two -1/-1 counters; 4/4 becomes 2/2.
-        Permanent survivor = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Big Bear"))
-                .findFirst().orElseThrow();
+        Permanent survivor = findPermanent(player2, "Big Bear");
         assertThat(survivor.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 

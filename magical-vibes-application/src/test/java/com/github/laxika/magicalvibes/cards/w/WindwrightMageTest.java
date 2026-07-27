@@ -62,8 +62,6 @@ class WindwrightMageTest extends BaseCardTest {
     }
 
     private Permanent findMage() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Windwright Mage"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Windwright Mage");
     }
 }

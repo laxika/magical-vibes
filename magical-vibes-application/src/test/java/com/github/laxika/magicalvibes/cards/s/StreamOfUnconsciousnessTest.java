@@ -29,9 +29,7 @@ class StreamOfUnconsciousnessTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearId);
         harness.passBothPriorities();
 
-        Permanent bear = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
         assertThat(bear.getPowerModifier()).isEqualTo(-4);
         assertThat(bear.getToughnessModifier()).isEqualTo(0);
 
@@ -51,9 +49,7 @@ class StreamOfUnconsciousnessTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearId);
         harness.passBothPriorities();
 
-        Permanent bear = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
         assertThat(bear.getPowerModifier()).isEqualTo(-4);
 
         // No Wizard controlled -> no draw
@@ -75,9 +71,7 @@ class StreamOfUnconsciousnessTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent bear = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
         assertThat(bear.getPowerModifier()).isEqualTo(0);
         assertThat(bear.getEffectivePower()).isEqualTo(2);
     }

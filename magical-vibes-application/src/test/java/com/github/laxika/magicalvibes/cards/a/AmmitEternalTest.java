@@ -19,10 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AmmitEternalTest extends BaseCardTest {
 
     private Permanent getAmmit() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ammit Eternal"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Ammit Eternal");
     }
 
     private long triggersOnStack() {

@@ -84,10 +84,7 @@ class CreepingCorrosionTest extends BaseCardTest {
     @DisplayName("Artifacts with regeneration shields survive Creeping Corrosion")
     void regenerationShieldsProtectArtifacts() {
         harness.addToBattlefield(player1, new Ornithopter());
-        Permanent ornithopter = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ornithopter"))
-                .findFirst()
-                .orElseThrow();
+        Permanent ornithopter = findPermanent(player1, "Ornithopter");
         ornithopter.setRegenerationShield(1);
 
         harness.setHand(player2, List.of(new CreepingCorrosion()));

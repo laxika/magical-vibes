@@ -146,8 +146,6 @@ class HinterlandHarborTest extends BaseCardTest {
     }
 
     private Permanent findHarbor(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hinterland Harbor"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Hinterland Harbor");
     }
 }

@@ -43,9 +43,7 @@ class ApostlesBlessingTest extends BaseCardTest {
 
         harness.handleListChoice(player1, "RED");
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
     }
 
@@ -61,9 +59,7 @@ class ApostlesBlessingTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "ARTIFACT");
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getProtectionFromCardTypes()).contains(CardType.ARTIFACT);
     }
 
@@ -79,9 +75,7 @@ class ApostlesBlessingTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLACK");
 
-        Permanent myr = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gold Myr"))
-                .findFirst().orElseThrow();
+        Permanent myr = findPermanent(player1, "Gold Myr");
         assertThat(myr.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
     }
 
@@ -181,9 +175,7 @@ class ApostlesBlessingTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "RED");
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
 
         // Simulate end of turn cleanup

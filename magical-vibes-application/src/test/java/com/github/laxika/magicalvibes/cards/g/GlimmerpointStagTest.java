@@ -171,9 +171,7 @@ class GlimmerpointStagTest extends BaseCardTest {
 
         advanceToEndStep();
 
-        Permanent returnedBears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent returnedBears = findPermanent(player1, "Grizzly Bears");
         assertThat(returnedBears.isSummoningSick()).isTrue();
     }
 

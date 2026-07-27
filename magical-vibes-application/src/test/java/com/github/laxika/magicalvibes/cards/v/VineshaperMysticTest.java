@@ -171,9 +171,7 @@ class VineshaperMysticTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Get Vineshaper Mystic's permanent ID
-            UUID vineshaperId = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Vineshaper Mystic"))
-                    .findFirst().orElseThrow().getId();
+            UUID vineshaperId = findPermanent(player1, "Vineshaper Mystic").getId();
 
             // The ETB already chose Merfolk Spy as target before entering, resolve it
             harness.passBothPriorities();

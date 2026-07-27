@@ -22,10 +22,7 @@ class ChangelingSentinelTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ChangelingSentinel());
 
         GameData gd = harness.getGameData();
-        Permanent changeling = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Changeling Sentinel"))
-                .findFirst()
-                .orElseThrow();
+        Permanent changeling = findPermanent(player1, "Changeling Sentinel");
 
         assertThat(gqs.getEffectivePower(gd, changeling)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, changeling)).isEqualTo(3);

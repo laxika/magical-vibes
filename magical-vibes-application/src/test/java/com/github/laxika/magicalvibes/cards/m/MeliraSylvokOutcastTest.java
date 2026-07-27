@@ -31,9 +31,7 @@ class MeliraSylvokOutcastTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
 
-        Permanent goblin = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blackcleave Goblin"))
-                .findFirst().orElseThrow();
+        Permanent goblin = findPermanent(player2, "Blackcleave Goblin");
 
         // But wait - Melira also removes infect from opponent creatures!
         // So the goblin should not have infect
@@ -71,9 +69,7 @@ class MeliraSylvokOutcastTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MeliraSylvokOutcast());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         // Verify the creature has the granted effect
         assertThat(gqs.cantHaveMinusOneMinusOneCounters(gd, bears)).isTrue();
@@ -85,9 +81,7 @@ class MeliraSylvokOutcastTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MeliraSylvokOutcast());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
 
         assertThat(gqs.cantHaveMinusOneMinusOneCounters(gd, bears)).isFalse();
     }
@@ -98,9 +92,7 @@ class MeliraSylvokOutcastTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MeliraSylvokOutcast());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.cantHaveMinusOneMinusOneCounters(gd, bears)).isTrue();
 
@@ -119,9 +111,7 @@ class MeliraSylvokOutcastTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MeliraSylvokOutcast());
         harness.addToBattlefield(player2, new BlackcleaveGoblin());
 
-        Permanent goblin = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blackcleave Goblin"))
-                .findFirst().orElseThrow();
+        Permanent goblin = findPermanent(player2, "Blackcleave Goblin");
 
         // Blackcleave Goblin normally has infect, but Melira removes it
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.INFECT)).isFalse();
@@ -133,9 +123,7 @@ class MeliraSylvokOutcastTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MeliraSylvokOutcast());
         harness.addToBattlefield(player1, new BlackcleaveGoblin());
 
-        Permanent goblin = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blackcleave Goblin"))
-                .findFirst().orElseThrow();
+        Permanent goblin = findPermanent(player1, "Blackcleave Goblin");
 
         // Controller's own infect creatures should keep infect
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.INFECT)).isTrue();
@@ -147,9 +135,7 @@ class MeliraSylvokOutcastTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MeliraSylvokOutcast());
         harness.addToBattlefield(player2, new BlackcleaveGoblin());
 
-        Permanent goblin = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blackcleave Goblin"))
-                .findFirst().orElseThrow();
+        Permanent goblin = findPermanent(player2, "Blackcleave Goblin");
 
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.INFECT)).isFalse();
 

@@ -37,9 +37,7 @@ class PlagueBelcherTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent target = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Air Elemental"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player1, "Air Elemental");
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
         assertThat(target.getEffectivePower()).isEqualTo(2);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);

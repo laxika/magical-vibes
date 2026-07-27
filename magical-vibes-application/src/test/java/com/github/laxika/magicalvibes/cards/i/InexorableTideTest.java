@@ -127,9 +127,7 @@ class InexorableTideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No MULTI_PERMANENT_CHOICE — no eligible permanents
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }

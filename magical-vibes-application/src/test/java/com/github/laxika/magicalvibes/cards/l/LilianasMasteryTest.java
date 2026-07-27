@@ -27,9 +27,7 @@ class LilianasMasteryTest extends BaseCardTest {
     void etbCreatesTwoZombieTokens() {
         castMastery(player1);
 
-        List<Permanent> zombieTokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .toList();
+        List<Permanent> zombieTokens = findPermanents(player1, "Zombie");
 
         assertThat(zombieTokens).hasSize(2);
         assertThat(zombieTokens).allMatch(p -> p.getCard().isToken());
@@ -40,9 +38,7 @@ class LilianasMasteryTest extends BaseCardTest {
     void anthemBoostsCreatedZombieTokens() {
         castMastery(player1);
 
-        List<Permanent> zombieTokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .toList();
+        List<Permanent> zombieTokens = findPermanents(player1, "Zombie");
 
         assertThat(zombieTokens).allSatisfy(token -> {
             assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);

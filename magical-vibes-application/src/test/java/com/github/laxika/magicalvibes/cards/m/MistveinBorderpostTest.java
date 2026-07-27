@@ -109,9 +109,7 @@ class MistveinBorderpostTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent borderpost(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mistvein Borderpost"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Mistvein Borderpost");
     }
 
     private Permanent addReadyBorderpost(Player player) {

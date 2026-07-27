@@ -38,9 +38,7 @@ class TarFiendTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(fodderA.getId(), fodderB.getId()));
 
         // Fodder is gone; Tar Fiend remains with 4 +1/+1 counters (devour 2 × 2 creatures).
-        Permanent tarFiend = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Tar Fiend"))
-                .findFirst().orElseThrow();
+        Permanent tarFiend = findPermanent(player1, "Tar Fiend");
         assertThat(tarFiend.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
 
@@ -65,9 +63,7 @@ class TarFiendTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
-        Permanent tarFiend = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Tar Fiend"))
-                .findFirst().orElseThrow();
+        Permanent tarFiend = findPermanent(player1, "Tar Fiend");
         assertThat(tarFiend.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         harness.passBothPriorities(); // resolve discard trigger (discards 0)

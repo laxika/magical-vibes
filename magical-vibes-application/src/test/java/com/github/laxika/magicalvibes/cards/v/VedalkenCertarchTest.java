@@ -18,9 +18,7 @@ class VedalkenCertarchTest extends BaseCardTest {
 
     private void addCertarchReady() {
         harness.addToBattlefield(player1, new VedalkenCertarch());
-        Permanent certarch = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vedalken Certarch"))
-                .findFirst().orElseThrow();
+        Permanent certarch = findPermanent(player1, "Vedalken Certarch");
         certarch.setSummoningSick(false);
     }
 
@@ -54,9 +52,7 @@ class VedalkenCertarchTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.isTapped()).isTrue();
     }
 
@@ -73,9 +69,7 @@ class VedalkenCertarchTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        Permanent spellbook = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spellbook"))
-                .findFirst().orElseThrow();
+        Permanent spellbook = findPermanent(player2, "Spellbook");
         assertThat(spellbook.isTapped()).isTrue();
     }
 

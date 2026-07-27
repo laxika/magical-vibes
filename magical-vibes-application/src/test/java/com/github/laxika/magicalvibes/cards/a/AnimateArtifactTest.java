@@ -76,9 +76,7 @@ class AnimateArtifactTest extends BaseCardTest {
     void cannotTargetNonArtifact() {
         harness.addToBattlefield(player1, new IcyManipulator()); // valid target so the spell is playable
         harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         harness.setHand(player1, List.of(new AnimateArtifact()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 

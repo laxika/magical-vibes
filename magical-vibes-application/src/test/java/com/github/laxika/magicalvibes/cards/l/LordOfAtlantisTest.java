@@ -49,9 +49,7 @@ class LordOfAtlantisTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new LordOfAtlantis());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -82,8 +80,7 @@ class LordOfAtlantisTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, merfolk)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, merfolk)).isEqualTo(3);
 
-        for (Permanent lord : gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Lord of Atlantis")).toList()) {
+        for (Permanent lord : findPermanents(player1, "Lord of Atlantis")) {
             assertThat(gqs.getEffectivePower(gd, lord)).isEqualTo(3);
             assertThat(gqs.getEffectiveToughness(gd, lord)).isEqualTo(3);
             assertThat(gqs.hasKeyword(gd, lord, Keyword.ISLANDWALK)).isTrue();
@@ -163,14 +160,10 @@ class LordOfAtlantisTest extends BaseCardTest {
     }
 
     private Permanent merfolk(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Coral Merfolk"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Coral Merfolk");
     }
 
     private Permanent lord(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Lord of Atlantis"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Lord of Atlantis");
     }
 }

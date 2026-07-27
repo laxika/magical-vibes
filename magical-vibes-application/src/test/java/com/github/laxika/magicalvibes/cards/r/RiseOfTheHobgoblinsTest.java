@@ -23,9 +23,7 @@ class RiseOfTheHobgoblinsTest extends BaseCardTest {
     }
 
     private long goblinTokenCount() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Soldier"))
-                .count();
+        return countPermanents(player1, "Goblin Soldier");
     }
 
     // ===== ETB: pay {X} to create X tokens =====

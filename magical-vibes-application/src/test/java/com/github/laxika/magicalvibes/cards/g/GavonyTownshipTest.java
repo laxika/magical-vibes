@@ -58,10 +58,7 @@ class GavonyTownshipTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        List<Permanent> bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .toList();
+        List<Permanent> bears = findPermanents(player1, "Grizzly Bears");
 
         assertThat(bears).hasSize(2);
         for (Permanent bear : bears) {
@@ -103,9 +100,7 @@ class GavonyTownshipTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        Permanent opponentBear = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent opponentBear = findPermanent(player2, "Grizzly Bears");
 
         assertThat(opponentBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
@@ -129,17 +124,13 @@ class GavonyTownshipTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         // Untap the land for second activation
-        Permanent township = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gavony Township"))
-                .findFirst().orElseThrow();
+        Permanent township = findPermanent(player1, "Gavony Township");
         township.untap();
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
 
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(bear.getEffectivePower()).isEqualTo(4);   // 2 base + 2 counters

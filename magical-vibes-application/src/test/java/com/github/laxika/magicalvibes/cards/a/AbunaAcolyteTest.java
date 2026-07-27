@@ -17,9 +17,7 @@ class AbunaAcolyteTest extends BaseCardTest {
 
     private void addAcolyteReady() {
         harness.addToBattlefield(player1, new AbunaAcolyte());
-        Permanent acolyte = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Abuna Acolyte"))
-                .findFirst().orElseThrow();
+        Permanent acolyte = findPermanent(player1, "Abuna Acolyte");
         acolyte.setSummoningSick(false);
     }
 
@@ -35,9 +33,7 @@ class AbunaAcolyteTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
     }
 
@@ -92,9 +88,7 @@ class AbunaAcolyteTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, targetId);
         harness.passBothPriorities();
 
-        Permanent gnomes = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bottle Gnomes"))
-                .findFirst().orElseThrow();
+        Permanent gnomes = findPermanent(player1, "Bottle Gnomes");
         assertThat(gnomes.getDamagePreventionShield()).isEqualTo(2);
     }
 
@@ -131,9 +125,7 @@ class AbunaAcolyteTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         // Tap the acolyte
-        Permanent acolyte = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Abuna Acolyte"))
-                .findFirst().orElseThrow();
+        Permanent acolyte = findPermanent(player1, "Abuna Acolyte");
         acolyte.tap();
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");

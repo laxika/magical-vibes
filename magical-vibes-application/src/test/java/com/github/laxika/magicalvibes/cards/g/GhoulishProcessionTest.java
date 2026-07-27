@@ -49,9 +49,7 @@ class GhoulishProcessionTest extends BaseCardTest {
             harness.passBothPriorities(); // Resolve Procession trigger
 
             GameData gd = harness.getGameData();
-            Permanent zombie = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Zombie"))
-                    .findFirst().orElseThrow();
+            Permanent zombie = findPermanent(player1, "Zombie");
 
             assertThat(zombie.getCard().isToken()).isTrue();
             assertThat(zombie.getCard().getPower()).isEqualTo(2);
@@ -85,9 +83,7 @@ class GhoulishProcessionTest extends BaseCardTest {
 
             harness.passBothPriorities(); // Resolve Procession trigger
 
-            assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Zombie"))
-                    .count()).isEqualTo(1);
+            assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
         }
 
         @Test
@@ -109,9 +105,7 @@ class GhoulishProcessionTest extends BaseCardTest {
             harness.passBothPriorities(); // Resolve Shock
             harness.passBothPriorities(); // Resolve Procession trigger
 
-            assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Zombie"))
-                    .count()).isEqualTo(1);
+            assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
 
             UUID secondBearId = gd.playerBattlefields.get(player1.getId()).stream()
                     .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
@@ -121,9 +115,7 @@ class GhoulishProcessionTest extends BaseCardTest {
             harness.passBothPriorities(); // Resolve Shock
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Zombie"))
-                    .count()).isEqualTo(1);
+            assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
         }
 
         @Test
@@ -160,9 +152,7 @@ class GhoulishProcessionTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Zombie"))
-                    .count()).isEqualTo(1);
+            assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
 
             advanceTurn();
             advanceTurn(); // back to a fresh turn where Procession can trigger again
@@ -176,9 +166,7 @@ class GhoulishProcessionTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.passBothPriorities();
 
-            assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Zombie"))
-                    .count()).isEqualTo(2);
+            assertThat(countPermanents(player1, "Zombie")).isEqualTo(2);
         }
     }
 
@@ -200,9 +188,7 @@ class GhoulishProcessionTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.passBothPriorities();
 
-            Permanent zombie = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Zombie"))
-                    .findFirst().orElseThrow();
+            Permanent zombie = findPermanent(player1, "Zombie");
             zombie.setSummoningSick(false);
 
             harness.setLife(player2, 20);

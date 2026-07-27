@@ -76,9 +76,7 @@ class AncientSilverbackTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        Permanent ape = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ancient Silverback"))
-                .findFirst().orElseThrow();
+        Permanent ape = findPermanent(player1, "Ancient Silverback");
         assertThat(ape.isTapped()).isTrue();
         assertThat(ape.getRegenerationShield()).isEqualTo(0);
         assertThat(ape.isBlocking()).isFalse();

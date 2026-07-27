@@ -54,9 +54,7 @@ class ShaperApprenticeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ShaperApprentice());
         harness.addToBattlefield(player1, new ShaperApprentice());
 
-        List<Permanent> apprentices = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Shaper Apprentice"))
-                .toList();
+        List<Permanent> apprentices = findPermanents(player1, "Shaper Apprentice");
 
         assertThat(apprentices).hasSize(2);
         assertThat(gqs.hasKeyword(gd, apprentices.get(0), Keyword.FLYING)).isTrue();

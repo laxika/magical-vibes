@@ -46,10 +46,7 @@ class SengirAutocratTest extends BaseCardTest {
 
         assertThat(serfTokens(player1)).hasSize(3);
 
-        Permanent autocrat = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sengir Autocrat"))
-                .findFirst()
-                .orElseThrow();
+        Permanent autocrat = findPermanent(player1, "Sengir Autocrat");
         harness.inMutationScope(
                 () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, autocrat));
         harness.clearPriorityPassed();
@@ -59,8 +56,6 @@ class SengirAutocratTest extends BaseCardTest {
     }
 
     private List<Permanent> serfTokens(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Serf"))
-                .toList();
+        return findPermanents(player, "Serf");
     }
 }

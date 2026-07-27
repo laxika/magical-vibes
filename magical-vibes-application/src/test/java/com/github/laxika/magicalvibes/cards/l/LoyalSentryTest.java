@@ -308,9 +308,7 @@ class LoyalSentryTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Loyal Sentry"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Loyal Sentry");
         assertThat(perm.isSummoningSick()).isTrue();
     }
 }

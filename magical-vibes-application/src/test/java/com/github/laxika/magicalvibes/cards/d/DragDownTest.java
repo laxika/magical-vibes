@@ -33,8 +33,7 @@ class DragDownTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearId);
         harness.passBothPriorities();
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears")).findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getEffectivePower()).isEqualTo(1);
         assertThat(bear.getEffectiveToughness()).isEqualTo(1);
     }
@@ -53,8 +52,7 @@ class DragDownTest extends BaseCardTest {
         harness.castInstant(player1, 0, avatarId);
         harness.passBothPriorities();
 
-        Permanent avatar = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Avatar of Might")).findFirst().orElseThrow();
+        Permanent avatar = findPermanent(player1, "Avatar of Might");
         assertThat(avatar.getEffectivePower()).isEqualTo(5);
         assertThat(avatar.getEffectiveToughness()).isEqualTo(5);
     }
@@ -72,8 +70,7 @@ class DragDownTest extends BaseCardTest {
         harness.castInstant(player1, 0, avatarId);
         harness.passBothPriorities();
 
-        Permanent avatar = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Avatar of Might")).findFirst().orElseThrow();
+        Permanent avatar = findPermanent(player1, "Avatar of Might");
         assertThat(avatar.getEffectivePower()).isEqualTo(7);
         assertThat(avatar.getEffectiveToughness()).isEqualTo(7);
     }
@@ -94,8 +91,7 @@ class DragDownTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears")).findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getEffectivePower()).isEqualTo(2);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
     }

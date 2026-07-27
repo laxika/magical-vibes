@@ -126,9 +126,7 @@ class FloodchaserTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent floodchaser(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Floodchaser"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Floodchaser");
     }
 
     private Permanent readyAttacker() {

@@ -31,9 +31,7 @@ class GravetillerWurmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        Permanent wurm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gravetiller Wurm"))
-                .findFirst().orElseThrow();
+        Permanent wurm = findPermanent(player1, "Gravetiller Wurm");
 
         assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(gd.stack).isEmpty();
@@ -54,10 +52,7 @@ class GravetillerWurmTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        Permanent wurm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gravetiller Wurm"))
-                .findFirst().orElseThrow();
+        Permanent wurm = findPermanent(player1, "Gravetiller Wurm");
 
         assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(wurm.getEffectivePower()).isEqualTo(8);
@@ -79,16 +74,13 @@ class GravetillerWurmTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearsId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent wurm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gravetiller Wurm"))
-                .findFirst().orElseThrow();
+        Permanent wurm = findPermanent(player1, "Gravetiller Wurm");
 
         assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(wurm.getEffectivePower()).isEqualTo(8);

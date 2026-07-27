@@ -32,9 +32,7 @@ class CoralHelmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getEffectivePower()).isEqualTo(4);
         assertThat(bear.getEffectiveToughness()).isEqualTo(4);
 
@@ -58,9 +56,7 @@ class CoralHelmTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getPowerModifier()).isEqualTo(0);
         assertThat(bear.getToughnessModifier()).isEqualTo(0);
     }

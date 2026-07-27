@@ -23,9 +23,7 @@ class OonaQueenOfTheFaeTest extends BaseCardTest {
     }
 
     private long faerieRogueCount() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Faerie Rogue"))
-                .count();
+        return countPermanents(player1, "Faerie Rogue");
     }
 
     @Test

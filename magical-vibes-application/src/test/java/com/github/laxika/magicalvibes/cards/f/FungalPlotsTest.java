@@ -87,9 +87,7 @@ class FungalPlotsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Saproling"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Saproling");
         assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);
@@ -153,9 +151,7 @@ class FungalPlotsTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        long saprolingCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Saproling"))
-                .count();
+        long saprolingCount = countPermanents(player1, "Saproling");
         assertThat(saprolingCount).isEqualTo(2);
     }
 
@@ -176,9 +172,7 @@ class FungalPlotsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
 
         // Both Saprolings should be auto-sacrificed
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Saproling"))
-                .count()).isZero();
+        assertThat(countPermanents(player1, "Saproling")).isZero();
 
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -223,9 +217,7 @@ class FungalPlotsTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.ACTIVATED_ABILITY);
 
         // Sacrificed Saprolings should be gone
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Saproling"))
-                .count()).isEqualTo(1);
+        assertThat(countPermanents(player1, "Saproling")).isEqualTo(1);
     }
 
     @Test
@@ -337,9 +329,7 @@ class FungalPlotsTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBeforeSacrifice + 2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBeforeSacrifice + 1);
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Saproling"))
-                .count()).isZero();
+        assertThat(countPermanents(player1, "Saproling")).isZero();
     }
 
     // =====================================================

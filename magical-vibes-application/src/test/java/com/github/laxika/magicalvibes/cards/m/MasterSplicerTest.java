@@ -46,10 +46,7 @@ class MasterSplicerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent golemToken = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .findFirst()
-                .orElseThrow();
+        Permanent golemToken = findPermanent(player1, "Phyrexian Golem");
 
         assertThat(gqs.getEffectivePower(gd, golemToken)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, golemToken)).isEqualTo(4);
@@ -60,10 +57,7 @@ class MasterSplicerTest extends BaseCardTest {
     void masterSplicerDoesNotGetBoost() {
         harness.addToBattlefield(player1, new MasterSplicer());
 
-        Permanent masterSplicer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Master Splicer"))
-                .findFirst()
-                .orElseThrow();
+        Permanent masterSplicer = findPermanent(player1, "Master Splicer");
 
         assertThat(gqs.getEffectivePower(gd, masterSplicer)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, masterSplicer)).isEqualTo(1);
@@ -84,10 +78,7 @@ class MasterSplicerTest extends BaseCardTest {
 
         // Player 2's Golem token should be 4/4 from player 2's own Master Splicer
         // but not get a second +1/+1 from player 1's Master Splicer
-        Permanent p2Golem = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .findFirst()
-                .orElseThrow();
+        Permanent p2Golem = findPermanent(player2, "Phyrexian Golem");
 
         assertThat(gqs.getEffectivePower(gd, p2Golem)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, p2Golem)).isEqualTo(4);
@@ -103,20 +94,14 @@ class MasterSplicerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent golemToken = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .findFirst()
-                .orElseThrow();
+        Permanent golemToken = findPermanent(player1, "Phyrexian Golem");
 
         // Verify golem is 4/4 with Master Splicer
         assertThat(gqs.getEffectivePower(gd, golemToken)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, golemToken)).isEqualTo(4);
 
         // Remove Master Splicer from battlefield
-        Permanent masterSplicer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Master Splicer"))
-                .findFirst()
-                .orElseThrow();
+        Permanent masterSplicer = findPermanent(player1, "Master Splicer");
         gd.playerBattlefields.get(player1.getId()).remove(masterSplicer);
 
         // Golem should be back to base 3/3

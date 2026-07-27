@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GiselaTheBrokenBladeTest extends BaseCardTest {
@@ -26,10 +25,7 @@ class GiselaTheBrokenBladeTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(gisela.getId()) || p.getId().equals(bruna.getId()));
-        Permanent brisela = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Brisela, Voice of Nightmares"))
-                .findFirst()
-                .orElseThrow();
+        Permanent brisela = findPermanent(player1, "Brisela, Voice of Nightmares");
         assertThat(brisela.getMeldComponentCards()).hasSize(2);
         assertThat(brisela.getCard()).isInstanceOf(BriselaVoiceOfNightmares.class);
         assertThat(gd.exiledCards).isEmpty();
@@ -85,10 +81,7 @@ class GiselaTheBrokenBladeTest extends BaseCardTest {
         advanceToControllerEndStep();
         harness.passBothPriorities();
 
-        Permanent brisela = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Brisela, Voice of Nightmares"))
-                .findFirst()
-                .orElseThrow();
+        Permanent brisela = findPermanent(player1, "Brisela, Voice of Nightmares");
 
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, brisela);
 

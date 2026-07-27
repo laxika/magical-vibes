@@ -113,9 +113,7 @@ class TelJiladFallenTest extends BaseCardTest {
     void staticProtectionPersistsAfterReset() {
         harness.addToBattlefield(player1, new TelJiladFallen());
 
-        Permanent fallen = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Tel-Jilad Fallen"))
-                .findFirst().orElseThrow();
+        Permanent fallen = findPermanent(player1, "Tel-Jilad Fallen");
 
         // Simulate end of turn cleanup
         fallen.resetModifiers();
@@ -130,9 +128,7 @@ class TelJiladFallenTest extends BaseCardTest {
     void staticProtectionDoesNotProtectFromNonArtifacts() {
         harness.addToBattlefield(player1, new TelJiladFallen());
 
-        Permanent fallen = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Tel-Jilad Fallen"))
-                .findFirst().orElseThrow();
+        Permanent fallen = findPermanent(player1, "Tel-Jilad Fallen");
 
         Permanent nonArtifactSource = new Permanent(new GrizzlyBears());
         assertThat(gqs.hasProtectionFromSourceCardTypes(gd, fallen, nonArtifactSource)).isFalse();

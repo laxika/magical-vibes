@@ -45,9 +45,7 @@ class GolemFoundryTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve charge counter triggered ability
         harness.passBothPriorities(); // resolve Spellbook
 
-        Permanent foundry = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Golem Foundry"))
-                .findFirst().orElseThrow();
+        Permanent foundry = findPermanent(player1, "Golem Foundry");
         assertThat(foundry.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
@@ -62,9 +60,7 @@ class GolemFoundryTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities(); // resolve Spellbook
 
-        Permanent foundry = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Golem Foundry"))
-                .findFirst().orElseThrow();
+        Permanent foundry = findPermanent(player1, "Golem Foundry");
         assertThat(foundry.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
@@ -81,9 +77,7 @@ class GolemFoundryTest extends BaseCardTest {
         // No may-ability prompt for charge counter
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
-        Permanent foundry = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Golem Foundry"))
-                .findFirst().orElseThrow();
+        Permanent foundry = findPermanent(player1, "Golem Foundry");
         assertThat(foundry.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
@@ -98,9 +92,7 @@ class GolemFoundryTest extends BaseCardTest {
         harness.castArtifact(player2, 0);
         harness.passBothPriorities(); // resolve Spellbook
 
-        Permanent foundry = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Golem Foundry"))
-                .findFirst().orElseThrow();
+        Permanent foundry = findPermanent(player1, "Golem Foundry");
         assertThat(foundry.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
@@ -111,9 +103,7 @@ class GolemFoundryTest extends BaseCardTest {
     void activateCreatesGolemToken() {
         harness.addToBattlefield(player1, new GolemFoundry());
 
-        Permanent foundry = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Golem Foundry"))
-                .findFirst().orElseThrow();
+        Permanent foundry = findPermanent(player1, "Golem Foundry");
         foundry.setCounterCount(CounterType.CHARGE, 3);
 
         int foundryIndex = gd.playerBattlefields.get(player1.getId()).indexOf(foundry);
@@ -136,9 +126,7 @@ class GolemFoundryTest extends BaseCardTest {
     void cannotActivateWithFewerThanThreeCounters() {
         harness.addToBattlefield(player1, new GolemFoundry());
 
-        Permanent foundry = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Golem Foundry"))
-                .findFirst().orElseThrow();
+        Permanent foundry = findPermanent(player1, "Golem Foundry");
         foundry.setCounterCount(CounterType.CHARGE, 2);
 
         int foundryIndex = gd.playerBattlefields.get(player1.getId()).indexOf(foundry);
@@ -151,9 +139,7 @@ class GolemFoundryTest extends BaseCardTest {
     void activateRemovesExactlyThreeCounters() {
         harness.addToBattlefield(player1, new GolemFoundry());
 
-        Permanent foundry = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Golem Foundry"))
-                .findFirst().orElseThrow();
+        Permanent foundry = findPermanent(player1, "Golem Foundry");
         foundry.setCounterCount(CounterType.CHARGE, 5);
 
         int foundryIndex = gd.playerBattlefields.get(player1.getId()).indexOf(foundry);

@@ -69,9 +69,7 @@ class GrandArchitectTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, myrId);
         harness.passBothPriorities();
 
-        Permanent myr = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Copper Myr"))
-                .findFirst().orElseThrow();
+        Permanent myr = findPermanent(player1, "Copper Myr");
         // "Becomes blue" is a floating CR 613 layer-5 color setter.
         assertThat(gqs.getEffectiveColors(gd, myr)).containsExactly(CardColor.BLUE);
     }
@@ -87,9 +85,7 @@ class GrandArchitectTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, myrId);
         harness.passBothPriorities();
 
-        Permanent myr = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Copper Myr"))
-                .findFirst().orElseThrow();
+        Permanent myr = findPermanent(player1, "Copper Myr");
         // Copper Myr is 1/1, now blue → gets +1/+1 = 2/2
         assertThat(gqs.getEffectivePower(gd, myr)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, myr)).isEqualTo(2);
@@ -106,9 +102,7 @@ class GrandArchitectTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, myrId);
         harness.passBothPriorities();
 
-        Permanent myr = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Copper Myr"))
-                .findFirst().orElseThrow();
+        Permanent myr = findPermanent(player1, "Copper Myr");
         // The color setter is a floating CR 613 layer-5 effect expiring with the
         // until-end-of-turn floating effects at cleanup.
         gd.expireEndOfTurnFloatingEffects();
@@ -208,9 +202,7 @@ class GrandArchitectTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, myrId);
         harness.passBothPriorities();
 
-        Permanent myr = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Copper Myr"))
-                .findFirst().orElseThrow();
+        Permanent myr = findPermanent(player1, "Copper Myr");
         assertThat(gqs.getEffectiveColors(gd, myr)).containsExactly(CardColor.BLUE);
 
         // Now 2 blue creatures — presents choice

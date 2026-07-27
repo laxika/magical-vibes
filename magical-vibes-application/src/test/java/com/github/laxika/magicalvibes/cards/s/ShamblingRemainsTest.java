@@ -54,9 +54,7 @@ class ShamblingRemainsTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Shambling Remains"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Shambling Remains");
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
         harness.assertNotInGraveyard(player1, "Shambling Remains");
     }

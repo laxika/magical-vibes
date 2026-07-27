@@ -28,9 +28,7 @@ class GoblinWarrensTest extends BaseCardTest {
                 .filteredOn(c -> c.getName().equals("Raging Goblin"))
                 .hasSize(2);
 
-        var goblinTokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin"))
-                .toList();
+        var goblinTokens = findPermanents(player1, "Goblin");
         assertThat(goblinTokens).hasSize(3);
         assertThat(goblinTokens).allSatisfy(p -> {
             assertThat(p.getCard().getPower()).isEqualTo(1);

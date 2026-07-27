@@ -122,9 +122,7 @@ class ChampionOfTheFlameTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent findChampion(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Champion of the Flame"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Champion of the Flame");
     }
 
     private Permanent addChampionReady(Player player) {

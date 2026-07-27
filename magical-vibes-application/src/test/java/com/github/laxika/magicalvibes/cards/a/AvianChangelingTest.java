@@ -25,10 +25,7 @@ class AvianChangelingTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AvianChangeling());
 
         GameData gd = harness.getGameData();
-        Permanent changeling = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Avian Changeling"))
-                .findFirst()
-                .orElseThrow();
+        Permanent changeling = findPermanent(player1, "Avian Changeling");
 
         assertThat(gqs.getEffectivePower(gd, changeling)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, changeling)).isEqualTo(3);

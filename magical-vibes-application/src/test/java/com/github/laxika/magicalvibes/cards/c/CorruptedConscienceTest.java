@@ -185,9 +185,7 @@ class CorruptedConscienceTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.INFECT)).isTrue();
 
         // Find the Corrupted Conscience aura permanent
-        Permanent auraPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Corrupted Conscience"))
-                .findFirst().orElseThrow();
+        Permanent auraPerm = findPermanent(player1, "Corrupted Conscience");
 
         // Destroy the aura with Demystify
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -222,9 +220,7 @@ class CorruptedConscienceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CorruptedConscience()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        Permanent artifact = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fountain of Youth"))
-                .findFirst().orElseThrow();
+        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

@@ -41,9 +41,7 @@ class CurseOfMisfortunesTest extends BaseCardTest {
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        Permanent newCurse = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fake Curse"))
-                .findFirst().orElseThrow();
+        Permanent newCurse = findPermanent(player1, "Fake Curse");
         assertThat(newCurse.getAttachedTo()).isEqualTo(player2.getId());
     }
 

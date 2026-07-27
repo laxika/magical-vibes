@@ -54,10 +54,7 @@ class SorinLordOfInnistradTest extends BaseCardTest {
         harness.castPlaneswalker(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        Permanent sorin = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sorin, Lord of Innistrad"))
-                .findFirst().orElseThrow();
+        Permanent sorin = findPermanent(player1, "Sorin, Lord of Innistrad");
         assertThat(sorin.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
 
@@ -118,9 +115,7 @@ class SorinLordOfInnistradTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
@@ -145,12 +140,9 @@ class SorinLordOfInnistradTest extends BaseCardTest {
         harness.activateAbilityWithMultiTargets(player1, 0, 2, targetIds);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(sorin.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .count()).isEqualTo(3);
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(3);
     }
 
     @Test
@@ -160,9 +152,7 @@ class SorinLordOfInnistradTest extends BaseCardTest {
         sorin.setCounterCount(CounterType.LOYALTY, 7);
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        UUID bearsId = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow().getId();
+        UUID bearsId = findPermanent(player2, "Grizzly Bears").getId();
 
         harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of(bearsId));
         harness.passBothPriorities();
@@ -189,9 +179,7 @@ class SorinLordOfInnistradTest extends BaseCardTest {
         Permanent sorin = addReadySorin(player1);
         sorin.setCounterCount(CounterType.LOYALTY, 7);
         harness.addToBattlefield(player2, new LilianaOfTheVeil());
-        Permanent liliana = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Liliana of the Veil"))
-                .findFirst().orElseThrow();
+        Permanent liliana = findPermanent(player2, "Liliana of the Veil");
         liliana.setCounterCount(CounterType.LOYALTY, 3);
 
         UUID lilianaId = liliana.getId();
@@ -199,11 +187,8 @@ class SorinLordOfInnistradTest extends BaseCardTest {
         harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of(lilianaId));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Liliana of the Veil");
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Liliana of the Veil"))
-                .findFirst().orElseThrow();
+        Permanent returned = findPermanent(player1, "Liliana of the Veil");
         assertThat(returned.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
 
@@ -214,9 +199,7 @@ class SorinLordOfInnistradTest extends BaseCardTest {
         sorin.setCounterCount(CounterType.LOYALTY, 7);
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        UUID bearsId = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow().getId();
+        UUID bearsId = findPermanent(player2, "Grizzly Bears").getId();
         Permanent bears = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getId().equals(bearsId))
                 .findFirst().orElseThrow();

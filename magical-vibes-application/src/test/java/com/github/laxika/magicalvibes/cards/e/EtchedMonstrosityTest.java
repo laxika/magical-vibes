@@ -150,9 +150,7 @@ class EtchedMonstrosityTest extends BaseCardTest {
     }
 
     private Permanent findMonstrosity(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Etched Monstrosity"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Etched Monstrosity");
     }
 
     private void addWUBRGMana(Player player) {

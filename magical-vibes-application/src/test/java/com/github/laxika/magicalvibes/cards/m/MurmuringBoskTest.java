@@ -114,8 +114,6 @@ class MurmuringBoskTest extends BaseCardTest {
     }
 
     private Permanent findLand(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Murmuring Bosk"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Murmuring Bosk");
     }
 }

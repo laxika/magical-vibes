@@ -64,9 +64,7 @@ class MimicVatTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Mimic Vat should have Grizzly Bears imprinted
-        Permanent vat = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mimic Vat"))
-                .findFirst().orElseThrow();
+        Permanent vat = findPermanent(player1, "Mimic Vat");
         assertThat(gd.getImprintedCard(vat.getCard())).isNotNull();
         assertThat(gd.getImprintedCard(vat.getCard()).getName()).isEqualTo("Grizzly Bears");
     }
@@ -91,9 +89,7 @@ class MimicVatTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // Mimic Vat should have nothing imprinted
-        Permanent vat = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mimic Vat"))
-                .findFirst().orElseThrow();
+        Permanent vat = findPermanent(player1, "Mimic Vat");
         assertThat(gd.getImprintedCard(vat.getCard())).isNull();
     }
 
@@ -101,9 +97,7 @@ class MimicVatTest extends BaseCardTest {
     @DisplayName("Imprint set in an AI simulation copy does not leak into the real game")
     void simulatedImprintDoesNotLeakIntoRealGame() {
         harness.addToBattlefield(player1, new MimicVat());
-        Permanent vat = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mimic Vat"))
-                .findFirst().orElseThrow();
+        Permanent vat = findPermanent(player1, "Mimic Vat");
 
         GameData simCopy = gd.simulationCopy();
         simCopy.setImprintedCard(vat.getCard(), new GrizzlyBears());
@@ -136,9 +130,7 @@ class MimicVatTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        Permanent vat = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mimic Vat"))
-                .findFirst().orElseThrow();
+        Permanent vat = findPermanent(player1, "Mimic Vat");
         assertThat(gd.getImprintedCard(vat.getCard()).getName()).isEqualTo("Grizzly Bears");
 
         // Kill second creature (Giant Spider): now player2 has only one, auto-sacrificed

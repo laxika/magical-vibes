@@ -30,9 +30,7 @@ class YavimayaEnchantressTest extends BaseCardTest {
         harness.addToBattlefield(player1, new YavimayaEnchantress());
         harness.addToBattlefield(player1, new AngelicChorus());
 
-        Permanent enchantress = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Yavimaya Enchantress"))
-                .findFirst().orElseThrow();
+        Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(3);
     }
@@ -55,9 +53,7 @@ class YavimayaEnchantressTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AngelicChorus());
         harness.addToBattlefield(player2, new AngelicChorus());
 
-        Permanent enchantress = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Yavimaya Enchantress"))
-                .findFirst().orElseThrow();
+        Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(4);
     }
@@ -68,9 +64,7 @@ class YavimayaEnchantressTest extends BaseCardTest {
         harness.addToBattlefield(player1, new YavimayaEnchantress());
         harness.addToBattlefield(player1, new AngelicChorus());
 
-        Permanent enchantress = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Yavimaya Enchantress"))
-                .findFirst().orElseThrow();
+        Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(3);
 
@@ -88,9 +82,7 @@ class YavimayaEnchantressTest extends BaseCardTest {
         harness.addToBattlefield(player1, new YavimayaEnchantress());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent enchantress = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Yavimaya Enchantress"))
-                .findFirst().orElseThrow();
+        Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(2);
     }
@@ -101,18 +93,14 @@ class YavimayaEnchantressTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new YavimayaEnchantress());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         // Attach an aura to Grizzly Bears
         Permanent aura = new Permanent(new UnholyStrength());
         aura.setAttachedTo(bears.getId());
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        Permanent enchantress = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Yavimaya Enchantress"))
-                .findFirst().orElseThrow();
+        Permanent enchantress = findPermanent(player1, "Yavimaya Enchantress");
         // Unholy Strength is an enchantment, so +1/+1
         assertThat(gqs.getEffectivePower(gd, enchantress)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, enchantress)).isEqualTo(3);

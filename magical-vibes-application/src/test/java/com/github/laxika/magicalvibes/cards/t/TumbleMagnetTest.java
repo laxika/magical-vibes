@@ -217,9 +217,7 @@ class TumbleMagnetTest extends BaseCardTest {
     }
 
     private Permanent findMagnet(Player player) {
-        return harness.getGameData().playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Tumble Magnet"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Tumble Magnet");
     }
 
     private Permanent addReadyArtifact(Player player) {

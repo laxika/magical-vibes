@@ -27,12 +27,8 @@ class NauseaTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        Permanent own = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
-        Permanent theirs = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent own = findPermanent(player1, "Grizzly Bears");
+        Permanent theirs = findPermanent(player2, "Grizzly Bears");
 
         assertThat(own.getEffectivePower()).isEqualTo(1);
         assertThat(own.getEffectiveToughness()).isEqualTo(1);
@@ -66,9 +62,7 @@ class NauseaTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);

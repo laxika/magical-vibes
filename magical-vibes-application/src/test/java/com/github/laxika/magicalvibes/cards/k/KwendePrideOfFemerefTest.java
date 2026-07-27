@@ -20,9 +20,7 @@ class KwendePrideOfFemerefTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KwendePrideOfFemeref());
         harness.addToBattlefield(player1, new BenalishKnight());
 
-        Permanent knight = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Benalish Knight"))
-                .findFirst().orElseThrow();
+        Permanent knight = findPermanent(player1, "Benalish Knight");
 
         assertThat(gqs.hasKeyword(gd, knight, Keyword.DOUBLE_STRIKE)).isTrue();
     }
@@ -33,9 +31,7 @@ class KwendePrideOfFemerefTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KwendePrideOfFemeref());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isFalse();
     }
@@ -46,9 +42,7 @@ class KwendePrideOfFemerefTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KwendePrideOfFemeref());
         harness.addToBattlefield(player2, new BenalishKnight());
 
-        Permanent knight = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Benalish Knight"))
-                .findFirst().orElseThrow();
+        Permanent knight = findPermanent(player2, "Benalish Knight");
 
         assertThat(gqs.hasKeyword(gd, knight, Keyword.DOUBLE_STRIKE)).isFalse();
     }
@@ -59,9 +53,7 @@ class KwendePrideOfFemerefTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KwendePrideOfFemeref());
         harness.addToBattlefield(player1, new BenalishKnight());
 
-        Permanent knight = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Benalish Knight"))
-                .findFirst().orElseThrow();
+        Permanent knight = findPermanent(player1, "Benalish Knight");
 
         assertThat(gqs.hasKeyword(gd, knight, Keyword.DOUBLE_STRIKE)).isTrue();
 
@@ -79,9 +71,7 @@ class KwendePrideOfFemerefTest extends BaseCardTest {
     void kwendeItselfNotAffectedByOwnAbility() {
         harness.addToBattlefield(player1, new KwendePrideOfFemeref());
 
-        Permanent kwende = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Kwende, Pride of Femeref"))
-                .findFirst().orElseThrow();
+        Permanent kwende = findPermanent(player1, "Kwende, Pride of Femeref");
 
         // Kwende has double strike intrinsically, not from its own static ability
         assertThat(gqs.hasKeyword(gd, kwende, Keyword.DOUBLE_STRIKE)).isTrue();

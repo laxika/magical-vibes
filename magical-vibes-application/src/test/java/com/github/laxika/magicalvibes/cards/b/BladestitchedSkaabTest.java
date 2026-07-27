@@ -66,9 +66,7 @@ class BladestitchedSkaabTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BladestitchedSkaab());
         harness.addToBattlefield(player1, new BladestitchedSkaab());
 
-        List<Permanent> skaabs = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bladestitched Skaab"))
-                .toList();
+        List<Permanent> skaabs = findPermanents(player1, "Bladestitched Skaab");
 
         assertThat(skaabs).hasSize(2);
         for (Permanent skaab : skaabs) {

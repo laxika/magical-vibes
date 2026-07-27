@@ -34,9 +34,7 @@ class PithDrillerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Grizzly Bears (2/2) with 1 -1/-1 counter → 1/1, survives
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(bears.getEffectivePower()).isEqualTo(1);
         assertThat(bears.getEffectiveToughness()).isEqualTo(1);
@@ -59,9 +57,7 @@ class PithDrillerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Air Elemental"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Air Elemental");
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(target.getEffectivePower()).isEqualTo(3);
         assertThat(target.getEffectiveToughness()).isEqualTo(3);
@@ -98,9 +94,7 @@ class PithDrillerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 

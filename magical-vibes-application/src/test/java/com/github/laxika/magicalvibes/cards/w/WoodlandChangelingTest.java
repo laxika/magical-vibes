@@ -19,10 +19,7 @@ class WoodlandChangelingTest extends BaseCardTest {
         harness.addToBattlefield(player1, new WoodlandChangeling());
 
         GameData gd = harness.getGameData();
-        Permanent changeling = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Woodland Changeling"))
-                .findFirst()
-                .orElseThrow();
+        Permanent changeling = findPermanent(player1, "Woodland Changeling");
 
         assertThat(gqs.getEffectivePower(gd, changeling)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, changeling)).isEqualTo(3);

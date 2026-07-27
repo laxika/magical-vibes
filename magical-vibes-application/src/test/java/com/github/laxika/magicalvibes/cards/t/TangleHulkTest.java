@@ -159,12 +159,9 @@ class TangleHulkTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Tangle Hulk survives via regeneration
         harness.assertOnBattlefield(player1, "Tangle Hulk");
-        Permanent hulk = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Tangle Hulk"))
-                .findFirst().orElseThrow();
+        Permanent hulk = findPermanent(player1, "Tangle Hulk");
         assertThat(hulk.isTapped()).isTrue();
         assertThat(hulk.getRegenerationShield()).isEqualTo(0);
         // Hill Giant should also die (5 damage from Tangle Hulk >= 3 toughness)
@@ -217,12 +214,9 @@ class TangleHulkTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Tangle Hulk survives via regeneration
         harness.assertOnBattlefield(player1, "Tangle Hulk");
-        Permanent hulk = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Tangle Hulk"))
-                .findFirst().orElseThrow();
+        Permanent hulk = findPermanent(player1, "Tangle Hulk");
         assertThat(hulk.isTapped()).isTrue();
         assertThat(hulk.isAttacking()).isFalse();
         assertThat(hulk.getRegenerationShield()).isEqualTo(0);

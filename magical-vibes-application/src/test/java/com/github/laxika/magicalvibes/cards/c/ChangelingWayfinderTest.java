@@ -265,10 +265,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ChangelingWayfinder());
 
         GameData gd = harness.getGameData();
-        Permanent wayfinder = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Changeling Wayfinder"))
-                .findFirst()
-                .orElseThrow();
+        Permanent wayfinder = findPermanent(player1, "Changeling Wayfinder");
 
         // Field Marshal gives other Soldiers +1/+1 and first strike
         // Changeling Wayfinder is 1/2 base → should be 2/3
@@ -282,11 +279,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
     void hasChangelingKeyword() {
         harness.addToBattlefield(player1, new ChangelingWayfinder());
 
-        GameData gd = harness.getGameData();
-        Permanent wayfinder = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Changeling Wayfinder"))
-                .findFirst()
-                .orElseThrow();
+        Permanent wayfinder = findPermanent(player1, "Changeling Wayfinder");
 
         assertThat(wayfinder.hasKeyword(Keyword.CHANGELING)).isTrue();
     }

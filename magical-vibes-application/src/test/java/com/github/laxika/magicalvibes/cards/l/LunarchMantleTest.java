@@ -69,10 +69,7 @@ class LunarchMantleTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         if (gd.interaction.activeInteraction() != null) {
-            Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Forest"))
-                    .findFirst()
-                    .orElseThrow();
+            Permanent forest = findPermanent(player1, "Forest");
             harness.handlePermanentChosen(player1, forest.getId());
         }
         harness.passBothPriorities();
@@ -89,10 +86,7 @@ class LunarchMantleTest extends BaseCardTest {
     @DisplayName("Boost and granted ability end when Lunarch Mantle is removed")
     void effectsStopWhenRemoved() {
         Permanent bears = attachMantleToBears();
-        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Lunarch Mantle"))
-                .findFirst()
-                .orElseThrow();
+        Permanent aura = findPermanent(player1, "Lunarch Mantle");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
 
@@ -113,10 +107,7 @@ class LunarchMantleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LunarchMantle()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        Permanent artifact = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fountain of Youth"))
-                .findFirst()
-                .orElseThrow();
+        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

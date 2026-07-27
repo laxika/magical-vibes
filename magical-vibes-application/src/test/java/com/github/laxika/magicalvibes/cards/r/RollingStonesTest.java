@@ -43,9 +43,7 @@ class RollingStonesTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AngelicWall());
         harness.addToBattlefield(player1, new RollingStones());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent wall = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Angelic Wall"))
-                .findFirst().orElseThrow();
+        Permanent wall = findPermanent(player1, "Angelic Wall");
         wall.setSummoningSick(false);
         int wallIndex = gd.playerBattlefields.get(player1.getId()).indexOf(wall);
 
@@ -75,9 +73,7 @@ class RollingStonesTest extends BaseCardTest {
     void wallCannotAttackAfterRollingStonesRemoved() {
         harness.addToBattlefield(player1, new AngelicWall());
         harness.addToBattlefield(player1, new RollingStones());
-        Permanent wall = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Angelic Wall"))
-                .findFirst().orElseThrow();
+        Permanent wall = findPermanent(player1, "Angelic Wall");
         wall.setSummoningSick(false);
 
         gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard().getName().equals("Rolling Stones"));

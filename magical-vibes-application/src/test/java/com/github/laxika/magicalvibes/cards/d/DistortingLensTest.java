@@ -28,9 +28,7 @@ class DistortingLensTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
         harness.handleListChoice(player1, "RED");
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         // Green Grizzly Bears becomes red only (CR 105.3 — replaces all previous colors).
         assertThat(gqs.getEffectiveColors(gd, bears)).containsExactly(CardColor.RED);
     }
@@ -61,9 +59,7 @@ class DistortingLensTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "RED");
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectiveColors(gd, bears)).containsExactly(CardColor.RED);
 
         // The floating layer-5 color setter expires at cleanup.

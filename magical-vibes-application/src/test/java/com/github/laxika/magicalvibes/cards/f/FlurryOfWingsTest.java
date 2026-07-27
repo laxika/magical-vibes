@@ -29,9 +29,7 @@ class FlurryOfWingsTest extends BaseCardTest {
     }
 
     private void markAttacking(Player player, String cardName) {
-        Permanent perm = gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(cardName))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player, cardName);
         perm.setAttacking(true);
     }
 

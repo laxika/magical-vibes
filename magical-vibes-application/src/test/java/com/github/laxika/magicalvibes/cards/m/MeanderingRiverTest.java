@@ -25,9 +25,7 @@ class MeanderingRiverTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        Permanent river = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Meandering River"))
-                .findFirst().orElseThrow();
+        Permanent river = findPermanent(player1, "Meandering River");
         assertThat(river.isTapped()).isTrue();
     }
 

@@ -24,9 +24,7 @@ class PrimalClayTest extends BaseCardTest {
         if (chosenForm != null) {
             harness.handleListChoice(player1, chosenForm);
         }
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Primal Clay"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Primal Clay");
     }
 
     @Test

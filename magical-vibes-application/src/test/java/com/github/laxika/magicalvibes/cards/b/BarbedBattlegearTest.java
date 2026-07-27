@@ -152,9 +152,7 @@ class BarbedBattlegearTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        Permanent remaining = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Barbed Battlegear"))
-                .findFirst().orElseThrow();
+        Permanent remaining = findPermanent(player1, "Barbed Battlegear");
         assertThat(remaining.getAttachedTo()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }

@@ -13,9 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DeathBaronTest extends BaseCardTest {
 
     private Permanent findByName(com.github.laxika.magicalvibes.model.Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst().orElseThrow();
+        return findPermanent(player, name);
     }
 
     @Test
@@ -76,8 +74,7 @@ class DeathBaronTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DeathBaron());
         harness.addToBattlefield(player1, new Gravecrawler());
 
-        for (Permanent baron : gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Death Baron")).toList()) {
+        for (Permanent baron : findPermanents(player1, "Death Baron")) {
             assertThat(gqs.getEffectivePower(gd, baron)).isEqualTo(3);
             assertThat(gqs.getEffectiveToughness(gd, baron)).isEqualTo(3);
             assertThat(gqs.hasKeyword(gd, baron, Keyword.DEATHTOUCH)).isTrue();

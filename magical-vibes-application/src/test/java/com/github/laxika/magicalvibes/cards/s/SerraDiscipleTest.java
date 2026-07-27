@@ -46,9 +46,7 @@ class SerraDiscipleTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
 
-        Permanent disciple = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Serra Disciple"))
-                .findFirst().orElseThrow();
+        Permanent disciple = findPermanent(player1, "Serra Disciple");
         assertThat(disciple.getPowerModifier()).isEqualTo(1);
         assertThat(disciple.getToughnessModifier()).isEqualTo(1);
     }
@@ -125,10 +123,7 @@ class SerraDiscipleTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve triggered ability
         harness.passBothPriorities(); // resolve Spellbook
 
-        GameData gd = harness.getGameData();
-        Permanent disciple = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Serra Disciple"))
-                .findFirst().orElseThrow();
+        Permanent disciple = findPermanent(player1, "Serra Disciple");
         assertThat(disciple.getPowerModifier()).isEqualTo(2);
         assertThat(disciple.getToughnessModifier()).isEqualTo(2);
     }

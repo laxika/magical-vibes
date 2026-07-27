@@ -29,10 +29,7 @@ class TraxosScourgeOfKroogTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        Permanent traxos = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Traxos, Scourge of Kroog"))
-                .findFirst().orElseThrow();
+        Permanent traxos = findPermanent(player1, "Traxos, Scourge of Kroog");
 
         assertThat(traxos.isTapped()).isTrue();
     }

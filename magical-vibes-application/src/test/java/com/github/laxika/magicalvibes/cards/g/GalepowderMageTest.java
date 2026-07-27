@@ -69,9 +69,7 @@ class GalepowderMageTest extends BaseCardTest {
     void canExileOwnOtherCreature() {
         addReadyMage(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, bears.getId());

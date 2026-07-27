@@ -17,9 +17,7 @@ class DeepchannelMentorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DeepchannelMentor());
         harness.addToBattlefield(player1, new FugitiveWizard());
 
-        Permanent wizard = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fugitive Wizard"))
-                .findFirst().orElseThrow();
+        Permanent wizard = findPermanent(player1, "Fugitive Wizard");
 
         assertThat(gqs.hasCantBeBlocked(gd, wizard)).isTrue();
     }
@@ -30,9 +28,7 @@ class DeepchannelMentorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DeepchannelMentor());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.hasCantBeBlocked(gd, bears)).isFalse();
     }
@@ -43,9 +39,7 @@ class DeepchannelMentorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DeepchannelMentor());
         harness.addToBattlefield(player2, new FugitiveWizard());
 
-        Permanent opponentWizard = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fugitive Wizard"))
-                .findFirst().orElseThrow();
+        Permanent opponentWizard = findPermanent(player2, "Fugitive Wizard");
 
         assertThat(gqs.hasCantBeBlocked(gd, opponentWizard)).isFalse();
     }
@@ -56,9 +50,7 @@ class DeepchannelMentorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DeepchannelMentor());
         harness.addToBattlefield(player1, new FugitiveWizard());
 
-        Permanent wizard = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fugitive Wizard"))
-                .findFirst().orElseThrow();
+        Permanent wizard = findPermanent(player1, "Fugitive Wizard");
 
         assertThat(gqs.hasCantBeBlocked(gd, wizard)).isTrue();
 

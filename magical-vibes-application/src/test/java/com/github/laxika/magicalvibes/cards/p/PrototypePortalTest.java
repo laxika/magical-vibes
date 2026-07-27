@@ -62,9 +62,7 @@ class PrototypePortalTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Golem's Heart");
 
         // Portal should have Golem's Heart imprinted
-        Permanent portal = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Prototype Portal"))
-                .findFirst().orElseThrow();
+        Permanent portal = findPermanent(player1, "Prototype Portal");
         assertThat(gd.getImprintedCard(portal.getCard())).isNotNull();
         assertThat(gd.getImprintedCard(portal.getCard()).getName()).isEqualTo("Golem's Heart");
     }
@@ -87,9 +85,7 @@ class PrototypePortalTest extends BaseCardTest {
         harness.assertInHand(player1, "Golem's Heart");
 
         // Portal should have nothing imprinted
-        Permanent portal = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Prototype Portal"))
-                .findFirst().orElseThrow();
+        Permanent portal = findPermanent(player1, "Prototype Portal");
         assertThat(gd.getImprintedCard(portal.getCard())).isNull();
     }
 
@@ -111,9 +107,7 @@ class PrototypePortalTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
 
         // Portal should have nothing imprinted
-        Permanent portal = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Prototype Portal"))
-                .findFirst().orElseThrow();
+        Permanent portal = findPermanent(player1, "Prototype Portal");
         assertThat(gd.getImprintedCard(portal.getCard())).isNull();
     }
 

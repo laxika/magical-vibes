@@ -94,9 +94,7 @@ class HeatShimmerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         castHeatShimmer(harness.getPermanentId(player1, "Grizzly Bears"));
 
-        long count = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .count();
+        long count = countPermanents(player1, "Grizzly Bears");
         assertThat(count).isEqualTo(2);
     }
 }

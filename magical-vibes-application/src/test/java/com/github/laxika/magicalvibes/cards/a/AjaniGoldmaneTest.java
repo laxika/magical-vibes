@@ -101,12 +101,9 @@ class AjaniGoldmaneTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 4 - 1
 
-        List<Permanent> bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .toList();
+        List<Permanent> bears = findPermanents(player1, "Grizzly Bears");
 
         // Each creature should have a +1/+1 counter
         for (Permanent bear : bears) {
@@ -124,9 +121,7 @@ class AjaniGoldmaneTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        Permanent opponentBear = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent opponentBear = findPermanent(player2, "Grizzly Bears");
 
         assertThat(opponentBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(opponentBear.getGrantedKeywords()).doesNotContain(Keyword.VIGILANCE);
@@ -141,9 +136,7 @@ class AjaniGoldmaneTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
 
         // +1/+1 counter is permanent
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -279,9 +272,7 @@ class AjaniGoldmaneTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         // Bear should still have gotten the +1/+1 counter
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 

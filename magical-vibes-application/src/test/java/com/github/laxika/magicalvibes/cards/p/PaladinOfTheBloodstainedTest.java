@@ -42,9 +42,7 @@ class PaladinOfTheBloodstainedTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve creature
         harness.passBothPriorities(); // Resolve ETB trigger
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vampire"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Vampire");
         assertThat(tokens).hasSize(1);
     }
 
@@ -58,9 +56,7 @@ class PaladinOfTheBloodstainedTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve creature
         harness.passBothPriorities(); // Resolve ETB trigger
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vampire"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Vampire");
 
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);

@@ -14,9 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KinsbaileCavalierTest extends BaseCardTest {
 
     private Permanent find(Player owner, String name) {
-        return gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst().orElseThrow();
+        return findPermanent(owner, name);
     }
 
     @Test

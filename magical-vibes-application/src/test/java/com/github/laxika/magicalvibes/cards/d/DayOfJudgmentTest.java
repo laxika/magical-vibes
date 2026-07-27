@@ -54,9 +54,7 @@ class DayOfJudgmentTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bears2 = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears2 = findPermanent(player2, "Grizzly Bears");
         bears2.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
 
         harness.setHand(player1, List.of(new DayOfJudgment()));
@@ -76,9 +74,7 @@ class DayOfJudgmentTest extends BaseCardTest {
     void creatureWithRegenerationShieldSurvives() {
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         bears.setRegenerationShield(1);
 
         harness.setHand(player1, List.of(new DayOfJudgment()));

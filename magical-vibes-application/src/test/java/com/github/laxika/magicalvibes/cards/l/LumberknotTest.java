@@ -25,9 +25,7 @@ class LumberknotTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Lumberknot());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent lumberknot = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Lumberknot"))
-                .findFirst().orElseThrow();
+        Permanent lumberknot = findPermanent(player1, "Lumberknot");
         assertThat(lumberknot.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         // Kill ally creature with Shock

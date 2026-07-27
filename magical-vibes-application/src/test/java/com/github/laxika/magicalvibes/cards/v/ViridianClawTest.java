@@ -187,9 +187,7 @@ class ViridianClawTest extends BaseCardTest {
 
         // Equipment should still be on battlefield, unattached
         assertThat(gd.stack).isEmpty();
-        Permanent remaining = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Viridian Claw"))
-                .findFirst().orElseThrow();
+        Permanent remaining = findPermanent(player1, "Viridian Claw");
         assertThat(remaining.getAttachedTo()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }

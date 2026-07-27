@@ -98,8 +98,6 @@ class VividCreekTest extends BaseCardTest {
     }
 
     private Permanent creek(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vivid Creek"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Vivid Creek");
     }
 }

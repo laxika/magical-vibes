@@ -136,9 +136,7 @@ class DoorOfDestiniesTest extends BaseCardTest {
         harness.addToBattlefield(player1, elf);
         addDoor(player1, CardSubtype.ELF);
 
-        Permanent elfPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elfPerm = findPermanent(player1, "Llanowar Elves");
 
         var bonus = gqs.computeStaticBonus(gd, elfPerm);
         assertThat(bonus.power()).isEqualTo(0);
@@ -154,9 +152,7 @@ class DoorOfDestiniesTest extends BaseCardTest {
         Permanent door = addDoor(player1, CardSubtype.ELF);
         door.setCounterCount(CounterType.CHARGE, 3);
 
-        Permanent elfPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elfPerm = findPermanent(player1, "Llanowar Elves");
 
         var bonus = gqs.computeStaticBonus(gd, elfPerm);
         assertThat(bonus.power()).isEqualTo(3);
@@ -172,9 +168,7 @@ class DoorOfDestiniesTest extends BaseCardTest {
         Permanent door = addDoor(player1, CardSubtype.ELF);
         door.setCounterCount(CounterType.CHARGE, 3);
 
-        Permanent goblinPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Piker"))
-                .findFirst().orElseThrow();
+        Permanent goblinPerm = findPermanent(player1, "Goblin Piker");
 
         var bonus = gqs.computeStaticBonus(gd, goblinPerm);
         assertThat(bonus.power()).isEqualTo(0);
@@ -190,9 +184,7 @@ class DoorOfDestiniesTest extends BaseCardTest {
         Permanent door = addDoor(player1, CardSubtype.ELF);
         door.setCounterCount(CounterType.CHARGE, 2);
 
-        Permanent elfPerm = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elfPerm = findPermanent(player2, "Llanowar Elves");
 
         var bonus = gqs.computeStaticBonus(gd, elfPerm);
         assertThat(bonus.power()).isEqualTo(0);

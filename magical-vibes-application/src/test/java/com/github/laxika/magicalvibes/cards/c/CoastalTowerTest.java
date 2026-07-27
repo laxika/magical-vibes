@@ -25,9 +25,7 @@ class CoastalTowerTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        Permanent tower = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Coastal Tower"))
-                .findFirst().orElseThrow();
+        Permanent tower = findPermanent(player1, "Coastal Tower");
         assertThat(tower.isTapped()).isTrue();
     }
 

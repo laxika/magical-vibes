@@ -31,9 +31,7 @@ class FaerieConclaveTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        Permanent conclave = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Faerie Conclave"))
-                .findFirst().orElseThrow();
+        Permanent conclave = findPermanent(player1, "Faerie Conclave");
         assertThat(conclave.isTapped()).isTrue();
     }
 

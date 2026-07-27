@@ -40,10 +40,7 @@ class WaitingInTheWeedsTest extends BaseCardTest {
         assertThat(catCount(player1.getId())).isEqualTo(2);
         assertThat(catCount(player2.getId())).isEqualTo(1);
 
-        Permanent cat = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Cat"))
-                .findFirst()
-                .orElseThrow();
+        Permanent cat = findPermanent(player1, "Cat");
         assertThat(cat.getCard().getPower()).isEqualTo(1);
         assertThat(cat.getCard().getToughness()).isEqualTo(1);
     }

@@ -19,9 +19,7 @@ class FavorableWindsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FavorableWinds());
         harness.addToBattlefield(player1, new CloudElemental());
 
-        Permanent elemental = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Cloud Elemental"))
-                .findFirst().orElseThrow();
+        Permanent elemental = findPermanent(player1, "Cloud Elemental");
 
         // Cloud Elemental is 2/3; with +1/+1 boost = 3/4
         assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(3);
@@ -34,9 +32,7 @@ class FavorableWindsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FavorableWinds());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         // Grizzly Bears is 2/2, no flying, should not be boosted
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
@@ -49,9 +45,7 @@ class FavorableWindsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FavorableWinds());
         harness.addToBattlefield(player2, new CloudElemental());
 
-        Permanent elemental = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Cloud Elemental"))
-                .findFirst().orElseThrow();
+        Permanent elemental = findPermanent(player2, "Cloud Elemental");
 
         // Opponent's Cloud Elemental should remain 2/3
         assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(2);
@@ -64,9 +58,7 @@ class FavorableWindsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FavorableWinds());
         harness.addToBattlefield(player1, new CloudElemental());
 
-        Permanent elemental = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Cloud Elemental"))
-                .findFirst().orElseThrow();
+        Permanent elemental = findPermanent(player1, "Cloud Elemental");
         assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(3);
 
         // Remove the enchantment
@@ -85,9 +77,7 @@ class FavorableWindsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FavorableWinds());
         harness.addToBattlefield(player1, new CloudElemental());
 
-        Permanent elemental = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Cloud Elemental"))
-                .findFirst().orElseThrow();
+        Permanent elemental = findPermanent(player1, "Cloud Elemental");
 
         // Cloud Elemental is 2/3; with two +1/+1 boosts = 4/5
         assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(4);

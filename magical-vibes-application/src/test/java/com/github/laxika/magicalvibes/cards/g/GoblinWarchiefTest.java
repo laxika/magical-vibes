@@ -53,9 +53,7 @@ class GoblinWarchiefTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GoblinEliteInfantry());
         harness.addToBattlefield(player1, new GoblinWarchief());
 
-        Permanent goblin = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Elite Infantry"))
-                .findFirst().orElseThrow();
+        Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
 
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.HASTE)).isTrue();
         // No power/toughness boost
@@ -69,9 +67,7 @@ class GoblinWarchiefTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GoblinWarchief());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
@@ -82,9 +78,7 @@ class GoblinWarchiefTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GoblinWarchief());
         harness.addToBattlefield(player2, new GoblinEliteInfantry());
 
-        Permanent opponentGoblin = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Elite Infantry"))
-                .findFirst().orElseThrow();
+        Permanent opponentGoblin = findPermanent(player2, "Goblin Elite Infantry");
 
         assertThat(gqs.hasKeyword(gd, opponentGoblin, Keyword.HASTE)).isFalse();
     }
@@ -95,9 +89,7 @@ class GoblinWarchiefTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GoblinWarchief());
         harness.addToBattlefield(player1, new GoblinEliteInfantry());
 
-        Permanent goblin = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Elite Infantry"))
-                .findFirst().orElseThrow();
+        Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
 
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.HASTE)).isTrue();
 
@@ -188,9 +180,7 @@ class GoblinWarchiefTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent goblin = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Elite Infantry"))
-                .findFirst().orElseThrow();
+        Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
 
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.HASTE)).isTrue();
     }

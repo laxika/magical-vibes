@@ -278,9 +278,7 @@ class MortivoreTest extends BaseCardTest {
 
         // Mortivore should survive via regeneration
         harness.assertOnBattlefield(player1, "Mortivore");
-        Permanent mort = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mortivore"))
-                .findFirst().orElseThrow();
+        Permanent mort = findPermanent(player1, "Mortivore");
         assertThat(mort.isTapped()).isTrue();
         assertThat(mort.getRegenerationShield()).isEqualTo(0);
         // Grizzly Bears also takes 2 lethal damage from Mortivore and dies

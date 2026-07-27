@@ -28,9 +28,7 @@ class SeasideCitadelTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        Permanent citadel = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Seaside Citadel"))
-                .findFirst().orElseThrow();
+        Permanent citadel = findPermanent(player1, "Seaside Citadel");
         assertThat(citadel.isTapped()).isTrue();
     }
 

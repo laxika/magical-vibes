@@ -80,10 +80,7 @@ class CarrionWallTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        Permanent wall = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Carrion Wall"))
-                .findFirst().orElseThrow();
+        Permanent wall = findPermanent(player1, "Carrion Wall");
         assertThat(wall.isTapped()).isTrue();
         assertThat(wall.getRegenerationShield()).isEqualTo(0);
     }

@@ -17,9 +17,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 class ShrineOfLoyalLegionsTest extends BaseCardTest {
 
     private Permanent getShrine() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Shrine of Loyal Legions"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Shrine of Loyal Legions");
     }
 
     private int getShrineIndex() {
@@ -144,9 +142,7 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
         harness.activateAbility(player1, getShrineIndex(), null, null);
         harness.passBothPriorities();
 
-        long myrCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Myr"))
-                .count();
+        long myrCount = countPermanents(player1, "Myr");
         assertThat(myrCount).isEqualTo(5);
     }
 
@@ -194,9 +190,7 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
         harness.activateAbility(player1, getShrineIndex(), null, null);
         harness.passBothPriorities();
 
-        long myrCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Myr"))
-                .count();
+        long myrCount = countPermanents(player1, "Myr");
         assertThat(myrCount).isEqualTo(2);
     }
 }

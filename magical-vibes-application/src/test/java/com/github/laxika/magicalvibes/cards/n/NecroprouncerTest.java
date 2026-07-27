@@ -91,9 +91,7 @@ class NecroprouncerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent germ = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         assertThat(germ.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(germ.getCard().getPower()).isEqualTo(0);
@@ -115,9 +113,7 @@ class NecroprouncerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent germ = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         // 0/0 base + 3/1 from equipment = 3/1 effective
         assertThat(gqs.getEffectivePower(gd, germ)).isEqualTo(3);
@@ -145,9 +141,7 @@ class NecroprouncerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        Permanent necropouncer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Necropouncer"))
-                .findFirst().orElseThrow();
+        Permanent necropouncer = findPermanent(player1, "Necropouncer");
 
         assertThat(necropouncer.getAttachedTo()).isEqualTo(bears.getId());
 

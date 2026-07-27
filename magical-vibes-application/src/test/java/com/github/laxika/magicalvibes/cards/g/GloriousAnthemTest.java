@@ -52,9 +52,7 @@ class GloriousAnthemTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GloriousAnthem());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
@@ -66,9 +64,7 @@ class GloriousAnthemTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GloriousAnthem());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent opponentBears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(2);
@@ -100,9 +96,7 @@ class GloriousAnthemTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GloriousAnthem());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
@@ -116,9 +110,7 @@ class GloriousAnthemTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GloriousAnthem());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
 
@@ -139,9 +131,7 @@ class GloriousAnthemTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GloriousAnthem()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
 
@@ -160,9 +150,7 @@ class GloriousAnthemTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GloriousAnthem());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         // Simulate a temporary spell boost
         bears.setPowerModifier(bears.getPowerModifier() + 3);

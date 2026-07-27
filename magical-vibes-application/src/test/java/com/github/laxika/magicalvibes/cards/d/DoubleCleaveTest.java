@@ -29,9 +29,7 @@ class DoubleCleaveTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
@@ -61,9 +59,7 @@ class DoubleCleaveTest extends BaseCardTest {
     @DisplayName("Double strike keyword is removed at end of turn")
     void doubleStrikeRemovedAtEndOfTurn() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         bears.getGrantedKeywords().add(Keyword.DOUBLE_STRIKE);
 
         harness.forceStep(TurnStep.END_STEP);

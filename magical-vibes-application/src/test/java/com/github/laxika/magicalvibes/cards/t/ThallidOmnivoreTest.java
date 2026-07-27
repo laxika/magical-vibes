@@ -189,8 +189,6 @@ class ThallidOmnivoreTest extends BaseCardTest {
     }
 
     private Permanent findOmnivore(GameData gd, Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Thallid Omnivore"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Thallid Omnivore");
     }
 }

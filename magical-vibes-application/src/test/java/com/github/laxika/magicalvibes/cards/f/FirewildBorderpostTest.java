@@ -109,9 +109,7 @@ class FirewildBorderpostTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent borderpost(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Firewild Borderpost"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Firewild Borderpost");
     }
 
     private Permanent addReadyBorderpost(Player player) {

@@ -32,9 +32,7 @@ class FieryInterventionTest extends BaseCardTest {
             harness.setHand(player1, List.of(new FieryIntervention()));
             harness.addMana(player1, ManaColor.RED, 5);
 
-            Permanent bearsPermanent = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                    .findFirst().orElseThrow();
+            Permanent bearsPermanent = findPermanent(player2, "Grizzly Bears");
 
             harness.castSorcery(player1, 0, 0, bearsPermanent.getId());
             harness.passBothPriorities();
@@ -52,9 +50,7 @@ class FieryInterventionTest extends BaseCardTest {
             harness.setHand(player1, List.of(new FieryIntervention()));
             harness.addMana(player1, ManaColor.RED, 5);
 
-            Permanent millstonePermanent = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Millstone"))
-                    .findFirst().orElseThrow();
+            Permanent millstonePermanent = findPermanent(player2, "Millstone");
 
             assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, millstonePermanent.getId()))
                     .isInstanceOf(IllegalStateException.class);
@@ -74,9 +70,7 @@ class FieryInterventionTest extends BaseCardTest {
             harness.setHand(player1, List.of(new FieryIntervention()));
             harness.addMana(player1, ManaColor.RED, 5);
 
-            Permanent millstonePermanent = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Millstone"))
-                    .findFirst().orElseThrow();
+            Permanent millstonePermanent = findPermanent(player2, "Millstone");
 
             harness.castSorcery(player1, 0, 1, millstonePermanent.getId());
             harness.passBothPriorities();
@@ -94,9 +88,7 @@ class FieryInterventionTest extends BaseCardTest {
             harness.setHand(player1, List.of(new FieryIntervention()));
             harness.addMana(player1, ManaColor.RED, 5);
 
-            Permanent bearsPermanent = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                    .findFirst().orElseThrow();
+            Permanent bearsPermanent = findPermanent(player2, "Grizzly Bears");
 
             assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, bearsPermanent.getId()))
                     .isInstanceOf(IllegalStateException.class);
@@ -112,9 +104,7 @@ class FieryInterventionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FieryIntervention()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        Permanent bearsPermanent = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bearsPermanent = findPermanent(player2, "Grizzly Bears");
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 99, bearsPermanent.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -130,9 +120,7 @@ class FieryInterventionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FieryIntervention()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        Permanent bearsPermanent = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bearsPermanent = findPermanent(player2, "Grizzly Bears");
 
         harness.castSorcery(player1, 0, 0, bearsPermanent.getId());
         harness.passBothPriorities();

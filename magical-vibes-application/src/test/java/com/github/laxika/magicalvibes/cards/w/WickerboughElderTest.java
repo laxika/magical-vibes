@@ -129,8 +129,6 @@ class WickerboughElderTest extends BaseCardTest {
     }
 
     private Permanent findElder(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wickerbough Elder"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Wickerbough Elder");
     }
 }

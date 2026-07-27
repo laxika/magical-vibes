@@ -70,10 +70,7 @@ class BandageTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
     }
 
@@ -103,16 +100,13 @@ class BandageTest extends BaseCardTest {
         // Passing priorities advances from DECLARE_BLOCKERS → COMBAT_DAMAGE, triggering resolveCombatDamage
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Attacker dealt 2 damage, but defender has 1 prevention → 1 effective damage
         // 1 < 2 toughness → defender survives
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         // Attacker took 2 damage with no shield → 2 >= 2 toughness → attacker dies
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         // Prevention shield was consumed
-        Permanent surviving = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent surviving = findPermanent(player2, "Grizzly Bears");
         assertThat(surviving.getDamagePreventionShield()).isEqualTo(0);
     }
 
@@ -140,9 +134,7 @@ class BandageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // After combat, shield should be consumed
-        Permanent surviving = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent surviving = findPermanent(player2, "Grizzly Bears");
         assertThat(surviving.getDamagePreventionShield()).isEqualTo(0);
     }
 

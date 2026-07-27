@@ -98,8 +98,6 @@ class VividCragTest extends BaseCardTest {
     }
 
     private Permanent crag(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vivid Crag"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Vivid Crag");
     }
 }

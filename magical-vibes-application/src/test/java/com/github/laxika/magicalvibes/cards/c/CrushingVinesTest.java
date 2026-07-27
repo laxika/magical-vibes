@@ -33,9 +33,7 @@ class CrushingVinesTest extends BaseCardTest {
             harness.setHand(player1, List.of(new CrushingVines()));
             harness.addMana(player1, ManaColor.GREEN, 3);
 
-            Permanent airElementalPermanent = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Air Elemental"))
-                    .findFirst().orElseThrow();
+            Permanent airElementalPermanent = findPermanent(player2, "Air Elemental");
 
             harness.castInstant(player1, 0, 0, airElementalPermanent.getId());
             harness.passBothPriorities();
@@ -54,9 +52,7 @@ class CrushingVinesTest extends BaseCardTest {
             harness.setHand(player1, List.of(new CrushingVines()));
             harness.addMana(player1, ManaColor.GREEN, 3);
 
-            Permanent bearsPermanent = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                    .findFirst().orElseThrow();
+            Permanent bearsPermanent = findPermanent(player2, "Grizzly Bears");
 
             assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, bearsPermanent.getId()))
                     .isInstanceOf(IllegalStateException.class);
@@ -72,9 +68,7 @@ class CrushingVinesTest extends BaseCardTest {
             harness.setHand(player1, List.of(new CrushingVines()));
             harness.addMana(player1, ManaColor.GREEN, 3);
 
-            Permanent millstonePermanent = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Millstone"))
-                    .findFirst().orElseThrow();
+            Permanent millstonePermanent = findPermanent(player2, "Millstone");
 
             assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, millstonePermanent.getId()))
                     .isInstanceOf(IllegalStateException.class);
@@ -94,9 +88,7 @@ class CrushingVinesTest extends BaseCardTest {
             harness.setHand(player1, List.of(new CrushingVines()));
             harness.addMana(player1, ManaColor.GREEN, 3);
 
-            Permanent millstonePermanent = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Millstone"))
-                    .findFirst().orElseThrow();
+            Permanent millstonePermanent = findPermanent(player2, "Millstone");
 
             harness.castInstant(player1, 0, 1, millstonePermanent.getId());
             harness.passBothPriorities();
@@ -115,9 +107,7 @@ class CrushingVinesTest extends BaseCardTest {
             harness.setHand(player1, List.of(new CrushingVines()));
             harness.addMana(player1, ManaColor.GREEN, 3);
 
-            Permanent bearsPermanent = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                    .findFirst().orElseThrow();
+            Permanent bearsPermanent = findPermanent(player2, "Grizzly Bears");
 
             assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, bearsPermanent.getId()))
                     .isInstanceOf(IllegalStateException.class);
@@ -133,9 +123,7 @@ class CrushingVinesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CrushingVines()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        Permanent airElementalPermanent = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Air Elemental"))
-                .findFirst().orElseThrow();
+        Permanent airElementalPermanent = findPermanent(player2, "Air Elemental");
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 99, airElementalPermanent.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -151,9 +139,7 @@ class CrushingVinesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CrushingVines()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        Permanent airElementalPermanent = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Air Elemental"))
-                .findFirst().orElseThrow();
+        Permanent airElementalPermanent = findPermanent(player2, "Air Elemental");
 
         harness.castInstant(player1, 0, 0, airElementalPermanent.getId());
         harness.passBothPriorities();

@@ -29,9 +29,7 @@ class GnarledEffigyTest extends BaseCardTest {
         harness.activateAbility(player1, index, null, targetId);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);

@@ -99,9 +99,7 @@ class AnnexTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(forest.getId()));
 
-        Permanent annexPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Annex"))
-                .findFirst().orElseThrow();
+        Permanent annexPerm = findPermanent(player1, "Annex");
 
         // Destroy the aura with Demystify
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -128,9 +126,7 @@ class AnnexTest extends BaseCardTest {
     void cannotTargetNonLand() {
         harness.addToBattlefield(player2, new Forest()); // valid target so spell is playable
         harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         harness.setHand(player1, List.of(new Annex()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 

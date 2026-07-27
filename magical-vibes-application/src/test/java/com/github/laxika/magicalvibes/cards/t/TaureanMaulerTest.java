@@ -79,9 +79,6 @@ class TaureanMaulerTest extends BaseCardTest {
     }
 
     private Permanent getMauler() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Taurean Mauler"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Taurean Mauler");
     }
 }

@@ -74,9 +74,7 @@ class GeistcatchersRigTest extends BaseCardTest {
     void rigEntersAs4_5() {
         harness.addToBattlefield(player1, new GeistcatchersRig());
 
-        Permanent rig = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Geistcatcher's Rig"))
-                .findFirst().orElseThrow();
+        Permanent rig = findPermanent(player1, "Geistcatcher's Rig");
 
         assertThat(gqs.getEffectivePower(gd, rig)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, rig)).isEqualTo(5);

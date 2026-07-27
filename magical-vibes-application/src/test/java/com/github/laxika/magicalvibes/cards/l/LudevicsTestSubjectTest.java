@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -158,9 +157,7 @@ class LudevicsTestSubjectTest extends BaseCardTest {
 
     private Permanent addReadySubject() {
         harness.addToBattlefield(player1, new LudevicsTestSubject());
-        Permanent subject = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ludevic's Test Subject"))
-                .findFirst().orElseThrow();
+        Permanent subject = findPermanent(player1, "Ludevic's Test Subject");
         subject.setSummoningSick(false);
         return subject;
     }

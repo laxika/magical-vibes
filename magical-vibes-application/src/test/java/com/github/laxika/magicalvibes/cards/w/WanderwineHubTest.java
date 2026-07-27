@@ -95,8 +95,6 @@ class WanderwineHubTest extends BaseCardTest {
     }
 
     private Permanent findLand(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wanderwine Hub"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Wanderwine Hub");
     }
 }

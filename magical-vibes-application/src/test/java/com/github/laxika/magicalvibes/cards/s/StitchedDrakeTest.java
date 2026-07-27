@@ -82,9 +82,7 @@ class StitchedDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Stitched Drake");
-        var drake = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Stitched Drake"))
-                .findFirst().orElseThrow();
+        var drake = findPermanent(player1, "Stitched Drake");
         assertThat(drake.getCard().getPower()).isEqualTo(3);
         assertThat(drake.getCard().getToughness()).isEqualTo(4);
     }

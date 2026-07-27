@@ -81,9 +81,7 @@ class BrackwaterElementalTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Brackwater Elemental"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Brackwater Elemental");
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
         harness.assertNotInGraveyard(player1, "Brackwater Elemental");
     }

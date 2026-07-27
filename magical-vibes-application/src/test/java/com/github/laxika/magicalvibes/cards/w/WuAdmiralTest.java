@@ -71,8 +71,6 @@ class WuAdmiralTest extends BaseCardTest {
     }
 
     private Permanent findAdmiral() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wu Admiral"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Wu Admiral");
     }
 }

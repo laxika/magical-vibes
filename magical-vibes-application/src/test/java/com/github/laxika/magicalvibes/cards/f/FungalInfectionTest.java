@@ -31,18 +31,14 @@ class FungalInfectionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Target creature gets -1/-1
-        Permanent bear = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
         assertThat(bear.getPowerModifier()).isEqualTo(-1);
         assertThat(bear.getToughnessModifier()).isEqualTo(-1);
         assertThat(bear.getEffectivePower()).isEqualTo(1);
         assertThat(bear.getEffectiveToughness()).isEqualTo(1);
 
         // Saproling token created under caster's control
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Saproling"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Saproling");
         assertThat(tokens).hasSize(1);
         assertThat(tokens.getFirst().getCard().getPower()).isEqualTo(1);
         assertThat(tokens.getFirst().getCard().getToughness()).isEqualTo(1);
@@ -64,9 +60,7 @@ class FungalInfectionTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Llanowar Elves");
 
         // Saproling token still created
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Saproling"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Saproling");
         assertThat(tokens).hasSize(1);
     }
 
@@ -84,9 +78,7 @@ class FungalInfectionTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // No Saproling token should be created when the spell fizzles
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Saproling"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Saproling");
         assertThat(tokens).isEmpty();
     }
 
@@ -105,9 +97,7 @@ class FungalInfectionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent bear = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
         assertThat(bear.getPowerModifier()).isEqualTo(0);
         assertThat(bear.getToughnessModifier()).isEqualTo(0);
         assertThat(bear.getEffectivePower()).isEqualTo(2);

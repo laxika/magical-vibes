@@ -35,10 +35,7 @@ class MarrowShardsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears have 2 toughness; 1 damage leaves them alive
-        GameData gd = harness.getGameData();
-        long bearCount = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .count();
+        long bearCount = countPermanents(player2, "Grizzly Bears");
         assertThat(bearCount).isEqualTo(2);
     }
 

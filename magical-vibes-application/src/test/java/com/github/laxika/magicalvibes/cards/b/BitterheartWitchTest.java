@@ -292,9 +292,7 @@ class BitterheartWitchTest extends BaseCardTest {
     // ===== Helpers =====
 
     private void setupCombatWhereWitchDies() {
-        Permanent witchPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bitterheart Witch"))
-                .findFirst().orElseThrow();
+        Permanent witchPerm = findPermanent(player1, "Bitterheart Witch");
         witchPerm.setSummoningSick(false);
         witchPerm.setAttacking(true);
 

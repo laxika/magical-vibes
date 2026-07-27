@@ -55,9 +55,7 @@ class TukatongueThallidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // A Saproling token should be on the battlefield
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Saproling"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Saproling");
         assertThat(tokens).hasSize(1);
     }
 }

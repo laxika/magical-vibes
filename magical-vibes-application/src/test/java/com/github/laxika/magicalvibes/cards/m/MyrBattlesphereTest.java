@@ -47,9 +47,7 @@ class MyrBattlesphereTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent myrToken = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Myr"))
-                .findFirst().orElseThrow();
+        Permanent myrToken = findPermanent(player1, "Myr");
         assertThat(myrToken.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(myrToken.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
         assertThat(myrToken.getCard().getSubtypes()).contains(CardSubtype.MYR);

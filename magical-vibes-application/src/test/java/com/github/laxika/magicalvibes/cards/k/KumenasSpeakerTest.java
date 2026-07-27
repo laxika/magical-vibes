@@ -87,9 +87,7 @@ class KumenasSpeakerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KumenasSpeaker());
         harness.addToBattlefield(player1, new KumenasSpeaker());
 
-        List<Permanent> speakers = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Kumena's Speaker"))
-                .toList();
+        List<Permanent> speakers = findPermanents(player1, "Kumena's Speaker");
 
         assertThat(speakers).hasSize(2);
         // Each sees the other as "another Merfolk" so both get the boost

@@ -21,9 +21,7 @@ class HeartlashCinderTest extends BaseCardTest {
         harness.castCreature(player, 0);
         harness.passBothPriorities(); // resolve the Cinder, queue ETB trigger
         harness.passBothPriorities(); // resolve ETB trigger
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Heartlash Cinder"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Heartlash Cinder");
     }
 
     @Test

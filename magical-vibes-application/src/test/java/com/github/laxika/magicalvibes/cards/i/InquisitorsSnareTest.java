@@ -109,9 +109,7 @@ class InquisitorsSnareTest extends BaseCardTest {
 
     private Permanent addAttacker(Player owner, com.github.laxika.magicalvibes.model.Card card) {
         harness.addToBattlefield(owner, card);
-        Permanent attacker = gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(card.getName()))
-                .findFirst().orElseThrow();
+        Permanent attacker = findPermanent(owner, card.getName());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());

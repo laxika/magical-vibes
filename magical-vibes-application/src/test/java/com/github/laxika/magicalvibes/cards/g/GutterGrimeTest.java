@@ -54,9 +54,7 @@ class GutterGrimeTest extends BaseCardTest {
             assertThat(grime.getCounterCount(CounterType.SLIME)).isEqualTo(1);
 
             // One Ooze token should exist
-            List<Permanent> oozes = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Ooze"))
-                    .toList();
+            List<Permanent> oozes = findPermanents(player1, "Ooze");
             assertThat(oozes).hasSize(1);
 
             Permanent ooze = oozes.getFirst();
@@ -103,9 +101,7 @@ class GutterGrimeTest extends BaseCardTest {
             assertThat(grime.getCounterCount(CounterType.SLIME)).isEqualTo(2);
 
             // Two Ooze tokens should exist
-            List<Permanent> oozes = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Ooze"))
-                    .toList();
+            List<Permanent> oozes = findPermanents(player1, "Ooze");
             assertThat(oozes).hasSize(2);
 
             // Both tokens should have P/T equal to 2 (current slime counter count) — the
@@ -208,9 +204,7 @@ class GutterGrimeTest extends BaseCardTest {
             harness.passBothPriorities(); // Resolve trigger — Gutter Grime is gone
 
             // No Ooze tokens should exist (effect fizzled)
-            List<Permanent> oozes = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Ooze"))
-                    .toList();
+            List<Permanent> oozes = findPermanents(player1, "Ooze");
             assertThat(oozes).isEmpty();
         }
     }

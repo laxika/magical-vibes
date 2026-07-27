@@ -27,10 +27,7 @@ class MoldgrafMillipedeTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB
 
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Moldgraf Millipede"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Moldgraf Millipede");
     }
 
     @Test

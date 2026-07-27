@@ -29,9 +29,7 @@ class TrigonOfCorruptionTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Corruption"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Corruption");
         assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
@@ -42,9 +40,7 @@ class TrigonOfCorruptionTest extends BaseCardTest {
     void firstAbilityAddsChargeCounter() {
         harness.addToBattlefield(player1, new TrigonOfCorruption());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Corruption"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Corruption");
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -72,9 +68,7 @@ class TrigonOfCorruptionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TrigonOfCorruption());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Corruption"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Corruption");
         trigon.setCounterCount(CounterType.CHARGE, 1);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -87,9 +81,7 @@ class TrigonOfCorruptionTest extends BaseCardTest {
         assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
 
         // -1/-1 counter placed
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
@@ -99,9 +91,7 @@ class TrigonOfCorruptionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TrigonOfCorruption());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Corruption"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Corruption");
         trigon.setCounterCount(CounterType.CHARGE, 0);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -122,9 +112,7 @@ class TrigonOfCorruptionTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(bears);
         UUID bearsId = bears.getId();
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Corruption"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Corruption");
         trigon.setCounterCount(CounterType.CHARGE, 1);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -143,9 +131,7 @@ class TrigonOfCorruptionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TrigonOfCorruption());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Corruption"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Corruption");
         trigon.setCounterCount(CounterType.CHARGE, 1);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -173,9 +159,7 @@ class TrigonOfCorruptionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TrigonOfCorruption());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Corruption"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Corruption");
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         // Use first ability (tap to add counter)

@@ -42,9 +42,7 @@ class RevelInRichesTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve death trigger (CreateTokenEffect)
 
         // Treasure token on player1's battlefield
-        List<Permanent> treasures = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .toList();
+        List<Permanent> treasures = findPermanents(player1, "Treasure");
         assertThat(treasures).hasSize(1);
         assertThat(treasures.getFirst().getCard().isToken()).isTrue();
         assertThat(treasures.getFirst().getCard().getType()).isEqualTo(CardType.ARTIFACT);
@@ -84,24 +82,18 @@ class RevelInRichesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID bears1Id = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow().getId();
+        UUID bears1Id = findPermanent(player2, "Grizzly Bears").getId();
         harness.castInstant(player1, 0, bears1Id);
         harness.passBothPriorities(); // Resolve first Shock → first bears die → death trigger
         harness.passBothPriorities(); // Resolve death trigger
 
-        UUID bears2Id = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow().getId();
+        UUID bears2Id = findPermanent(player2, "Grizzly Bears").getId();
         harness.castInstant(player1, 0, bears2Id);
         harness.passBothPriorities(); // Resolve second Shock → second bears die → death trigger
         harness.passBothPriorities(); // Resolve death trigger
 
         // Two Treasure tokens on player1's battlefield
-        long treasureCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .count();
+        long treasureCount = countPermanents(player1, "Treasure");
         assertThat(treasureCount).isEqualTo(2);
     }
 

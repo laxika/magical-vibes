@@ -80,9 +80,7 @@ class ControlledInstinctsTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(new Permanent(new GrizzlyBears()));
 
         harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.p.Pacifism());
-        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Pacifism"))
-                .findFirst().orElseThrow();
+        Permanent aura = findPermanent(player1, "Pacifism");
 
         harness.setHand(player1, List.of(new ControlledInstincts()));
         harness.addMana(player1, ManaColor.BLUE, 1);

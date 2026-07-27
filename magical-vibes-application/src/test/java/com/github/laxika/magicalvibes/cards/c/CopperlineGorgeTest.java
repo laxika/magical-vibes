@@ -176,8 +176,6 @@ class CopperlineGorgeTest extends BaseCardTest {
     }
 
     private Permanent findGorge(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Copperline Gorge"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Copperline Gorge");
     }
 }

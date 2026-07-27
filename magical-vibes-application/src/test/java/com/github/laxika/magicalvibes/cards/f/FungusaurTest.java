@@ -42,9 +42,7 @@ class FungusaurTest extends BaseCardTest {
 
         // Fungusaur survives (2 toughness, 1 damage) and has a +1/+1 counter
         harness.assertOnBattlefield(player2, "Fungusaur");
-        Permanent survivor = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fungusaur"))
-                .findFirst().orElseThrow();
+        Permanent survivor = findPermanent(player2, "Fungusaur");
         assertThat(survivor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Fugitive Wizard dies to the 2/2 Fungusaur

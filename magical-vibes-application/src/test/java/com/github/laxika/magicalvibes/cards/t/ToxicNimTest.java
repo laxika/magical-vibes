@@ -156,9 +156,7 @@ class ToxicNimTest extends BaseCardTest {
 
         // Toxic Nim should survive via regeneration
         harness.assertOnBattlefield(player1, "Toxic Nim");
-        Permanent nim = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Toxic Nim"))
-                .findFirst().orElseThrow();
+        Permanent nim = findPermanent(player1, "Toxic Nim");
         // Regeneration should tap the creature
         assertThat(nim.isTapped()).isTrue();
         // Regeneration shield should be consumed

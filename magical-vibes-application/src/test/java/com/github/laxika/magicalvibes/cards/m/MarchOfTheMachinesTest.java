@@ -54,9 +54,7 @@ class MarchOfTheMachinesTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AngelsFeather());
         harness.addToBattlefield(player1, new MarchOfTheMachines());
 
-        Permanent feather = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Angel's Feather"))
-                .findFirst().orElseThrow();
+        Permanent feather = findPermanent(player1, "Angel's Feather");
 
         assertThat(gqs.isCreature(gd, feather)).isTrue();
         assertThat(gqs.getEffectivePower(gd, feather)).isEqualTo(2);
@@ -69,9 +67,7 @@ class MarchOfTheMachinesTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AngelsFeather());
         harness.addToBattlefield(player1, new MarchOfTheMachines());
 
-        Permanent feather = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Angel's Feather"))
-                .findFirst().orElseThrow();
+        Permanent feather = findPermanent(player1, "Angel's Feather");
 
         // March of the Machines makes artifacts into creatures but does NOT grant creature subtypes
         assertThat(gqs.isCreature(gd, feather)).isTrue();
@@ -85,9 +81,7 @@ class MarchOfTheMachinesTest extends BaseCardTest {
         harness.addToBattlefield(player1, new IcyManipulator());
         harness.addToBattlefield(player1, new MarchOfTheMachines());
 
-        Permanent icy = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Icy Manipulator"))
-                .findFirst().orElseThrow();
+        Permanent icy = findPermanent(player1, "Icy Manipulator");
 
         assertThat(gqs.isCreature(gd, icy)).isTrue();
         assertThat(gqs.getEffectivePower(gd, icy)).isEqualTo(4);
@@ -102,9 +96,7 @@ class MarchOfTheMachinesTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new MarchOfTheMachines());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -119,9 +111,7 @@ class MarchOfTheMachinesTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MarchOfTheMachines());
         harness.addToBattlefield(player1, new GloriousAnthem());
 
-        Permanent feather = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Angel's Feather"))
-                .findFirst().orElseThrow();
+        Permanent feather = findPermanent(player1, "Angel's Feather");
 
         // Angel's Feather: mana value 2 + Glorious Anthem +1/+1 = 3/3
         assertThat(gqs.getEffectivePower(gd, feather)).isEqualTo(3);
@@ -136,9 +126,7 @@ class MarchOfTheMachinesTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AngelsFeather());
         harness.addToBattlefield(player1, new MarchOfTheMachines());
 
-        Permanent feather = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Angel's Feather"))
-                .findFirst().orElseThrow();
+        Permanent feather = findPermanent(player1, "Angel's Feather");
 
         assertThat(gqs.isCreature(gd, feather)).isTrue();
         assertThat(gqs.getEffectivePower(gd, feather)).isEqualTo(2);
@@ -160,9 +148,7 @@ class MarchOfTheMachinesTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MarchOfTheMachines());
         harness.addToBattlefield(player2, new IcyManipulator());
 
-        Permanent opponentIcy = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Icy Manipulator"))
-                .findFirst().orElseThrow();
+        Permanent opponentIcy = findPermanent(player2, "Icy Manipulator");
 
         assertThat(gqs.isCreature(gd, opponentIcy)).isTrue();
         assertThat(gqs.getEffectivePower(gd, opponentIcy)).isEqualTo(4);
@@ -177,9 +163,7 @@ class MarchOfTheMachinesTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GloriousAnthem());
         harness.addToBattlefield(player1, new MarchOfTheMachines());
 
-        Permanent anthem = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Glorious Anthem"))
-                .findFirst().orElseThrow();
+        Permanent anthem = findPermanent(player1, "Glorious Anthem");
 
         assertThat(gqs.isCreature(gd, anthem)).isFalse();
     }

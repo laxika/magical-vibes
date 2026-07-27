@@ -59,9 +59,7 @@ class ChandraBoldPyromancerTest extends BaseCardTest {
         Permanent chandra = addReadyChandra(player1);
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
 
         harness.activateAbility(player1, 0, 1, null, bear.getId());
         harness.passBothPriorities();

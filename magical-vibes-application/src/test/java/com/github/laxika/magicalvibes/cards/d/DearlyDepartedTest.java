@@ -66,9 +66,7 @@ class DearlyDepartedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The Human should NOT have a counter (Dearly Departed is on battlefield, not in graveyard)
-        Permanent vanguard = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elite Vanguard"))
-                .findFirst().orElseThrow();
+        Permanent vanguard = findPermanent(player1, "Elite Vanguard");
         assertThat(vanguard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 

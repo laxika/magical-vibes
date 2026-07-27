@@ -89,9 +89,7 @@ class KrovikanVampireTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
 
-        Permanent vampire = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Krovikan Vampire"))
-                .findFirst().orElseThrow();
+        Permanent vampire = findPermanent(player1, "Krovikan Vampire");
         gd.playerBattlefields.get(player1.getId()).remove(vampire);
         gd.playerBattlefields.get(player2.getId()).add(vampire);
 

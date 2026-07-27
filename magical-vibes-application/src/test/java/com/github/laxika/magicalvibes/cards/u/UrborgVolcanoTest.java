@@ -25,9 +25,7 @@ class UrborgVolcanoTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        Permanent land = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Urborg Volcano"))
-                .findFirst().orElseThrow();
+        Permanent land = findPermanent(player1, "Urborg Volcano");
         assertThat(land.isTapped()).isTrue();
     }
 

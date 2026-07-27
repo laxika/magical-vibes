@@ -65,9 +65,7 @@ class AntQueenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Insect"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Insect");
         assertThat(token.isSummoningSick()).isTrue();
     }
 
@@ -95,9 +93,7 @@ class AntQueenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        long tokenCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Insect"))
-                .count();
+        long tokenCount = countPermanents(player1, "Insect");
         assertThat(tokenCount).isEqualTo(2);
     }
 

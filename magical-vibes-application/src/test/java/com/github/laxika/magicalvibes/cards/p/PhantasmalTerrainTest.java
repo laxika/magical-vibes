@@ -49,9 +49,7 @@ class PhantasmalTerrainTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "ISLAND");
 
-        Permanent terrain = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phantasmal Terrain"))
-                .findFirst().orElseThrow();
+        Permanent terrain = findPermanent(player1, "Phantasmal Terrain");
         assertThat(terrain.getChosenSubtype()).isEqualTo(CardSubtype.ISLAND);
     }
 
@@ -110,9 +108,7 @@ class PhantasmalTerrainTest extends BaseCardTest {
     void cannotTargetNonLand() {
         harness.addToBattlefield(player1, new Forest()); // valid target so spell is playable
         harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         harness.setHand(player1, List.of(new PhantasmalTerrain()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 

@@ -18,9 +18,7 @@ class BlessedOratorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new BlessedOrator());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
@@ -31,9 +29,7 @@ class BlessedOratorTest extends BaseCardTest {
     void doesNotBuffItself() {
         harness.addToBattlefield(player1, new BlessedOrator());
 
-        Permanent orator = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blessed Orator"))
-                .findFirst().orElseThrow();
+        Permanent orator = findPermanent(player1, "Blessed Orator");
 
         assertThat(gqs.getEffectivePower(gd, orator)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, orator)).isEqualTo(4);
@@ -45,9 +41,7 @@ class BlessedOratorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BlessedOrator());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent opponentBears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(2);
@@ -60,9 +54,7 @@ class BlessedOratorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BlessedOrator());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
@@ -74,9 +66,7 @@ class BlessedOratorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BlessedOrator());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
 

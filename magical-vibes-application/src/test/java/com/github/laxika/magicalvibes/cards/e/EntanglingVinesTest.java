@@ -69,9 +69,7 @@ class EntanglingVinesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EntanglingVines()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        Permanent artifact = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fountain of Youth"))
-                .findFirst().orElseThrow();
+        Permanent artifact = findPermanent(player1, "Fountain of Youth");
         artifact.tap();
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))

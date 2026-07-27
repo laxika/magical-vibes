@@ -26,9 +26,7 @@ class SunsetPyramidTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        Permanent pyramid = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sunset Pyramid"))
-                .findFirst().orElseThrow();
+        Permanent pyramid = findPermanent(player1, "Sunset Pyramid");
         assertThat(pyramid.getCounterCount(CounterType.BRICK)).isEqualTo(3);
     }
 

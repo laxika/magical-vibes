@@ -48,9 +48,7 @@ class ElgaudInquisitorTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // A 1/1 Spirit token with flying should be on the battlefield
-            List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Spirit"))
-                    .toList();
+            List<Permanent> tokens = findPermanents(player1, "Spirit");
             assertThat(tokens).hasSize(1);
 
             Permanent spiritToken = tokens.getFirst();
@@ -75,18 +73,12 @@ class ElgaudInquisitorTest extends BaseCardTest {
             harness.passBothPriorities(); // Resolve Wrath — Elgaud Inquisitor dies
             harness.passBothPriorities(); // Resolve death trigger
 
-            GameData gd = harness.getGameData();
-
             // The Spirit token should be on player2's battlefield (the Elgaud Inquisitor's controller)
-            List<Permanent> player2Tokens = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Spirit"))
-                    .toList();
+            List<Permanent> player2Tokens = findPermanents(player2, "Spirit");
             assertThat(player2Tokens).hasSize(1);
 
             // Player1 should have no Spirit tokens
-            List<Permanent> player1Tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Spirit"))
-                    .toList();
+            List<Permanent> player1Tokens = findPermanents(player1, "Spirit");
             assertThat(player1Tokens).isEmpty();
         }
     }

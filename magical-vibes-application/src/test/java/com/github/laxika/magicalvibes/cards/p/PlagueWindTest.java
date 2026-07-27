@@ -85,10 +85,7 @@ class PlagueWindTest extends BaseCardTest {
     void ignoresRegenerationShields() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent opposingBears = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst()
-                .orElseThrow();
+        Permanent opposingBears = findPermanent(player2, "Grizzly Bears");
         opposingBears.setRegenerationShield(2);
 
         harness.setHand(player1, List.of(new PlagueWind()));

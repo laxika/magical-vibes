@@ -73,9 +73,6 @@ class HekmaSentinelsTest extends BaseCardTest {
     }
 
     private Permanent getHekmaSentinels() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hekma Sentinels"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Hekma Sentinels");
     }
 }

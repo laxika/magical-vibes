@@ -79,9 +79,7 @@ class KazarovSengirPurebloodTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Kazarov should have 1 +1/+1 counter
-            Permanent kazarov = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Kazarov, Sengir Pureblood"))
-                    .findFirst().orElseThrow();
+            Permanent kazarov = findPermanent(player1, "Kazarov, Sengir Pureblood");
             assertThat(kazarov.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         }
 
@@ -106,9 +104,7 @@ class KazarovSengirPurebloodTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Kazarov should have 1 +1/+1 counter
-            Permanent kazarov = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Kazarov, Sengir Pureblood"))
-                    .findFirst().orElseThrow();
+            Permanent kazarov = findPermanent(player1, "Kazarov, Sengir Pureblood");
             assertThat(kazarov.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         }
 
@@ -128,9 +124,7 @@ class KazarovSengirPurebloodTest extends BaseCardTest {
             // Kazarov's trigger should NOT fire (damage was dealt to controller's creature, not opponent's)
             assertThat(gd.stack).isEmpty();
 
-            Permanent kazarov = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Kazarov, Sengir Pureblood"))
-                    .findFirst().orElseThrow();
+            Permanent kazarov = findPermanent(player1, "Kazarov, Sengir Pureblood");
             assertThat(kazarov.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         }
     }
@@ -148,9 +142,7 @@ class KazarovSengirPurebloodTest extends BaseCardTest {
             harness.addToBattlefield(player1, new GrizzlyBears()); // 2/2 attacker
             harness.addToBattlefield(player2, new GrizzlyBears()); // 2/2 blocker
 
-            Permanent attacker = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                    .findFirst().orElseThrow();
+            Permanent attacker = findPermanent(player1, "Grizzly Bears");
             attacker.setSummoningSick(false);
             attacker.setAttacking(true);
 
@@ -175,9 +167,7 @@ class KazarovSengirPurebloodTest extends BaseCardTest {
             }
 
             // Kazarov should have a +1/+1 counter
-            Permanent kazarov = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Kazarov, Sengir Pureblood"))
-                    .findFirst().orElseThrow();
+            Permanent kazarov = findPermanent(player1, "Kazarov, Sengir Pureblood");
             assertThat(kazarov.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isGreaterThanOrEqualTo(1);
         }
     }

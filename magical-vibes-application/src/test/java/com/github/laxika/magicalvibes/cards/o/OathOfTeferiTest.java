@@ -90,9 +90,7 @@ class OathOfTeferiTest extends BaseCardTest {
 
             advanceToEndStep();
 
-            Permanent returnedBears = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                    .findFirst().orElseThrow();
+            Permanent returnedBears = findPermanent(player1, "Grizzly Bears");
             assertThat(returnedBears.isSummoningSick()).isTrue();
         }
 
@@ -170,9 +168,7 @@ class OathOfTeferiTest extends BaseCardTest {
             assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
 
             // Verify two Beast tokens were created
-            long tokenCount = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Beast"))
-                    .count();
+            long tokenCount = countPermanents(player1, "Beast");
             assertThat(tokenCount).isEqualTo(2);
         }
 

@@ -45,8 +45,7 @@ class MindIntoMatterTest extends BaseCardTest {
         // Grizzly Bears is at hand index 0 (drawn cards were appended after it).
         harness.handleCardChosen(player1, 0);
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears")).findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.isTapped()).isTrue();
     }
 

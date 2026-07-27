@@ -68,9 +68,7 @@ class AjanisPridemateTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AjanisPridemate());
         harness.addToBattlefield(player1, new SoulWarden());
 
-        Permanent pridemate = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ajani's Pridemate"))
-                .findFirst().orElseThrow();
+        Permanent pridemate = findPermanent(player1, "Ajani's Pridemate");
 
         // Cast a creature — Soul Warden triggers (gain 1 life), which triggers Pridemate
         harness.setHand(player1, List.of(new GrizzlyBears()));

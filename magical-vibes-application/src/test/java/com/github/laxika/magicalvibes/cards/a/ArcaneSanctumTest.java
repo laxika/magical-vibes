@@ -28,9 +28,7 @@ class ArcaneSanctumTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        Permanent sanctum = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Arcane Sanctum"))
-                .findFirst().orElseThrow();
+        Permanent sanctum = findPermanent(player1, "Arcane Sanctum");
         assertThat(sanctum.isTapped()).isTrue();
     }
 

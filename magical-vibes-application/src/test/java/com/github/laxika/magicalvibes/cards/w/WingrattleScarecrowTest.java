@@ -26,9 +26,7 @@ class WingrattleScarecrowTest extends BaseCardTest {
     }
 
     private Permanent scarecrow() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wingrattle Scarecrow"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Wingrattle Scarecrow");
     }
 
     @Test

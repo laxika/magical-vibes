@@ -33,9 +33,7 @@ class AuriokSunchaserTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent sunchaser = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Auriok Sunchaser"))
-                .findFirst().orElseThrow();
+        Permanent sunchaser = findPermanent(player1, "Auriok Sunchaser");
         assertThat(gqs.hasKeyword(gd, sunchaser, Keyword.FLYING)).isFalse();
         assertThat(gqs.getEffectivePower(gd, sunchaser)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, sunchaser)).isEqualTo(1);
@@ -51,9 +49,7 @@ class AuriokSunchaserTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
 
-        Permanent sunchaser = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Auriok Sunchaser"))
-                .findFirst().orElseThrow();
+        Permanent sunchaser = findPermanent(player1, "Auriok Sunchaser");
         assertThat(gqs.hasKeyword(gd, sunchaser, Keyword.FLYING)).isTrue();
         assertThat(gqs.getEffectivePower(gd, sunchaser)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, sunchaser)).isEqualTo(3);
@@ -69,9 +65,7 @@ class AuriokSunchaserTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
 
-        Permanent sunchaser = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Auriok Sunchaser"))
-                .findFirst().orElseThrow();
+        Permanent sunchaser = findPermanent(player1, "Auriok Sunchaser");
         assertThat(gqs.hasKeyword(gd, sunchaser, Keyword.FLYING)).isTrue();
         assertThat(gqs.getEffectivePower(gd, sunchaser)).isEqualTo(3);
 

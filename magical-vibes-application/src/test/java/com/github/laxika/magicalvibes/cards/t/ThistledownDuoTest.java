@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -40,10 +39,7 @@ class ThistledownDuoTest extends BaseCardTest {
     }
 
     private Permanent duo() {
-        GameData gd = harness.getGameData();
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Thistledown Duo"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Thistledown Duo");
     }
 
     @Test

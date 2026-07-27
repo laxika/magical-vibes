@@ -44,9 +44,7 @@ class CacklingCounterpartTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        long bearsCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .count();
+        long bearsCount = countPermanents(player1, "Grizzly Bears");
         assertThat(bearsCount).isEqualTo(2);
 
         long tokenCount = gd.playerBattlefields.get(player1.getId()).stream()
@@ -95,9 +93,7 @@ class CacklingCounterpartTest extends BaseCardTest {
         harness.castFlashback(player1, 0, targetId);
         harness.passBothPriorities();
 
-        long bearsCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .count();
+        long bearsCount = countPermanents(player1, "Grizzly Bears");
         assertThat(bearsCount).isEqualTo(2);
 
         long tokenCount = gd.playerBattlefields.get(player1.getId()).stream()
@@ -352,9 +348,7 @@ class CacklingCounterpartTest extends BaseCardTest {
 
         // First slot in the max=2 group.
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        UUID bear1 = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow().getId();
+        UUID bear1 = findPermanent(player2, "Grizzly Bears").getId();
         harness.handlePermanentChosen(player1, bear1);
 
         // Second slot. min=0 is satisfied, so self-select becomes a valid "stop" option.
@@ -430,9 +424,7 @@ class CacklingCounterpartTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, mirriId);
 
-        List<Permanent> mirris = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mirri, Cat Warrior"))
-                .toList();
+        List<Permanent> mirris = findPermanents(player1, "Mirri, Cat Warrior");
         assertThat(mirris).hasSize(1);
         assertThat(mirris.getFirst().getId()).isEqualTo(mirriId);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -458,9 +450,7 @@ class CacklingCounterpartTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, tokenId);
 
-        List<Permanent> mirris = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mirri, Cat Warrior"))
-                .toList();
+        List<Permanent> mirris = findPermanents(player1, "Mirri, Cat Warrior");
         assertThat(mirris).hasSize(1);
         assertThat(mirris.getFirst().getId()).isEqualTo(tokenId);
         harness.assertInGraveyard(player1, "Mirri, Cat Warrior");

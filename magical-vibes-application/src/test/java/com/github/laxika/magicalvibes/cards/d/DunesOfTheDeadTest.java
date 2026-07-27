@@ -45,9 +45,7 @@ class DunesOfTheDeadTest extends BaseCardTest {
 
         harness.passBothPriorities(); // Resolve graveyard trigger
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Zombie");
         assertThat(tokens).hasSize(1);
 
         Permanent zombie = tokens.getFirst();
@@ -70,11 +68,7 @@ class DunesOfTheDeadTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Stone Rain
         harness.passBothPriorities(); // Resolve graveyard trigger
 
-        assertThat(gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .toList()).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .toList()).isEmpty();
+        assertThat(findPermanents(player2, "Zombie")).hasSize(1);
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
     }
 }

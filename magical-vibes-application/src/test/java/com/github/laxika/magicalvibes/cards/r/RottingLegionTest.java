@@ -25,9 +25,7 @@ class RottingLegionTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent legion = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rotting Legion"))
-                .findFirst().orElseThrow();
+        Permanent legion = findPermanent(player1, "Rotting Legion");
         assertThat(legion.isTapped()).isTrue();
     }
 }

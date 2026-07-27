@@ -105,9 +105,7 @@ class HeadstrongBruteTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HeadstrongBrute());
         harness.addToBattlefield(player1, new HeadstrongBrute());
 
-        List<Permanent> brutes = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Headstrong Brute"))
-                .toList();
+        List<Permanent> brutes = findPermanents(player1, "Headstrong Brute");
 
         assertThat(brutes).hasSize(2);
         assertThat(gqs.hasKeyword(gd, brutes.get(0), Keyword.MENACE)).isTrue();

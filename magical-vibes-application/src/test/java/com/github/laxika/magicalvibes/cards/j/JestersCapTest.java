@@ -20,9 +20,7 @@ class JestersCapTest extends BaseCardTest {
 
     private void addCapReady() {
         harness.addToBattlefield(player1, new JestersCap());
-        Permanent cap = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Jester's Cap"))
-                .findFirst().orElseThrow();
+        Permanent cap = findPermanent(player1, "Jester's Cap");
         cap.setSummoningSick(false);
         harness.addMana(player1, ManaColor.WHITE, 2);
     }

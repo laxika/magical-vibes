@@ -54,9 +54,7 @@ class HeartlessSummoningTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HeartlessSummoning());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         // Grizzly Bears is 2/2, with -1/-1 should be 1/1
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
@@ -69,9 +67,7 @@ class HeartlessSummoningTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HeartlessSummoning());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
 
         // Opponent's Grizzly Bears should remain 2/2
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
@@ -170,9 +166,7 @@ class HeartlessSummoningTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HeartlessSummoning());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);

@@ -22,9 +22,7 @@ class IndomitableArchangelTest extends BaseCardTest {
         harness.addToBattlefield(player1, new IndomitableArchangel());
         harness.addToBattlefield(player1, new Spellbook());
 
-        Permanent spellbook = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spellbook"))
-                .findFirst().orElseThrow();
+        Permanent spellbook = findPermanent(player1, "Spellbook");
 
         assertThat(gqs.hasKeyword(gd, spellbook, Keyword.SHROUD)).isFalse();
     }
@@ -36,9 +34,7 @@ class IndomitableArchangelTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent spellbook = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spellbook"))
-                .findFirst().orElseThrow();
+        Permanent spellbook = findPermanent(player1, "Spellbook");
 
         assertThat(gqs.hasKeyword(gd, spellbook, Keyword.SHROUD)).isFalse();
     }
@@ -53,15 +49,9 @@ class IndomitableArchangelTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
 
-        Permanent spellbook = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spellbook"))
-                .findFirst().orElseThrow();
-        Permanent scimitar = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Leonin Scimitar"))
-                .findFirst().orElseThrow();
-        Permanent gnomes = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bottle Gnomes"))
-                .findFirst().orElseThrow();
+        Permanent spellbook = findPermanent(player1, "Spellbook");
+        Permanent scimitar = findPermanent(player1, "Leonin Scimitar");
+        Permanent gnomes = findPermanent(player1, "Bottle Gnomes");
 
         assertThat(gqs.hasKeyword(gd, spellbook, Keyword.SHROUD)).isTrue();
         assertThat(gqs.hasKeyword(gd, scimitar, Keyword.SHROUD)).isTrue();
@@ -76,9 +66,7 @@ class IndomitableArchangelTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
 
-        Permanent archangel = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Indomitable Archangel"))
-                .findFirst().orElseThrow();
+        Permanent archangel = findPermanent(player1, "Indomitable Archangel");
 
         assertThat(gqs.hasKeyword(gd, archangel, Keyword.SHROUD)).isFalse();
     }
@@ -92,9 +80,7 @@ class IndomitableArchangelTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BottleGnomes());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.SHROUD)).isFalse();
     }
@@ -111,9 +97,7 @@ class IndomitableArchangelTest extends BaseCardTest {
 
         harness.addToBattlefield(player2, new Spellbook());
 
-        Permanent opponentSpellbook = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spellbook"))
-                .findFirst().orElseThrow();
+        Permanent opponentSpellbook = findPermanent(player2, "Spellbook");
 
         assertThat(gqs.hasKeyword(gd, opponentSpellbook, Keyword.SHROUD)).isFalse();
     }
@@ -128,9 +112,7 @@ class IndomitableArchangelTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
 
-        Permanent spellbook = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spellbook"))
-                .findFirst().orElseThrow();
+        Permanent spellbook = findPermanent(player1, "Spellbook");
 
         // With 3 artifacts, has shroud
         assertThat(gqs.hasKeyword(gd, spellbook, Keyword.SHROUD)).isTrue();
@@ -152,9 +134,7 @@ class IndomitableArchangelTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LeoninScimitar());
         harness.addToBattlefield(player2, new BottleGnomes());
 
-        Permanent spellbook = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spellbook"))
-                .findFirst().orElseThrow();
+        Permanent spellbook = findPermanent(player1, "Spellbook");
 
         assertThat(gqs.hasKeyword(gd, spellbook, Keyword.SHROUD)).isFalse();
     }

@@ -23,9 +23,7 @@ class WarrenWeirdingTest extends BaseCardTest {
     }
 
     private long goblinRogueCount(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Rogue"))
-                .count();
+        return countPermanents(player, "Goblin Rogue");
     }
 
     @Test
@@ -40,9 +38,7 @@ class WarrenWeirdingTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Goblin Piker");
 
         // The sacrificing player created two Goblin Rogue tokens...
-        List<Permanent> tokens = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Rogue"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player2, "Goblin Rogue");
         assertThat(tokens).hasSize(2);
 
         // ...with haste, under the target player's control (not the caster's).

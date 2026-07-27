@@ -63,10 +63,7 @@ class WillOTheWispTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        Permanent survivor = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Will-o'-the-Wisp"))
-                .findFirst().orElseThrow();
+        Permanent survivor = findPermanent(player1, "Will-o'-the-Wisp");
         assertThat(survivor.isTapped()).isTrue();
         assertThat(survivor.getRegenerationShield()).isEqualTo(0);
     }

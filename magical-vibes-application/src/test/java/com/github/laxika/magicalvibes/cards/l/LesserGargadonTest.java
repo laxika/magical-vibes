@@ -61,14 +61,10 @@ class LesserGargadonTest extends BaseCardTest {
         assertThat(choice.maxCount()).isEqualTo(1);
         assertThat(choice.context()).isInstanceOf(MultiPermanentChoiceContext.ForcedSacrifice.class);
 
-        Permanent land = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mountain"))
-                .findFirst().orElseThrow();
+        Permanent land = findPermanent(player1, "Mountain");
         harness.handleMultiplePermanentsChosen(player1, List.of(land.getId()));
 
-        long lands = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mountain"))
-                .count();
+        long lands = countPermanents(player1, "Mountain");
         assertThat(lands).isEqualTo(1);
     }
 

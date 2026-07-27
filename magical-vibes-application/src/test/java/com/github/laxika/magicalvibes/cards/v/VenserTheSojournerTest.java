@@ -144,11 +144,8 @@ class VenserTheSojournerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Venser himself (a planeswalker) should not be affected
-        Permanent venserPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Venser, the Sojourner"))
-                .findFirst().orElseThrow();
+        Permanent venserPerm = findPermanent(player1, "Venser, the Sojourner");
         assertThat(venserPerm.isCantBeBlocked()).isFalse();
     }
 

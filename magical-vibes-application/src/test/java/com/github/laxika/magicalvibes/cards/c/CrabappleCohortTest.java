@@ -63,9 +63,7 @@ class CrabappleCohortTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CrabappleCohort());
         harness.addToBattlefield(player1, new CrabappleCohort());
 
-        List<Permanent> cohorts = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Crabapple Cohort"))
-                .toList();
+        List<Permanent> cohorts = findPermanents(player1, "Crabapple Cohort");
 
         assertThat(cohorts).hasSize(2);
         for (Permanent cohort : cohorts) {

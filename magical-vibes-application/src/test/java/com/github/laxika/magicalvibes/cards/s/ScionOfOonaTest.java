@@ -76,9 +76,7 @@ class ScionOfOonaTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ScionOfOona());
         harness.addToBattlefield(player1, new ScionOfOona());
 
-        List<Permanent> scions = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Scion of Oona"))
-                .toList();
+        List<Permanent> scions = findPermanents(player1, "Scion of Oona");
 
         assertThat(scions).hasSize(2);
         for (Permanent scion : scions) {

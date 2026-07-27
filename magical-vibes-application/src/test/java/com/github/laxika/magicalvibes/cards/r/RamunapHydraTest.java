@@ -123,8 +123,6 @@ class RamunapHydraTest extends BaseCardTest {
     }
 
     private Permanent findHydra() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ramunap Hydra"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Ramunap Hydra");
     }
 }

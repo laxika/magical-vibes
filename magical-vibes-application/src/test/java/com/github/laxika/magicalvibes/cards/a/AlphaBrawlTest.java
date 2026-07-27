@@ -69,9 +69,7 @@ class AlphaBrawlTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Llanowar Elves");
 
-        Permanent hillGiant = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hill Giant"))
-                .findFirst().orElseThrow();
+        Permanent hillGiant = findPermanent(player2, "Hill Giant");
         assertThat(hillGiant.getMarkedDamage()).isEqualTo(1);
     }
 
@@ -158,14 +156,10 @@ class AlphaBrawlTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Hill Giant");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
 
-        Permanent hillGiant = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hill Giant"))
-                .findFirst().orElseThrow();
+        Permanent hillGiant = findPermanent(player2, "Hill Giant");
         assertThat(hillGiant.getMarkedDamage()).isEqualTo(1);
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
     }
 

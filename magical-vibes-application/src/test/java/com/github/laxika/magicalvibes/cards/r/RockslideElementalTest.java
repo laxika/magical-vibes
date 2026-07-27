@@ -18,9 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RockslideElementalTest extends BaseCardTest {
 
     private Permanent elemental() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rockslide Elemental"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Rockslide Elemental");
     }
 
     @Test

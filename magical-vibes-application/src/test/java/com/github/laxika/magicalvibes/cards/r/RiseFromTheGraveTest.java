@@ -107,10 +107,7 @@ class RiseFromTheGraveTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleGraveyardCardChosen(player1, 0);
 
-        GameData gd = harness.getGameData();
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(bears.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
         // Original subtypes are preserved (Bear)
@@ -128,10 +125,7 @@ class RiseFromTheGraveTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleGraveyardCardChosen(player1, 0);
 
-        GameData gd = harness.getGameData();
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(bears.getGrantedColors()).contains(CardColor.BLACK);
         // Original color is preserved on the card
@@ -155,10 +149,7 @@ class RiseFromTheGraveTest extends BaseCardTest {
         harness.passBothPriorities(); // main 2
         harness.passBothPriorities(); // end step
 
-        GameData gd = harness.getGameData();
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         // Permanently granted colors and subtypes survive turn resets
         assertThat(bears.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);

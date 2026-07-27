@@ -89,17 +89,13 @@ class DestructiveForceTest extends BaseCardTest {
         assertThat(((MultiPermanentChoiceContext.ForcedSacrifice) choice.context()).accumulatedSacrificeIds()).hasSize(2);
 
         // Player1 chooses 5 lands
-        List<Permanent> p1Lands = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mountain"))
-                .toList();
+        List<Permanent> p1Lands = findPermanents(player1, "Mountain");
         List<UUID> chosen = p1Lands.stream().limit(5).map(Permanent::getId).toList();
         harness.handleMultiplePermanentsChosen(player1, chosen);
 
         // After choice, ALL lands are sacrificed simultaneously
         // Player1 should have exactly 2 lands remaining
-        long p1Remaining = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mountain"))
-                .count();
+        long p1Remaining = countPermanents(player1, "Mountain");
         assertThat(p1Remaining).isEqualTo(2);
 
         // Player2's lands should now be gone too

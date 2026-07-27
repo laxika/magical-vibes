@@ -57,9 +57,7 @@ class VanquishersBannerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "ELF");
 
-        Permanent banner = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vanquisher's Banner"))
-                .findFirst().orElseThrow();
+        Permanent banner = findPermanent(player1, "Vanquisher's Banner");
         assertThat(banner.getChosenSubtype()).isEqualTo(CardSubtype.ELF);
     }
 
@@ -76,9 +74,7 @@ class VanquishersBannerTest extends BaseCardTest {
         bannerPerm.setChosenSubtype(CardSubtype.ELF);
         gd.playerBattlefields.get(player1.getId()).add(bannerPerm);
 
-        Permanent elfPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elfPerm = findPermanent(player1, "Llanowar Elves");
 
         var bonus = gqs.computeStaticBonus(gd, elfPerm);
         assertThat(bonus.power()).isEqualTo(1);
@@ -96,9 +92,7 @@ class VanquishersBannerTest extends BaseCardTest {
         bannerPerm.setChosenSubtype(CardSubtype.ELF);
         gd.playerBattlefields.get(player1.getId()).add(bannerPerm);
 
-        Permanent goblinPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Piker"))
-                .findFirst().orElseThrow();
+        Permanent goblinPerm = findPermanent(player1, "Goblin Piker");
 
         var bonus = gqs.computeStaticBonus(gd, goblinPerm);
         assertThat(bonus.power()).isEqualTo(0);
@@ -116,9 +110,7 @@ class VanquishersBannerTest extends BaseCardTest {
         bannerPerm.setChosenSubtype(CardSubtype.ELF);
         gd.playerBattlefields.get(player1.getId()).add(bannerPerm);
 
-        Permanent elfPerm = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elfPerm = findPermanent(player2, "Llanowar Elves");
 
         var bonus = gqs.computeStaticBonus(gd, elfPerm);
         assertThat(bonus.power()).isEqualTo(0);
@@ -134,9 +126,7 @@ class VanquishersBannerTest extends BaseCardTest {
         // Add banner without setting chosen subtype
         harness.addToBattlefield(player1, new VanquishersBanner());
 
-        Permanent elfPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elfPerm = findPermanent(player1, "Llanowar Elves");
 
         var bonus = gqs.computeStaticBonus(gd, elfPerm);
         assertThat(bonus.power()).isEqualTo(0);
@@ -261,9 +251,7 @@ class VanquishersBannerTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(bannerPerm);
 
         // Verify boost is applied
-        Permanent elfPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elfPerm = findPermanent(player1, "Llanowar Elves");
         assertThat(gqs.computeStaticBonus(gd, elfPerm).power()).isEqualTo(1);
 
         // Remove the banner
@@ -292,9 +280,7 @@ class VanquishersBannerTest extends BaseCardTest {
         harness.handleListChoice(player1, "ELF");
 
         // Verify creature gets +1/+1
-        Permanent elfPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elvish Mystic"))
-                .findFirst().orElseThrow();
+        Permanent elfPerm = findPermanent(player1, "Elvish Mystic");
         var bonus = gqs.computeStaticBonus(gd, elfPerm);
         assertThat(bonus.power()).isEqualTo(1);
         assertThat(bonus.toughness()).isEqualTo(1);

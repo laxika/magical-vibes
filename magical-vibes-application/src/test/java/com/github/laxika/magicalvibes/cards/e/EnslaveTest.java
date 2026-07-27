@@ -114,9 +114,7 @@ class EnslaveTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        Permanent enslavePerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Enslave"))
-                .findFirst().orElseThrow();
+        Permanent enslavePerm = findPermanent(player1, "Enslave");
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -144,9 +142,7 @@ class EnslaveTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Enslave()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        Permanent artifact = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fountain of Youth"))
-                .findFirst().orElseThrow();
+        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

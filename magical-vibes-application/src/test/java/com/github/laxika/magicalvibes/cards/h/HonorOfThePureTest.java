@@ -53,9 +53,7 @@ class HonorOfThePureTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HonorOfThePure());
         harness.addToBattlefield(player1, new EliteVanguard());
 
-        Permanent vanguard = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elite Vanguard"))
-                .findFirst().orElseThrow();
+        Permanent vanguard = findPermanent(player1, "Elite Vanguard");
 
         // Elite Vanguard is 2/1, with +1/+1 should be 3/2
         assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(3);
@@ -70,9 +68,7 @@ class HonorOfThePureTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HonorOfThePure());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         // Grizzly Bears is 2/2, should remain 2/2
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
@@ -87,9 +83,7 @@ class HonorOfThePureTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HonorOfThePure());
         harness.addToBattlefield(player2, new EliteVanguard());
 
-        Permanent opponentVanguard = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elite Vanguard"))
-                .findFirst().orElseThrow();
+        Permanent opponentVanguard = findPermanent(player2, "Elite Vanguard");
 
         // Opponent's white creature should NOT be buffed (OWN_CREATURES scope)
         assertThat(gqs.getEffectivePower(gd, opponentVanguard)).isEqualTo(2);
@@ -105,9 +99,7 @@ class HonorOfThePureTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HonorOfThePure());
         harness.addToBattlefield(player1, new EliteVanguard());
 
-        Permanent vanguard = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elite Vanguard"))
-                .findFirst().orElseThrow();
+        Permanent vanguard = findPermanent(player1, "Elite Vanguard");
 
         // 2/1 base + 2/2 from two Honors = 4/3
         assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(4);
@@ -122,9 +114,7 @@ class HonorOfThePureTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HonorOfThePure());
         harness.addToBattlefield(player1, new EliteVanguard());
 
-        Permanent vanguard = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elite Vanguard"))
-                .findFirst().orElseThrow();
+        Permanent vanguard = findPermanent(player1, "Elite Vanguard");
 
         assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(3);
 
@@ -144,9 +134,7 @@ class HonorOfThePureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HonorOfThePure()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        Permanent vanguard = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elite Vanguard"))
-                .findFirst().orElseThrow();
+        Permanent vanguard = findPermanent(player1, "Elite Vanguard");
 
         // Before casting, no bonus
         assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(2);
@@ -167,9 +155,7 @@ class HonorOfThePureTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HonorOfThePure());
         harness.addToBattlefield(player1, new EliteVanguard());
 
-        Permanent vanguard = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elite Vanguard"))
-                .findFirst().orElseThrow();
+        Permanent vanguard = findPermanent(player1, "Elite Vanguard");
 
         // Add a temporary spell boost
         vanguard.setPowerModifier(vanguard.getPowerModifier() + 3);

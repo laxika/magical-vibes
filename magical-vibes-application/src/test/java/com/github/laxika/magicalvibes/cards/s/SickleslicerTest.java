@@ -93,9 +93,7 @@ class SickleslicerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent germ = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         assertThat(germ.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(germ.getCard().getPower()).isEqualTo(0);
@@ -117,9 +115,7 @@ class SickleslicerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent germ = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         // 0/0 base + 2/2 from equipment = 2/2 effective
         assertThat(gqs.getEffectivePower(gd, germ)).isEqualTo(2);
@@ -148,9 +144,7 @@ class SickleslicerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        Permanent sickleslicer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sickleslicer"))
-                .findFirst().orElseThrow();
+        Permanent sickleslicer = findPermanent(player1, "Sickleslicer");
 
         assertThat(sickleslicer.getAttachedTo()).isEqualTo(bears.getId());
 

@@ -46,9 +46,7 @@ class SummerBloomTest extends BaseCardTest {
             gs.playCard(gd, player1, 0, 0, null, null);
         }
 
-        long forests = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .count();
+        long forests = countPermanents(player1, "Forest");
         assertThat(forests).isEqualTo(4);
     }
 

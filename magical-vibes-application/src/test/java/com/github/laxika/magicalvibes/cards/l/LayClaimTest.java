@@ -63,9 +63,7 @@ class LayClaimTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        Permanent layClaimPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Lay Claim"))
-                .findFirst().orElseThrow();
+        Permanent layClaimPerm = findPermanent(player1, "Lay Claim");
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

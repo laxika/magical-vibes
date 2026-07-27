@@ -146,12 +146,9 @@ class CudgelTrollTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Cudgel Troll should survive via regeneration
         harness.assertOnBattlefield(player1, "Cudgel Troll");
-        Permanent troll = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Cudgel Troll"))
-                .findFirst().orElseThrow();
+        Permanent troll = findPermanent(player1, "Cudgel Troll");
         assertThat(troll.isTapped()).isTrue();
         assertThat(troll.getRegenerationShield()).isEqualTo(0);
         assertThat(troll.isBlocking()).isFalse();

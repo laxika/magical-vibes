@@ -41,9 +41,7 @@ class BloodrockCyclopsTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bloodrock Cyclops"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Bloodrock Cyclops");
         assertThat(perm.isSummoningSick()).isTrue();
     }
 

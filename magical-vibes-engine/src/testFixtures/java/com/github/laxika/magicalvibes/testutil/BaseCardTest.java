@@ -62,10 +62,27 @@ public abstract class BaseCardTest {
         return perm;
     }
 
+    /**
+     * The first permanent {@code player} controls with this name.
+     *
+     * @throws java.util.NoSuchElementException if they control no such permanent
+     */
     protected Permanent findPermanent(Player player, String name) {
         return gd.playerBattlefields.get(player.getId()).stream()
                 .filter(p -> p.getCard().getName().equals(name))
                 .findFirst().orElseThrow();
+    }
+
+    /** Every permanent {@code player} controls with this name, in battlefield order. */
+    protected List<Permanent> findPermanents(Player player, String name) {
+        return gd.playerBattlefields.get(player.getId()).stream()
+                .filter(p -> p.getCard().getName().equals(name))
+                .toList();
+    }
+
+    /** How many permanents named {@code name} {@code player} controls. */
+    protected long countPermanents(Player player, String name) {
+        return findPermanents(player, name).size();
     }
 
     /**

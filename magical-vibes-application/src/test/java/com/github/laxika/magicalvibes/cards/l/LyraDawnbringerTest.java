@@ -77,9 +77,7 @@ class LyraDawnbringerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LyraDawnbringer());
         harness.addToBattlefield(player1, new LyraDawnbringer());
 
-        List<Permanent> lyras = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Lyra Dawnbringer"))
-                .toList();
+        List<Permanent> lyras = findPermanents(player1, "Lyra Dawnbringer");
 
         assertThat(lyras).hasSize(2);
         for (Permanent lyra : lyras) {

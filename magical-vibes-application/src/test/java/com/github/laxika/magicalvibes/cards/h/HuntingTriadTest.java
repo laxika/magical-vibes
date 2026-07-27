@@ -18,9 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class HuntingTriadTest extends BaseCardTest {
 
     private List<Permanent> elfWarriors() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elf Warrior"))
-                .toList();
+        return findPermanents(player1, "Elf Warrior");
     }
 
     @Test

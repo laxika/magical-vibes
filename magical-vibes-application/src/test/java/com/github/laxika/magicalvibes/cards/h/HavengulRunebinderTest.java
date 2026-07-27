@@ -121,9 +121,7 @@ class HavengulRunebinderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Zombie");
         assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE);
@@ -142,9 +140,7 @@ class HavengulRunebinderTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Zombie");
         assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);

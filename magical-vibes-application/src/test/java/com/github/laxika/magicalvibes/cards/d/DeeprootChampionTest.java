@@ -110,9 +110,6 @@ class DeeprootChampionTest extends BaseCardTest {
     }
 
     private Permanent getChampion() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Deeproot Champion"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Deeproot Champion");
     }
 }

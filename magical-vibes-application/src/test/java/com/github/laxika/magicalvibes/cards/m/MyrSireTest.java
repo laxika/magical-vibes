@@ -57,9 +57,7 @@ class MyrSireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // A Phyrexian Myr token should be on the battlefield
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Myr"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Phyrexian Myr");
         assertThat(tokens).hasSize(1);
     }
 
@@ -75,11 +73,7 @@ class MyrSireTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Wrath
         harness.passBothPriorities(); // Resolve death trigger
 
-        GameData gd = harness.getGameData();
-
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Myr"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Phyrexian Myr");
 
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);

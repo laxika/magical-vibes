@@ -86,9 +86,7 @@ class PrismaticWardTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "RED");
 
-        Permanent ward = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Prismatic Ward"))
-                .findFirst().orElseThrow();
+        Permanent ward = findPermanent(player1, "Prismatic Ward");
         assertThat(ward.getChosenColor()).isEqualTo(CardColor.RED);
         assertThat(ward.getAttachedTo()).isEqualTo(target.getId());
     }

@@ -25,9 +25,7 @@ class NecrogenCenserTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        Permanent censer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Necrogen Censer"))
-                .findFirst().orElseThrow();
+        Permanent censer = findPermanent(player1, "Necrogen Censer");
         assertThat(censer.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
@@ -38,9 +36,7 @@ class NecrogenCenserTest extends BaseCardTest {
     void activateRemovesCounterAndTargetLosesLife() {
         harness.addToBattlefield(player1, new NecrogenCenser());
 
-        Permanent censer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Necrogen Censer"))
-                .findFirst().orElseThrow();
+        Permanent censer = findPermanent(player1, "Necrogen Censer");
         censer.setCounterCount(CounterType.CHARGE, 2);
 
         int initialLife = gd.playerLifeTotals.get(player2.getId());
@@ -57,9 +53,7 @@ class NecrogenCenserTest extends BaseCardTest {
     void canActivateTwice() {
         harness.addToBattlefield(player1, new NecrogenCenser());
 
-        Permanent censer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Necrogen Censer"))
-                .findFirst().orElseThrow();
+        Permanent censer = findPermanent(player1, "Necrogen Censer");
         censer.setCounterCount(CounterType.CHARGE, 2);
 
         int initialLife = gd.playerLifeTotals.get(player2.getId());
@@ -82,9 +76,7 @@ class NecrogenCenserTest extends BaseCardTest {
     void cannotActivateWithNoCounters() {
         harness.addToBattlefield(player1, new NecrogenCenser());
 
-        Permanent censer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Necrogen Censer"))
-                .findFirst().orElseThrow();
+        Permanent censer = findPermanent(player1, "Necrogen Censer");
         censer.setCounterCount(CounterType.CHARGE, 0);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
@@ -96,9 +88,7 @@ class NecrogenCenserTest extends BaseCardTest {
     void canTargetSelf() {
         harness.addToBattlefield(player1, new NecrogenCenser());
 
-        Permanent censer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Necrogen Censer"))
-                .findFirst().orElseThrow();
+        Permanent censer = findPermanent(player1, "Necrogen Censer");
         censer.setCounterCount(CounterType.CHARGE, 1);
 
         int initialLife = gd.playerLifeTotals.get(player1.getId());
@@ -115,9 +105,7 @@ class NecrogenCenserTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         harness.addToBattlefield(player1, new NecrogenCenser());
 
-        Permanent censer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Necrogen Censer"))
-                .findFirst().orElseThrow();
+        Permanent censer = findPermanent(player1, "Necrogen Censer");
         censer.setCounterCount(CounterType.CHARGE, 2);
 
         // First activation taps it

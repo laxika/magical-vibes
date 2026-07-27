@@ -33,9 +33,7 @@ class FlourishingDefensesTest extends BaseCardTest {
     }
 
     private long elfWarriorTokenCount(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elf Warrior"))
-                .count();
+        return countPermanents(player, "Elf Warrior");
     }
 
     @Test

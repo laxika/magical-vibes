@@ -32,9 +32,7 @@ class FesterhideBoarTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
 
         GameData gd = harness.getGameData();
-        Permanent boar = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Festerhide Boar"))
-                .findFirst().orElseThrow();
+        Permanent boar = findPermanent(player1, "Festerhide Boar");
 
         // No +1/+1 counters without morbid
         assertThat(boar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
@@ -60,10 +58,7 @@ class FesterhideBoarTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell (enters battlefield with ETB trigger)
         harness.passBothPriorities(); // resolve ETB effect (puts +1/+1 counters)
 
-        GameData gd = harness.getGameData();
-        Permanent boar = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Festerhide Boar"))
-                .findFirst().orElseThrow();
+        Permanent boar = findPermanent(player1, "Festerhide Boar");
 
         assertThat(boar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(boar.getEffectivePower()).isEqualTo(5);
@@ -89,7 +84,6 @@ class FesterhideBoarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bears should be dead
-        GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         // Now cast Festerhide Boar — morbid should be active
@@ -97,9 +91,7 @@ class FesterhideBoarTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB effect (puts +1/+1 counters)
 
-        Permanent boar = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Festerhide Boar"))
-                .findFirst().orElseThrow();
+        Permanent boar = findPermanent(player1, "Festerhide Boar");
 
         assertThat(boar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(boar.getEffectivePower()).isEqualTo(5);

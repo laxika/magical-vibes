@@ -94,9 +94,7 @@ class ReassemblingSkeletonTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Reassembling Skeleton");
 
         // Simulate dying: remove from battlefield and put back in graveyard
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Reassembling Skeleton"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Reassembling Skeleton");
         gd.playerBattlefields.get(player1.getId()).remove(perm);
         gd.playerGraveyards.get(player1.getId()).add(perm.getCard());
 

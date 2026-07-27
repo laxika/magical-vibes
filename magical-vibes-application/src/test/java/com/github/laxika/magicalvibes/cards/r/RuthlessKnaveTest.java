@@ -46,9 +46,7 @@ class RuthlessKnaveTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        List<Permanent> treasures = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .toList();
+        List<Permanent> treasures = findPermanents(player1, "Treasure");
         assertThat(treasures).hasSize(2);
         for (Permanent treasure : treasures) {
             assertThat(treasure.getCard().getType()).isEqualTo(CardType.ARTIFACT);
@@ -147,9 +145,7 @@ class RuthlessKnaveTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        long treasureCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .count();
+        long treasureCount = countPermanents(player1, "Treasure");
         assertThat(treasureCount).isEqualTo(4);
     }
 
@@ -167,9 +163,7 @@ class RuthlessKnaveTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .count()).isZero();
+        assertThat(countPermanents(player1, "Treasure")).isZero();
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
@@ -231,9 +225,7 @@ class RuthlessKnaveTest extends BaseCardTest {
 
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.ACTIVATED_ABILITY);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .count()).isEqualTo(1);
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
     }
 
     @Test
@@ -290,9 +282,7 @@ class RuthlessKnaveTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        long treasureCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .count();
+        long treasureCount = countPermanents(player1, "Treasure");
         assertThat(treasureCount).isEqualTo(3);
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
@@ -302,9 +292,7 @@ class RuthlessKnaveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .count()).isZero();
+        assertThat(countPermanents(player1, "Treasure")).isZero();
     }
 
     // =====================================================

@@ -26,9 +26,7 @@ class VillageCannibalsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VillageCannibals());
         harness.addToBattlefield(player1, new UnrulyMob()); // Human creature
 
-        Permanent cannibals = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Village Cannibals"))
-                .findFirst().orElseThrow();
+        Permanent cannibals = findPermanent(player1, "Village Cannibals");
         assertThat(cannibals.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         // Kill ally Human creature with Shock
@@ -75,9 +73,7 @@ class VillageCannibalsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VillageCannibals());
         harness.addToBattlefield(player1, new GrizzlyBears()); // Bear, not Human
 
-        Permanent cannibals = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Village Cannibals"))
-                .findFirst().orElseThrow();
+        Permanent cannibals = findPermanent(player1, "Village Cannibals");
         assertThat(cannibals.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         // Kill non-Human creature with Shock

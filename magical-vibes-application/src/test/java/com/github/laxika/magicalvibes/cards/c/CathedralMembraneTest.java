@@ -48,12 +48,8 @@ class CathedralMembraneTest extends BaseCardTest {
 
         harness.addToBattlefield(player2, new CathedralMembrane());
 
-        Permanent attackerPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
-        Permanent membranePerm = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Cathedral Membrane"))
-                .findFirst().orElseThrow();
+        Permanent attackerPerm = findPermanent(player1, "Grizzly Bears");
+        Permanent membranePerm = findPermanent(player2, "Cathedral Membrane");
 
         UUID attackerId = attackerPerm.getId();
         setupCombatWhereMembraneBlocks(attackerPerm, membranePerm);
@@ -91,12 +87,8 @@ class CathedralMembraneTest extends BaseCardTest {
 
         harness.addToBattlefield(player2, new CathedralMembrane());
 
-        Permanent attackerPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
-        Permanent membranePerm = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Cathedral Membrane"))
-                .findFirst().orElseThrow();
+        Permanent attackerPerm = findPermanent(player1, "Grizzly Bears");
+        Permanent membranePerm = findPermanent(player2, "Cathedral Membrane");
 
         UUID attackerId = attackerPerm.getId();
         setupCombatWhereMembraneBlocks(attackerPerm, membranePerm);

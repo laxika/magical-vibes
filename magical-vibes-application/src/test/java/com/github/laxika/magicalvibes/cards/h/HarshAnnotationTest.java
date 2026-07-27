@@ -62,10 +62,7 @@ class HarshAnnotationTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Inkling"))
-                .findFirst()
-                .orElseThrow()
+        assertThat(findPermanent(player2, "Inkling")
                 .getCard()
                 .getColors())
                 .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLACK);

@@ -71,10 +71,8 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         // Add two tapped lands
         harness.addToBattlefield(player1, new Plains());
         harness.addToBattlefield(player1, new Island());
-        Permanent plains = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Plains")).findFirst().orElseThrow();
-        Permanent island = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Island")).findFirst().orElseThrow();
+        Permanent plains = findPermanent(player1, "Plains");
+        Permanent island = findPermanent(player1, "Island");
         plains.tap();
         island.tap();
 

@@ -62,9 +62,7 @@ class WingsOfVelisVelTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WingsOfVelisVel()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2); // not a Goblin yet
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");

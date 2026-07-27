@@ -83,9 +83,7 @@ class MakeshiftMaulerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Makeshift Mauler");
-        var mauler = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Makeshift Mauler"))
-                .findFirst().orElseThrow();
+        var mauler = findPermanent(player1, "Makeshift Mauler");
         assertThat(mauler.getCard().getPower()).isEqualTo(4);
         assertThat(mauler.getCard().getToughness()).isEqualTo(5);
     }

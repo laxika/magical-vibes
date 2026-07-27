@@ -154,9 +154,7 @@ class IceCageTest extends BaseCardTest {
 
         // Use Icy Manipulator to target the Ice Caged creature with an activated ability
         harness.addToBattlefield(player1, new IcyManipulator());
-        Permanent icyPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Icy Manipulator"))
-                .findFirst().orElseThrow();
+        Permanent icyPerm = findPermanent(player1, "Icy Manipulator");
         icyPerm.setSummoningSick(false);
 
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -237,9 +235,7 @@ class IceCageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new IceCage()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        Permanent artifact = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Icy Manipulator"))
-                .findFirst().orElseThrow();
+        Permanent artifact = findPermanent(player1, "Icy Manipulator");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

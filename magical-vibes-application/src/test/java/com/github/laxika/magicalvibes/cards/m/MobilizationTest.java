@@ -97,9 +97,7 @@ class MobilizationTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Soldier"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Soldier");
         assertThat(token.isSummoningSick()).isTrue();
     }
 
@@ -116,9 +114,7 @@ class MobilizationTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        long tokenCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Soldier"))
-                .count();
+        long tokenCount = countPermanents(player1, "Soldier");
         assertThat(tokenCount).isEqualTo(3);
     }
 
@@ -130,9 +126,7 @@ class MobilizationTest extends BaseCardTest {
         addMobilizationReady(player1);
         harness.addToBattlefield(player1, new HonorGuard());
 
-        Permanent soldier = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Honor Guard"))
-                .findFirst().orElseThrow();
+        Permanent soldier = findPermanent(player1, "Honor Guard");
 
         assertThat(gqs.hasKeyword(gd, soldier, Keyword.VIGILANCE)).isTrue();
     }
@@ -143,9 +137,7 @@ class MobilizationTest extends BaseCardTest {
         addMobilizationReady(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
     }
@@ -159,9 +151,7 @@ class MobilizationTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Soldier"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Soldier");
 
         assertThat(gqs.hasKeyword(gd, token, Keyword.VIGILANCE)).isTrue();
     }
@@ -172,9 +162,7 @@ class MobilizationTest extends BaseCardTest {
         addMobilizationReady(player1);
         harness.addToBattlefield(player1, new HonorGuard());
 
-        Permanent soldier = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Honor Guard"))
-                .findFirst().orElseThrow();
+        Permanent soldier = findPermanent(player1, "Honor Guard");
 
         assertThat(gqs.hasKeyword(gd, soldier, Keyword.VIGILANCE)).isTrue();
 

@@ -30,9 +30,7 @@ class MemorialToWarTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        Permanent memorial = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Memorial to War"))
-                .findFirst().orElseThrow();
+        Permanent memorial = findPermanent(player1, "Memorial to War");
         assertThat(memorial.isTapped()).isTrue();
     }
 

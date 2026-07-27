@@ -41,9 +41,7 @@ class RuthlessSniperTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(bears.getEffectivePower()).isEqualTo(1);
         assertThat(bears.getEffectiveToughness()).isEqualTo(1);
@@ -70,9 +68,7 @@ class RuthlessSniperTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         // The may-pay {1} is never spent when declined
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);

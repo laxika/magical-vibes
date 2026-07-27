@@ -121,8 +121,6 @@ class UnscytheKillerOfKingsTest extends BaseCardTest {
     }
 
     private java.util.List<Permanent> zombieTokens(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .toList();
+        return findPermanents(player, "Zombie");
     }
 }

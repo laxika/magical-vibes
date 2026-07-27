@@ -190,9 +190,7 @@ class TishanaVoiceOfThunderTest extends BaseCardTest {
         int handSize = gd.playerHands.get(player1.getId()).size();
         assertThat(handSize).isEqualTo(4);
 
-        Permanent tishana = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Tishana, Voice of Thunder"))
-                .findFirst().orElseThrow();
+        Permanent tishana = findPermanent(player1, "Tishana, Voice of Thunder");
         assertThat(gqs.getEffectivePower(gd, tishana)).isEqualTo(handSize);
         assertThat(gqs.getEffectiveToughness(gd, tishana)).isEqualTo(handSize);
     }

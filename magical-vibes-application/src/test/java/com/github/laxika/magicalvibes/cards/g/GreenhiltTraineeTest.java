@@ -37,9 +37,7 @@ class GreenhiltTraineeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Air Elemental is 4/4, should now be 8/8
-        Permanent airElemental = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Air Elemental"))
-                .findFirst().orElseThrow();
+        Permanent airElemental = findPermanent(player1, "Air Elemental");
         assertThat(airElemental.getPowerModifier()).isEqualTo(4);
         assertThat(airElemental.getToughnessModifier()).isEqualTo(4);
     }
@@ -53,9 +51,7 @@ class GreenhiltTraineeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        Permanent airElemental = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Air Elemental"))
-                .findFirst().orElseThrow();
+        Permanent airElemental = findPermanent(player1, "Air Elemental");
         assertThat(airElemental.getPowerModifier()).isEqualTo(4);
         assertThat(airElemental.getToughnessModifier()).isEqualTo(4);
     }
@@ -69,9 +65,7 @@ class GreenhiltTraineeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AirElemental());
         harness.forceActivePlayer(player1);
 
-        Permanent trainee = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Greenhilt Trainee"))
-                .findFirst().orElseThrow();
+        Permanent trainee = findPermanent(player1, "Greenhilt Trainee");
         trainee.setSummoningSick(false);
 
         UUID targetId = harness.getPermanentId(player1, "Air Elemental");
@@ -102,9 +96,7 @@ class GreenhiltTraineeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, targetId);
 
-        Permanent trainee = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Greenhilt Trainee"))
-                .findFirst().orElseThrow();
+        Permanent trainee = findPermanent(player1, "Greenhilt Trainee");
         assertThat(trainee.isTapped()).isTrue();
     }
 
@@ -116,9 +108,7 @@ class GreenhiltTraineeTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
 
         // Greenhilt Trainee has base power 2; add +1/+1 counters to reach desired power
-        Permanent trainee = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Greenhilt Trainee"))
-                .findFirst().orElseThrow();
+        Permanent trainee = findPermanent(player1, "Greenhilt Trainee");
         trainee.setSummoningSick(false);
         int countersNeeded = desiredPower - 2;
         if (countersNeeded > 0) {

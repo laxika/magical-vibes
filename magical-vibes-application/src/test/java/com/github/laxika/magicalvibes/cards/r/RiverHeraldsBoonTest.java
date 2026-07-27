@@ -32,10 +32,8 @@ class RiverHeraldsBoonTest extends BaseCardTest {
         harness.castInstant(player1, 0, List.of(bearId, merfolkId));
         harness.passBothPriorities();
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears")).findFirst().orElseThrow();
-        Permanent merfolk = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Kumena's Speaker")).findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
+        Permanent merfolk = findPermanent(player1, "Kumena's Speaker");
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(merfolk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -51,8 +49,7 @@ class RiverHeraldsBoonTest extends BaseCardTest {
         harness.castInstant(player1, 0, List.of(bearId));
         harness.passBothPriorities();
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears")).findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -67,8 +64,7 @@ class RiverHeraldsBoonTest extends BaseCardTest {
         harness.castInstant(player1, 0, List.of(merfolkId, merfolkId));
         harness.passBothPriorities();
 
-        Permanent merfolk = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Kumena's Speaker")).findFirst().orElseThrow();
+        Permanent merfolk = findPermanent(player1, "Kumena's Speaker");
         assertThat(merfolk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
@@ -104,10 +100,8 @@ class RiverHeraldsBoonTest extends BaseCardTest {
         harness.castInstant(player1, 0, List.of(bearId, merfolkId));
         harness.passBothPriorities();
 
-        Permanent bear = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears")).findFirst().orElseThrow();
-        Permanent merfolk = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Kumena's Speaker")).findFirst().orElseThrow();
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
+        Permanent merfolk = findPermanent(player2, "Kumena's Speaker");
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(merfolk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -130,8 +124,7 @@ class RiverHeraldsBoonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // First target should still get its counter
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears")).findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

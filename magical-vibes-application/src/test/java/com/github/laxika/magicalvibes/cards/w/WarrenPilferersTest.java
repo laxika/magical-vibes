@@ -32,9 +32,7 @@ class WarrenPilferersTest extends BaseCardTest {
     }
 
     private Permanent findPilferers() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Warren Pilferers"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Warren Pilferers");
     }
 
     // ===== Base return =====

@@ -80,9 +80,7 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
         Permanent huatli = addReadyHuatli(player1);
         harness.addToBattlefield(player1, new FrenziedRaptor());
 
-        Permanent raptor = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Frenzied Raptor"))
-                .findFirst().orElseThrow();
+        Permanent raptor = findPermanent(player1, "Frenzied Raptor");
 
         harness.activateAbility(player1, 0, 0, null, raptor.getId());
         harness.passBothPriorities();
@@ -108,9 +106,7 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
         addReadyHuatli(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bear.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -122,9 +118,7 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
         addReadyHuatli(player1);
         harness.addToBattlefield(player2, new FrenziedRaptor());
 
-        Permanent raptor = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Frenzied Raptor"))
-                .findFirst().orElseThrow();
+        Permanent raptor = findPermanent(player2, "Frenzied Raptor");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, raptor.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -139,13 +133,9 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FrenziedRaptor());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent raptor = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Frenzied Raptor"))
-                .findFirst().orElseThrow();
+        Permanent raptor = findPermanent(player1, "Frenzied Raptor");
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
 
         // Frenzied Raptor is 4/2, Grizzly Bears is 2/2 — 4 damage kills it
         harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(raptor.getId(), bear.getId()));
@@ -162,17 +152,13 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
         Permanent huatli = addReadyHuatli(player1);
         harness.addToBattlefield(player1, new FrenziedRaptor());
 
-        Permanent raptor = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Frenzied Raptor"))
-                .findFirst().orElseThrow();
+        Permanent raptor = findPermanent(player1, "Frenzied Raptor");
         // Give raptor 2 extra +1/+1 counters -> 6/4
         raptor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         // Add a 5/5 creature for opponent
         harness.addToBattlefield(player2, new FrenziedRaptor());
-        Permanent opponentDino = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Frenzied Raptor"))
-                .findFirst().orElseThrow();
+        Permanent opponentDino = findPermanent(player2, "Frenzied Raptor");
         // Opponent's Raptor is 4/2, our Raptor deals 6 damage -> kills it
         harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(raptor.getId(), opponentDino.getId()));
         harness.passBothPriorities();
@@ -197,16 +183,12 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Frenzied Raptor is 4/2 -> should be 8/6
-        Permanent raptor = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Frenzied Raptor"))
-                .findFirst().orElseThrow();
+        Permanent raptor = findPermanent(player1, "Frenzied Raptor");
         assertThat(gqs.getEffectivePower(gd, raptor)).isEqualTo(8);
         assertThat(gqs.getEffectiveToughness(gd, raptor)).isEqualTo(6);
 
         // Grizzly Bears is not a Dinosaur -> should stay 2/2
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
@@ -222,9 +204,7 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        Permanent opponentRaptor = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Frenzied Raptor"))
-                .findFirst().orElseThrow();
+        Permanent opponentRaptor = findPermanent(player2, "Frenzied Raptor");
         assertThat(gqs.getEffectivePower(gd, opponentRaptor)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, opponentRaptor)).isEqualTo(2);
     }
@@ -287,12 +267,8 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FrenziedRaptor());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent raptor = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Frenzied Raptor"))
-                .findFirst().orElseThrow();
-        Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent raptor = findPermanent(player1, "Frenzied Raptor");
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
 
         // -3 ability: 3 - 3 = 0, Huatli dies to state-based actions
         harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(raptor.getId(), bear.getId()));

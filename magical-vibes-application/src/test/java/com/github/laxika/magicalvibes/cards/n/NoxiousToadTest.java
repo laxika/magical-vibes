@@ -70,9 +70,7 @@ class NoxiousToadTest extends BaseCardTest {
     // ===== Helpers =====
 
     private void setupCombatWhereToadDies() {
-        Permanent toadPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Noxious Toad"))
-                .findFirst().orElseThrow();
+        Permanent toadPerm = findPermanent(player1, "Noxious Toad");
         toadPerm.setSummoningSick(false);
         toadPerm.setAttacking(true);
 

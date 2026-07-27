@@ -77,9 +77,7 @@ class ConquerTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, land.getId());
         harness.passBothPriorities();
 
-        Permanent conquerPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Conquer"))
-                .findFirst().orElseThrow();
+        Permanent conquerPerm = findPermanent(player1, "Conquer");
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -104,9 +102,7 @@ class ConquerTest extends BaseCardTest {
     void cannotTargetNonLand() {
         harness.addToBattlefield(player2, new Forest()); // valid target so the spell is playable
         harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
 
         harness.setHand(player1, List.of(new Conquer()));
         harness.addMana(player1, ManaColor.RED, 5);

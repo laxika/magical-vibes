@@ -180,8 +180,6 @@ class DarkslickShoresTest extends BaseCardTest {
     }
 
     private Permanent findShores(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Darkslick Shores"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Darkslick Shores");
     }
 }

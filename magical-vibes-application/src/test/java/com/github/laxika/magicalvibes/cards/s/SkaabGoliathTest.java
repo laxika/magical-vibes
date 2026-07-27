@@ -58,9 +58,7 @@ class SkaabGoliathTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Skaab Goliath");
-        Permanent goliath = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Skaab Goliath"))
-                .findFirst().orElseThrow();
+        Permanent goliath = findPermanent(player1, "Skaab Goliath");
         assertThat(goliath.getCard().getPower()).isEqualTo(6);
         assertThat(goliath.getCard().getToughness()).isEqualTo(9);
     }

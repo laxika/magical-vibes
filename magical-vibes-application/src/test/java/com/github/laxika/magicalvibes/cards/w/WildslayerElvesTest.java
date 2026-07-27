@@ -53,9 +53,7 @@ class WildslayerElvesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Wildslayer Elves (3 power) deals its damage as three -1/-1 counters; 5/5 becomes 2/2.
-        Permanent survivor = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Big Bear"))
-                .findFirst().orElseThrow();
+        Permanent survivor = findPermanent(player2, "Big Bear");
         assertThat(survivor.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
     }
 

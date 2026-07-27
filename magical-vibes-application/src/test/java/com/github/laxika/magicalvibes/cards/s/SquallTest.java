@@ -41,10 +41,7 @@ class SquallTest extends BaseCardTest {
 
         castSquall();
 
-        GameData gd = harness.getGameData();
-        Permanent flyer = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Air Elemental"))
-                .findFirst().orElseThrow();
+        Permanent flyer = findPermanent(player2, "Air Elemental");
         assertThat(flyer.getMarkedDamage()).isEqualTo(2);
     }
 

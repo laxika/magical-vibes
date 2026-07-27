@@ -84,9 +84,7 @@ class RhoxPikemasterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RhoxPikemaster());
         harness.addToBattlefield(player1, new RhoxPikemaster());
 
-        List<Permanent> pikemasters = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rhox Pikemaster"))
-                .toList();
+        List<Permanent> pikemasters = findPermanents(player1, "Rhox Pikemaster");
 
         assertThat(pikemasters).hasSize(2);
         for (Permanent pikemaster : pikemasters) {

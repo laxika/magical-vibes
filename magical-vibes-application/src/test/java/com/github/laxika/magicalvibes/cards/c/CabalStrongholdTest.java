@@ -38,9 +38,7 @@ class CabalStrongholdTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Swamp());
         harness.addToBattlefield(player1, new Swamp());
 
-        Permanent stronghold = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Cabal Stronghold"))
-                .findFirst().orElseThrow();
+        Permanent stronghold = findPermanent(player1, "Cabal Stronghold");
         stronghold.setSummoningSick(false);
 
         int strongholdIdx = gd.playerBattlefields.get(player1.getId()).indexOf(stronghold);
@@ -82,9 +80,7 @@ class CabalStrongholdTest extends BaseCardTest {
         nonBasicSwamp.setSupertypes(Set.of());
         harness.addToBattlefield(player1, nonBasicSwamp);
 
-        Permanent stronghold = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Cabal Stronghold"))
-                .findFirst().orElseThrow();
+        Permanent stronghold = findPermanent(player1, "Cabal Stronghold");
         stronghold.setSummoningSick(false);
 
         int strongholdIdx = gd.playerBattlefields.get(player1.getId()).indexOf(stronghold);
@@ -105,9 +101,7 @@ class CabalStrongholdTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Swamp());
         harness.addToBattlefield(player2, new Swamp());
 
-        Permanent stronghold = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Cabal Stronghold"))
-                .findFirst().orElseThrow();
+        Permanent stronghold = findPermanent(player1, "Cabal Stronghold");
         stronghold.setSummoningSick(false);
 
         int strongholdIdx = gd.playerBattlefields.get(player1.getId()).indexOf(stronghold);

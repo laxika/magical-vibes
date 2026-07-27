@@ -80,9 +80,7 @@ class GlenElendraLiegeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GlenElendraLiege());
 
         // The second Liege is both blue and black ({U/B} hybrid), so it receives +1/+1 twice from the first.
-        Permanent boosted = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Glen Elendra Liege"))
-                .findFirst().orElseThrow();
+        Permanent boosted = findPermanent(player1, "Glen Elendra Liege");
 
         // Base 2/3 + 1/1 (blue) + 1/1 (black) = 4/5
         assertThat(gqs.getEffectivePower(gd, boosted)).isEqualTo(4);

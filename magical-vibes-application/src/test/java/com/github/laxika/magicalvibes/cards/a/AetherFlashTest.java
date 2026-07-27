@@ -43,9 +43,7 @@ class AetherFlashTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell → trigger
         harness.passBothPriorities(); // resolve trigger → 2 damage marked
 
-        Permanent hillGiant = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hill Giant"))
-                .findFirst().orElseThrow();
+        Permanent hillGiant = findPermanent(player1, "Hill Giant");
         assertThat(hillGiant.getMarkedDamage()).isEqualTo(2);
     }
 

@@ -88,9 +88,7 @@ class DeadWeightTest extends BaseCardTest {
     @DisplayName("Dead Weight kills a 2/2 creature")
     void killsTwoToughnessCreature() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         harness.setHand(player1, List.of(new DeadWeight()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -127,9 +125,7 @@ class DeadWeightTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DeadWeight()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        Permanent artifact = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fountain of Youth"))
-                .findFirst().orElseThrow();
+        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

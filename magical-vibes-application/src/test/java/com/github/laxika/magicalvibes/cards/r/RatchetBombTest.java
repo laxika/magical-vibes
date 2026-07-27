@@ -158,9 +158,7 @@ class RatchetBombTest extends BaseCardTest {
 
         // Pacifism is an enchantment with MV 2 ({1}{W})
         harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
 
         Pacifism pacifism = new Pacifism();
         Permanent pacifismPerm = new Permanent(pacifism);

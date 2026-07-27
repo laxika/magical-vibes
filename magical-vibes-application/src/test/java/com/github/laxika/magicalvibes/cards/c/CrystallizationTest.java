@@ -142,9 +142,7 @@ class CrystallizationTest extends BaseCardTest {
 
         // Use Icy Manipulator to target the enchanted creature with an activated ability
         harness.addToBattlefield(player1, new IcyManipulator());
-        Permanent icyPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Icy Manipulator"))
-                .findFirst().orElseThrow();
+        Permanent icyPerm = findPermanent(player1, "Icy Manipulator");
         icyPerm.setSummoningSick(false);
 
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -194,9 +192,7 @@ class CrystallizationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        Permanent artifact = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Icy Manipulator"))
-                .findFirst().orElseThrow();
+        Permanent artifact = findPermanent(player1, "Icy Manipulator");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

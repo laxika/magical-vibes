@@ -35,9 +35,7 @@ class ThunderDragonTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent spider = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Giant Spider"))
-                .findFirst().orElseThrow();
+        Permanent spider = findPermanent(player2, "Giant Spider");
         assertThat(spider.getMarkedDamage()).isEqualTo(3);
     }
 
@@ -49,9 +47,7 @@ class ThunderDragonTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent flyer = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Air Elemental"))
-                .findFirst().orElseThrow();
+        Permanent flyer = findPermanent(player2, "Air Elemental");
         assertThat(flyer.getMarkedDamage()).isEqualTo(0);
     }
 

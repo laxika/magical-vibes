@@ -31,8 +31,7 @@ class DramaticEntranceTest extends BaseCardTest {
         // Hand is now [Grizzly Bears]; put it onto the battlefield.
         harness.handleCardChosen(player1, 0);
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears")).findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.isTapped()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }

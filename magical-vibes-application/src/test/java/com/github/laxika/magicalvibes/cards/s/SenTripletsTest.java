@@ -85,9 +85,7 @@ class SenTripletsTest extends BaseCardTest {
     @DisplayName("Locked opponent cannot activate abilities")
     void lockedOpponentCannotActivateAbilities() {
         harness.addToBattlefield(player2, new ProdigalPyromancer());
-        Permanent pyro = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Prodigal Pyromancer"))
-                .findFirst().orElseThrow();
+        Permanent pyro = findPermanent(player2, "Prodigal Pyromancer");
         pyro.setSummoningSick(false);
 
         lockOpponent(player2);

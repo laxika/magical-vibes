@@ -86,9 +86,7 @@ class ImmerwolfTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Immerwolf());
         harness.addToBattlefield(player1, new Immerwolf());
 
-        List<Permanent> immerwolves = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Immerwolf"))
-                .toList();
+        List<Permanent> immerwolves = findPermanents(player1, "Immerwolf");
 
         assertThat(immerwolves).hasSize(2);
         for (Permanent immerwolf : immerwolves) {

@@ -20,9 +20,7 @@ class DemigodOfRevengeTest extends BaseCardTest {
     }
 
     private long demigodsOnBattlefield() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Demigod of Revenge"))
-                .count();
+        return countPermanents(player1, "Demigod of Revenge");
     }
 
     @Test

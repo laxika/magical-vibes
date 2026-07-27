@@ -81,9 +81,7 @@ class RelentlessSkaabsTest extends BaseCardTest {
         harness.castInstant(player2, 0, skaabs.getId());
         resolveUntilEmpty();
 
-        Permanent returnedSkaabs = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Relentless Skaabs"))
-                .findFirst().orElseThrow();
+        Permanent returnedSkaabs = findPermanent(player1, "Relentless Skaabs");
         assertThat(returnedSkaabs.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(returnedSkaabs.getEffectivePower()).isEqualTo(5);
         assertThat(returnedSkaabs.getEffectiveToughness()).isEqualTo(5);

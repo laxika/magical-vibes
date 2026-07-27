@@ -18,9 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ReveillarkTest extends BaseCardTest {
 
     private long battlefieldCount(com.github.laxika.magicalvibes.model.Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .count();
+        return countPermanents(player, name);
     }
 
     private void killReveillark(Permanent reveillark) {

@@ -171,9 +171,7 @@ class PhyresisTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.INFECT)).isTrue();
 
         // Find the Phyresis aura permanent
-        Permanent auraPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyresis"))
-                .findFirst().orElseThrow();
+        Permanent auraPerm = findPermanent(player1, "Phyresis");
 
         // Destroy the aura with Demystify
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -203,9 +201,7 @@ class PhyresisTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Phyresis()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        Permanent artifact = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fountain of Youth"))
-                .findFirst().orElseThrow();
+        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

@@ -151,8 +151,6 @@ class DeathcapGladeTest extends BaseCardTest {
     }
 
     private Permanent findGlade(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Deathcap Glade"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Deathcap Glade");
     }
 }

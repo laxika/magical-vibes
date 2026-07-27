@@ -151,9 +151,7 @@ class CuratorsWardTest extends BaseCardTest {
 
     private Permanent addCreatureWithWard(Player creatureController, Player auraController, Card creatureCard) {
         harness.addToBattlefield(creatureController, creatureCard);
-        Permanent creature = gd.playerBattlefields.get(creatureController.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(creatureCard.getName()))
-                .findFirst().orElseThrow();
+        Permanent creature = findPermanent(creatureController, creatureCard.getName());
 
         CuratorsWard wardCard = new CuratorsWard();
         Permanent ward = new Permanent(wardCard);
@@ -165,9 +163,7 @@ class CuratorsWardTest extends BaseCardTest {
 
     private Permanent addArtifactWithWard(Player artifactController, Player auraController) {
         harness.addToBattlefield(artifactController, new Spellbook());
-        Permanent artifact = gd.playerBattlefields.get(artifactController.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spellbook"))
-                .findFirst().orElseThrow();
+        Permanent artifact = findPermanent(artifactController, "Spellbook");
 
         CuratorsWard wardCard = new CuratorsWard();
         Permanent ward = new Permanent(wardCard);

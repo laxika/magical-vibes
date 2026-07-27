@@ -36,9 +36,7 @@ class BrokenVisageTest extends BaseCardTest {
     }
 
     private Permanent findSpiritToken(Player controller) {
-        return gd.playerBattlefields.get(controller.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spirit"))
-                .findFirst().orElseThrow();
+        return findPermanent(controller, "Spirit");
     }
 
     @Test

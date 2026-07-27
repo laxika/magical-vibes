@@ -25,9 +25,7 @@ class TimberGorgeTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        Permanent gorge = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Timber Gorge"))
-                .findFirst().orElseThrow();
+        Permanent gorge = findPermanent(player1, "Timber Gorge");
         assertThat(gorge.isTapped()).isTrue();
     }
 

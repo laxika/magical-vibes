@@ -61,9 +61,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Lord of the Undead"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Lord of the Undead");
         assertThat(perm.isSummoningSick()).isTrue();
     }
 
@@ -76,9 +74,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Gravedigger());
         harness.addToBattlefield(player1, new LordOfTheUndead());
 
-        Permanent gravedigger = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gravedigger"))
-                .findFirst().orElseThrow();
+        Permanent gravedigger = findPermanent(player1, "Gravedigger");
 
         assertThat(gqs.getEffectivePower(gd, gravedigger)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, gravedigger)).isEqualTo(3);
@@ -89,9 +85,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
     void doesNotBuffItself() {
         harness.addToBattlefield(player1, new LordOfTheUndead());
 
-        Permanent lord = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Lord of the Undead"))
-                .findFirst().orElseThrow();
+        Permanent lord = findPermanent(player1, "Lord of the Undead");
 
         assertThat(gqs.getEffectivePower(gd, lord)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, lord)).isEqualTo(2);
@@ -103,9 +97,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new LordOfTheUndead());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -117,9 +109,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LordOfTheUndead());
         harness.addToBattlefield(player2, new Gravedigger());
 
-        Permanent opponentZombie = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gravedigger"))
-                .findFirst().orElseThrow();
+        Permanent opponentZombie = findPermanent(player2, "Gravedigger");
 
         assertThat(gqs.getEffectivePower(gd, opponentZombie)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, opponentZombie)).isEqualTo(3);
@@ -133,9 +123,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LordOfTheUndead());
         harness.addToBattlefield(player1, new LordOfTheUndead());
 
-        List<Permanent> lords = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Lord of the Undead"))
-                .toList();
+        List<Permanent> lords = findPermanents(player1, "Lord of the Undead");
 
         assertThat(lords).hasSize(2);
         for (Permanent lord : lords) {
@@ -151,9 +139,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LordOfTheUndead());
         harness.addToBattlefield(player1, new Gravedigger());
 
-        Permanent gravedigger = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gravedigger"))
-                .findFirst().orElseThrow();
+        Permanent gravedigger = findPermanent(player1, "Gravedigger");
 
         // 2/2 base + 2/2 from two lords = 4/4
         assertThat(gqs.getEffectivePower(gd, gravedigger)).isEqualTo(4);
@@ -168,9 +154,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LordOfTheUndead());
         harness.addToBattlefield(player1, new Gravedigger());
 
-        Permanent gravedigger = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gravedigger"))
-                .findFirst().orElseThrow();
+        Permanent gravedigger = findPermanent(player1, "Gravedigger");
 
         assertThat(gqs.getEffectivePower(gd, gravedigger)).isEqualTo(3);
 
@@ -188,9 +172,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LordOfTheUndead()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        Permanent gravedigger = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gravedigger"))
-                .findFirst().orElseThrow();
+        Permanent gravedigger = findPermanent(player1, "Gravedigger");
 
         assertThat(gqs.getEffectivePower(gd, gravedigger)).isEqualTo(2);
 
@@ -207,9 +189,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LordOfTheUndead());
         harness.addToBattlefield(player1, new Gravedigger());
 
-        Permanent gravedigger = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gravedigger"))
-                .findFirst().orElseThrow();
+        Permanent gravedigger = findPermanent(player1, "Gravedigger");
 
         gravedigger.setPowerModifier(gravedigger.getPowerModifier() + 5);
         assertThat(gqs.getEffectivePower(gd, gravedigger)).isEqualTo(8); // 2 base + 5 spell + 1 static

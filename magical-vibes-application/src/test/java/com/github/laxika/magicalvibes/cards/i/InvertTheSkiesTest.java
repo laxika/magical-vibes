@@ -32,15 +32,11 @@ class InvertTheSkiesTest extends BaseCardTest {
     }
 
     private Permanent ownBears() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Grizzly Bears");
     }
 
     private Permanent opponentHawk() {
-        return gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Suntail Hawk"))
-                .findFirst().orElseThrow();
+        return findPermanent(player2, "Suntail Hawk");
     }
 
     @Test

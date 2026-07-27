@@ -96,9 +96,7 @@ class PaladinEnVecTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Paladin en-Vec"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Paladin en-Vec");
         assertThat(perm.isSummoningSick()).isTrue();
     }
 

@@ -32,9 +32,7 @@ class HunterOfEyeblightsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(1);
         assertThat(bears.getEffectivePower()).isEqualTo(3);
         assertThat(bears.getEffectiveToughness()).isEqualTo(3);

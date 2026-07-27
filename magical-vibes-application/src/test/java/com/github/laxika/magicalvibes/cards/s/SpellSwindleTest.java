@@ -212,8 +212,6 @@ class SpellSwindleTest extends BaseCardTest {
     // ===== Helpers =====
 
     private List<Permanent> findAllPermanents(Player player, String cardName) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(cardName))
-                .toList();
+        return findPermanents(player, cardName);
     }
 }

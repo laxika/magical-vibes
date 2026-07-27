@@ -97,9 +97,7 @@ class FlayerHuskTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent germ = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         assertThat(germ.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(germ.getCard().getPower()).isEqualTo(0);
@@ -121,9 +119,7 @@ class FlayerHuskTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent germ = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         // 0/0 base + 1/1 from equipment = 1/1 effective
         assertThat(gqs.getEffectivePower(gd, germ)).isEqualTo(1);
@@ -152,9 +148,7 @@ class FlayerHuskTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        Permanent flayerHusk = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Flayer Husk"))
-                .findFirst().orElseThrow();
+        Permanent flayerHusk = findPermanent(player1, "Flayer Husk");
 
         assertThat(flayerHusk.getAttachedTo()).isEqualTo(bears.getId());
 

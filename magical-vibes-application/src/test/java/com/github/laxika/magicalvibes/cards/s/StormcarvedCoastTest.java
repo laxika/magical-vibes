@@ -151,8 +151,6 @@ class StormcarvedCoastTest extends BaseCardTest {
     }
 
     private Permanent findCoast(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Stormcarved Coast"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Stormcarved Coast");
     }
 }

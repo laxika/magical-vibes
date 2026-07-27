@@ -166,8 +166,6 @@ class VeteransArmamentsTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent soldierOnBattlefield(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Veteran Armorsmith"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Veteran Armorsmith");
     }
 }

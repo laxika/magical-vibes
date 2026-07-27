@@ -79,10 +79,7 @@ class DriftOfTheDeadTest extends BaseCardTest {
 
     private Permanent addDrift(Player player) {
         harness.addToBattlefield(player, new DriftOfTheDead());
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Drift of the Dead"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player, "Drift of the Dead");
     }
 
     private Permanent addSnowLand(Player player) {

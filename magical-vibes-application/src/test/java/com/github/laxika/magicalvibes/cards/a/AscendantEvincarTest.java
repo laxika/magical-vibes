@@ -55,9 +55,7 @@ class AscendantEvincarTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ascendant Evincar"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Ascendant Evincar");
         assertThat(perm.isSummoningSick()).isTrue();
     }
 
@@ -68,9 +66,7 @@ class AscendantEvincarTest extends BaseCardTest {
     void doesNotBuffItself() {
         harness.addToBattlefield(player1, new AscendantEvincar());
 
-        Permanent evincar = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ascendant Evincar"))
-                .findFirst().orElseThrow();
+        Permanent evincar = findPermanent(player1, "Ascendant Evincar");
 
         assertThat(gqs.getEffectivePower(gd, evincar)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, evincar)).isEqualTo(3);
@@ -84,9 +80,7 @@ class AscendantEvincarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AscendantEvincar());
         harness.addToBattlefield(player1, new DrudgeSkeletons());
 
-        Permanent skeletons = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Drudge Skeletons"))
-                .findFirst().orElseThrow();
+        Permanent skeletons = findPermanent(player1, "Drudge Skeletons");
 
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, skeletons)).isEqualTo(2);
@@ -98,9 +92,7 @@ class AscendantEvincarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AscendantEvincar());
         harness.addToBattlefield(player2, new DrudgeSkeletons());
 
-        Permanent opponentSkeletons = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Drudge Skeletons"))
-                .findFirst().orElseThrow();
+        Permanent opponentSkeletons = findPermanent(player2, "Drudge Skeletons");
 
         assertThat(gqs.getEffectivePower(gd, opponentSkeletons)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentSkeletons)).isEqualTo(2);
@@ -114,9 +106,7 @@ class AscendantEvincarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AscendantEvincar());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
@@ -128,9 +118,7 @@ class AscendantEvincarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AscendantEvincar());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent opponentBears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(1);
@@ -144,9 +132,7 @@ class AscendantEvincarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AscendantEvincar());
         harness.addToBattlefield(player1, new AscendantEvincar());
 
-        List<Permanent> evincars = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ascendant Evincar"))
-                .toList();
+        List<Permanent> evincars = findPermanents(player1, "Ascendant Evincar");
 
         assertThat(evincars).hasSize(2);
         for (Permanent evincar : evincars) {
@@ -163,9 +149,7 @@ class AscendantEvincarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AscendantEvincar());
         harness.addToBattlefield(player1, new DrudgeSkeletons());
 
-        Permanent skeletons = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Drudge Skeletons"))
-                .findFirst().orElseThrow();
+        Permanent skeletons = findPermanent(player1, "Drudge Skeletons");
 
         // 1/1 base + 2/2 from two Evincars = 3/3
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(3);
@@ -179,9 +163,7 @@ class AscendantEvincarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AscendantEvincar());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
 
         // 2/2 base - 2/2 from two Evincars = 0/0
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(0);
@@ -196,9 +178,7 @@ class AscendantEvincarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AscendantEvincar());
         harness.addToBattlefield(player1, new DrudgeSkeletons());
 
-        Permanent skeletons = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Drudge Skeletons"))
-                .findFirst().orElseThrow();
+        Permanent skeletons = findPermanent(player1, "Drudge Skeletons");
 
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(2);
 
@@ -215,9 +195,7 @@ class AscendantEvincarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AscendantEvincar());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
 
@@ -238,12 +216,8 @@ class AscendantEvincarTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AscendantEvincar()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        Permanent skeletons = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Drudge Skeletons"))
-                .findFirst().orElseThrow();
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent skeletons = findPermanent(player1, "Drudge Skeletons");
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
 
         // Before casting, no bonus
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(1);
@@ -267,9 +241,7 @@ class AscendantEvincarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AscendantEvincar());
         harness.addToBattlefield(player1, new DrudgeSkeletons());
 
-        Permanent skeletons = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Drudge Skeletons"))
-                .findFirst().orElseThrow();
+        Permanent skeletons = findPermanent(player1, "Drudge Skeletons");
 
         // Simulate a temporary spell boost
         skeletons.setPowerModifier(skeletons.getPowerModifier() + 3);
@@ -290,9 +262,7 @@ class AscendantEvincarTest extends BaseCardTest {
     void hasFlying() {
         harness.addToBattlefield(player1, new AscendantEvincar());
 
-        Permanent evincar = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ascendant Evincar"))
-                .findFirst().orElseThrow();
+        Permanent evincar = findPermanent(player1, "Ascendant Evincar");
 
         assertThat(gqs.hasKeyword(gd, evincar, Keyword.FLYING)).isTrue();
     }

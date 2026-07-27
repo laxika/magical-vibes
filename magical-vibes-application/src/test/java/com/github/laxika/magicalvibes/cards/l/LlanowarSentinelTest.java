@@ -113,8 +113,6 @@ class LlanowarSentinelTest extends BaseCardTest {
     }
 
     private long countSentinelsOnBattlefield() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Sentinel"))
-                .count();
+        return countPermanents(player1, "Llanowar Sentinel");
     }
 }

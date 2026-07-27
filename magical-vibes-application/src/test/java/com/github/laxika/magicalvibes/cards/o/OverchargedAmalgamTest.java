@@ -98,9 +98,7 @@ class OverchargedAmalgamTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
         harness.addToBattlefield(player2, new IcyManipulator());
-        Permanent icy = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Icy Manipulator"))
-                .findFirst().orElseThrow();
+        Permanent icy = findPermanent(player2, "Icy Manipulator");
         icy.setSummoningSick(false);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player2);
@@ -123,9 +121,7 @@ class OverchargedAmalgamTest extends BaseCardTest {
                 se.getEntryType().name().contains("ACTIVATED"));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(bearsId));
-        Permanent amalgam = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Overcharged Amalgam"))
-                .findFirst().orElseThrow();
+        Permanent amalgam = findPermanent(player1, "Overcharged Amalgam");
         assertThat(amalgam.isTapped()).isFalse();
     }
 

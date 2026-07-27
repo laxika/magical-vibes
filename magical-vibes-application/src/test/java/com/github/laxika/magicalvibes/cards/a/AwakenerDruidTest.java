@@ -79,9 +79,7 @@ class AwakenerDruidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst().orElseThrow();
+        Permanent forest = findPermanent(player1, "Forest");
 
         assertThat(forest.isPermanentlyAnimated()).isTrue();
         assertThat(forest.getPermanentAnimatedPower()).isEqualTo(4);
@@ -121,15 +119,11 @@ class AwakenerDruidTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Find the Druid permanent and destroy it
-        Permanent druid = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Awakener Druid"))
-                .findFirst().orElseThrow();
+        Permanent druid = findPermanent(player1, "Awakener Druid");
         harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, druid));
 
         // Forest should revert
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst().orElseThrow();
+        Permanent forest = findPermanent(player1, "Forest");
 
         assertThat(forest.isPermanentlyAnimated()).isFalse();
         assertThat(forest.getGrantedSubtypes()).isEmpty();
@@ -155,15 +149,11 @@ class AwakenerDruidTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Bounce the Druid to hand
-        Permanent druid = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Awakener Druid"))
-                .findFirst().orElseThrow();
+        Permanent druid = findPermanent(player1, "Awakener Druid");
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, druid));
 
         // Forest should revert
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst().orElseThrow();
+        Permanent forest = findPermanent(player1, "Forest");
 
         assertThat(forest.isPermanentlyAnimated()).isFalse();
         assertThat(gqs.isCreature(gd, forest)).isFalse();
@@ -212,17 +202,13 @@ class AwakenerDruidTest extends BaseCardTest {
 
         // Remove the Druid before ETB resolves
         GameData gd = harness.getGameData();
-        Permanent druid = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Awakener Druid"))
-                .findFirst().orElseThrow();
+        Permanent druid = findPermanent(player1, "Awakener Druid");
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, druid));
 
         // Resolve ETB → no effect
         harness.passBothPriorities();
 
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst().orElseThrow();
+        Permanent forest = findPermanent(player1, "Forest");
 
         assertThat(forest.isPermanentlyAnimated()).isFalse();
         assertThat(gqs.isCreature(gd, forest)).isFalse();
@@ -294,9 +280,7 @@ class AwakenerDruidTest extends BaseCardTest {
         assertThat(gd.sourceLinkedAnimations).hasSize(2);
 
         // Destroy the first Druid
-        List<Permanent> druids = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Awakener Druid"))
-                .toList();
+        List<Permanent> druids = findPermanents(player1, "Awakener Druid");
         harness.inMutationScope(
                 () -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, druids.getFirst()));
 

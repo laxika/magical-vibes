@@ -31,9 +31,7 @@ class CarapaceForgerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent forger = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Carapace Forger"))
-                .findFirst().orElseThrow();
+        Permanent forger = findPermanent(player1, "Carapace Forger");
         assertThat(gqs.getEffectivePower(gd, forger)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, forger)).isEqualTo(2);
     }
@@ -48,9 +46,7 @@ class CarapaceForgerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
 
-        Permanent forger = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Carapace Forger"))
-                .findFirst().orElseThrow();
+        Permanent forger = findPermanent(player1, "Carapace Forger");
         assertThat(gqs.getEffectivePower(gd, forger)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, forger)).isEqualTo(4);
     }
@@ -65,9 +61,7 @@ class CarapaceForgerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
 
-        Permanent forger = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Carapace Forger"))
-                .findFirst().orElseThrow();
+        Permanent forger = findPermanent(player1, "Carapace Forger");
         assertThat(gqs.getEffectivePower(gd, forger)).isEqualTo(4);
 
         // Remove one artifact — now only 2

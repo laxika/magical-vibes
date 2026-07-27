@@ -28,9 +28,7 @@ class JungleShrineTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        Permanent shrine = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Jungle Shrine"))
-                .findFirst().orElseThrow();
+        Permanent shrine = findPermanent(player1, "Jungle Shrine");
         assertThat(shrine.isTapped()).isTrue();
     }
 

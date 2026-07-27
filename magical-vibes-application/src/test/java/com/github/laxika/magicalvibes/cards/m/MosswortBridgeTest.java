@@ -18,9 +18,7 @@ class MosswortBridgeTest extends BaseCardTest {
     private Permanent addBridgeWithImprint(Card imprinted) {
         harness.addToBattlefield(player1, new MosswortBridge());
         GameData gd = harness.getGameData();
-        Permanent bridge = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mosswort Bridge"))
-                .findFirst().orElseThrow();
+        Permanent bridge = findPermanent(player1, "Mosswort Bridge");
         gd.setImprintedCard(bridge.getCard(), imprinted);
         gd.addToExile(player1.getId(), imprinted);
         return bridge;

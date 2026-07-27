@@ -379,9 +379,7 @@ class PhyrexianCrusaderTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Phyrexian Crusader");
 
         // Sengir should have 2 -1/-1 counters
-        Permanent survivingBlocker = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sengir Vampire"))
-                .findFirst().orElseThrow();
+        Permanent survivingBlocker = findPermanent(player2, "Sengir Vampire");
         assertThat(survivingBlocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 

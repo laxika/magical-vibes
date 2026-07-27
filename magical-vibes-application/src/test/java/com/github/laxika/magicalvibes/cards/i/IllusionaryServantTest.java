@@ -74,9 +74,7 @@ class IllusionaryServantTest extends BaseCardTest {
 
         // Use Prodigal Pyromancer to target Illusionary Servant with an activated ability
         harness.addToBattlefield(player2, new ProdigalPyromancer());
-        Permanent pyroPerm = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Prodigal Pyromancer"))
-                .findFirst().orElseThrow();
+        Permanent pyroPerm = findPermanent(player2, "Prodigal Pyromancer");
         pyroPerm.setSummoningSick(false);
 
         harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(pyroPerm),

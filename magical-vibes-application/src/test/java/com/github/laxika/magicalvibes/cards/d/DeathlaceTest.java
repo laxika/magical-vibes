@@ -63,9 +63,7 @@ class DeathlaceTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Deathlace on the spell
         harness.passBothPriorities(); // resolve the Grizzly Bears spell
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectiveColors(gd, bears)).containsExactly(CardColor.BLACK);
     }
 }

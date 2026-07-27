@@ -23,9 +23,7 @@ class AmoeboidChangelingTest extends BaseCardTest {
     }
 
     private Permanent find(String name) {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, name);
     }
 
     // ===== Ability 1: gains all creature types =====

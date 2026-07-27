@@ -110,9 +110,7 @@ class CausticHoundTest extends BaseCardTest {
      * Caustic Hound will die from combat damage.
      */
     private void setupCombatWhereCausticHoundDies() {
-        Permanent causticHoundPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Caustic Hound"))
-                .findFirst().orElseThrow();
+        Permanent causticHoundPerm = findPermanent(player1, "Caustic Hound");
         causticHoundPerm.setSummoningSick(false);
         causticHoundPerm.setAttacking(true);
 

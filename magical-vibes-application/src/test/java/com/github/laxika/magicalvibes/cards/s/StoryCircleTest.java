@@ -76,9 +76,7 @@ class StoryCircleTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "RED");
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Story Circle"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Story Circle");
         assertThat(perm.getChosenColor()).isEqualTo(CardColor.RED);
     }
 

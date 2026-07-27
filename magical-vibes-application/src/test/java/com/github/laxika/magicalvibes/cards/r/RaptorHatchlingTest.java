@@ -107,9 +107,7 @@ class RaptorHatchlingTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 2);
 
         // Shock first hatchling
-        List<Permanent> hatchlings = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Raptor Hatchling"))
-                .toList();
+        List<Permanent> hatchlings = findPermanents(player1, "Raptor Hatchling");
         harness.castInstant(player2, 0, hatchlings.get(0).getId());
         harness.passBothPriorities(); // Resolve first Shock
         harness.passBothPriorities(); // Resolve first trigger

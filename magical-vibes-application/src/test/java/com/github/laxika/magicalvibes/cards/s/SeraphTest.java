@@ -87,9 +87,7 @@ class SeraphTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
 
         // Player2 gains control of Seraph (it stays on the battlefield, just under a new controller).
-        Permanent seraph = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Seraph"))
-                .findFirst().orElseThrow();
+        Permanent seraph = findPermanent(player1, "Seraph");
         gd.playerBattlefields.get(player1.getId()).remove(seraph);
         gd.playerBattlefields.get(player2.getId()).add(seraph);
 

@@ -162,9 +162,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
                 .anyMatch(p -> p.getId().equals(creature.getId()));
 
         // Find the Pacifism aura
-        Permanent pacifismPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Pacifism"))
-                .findFirst().orElseThrow();
+        Permanent pacifismPerm = findPermanent(player1, "Pacifism");
 
         // Destroy Pacifism with Demystify
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -205,9 +203,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
         attachAura(player2, creature, new Pacifism());
 
         // Find the first Pacifism aura (on player1's battlefield)
-        Permanent pacifismPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Pacifism"))
-                .findFirst().orElseThrow();
+        Permanent pacifismPerm = findPermanent(player1, "Pacifism");
 
         // Destroy first Pacifism with Demystify
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

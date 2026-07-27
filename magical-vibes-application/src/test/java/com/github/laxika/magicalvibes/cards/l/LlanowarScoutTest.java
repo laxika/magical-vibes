@@ -78,10 +78,7 @@ class LlanowarScoutTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
-        Permanent land = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst()
-                .orElseThrow();
+        Permanent land = findPermanent(player1, "Forest");
         assertThat(land.isTapped()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }

@@ -67,9 +67,6 @@ class ManaplasmTest extends BaseCardTest {
     }
 
     private Permanent getManaplasm() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Manaplasm"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Manaplasm");
     }
 }

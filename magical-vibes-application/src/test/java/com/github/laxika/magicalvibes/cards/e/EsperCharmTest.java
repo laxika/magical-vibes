@@ -36,9 +36,7 @@ class EsperCharmTest extends BaseCardTest {
             harness.setHand(player1, List.of(new EsperCharm()));
             addWUB();
 
-            Permanent anthem = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Glorious Anthem"))
-                    .findFirst().orElseThrow();
+            Permanent anthem = findPermanent(player2, "Glorious Anthem");
 
             harness.castInstant(player1, 0, 0, anthem.getId());
             harness.passBothPriorities();
@@ -56,9 +54,7 @@ class EsperCharmTest extends BaseCardTest {
             harness.setHand(player1, List.of(new EsperCharm()));
             addWUB();
 
-            Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                    .findFirst().orElseThrow();
+            Permanent bears = findPermanent(player2, "Grizzly Bears");
 
             assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, bears.getId()))
                     .isInstanceOf(IllegalStateException.class);
@@ -113,9 +109,7 @@ class EsperCharmTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EsperCharm()));
         addWUB();
 
-        Permanent anthem = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Glorious Anthem"))
-                .findFirst().orElseThrow();
+        Permanent anthem = findPermanent(player2, "Glorious Anthem");
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 99, anthem.getId()))
                 .isInstanceOf(IllegalStateException.class);

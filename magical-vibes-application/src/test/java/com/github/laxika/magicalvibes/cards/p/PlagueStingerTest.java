@@ -86,9 +86,7 @@ class PlagueStingerTest extends BaseCardTest {
 
         // Air Elemental should have 1 -1/-1 counter (from 1 infect damage), making it 3/3 — survives
         harness.assertOnBattlefield(player2, "Air Elemental");
-        Permanent elemental = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Air Elemental"))
-                .findFirst().orElseThrow();
+        Permanent elemental = findPermanent(player2, "Air Elemental");
         assertThat(elemental.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
 
         // No poison counters — damage went to a creature

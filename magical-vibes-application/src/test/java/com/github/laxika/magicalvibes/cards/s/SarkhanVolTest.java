@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -129,13 +128,10 @@ class SarkhanVolTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Sarkhan dies (6 - 6 = 0)
         harness.assertNotOnBattlefield(player1, "Sarkhan Vol");
 
-        List<Permanent> dragons = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Dragon"))
-                .toList();
+        List<Permanent> dragons = findPermanents(player1, "Dragon");
         assertThat(dragons).hasSize(5);
         assertThat(dragons).allSatisfy(d -> {
             assertThat(d.getCard().getPower()).isEqualTo(4);

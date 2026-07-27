@@ -29,9 +29,7 @@ class GiantAmbushBeetleTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell -> ETB may on stack
 
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Giant Ambush Beetle"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Giant Ambush Beetle");
     }
 
     private Permanent addCreature(Player player) {

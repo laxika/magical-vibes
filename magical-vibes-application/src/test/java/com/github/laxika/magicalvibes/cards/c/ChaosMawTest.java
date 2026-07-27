@@ -48,15 +48,10 @@ class ChaosMawTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Air Elemental"))
-                .findFirst().orElseThrow().getMarkedDamage()).isEqualTo(3);
+        assertThat(findPermanent(player2, "Air Elemental").getMarkedDamage()).isEqualTo(3);
 
         // Chaos Maw itself survives with no marked damage
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Chaos Maw"))
-                .findFirst().orElseThrow().getMarkedDamage()).isZero();
+        assertThat(findPermanent(player1, "Chaos Maw").getMarkedDamage()).isZero();
     }
 
     @Test

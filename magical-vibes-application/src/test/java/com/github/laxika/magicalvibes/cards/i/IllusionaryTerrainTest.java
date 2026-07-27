@@ -41,9 +41,7 @@ class IllusionaryTerrainTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "ISLAND");
 
-        Permanent terrain = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Illusionary Terrain"))
-                .findFirst().orElseThrow();
+        Permanent terrain = findPermanent(player1, "Illusionary Terrain");
         assertThat(terrain.getChosenSubtype()).isEqualTo(CardSubtype.MOUNTAIN);
         assertThat(terrain.getSecondChosenSubtype()).isEqualTo(CardSubtype.ISLAND);
     }

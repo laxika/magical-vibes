@@ -98,9 +98,7 @@ class BloodlineKeeperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Verify other Vampires get +2/+2
-        Permanent otherVampire = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Barony Vampire"))
-                .findFirst().orElseThrow();
+        Permanent otherVampire = findPermanent(player1, "Barony Vampire");
 
         // Barony Vampire is 3/2 base; with +2/+2 from Lord of Lineage = 5/4
         assertThat(gqs.getEffectivePower(gd, otherVampire)).isEqualTo(5);

@@ -95,9 +95,7 @@ class ChandraNalaarTest extends BaseCardTest {
         Permanent chandra = addReadyChandra(player1);
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
 
         // Use X=3 to deal 3 damage (kills 2/2 bear)
         harness.activateAbility(player1, 0, 1, 3, bear.getId());
@@ -115,9 +113,7 @@ class ChandraNalaarTest extends BaseCardTest {
         Permanent chandra = addReadyChandra(player1);
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
 
         harness.activateAbility(player1, 0, 1, 0, bear.getId());
         harness.passBothPriorities();
@@ -133,9 +129,7 @@ class ChandraNalaarTest extends BaseCardTest {
         Permanent chandra = addReadyChandra(player1);
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
 
         // X=7 but Chandra only has 6 loyalty
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 7, bear.getId()))

@@ -38,9 +38,7 @@ class SpireSerpentTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent serpent = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spire Serpent"))
-                .findFirst().orElseThrow();
+        Permanent serpent = findPermanent(player1, "Spire Serpent");
         assertThat(gqs.getEffectivePower(gd, serpent)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, serpent)).isEqualTo(5);
     }
@@ -73,9 +71,7 @@ class SpireSerpentTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
 
-        Permanent serpent = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spire Serpent"))
-                .findFirst().orElseThrow();
+        Permanent serpent = findPermanent(player1, "Spire Serpent");
         assertThat(gqs.getEffectivePower(gd, serpent)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, serpent)).isEqualTo(7);
     }
@@ -87,9 +83,7 @@ class SpireSerpentTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
-        Permanent serpent = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spire Serpent"))
-                .findFirst().orElseThrow();
+        Permanent serpent = findPermanent(player1, "Spire Serpent");
         serpent.setSummoningSick(false);
         harness.addToBattlefield(player2, new GrizzlyBears());
 
@@ -114,9 +108,7 @@ class SpireSerpentTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
 
-        Permanent serpent = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spire Serpent"))
-                .findFirst().orElseThrow();
+        Permanent serpent = findPermanent(player1, "Spire Serpent");
         assertThat(gqs.getEffectivePower(gd, serpent)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, serpent)).isEqualTo(7);
 
@@ -133,9 +125,7 @@ class SpireSerpentTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
-        Permanent serpent = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spire Serpent"))
-                .findFirst().orElseThrow();
+        Permanent serpent = findPermanent(player1, "Spire Serpent");
         serpent.setSummoningSick(false);
         harness.addToBattlefield(player2, new GrizzlyBears());
 

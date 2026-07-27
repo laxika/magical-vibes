@@ -35,9 +35,7 @@ class ContagionClaspTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve artifact spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(bears.getEffectivePower()).isEqualTo(1);
         assertThat(bears.getEffectiveToughness()).isEqualTo(1);
@@ -195,9 +193,7 @@ class ContagionClaspTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No MULTI_PERMANENT_CHOICE should be awaited — no eligible permanents
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
     }
 
@@ -215,9 +211,7 @@ class ContagionClaspTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No eligible permanents, no choice needed
-        Permanent spellbook = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spellbook"))
-                .findFirst().orElseThrow();
+        Permanent spellbook = findPermanent(player1, "Spellbook");
         assertThat(spellbook.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
     }
 

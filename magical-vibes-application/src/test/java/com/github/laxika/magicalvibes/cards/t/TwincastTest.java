@@ -593,9 +593,7 @@ class TwincastTest extends BaseCardTest {
 
         GloriousAnthem anthem = new GloriousAnthem();
         harness.addToBattlefield(player1, anthem);
-        UUID anthemPermId = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Glorious Anthem"))
-                .findFirst().orElseThrow().getId();
+        UUID anthemPermId = findPermanent(player1, "Glorious Anthem").getId();
 
         // Player1 casts Might of Oaks targeting bears
         MightOfOaks might = new MightOfOaks();

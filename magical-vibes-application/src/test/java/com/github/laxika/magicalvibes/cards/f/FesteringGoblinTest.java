@@ -27,9 +27,7 @@ class FesteringGoblinTest extends BaseCardTest {
      * FG will die from combat damage.
      */
     private void setupCombatWhereGoblinDies() {
-        Permanent goblinPerm = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Festering Goblin"))
-                .findFirst().orElseThrow();
+        Permanent goblinPerm = findPermanent(player1, "Festering Goblin");
         goblinPerm.setSummoningSick(false);
         goblinPerm.setAttacking(true);
 
@@ -130,9 +128,7 @@ class FesteringGoblinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears should have -1/-1
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getPowerModifier()).isEqualTo(-1);
         assertThat(bears.getToughnessModifier()).isEqualTo(-1);
     }

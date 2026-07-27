@@ -26,9 +26,7 @@ class HystericalBlindnessTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(-2); // 2 - 4 = -2
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
     }
@@ -43,9 +41,7 @@ class HystericalBlindnessTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(2);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
     }
@@ -60,9 +56,7 @@ class HystericalBlindnessTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(-2);
 
         harness.forceStep(TurnStep.END_STEP);

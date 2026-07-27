@@ -21,9 +21,7 @@ class TetsukoUmezawaFugitiveTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TetsukoUmezawaFugitive());
         harness.addToBattlefield(player1, new FugitiveWizard());
 
-        Permanent wizard = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fugitive Wizard"))
-                .findFirst().orElseThrow();
+        Permanent wizard = findPermanent(player1, "Fugitive Wizard");
 
         assertThat(gqs.hasCantBeBlocked(gd, wizard)).isTrue();
     }
@@ -34,9 +32,7 @@ class TetsukoUmezawaFugitiveTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TetsukoUmezawaFugitive());
         harness.addToBattlefield(player1, new PhyrexianDigester());
 
-        Permanent digester = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Digester"))
-                .findFirst().orElseThrow();
+        Permanent digester = findPermanent(player1, "Phyrexian Digester");
 
         assertThat(gqs.hasCantBeBlocked(gd, digester)).isTrue();
     }
@@ -47,9 +43,7 @@ class TetsukoUmezawaFugitiveTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TetsukoUmezawaFugitive());
         harness.addToBattlefield(player1, new WallOfAir());
 
-        Permanent wall = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wall of Air"))
-                .findFirst().orElseThrow();
+        Permanent wall = findPermanent(player1, "Wall of Air");
 
         assertThat(gqs.hasCantBeBlocked(gd, wall)).isTrue();
     }
@@ -59,9 +53,7 @@ class TetsukoUmezawaFugitiveTest extends BaseCardTest {
     void tetsukoItselfCantBeBlocked() {
         harness.addToBattlefield(player1, new TetsukoUmezawaFugitive());
 
-        Permanent tetsuko = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Tetsuko Umezawa, Fugitive"))
-                .findFirst().orElseThrow();
+        Permanent tetsuko = findPermanent(player1, "Tetsuko Umezawa, Fugitive");
 
         assertThat(gqs.hasCantBeBlocked(gd, tetsuko)).isTrue();
     }
@@ -74,9 +66,7 @@ class TetsukoUmezawaFugitiveTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TetsukoUmezawaFugitive());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.hasCantBeBlocked(gd, bears)).isFalse();
     }
@@ -89,9 +79,7 @@ class TetsukoUmezawaFugitiveTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TetsukoUmezawaFugitive());
         harness.addToBattlefield(player2, new FugitiveWizard());
 
-        Permanent opponentWizard = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fugitive Wizard"))
-                .findFirst().orElseThrow();
+        Permanent opponentWizard = findPermanent(player2, "Fugitive Wizard");
 
         assertThat(gqs.hasCantBeBlocked(gd, opponentWizard)).isFalse();
     }
@@ -104,9 +92,7 @@ class TetsukoUmezawaFugitiveTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TetsukoUmezawaFugitive());
         harness.addToBattlefield(player1, new FugitiveWizard());
 
-        Permanent wizard = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fugitive Wizard"))
-                .findFirst().orElseThrow();
+        Permanent wizard = findPermanent(player1, "Fugitive Wizard");
 
         assertThat(gqs.hasCantBeBlocked(gd, wizard)).isTrue();
 

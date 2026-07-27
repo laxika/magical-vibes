@@ -83,8 +83,6 @@ class ThresherLizardTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent findLizard() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Thresher Lizard"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Thresher Lizard");
     }
 }

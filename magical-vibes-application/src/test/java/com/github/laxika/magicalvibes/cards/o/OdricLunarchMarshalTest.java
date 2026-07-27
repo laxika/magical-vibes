@@ -127,10 +127,7 @@ class OdricLunarchMarshalTest extends BaseCardTest {
 
         advanceToCombatAndResolve(player1);
 
-        Permanent odric = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Odric, Lunarch Marshal"))
-                .findFirst()
-                .orElseThrow();
+        Permanent odric = findPermanent(player1, "Odric, Lunarch Marshal");
         assertThat(gqs.hasKeyword(gd, odric, Keyword.SKULK)).isTrue();
 
         attacker.setAttacking(true);

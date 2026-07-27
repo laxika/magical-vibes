@@ -25,9 +25,7 @@ class SaltMarshTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        Permanent marsh = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Salt Marsh"))
-                .findFirst().orElseThrow();
+        Permanent marsh = findPermanent(player1, "Salt Marsh");
         assertThat(marsh.isTapped()).isTrue();
     }
 

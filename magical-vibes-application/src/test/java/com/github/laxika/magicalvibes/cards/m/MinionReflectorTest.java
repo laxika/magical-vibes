@@ -47,9 +47,7 @@ class MinionReflectorTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        long bearsCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .count();
+        long bearsCount = countPermanents(player1, "Grizzly Bears");
         assertThat(bearsCount).isEqualTo(2);
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
@@ -73,9 +71,7 @@ class MinionReflectorTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
-        long bearsCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .count();
+        long bearsCount = countPermanents(player1, "Grizzly Bears");
         assertThat(bearsCount).isEqualTo(1);
     }
 

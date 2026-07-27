@@ -29,9 +29,7 @@ class CurseOfStalkedPreyTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Curse of Stalked Prey");
 
-        Permanent curse = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Curse of Stalked Prey"))
-                .findFirst().orElseThrow();
+        Permanent curse = findPermanent(player1, "Curse of Stalked Prey");
         assertThat(curse.getAttachedTo()).isEqualTo(player2.getId());
     }
 
@@ -45,9 +43,7 @@ class CurseOfStalkedPreyTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, player1.getId());
         harness.passBothPriorities(); // resolve
 
-        Permanent curse = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Curse of Stalked Prey"))
-                .findFirst().orElseThrow();
+        Permanent curse = findPermanent(player1, "Curse of Stalked Prey");
         assertThat(curse.getAttachedTo()).isEqualTo(player1.getId());
     }
 

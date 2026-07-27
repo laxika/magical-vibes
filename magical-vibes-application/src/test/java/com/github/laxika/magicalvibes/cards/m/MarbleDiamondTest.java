@@ -42,9 +42,6 @@ class MarbleDiamondTest extends BaseCardTest {
     }
 
     private Permanent findDiamond(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Marble Diamond"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player, "Marble Diamond");
     }
 }

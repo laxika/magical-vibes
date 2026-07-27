@@ -101,9 +101,7 @@ class RealmRazerTest extends BaseCardTest {
         harness.castInstant(player2, 0, razerId);
         harness.passBothPriorities();
 
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst().orElseThrow();
+        Permanent returned = findPermanent(player1, "Forest");
         assertThat(returned.isTapped()).isTrue();
     }
 }

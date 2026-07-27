@@ -295,9 +295,7 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         // Bears killed, first Ornithopter stays, second gone
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         // One Ornithopter remains (checking count)
-        long ornithopterCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ornithopter"))
-                .count();
+        long ornithopterCount = countPermanents(player1, "Ornithopter");
         assertThat(ornithopterCount).isEqualTo(1);
 
         // The sacrificed one is the second one

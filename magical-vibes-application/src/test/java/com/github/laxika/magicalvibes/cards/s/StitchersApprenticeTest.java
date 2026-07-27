@@ -53,9 +53,7 @@ class StitchersApprenticeTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Stitcher's Apprentice");
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Homunculus"))
-                .count()).isEqualTo(1);
+        assertThat(countPermanents(player1, "Homunculus")).isEqualTo(1);
     }
 
     // ===== Sacrifice the token itself =====
@@ -109,9 +107,7 @@ class StitchersApprenticeTest extends BaseCardTest {
 
         // Apprentice is gone, token remains
         harness.assertNotOnBattlefield(player1, "Stitcher's Apprentice");
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Homunculus"))
-                .count()).isEqualTo(1);
+        assertThat(countPermanents(player1, "Homunculus")).isEqualTo(1);
     }
 
     // ===== Summoning sickness prevents activation =====

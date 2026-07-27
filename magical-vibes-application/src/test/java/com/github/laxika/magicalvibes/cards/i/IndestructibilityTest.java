@@ -66,9 +66,7 @@ class IndestructibilityTest extends BaseCardTest {
     @DisplayName("Can cast Indestructibility targeting a noncreature permanent")
     void canTargetNonCreature() {
         harness.addToBattlefield(player1, new FountainOfYouth());
-        Permanent artifact = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fountain of Youth"))
-                .findFirst().orElseThrow();
+        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         harness.setHand(player1, List.of(new Indestructibility()));
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -93,9 +91,7 @@ class IndestructibilityTest extends BaseCardTest {
     @DisplayName("Enchanted noncreature permanent has indestructible")
     void enchantedNonCreatureHasIndestructible() {
         harness.addToBattlefield(player1, new FountainOfYouth());
-        Permanent artifact = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fountain of Youth"))
-                .findFirst().orElseThrow();
+        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         Permanent aura = new Permanent(new Indestructibility());
         aura.setAttachedTo(artifact.getId());

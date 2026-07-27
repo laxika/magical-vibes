@@ -161,11 +161,8 @@ class ManorSkeletonTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         harness.assertOnBattlefield(player1, "Manor Skeleton");
-        Permanent skele = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Manor Skeleton"))
-                .findFirst().orElseThrow();
+        Permanent skele = findPermanent(player1, "Manor Skeleton");
         assertThat(skele.isTapped()).isTrue();
         assertThat(skele.getRegenerationShield()).isEqualTo(0);
     }

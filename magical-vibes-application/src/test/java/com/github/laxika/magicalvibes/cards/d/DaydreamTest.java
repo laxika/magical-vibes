@@ -30,9 +30,7 @@ class DaydreamTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(bearId));
         harness.passBothPriorities();
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getId()).isNotEqualTo(bearId);
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -81,9 +79,7 @@ class DaydreamTest extends BaseCardTest {
         harness.castFlashback(player1, 0, List.of(bearId));
         harness.passBothPriorities();
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 

@@ -25,9 +25,7 @@ class WoodlandStreamTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        Permanent stream = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Woodland Stream"))
-                .findFirst().orElseThrow();
+        Permanent stream = findPermanent(player1, "Woodland Stream");
         assertThat(stream.isTapped()).isTrue();
     }
 

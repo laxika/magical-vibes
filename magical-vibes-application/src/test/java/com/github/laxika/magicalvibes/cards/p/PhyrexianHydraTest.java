@@ -31,13 +31,10 @@ class PhyrexianHydraTest extends BaseCardTest {
         harness.castInstant(player1, 0, hydraId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Hydra survives
         harness.assertOnBattlefield(player2, "Phyrexian Hydra");
         // Hydra has 2 -1/-1 counters from Shock's 2 damage
-        Permanent hydra = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Hydra"))
-                .findFirst().orElseThrow();
+        Permanent hydra = findPermanent(player2, "Phyrexian Hydra");
         assertThat(hydra.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
@@ -65,12 +62,9 @@ class PhyrexianHydraTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Hydra survives with 2 -1/-1 counters from Bears' 2 power
         harness.assertOnBattlefield(player2, "Phyrexian Hydra");
-        Permanent hydra = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Hydra"))
-                .findFirst().orElseThrow();
+        Permanent hydra = findPermanent(player2, "Phyrexian Hydra");
         assertThat(hydra.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
 
         // Bears dies from Hydra's 7 power (infect → -1/-1 counters, toughness 0)
@@ -166,9 +160,7 @@ class PhyrexianHydraTest extends BaseCardTest {
         assertThat(survivingBlocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(7);
 
         // Hydra gets 3 -1/-1 counters from blocking creature's 3 power
-        Permanent hydra = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Hydra"))
-                .findFirst().orElseThrow();
+        Permanent hydra = findPermanent(player1, "Phyrexian Hydra");
         assertThat(hydra.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
     }
 }

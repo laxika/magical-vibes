@@ -89,8 +89,6 @@ class RazorfieldRhinoTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent findRhino() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Razorfield Rhino"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Razorfield Rhino");
     }
 }

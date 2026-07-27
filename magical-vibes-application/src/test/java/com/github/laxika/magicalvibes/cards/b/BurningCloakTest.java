@@ -26,9 +26,7 @@ class BurningCloakTest extends BaseCardTest {
     }
 
     private Permanent battlefieldPermanent(String name) {
-        return gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst().orElseThrow();
+        return findPermanent(player2, name);
     }
 
     @Test

@@ -52,9 +52,6 @@ class PitilessVizierTest extends BaseCardTest {
     }
 
     private Permanent getPitilessVizier() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Pitiless Vizier"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Pitiless Vizier");
     }
 }

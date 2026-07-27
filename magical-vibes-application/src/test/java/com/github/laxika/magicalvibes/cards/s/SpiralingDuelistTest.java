@@ -30,9 +30,7 @@ class SpiralingDuelistTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent duelist = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spiraling Duelist"))
-                .findFirst().orElseThrow();
+        Permanent duelist = findPermanent(player1, "Spiraling Duelist");
         assertThat(gqs.hasKeyword(gd, duelist, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
@@ -44,9 +42,7 @@ class SpiralingDuelistTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
 
-        Permanent duelist = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spiraling Duelist"))
-                .findFirst().orElseThrow();
+        Permanent duelist = findPermanent(player1, "Spiraling Duelist");
         assertThat(gqs.hasKeyword(gd, duelist, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
@@ -58,9 +54,7 @@ class SpiralingDuelistTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
 
-        Permanent duelist = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spiraling Duelist"))
-                .findFirst().orElseThrow();
+        Permanent duelist = findPermanent(player1, "Spiraling Duelist");
         assertThat(gqs.hasKeyword(gd, duelist, Keyword.DOUBLE_STRIKE)).isTrue();
 
         // Remove one artifact — now only 2
@@ -77,9 +71,7 @@ class SpiralingDuelistTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LeoninScimitar());
         harness.addToBattlefield(player2, new BottleGnomes());
 
-        Permanent duelist = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spiraling Duelist"))
-                .findFirst().orElseThrow();
+        Permanent duelist = findPermanent(player1, "Spiraling Duelist");
         assertThat(gqs.hasKeyword(gd, duelist, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 }

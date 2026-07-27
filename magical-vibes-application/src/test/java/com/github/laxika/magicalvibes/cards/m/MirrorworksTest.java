@@ -48,9 +48,7 @@ class MirrorworksTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Should have Mirrorworks + original Glint Hawk Idol + token copy = 3 permanents
-        long idolCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Glint Hawk Idol"))
-                .count();
+        long idolCount = countPermanents(player1, "Glint Hawk Idol");
         assertThat(idolCount).isEqualTo(2);
 
         // One of them should be a token
@@ -75,9 +73,7 @@ class MirrorworksTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // Should have only Mirrorworks + original Glint Hawk Idol
-        long idolCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Glint Hawk Idol"))
-                .count();
+        long idolCount = countPermanents(player1, "Glint Hawk Idol");
         assertThat(idolCount).isEqualTo(1);
     }
 
@@ -96,9 +92,7 @@ class MirrorworksTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // No token should be created
-        long idolCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Glint Hawk Idol"))
-                .count();
+        long idolCount = countPermanents(player1, "Glint Hawk Idol");
         assertThat(idolCount).isEqualTo(1);
     }
 

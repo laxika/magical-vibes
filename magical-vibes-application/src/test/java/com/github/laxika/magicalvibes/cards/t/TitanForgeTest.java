@@ -35,9 +35,7 @@ class TitanForgeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TitanForge());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        Permanent forge = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Titan Forge"))
-                .findFirst().orElseThrow();
+        Permanent forge = findPermanent(player1, "Titan Forge");
         int forgeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forge);
 
         harness.activateAbility(player1, forgeIndex, 0, null, null);
@@ -52,9 +50,7 @@ class TitanForgeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TitanForge());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        Permanent forge = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Titan Forge"))
-                .findFirst().orElseThrow();
+        Permanent forge = findPermanent(player1, "Titan Forge");
         int forgeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forge);
 
         harness.activateAbility(player1, forgeIndex, 0, null, null);
@@ -68,9 +64,7 @@ class TitanForgeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TitanForge());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        Permanent forge = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Titan Forge"))
-                .findFirst().orElseThrow();
+        Permanent forge = findPermanent(player1, "Titan Forge");
         int forgeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forge);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, forgeIndex, 0, null, null))
@@ -83,9 +77,7 @@ class TitanForgeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TitanForge());
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
-        Permanent forge = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Titan Forge"))
-                .findFirst().orElseThrow();
+        Permanent forge = findPermanent(player1, "Titan Forge");
         int forgeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forge);
 
         // First activation
@@ -107,9 +99,7 @@ class TitanForgeTest extends BaseCardTest {
     void activateSecondAbilityCreatesGolemToken() {
         harness.addToBattlefield(player1, new TitanForge());
 
-        Permanent forge = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Titan Forge"))
-                .findFirst().orElseThrow();
+        Permanent forge = findPermanent(player1, "Titan Forge");
         forge.setCounterCount(CounterType.CHARGE, 3);
         int forgeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forge);
 
@@ -132,9 +122,7 @@ class TitanForgeTest extends BaseCardTest {
     void cannotActivateSecondAbilityWithFewerThanThreeCounters() {
         harness.addToBattlefield(player1, new TitanForge());
 
-        Permanent forge = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Titan Forge"))
-                .findFirst().orElseThrow();
+        Permanent forge = findPermanent(player1, "Titan Forge");
         forge.setCounterCount(CounterType.CHARGE, 2);
         int forgeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forge);
 
@@ -147,9 +135,7 @@ class TitanForgeTest extends BaseCardTest {
     void activateRemovesExactlyThreeCounters() {
         harness.addToBattlefield(player1, new TitanForge());
 
-        Permanent forge = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Titan Forge"))
-                .findFirst().orElseThrow();
+        Permanent forge = findPermanent(player1, "Titan Forge");
         forge.setCounterCount(CounterType.CHARGE, 5);
         int forgeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forge);
 
@@ -164,9 +150,7 @@ class TitanForgeTest extends BaseCardTest {
     void secondAbilityTapsArtifact() {
         harness.addToBattlefield(player1, new TitanForge());
 
-        Permanent forge = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Titan Forge"))
-                .findFirst().orElseThrow();
+        Permanent forge = findPermanent(player1, "Titan Forge");
         forge.setCounterCount(CounterType.CHARGE, 3);
         int forgeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forge);
 
@@ -181,9 +165,7 @@ class TitanForgeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TitanForge());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        Permanent forge = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Titan Forge"))
-                .findFirst().orElseThrow();
+        Permanent forge = findPermanent(player1, "Titan Forge");
         forge.setCounterCount(CounterType.CHARGE, 3);
         forge.tap();
         int forgeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forge);

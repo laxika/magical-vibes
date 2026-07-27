@@ -154,9 +154,7 @@ class CallToTheKindredTest extends BaseCardTest {
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Bear should be on the battlefield
-        long bearsOnBattlefield = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .count();
+        long bearsOnBattlefield = countPermanents(player1, "Grizzly Bears");
         assertThat(bearsOnBattlefield).isEqualTo(2); // original enchanted + new one
 
         // Remaining 4 cards should be in reorder phase

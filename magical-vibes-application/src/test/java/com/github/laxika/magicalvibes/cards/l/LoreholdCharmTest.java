@@ -93,9 +93,7 @@ class LoreholdCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 2, null);
             harness.passBothPriorities();
 
-            Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                    .findFirst().orElseThrow();
+            Permanent bears = findPermanent(player1, "Grizzly Bears");
             assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
             assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
             assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
@@ -111,9 +109,7 @@ class LoreholdCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 2, null);
             harness.passBothPriorities();
 
-            Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                    .findFirst().orElseThrow();
+            Permanent bears = findPermanent(player2, "Grizzly Bears");
             assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
             assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
         }

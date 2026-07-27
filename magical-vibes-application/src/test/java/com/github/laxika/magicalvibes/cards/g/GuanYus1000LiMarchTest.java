@@ -18,13 +18,9 @@ class GuanYus1000LiMarchTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new LlanowarElves());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         bears.tap();
-        Permanent elves = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elves = findPermanent(player2, "Llanowar Elves");
         elves.tap();
 
         harness.setHand(player1, List.of(new GuanYus1000LiMarch()));
@@ -58,9 +54,7 @@ class GuanYus1000LiMarchTest extends BaseCardTest {
     void indestructibleTappedCreatureSurvives() {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         bears.tap();
         bears.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
 

@@ -176,9 +176,7 @@ class AdeptWatershaperTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AdeptWatershaper());
         harness.addToBattlefield(player1, new AdeptWatershaper());
 
-        List<Permanent> watershapers = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Adept Watershaper"))
-                .toList();
+        List<Permanent> watershapers = findPermanents(player1, "Adept Watershaper");
 
         assertThat(watershapers).hasSize(2);
 

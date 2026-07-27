@@ -117,9 +117,7 @@ class ObeliskOfAlaraTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 4, null, targetId);
         harness.passBothPriorities();
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getPowerModifier()).isEqualTo(4);
         assertThat(bear.getToughnessModifier()).isEqualTo(4);
     }
@@ -139,9 +137,7 @@ class ObeliskOfAlaraTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getPowerModifier()).isEqualTo(0);
         assertThat(bear.getToughnessModifier()).isEqualTo(0);
     }

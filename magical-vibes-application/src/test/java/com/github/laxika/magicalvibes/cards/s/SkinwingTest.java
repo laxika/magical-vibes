@@ -98,9 +98,7 @@ class SkinwingTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent germ = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         assertThat(germ.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(germ.getCard().getPower()).isEqualTo(0);
@@ -122,9 +120,7 @@ class SkinwingTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent germ = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         // 0/0 base + 2/2 from equipment = 2/2 effective
         assertThat(gqs.getEffectivePower(gd, germ)).isEqualTo(2);
@@ -154,9 +150,7 @@ class SkinwingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        Permanent skinwing = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Skinwing"))
-                .findFirst().orElseThrow();
+        Permanent skinwing = findPermanent(player1, "Skinwing");
 
         assertThat(skinwing.getAttachedTo()).isEqualTo(bears.getId());
 
@@ -204,9 +198,7 @@ class SkinwingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Remove germ from battlefield manually (simulating it dying)
-        Permanent germ = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
         gd.playerBattlefields.get(player1.getId()).remove(germ);
 
         // Equipment should still be on the battlefield

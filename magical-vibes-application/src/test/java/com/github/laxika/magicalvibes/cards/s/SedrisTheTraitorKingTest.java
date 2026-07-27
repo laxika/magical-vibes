@@ -29,9 +29,7 @@ class SedrisTheTraitorKingTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0, 0);
         harness.passBothPriorities();
 
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }

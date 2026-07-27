@@ -49,17 +49,13 @@ class CalderaHellionTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of(fodder.getId()));
 
-        Permanent hellion = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Caldera Hellion"))
-                .findFirst().orElseThrow();
+        Permanent hellion = findPermanent(player1, "Caldera Hellion");
         assertThat(hellion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         harness.passBothPriorities(); // resolve ETB mass damage
 
         // Hellion is now a 4/4 with 3 marked damage -> survives.
-        hellion = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Caldera Hellion"))
-                .findFirst().orElseThrow();
+        hellion = findPermanent(player1, "Caldera Hellion");
         assertThat(hellion.getMarkedDamage()).isEqualTo(3);
         // Opponent's 2/2 took 3 -> dies.
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -76,9 +72,7 @@ class CalderaHellionTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
-        Permanent hellion = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Caldera Hellion"))
-                .findFirst().orElseThrow();
+        Permanent hellion = findPermanent(player1, "Caldera Hellion");
         assertThat(hellion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         harness.passBothPriorities(); // resolve ETB mass damage

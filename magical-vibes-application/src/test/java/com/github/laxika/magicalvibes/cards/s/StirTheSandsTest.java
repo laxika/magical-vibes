@@ -25,10 +25,7 @@ class StirTheSandsTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        List<Permanent> zombies = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .toList();
+        List<Permanent> zombies = findPermanents(player1, "Zombie");
 
         assertThat(zombies).hasSize(3);
         for (Permanent zombie : zombies) {
@@ -54,9 +51,7 @@ class StirTheSandsTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Stir the Sands");
         harness.assertInHand(player1, "Grizzly Bears");
 
-        List<Permanent> zombies = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .toList();
+        List<Permanent> zombies = findPermanents(player1, "Zombie");
         assertThat(zombies).hasSize(1);
         assertThat(zombies.getFirst().getCard().getPower()).isEqualTo(2);
         assertThat(zombies.getFirst().getCard().getToughness()).isEqualTo(2);

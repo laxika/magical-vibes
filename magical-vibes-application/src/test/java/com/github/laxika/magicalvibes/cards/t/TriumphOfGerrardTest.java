@@ -125,9 +125,7 @@ class TriumphOfGerrardTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
 
         // Both creatures should be valid choices (tied for greatest power)
-        List<Permanent> bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .toList();
+        List<Permanent> bears = findPermanents(player1, "Grizzly Bears");
         assertThat(bears).hasSize(2);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(bears.get(0).getId(), bears.get(1).getId());

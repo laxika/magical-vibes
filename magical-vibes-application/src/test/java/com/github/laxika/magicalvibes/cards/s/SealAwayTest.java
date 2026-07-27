@@ -176,9 +176,7 @@ class SealAwayTest extends BaseCardTest {
         harness.castInstant(player2, 0, sealAwayId);
         harness.passBothPriorities();
 
-        Permanent returned = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Piker"))
-                .findFirst().orElseThrow();
+        Permanent returned = findPermanent(player2, "Goblin Piker");
         assertThat(returned.isSummoningSick()).isTrue();
     }
 

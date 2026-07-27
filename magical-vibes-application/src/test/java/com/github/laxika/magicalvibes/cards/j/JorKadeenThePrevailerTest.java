@@ -31,9 +31,7 @@ class JorKadeenThePrevailerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new JorKadeenThePrevailer());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
@@ -46,9 +44,7 @@ class JorKadeenThePrevailerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
@@ -64,9 +60,7 @@ class JorKadeenThePrevailerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
@@ -79,9 +73,7 @@ class JorKadeenThePrevailerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
 
-        Permanent jor = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Jor Kadeen, the Prevailer"))
-                .findFirst().orElseThrow();
+        Permanent jor = findPermanent(player1, "Jor Kadeen, the Prevailer");
         assertThat(gqs.getEffectivePower(gd, jor)).isEqualTo(8);
         assertThat(gqs.getEffectiveToughness(gd, jor)).isEqualTo(4);
     }
@@ -95,9 +87,7 @@ class JorKadeenThePrevailerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BottleGnomes());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent opponentBears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(2);
     }
@@ -113,9 +103,7 @@ class JorKadeenThePrevailerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
 
         // Remove one artifact — now only 2
@@ -133,9 +121,7 @@ class JorKadeenThePrevailerTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LeoninScimitar());
         harness.addToBattlefield(player2, new BottleGnomes());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }

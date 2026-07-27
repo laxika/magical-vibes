@@ -180,9 +180,7 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
         resolveCombat();
 
         // Wolf token created
-        List<Permanent> wolves = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wolf"))
-                .toList();
+        List<Permanent> wolves = findPermanents(player1, "Wolf");
         assertThat(wolves).hasSize(1);
 
         // 10 cards milled
@@ -230,9 +228,7 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
         resolveCombat();
 
         // No wolf token created
-        List<Permanent> wolves = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wolf"))
-                .toList();
+        List<Permanent> wolves = findPermanents(player1, "Wolf");
         assertThat(wolves).isEmpty();
 
         // No cards milled — deck still has all 15 cards
@@ -279,9 +275,7 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
 
         resolveCombat();
 
-        List<Permanent> wolves = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wolf"))
-                .toList();
+        List<Permanent> wolves = findPermanents(player1, "Wolf");
         assertThat(wolves).hasSize(1);
         assertThat(wolves.getFirst().getCard().getPower()).isEqualTo(2);
         assertThat(wolves.getFirst().getCard().getToughness()).isEqualTo(2);
@@ -315,9 +309,7 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
         resolveCombat();
 
         // Wolf token created
-        List<Permanent> wolves = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wolf"))
-                .toList();
+        List<Permanent> wolves = findPermanents(player1, "Wolf");
         assertThat(wolves).hasSize(1);
 
         // 10 cards milled

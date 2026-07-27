@@ -108,8 +108,6 @@ class FacevaulterTest extends BaseCardTest {
     }
 
     private Permanent findByName(GameData gd, Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst().orElseThrow();
+        return findPermanent(player, name);
     }
 }

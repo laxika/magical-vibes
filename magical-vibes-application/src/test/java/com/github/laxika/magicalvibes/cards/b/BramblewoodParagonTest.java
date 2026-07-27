@@ -117,14 +117,10 @@ class BramblewoodParagonTest extends BaseCardTest {
     }
 
     private List<Permanent> paragonsOnBattlefield(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bramblewood Paragon"))
-                .toList();
+        return findPermanents(player, "Bramblewood Paragon");
     }
 
     private Permanent creatureNamed(com.github.laxika.magicalvibes.model.Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst().orElseThrow();
+        return findPermanent(player, name);
     }
 }

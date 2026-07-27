@@ -43,8 +43,7 @@ class CostOfBrillianceTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(player2.getId(), bearId));
         harness.passBothPriorities();
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears")).findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }

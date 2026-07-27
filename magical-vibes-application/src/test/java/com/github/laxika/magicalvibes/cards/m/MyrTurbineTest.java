@@ -39,9 +39,7 @@ class MyrTurbineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Myr"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Myr");
         assertThat(tokens).hasSize(1);
 
         Permanent token = tokens.getFirst();

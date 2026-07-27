@@ -97,9 +97,7 @@ class DragonRoostTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Dragon"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Dragon");
         assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
         assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
     }
@@ -113,9 +111,7 @@ class DragonRoostTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Dragon"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Dragon");
         assertThat(gqs.isCreature(gd, token)).isTrue();
     }
 
@@ -128,9 +124,7 @@ class DragonRoostTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Dragon"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Dragon");
         assertThat(token.isSummoningSick()).isTrue();
     }
 
@@ -158,9 +152,7 @@ class DragonRoostTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        long tokenCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Dragon"))
-                .count();
+        long tokenCount = countPermanents(player1, "Dragon");
         assertThat(tokenCount).isEqualTo(2);
     }
 

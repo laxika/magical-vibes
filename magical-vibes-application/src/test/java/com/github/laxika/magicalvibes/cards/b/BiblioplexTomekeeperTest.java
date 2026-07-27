@@ -105,10 +105,7 @@ class BiblioplexTomekeeperTest extends BaseCardTest {
 
     private Permanent addPreparedCapableCreature() {
         harness.addToBattlefield(player1, new BlazingFiresingerSeethingSong());
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blazing Firesinger"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Blazing Firesinger");
     }
 
     private void prepareCreature(Permanent creature) {

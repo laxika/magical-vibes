@@ -265,8 +265,7 @@ class TimeOfIceTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve chapter III
 
         // Only tapped creature should be gone; untapped creature stays
-        long remainingBears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears")).count();
+        long remainingBears = countPermanents(player2, "Grizzly Bears");
         assertThat(remainingBears).isEqualTo(1);
     }
 

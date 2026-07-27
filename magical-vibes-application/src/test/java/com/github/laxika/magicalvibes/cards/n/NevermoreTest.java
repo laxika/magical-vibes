@@ -57,9 +57,7 @@ class NevermoreTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Grizzly Bears");
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Nevermore"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Nevermore");
         assertThat(perm.getChosenName()).isEqualTo("Grizzly Bears");
     }
 

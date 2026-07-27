@@ -136,8 +136,6 @@ class StingmoggieTest extends BaseCardTest {
     }
 
     private Permanent findMoggie(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Stingmoggie"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Stingmoggie");
     }
 }

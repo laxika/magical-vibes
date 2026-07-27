@@ -15,9 +15,7 @@ class ElvishHealerTest extends BaseCardTest {
 
     private void addHealerReady() {
         harness.addToBattlefield(player1, new ElvishHealer());
-        Permanent healer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elvish Healer"))
-                .findFirst().orElseThrow();
+        Permanent healer = findPermanent(player1, "Elvish Healer");
         healer.setSummoningSick(false);
     }
 
@@ -31,9 +29,7 @@ class ElvishHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        Permanent memnite = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Memnite"))
-                .findFirst().orElseThrow();
+        Permanent memnite = findPermanent(player2, "Memnite");
         assertThat(memnite.getDamagePreventionShield()).isEqualTo(1);
     }
 
@@ -47,9 +43,7 @@ class ElvishHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getDamagePreventionShield()).isEqualTo(2);
     }
 

@@ -21,9 +21,7 @@ class HowltoothHollowTest extends BaseCardTest {
     private Permanent addHollowWithImprint(Card imprinted) {
         harness.addToBattlefield(player1, new HowltoothHollow());
         GameData gd = harness.getGameData();
-        Permanent hollow = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Howltooth Hollow"))
-                .findFirst().orElseThrow();
+        Permanent hollow = findPermanent(player1, "Howltooth Hollow");
         gd.setImprintedCard(hollow.getCard(), imprinted);
         gd.addToExile(player1.getId(), imprinted);
         return hollow;
@@ -48,9 +46,7 @@ class HowltoothHollowTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.getImprintedCard(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Howltooth Hollow"))
-                .findFirst().orElseThrow().getCard())).isNull();
+        assertThat(gd.getImprintedCard(findPermanent(player1, "Howltooth Hollow").getCard())).isNull();
     }
 
     @Test

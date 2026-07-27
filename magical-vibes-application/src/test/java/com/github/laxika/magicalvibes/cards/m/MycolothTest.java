@@ -38,9 +38,7 @@ class MycolothTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of(fodderA.getId(), fodderB.getId()));
 
-        Permanent mycoloth = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mycoloth"))
-                .findFirst().orElseThrow();
+        Permanent mycoloth = findPermanent(player1, "Mycoloth");
         assertThat(mycoloth.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
 
         advanceToUpkeep(player1);

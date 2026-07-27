@@ -45,9 +45,7 @@ class NeurokInvisimancerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Grizzly Bears");
         assertThat(target.isCantBeBlocked()).isTrue();
     }
 
@@ -68,9 +66,7 @@ class NeurokInvisimancerTest extends BaseCardTest {
         // Resolve ETB
         harness.passBothPriorities();
 
-        Permanent target = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player1, "Grizzly Bears");
         assertThat(target.isCantBeBlocked()).isTrue();
     }
 

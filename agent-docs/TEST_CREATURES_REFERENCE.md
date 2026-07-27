@@ -47,7 +47,15 @@ protected Permanent addCreatureReady(Player player, Card card)
 
 // Find a permanent by name on a player's battlefield
 protected Permanent findPermanent(Player player, String name)
+
+// ...or every match, or just how many there are
+protected List<Permanent> findPermanents(Player player, String name)
+protected long countPermanents(Player player, String name)
 ```
+
+Use these rather than streaming `gd.playerBattlefields` by hand. Only drop to a raw
+stream when the lookup is genuinely different — matching on something other than the
+card name, or wanting `orElse(null)` instead of a throw.
 
 ## Common test patterns
 

@@ -75,9 +75,7 @@ class TerritorialHammerskullTest extends BaseCardTest {
             harness.addToBattlefield(player1, new GrizzlyBears());
             // Add opponent creature
             harness.addToBattlefield(player2, new GrizzlyBears());
-            Permanent ownBears = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                    .findFirst().orElseThrow();
+            Permanent ownBears = findPermanent(player1, "Grizzly Bears");
             Permanent opponentBears = gd.playerBattlefields.get(player2.getId()).getFirst();
 
             declareAttackers(List.of(0));

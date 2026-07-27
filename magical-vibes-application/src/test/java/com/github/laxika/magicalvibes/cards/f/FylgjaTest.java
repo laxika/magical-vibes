@@ -24,9 +24,7 @@ class FylgjaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castEnchantment(player1, 0, bears.getId());
         harness.passBothPriorities();
-        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fylgja"))
-                .findFirst().orElseThrow();
+        Permanent aura = findPermanent(player1, "Fylgja");
         return aura;
     }
 

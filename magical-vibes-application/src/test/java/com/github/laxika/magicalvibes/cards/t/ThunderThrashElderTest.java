@@ -24,9 +24,7 @@ class ThunderThrashElderTest extends BaseCardTest {
     }
 
     private Permanent elder() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Thunder-Thrash Elder"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Thunder-Thrash Elder");
     }
 
     @Test

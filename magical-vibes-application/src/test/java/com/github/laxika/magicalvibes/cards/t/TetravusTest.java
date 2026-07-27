@@ -107,8 +107,6 @@ class TetravusTest extends BaseCardTest {
     }
 
     private List<Permanent> tetraviteTokens() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Tetravite"))
-                .toList();
+        return findPermanents(player1, "Tetravite");
     }
 }

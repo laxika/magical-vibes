@@ -85,8 +85,6 @@ class MightyEmergenceTest extends BaseCardTest {
     }
 
     private Permanent findAvatar(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Avatar of Might"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Avatar of Might");
     }
 }

@@ -58,9 +58,7 @@ class BattlegroundGeistTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BattlegroundGeist());
         harness.addToBattlefield(player1, new BattlegroundGeist());
 
-        List<Permanent> geists = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Battleground Geist"))
-                .toList();
+        List<Permanent> geists = findPermanents(player1, "Battleground Geist");
 
         assertThat(geists).hasSize(2);
         for (Permanent geist : geists) {
@@ -78,9 +76,7 @@ class BattlegroundGeistTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BattlegroundGeist());
         harness.addToBattlefield(player1, new BattlegroundGeist());
 
-        List<Permanent> geists = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Battleground Geist"))
-                .toList();
+        List<Permanent> geists = findPermanents(player1, "Battleground Geist");
 
         // Both should be 4/3 (buffed by the other)
         assertThat(gqs.getEffectivePower(gd, geists.get(0))).isEqualTo(4);

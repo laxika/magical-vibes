@@ -36,10 +36,7 @@ class AmbassadorOakTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elf Warrior"))
-                .findFirst()
-                .orElseThrow();
+        Permanent token = findPermanent(player1, "Elf Warrior");
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);
     }

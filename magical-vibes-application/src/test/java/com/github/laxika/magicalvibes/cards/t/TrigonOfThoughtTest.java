@@ -67,9 +67,7 @@ class TrigonOfThoughtTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Thought"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Thought");
         assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
@@ -80,9 +78,7 @@ class TrigonOfThoughtTest extends BaseCardTest {
     void firstAbilityAddsChargeCounter() {
         harness.addToBattlefield(player1, new TrigonOfThought());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Thought"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Thought");
         trigon.setCounterCount(CounterType.CHARGE, 1);
 
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -99,9 +95,7 @@ class TrigonOfThoughtTest extends BaseCardTest {
     void secondAbilityDrawsCard() {
         harness.addToBattlefield(player1, new TrigonOfThought());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Thought"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Thought");
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         int initialHandSize = gd.playerHands.get(player1.getId()).size();
@@ -119,9 +113,7 @@ class TrigonOfThoughtTest extends BaseCardTest {
     void canActivateMultipleTimes() {
         harness.addToBattlefield(player1, new TrigonOfThought());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Thought"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Thought");
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         int initialHandSize = gd.playerHands.get(player1.getId()).size();
@@ -146,9 +138,7 @@ class TrigonOfThoughtTest extends BaseCardTest {
     void cannotActivateWithNoCounters() {
         harness.addToBattlefield(player1, new TrigonOfThought());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Thought"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Thought");
         trigon.setCounterCount(CounterType.CHARGE, 0);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -161,9 +151,7 @@ class TrigonOfThoughtTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         harness.addToBattlefield(player1, new TrigonOfThought());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Thought"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Thought");
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         // First activation taps it

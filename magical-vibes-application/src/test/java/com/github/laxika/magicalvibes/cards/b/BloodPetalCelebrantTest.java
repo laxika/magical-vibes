@@ -48,9 +48,7 @@ class BloodPetalCelebrantTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        List<Permanent> bloods = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blood"))
-                .toList();
+        List<Permanent> bloods = findPermanents(player1, "Blood");
         assertThat(bloods).hasSize(1);
         Permanent blood = bloods.getFirst();
         assertThat(blood.getCard().getType()).isEqualTo(CardType.ARTIFACT);

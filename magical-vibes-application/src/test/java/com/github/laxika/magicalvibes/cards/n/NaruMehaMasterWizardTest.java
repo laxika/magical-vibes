@@ -175,9 +175,7 @@ class NaruMehaMasterWizardTest extends BaseCardTest {
         harness.addToBattlefield(player1, naru);
 
         // FugitiveWizard is a 1/1 Wizard — with Naru Meha's lord effect, should get +1/+1
-        Permanent wizardPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fugitive Wizard"))
-                .findFirst().orElseThrow();
+        Permanent wizardPerm = findPermanent(player1, "Fugitive Wizard");
         var bonus = gqs.computeStaticBonus(gd, wizardPerm);
         assertThat(bonus.power()).isEqualTo(1);
         assertThat(bonus.toughness()).isEqualTo(1);
@@ -190,9 +188,7 @@ class NaruMehaMasterWizardTest extends BaseCardTest {
         harness.addToBattlefield(player1, naru);
 
         // Naru Meha is a 3/3 — should not boost itself
-        Permanent naruPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Naru Meha, Master Wizard"))
-                .findFirst().orElseThrow();
+        Permanent naruPerm = findPermanent(player1, "Naru Meha, Master Wizard");
         var bonus = gqs.computeStaticBonus(gd, naruPerm);
         assertThat(bonus.power()).isEqualTo(0);
         assertThat(bonus.toughness()).isEqualTo(0);
@@ -207,9 +203,7 @@ class NaruMehaMasterWizardTest extends BaseCardTest {
         harness.addToBattlefield(player1, naru);
 
         // Grizzly Bears is not a Wizard — should get no boost
-        Permanent bearsPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bearsPerm = findPermanent(player1, "Grizzly Bears");
         var bonus = gqs.computeStaticBonus(gd, bearsPerm);
         assertThat(bonus.power()).isEqualTo(0);
         assertThat(bonus.toughness()).isEqualTo(0);

@@ -26,9 +26,7 @@ class AnointedProcessionTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Phyrexian Golem");
         assertThat(tokens).hasSize(2);
     }
 
@@ -46,9 +44,7 @@ class AnointedProcessionTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        List<Permanent> opponentTokens = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .toList();
+        List<Permanent> opponentTokens = findPermanents(player2, "Phyrexian Golem");
         assertThat(opponentTokens).hasSize(1);
     }
 
@@ -66,9 +62,7 @@ class AnointedProcessionTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Phyrexian Golem");
         assertThat(tokens).hasSize(4);
     }
 
@@ -84,9 +78,7 @@ class AnointedProcessionTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Phyrexian Golem");
         assertThat(tokens).hasSize(1);
     }
 }

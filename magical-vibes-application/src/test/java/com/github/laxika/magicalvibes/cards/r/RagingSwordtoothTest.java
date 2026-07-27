@@ -64,13 +64,10 @@ class RagingSwordtoothTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        GameData gd = harness.getGameData();
         harness.assertOnBattlefield(player1, "Raging Swordtooth");
         // Swordtooth is 5/5 — even if it took 1 damage it would survive,
         // but verify it has no damage at all
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Raging Swordtooth"))
-                .findFirst().orElseThrow().getMarkedDamage()).isZero();
+        assertThat(findPermanent(player1, "Raging Swordtooth").getMarkedDamage()).isZero();
     }
 
     @Test
@@ -83,18 +80,11 @@ class RagingSwordtoothTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        GameData gd = harness.getGameData();
         // Both Grizzly Bears survive (2/2 take 1 damage) but have 1 damage
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow().getMarkedDamage()).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow().getMarkedDamage()).isEqualTo(1);
+        assertThat(findPermanent(player1, "Grizzly Bears").getMarkedDamage()).isEqualTo(1);
+        assertThat(findPermanent(player2, "Grizzly Bears").getMarkedDamage()).isEqualTo(1);
         // Swordtooth itself has no damage
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Raging Swordtooth"))
-                .findFirst().orElseThrow().getMarkedDamage()).isZero();
+        assertThat(findPermanent(player1, "Raging Swordtooth").getMarkedDamage()).isZero();
     }
 
     @Test

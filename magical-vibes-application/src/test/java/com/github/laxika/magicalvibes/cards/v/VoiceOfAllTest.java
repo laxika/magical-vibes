@@ -112,9 +112,7 @@ class VoiceOfAllTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "RED");
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Voice of All"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Voice of All");
         assertThat(perm.getChosenColor()).isEqualTo(CardColor.RED);
     }
 
@@ -173,9 +171,7 @@ class VoiceOfAllTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "GREEN");
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Voice of All"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Voice of All");
         assertThat(perm.isSummoningSick()).isTrue();
     }
 

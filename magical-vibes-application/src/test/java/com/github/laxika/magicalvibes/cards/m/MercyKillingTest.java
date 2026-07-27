@@ -18,9 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class MercyKillingTest extends BaseCardTest {
 
     private long elfWarriorCount(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elf Warrior"))
-                .count();
+        return countPermanents(player, "Elf Warrior");
     }
 
     private void castAt(Permanent target) {

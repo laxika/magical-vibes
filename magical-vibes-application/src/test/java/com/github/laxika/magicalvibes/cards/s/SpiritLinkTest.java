@@ -210,10 +210,7 @@ class SpiritLinkTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SpiritLink()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        GameData gd = harness.getGameData();
-        Permanent mountain = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mountain"))
-                .findFirst().orElseThrow();
+        Permanent mountain = findPermanent(player1, "Mountain");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class)

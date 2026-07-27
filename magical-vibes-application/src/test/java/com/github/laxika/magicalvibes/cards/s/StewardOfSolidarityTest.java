@@ -28,9 +28,7 @@ class StewardOfSolidarityTest extends BaseCardTest {
         harness.activateAbility(player1, stewardIdx, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent warrior = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Warrior"))
-                .findFirst().orElseThrow();
+        Permanent warrior = findPermanent(player1, "Warrior");
         assertThat(warrior.getCard().getPower()).isEqualTo(1);
         assertThat(warrior.getCard().getToughness()).isEqualTo(1);
         assertThat(warrior.getCard().getSubtypes()).contains(CardSubtype.WARRIOR);

@@ -39,9 +39,7 @@ class TeferiTimebenderTest extends BaseCardTest {
         Permanent teferi = addReadyTeferi(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         bear.tap();
 
         harness.activateAbility(player1, 0, 0, null, bear.getId());
@@ -57,9 +55,7 @@ class TeferiTimebenderTest extends BaseCardTest {
         Permanent teferi = addReadyTeferi(player1);
         harness.addToBattlefield(player1, new SkitteringSurveyor());
 
-        Permanent surveyor = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Skittering Surveyor"))
-                .findFirst().orElseThrow();
+        Permanent surveyor = findPermanent(player1, "Skittering Surveyor");
         surveyor.tap();
         surveyor.setSummoningSick(false);
 

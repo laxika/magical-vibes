@@ -299,9 +299,7 @@ class LeoninScimitarTest extends BaseCardTest {
 
         // Equipment should still be on battlefield, unattached
         assertThat(gd.stack).isEmpty();
-        Permanent scimitar = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Leonin Scimitar"))
-                .findFirst().orElseThrow();
+        Permanent scimitar = findPermanent(player1, "Leonin Scimitar");
         assertThat(scimitar.getAttachedTo()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }

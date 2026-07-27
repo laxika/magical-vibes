@@ -112,9 +112,7 @@ class ThrashOfRaptorsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ThrashOfRaptors());
         harness.addToBattlefield(player1, new ThrashOfRaptors());
 
-        List<Permanent> thrashes = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Thrash of Raptors"))
-                .toList();
+        List<Permanent> thrashes = findPermanents(player1, "Thrash of Raptors");
 
         assertThat(thrashes).hasSize(2);
         for (Permanent thrash : thrashes) {

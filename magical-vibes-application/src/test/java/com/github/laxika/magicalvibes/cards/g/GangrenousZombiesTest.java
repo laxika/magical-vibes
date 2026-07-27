@@ -28,12 +28,8 @@ class GangrenousZombiesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent ownBear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
-        Permanent oppBear = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent ownBear = findPermanent(player1, "Grizzly Bears");
+        Permanent oppBear = findPermanent(player2, "Grizzly Bears");
         assertThat(ownBear.getMarkedDamage()).isEqualTo(1);
         assertThat(oppBear.getMarkedDamage()).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
@@ -70,9 +66,7 @@ class GangrenousZombiesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent oppBear = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent oppBear = findPermanent(player2, "Grizzly Bears");
         assertThat(oppBear.getMarkedDamage()).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }

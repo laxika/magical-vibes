@@ -96,9 +96,7 @@ class MirranCrusaderTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mirran Crusader"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Mirran Crusader");
         assertThat(perm.isSummoningSick()).isTrue();
     }
 

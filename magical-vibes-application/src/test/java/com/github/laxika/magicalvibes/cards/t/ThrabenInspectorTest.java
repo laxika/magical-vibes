@@ -25,9 +25,7 @@ class ThrabenInspectorTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve creature
         harness.passBothPriorities(); // Resolve ETB (investigate)
 
-        List<Permanent> clues = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Clue"))
-                .toList();
+        List<Permanent> clues = findPermanents(player1, "Clue");
         assertThat(clues).hasSize(1);
         Permanent clue = clues.getFirst();
         assertThat(clue.getCard().getType()).isEqualTo(CardType.ARTIFACT);
@@ -46,9 +44,7 @@ class ThrabenInspectorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent clue = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Clue"))
-                .findFirst().orElseThrow();
+        Permanent clue = findPermanent(player1, "Clue");
         int clueIdx = gd.playerBattlefields.get(player1.getId()).indexOf(clue);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);

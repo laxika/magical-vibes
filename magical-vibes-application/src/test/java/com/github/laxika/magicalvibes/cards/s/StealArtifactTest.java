@@ -91,9 +91,7 @@ class StealArtifactTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, thopter.getId());
         harness.passBothPriorities();
 
-        Permanent auraPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Steal Artifact"))
-                .findFirst().orElseThrow();
+        Permanent auraPerm = findPermanent(player1, "Steal Artifact");
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -118,9 +116,7 @@ class StealArtifactTest extends BaseCardTest {
     void cannotTargetNonArtifact() {
         harness.addToBattlefield(player2, new Ornithopter()); // valid target so spell is playable
         harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         harness.setHand(player1, List.of(new StealArtifact()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 

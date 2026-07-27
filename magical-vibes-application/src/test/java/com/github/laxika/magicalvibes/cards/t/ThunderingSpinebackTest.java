@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ThunderingSpinebackTest extends BaseCardTest {
@@ -97,9 +96,7 @@ class ThunderingSpinebackTest extends BaseCardTest {
         // Token should be on battlefield (plus Thundering Spineback itself)
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Dinosaur"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Dinosaur");
 
         // Token is 3/3 base + 1/1 from Thundering Spineback lord = 4/4
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
@@ -124,9 +121,7 @@ class ThunderingSpinebackTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        long tokenCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Dinosaur"))
-                .count();
+        long tokenCount = countPermanents(player1, "Dinosaur");
         assertThat(tokenCount).isEqualTo(2);
     }
 

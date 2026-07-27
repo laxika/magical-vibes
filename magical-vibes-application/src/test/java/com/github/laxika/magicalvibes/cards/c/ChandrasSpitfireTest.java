@@ -56,9 +56,7 @@ class ChandrasSpitfireTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
 
-        Permanent spitfire = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Chandra's Spitfire"))
-                .findFirst().orElseThrow();
+        Permanent spitfire = findPermanent(player1, "Chandra's Spitfire");
         assertThat(spitfire.getPowerModifier()).isEqualTo(3);
         assertThat(spitfire.getToughnessModifier()).isEqualTo(0);
     }
@@ -100,10 +98,7 @@ class ChandrasSpitfireTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock
         harness.passBothPriorities(); // Resolve Spitfire trigger
 
-        GameData gd = harness.getGameData();
-        Permanent spitfire = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Chandra's Spitfire"))
-                .findFirst().orElseThrow();
+        Permanent spitfire = findPermanent(player1, "Chandra's Spitfire");
 
         // +3/+0 twice = +6/+0
         assertThat(spitfire.getPowerModifier()).isEqualTo(6);

@@ -110,14 +110,10 @@ class RewindTest extends BaseCardTest {
         harness.passBothPriorities();
 
         gd = harness.getGameData();
-        Permanent island = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Island"))
-                .findFirst().orElseThrow();
+        Permanent island = findPermanent(player2, "Island");
         assertThat(island.isTapped()).isFalse();
 
-        Permanent creature = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent creature = findPermanent(player2, "Grizzly Bears");
         assertThat(creature.isTapped()).isTrue();
     }
 }

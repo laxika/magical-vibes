@@ -125,10 +125,7 @@ class AmbitiousAugmenterTest extends BaseCardTest {
             harness.passBothPriorities(); // Wrath resolves — augmenter dies, death trigger goes on stack
             harness.passBothPriorities(); // Death trigger resolves
 
-            GameData gd = harness.getGameData();
-            List<Permanent> fractals = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Fractal"))
-                    .toList();
+            List<Permanent> fractals = findPermanents(player1, "Fractal");
             assertThat(fractals).hasSize(1);
 
             Permanent fractal = fractals.getFirst();

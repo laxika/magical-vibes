@@ -20,9 +20,7 @@ class EsperBattlemageTest extends BaseCardTest {
 
     private void addBattlemageReady() {
         harness.addToBattlefield(player1, new EsperBattlemage());
-        Permanent mage = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Esper Battlemage"))
-                .findFirst().orElseThrow();
+        Permanent mage = findPermanent(player1, "Esper Battlemage");
         mage.setSummoningSick(false);
     }
 

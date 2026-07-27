@@ -23,9 +23,7 @@ class ElvishArchdruidTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LlanowarElves());
         harness.addToBattlefield(player1, new ElvishArchdruid());
 
-        Permanent elf = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elf = findPermanent(player1, "Llanowar Elves");
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(2);
@@ -36,9 +34,7 @@ class ElvishArchdruidTest extends BaseCardTest {
     void doesNotBuffItself() {
         harness.addToBattlefield(player1, new ElvishArchdruid());
 
-        Permanent archdruid = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elvish Archdruid"))
-                .findFirst().orElseThrow();
+        Permanent archdruid = findPermanent(player1, "Elvish Archdruid");
 
         assertThat(gqs.getEffectivePower(gd, archdruid)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, archdruid)).isEqualTo(2);
@@ -50,9 +46,7 @@ class ElvishArchdruidTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new ElvishArchdruid());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -64,9 +58,7 @@ class ElvishArchdruidTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ElvishArchdruid());
         harness.addToBattlefield(player2, new LlanowarElves());
 
-        Permanent opponentElf = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent opponentElf = findPermanent(player2, "Llanowar Elves");
 
         assertThat(gqs.getEffectivePower(gd, opponentElf)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, opponentElf)).isEqualTo(1);
@@ -78,9 +70,7 @@ class ElvishArchdruidTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ElvishArchdruid());
         harness.addToBattlefield(player1, new ElvishArchdruid());
 
-        List<Permanent> archdruids = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elvish Archdruid"))
-                .toList();
+        List<Permanent> archdruids = findPermanents(player1, "Elvish Archdruid");
 
         assertThat(archdruids).hasSize(2);
         for (Permanent archdruid : archdruids) {
@@ -96,9 +86,7 @@ class ElvishArchdruidTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ElvishArchdruid());
         harness.addToBattlefield(player1, new LlanowarElves());
 
-        Permanent elf = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elf = findPermanent(player1, "Llanowar Elves");
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(3);
@@ -110,9 +98,7 @@ class ElvishArchdruidTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ElvishArchdruid());
         harness.addToBattlefield(player1, new LlanowarElves());
 
-        Permanent elf = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elf = findPermanent(player1, "Llanowar Elves");
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
 
@@ -132,9 +118,7 @@ class ElvishArchdruidTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LlanowarElves());
         harness.addToBattlefield(player1, new LlanowarElves());
 
-        Permanent archdruid = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elvish Archdruid"))
-                .findFirst().orElseThrow();
+        Permanent archdruid = findPermanent(player1, "Elvish Archdruid");
         archdruid.setSummoningSick(false);
 
         int archdruidIdx = gd.playerBattlefields.get(player1.getId()).indexOf(archdruid);
@@ -149,9 +133,7 @@ class ElvishArchdruidTest extends BaseCardTest {
     void tapAbilityWithOnlyArchdruidAddsOneGreen() {
         harness.addToBattlefield(player1, new ElvishArchdruid());
 
-        Permanent archdruid = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elvish Archdruid"))
-                .findFirst().orElseThrow();
+        Permanent archdruid = findPermanent(player1, "Elvish Archdruid");
         archdruid.setSummoningSick(false);
 
         int archdruidIdx = gd.playerBattlefields.get(player1.getId()).indexOf(archdruid);
@@ -168,9 +150,7 @@ class ElvishArchdruidTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LlanowarElves());
         harness.addToBattlefield(player2, new LlanowarElves());
 
-        Permanent archdruid = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elvish Archdruid"))
-                .findFirst().orElseThrow();
+        Permanent archdruid = findPermanent(player1, "Elvish Archdruid");
         archdruid.setSummoningSick(false);
 
         int archdruidIdx = gd.playerBattlefields.get(player1.getId()).indexOf(archdruid);
@@ -186,9 +166,7 @@ class ElvishArchdruidTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ElvishArchdruid());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent archdruid = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elvish Archdruid"))
-                .findFirst().orElseThrow();
+        Permanent archdruid = findPermanent(player1, "Elvish Archdruid");
         archdruid.setSummoningSick(false);
 
         int archdruidIdx = gd.playerBattlefields.get(player1.getId()).indexOf(archdruid);

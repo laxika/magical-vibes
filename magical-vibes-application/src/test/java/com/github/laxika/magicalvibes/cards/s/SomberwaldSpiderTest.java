@@ -31,9 +31,7 @@ class SomberwaldSpiderTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
 
         GameData gd = harness.getGameData();
-        Permanent spider = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Somberwald Spider"))
-                .findFirst().orElseThrow();
+        Permanent spider = findPermanent(player1, "Somberwald Spider");
 
         // No +1/+1 counters without morbid
         assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
@@ -59,10 +57,7 @@ class SomberwaldSpiderTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell (enters battlefield with ETB trigger)
         harness.passBothPriorities(); // resolve ETB effect (puts +1/+1 counters)
 
-        GameData gd = harness.getGameData();
-        Permanent spider = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Somberwald Spider"))
-                .findFirst().orElseThrow();
+        Permanent spider = findPermanent(player1, "Somberwald Spider");
 
         assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(spider.getEffectivePower()).isEqualTo(4);
@@ -88,7 +83,6 @@ class SomberwaldSpiderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bears should be dead
-        GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         // Now cast Somberwald Spider — morbid should be active
@@ -96,9 +90,7 @@ class SomberwaldSpiderTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB effect (puts +1/+1 counters)
 
-        Permanent spider = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Somberwald Spider"))
-                .findFirst().orElseThrow();
+        Permanent spider = findPermanent(player1, "Somberwald Spider");
 
         assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(spider.getEffectivePower()).isEqualTo(4);

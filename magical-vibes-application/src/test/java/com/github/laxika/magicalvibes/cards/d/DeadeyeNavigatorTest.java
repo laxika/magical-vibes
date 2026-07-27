@@ -31,9 +31,7 @@ class DeadeyeNavigatorTest extends BaseCardTest {
     @DisplayName("Soulbond ETB pairs Deadeye with another unpaired creature")
     void soulbondPairsOnEnter() {
         Permanent bears = castAndPairWithBears();
-        Permanent navigator = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Deadeye Navigator"))
-                .findFirst().orElseThrow();
+        Permanent navigator = findPermanent(player1, "Deadeye Navigator");
 
         assertThat(navigator.getPairedWithId()).isEqualTo(bears.getId());
         assertThat(bears.getPairedWithId()).isEqualTo(navigator.getId());
@@ -43,9 +41,7 @@ class DeadeyeNavigatorTest extends BaseCardTest {
     @DisplayName("While paired, Deadeye can flicker itself")
     void pairedNavigatorCanFlickerSelf() {
         castAndPairWithBears();
-        Permanent navigator = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Deadeye Navigator"))
-                .findFirst().orElseThrow();
+        Permanent navigator = findPermanent(player1, "Deadeye Navigator");
         UUID oldId = navigator.getId();
 
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -53,9 +49,7 @@ class DeadeyeNavigatorTest extends BaseCardTest {
         harness.activateAbility(player1, navIndex, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Deadeye Navigator"))
-                .findFirst().orElseThrow();
+        Permanent returned = findPermanent(player1, "Deadeye Navigator");
         assertThat(returned.getId()).isNotEqualTo(oldId);
         // Exile breaks the pair immediately.
         assertThat(returned.getPairedWithId()).isNull();
@@ -72,9 +66,7 @@ class DeadeyeNavigatorTest extends BaseCardTest {
         harness.activateAbility(player1, bearsIndex, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent returnedBears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent returnedBears = findPermanent(player1, "Grizzly Bears");
         assertThat(returnedBears.getId()).isNotEqualTo(oldBearsId);
         assertThat(returnedBears.getPairedWithId()).isNull();
     }
@@ -83,9 +75,7 @@ class DeadeyeNavigatorTest extends BaseCardTest {
     @DisplayName("Unpaired Deadeye does not have the flicker ability")
     void unpairedCannotFlicker() {
         harness.addToBattlefield(player1, new DeadeyeNavigator());
-        Permanent navigator = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Deadeye Navigator"))
-                .findFirst().orElseThrow();
+        Permanent navigator = findPermanent(player1, "Deadeye Navigator");
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         int navIndex = gd.playerBattlefields.get(player1.getId()).indexOf(navigator);
@@ -104,9 +94,7 @@ class DeadeyeNavigatorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        Permanent navigator = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Deadeye Navigator"))
-                .findFirst().orElseThrow();
+        Permanent navigator = findPermanent(player1, "Deadeye Navigator");
         assertThat(navigator.getPairedWithId()).isNull();
         assertThat(bears.getPairedWithId()).isNull();
         assertThat(gd.interaction.permanentChoiceContext()).isNull();

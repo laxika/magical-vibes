@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class EzurisBrigadeTest extends BaseCardTest {
@@ -96,8 +95,6 @@ class EzurisBrigadeTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent findBrigade() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ezuri's Brigade"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Ezuri's Brigade");
     }
 }

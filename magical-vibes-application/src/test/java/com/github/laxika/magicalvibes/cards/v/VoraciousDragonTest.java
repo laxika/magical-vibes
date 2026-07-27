@@ -26,9 +26,7 @@ class VoraciousDragonTest extends BaseCardTest {
     }
 
     private Permanent dragon() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Voracious Dragon"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Voracious Dragon");
     }
 
     @Test

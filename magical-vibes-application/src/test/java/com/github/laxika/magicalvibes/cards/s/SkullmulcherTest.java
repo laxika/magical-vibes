@@ -24,9 +24,7 @@ class SkullmulcherTest extends BaseCardTest {
     }
 
     private Permanent skullmulcher() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Skullmulcher"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Skullmulcher");
     }
 
     @Test

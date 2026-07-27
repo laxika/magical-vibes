@@ -76,9 +76,7 @@ class MortisDogsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         // Simulate the attack boost (+2/+0) that would have been applied by the ON_ATTACK trigger
-        Permanent dogsPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mortis Dogs"))
-                .findFirst().orElseThrow();
+        Permanent dogsPerm = findPermanent(player1, "Mortis Dogs");
         dogsPerm.setPowerModifier(2);
 
         setupCombatWhereBoostedMortisDogsDies(dogsPerm);
@@ -123,9 +121,7 @@ class MortisDogsTest extends BaseCardTest {
      * Mortis Dogs will die from combat damage (does NOT get the attack boost since we skip declare attackers).
      */
     private void setupCombatWhereMortisDogsDies() {
-        Permanent dogsPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mortis Dogs"))
-                .findFirst().orElseThrow();
+        Permanent dogsPerm = findPermanent(player1, "Mortis Dogs");
         dogsPerm.setSummoningSick(false);
         dogsPerm.setAttacking(true);
 

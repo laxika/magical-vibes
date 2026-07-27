@@ -22,9 +22,7 @@ class CoreProwlerTest extends BaseCardTest {
      * Core Prowler will die from combat damage, and the blocker will get 2 -1/-1 counters from infect.
      */
     private void setupCombatWhereCoreProwlerDies() {
-        Permanent prowlerPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Core Prowler"))
-                .findFirst().orElseThrow();
+        Permanent prowlerPerm = findPermanent(player1, "Core Prowler");
         prowlerPerm.setSummoningSick(false);
         prowlerPerm.setAttacking(true);
 
@@ -105,9 +103,7 @@ class CoreProwlerTest extends BaseCardTest {
         setupCombatWhereCoreProwlerDies();
 
         // Get reference to the blocker (3/3 bear that will receive 2 -1/-1 counters from infect)
-        Permanent blocker = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent blocker = findPermanent(player2, "Grizzly Bears");
 
         harness.passBothPriorities(); // Combat damage — Core Prowler dies, blocker gets 2 -1/-1 counters
 

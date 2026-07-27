@@ -158,10 +158,7 @@ class WarpWorldTest extends BaseCardTest {
         UUID chosenTarget = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds().stream().findFirst().orElseThrow();
         harness.handlePermanentChosen(player1, chosenTarget);
 
-        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Pacifism"))
-                .findFirst()
-                .orElseThrow();
+        Permanent aura = findPermanent(player1, "Pacifism");
         assertThat(aura.getAttachedTo()).isEqualTo(chosenTarget);
     }
 
@@ -223,8 +220,8 @@ class WarpWorldTest extends BaseCardTest {
         UUID chosenTarget = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds().stream().findFirst().orElseThrow();
         harness.handlePermanentChosen(player1, chosenTarget);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream().filter(p -> p.getCard().getName().equals("Pacifism")).count()).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream().filter(p -> p.getCard().getName().equals("Glorious Anthem")).count()).isEqualTo(1);
+        assertThat(countPermanents(player1, "Pacifism")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Glorious Anthem")).isEqualTo(1);
     }
 
     @Test
@@ -263,8 +260,8 @@ class WarpWorldTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, p1Choice);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream().filter(p -> p.getCard().getName().equals("Pacifism")).count()).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player2.getId()).stream().filter(p -> p.getCard().getName().equals("Pacifism")).count()).isEqualTo(1);
+        assertThat(countPermanents(player1, "Pacifism")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Pacifism")).isEqualTo(1);
     }
 
     @Test

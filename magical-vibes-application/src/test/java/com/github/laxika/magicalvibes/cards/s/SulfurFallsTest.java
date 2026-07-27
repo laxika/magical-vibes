@@ -145,8 +145,6 @@ class SulfurFallsTest extends BaseCardTest {
     }
 
     private Permanent findFalls(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sulfur Falls"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Sulfur Falls");
     }
 }

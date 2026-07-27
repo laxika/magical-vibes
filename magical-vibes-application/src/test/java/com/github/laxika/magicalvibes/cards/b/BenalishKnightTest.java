@@ -202,9 +202,7 @@ class BenalishKnightTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Benalish Knight"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Benalish Knight");
         assertThat(perm.isSummoningSick()).isTrue();
     }
 }

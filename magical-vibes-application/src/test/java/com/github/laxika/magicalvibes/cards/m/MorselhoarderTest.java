@@ -77,8 +77,6 @@ class MorselhoarderTest extends BaseCardTest {
     }
 
     private Permanent findMorselhoarder(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Morselhoarder"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Morselhoarder");
     }
 }

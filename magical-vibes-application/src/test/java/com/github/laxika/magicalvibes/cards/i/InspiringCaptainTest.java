@@ -32,9 +32,7 @@ class InspiringCaptainTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB boost
 
-        Permanent captain = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Inspiring Captain"))
-                .findFirst().orElseThrow();
+        Permanent captain = findPermanent(player1, "Inspiring Captain");
 
         assertThat(bears.getPowerModifier()).isEqualTo(1);
         assertThat(bears.getToughnessModifier()).isEqualTo(1);

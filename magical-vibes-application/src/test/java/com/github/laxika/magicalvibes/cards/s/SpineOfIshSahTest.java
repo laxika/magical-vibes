@@ -109,9 +109,7 @@ class SpineOfIshSahTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grant indestructible before ETB resolves
-        Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Grizzly Bears");
         target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
 
         // Resolve ETB

@@ -67,8 +67,6 @@ class DivinityOfPrideTest extends BaseCardTest {
     }
 
     private Permanent findDivinity() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Divinity of Pride"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Divinity of Pride");
     }
 }

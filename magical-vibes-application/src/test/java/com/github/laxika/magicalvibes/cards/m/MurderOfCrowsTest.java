@@ -130,9 +130,7 @@ class MurderOfCrowsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Cruel Edict
 
         // Player1 must choose which creature to sacrifice — choose Grizzly Bears (index 1)
-        Permanent grizzlyBears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent grizzlyBears = findPermanent(player1, "Grizzly Bears");
         harness.handlePermanentChosen(player1, grizzlyBears.getId());
 
         // ON_ANY_CREATURE_DIES fires → MayEffect trigger goes on stack

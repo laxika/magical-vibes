@@ -66,11 +66,7 @@ class WrackWithMadnessTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        Permanent wall = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wall of Swords"))
-                .findFirst()
-                .orElseThrow();
+        Permanent wall = findPermanent(player2, "Wall of Swords");
         assertThat(wall.getMarkedDamage()).isEqualTo(3);
     }
 
@@ -85,11 +81,7 @@ class WrackWithMadnessTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        Permanent wall = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wall of Vines"))
-                .findFirst()
-                .orElseThrow();
+        Permanent wall = findPermanent(player2, "Wall of Vines");
         assertThat(wall.getMarkedDamage()).isZero();
     }
 

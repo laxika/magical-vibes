@@ -52,9 +52,7 @@ class GravePactTest extends BaseCardTest {
         attackerPerm.setSummoningSick(false);
         attackerPerm.setAttacking(true);
 
-        Permanent blockerPerm = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Giant Spider"))
-                .findFirst().orElseThrow();
+        Permanent blockerPerm = findPermanent(player2, "Giant Spider");
         blockerPerm.setSummoningSick(false);
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(attackerIndex);

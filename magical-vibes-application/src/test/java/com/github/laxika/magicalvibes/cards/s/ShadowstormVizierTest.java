@@ -73,9 +73,6 @@ class ShadowstormVizierTest extends BaseCardTest {
     }
 
     private Permanent getVizier() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Shadowstorm Vizier"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Shadowstorm Vizier");
     }
 }

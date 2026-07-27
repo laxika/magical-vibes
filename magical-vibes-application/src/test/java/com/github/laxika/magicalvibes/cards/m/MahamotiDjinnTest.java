@@ -73,9 +73,7 @@ class MahamotiDjinnTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mahamoti Djinn"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Mahamoti Djinn");
         assertThat(perm.isSummoningSick()).isTrue();
     }
 

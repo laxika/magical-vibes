@@ -30,9 +30,7 @@ class BlurOfBladesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears (2/2) with one -1/-1 counter → 1/1, survives
-        Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Grizzly Bears");
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(target.getEffectivePower()).isEqualTo(1);
         assertThat(target.getEffectiveToughness()).isEqualTo(1);

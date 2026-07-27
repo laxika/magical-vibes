@@ -144,8 +144,6 @@ class ThornbiteStaffTest extends BaseCardTest {
     }
 
     private Permanent shamanOnBattlefield(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bosk Banneret"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Bosk Banneret");
     }
 }

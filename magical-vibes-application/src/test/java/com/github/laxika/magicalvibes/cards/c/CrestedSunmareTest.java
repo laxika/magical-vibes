@@ -24,9 +24,7 @@ class CrestedSunmareTest extends BaseCardTest {
     }
 
     private long horseTokenCount(Player owner) {
-        return gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Horse"))
-                .count();
+        return countPermanents(owner, "Horse");
     }
 
     // ===== End-step token creation =====
@@ -41,9 +39,7 @@ class CrestedSunmareTest extends BaseCardTest {
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         harness.passBothPriorities(); // resolve trigger -> token created
 
-        var horses = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Horse"))
-                .toList();
+        var horses = findPermanents(player1, "Horse");
         assertThat(horses).hasSize(1);
         assertThat(horses).allSatisfy(t -> {
             assertThat(t.getCard().getPower()).isEqualTo(5);
@@ -116,9 +112,7 @@ class CrestedSunmareTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Each grants the other indestructible -> both survive.
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Crested Sunmare"))
-                .count()).isEqualTo(2);
+        assertThat(countPermanents(player1, "Crested Sunmare")).isEqualTo(2);
     }
 
     @Test

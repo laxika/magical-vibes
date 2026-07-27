@@ -69,9 +69,7 @@ class TrigonOfInfestationTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Infestation"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Infestation");
         assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
@@ -82,9 +80,7 @@ class TrigonOfInfestationTest extends BaseCardTest {
     void activateFirstAbilityAddsCounter() {
         harness.addToBattlefield(player1, new TrigonOfInfestation());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Infestation"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Infestation");
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -100,9 +96,7 @@ class TrigonOfInfestationTest extends BaseCardTest {
     void firstAbilityRequiresGreenMana() {
         harness.addToBattlefield(player1, new TrigonOfInfestation());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Infestation"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Infestation");
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         // Only colorless mana, should fail
@@ -119,9 +113,7 @@ class TrigonOfInfestationTest extends BaseCardTest {
     void activateSecondAbilityCreatesToken() {
         harness.addToBattlefield(player1, new TrigonOfInfestation());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Infestation"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Infestation");
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -146,9 +138,7 @@ class TrigonOfInfestationTest extends BaseCardTest {
     void cannotActivateTokenAbilityWithNoCounters() {
         harness.addToBattlefield(player1, new TrigonOfInfestation());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Infestation"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Infestation");
         trigon.setCounterCount(CounterType.CHARGE, 0);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -162,9 +152,7 @@ class TrigonOfInfestationTest extends BaseCardTest {
     void canCreateMultipleTokens() {
         harness.addToBattlefield(player1, new TrigonOfInfestation());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Infestation"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Infestation");
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         // First activation
@@ -181,9 +169,7 @@ class TrigonOfInfestationTest extends BaseCardTest {
 
         assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
 
-        long tokenCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Insect"))
-                .count();
+        long tokenCount = countPermanents(player1, "Phyrexian Insect");
         assertThat(tokenCount).isEqualTo(2);
     }
 
@@ -192,9 +178,7 @@ class TrigonOfInfestationTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         harness.addToBattlefield(player1, new TrigonOfInfestation());
 
-        Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trigon of Infestation"))
-                .findFirst().orElseThrow();
+        Permanent trigon = findPermanent(player1, "Trigon of Infestation");
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         // First activation taps it

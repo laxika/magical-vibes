@@ -15,9 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KnightOfNewAlaraTest extends BaseCardTest {
 
     private Permanent creature(Player owner, String name) {
-        return gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst().orElseThrow();
+        return findPermanent(owner, name);
     }
 
     @Test

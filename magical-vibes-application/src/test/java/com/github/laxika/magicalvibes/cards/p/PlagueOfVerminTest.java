@@ -21,9 +21,7 @@ class PlagueOfVerminTest extends BaseCardTest {
     }
 
     private long ratCount(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rat"))
-                .count();
+        return countPermanents(player, "Rat");
     }
 
     @Test

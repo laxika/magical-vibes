@@ -211,9 +211,7 @@ class GenesisWaveTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Carnifex Demon");
 
         // Carnifex Demon should have two -1/-1 counters from its ETB
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Carnifex Demon"))
-                .findFirst().orElseThrow()
+        assertThat(findPermanent(player1, "Carnifex Demon")
                 .getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 

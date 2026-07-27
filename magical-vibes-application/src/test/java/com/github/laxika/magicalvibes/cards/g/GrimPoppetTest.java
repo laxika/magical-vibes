@@ -124,8 +124,6 @@ class GrimPoppetTest extends BaseCardTest {
     }
 
     private Permanent findPoppet(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grim Poppet"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Grim Poppet");
     }
 }

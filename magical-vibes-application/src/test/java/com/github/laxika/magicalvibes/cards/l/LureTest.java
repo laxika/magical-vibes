@@ -119,9 +119,7 @@ class LureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Lure()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        Permanent mountain = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mountain"))
-                .findFirst().orElseThrow();
+        Permanent mountain = findPermanent(player1, "Mountain");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class)

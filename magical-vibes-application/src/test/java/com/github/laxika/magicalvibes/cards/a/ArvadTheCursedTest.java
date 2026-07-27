@@ -93,9 +93,7 @@ class ArvadTheCursedTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, adeliz)).isEqualTo(6);
 
         // Each Arvad buffs the other (both are Legendary)
-        List<Permanent> arvads = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Arvad the Cursed"))
-                .toList();
+        List<Permanent> arvads = findPermanents(player1, "Arvad the Cursed");
         assertThat(arvads).hasSize(2);
         for (Permanent arvad : arvads) {
             // 3/3 base + 2/2 from the other Arvad = 5/5

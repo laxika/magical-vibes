@@ -94,9 +94,7 @@ class AvenMimeomancerTest extends BaseCardTest {
     }
 
     private Permanent findAven() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Aven Mimeomancer"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Aven Mimeomancer");
     }
 
     private void triggerUpkeep(Player player) {

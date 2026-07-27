@@ -42,9 +42,7 @@ class CaptainLanneryStormTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        Permanent treasure = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .findFirst().orElseThrow();
+        Permanent treasure = findPermanent(player1, "Treasure");
 
         assertThat(treasure.getCard().getActivatedAbilities()).hasSize(1);
         assertThat(treasure.getCard().getActivatedAbilities().getFirst().getDescription())

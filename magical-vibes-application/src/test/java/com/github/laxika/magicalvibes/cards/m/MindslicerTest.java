@@ -69,9 +69,7 @@ class MindslicerTest extends BaseCardTest {
     // ===== Helpers =====
 
     private void setupCombatWhereMindslicerDies() {
-        Permanent mindslicerPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mindslicer"))
-                .findFirst().orElseThrow();
+        Permanent mindslicerPerm = findPermanent(player1, "Mindslicer");
         mindslicerPerm.setSummoningSick(false);
         mindslicerPerm.setAttacking(true);
 

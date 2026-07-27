@@ -187,9 +187,7 @@ class MagmaPhoenixTest extends BaseCardTest {
     // ===== Helpers =====
 
     private void setupCombatWherePhoenixDies() {
-        Permanent phoenixPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Magma Phoenix"))
-                .findFirst().orElseThrow();
+        Permanent phoenixPerm = findPermanent(player1, "Magma Phoenix");
         phoenixPerm.setSummoningSick(false);
         phoenixPerm.setAttacking(true);
 

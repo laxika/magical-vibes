@@ -43,9 +43,7 @@ class InBolassClutchesTest extends BaseCardTest {
     @DisplayName("Resolving In Bolas's Clutches steals opponent's artifact")
     void stealsArtifact() {
         harness.addToBattlefield(player2, new FountainOfYouth());
-        Permanent artifact = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fountain of Youth"))
-                .findFirst().orElseThrow();
+        Permanent artifact = findPermanent(player2, "Fountain of Youth");
 
         harness.setHand(player1, List.of(new InBolassClutches()));
         harness.addMana(player1, ManaColor.BLUE, 6);
@@ -119,9 +117,7 @@ class InBolassClutchesTest extends BaseCardTest {
                 .anyMatch(p -> p.getId().equals(creature.getId()));
 
         // Destroy In Bolas's Clutches with Demystify
-        Permanent auraPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("In Bolas's Clutches"))
-                .findFirst().orElseThrow();
+        Permanent auraPerm = findPermanent(player1, "In Bolas's Clutches");
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -156,9 +152,7 @@ class InBolassClutchesTest extends BaseCardTest {
         assertThat(bonus.grantedSupertypes()).contains(CardSupertype.LEGENDARY);
 
         // Destroy the aura
-        Permanent auraPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("In Bolas's Clutches"))
-                .findFirst().orElseThrow();
+        Permanent auraPerm = findPermanent(player1, "In Bolas's Clutches");
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

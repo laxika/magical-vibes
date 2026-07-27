@@ -36,9 +36,7 @@ class SproutingThrinaxTest extends BaseCardTest {
 
         harness.passBothPriorities(); // Resolve death trigger
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Saproling"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Saproling");
         assertThat(tokens).hasSize(3);
 
         for (Permanent token : tokens) {

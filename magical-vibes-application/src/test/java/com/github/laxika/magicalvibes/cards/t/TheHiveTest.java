@@ -94,9 +94,7 @@ class TheHiveTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wasp"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Wasp");
         assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
         assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
     }
@@ -110,9 +108,7 @@ class TheHiveTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wasp"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Wasp");
         assertThat(token.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
     }
 
@@ -125,9 +121,7 @@ class TheHiveTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wasp"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Wasp");
         assertThat(gqs.isCreature(gd, token)).isTrue();
     }
 
@@ -140,9 +134,7 @@ class TheHiveTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wasp"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Wasp");
         assertThat(token.isSummoningSick()).isTrue();
     }
 
@@ -157,9 +149,7 @@ class TheHiveTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        long tokenCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Wasp"))
-                .count();
+        long tokenCount = countPermanents(player1, "Wasp");
         assertThat(tokenCount).isEqualTo(1);
     }
 

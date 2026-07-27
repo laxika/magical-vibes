@@ -210,9 +210,7 @@ class HostageTakerTest extends BaseCardTest {
 
         // Goblin Piker should NOT be returned — it was already cast from exile
         // Player2 should NOT get a second Goblin Piker
-        long pikerCount = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Piker"))
-                .count();
+        long pikerCount = countPermanents(player2, "Goblin Piker");
         assertThat(pikerCount).isZero();
     }
 

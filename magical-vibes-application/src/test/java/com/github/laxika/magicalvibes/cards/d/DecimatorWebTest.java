@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -103,9 +102,7 @@ class DecimatorWebTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Untap for second activation
-        gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Decimator Web"))
-                .findFirst().orElseThrow().untap();
+        findPermanent(player1, "Decimator Web").untap();
 
         // Second activation
         harness.addMana(player1, ManaColor.COLORLESS, 4);

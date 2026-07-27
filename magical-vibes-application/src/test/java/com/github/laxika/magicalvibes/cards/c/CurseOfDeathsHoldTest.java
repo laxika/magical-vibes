@@ -41,9 +41,7 @@ class CurseOfDeathsHoldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        Permanent curse = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Curse of Death's Hold"))
-                .findFirst().orElseThrow();
+        Permanent curse = findPermanent(player1, "Curse of Death's Hold");
         assertThat(curse.getAttachedTo()).isEqualTo(player2.getId());
     }
 
@@ -61,9 +59,7 @@ class CurseOfDeathsHoldTest extends BaseCardTest {
 
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
 
         // 2/2 base - 1/1 from curse = 1/1
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
@@ -82,9 +78,7 @@ class CurseOfDeathsHoldTest extends BaseCardTest {
 
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         // Controller's creature is unaffected: 2/2
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
@@ -100,9 +94,7 @@ class CurseOfDeathsHoldTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CurseOfDeathsHold()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
 
         // Before casting, no debuff
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
@@ -130,9 +122,7 @@ class CurseOfDeathsHoldTest extends BaseCardTest {
 
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
 
@@ -159,9 +149,7 @@ class CurseOfDeathsHoldTest extends BaseCardTest {
 
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
 
         // 2/2 base - 2/2 from two curses = 0/0
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(0);

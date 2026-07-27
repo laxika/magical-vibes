@@ -165,9 +165,7 @@ class GarrukWildspeakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
-        long tokenCount = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Beast"))
-                .count();
+        long tokenCount = countPermanents(player1, "Beast");
         assertThat(tokenCount).isEqualTo(2);
     }
 

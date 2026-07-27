@@ -96,10 +96,7 @@ class KjeldoranDeadTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        Permanent survivor = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Kjeldoran Dead"))
-                .findFirst().orElseThrow();
+        Permanent survivor = findPermanent(player1, "Kjeldoran Dead");
         assertThat(survivor.isTapped()).isTrue();
         assertThat(survivor.getRegenerationShield()).isEqualTo(0);
     }

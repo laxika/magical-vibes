@@ -17,9 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ConsumingBonfireTest extends BaseCardTest {
 
     private Permanent battlefieldPermanent(String cardName) {
-        return gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(cardName))
-                .findFirst().orElseThrow();
+        return findPermanent(player2, cardName);
     }
 
     @Nested

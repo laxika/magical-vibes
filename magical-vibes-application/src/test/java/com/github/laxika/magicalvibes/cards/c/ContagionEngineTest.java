@@ -61,15 +61,11 @@ class ContagionEngineTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Controller's bears should be unaffected
-        Permanent ownBears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent ownBears = findPermanent(player1, "Grizzly Bears");
         assertThat(ownBears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
 
         // Opponent's bears should have a counter
-        Permanent oppBears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent oppBears = findPermanent(player2, "Grizzly Bears");
         assertThat(oppBears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
@@ -88,9 +84,7 @@ class ContagionEngineTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve artifact spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent spellbook = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spellbook"))
-                .findFirst().orElseThrow();
+        Permanent spellbook = findPermanent(player2, "Spellbook");
         assertThat(spellbook.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
     }
 

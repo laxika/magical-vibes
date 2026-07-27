@@ -32,9 +32,7 @@ class DrogskolShieldmateTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB boost
 
-        Permanent shieldmate = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Drogskol Shieldmate"))
-                .findFirst().orElseThrow();
+        Permanent shieldmate = findPermanent(player1, "Drogskol Shieldmate");
 
         assertThat(bears.getPowerModifier()).isEqualTo(0);
         assertThat(bears.getToughnessModifier()).isEqualTo(1);

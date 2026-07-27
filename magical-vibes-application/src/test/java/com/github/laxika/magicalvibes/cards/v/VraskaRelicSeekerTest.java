@@ -116,9 +116,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
         Permanent vraska = addReadyVraska(player1);
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bear = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
 
         harness.activateAbility(player1, 0, 1, null, bear.getId());
         harness.passBothPriorities();
@@ -145,9 +143,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
         Permanent vraska = addReadyVraska(player1);
         harness.addToBattlefield(player2, new Pacifism());
 
-        Permanent enchantment = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Pacifism"))
-                .findFirst().orElseThrow();
+        Permanent enchantment = findPermanent(player2, "Pacifism");
 
         harness.activateAbility(player1, 0, 1, null, enchantment.getId());
         harness.passBothPriorities();
@@ -169,9 +165,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
         addReadyVraska(player1);
         harness.addToBattlefield(player2, new com.github.laxika.magicalvibes.cards.f.Forest());
 
-        Permanent forest = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst().orElseThrow();
+        Permanent forest = findPermanent(player2, "Forest");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -183,9 +177,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
         Permanent vraska = addReadyVraska(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent ownBear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent ownBear = findPermanent(player1, "Grizzly Bears");
 
         harness.activateAbility(player1, 0, 1, null, ownBear.getId());
         harness.passBothPriorities();
@@ -288,8 +280,6 @@ class VraskaRelicSeekerTest extends BaseCardTest {
     }
 
     private Permanent findVraska(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vraska, Relic Seeker"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Vraska, Relic Seeker");
     }
 }

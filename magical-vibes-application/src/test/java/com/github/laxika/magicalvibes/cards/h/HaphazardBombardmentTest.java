@@ -114,9 +114,7 @@ class HaphazardBombardmentTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger
 
         // Exactly one of the two should be destroyed
-        int remaining = (int) gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .count();
+        int remaining = (int) countPermanents(player2, "Grizzly Bears");
         assertThat(remaining).isEqualTo(1);
     }
 

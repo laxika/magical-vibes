@@ -23,9 +23,7 @@ class UrabraskTheHiddenTest extends BaseCardTest {
         harness.addToBattlefield(player1, new UrabraskTheHidden());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
@@ -36,9 +34,7 @@ class UrabraskTheHiddenTest extends BaseCardTest {
         harness.addToBattlefield(player1, new UrabraskTheHidden());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
@@ -56,9 +52,7 @@ class UrabraskTheHiddenTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.isTapped()).isTrue();
     }
 
@@ -72,9 +66,7 @@ class UrabraskTheHiddenTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.isTapped()).isFalse();
     }
 }

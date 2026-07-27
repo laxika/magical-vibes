@@ -98,9 +98,7 @@ class DeityOfScarsTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent deity(Player player) {
-        return harness.getGameData().playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Deity of Scars"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Deity of Scars");
     }
 
     private Permanent addReadyDeity(Player player) {

@@ -67,9 +67,7 @@ class PithingNeedleTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Prodigal Pyromancer");
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Pithing Needle"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Pithing Needle");
         assertThat(perm.getChosenName()).isEqualTo("Prodigal Pyromancer");
     }
 

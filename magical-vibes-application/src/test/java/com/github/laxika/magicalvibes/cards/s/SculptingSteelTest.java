@@ -192,13 +192,9 @@ class SculptingSteelTest extends BaseCardTest {
         UUID tomeId = harness.getPermanentId(player1, "Jayemdae Tome");
         harness.handlePermanentChosen(player1, tomeId);
 
-        GameData gd = harness.getGameData();
-
         // Both Jayemdae Tome (original) and Sculpting Steel (as Jayemdae Tome) should coexist
         // since Jayemdae Tome is not legendary — no legend rule triggered
-        long tomeCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Jayemdae Tome"))
-                .count();
+        long tomeCount = countPermanents(player1, "Jayemdae Tome");
         assertThat(tomeCount).isEqualTo(2);
     }
 

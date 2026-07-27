@@ -22,9 +22,7 @@ class MudbuttonTorchrunnerTest extends BaseCardTest {
      * a 2/2 Grizzly Bears (player2), so the Torchrunner dies from combat damage.
      */
     private void setupCombatWhereTorchrunnerDies() {
-        Permanent torchrunner = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mudbutton Torchrunner"))
-                .findFirst().orElseThrow();
+        Permanent torchrunner = findPermanent(player1, "Mudbutton Torchrunner");
         torchrunner.setSummoningSick(false);
         torchrunner.setAttacking(true);
 

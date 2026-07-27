@@ -53,9 +53,7 @@ class OonasBlackguardTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        Permanent entered = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Oona's Blackguard"))
-                .findFirst().orElseThrow();
+        Permanent entered = findPermanent(player2, "Oona's Blackguard");
         assertThat(entered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 

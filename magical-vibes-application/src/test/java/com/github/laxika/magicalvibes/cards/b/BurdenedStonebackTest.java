@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class BurdenedStonebackTest extends BaseCardTest {
 
-
     // ===== Card properties =====
 
     @Test
@@ -46,10 +45,7 @@ class BurdenedStonebackTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell (enters battlefield)
         harness.passBothPriorities(); // resolve ETB effect (puts -1/-1 counters)
 
-        GameData gd = harness.getGameData();
-        Permanent stoneback = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Burdened Stoneback"))
-                .findFirst().orElseThrow();
+        Permanent stoneback = findPermanent(player1, "Burdened Stoneback");
 
         assertThat(stoneback.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
         assertThat(stoneback.getEffectivePower()).isEqualTo(2);

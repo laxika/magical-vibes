@@ -131,9 +131,7 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
         addReadyJace(player1);
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent opponentBear = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent opponentBear = findPermanent(player2, "Grizzly Bears");
         opponentBear.tap();
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -184,9 +182,7 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
 
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        UUID bearsId = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow().getId();
+        UUID bearsId = findPermanent(player2, "Grizzly Bears").getId();
 
         harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of(bearsId));
         harness.passBothPriorities();

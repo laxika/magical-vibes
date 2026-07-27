@@ -26,9 +26,7 @@ class TrespassersCurseTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, player2.getId());
         harness.passBothPriorities(); // resolve
 
-        Permanent curse = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Trespasser's Curse"))
-                .findFirst().orElseThrow();
+        Permanent curse = findPermanent(player1, "Trespasser's Curse");
         assertThat(curse.getAttachedTo()).isEqualTo(player2.getId());
     }
 

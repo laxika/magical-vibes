@@ -55,15 +55,11 @@ class CarnifexDemonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Own Grizzly Bears gets a -1/-1 counter
-        Permanent ownBears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent ownBears = findPermanent(player1, "Grizzly Bears");
         assertThat(ownBears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
 
         // Opponent's Grizzly Bears also gets a -1/-1 counter
-        Permanent oppBears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent oppBears = findPermanent(player2, "Grizzly Bears");
         assertThat(oppBears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
@@ -165,9 +161,7 @@ class CarnifexDemonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent oppBears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent oppBears = findPermanent(player2, "Grizzly Bears");
         assertThat(oppBears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
@@ -187,9 +181,7 @@ class CarnifexDemonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Spellbook (artifact, not a creature) should have no -1/-1 counters
-        Permanent spellbook = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spellbook"))
-                .findFirst().orElseThrow();
+        Permanent spellbook = findPermanent(player1, "Spellbook");
         assertThat(spellbook.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
     }
 
@@ -205,8 +197,6 @@ class CarnifexDemonTest extends BaseCardTest {
     }
 
     private Permanent findDemon(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Carnifex Demon"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Carnifex Demon");
     }
 }

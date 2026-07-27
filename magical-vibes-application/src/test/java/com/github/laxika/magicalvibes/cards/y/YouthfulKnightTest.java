@@ -80,9 +80,7 @@ class YouthfulKnightTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Youthful Knight"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Youthful Knight");
         assertThat(perm.isSummoningSick()).isTrue();
     }
 

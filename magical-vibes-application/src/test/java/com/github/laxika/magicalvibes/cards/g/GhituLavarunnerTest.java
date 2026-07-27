@@ -139,8 +139,6 @@ class GhituLavarunnerTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent findLavarunner() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ghitu Lavarunner"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Ghitu Lavarunner");
     }
 }

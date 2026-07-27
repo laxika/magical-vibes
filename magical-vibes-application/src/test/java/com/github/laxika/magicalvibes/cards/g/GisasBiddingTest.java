@@ -31,9 +31,7 @@ class GisasBiddingTest extends BaseCardTest {
     }
 
     private List<Permanent> zombiesOnBattlefield() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .toList();
+        return findPermanents(player1, "Zombie");
     }
 
     @Test

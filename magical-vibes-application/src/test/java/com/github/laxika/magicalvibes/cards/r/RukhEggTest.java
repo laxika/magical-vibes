@@ -52,9 +52,7 @@ class RukhEggTest extends BaseCardTest {
         assertThat(gd.stack).isNotEmpty();
         harness.passBothPriorities(); // resolve the token-creation trigger
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bird"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Bird");
         assertThat(token.getCard().getPower()).isEqualTo(4);
         assertThat(token.getCard().getToughness()).isEqualTo(4);
         assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);

@@ -75,9 +75,7 @@ class FlightTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Flight()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        Permanent artifact = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fountain of Youth"))
-                .findFirst().orElseThrow();
+        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

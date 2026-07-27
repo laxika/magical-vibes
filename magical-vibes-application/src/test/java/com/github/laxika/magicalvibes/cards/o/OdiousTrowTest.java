@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.c.CudgelTroll;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -71,10 +70,7 @@ class OdiousTrowTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        Permanent survivor = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Odious Trow"))
-                .findFirst().orElseThrow();
+        Permanent survivor = findPermanent(player1, "Odious Trow");
         assertThat(survivor.isTapped()).isTrue();
         assertThat(survivor.getRegenerationShield()).isEqualTo(0);
         assertThat(survivor.isBlocking()).isFalse();

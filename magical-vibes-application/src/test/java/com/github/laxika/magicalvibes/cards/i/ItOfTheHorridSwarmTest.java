@@ -29,9 +29,7 @@ class ItOfTheHorridSwarmTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
 
         harness.assertOnBattlefield(player1, "It of the Horrid Swarm");
-        List<Permanent> insects = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Insect"))
-                .toList();
+        List<Permanent> insects = findPermanents(player1, "Insect");
         assertThat(insects).hasSize(2);
         assertThat(insects).allSatisfy(token -> {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);

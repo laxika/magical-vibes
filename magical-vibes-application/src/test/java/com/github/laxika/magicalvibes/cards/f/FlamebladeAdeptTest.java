@@ -73,9 +73,6 @@ class FlamebladeAdeptTest extends BaseCardTest {
     }
 
     private Permanent getFlamebladeAdept() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Flameblade Adept"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Flameblade Adept");
     }
 }

@@ -144,9 +144,7 @@ class SerumRakerTest extends BaseCardTest {
     // ===== Helpers =====
 
     private void setupCombatWhereSerumRakerDies() {
-        Permanent serumRakerPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Serum Raker"))
-                .findFirst().orElseThrow();
+        Permanent serumRakerPerm = findPermanent(player1, "Serum Raker");
         serumRakerPerm.setSummoningSick(false);
         serumRakerPerm.setAttacking(true);
 

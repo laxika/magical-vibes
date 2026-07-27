@@ -27,9 +27,7 @@ class LightningMaulerTest extends BaseCardTest {
     }
 
     private Permanent findMauler() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Lightning Mauler"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Lightning Mauler");
     }
 
     @Test

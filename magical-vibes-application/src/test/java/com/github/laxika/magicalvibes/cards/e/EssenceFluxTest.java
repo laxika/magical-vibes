@@ -28,9 +28,7 @@ class EssenceFluxTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearsId);
         harness.passBothPriorities();
 
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.getId()).isNotEqualTo(bearsId);
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -48,9 +46,7 @@ class EssenceFluxTest extends BaseCardTest {
         harness.castInstant(player1, 0, geistId);
         harness.passBothPriorities();
 
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Battleground Geist"))
-                .findFirst().orElseThrow();
+        Permanent returned = findPermanent(player1, "Battleground Geist");
         assertThat(returned.getId()).isNotEqualTo(geistId);
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }

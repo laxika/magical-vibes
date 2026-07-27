@@ -28,9 +28,7 @@ class SnapsailGliderTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SnapsailGlider());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent glider = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Snapsail Glider"))
-                .findFirst().orElseThrow();
+        Permanent glider = findPermanent(player1, "Snapsail Glider");
         assertThat(gqs.hasKeyword(gd, glider, Keyword.FLYING)).isFalse();
     }
 
@@ -43,9 +41,7 @@ class SnapsailGliderTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent glider = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Snapsail Glider"))
-                .findFirst().orElseThrow();
+        Permanent glider = findPermanent(player1, "Snapsail Glider");
         assertThat(gqs.hasKeyword(gd, glider, Keyword.FLYING)).isTrue();
     }
 
@@ -58,9 +54,7 @@ class SnapsailGliderTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent glider = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Snapsail Glider"))
-                .findFirst().orElseThrow();
+        Permanent glider = findPermanent(player1, "Snapsail Glider");
         assertThat(gqs.hasKeyword(gd, glider, Keyword.FLYING)).isTrue();
 
         // Remove one artifact — now only 2

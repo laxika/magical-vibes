@@ -170,9 +170,7 @@ class DivineReckoningTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LlanowarElves());
 
         // Grant Llanowar Elves indestructible
-        Permanent elves = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elves = findPermanent(player1, "Llanowar Elves");
         elves.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
 
         harness.setHand(player1, List.of(new DivineReckoning()));
@@ -199,9 +197,7 @@ class DivineReckoningTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LlanowarElves());
 
         // Give Llanowar Elves a regeneration shield
-        Permanent elves = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elves = findPermanent(player1, "Llanowar Elves");
         elves.setRegenerationShield(1);
 
         harness.setHand(player1, List.of(new DivineReckoning()));

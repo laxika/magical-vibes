@@ -50,9 +50,7 @@ class SteadfastArmasaurTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears();
         bears.setToughness(4);
         harness.addToBattlefield(player2, bears);
-        Permanent blocker = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent blocker = findPermanent(player2, "Grizzly Bears");
 
         setupArmasaurAttackingBlockedBy(armasaur, blocker);
 
@@ -70,9 +68,7 @@ class SteadfastArmasaurTest extends BaseCardTest {
     void killsBlockerWithLethalToughnessDamage() {
         Permanent armasaur = addReadyArmasaur(player1);
         harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent blocker = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent blocker = findPermanent(player2, "Grizzly Bears");
 
         setupArmasaurAttackingBlockedBy(armasaur, blocker);
 
@@ -91,9 +87,7 @@ class SteadfastArmasaurTest extends BaseCardTest {
     void dealsToughnessDamageToAttackerItBlocks() {
         Permanent armasaur = addReadyArmasaur(player1);
         harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent attacker = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent attacker = findPermanent(player2, "Grizzly Bears");
 
         setupArmasaurBlockingAttacker(armasaur, attacker);
 
@@ -137,9 +131,7 @@ class SteadfastArmasaurTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears();
         bears.setToughness(5);
         harness.addToBattlefield(player2, bears);
-        Permanent blocker = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent blocker = findPermanent(player2, "Grizzly Bears");
 
         setupArmasaurAttackingBlockedBy(armasaur, blocker);
 
@@ -158,9 +150,7 @@ class SteadfastArmasaurTest extends BaseCardTest {
     void tapsOnActivation() {
         Permanent armasaur = addReadyArmasaur(player1);
         harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent blocker = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent blocker = findPermanent(player2, "Grizzly Bears");
 
         setupArmasaurAttackingBlockedBy(armasaur, blocker);
 
@@ -177,9 +167,7 @@ class SteadfastArmasaurTest extends BaseCardTest {
     void cannotActivateWithoutEnoughMana() {
         Permanent armasaur = addReadyArmasaur(player1);
         harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent blocker = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent blocker = findPermanent(player2, "Grizzly Bears");
 
         setupArmasaurAttackingBlockedBy(armasaur, blocker);
 
@@ -197,9 +185,7 @@ class SteadfastArmasaurTest extends BaseCardTest {
     void activatingPutsOnStack() {
         Permanent armasaur = addReadyArmasaur(player1);
         harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent blocker = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent blocker = findPermanent(player2, "Grizzly Bears");
 
         setupArmasaurAttackingBlockedBy(armasaur, blocker);
 
@@ -221,9 +207,7 @@ class SteadfastArmasaurTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears();
         bears.setToughness(4);
         harness.addToBattlefield(player2, bears);
-        Permanent blocker = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent blocker = findPermanent(player2, "Grizzly Bears");
 
         setupArmasaurAttackingBlockedBy(armasaur, blocker);
 
@@ -247,9 +231,7 @@ class SteadfastArmasaurTest extends BaseCardTest {
     void fizzlesIfTargetCreatureRemoved() {
         Permanent armasaur = addReadyArmasaur(player1);
         harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent blocker = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent blocker = findPermanent(player2, "Grizzly Bears");
 
         setupArmasaurAttackingBlockedBy(armasaur, blocker);
 

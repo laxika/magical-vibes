@@ -72,9 +72,7 @@ class YawgmothDemonTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, chosenArtifact);
 
-        long artifactsLeft = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ornithopter"))
-                .count();
+        long artifactsLeft = countPermanents(player1, "Ornithopter");
         assertThat(artifactsLeft).isEqualTo(1);
         assertThat(demon(player1).isTapped()).isFalse();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);

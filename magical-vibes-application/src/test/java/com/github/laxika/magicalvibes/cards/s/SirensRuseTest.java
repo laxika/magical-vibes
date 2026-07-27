@@ -78,9 +78,7 @@ class SirensRuseTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearsId);
         harness.passBothPriorities();
 
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.isSummoningSick()).isTrue();
     }
 

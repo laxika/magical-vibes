@@ -46,9 +46,7 @@ class XathridDemonTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        Permanent demon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Xathrid Demon"))
-                .findFirst().orElseThrow();
+        Permanent demon = findPermanent(player1, "Xathrid Demon");
         assertThat(demon.isTapped()).isTrue();
     }
 
@@ -114,9 +112,7 @@ class XathridDemonTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        Permanent demon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Xathrid Demon"))
-                .findFirst().orElseThrow();
+        Permanent demon = findPermanent(player1, "Xathrid Demon");
         assertThat(demon.isTapped()).isFalse();
     }
 
@@ -171,9 +167,7 @@ class XathridDemonTest extends BaseCardTest {
         addCreature(player1, new GrizzlyBears());
         addCreature(player1, new GiantSpider());
 
-        Permanent demonPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Xathrid Demon"))
-                .findFirst().orElseThrow();
+        Permanent demonPerm = findPermanent(player1, "Xathrid Demon");
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger

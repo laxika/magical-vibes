@@ -54,9 +54,7 @@ class TemperedSteelTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TemperedSteel());
         harness.addToBattlefield(player1, new GoldMyr());
 
-        Permanent myr = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gold Myr"))
-                .findFirst().orElseThrow();
+        Permanent myr = findPermanent(player1, "Gold Myr");
 
         assertThat(gqs.getEffectivePower(gd, myr)).isEqualTo(3);   // 1 base + 2
         assertThat(gqs.getEffectiveToughness(gd, myr)).isEqualTo(3); // 1 base + 2
@@ -68,9 +66,7 @@ class TemperedSteelTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TemperedSteel());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -82,9 +78,7 @@ class TemperedSteelTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TemperedSteel());
         harness.addToBattlefield(player1, new Spellbook());
 
-        Permanent spellbook = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spellbook"))
-                .findFirst().orElseThrow();
+        Permanent spellbook = findPermanent(player1, "Spellbook");
 
         // Spellbook is a non-creature artifact, should not be affected
         assertThat(gqs.getEffectivePower(gd, spellbook)).isEqualTo(0);
@@ -97,9 +91,7 @@ class TemperedSteelTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TemperedSteel());
         harness.addToBattlefield(player2, new GoldMyr());
 
-        Permanent opponentMyr = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gold Myr"))
-                .findFirst().orElseThrow();
+        Permanent opponentMyr = findPermanent(player2, "Gold Myr");
 
         assertThat(gqs.getEffectivePower(gd, opponentMyr)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, opponentMyr)).isEqualTo(1);
@@ -114,9 +106,7 @@ class TemperedSteelTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TemperedSteel());
         harness.addToBattlefield(player1, new GoldMyr());
 
-        Permanent myr = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gold Myr"))
-                .findFirst().orElseThrow();
+        Permanent myr = findPermanent(player1, "Gold Myr");
 
         assertThat(gqs.getEffectivePower(gd, myr)).isEqualTo(5);   // 1 base + 4
         assertThat(gqs.getEffectiveToughness(gd, myr)).isEqualTo(5); // 1 base + 4
@@ -130,9 +120,7 @@ class TemperedSteelTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TemperedSteel());
         harness.addToBattlefield(player1, new GoldMyr());
 
-        Permanent myr = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gold Myr"))
-                .findFirst().orElseThrow();
+        Permanent myr = findPermanent(player1, "Gold Myr");
 
         assertThat(gqs.getEffectivePower(gd, myr)).isEqualTo(3);
 
@@ -152,9 +140,7 @@ class TemperedSteelTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TemperedSteel()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        Permanent myr = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gold Myr"))
-                .findFirst().orElseThrow();
+        Permanent myr = findPermanent(player1, "Gold Myr");
 
         assertThat(gqs.getEffectivePower(gd, myr)).isEqualTo(1);
 

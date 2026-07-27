@@ -24,9 +24,7 @@ class DiregrafGhoulTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent ghoul = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Diregraf Ghoul"))
-                .findFirst().orElseThrow();
+        Permanent ghoul = findPermanent(player1, "Diregraf Ghoul");
         assertThat(ghoul.isTapped()).isTrue();
     }
 }

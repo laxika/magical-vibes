@@ -16,9 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SentryOakTest extends BaseCardTest {
 
     private Permanent sentryOak() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sentry Oak"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Sentry Oak");
     }
 
     private void advanceToCombat(Player activePlayer) {

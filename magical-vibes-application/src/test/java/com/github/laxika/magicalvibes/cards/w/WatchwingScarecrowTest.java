@@ -13,9 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class WatchwingScarecrowTest extends BaseCardTest {
 
     private Permanent scarecrow() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Watchwing Scarecrow"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Watchwing Scarecrow");
     }
 
     @Test

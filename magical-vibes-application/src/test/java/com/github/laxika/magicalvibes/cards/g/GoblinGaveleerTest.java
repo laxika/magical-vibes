@@ -25,9 +25,7 @@ class GoblinGaveleerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent gaveleer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Gaveleer"))
-                .findFirst().orElseThrow();
+        Permanent gaveleer = findPermanent(player1, "Goblin Gaveleer");
         assertThat(gqs.getEffectivePower(gd, gaveleer)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, gaveleer)).isEqualTo(1);
     }

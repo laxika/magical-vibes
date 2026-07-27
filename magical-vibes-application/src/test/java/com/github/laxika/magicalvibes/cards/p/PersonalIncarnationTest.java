@@ -80,9 +80,7 @@ class PersonalIncarnationTest extends BaseCardTest {
 
     /** Personal Incarnation (player1) attacks and is blocked by a 6/6 (player2); the 6/6 kills it. */
     private void setupCombatWhereIncarnationDies() {
-        Permanent incarnation = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Personal Incarnation"))
-                .findFirst().orElseThrow();
+        Permanent incarnation = findPermanent(player1, "Personal Incarnation");
         incarnation.setSummoningSick(false);
         incarnation.setAttacking(true);
 

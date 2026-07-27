@@ -88,9 +88,7 @@ class ElderMasteryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        Permanent mountain = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mountain"))
-                .findFirst().orElseThrow();
+        Permanent mountain = findPermanent(player1, "Mountain");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class)

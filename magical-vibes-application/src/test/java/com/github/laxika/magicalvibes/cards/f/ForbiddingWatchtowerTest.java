@@ -30,9 +30,7 @@ class ForbiddingWatchtowerTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        Permanent watchtower = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forbidding Watchtower"))
-                .findFirst().orElseThrow();
+        Permanent watchtower = findPermanent(player1, "Forbidding Watchtower");
         assertThat(watchtower.isTapped()).isTrue();
     }
 

@@ -42,9 +42,7 @@ class DoomedDissenterTest extends BaseCardTest {
             // Resolve the death trigger
             harness.passBothPriorities();
 
-            List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Zombie"))
-                    .toList();
+            List<Permanent> tokens = findPermanents(player1, "Zombie");
             assertThat(tokens).hasSize(1);
 
             Permanent zombie = tokens.getFirst();
@@ -67,16 +65,10 @@ class DoomedDissenterTest extends BaseCardTest {
             harness.passBothPriorities(); // Resolve Wrath — Doomed Dissenter dies
             harness.passBothPriorities(); // Resolve death trigger
 
-            GameData gd = harness.getGameData();
-
-            List<Permanent> player2Tokens = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Zombie"))
-                    .toList();
+            List<Permanent> player2Tokens = findPermanents(player2, "Zombie");
             assertThat(player2Tokens).hasSize(1);
 
-            List<Permanent> player1Tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Zombie"))
-                    .toList();
+            List<Permanent> player1Tokens = findPermanents(player1, "Zombie");
             assertThat(player1Tokens).isEmpty();
         }
     }

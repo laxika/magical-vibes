@@ -73,8 +73,6 @@ class IslebackSpawnTest extends BaseCardTest {
     }
 
     private Permanent findSpawn() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Isleback Spawn"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Isleback Spawn");
     }
 }

@@ -32,9 +32,7 @@ class NeedleDropTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Grizzly Bears");
         assertThat(target.getMarkedDamage()).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }

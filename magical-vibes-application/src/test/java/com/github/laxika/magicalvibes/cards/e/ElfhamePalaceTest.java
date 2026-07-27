@@ -25,9 +25,7 @@ class ElfhamePalaceTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        Permanent palace = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elfhame Palace"))
-                .findFirst().orElseThrow();
+        Permanent palace = findPermanent(player1, "Elfhame Palace");
         assertThat(palace.isTapped()).isTrue();
     }
 

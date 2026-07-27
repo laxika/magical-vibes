@@ -22,9 +22,7 @@ class FesteringMummyTest extends BaseCardTest {
      * (player2). Festering Mummy dies from combat damage.
      */
     private void setupCombatWhereMummyDies() {
-        Permanent mummyPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Festering Mummy"))
-                .findFirst().orElseThrow();
+        Permanent mummyPerm = findPermanent(player1, "Festering Mummy");
         mummyPerm.setSummoningSick(false);
         mummyPerm.setAttacking(true);
 

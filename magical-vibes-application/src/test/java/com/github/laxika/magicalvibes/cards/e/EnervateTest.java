@@ -27,8 +27,7 @@ class EnervateTest extends BaseCardTest {
         harness.castInstant(player1, 0, giantId);
         harness.passBothPriorities();
 
-        Permanent giant = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hill Giant")).findFirst().orElseThrow();
+        Permanent giant = findPermanent(player2, "Hill Giant");
         assertThat(giant.isTapped()).isTrue();
 
         List<DrawCardsAtNextUpkeep> scheduled = gd.getDelayedActions(DrawCardsAtNextUpkeep.class);
@@ -48,8 +47,7 @@ class EnervateTest extends BaseCardTest {
         harness.castInstant(player1, 0, forestId);
         harness.passBothPriorities();
 
-        Permanent forest = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest")).findFirst().orElseThrow();
+        Permanent forest = findPermanent(player2, "Forest");
         assertThat(forest.isTapped()).isTrue();
     }
 }

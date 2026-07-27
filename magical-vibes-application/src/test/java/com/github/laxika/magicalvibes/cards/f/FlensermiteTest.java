@@ -45,9 +45,7 @@ class FlensermiteTest extends BaseCardTest {
         resolveCombat();
 
         // Grizzly Bears (2/2) gets 1 -1/-1 counter from 1-power Flensermite
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 

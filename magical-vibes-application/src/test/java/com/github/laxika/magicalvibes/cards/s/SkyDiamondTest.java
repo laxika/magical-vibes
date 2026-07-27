@@ -42,9 +42,6 @@ class SkyDiamondTest extends BaseCardTest {
     }
 
     private Permanent findDiamond(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sky Diamond"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player, "Sky Diamond");
     }
 }

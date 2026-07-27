@@ -53,9 +53,7 @@ class PhyrexianIngesterTest extends BaseCardTest {
 
         castIngesterAndAcceptMay(bearsId);
 
-        Permanent ingester = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Ingester"))
-                .findFirst().orElseThrow();
+        Permanent ingester = findPermanent(player1, "Phyrexian Ingester");
 
         // Base 3/3 + Grizzly Bears 2/2 = 5/5
         assertThat(gqs.getEffectivePower(gd, ingester)).isEqualTo(5);
@@ -70,9 +68,7 @@ class PhyrexianIngesterTest extends BaseCardTest {
 
         castIngesterAndAcceptMay(digesterId);
 
-        Permanent ingester = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Ingester"))
-                .findFirst().orElseThrow();
+        Permanent ingester = findPermanent(player1, "Phyrexian Ingester");
 
         // Base 3/3 + Phyrexian Digester 2/1 = 5/4
         assertThat(gqs.getEffectivePower(gd, ingester)).isEqualTo(5);
@@ -96,9 +92,7 @@ class PhyrexianIngesterTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, false); // decline
 
-        Permanent ingester = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Ingester"))
-                .findFirst().orElseThrow();
+        Permanent ingester = findPermanent(player1, "Phyrexian Ingester");
 
         // Base 3/3, no boost
         assertThat(gqs.getEffectivePower(gd, ingester)).isEqualTo(3);
@@ -122,9 +116,7 @@ class PhyrexianIngesterTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
-        Permanent ingester = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Ingester"))
-                .findFirst().orElseThrow();
+        Permanent ingester = findPermanent(player1, "Phyrexian Ingester");
         assertThat(gqs.getEffectivePower(gd, ingester)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, ingester)).isEqualTo(5);
     }

@@ -144,9 +144,7 @@ class RestlessBloodseekerTest extends BaseCardTest {
     }
 
     private long bloodTokenCount(Player owner) {
-        return gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blood"))
-                .count();
+        return countPermanents(owner, "Blood");
     }
 
     private int indexOf(Player player, Permanent permanent) {

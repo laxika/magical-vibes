@@ -90,8 +90,6 @@ class ArdentRecruitTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent findRecruit() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ardent Recruit"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Ardent Recruit");
     }
 }

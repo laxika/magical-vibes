@@ -34,10 +34,7 @@ class DueRespectTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst()
-                .orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.isTapped()).isTrue();
     }
 
@@ -55,10 +52,7 @@ class DueRespectTest extends BaseCardTest {
         harness.castArtifact(player2, 0);
         harness.passBothPriorities();
 
-        Permanent ornithopter = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ornithopter"))
-                .findFirst()
-                .orElseThrow();
+        Permanent ornithopter = findPermanent(player2, "Ornithopter");
         assertThat(ornithopter.isTapped()).isTrue();
     }
 
@@ -72,10 +66,7 @@ class DueRespectTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Forest()));
         gs.playCard(gd, player1, 0, 0, null, null);
 
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst()
-                .orElseThrow();
+        Permanent forest = findPermanent(player1, "Forest");
         assertThat(forest.isTapped()).isTrue();
     }
 

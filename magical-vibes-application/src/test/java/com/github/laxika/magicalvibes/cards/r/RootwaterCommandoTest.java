@@ -67,9 +67,7 @@ class RootwaterCommandoTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rootwater Commando"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Rootwater Commando");
         assertThat(perm.isSummoningSick()).isTrue();
     }
 

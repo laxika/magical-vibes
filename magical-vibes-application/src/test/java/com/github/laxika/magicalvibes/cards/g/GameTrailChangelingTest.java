@@ -19,10 +19,7 @@ class GameTrailChangelingTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GameTrailChangeling());
 
         GameData gd = harness.getGameData();
-        Permanent changeling = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Game-Trail Changeling"))
-                .findFirst()
-                .orElseThrow();
+        Permanent changeling = findPermanent(player1, "Game-Trail Changeling");
 
         assertThat(gqs.getEffectivePower(gd, changeling)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, changeling)).isEqualTo(5);

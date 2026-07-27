@@ -58,9 +58,7 @@ class CryptolithRiteTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CryptolithRite());
         harness.addToBattlefield(player1, new Forest());
 
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst().orElseThrow();
+        Permanent forest = findPermanent(player1, "Forest");
         int forestIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forest);
 
         // Forest already has its printed mana ability at index 0; a wrongly granted second ability

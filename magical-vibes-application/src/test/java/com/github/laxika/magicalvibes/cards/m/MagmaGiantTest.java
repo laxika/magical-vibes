@@ -60,10 +60,7 @@ class MagmaGiantTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Magma Giant"))
-                .findFirst().orElseThrow().getMarkedDamage()).isEqualTo(2);
+        assertThat(findPermanent(player1, "Magma Giant").getMarkedDamage()).isEqualTo(2);
     }
 
     private void castGiant() {

@@ -73,10 +73,7 @@ class AdventurousEaterHaveABiteTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB BecomePrepared trigger
 
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Adventurous Eater"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Adventurous Eater");
     }
 
     private Permanent addReady(com.github.laxika.magicalvibes.model.Player player,

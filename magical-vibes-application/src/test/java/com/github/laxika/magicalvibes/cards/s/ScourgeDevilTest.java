@@ -33,9 +33,7 @@ class ScourgeDevilTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB boost
 
-        Permanent devil = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Scourge Devil"))
-                .findFirst().orElseThrow();
+        Permanent devil = findPermanent(player1, "Scourge Devil");
 
         assertThat(bears.getPowerModifier()).isEqualTo(1);
         assertThat(bears.getToughnessModifier()).isEqualTo(0);
@@ -82,9 +80,7 @@ class ScourgeDevilTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Scourge Devil"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Scourge Devil");
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
         harness.assertNotInGraveyard(player1, "Scourge Devil");
     }

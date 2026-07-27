@@ -51,10 +51,7 @@ class BladeSplicerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent golemToken = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .findFirst()
-                .orElseThrow();
+        Permanent golemToken = findPermanent(player1, "Phyrexian Golem");
 
         assertThat(gqs.hasKeyword(gd, golemToken, Keyword.FIRST_STRIKE)).isTrue();
     }
@@ -64,10 +61,7 @@ class BladeSplicerTest extends BaseCardTest {
     void bladeSplicerDoesNotHaveFirstStrike() {
         harness.addToBattlefield(player1, new BladeSplicer());
 
-        Permanent bladeSplicer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blade Splicer"))
-                .findFirst()
-                .orElseThrow();
+        Permanent bladeSplicer = findPermanent(player1, "Blade Splicer");
 
         assertThat(gqs.hasKeyword(gd, bladeSplicer, Keyword.FIRST_STRIKE)).isFalse();
     }
@@ -116,10 +110,7 @@ class BladeSplicerTest extends BaseCardTest {
         // but let's verify player 1's Blade Splicer doesn't affect player 2's non-Golem creatures.
         // Actually, player 2 now has their own Blade Splicer granting first strike.
         // To properly test, remove player 2's Blade Splicer and check the token.
-        Permanent p2BladeSplicer = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blade Splicer"))
-                .findFirst()
-                .orElseThrow();
+        Permanent p2BladeSplicer = findPermanent(player2, "Blade Splicer");
 
         // Player 2's Blade Splicer should not get first strike from Player 1's Blade Splicer
         assertThat(gqs.hasKeyword(gd, p2BladeSplicer, Keyword.FIRST_STRIKE)).isFalse();
@@ -135,19 +126,13 @@ class BladeSplicerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent golemToken = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .findFirst()
-                .orElseThrow();
+        Permanent golemToken = findPermanent(player1, "Phyrexian Golem");
 
         // Verify golem has first strike
         assertThat(gqs.hasKeyword(gd, golemToken, Keyword.FIRST_STRIKE)).isTrue();
 
         // Remove Blade Splicer from battlefield
-        Permanent bladeSplicer = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blade Splicer"))
-                .findFirst()
-                .orElseThrow();
+        Permanent bladeSplicer = findPermanent(player1, "Blade Splicer");
         gd.playerBattlefields.get(player1.getId()).remove(bladeSplicer);
 
         // Golem should no longer have first strike

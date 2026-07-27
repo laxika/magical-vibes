@@ -83,9 +83,7 @@ class GargoyleCastleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gargoyle"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Gargoyle");
         assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(token.getCard().getPower()).isEqualTo(3);
         assertThat(token.getCard().getToughness()).isEqualTo(4);
@@ -102,9 +100,7 @@ class GargoyleCastleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gargoyle"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Gargoyle");
         assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
         assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
     }
@@ -118,9 +114,7 @@ class GargoyleCastleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gargoyle"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Gargoyle");
         assertThat(token.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
         assertThat(gqs.isCreature(gd, token)).isTrue();
     }
@@ -134,9 +128,7 @@ class GargoyleCastleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gargoyle"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Gargoyle");
         assertThat(token.isSummoningSick()).isTrue();
     }
 

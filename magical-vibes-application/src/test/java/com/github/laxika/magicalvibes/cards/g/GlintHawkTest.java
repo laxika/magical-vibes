@@ -71,9 +71,7 @@ class GlintHawkTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        UUID artifactId = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spellbook"))
-                .findFirst().orElseThrow().getId();
+        UUID artifactId = findPermanent(player1, "Spellbook").getId();
 
         harness.handlePermanentChosen(player1, artifactId);
 
@@ -121,9 +119,7 @@ class GlintHawkTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
         harness.handleMayAbilityChosen(player1, true);
 
-        UUID scimitarId = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Leonin Scimitar"))
-                .findFirst().orElseThrow().getId();
+        UUID scimitarId = findPermanent(player1, "Leonin Scimitar").getId();
 
         harness.handlePermanentChosen(player1, scimitarId);
 

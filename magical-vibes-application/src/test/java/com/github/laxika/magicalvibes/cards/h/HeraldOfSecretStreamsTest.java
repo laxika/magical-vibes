@@ -19,9 +19,7 @@ class HeraldOfSecretStreamsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HeraldOfSecretStreams());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
@@ -34,9 +32,7 @@ class HeraldOfSecretStreamsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HeraldOfSecretStreams());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.hasCantBeBlocked(gd, bears)).isFalse();
     }
@@ -48,9 +44,7 @@ class HeraldOfSecretStreamsTest extends BaseCardTest {
     void heraldWithCounterCantBeBlocked() {
         harness.addToBattlefield(player1, new HeraldOfSecretStreams());
 
-        Permanent herald = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Herald of Secret Streams"))
-                .findFirst().orElseThrow();
+        Permanent herald = findPermanent(player1, "Herald of Secret Streams");
 
         herald.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
@@ -62,9 +56,7 @@ class HeraldOfSecretStreamsTest extends BaseCardTest {
     void heraldWithoutCounterCanBeBlocked() {
         harness.addToBattlefield(player1, new HeraldOfSecretStreams());
 
-        Permanent herald = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Herald of Secret Streams"))
-                .findFirst().orElseThrow();
+        Permanent herald = findPermanent(player1, "Herald of Secret Streams");
 
         assertThat(gqs.hasCantBeBlocked(gd, herald)).isFalse();
     }
@@ -77,9 +69,7 @@ class HeraldOfSecretStreamsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HeraldOfSecretStreams());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent opponentBears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
 
         opponentBears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
@@ -94,9 +84,7 @@ class HeraldOfSecretStreamsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HeraldOfSecretStreams());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
@@ -115,9 +103,7 @@ class HeraldOfSecretStreamsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HeraldOfSecretStreams());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();

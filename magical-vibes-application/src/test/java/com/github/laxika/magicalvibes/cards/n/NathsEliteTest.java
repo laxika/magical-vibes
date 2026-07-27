@@ -30,9 +30,7 @@ class NathsEliteTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell (ETB clash trigger placed)
         harness.passBothPriorities(); // resolve ETB clash effect
 
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Nath's Elite"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Nath's Elite");
     }
 
     // ===== ETB clash — win puts a +1/+1 counter on it =====

@@ -65,9 +65,7 @@ class NacatlSavageTest extends BaseCardTest {
     void staticProtectionPersistsAfterReset() {
         harness.addToBattlefield(player1, new NacatlSavage());
 
-        Permanent savage = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Nacatl Savage"))
-                .findFirst().orElseThrow();
+        Permanent savage = findPermanent(player1, "Nacatl Savage");
 
         savage.resetModifiers();
 

@@ -30,9 +30,7 @@ class GhituEncampmentTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        Permanent encampment = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ghitu Encampment"))
-                .findFirst().orElseThrow();
+        Permanent encampment = findPermanent(player1, "Ghitu Encampment");
         assertThat(encampment.isTapped()).isTrue();
     }
 

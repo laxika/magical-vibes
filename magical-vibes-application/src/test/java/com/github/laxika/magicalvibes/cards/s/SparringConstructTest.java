@@ -29,9 +29,7 @@ class SparringConstructTest extends BaseCardTest {
      * Sparring Construct will die from combat damage.
      */
     private void setupCombatWhereSparringConstructDies() {
-        Permanent constructPerm = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sparring Construct"))
-                .findFirst().orElseThrow();
+        Permanent constructPerm = findPermanent(player1, "Sparring Construct");
         constructPerm.setSummoningSick(false);
         constructPerm.setAttacking(true);
 

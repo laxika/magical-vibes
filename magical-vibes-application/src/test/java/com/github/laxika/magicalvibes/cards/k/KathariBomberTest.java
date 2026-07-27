@@ -87,9 +87,7 @@ class KathariBomberTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Kathari Bomber"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Kathari Bomber");
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
         harness.assertNotInGraveyard(player1, "Kathari Bomber");
     }

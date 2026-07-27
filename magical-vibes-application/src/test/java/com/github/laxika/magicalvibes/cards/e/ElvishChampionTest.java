@@ -56,9 +56,7 @@ class ElvishChampionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LlanowarElves());
         harness.addToBattlefield(player1, new ElvishChampion());
 
-        Permanent elf = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elf = findPermanent(player1, "Llanowar Elves");
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(2);
@@ -70,9 +68,7 @@ class ElvishChampionTest extends BaseCardTest {
     void doesNotBuffItself() {
         harness.addToBattlefield(player1, new ElvishChampion());
 
-        Permanent champion = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elvish Champion"))
-                .findFirst().orElseThrow();
+        Permanent champion = findPermanent(player1, "Elvish Champion");
 
         assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(2);
@@ -85,9 +81,7 @@ class ElvishChampionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new ElvishChampion());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -100,9 +94,7 @@ class ElvishChampionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ElvishChampion());
         harness.addToBattlefield(player2, new LlanowarElves());
 
-        Permanent opponentElf = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent opponentElf = findPermanent(player2, "Llanowar Elves");
 
         assertThat(gqs.getEffectivePower(gd, opponentElf)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentElf)).isEqualTo(2);
@@ -115,9 +107,7 @@ class ElvishChampionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ElvishChampion());
         harness.addToBattlefield(player1, new ElvishChampion());
 
-        List<Permanent> champions = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elvish Champion"))
-                .toList();
+        List<Permanent> champions = findPermanents(player1, "Elvish Champion");
 
         assertThat(champions).hasSize(2);
         for (Permanent champion : champions) {
@@ -134,9 +124,7 @@ class ElvishChampionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ElvishChampion());
         harness.addToBattlefield(player1, new LlanowarElves());
 
-        Permanent elf = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elf = findPermanent(player1, "Llanowar Elves");
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(3);
@@ -148,9 +136,7 @@ class ElvishChampionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ElvishChampion());
         harness.addToBattlefield(player1, new LlanowarElves());
 
-        Permanent elf = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elf = findPermanent(player1, "Llanowar Elves");
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
 
@@ -169,9 +155,7 @@ class ElvishChampionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ElvishChampion()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        Permanent elf = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elf = findPermanent(player1, "Llanowar Elves");
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(1);
 
@@ -189,9 +173,7 @@ class ElvishChampionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ElvishChampion());
         harness.addToBattlefield(player1, new LlanowarElves());
 
-        Permanent elf = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elf = findPermanent(player1, "Llanowar Elves");
 
         elf.setPowerModifier(elf.getPowerModifier() + 5);
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(7);
@@ -264,9 +246,7 @@ class ElvishChampionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ElvishChampion());
         harness.addToBattlefield(player2, new Forest());
 
-        Permanent champion = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elvish Champion"))
-                .findFirst().orElseThrow();
+        Permanent champion = findPermanent(player1, "Elvish Champion");
         champion.setSummoningSick(false);
         champion.setAttacking(true);
 

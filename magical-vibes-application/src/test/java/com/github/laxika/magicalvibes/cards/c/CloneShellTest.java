@@ -69,9 +69,7 @@ class CloneShellTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Clone Shell should have it imprinted
-        Permanent cloneShell = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Clone Shell"))
-                .findFirst().orElseThrow();
+        Permanent cloneShell = findPermanent(player1, "Clone Shell");
         assertThat(gd.getImprintedCard(cloneShell.getCard())).isNotNull();
         assertThat(gd.getImprintedCard(cloneShell.getCard()).getName()).isEqualTo("Grizzly Bears");
 
@@ -123,9 +121,7 @@ class CloneShellTest extends BaseCardTest {
         harness.addToBattlefield(player1, shellCard);
 
         GameData gd = harness.getGameData();
-        Permanent cloneShell = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Clone Shell"))
-                .findFirst().orElseThrow();
+        Permanent cloneShell = findPermanent(player1, "Clone Shell");
 
         // Manually imprint a creature card
         GrizzlyBears bears = new GrizzlyBears();
@@ -161,9 +157,7 @@ class CloneShellTest extends BaseCardTest {
         harness.addToBattlefield(player1, shellCard);
 
         GameData gd = harness.getGameData();
-        Permanent cloneShell = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Clone Shell"))
-                .findFirst().orElseThrow();
+        Permanent cloneShell = findPermanent(player1, "Clone Shell");
 
         // Manually imprint a non-creature card
         Spellbook spellbook = new Spellbook();

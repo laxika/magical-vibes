@@ -322,11 +322,7 @@ class RooftopPercherTest extends BaseCardTest {
     void hasChangelingKeyword() {
         harness.addToBattlefield(player1, new RooftopPercher());
 
-        GameData gd = harness.getGameData();
-        Permanent percher = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rooftop Percher"))
-                .findFirst()
-                .orElseThrow();
+        Permanent percher = findPermanent(player1, "Rooftop Percher");
 
         assertThat(percher.hasKeyword(Keyword.CHANGELING)).isTrue();
         assertThat(percher.hasKeyword(Keyword.FLYING)).isTrue();

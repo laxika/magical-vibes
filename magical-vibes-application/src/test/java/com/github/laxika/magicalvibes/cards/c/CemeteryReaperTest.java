@@ -28,9 +28,7 @@ class CemeteryReaperTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Gravedigger());
         harness.addToBattlefield(player1, new CemeteryReaper());
 
-        Permanent gravedigger = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gravedigger"))
-                .findFirst().orElseThrow();
+        Permanent gravedigger = findPermanent(player1, "Gravedigger");
 
         assertThat(gqs.getEffectivePower(gd, gravedigger)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, gravedigger)).isEqualTo(3);
@@ -41,9 +39,7 @@ class CemeteryReaperTest extends BaseCardTest {
     void doesNotBuffItself() {
         harness.addToBattlefield(player1, new CemeteryReaper());
 
-        Permanent reaper = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Cemetery Reaper"))
-                .findFirst().orElseThrow();
+        Permanent reaper = findPermanent(player1, "Cemetery Reaper");
 
         assertThat(gqs.getEffectivePower(gd, reaper)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, reaper)).isEqualTo(2);
@@ -55,9 +51,7 @@ class CemeteryReaperTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new CemeteryReaper());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -69,9 +63,7 @@ class CemeteryReaperTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CemeteryReaper());
         harness.addToBattlefield(player2, new Gravedigger());
 
-        Permanent opponentZombie = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gravedigger"))
-                .findFirst().orElseThrow();
+        Permanent opponentZombie = findPermanent(player2, "Gravedigger");
 
         assertThat(gqs.getEffectivePower(gd, opponentZombie)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentZombie)).isEqualTo(2);
@@ -83,9 +75,7 @@ class CemeteryReaperTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CemeteryReaper());
         harness.addToBattlefield(player1, new CemeteryReaper());
 
-        List<Permanent> reapers = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Cemetery Reaper"))
-                .toList();
+        List<Permanent> reapers = findPermanents(player1, "Cemetery Reaper");
 
         assertThat(reapers).hasSize(2);
         for (Permanent reaper : reapers) {
@@ -100,9 +90,7 @@ class CemeteryReaperTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CemeteryReaper());
         harness.addToBattlefield(player1, new Gravedigger());
 
-        Permanent gravedigger = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gravedigger"))
-                .findFirst().orElseThrow();
+        Permanent gravedigger = findPermanent(player1, "Gravedigger");
 
         assertThat(gqs.getEffectivePower(gd, gravedigger)).isEqualTo(3);
 
@@ -274,9 +262,7 @@ class CemeteryReaperTest extends BaseCardTest {
         harness.activateAbility(player1, reaperIndex, 0, null, bears.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
-        Permanent zombieToken = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .findFirst().orElseThrow();
+        Permanent zombieToken = findPermanent(player1, "Zombie");
 
         // 2/2 base + 1/1 from Cemetery Reaper's lord effect = 3/3
         assertThat(gqs.getEffectivePower(gd, zombieToken)).isEqualTo(3);

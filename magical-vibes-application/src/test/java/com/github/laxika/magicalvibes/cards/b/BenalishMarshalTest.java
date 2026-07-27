@@ -52,9 +52,7 @@ class BenalishMarshalTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new BenalishMarshal());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
@@ -65,9 +63,7 @@ class BenalishMarshalTest extends BaseCardTest {
     void doesNotBuffItself() {
         harness.addToBattlefield(player1, new BenalishMarshal());
 
-        Permanent marshal = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Benalish Marshal"))
-                .findFirst().orElseThrow();
+        Permanent marshal = findPermanent(player1, "Benalish Marshal");
 
         assertThat(gqs.getEffectivePower(gd, marshal)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, marshal)).isEqualTo(3);
@@ -79,9 +75,7 @@ class BenalishMarshalTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BenalishMarshal());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent opponentBears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(2);
@@ -95,9 +89,7 @@ class BenalishMarshalTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BenalishMarshal());
         harness.addToBattlefield(player1, new BenalishMarshal());
 
-        List<Permanent> marshals = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Benalish Marshal"))
-                .toList();
+        List<Permanent> marshals = findPermanents(player1, "Benalish Marshal");
 
         assertThat(marshals).hasSize(2);
         for (Permanent marshal : marshals) {
@@ -113,9 +105,7 @@ class BenalishMarshalTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BenalishMarshal());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
@@ -129,9 +119,7 @@ class BenalishMarshalTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BenalishMarshal());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
 
@@ -149,9 +137,7 @@ class BenalishMarshalTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BenalishMarshal()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
 
@@ -170,9 +156,7 @@ class BenalishMarshalTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BenalishMarshal());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         bears.setPowerModifier(bears.getPowerModifier() + 3);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6); // 2 base + 3 spell + 1 static

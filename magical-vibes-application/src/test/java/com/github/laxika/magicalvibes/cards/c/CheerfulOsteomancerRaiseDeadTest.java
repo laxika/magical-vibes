@@ -106,9 +106,6 @@ class CheerfulOsteomancerRaiseDeadTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB BecomePrepared trigger
 
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Cheerful Osteomancer"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Cheerful Osteomancer");
     }
 }

@@ -69,9 +69,7 @@ class MortarpodTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent germ = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         assertThat(germ.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(germ.getCard().getPower()).isEqualTo(0);
@@ -93,9 +91,7 @@ class MortarpodTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent germ = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         // 0/0 base + 0/1 from equipment = 0/1 effective
         assertThat(gqs.getEffectivePower(gd, germ)).isEqualTo(0);
@@ -161,9 +157,7 @@ class MortarpodTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve artifact spell
         harness.passBothPriorities(); // Resolve living weapon ETB trigger
 
-        Permanent germ = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         // Germ has summoning sickness, but the sacrifice ability doesn't require tapping
         germ.setSummoningSick(false);
@@ -205,9 +199,7 @@ class MortarpodTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        Permanent mortarpod = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mortarpod"))
-                .findFirst().orElseThrow();
+        Permanent mortarpod = findPermanent(player1, "Mortarpod");
 
         assertThat(mortarpod.getAttachedTo()).isEqualTo(bears.getId());
 

@@ -106,9 +106,7 @@ class ConfiscateTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        Permanent confiscatePerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Confiscate"))
-                .findFirst().orElseThrow();
+        Permanent confiscatePerm = findPermanent(player1, "Confiscate");
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

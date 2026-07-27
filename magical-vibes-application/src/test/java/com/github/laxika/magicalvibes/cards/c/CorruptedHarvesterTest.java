@@ -61,9 +61,7 @@ class CorruptedHarvesterTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        Permanent harvester = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Corrupted Harvester"))
-                .findFirst().orElseThrow();
+        Permanent harvester = findPermanent(player1, "Corrupted Harvester");
         assertThat(harvester.getRegenerationShield()).isEqualTo(1);
     }
 
@@ -90,12 +88,9 @@ class CorruptedHarvesterTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Corrupted Harvester should survive via regeneration
         harness.assertOnBattlefield(player1, "Corrupted Harvester");
-        Permanent harvester = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Corrupted Harvester"))
-                .findFirst().orElseThrow();
+        Permanent harvester = findPermanent(player1, "Corrupted Harvester");
         assertThat(harvester.isTapped()).isTrue();
         assertThat(harvester.getRegenerationShield()).isEqualTo(0);
     }

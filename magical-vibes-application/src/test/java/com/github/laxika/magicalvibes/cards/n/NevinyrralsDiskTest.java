@@ -49,9 +49,7 @@ class NevinyrralsDiskTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        Permanent disk = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Nevinyrral's Disk"))
-                .findFirst().orElseThrow();
+        Permanent disk = findPermanent(player1, "Nevinyrral's Disk");
         assertThat(disk.isTapped()).isTrue();
     }
 }

@@ -165,8 +165,6 @@ class CloakAndDaggerTest extends BaseCardTest {
     }
 
     private Permanent rogueOnBattlefield(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Frogtosser Banneret"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Frogtosser Banneret");
     }
 }

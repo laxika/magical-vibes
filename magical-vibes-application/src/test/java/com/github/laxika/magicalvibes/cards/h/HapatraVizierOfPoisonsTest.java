@@ -20,9 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HapatraVizierOfPoisonsTest extends BaseCardTest {
 
     private long snakeCount(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Snake"))
-                .count();
+        return countPermanents(player, "Snake");
     }
 
     private void resolveStack() {
@@ -58,9 +56,7 @@ class HapatraVizierOfPoisonsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bearsId);
         resolveStack();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         // The -1/-1 counter placement triggers the second ability once: one Snake for Hapatra's controller.
         assertThat(snakeCount(player1)).isEqualTo(1);
@@ -79,9 +75,7 @@ class HapatraVizierOfPoisonsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         resolveStack();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         assertThat(snakeCount(player1)).isZero();
     }
@@ -101,9 +95,7 @@ class HapatraVizierOfPoisonsTest extends BaseCardTest {
         harness.getGameService().playCard(gd, player1, 0, 0, targetId, null);
         resolveStack();
 
-        Permanent airElemental = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Air Elemental"))
-                .findFirst().orElseThrow();
+        Permanent airElemental = findPermanent(player2, "Air Elemental");
         assertThat(airElemental.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
         // Once per creature per instance — not once per counter.
         assertThat(snakeCount(player1)).isEqualTo(1);

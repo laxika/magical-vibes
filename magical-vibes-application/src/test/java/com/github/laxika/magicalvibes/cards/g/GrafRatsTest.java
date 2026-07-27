@@ -27,10 +27,7 @@ class GrafRatsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(grafRats.getId()) || p.getId().equals(scavengers.getId()));
-        Permanent host = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Chittering Host"))
-                .findFirst()
-                .orElseThrow();
+        Permanent host = findPermanent(player1, "Chittering Host");
         assertThat(host.getMeldComponentCards()).hasSize(2);
         assertThat(host.getCard()).isInstanceOf(ChitteringHost.class);
         assertThat(gd.exiledCards).isEmpty();
@@ -85,10 +82,7 @@ class GrafRatsTest extends BaseCardTest {
         advanceToBeginningOfCombat();
         harness.passBothPriorities();
 
-        Permanent host = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Chittering Host"))
-                .findFirst()
-                .orElseThrow();
+        Permanent host = findPermanent(player1, "Chittering Host");
 
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, host);
 
@@ -108,10 +102,7 @@ class GrafRatsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve meld
         harness.passBothPriorities(); // resolve ETB boost + menace
 
-        Permanent host = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Chittering Host"))
-                .findFirst()
-                .orElseThrow();
+        Permanent host = findPermanent(player1, "Chittering Host");
 
         assertThat(bears.getPowerModifier()).isEqualTo(1);
         assertThat(bears.getToughnessModifier()).isEqualTo(0);

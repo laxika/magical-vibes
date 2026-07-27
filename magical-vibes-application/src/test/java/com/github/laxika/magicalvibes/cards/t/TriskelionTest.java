@@ -54,9 +54,7 @@ class TriskelionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
     }
 
@@ -141,8 +139,6 @@ class TriskelionTest extends BaseCardTest {
     }
 
     private Permanent findTriskelion(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Triskelion"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Triskelion");
     }
 }

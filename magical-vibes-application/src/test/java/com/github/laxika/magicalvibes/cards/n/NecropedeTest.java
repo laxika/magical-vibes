@@ -27,9 +27,7 @@ class NecropedeTest extends BaseCardTest {
      * Necropede will die from combat damage.
      */
     private void setupCombatWhereNecropedeDies() {
-        Permanent necropedePerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Necropede"))
-                .findFirst().orElseThrow();
+        Permanent necropedePerm = findPermanent(player1, "Necropede");
         necropedePerm.setSummoningSick(false);
         necropedePerm.setAttacking(true);
 

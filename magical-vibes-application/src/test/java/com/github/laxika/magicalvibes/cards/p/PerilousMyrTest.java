@@ -27,9 +27,7 @@ class PerilousMyrTest extends BaseCardTest {
      * Myr (1/1) will die from combat damage.
      */
     private void setupCombatWhereMyrDies() {
-        Permanent myrPerm = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Perilous Myr"))
-                .findFirst().orElseThrow();
+        Permanent myrPerm = findPermanent(player1, "Perilous Myr");
         myrPerm.setSummoningSick(false);
         myrPerm.setAttacking(true);
 

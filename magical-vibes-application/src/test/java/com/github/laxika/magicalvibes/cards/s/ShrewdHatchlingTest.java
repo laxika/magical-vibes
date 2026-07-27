@@ -133,8 +133,6 @@ class ShrewdHatchlingTest extends BaseCardTest {
     }
 
     private Permanent findHatchling(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Shrewd Hatchling"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Shrewd Hatchling");
     }
 }

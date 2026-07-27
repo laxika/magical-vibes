@@ -22,14 +22,10 @@ class SunblastAngelTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LlanowarElves());
 
         // Tap both creatures
-        Permanent bears = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         bears.tap();
 
-        Permanent elves = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elves = findPermanent(player2, "Llanowar Elves");
         elves.tap();
 
         harness.setHand(player1, List.of(new SunblastAngel()));
@@ -84,9 +80,7 @@ class SunblastAngelTest extends BaseCardTest {
     void indestructibleTappedCreatureSurvives() {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bears = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         bears.tap();
         bears.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
 
@@ -107,9 +101,7 @@ class SunblastAngelTest extends BaseCardTest {
     void tappedCreatureCanBeRegenerated() {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bears = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         bears.tap();
         bears.setRegenerationShield(1);
 

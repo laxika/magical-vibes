@@ -129,9 +129,7 @@ class RegalCaracalTest extends BaseCardTest {
     }
 
     private List<Permanent> findCaracals(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Regal Caracal"))
-                .toList();
+        return findPermanents(player, "Regal Caracal");
     }
 
     private int countCatTokens(Player player) {

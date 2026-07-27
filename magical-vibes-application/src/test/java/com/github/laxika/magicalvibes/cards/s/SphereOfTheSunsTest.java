@@ -29,9 +29,7 @@ class SphereOfTheSunsTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        Permanent sphere = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sphere of the Suns"))
-                .findFirst().orElseThrow();
+        Permanent sphere = findPermanent(player1, "Sphere of the Suns");
         assertThat(sphere.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
         assertThat(sphere.isTapped()).isTrue();
     }

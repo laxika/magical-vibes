@@ -126,9 +126,7 @@ class CaptainOfTheWatchTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, vanguard)).isEqualTo(3);
 
         // Each Captain buffs the other (both are Soldiers)
-        List<Permanent> captains = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Captain of the Watch"))
-                .toList();
+        List<Permanent> captains = findPermanents(player1, "Captain of the Watch");
         assertThat(captains).hasSize(2);
         for (Permanent captain : captains) {
             // 3/3 base + 1/1 from the other Captain = 4/4

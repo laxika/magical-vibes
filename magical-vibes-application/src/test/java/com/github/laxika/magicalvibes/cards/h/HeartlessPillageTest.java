@@ -72,9 +72,7 @@ class HeartlessPillageTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Peek");
 
         // No treasure tokens without raid
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .toList()).isEmpty();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
     }
 
     @Test
@@ -88,9 +86,7 @@ class HeartlessPillageTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to discard"));
 
         // No treasure tokens without raid
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .toList()).isEmpty();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
     }
 
     // ===== Discard with raid =====
@@ -109,9 +105,7 @@ class HeartlessPillageTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
 
         // One Treasure token created for the caster
-        List<Permanent> treasures = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .toList();
+        List<Permanent> treasures = findPermanents(player1, "Treasure");
         assertThat(treasures).hasSize(1);
         Permanent treasure = treasures.getFirst();
         assertThat(treasure.getCard().isToken()).isTrue();
@@ -132,9 +126,7 @@ class HeartlessPillageTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to discard"));
 
         // Treasure token still created because raid is met
-        List<Permanent> treasures = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .toList();
+        List<Permanent> treasures = findPermanents(player1, "Treasure");
         assertThat(treasures).hasSize(1);
     }
 
@@ -154,9 +146,7 @@ class HeartlessPillageTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         // Treasure created because raid was met at resolution time
-        List<Permanent> treasures = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .toList();
+        List<Permanent> treasures = findPermanents(player1, "Treasure");
         assertThat(treasures).hasSize(1);
     }
 
@@ -178,9 +168,7 @@ class HeartlessPillageTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
 
         // No treasure because raid was lost
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .toList()).isEmpty();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("raid ability does nothing"));
     }
@@ -199,9 +187,7 @@ class HeartlessPillageTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         // No treasure — opponent attacked, not caster
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .toList()).isEmpty();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
     }
 
     // ===== Spell goes to graveyard =====

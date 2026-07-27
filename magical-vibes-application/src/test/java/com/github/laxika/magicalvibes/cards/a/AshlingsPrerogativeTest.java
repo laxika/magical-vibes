@@ -21,17 +21,13 @@ class AshlingsPrerogativeTest extends BaseCardTest {
 
     private Permanent addPrerogativeWithParity(com.github.laxika.magicalvibes.model.Player owner, ManaValueParity parity) {
         harness.addToBattlefield(owner, new AshlingsPrerogative());
-        Permanent perm = gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ashling's Prerogative"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(owner, "Ashling's Prerogative");
         perm.setChosenManaValueParity(parity);
         return perm;
     }
 
     private Permanent find(com.github.laxika.magicalvibes.model.Player owner, String name) {
-        return gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst().orElseThrow();
+        return findPermanent(owner, name);
     }
 
     // ===== Enter-time odd/even choice =====

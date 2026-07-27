@@ -75,9 +75,7 @@ class CaptivatingVampireTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CaptivatingVampire());
         harness.addToBattlefield(player1, new CaptivatingVampire());
 
-        List<Permanent> captivatingVamps = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Captivating Vampire"))
-                .toList();
+        List<Permanent> captivatingVamps = findPermanents(player1, "Captivating Vampire");
 
         assertThat(captivatingVamps).hasSize(2);
         for (Permanent vamp : captivatingVamps) {

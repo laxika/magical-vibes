@@ -196,9 +196,7 @@ class CorrosiveOozeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both equipment should be destroyed
-        long equipmentOnBattlefield = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Warlord's Axe"))
-                .count();
+        long equipmentOnBattlefield = countPermanents(player1, "Warlord's Axe");
         assertThat(equipmentOnBattlefield).isZero();
         long equipmentInGraveyard = gd.playerGraveyards.get(player1.getId()).stream()
                 .filter(c -> c.getName().equals("Warlord's Axe"))

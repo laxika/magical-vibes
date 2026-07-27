@@ -37,9 +37,7 @@ class AryelKnightOfWindgraceTest extends BaseCardTest {
         harness.activateAbility(player1, aryelIdx, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent knight = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Knight"))
-                .findFirst().orElseThrow();
+        Permanent knight = findPermanent(player1, "Knight");
         assertThat(knight.getCard().getPower()).isEqualTo(2);
         assertThat(knight.getCard().getToughness()).isEqualTo(2);
         assertThat(knight.getCard().getSubtypes()).contains(CardSubtype.KNIGHT);

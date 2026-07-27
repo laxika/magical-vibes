@@ -32,9 +32,7 @@ class OldGrowthEducatorTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the ETB trigger (does nothing — no life gained)
 
         GameData gd = harness.getGameData();
-        Permanent educator = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Old-Growth Educator"))
-                .findFirst().orElseThrow();
+        Permanent educator = findPermanent(player1, "Old-Growth Educator");
         assertThat(educator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(gd.stack).isEmpty();
     }
@@ -54,9 +52,7 @@ class OldGrowthEducatorTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell (enters + ETB trigger)
         harness.passBothPriorities(); // resolve ETB effect (put counters)
 
-        Permanent educator = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Old-Growth Educator"))
-                .findFirst().orElseThrow();
+        Permanent educator = findPermanent(player1, "Old-Growth Educator");
         assertThat(educator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(educator.getEffectivePower()).isEqualTo(6);
         assertThat(educator.getEffectiveToughness()).isEqualTo(6);

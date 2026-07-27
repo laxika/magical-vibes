@@ -33,9 +33,7 @@ class ReachOfBranchesTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treefolk Shaman"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Treefolk Shaman");
         assertThat(tokens).hasSize(1);
         assertThat(tokens.getFirst().getEffectivePower()).isEqualTo(2);
         assertThat(tokens.getFirst().getEffectiveToughness()).isEqualTo(5);

@@ -104,10 +104,7 @@ class ArtisticProcessTest extends BaseCardTest {
             harness.passBothPriorities();
 
             GameData gd = harness.getGameData();
-            Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Elemental"))
-                    .findFirst()
-                    .orElseThrow();
+            Permanent token = findPermanent(player1, "Elemental");
 
             assertThat(token.getCard().getPower()).isEqualTo(3);
             assertThat(token.getCard().getToughness()).isEqualTo(3);

@@ -43,10 +43,7 @@ class ClachanFestivalTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Kithkin"))
-                .findFirst()
-                .orElseThrow();
+        Permanent token = findPermanent(player1, "Kithkin");
 
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);

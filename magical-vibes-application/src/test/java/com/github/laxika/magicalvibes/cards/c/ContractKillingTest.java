@@ -42,9 +42,7 @@ class ContractKillingTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
 
         // Two Treasure tokens created for the caster
-        List<Permanent> treasures = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .toList();
+        List<Permanent> treasures = findPermanents(player1, "Treasure");
         assertThat(treasures).hasSize(2);
         for (Permanent treasure : treasures) {
             assertThat(treasure.getCard().isToken()).isTrue();
@@ -69,18 +67,14 @@ class ContractKillingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Two Treasure tokens on battlefield
-        List<Permanent> treasures = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .toList();
+        List<Permanent> treasures = findPermanents(player1, "Treasure");
         assertThat(treasures).hasSize(2);
 
         // Activate a Treasure token's ability (tap + sac → mana ability, resolves immediately)
         harness.activateAbility(player1, 0, null, null);
 
         // Treasure was sacrificed
-        List<Permanent> remainingTreasures = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treasure"))
-                .toList();
+        List<Permanent> remainingTreasures = findPermanents(player1, "Treasure");
         assertThat(remainingTreasures).hasSize(1);
 
         // Choose RED mana

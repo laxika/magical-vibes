@@ -37,9 +37,7 @@ class NecrosavantTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
         // Necrosavant is on the battlefield untapped and no longer in the graveyard
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Necrosavant"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Necrosavant");
         assertThat(perm.isTapped()).isFalse();
         harness.assertNotInGraveyard(player1, "Necrosavant");
     }

@@ -75,9 +75,7 @@ class XenograftTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "GOBLIN");
 
-        Permanent xenograft = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Xenograft"))
-                .findFirst().orElseThrow();
+        Permanent xenograft = findPermanent(player1, "Xenograft");
         assertThat(xenograft.getChosenSubtype()).isEqualTo(CardSubtype.GOBLIN);
     }
 
@@ -94,9 +92,7 @@ class XenograftTest extends BaseCardTest {
         xenograftPerm.setChosenSubtype(CardSubtype.GOBLIN);
         gd.playerBattlefields.get(player1.getId()).add(xenograftPerm);
 
-        Permanent bearPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bear Cub"))
-                .findFirst().orElseThrow();
+        Permanent bearPerm = findPermanent(player1, "Bear Cub");
 
         var bonus = gqs.computeStaticBonus(gd, bearPerm);
         assertThat(bonus.grantedSubtypes()).contains(CardSubtype.GOBLIN);
@@ -113,9 +109,7 @@ class XenograftTest extends BaseCardTest {
         xenograftPerm.setChosenSubtype(CardSubtype.WIZARD);
         gd.playerBattlefields.get(player1.getId()).add(xenograftPerm);
 
-        Permanent elfPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elfPerm = findPermanent(player1, "Llanowar Elves");
 
         var bonus = gqs.computeStaticBonus(gd, elfPerm);
         assertThat(bonus.grantedSubtypes()).contains(CardSubtype.WIZARD);
@@ -134,9 +128,7 @@ class XenograftTest extends BaseCardTest {
         xenograftPerm.setChosenSubtype(CardSubtype.GOBLIN);
         gd.playerBattlefields.get(player1.getId()).add(xenograftPerm);
 
-        Permanent bearPerm = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bearPerm = findPermanent(player2, "Grizzly Bears");
 
         var bonus = gqs.computeStaticBonus(gd, bearPerm);
         assertThat(bonus.grantedSubtypes()).doesNotContain(CardSubtype.GOBLIN);
@@ -151,9 +143,7 @@ class XenograftTest extends BaseCardTest {
         // Add Xenograft without setting chosen subtype
         harness.addToBattlefield(player1, new Xenograft());
 
-        Permanent bearPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bear Cub"))
-                .findFirst().orElseThrow();
+        Permanent bearPerm = findPermanent(player1, "Bear Cub");
 
         var bonus = gqs.computeStaticBonus(gd, bearPerm);
         assertThat(bonus.grantedSubtypes()).isEmpty();
@@ -170,9 +160,7 @@ class XenograftTest extends BaseCardTest {
         xenograftPerm.setChosenSubtype(CardSubtype.GOBLIN);
         gd.playerBattlefields.get(player1.getId()).add(xenograftPerm);
 
-        Permanent goblinPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Piker"))
-                .findFirst().orElseThrow();
+        Permanent goblinPerm = findPermanent(player1, "Goblin Piker");
 
         var bonus = gqs.computeStaticBonus(gd, goblinPerm);
         // GrantedSubtypes should contain GOBLIN at most once (accumulator deduplicates)
@@ -193,9 +181,7 @@ class XenograftTest extends BaseCardTest {
         xenograftPerm.setChosenSubtype(CardSubtype.GOBLIN);
         gd.playerBattlefields.get(player1.getId()).add(xenograftPerm);
 
-        Permanent artifactPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sol Ring"))
-                .findFirst().orElseThrow();
+        Permanent artifactPerm = findPermanent(player1, "Sol Ring");
 
         var bonus = gqs.computeStaticBonus(gd, artifactPerm);
         assertThat(bonus.grantedSubtypes()).doesNotContain(CardSubtype.GOBLIN);
@@ -221,17 +207,13 @@ class XenograftTest extends BaseCardTest {
         harness.handleListChoice(player1, "GOBLIN");
 
         // Verify creature gains the chosen type
-        Permanent bearPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bear Cub"))
-                .findFirst().orElseThrow();
+        Permanent bearPerm = findPermanent(player1, "Bear Cub");
 
         var bonus = gqs.computeStaticBonus(gd, bearPerm);
         assertThat(bonus.grantedSubtypes()).contains(CardSubtype.GOBLIN);
 
         // Verify the Xenograft permanent has the chosen subtype stored
-        Permanent xenograft = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Xenograft"))
-                .findFirst().orElseThrow();
+        Permanent xenograft = findPermanent(player1, "Xenograft");
         assertThat(xenograft.getChosenSubtype()).isEqualTo(CardSubtype.GOBLIN);
     }
 }

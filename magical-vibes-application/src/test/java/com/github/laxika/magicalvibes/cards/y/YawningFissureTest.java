@@ -45,12 +45,8 @@ class YawningFissureTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Controller's lands should remain
-        long p1Lands = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mountain"))
-                .count();
+        long p1Lands = countPermanents(player1, "Mountain");
         assertThat(p1Lands).isEqualTo(2);
 
         // Opponent's land should be sacrificed
@@ -80,9 +76,7 @@ class YawningFissureTest extends BaseCardTest {
         assertThat(choice.context()).isInstanceOf(MultiPermanentChoiceContext.ForcedSacrifice.class);
 
         // Choose the Forest
-        Permanent forest = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst().orElseThrow();
+        Permanent forest = findPermanent(player2, "Forest");
         harness.handleMultiplePermanentsChosen(player2, List.of(forest.getId()));
 
         // Forest is gone, Mountain remains

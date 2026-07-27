@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RagingGoblinTest extends BaseCardTest {
 
-
     @Test
     @DisplayName("Casting puts it on the stack as CREATURE_SPELL")
     void castingPutsOnStack() {
@@ -57,9 +56,7 @@ class RagingGoblinTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
 
-        Permanent goblin = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Raging Goblin"))
-                .findFirst().orElseThrow();
+        Permanent goblin = findPermanent(player1, "Raging Goblin");
         assertThat(goblin.hasKeyword(Keyword.HASTE)).isTrue();
     }
 
@@ -87,5 +84,4 @@ class RagingGoblinTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 }
-
 

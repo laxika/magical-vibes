@@ -20,9 +20,7 @@ class BellowingTanglewurmTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BellowingTanglewurm());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.hasKeyword(gd, bears, Keyword.INTIMIDATE)).isTrue();
     }
 
@@ -31,9 +29,7 @@ class BellowingTanglewurmTest extends BaseCardTest {
     void doesNotGrantToSelf() {
         harness.addToBattlefield(player1, new BellowingTanglewurm());
 
-        Permanent wurm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bellowing Tanglewurm"))
-                .findFirst().orElseThrow();
+        Permanent wurm = findPermanent(player1, "Bellowing Tanglewurm");
         // Bellowing Tanglewurm has innate intimidate from Scryfall, but the static
         // effect should not grant an extra copy to itself ("Other green creatures").
         // The innate keyword is still present.
@@ -46,9 +42,7 @@ class BellowingTanglewurmTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BellowingTanglewurm());
         harness.addToBattlefield(player1, new HillGiant());
 
-        Permanent giant = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hill Giant"))
-                .findFirst().orElseThrow();
+        Permanent giant = findPermanent(player1, "Hill Giant");
         assertThat(gqs.hasKeyword(gd, giant, Keyword.INTIMIDATE)).isFalse();
     }
 
@@ -58,9 +52,7 @@ class BellowingTanglewurmTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BellowingTanglewurm());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(gqs.hasKeyword(gd, bears, Keyword.INTIMIDATE)).isFalse();
     }
 
@@ -72,9 +64,7 @@ class BellowingTanglewurmTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BellowingTanglewurm());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.hasKeyword(gd, bears, Keyword.INTIMIDATE)).isTrue();
 
         // Remove the lord

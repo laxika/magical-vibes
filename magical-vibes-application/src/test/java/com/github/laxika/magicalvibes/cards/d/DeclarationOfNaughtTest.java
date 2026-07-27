@@ -70,9 +70,7 @@ class DeclarationOfNaughtTest extends BaseCardTest {
     }
 
     private Permanent declaration(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Declaration of Naught"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Declaration of Naught");
     }
 
     private Permanent addReadyDeclaration(Player player, String chosenName) {

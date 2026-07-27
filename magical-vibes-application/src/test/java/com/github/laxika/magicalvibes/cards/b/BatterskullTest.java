@@ -105,9 +105,7 @@ class BatterskullTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent germ = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         assertThat(germ.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(germ.getCard().getPower()).isEqualTo(0);
@@ -129,9 +127,7 @@ class BatterskullTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent germ = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         // 0/0 base + 4/4 from equipment = 4/4 effective
         assertThat(gqs.getEffectivePower(gd, germ)).isEqualTo(4);
@@ -160,9 +156,7 @@ class BatterskullTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, bears.getId());
         harness.passBothPriorities();
 
-        Permanent batterskull = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Batterskull"))
-                .findFirst().orElseThrow();
+        Permanent batterskull = findPermanent(player1, "Batterskull");
 
         assertThat(batterskull.getAttachedTo()).isEqualTo(bears.getId());
 
@@ -252,9 +246,7 @@ class BatterskullTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent germ = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
         gd.playerBattlefields.get(player1.getId()).remove(germ);
 
         harness.assertOnBattlefield(player1, "Batterskull");

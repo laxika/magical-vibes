@@ -55,9 +55,7 @@ class ExplodingBordersTest extends BaseCardTest {
                 .isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        Permanent mountain = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mountain"))
-                .findFirst().orElseThrow();
+        Permanent mountain = findPermanent(player1, "Mountain");
         assertThat(mountain.isTapped()).isTrue();
 
         // Forest + Island + fetched Mountain = 3 basic land types = 3 damage.

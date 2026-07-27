@@ -17,9 +17,7 @@ class SpinerockKnollTest extends BaseCardTest {
     private Permanent addKnollWithImprint(Card imprinted) {
         harness.addToBattlefield(player1, new SpinerockKnoll());
         GameData gd = harness.getGameData();
-        Permanent knoll = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spinerock Knoll"))
-                .findFirst().orElseThrow();
+        Permanent knoll = findPermanent(player1, "Spinerock Knoll");
         gd.setImprintedCard(knoll.getCard(), imprinted);
         gd.addToExile(player1.getId(), imprinted);
         return knoll;

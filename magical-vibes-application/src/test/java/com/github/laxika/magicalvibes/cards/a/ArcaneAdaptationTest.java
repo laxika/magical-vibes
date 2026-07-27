@@ -75,9 +75,7 @@ class ArcaneAdaptationTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "GOBLIN");
 
-        Permanent arcaneAdaptation = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Arcane Adaptation"))
-                .findFirst().orElseThrow();
+        Permanent arcaneAdaptation = findPermanent(player1, "Arcane Adaptation");
         assertThat(arcaneAdaptation.getChosenSubtype()).isEqualTo(CardSubtype.GOBLIN);
     }
 
@@ -94,9 +92,7 @@ class ArcaneAdaptationTest extends BaseCardTest {
         arcaneAdaptationPerm.setChosenSubtype(CardSubtype.GOBLIN);
         gd.playerBattlefields.get(player1.getId()).add(arcaneAdaptationPerm);
 
-        Permanent bearPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bear Cub"))
-                .findFirst().orElseThrow();
+        Permanent bearPerm = findPermanent(player1, "Bear Cub");
 
         var bonus = gqs.computeStaticBonus(gd, bearPerm);
         assertThat(bonus.grantedSubtypes()).contains(CardSubtype.GOBLIN);
@@ -113,9 +109,7 @@ class ArcaneAdaptationTest extends BaseCardTest {
         arcaneAdaptationPerm.setChosenSubtype(CardSubtype.WIZARD);
         gd.playerBattlefields.get(player1.getId()).add(arcaneAdaptationPerm);
 
-        Permanent elfPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
+        Permanent elfPerm = findPermanent(player1, "Llanowar Elves");
 
         var bonus = gqs.computeStaticBonus(gd, elfPerm);
         assertThat(bonus.grantedSubtypes()).contains(CardSubtype.WIZARD);
@@ -134,9 +128,7 @@ class ArcaneAdaptationTest extends BaseCardTest {
         arcaneAdaptationPerm.setChosenSubtype(CardSubtype.GOBLIN);
         gd.playerBattlefields.get(player1.getId()).add(arcaneAdaptationPerm);
 
-        Permanent bearPerm = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bearPerm = findPermanent(player2, "Grizzly Bears");
 
         var bonus = gqs.computeStaticBonus(gd, bearPerm);
         assertThat(bonus.grantedSubtypes()).doesNotContain(CardSubtype.GOBLIN);
@@ -151,9 +143,7 @@ class ArcaneAdaptationTest extends BaseCardTest {
         // Add Arcane Adaptation without setting chosen subtype
         harness.addToBattlefield(player1, new ArcaneAdaptation());
 
-        Permanent bearPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bear Cub"))
-                .findFirst().orElseThrow();
+        Permanent bearPerm = findPermanent(player1, "Bear Cub");
 
         var bonus = gqs.computeStaticBonus(gd, bearPerm);
         assertThat(bonus.grantedSubtypes()).isEmpty();
@@ -170,9 +160,7 @@ class ArcaneAdaptationTest extends BaseCardTest {
         arcaneAdaptationPerm.setChosenSubtype(CardSubtype.GOBLIN);
         gd.playerBattlefields.get(player1.getId()).add(arcaneAdaptationPerm);
 
-        Permanent goblinPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Goblin Piker"))
-                .findFirst().orElseThrow();
+        Permanent goblinPerm = findPermanent(player1, "Goblin Piker");
 
         var bonus = gqs.computeStaticBonus(gd, goblinPerm);
         assertThat(bonus.grantedSubtypes().stream().filter(s -> s == CardSubtype.GOBLIN).count()).isLessThanOrEqualTo(1);
@@ -192,9 +180,7 @@ class ArcaneAdaptationTest extends BaseCardTest {
         arcaneAdaptationPerm.setChosenSubtype(CardSubtype.GOBLIN);
         gd.playerBattlefields.get(player1.getId()).add(arcaneAdaptationPerm);
 
-        Permanent artifactPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sol Ring"))
-                .findFirst().orElseThrow();
+        Permanent artifactPerm = findPermanent(player1, "Sol Ring");
 
         var bonus = gqs.computeStaticBonus(gd, artifactPerm);
         assertThat(bonus.grantedSubtypes()).doesNotContain(CardSubtype.GOBLIN);
@@ -284,17 +270,13 @@ class ArcaneAdaptationTest extends BaseCardTest {
         harness.handleListChoice(player1, "DINOSAUR");
 
         // Verify creature gains the chosen type
-        Permanent bearPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bear Cub"))
-                .findFirst().orElseThrow();
+        Permanent bearPerm = findPermanent(player1, "Bear Cub");
 
         var bonus = gqs.computeStaticBonus(gd, bearPerm);
         assertThat(bonus.grantedSubtypes()).contains(CardSubtype.DINOSAUR);
 
         // Verify the Arcane Adaptation permanent has the chosen subtype stored
-        Permanent arcaneAdaptation = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Arcane Adaptation"))
-                .findFirst().orElseThrow();
+        Permanent arcaneAdaptation = findPermanent(player1, "Arcane Adaptation");
         assertThat(arcaneAdaptation.getChosenSubtype()).isEqualTo(CardSubtype.DINOSAUR);
     }
 }

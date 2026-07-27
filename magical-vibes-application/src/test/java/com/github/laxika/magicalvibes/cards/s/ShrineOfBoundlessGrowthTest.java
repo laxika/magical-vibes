@@ -85,9 +85,7 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
         // Giant Growth targets a creature, so we need a creature
         Card bears = new com.github.laxika.magicalvibes.cards.g.GrizzlyBears();
         harness.addToBattlefield(player1, bears);
-        Permanent creature = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent creature = findPermanent(player1, "Grizzly Bears");
         harness.castInstant(player1, 0, creature.getId());
 
         // Spell cast trigger should put charge counter on shrine

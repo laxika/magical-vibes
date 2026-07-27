@@ -46,9 +46,7 @@ class SurgeNodeTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        Permanent node = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Surge Node"))
-                .findFirst().orElseThrow();
+        Permanent node = findPermanent(player1, "Surge Node");
         assertThat(node.getCounterCount(CounterType.CHARGE)).isEqualTo(6);
     }
 

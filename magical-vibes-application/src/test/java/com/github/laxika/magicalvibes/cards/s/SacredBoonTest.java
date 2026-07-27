@@ -162,9 +162,7 @@ class SacredBoonTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent bears(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Grizzly Bears");
     }
 
     private void advanceToEndStep(Player activePlayer) {

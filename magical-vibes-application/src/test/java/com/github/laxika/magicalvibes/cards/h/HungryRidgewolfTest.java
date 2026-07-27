@@ -67,9 +67,7 @@ class HungryRidgewolfTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HungryRidgewolf());
         harness.addToBattlefield(player1, new HungryRidgewolf());
 
-        List<Permanent> wolves = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hungry Ridgewolf"))
-                .toList();
+        List<Permanent> wolves = findPermanents(player1, "Hungry Ridgewolf");
 
         assertThat(wolves).hasSize(2);
         for (Permanent wolf : wolves) {

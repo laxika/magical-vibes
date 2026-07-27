@@ -23,7 +23,9 @@ first place:
 
 ```java
 Permanent addCreatureReady(Player player, Card card)   // battlefield, not summoning sick
-Permanent findPermanent(Player player, String name)
+Permanent findPermanent(Player player, String name)    // throws if there is no match
+List<Permanent> findPermanents(Player player, String name)
+long      countPermanents(Player player, String name)
 boolean   gameLogContains(String substring)
 
 void advanceToUpkeep(Player activePlayer)              // forces active player, UNTAP -> upkeep
@@ -214,9 +216,7 @@ Pattern for cards like Bogardan Firefiend, Festering Goblin, Necropede, Sparring
 
 ```java
 private void setupCombatWhereCardDies(String cardName) {
-    Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-            .filter(p -> p.getCard().getName().equals(cardName))
-            .findFirst().orElseThrow();
+    Permanent perm = findPermanent(player1, cardName);
     perm.setSummoningSick(false);
     perm.setAttacking(true);
 

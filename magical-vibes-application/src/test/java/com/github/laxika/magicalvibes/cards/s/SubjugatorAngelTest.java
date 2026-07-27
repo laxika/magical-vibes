@@ -48,16 +48,9 @@ class SubjugatorAngelTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
-        Permanent elves = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                .findFirst().orElseThrow();
-        Permanent angel = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Subjugator Angel"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent elves = findPermanent(player2, "Llanowar Elves");
+        Permanent angel = findPermanent(player1, "Subjugator Angel");
 
         assertThat(bears.isTapped()).isFalse();
         assertThat(angel.isTapped()).isFalse();

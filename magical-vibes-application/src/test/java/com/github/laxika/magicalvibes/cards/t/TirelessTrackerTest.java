@@ -38,9 +38,7 @@ class TirelessTrackerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        List<Permanent> clues = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Clue"))
-                .toList();
+        List<Permanent> clues = findPermanents(player1, "Clue");
         assertThat(clues).hasSize(1);
         Permanent clue = clues.getFirst();
         assertThat(clue.getCard().getType()).isEqualTo(CardType.ARTIFACT);

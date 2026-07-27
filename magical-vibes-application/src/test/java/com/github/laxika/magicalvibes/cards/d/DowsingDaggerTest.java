@@ -123,15 +123,11 @@ class DowsingDaggerTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             // Opponent should have the plants
-            long opponentPlants = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Plant"))
-                    .count();
+            long opponentPlants = countPermanents(player2, "Plant");
             assertThat(opponentPlants).isEqualTo(2);
 
             // Controller should have no plants
-            long controllerPlants = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Plant"))
-                    .count();
+            long controllerPlants = countPermanents(player1, "Plant");
             assertThat(controllerPlants).isZero();
         }
     }

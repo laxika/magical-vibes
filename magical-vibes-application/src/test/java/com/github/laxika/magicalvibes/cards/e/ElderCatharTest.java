@@ -30,9 +30,7 @@ class ElderCatharTest extends BaseCardTest {
      * Elder Cathar will die from combat damage.
      */
     private void setupCombatWhereElderCatharDies() {
-        Permanent catharPerm = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elder Cathar"))
-                .findFirst().orElseThrow();
+        Permanent catharPerm = findPermanent(player1, "Elder Cathar");
         catharPerm.setSummoningSick(false);
         catharPerm.setAttacking(true);
 

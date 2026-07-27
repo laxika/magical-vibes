@@ -69,9 +69,7 @@ class FogElementalTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fog Elemental"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Fog Elemental");
         assertThat(perm.isSummoningSick()).isTrue();
     }
 

@@ -49,9 +49,7 @@ class MitoticSlimeTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Two 2/2 Ooze tokens should be on the battlefield
-            List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Ooze"))
-                    .toList();
+            List<Permanent> tokens = findPermanents(player1, "Ooze");
             assertThat(tokens).hasSize(2);
 
             for (Permanent token : tokens) {

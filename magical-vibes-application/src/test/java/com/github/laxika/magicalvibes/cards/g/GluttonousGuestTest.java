@@ -30,9 +30,7 @@ class GluttonousGuestTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        List<Permanent> bloods = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blood"))
-                .toList();
+        List<Permanent> bloods = findPermanents(player1, "Blood");
         assertThat(bloods).hasSize(1);
         Permanent blood = bloods.getFirst();
         assertThat(blood.getCard().getType()).isEqualTo(CardType.ARTIFACT);
@@ -51,9 +49,7 @@ class GluttonousGuestTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent blood = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blood"))
-                .findFirst().orElseThrow();
+        Permanent blood = findPermanent(player1, "Blood");
         int bloodIdx = gd.playerBattlefields.get(player1.getId()).indexOf(blood);
 
         harness.setHand(player1, List.of(new GrizzlyBears()));

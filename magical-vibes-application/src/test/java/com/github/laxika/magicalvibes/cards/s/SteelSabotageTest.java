@@ -97,9 +97,7 @@ class SteelSabotageTest extends BaseCardTest {
             harness.forceStep(TurnStep.PRECOMBAT_MAIN);
             harness.clearPriorityPassed();
 
-            Permanent millstonePermanent = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Millstone"))
-                    .findFirst().orElseThrow();
+            Permanent millstonePermanent = findPermanent(player1, "Millstone");
 
             harness.castInstant(player2, 0, 1, millstonePermanent.getId());
             harness.passBothPriorities();
@@ -120,9 +118,7 @@ class SteelSabotageTest extends BaseCardTest {
             harness.forceStep(TurnStep.PRECOMBAT_MAIN);
             harness.clearPriorityPassed();
 
-            Permanent bearsPermanent = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                    .findFirst().orElseThrow();
+            Permanent bearsPermanent = findPermanent(player1, "Grizzly Bears");
 
             assertThatThrownBy(() -> harness.castInstant(player2, 0, 1, bearsPermanent.getId()))
                     .isInstanceOf(IllegalStateException.class);
@@ -140,9 +136,7 @@ class SteelSabotageTest extends BaseCardTest {
             harness.forceStep(TurnStep.PRECOMBAT_MAIN);
             harness.clearPriorityPassed();
 
-            Permanent millstonePermanent = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Millstone"))
-                    .findFirst().orElseThrow();
+            Permanent millstonePermanent = findPermanent(player1, "Millstone");
 
             harness.castInstant(player2, 0, 1, millstonePermanent.getId());
             harness.passBothPriorities();

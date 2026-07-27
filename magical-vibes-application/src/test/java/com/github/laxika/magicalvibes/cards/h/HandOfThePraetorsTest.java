@@ -23,9 +23,7 @@ class HandOfThePraetorsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HandOfThePraetors());
         harness.addToBattlefield(player1, new BlackcleaveGoblin());
 
-        Permanent goblin = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blackcleave Goblin"))
-                .findFirst().orElseThrow();
+        Permanent goblin = findPermanent(player1, "Blackcleave Goblin");
 
         // Blackcleave Goblin is 2/1; with +1/+1 boost = 3/2
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
@@ -37,9 +35,7 @@ class HandOfThePraetorsTest extends BaseCardTest {
     void doesNotBoostItself() {
         harness.addToBattlefield(player1, new HandOfThePraetors());
 
-        Permanent hand = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hand of the Praetors"))
-                .findFirst().orElseThrow();
+        Permanent hand = findPermanent(player1, "Hand of the Praetors");
 
         // Hand of the Praetors is 3/2 base, should NOT get boosted by its own effect
         assertThat(gqs.getEffectivePower(gd, hand)).isEqualTo(3);
@@ -52,9 +48,7 @@ class HandOfThePraetorsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HandOfThePraetors());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         // Grizzly Bears is 2/2, no infect, should not be boosted
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
@@ -67,9 +61,7 @@ class HandOfThePraetorsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HandOfThePraetors());
         harness.addToBattlefield(player2, new BlackcleaveGoblin());
 
-        Permanent goblin = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blackcleave Goblin"))
-                .findFirst().orElseThrow();
+        Permanent goblin = findPermanent(player2, "Blackcleave Goblin");
 
         // Opponent's Blackcleave Goblin should remain 2/1
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
@@ -82,9 +74,7 @@ class HandOfThePraetorsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HandOfThePraetors());
         harness.addToBattlefield(player1, new BlackcleaveGoblin());
 
-        Permanent goblin = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blackcleave Goblin"))
-                .findFirst().orElseThrow();
+        Permanent goblin = findPermanent(player1, "Blackcleave Goblin");
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
 
         // Remove the lord

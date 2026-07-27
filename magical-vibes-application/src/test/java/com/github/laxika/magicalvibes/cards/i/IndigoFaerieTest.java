@@ -69,8 +69,6 @@ class IndigoFaerieTest extends BaseCardTest {
     }
 
     private Permanent permanent(com.github.laxika.magicalvibes.model.Player owner, String name) {
-        return gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst().orElseThrow();
+        return findPermanent(owner, name);
     }
 }

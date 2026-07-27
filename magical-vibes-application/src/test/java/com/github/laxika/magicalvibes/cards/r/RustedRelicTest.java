@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RustedRelicTest extends BaseCardTest {
@@ -32,9 +31,7 @@ class RustedRelicTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RustedRelic());
         harness.addToBattlefield(player1, new Spellbook());
 
-        Permanent relic = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rusted Relic"))
-                .findFirst().orElseThrow();
+        Permanent relic = findPermanent(player1, "Rusted Relic");
         assertThat(gqs.isCreature(gd, relic)).isFalse();
     }
 
@@ -47,9 +44,7 @@ class RustedRelicTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent relic = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rusted Relic"))
-                .findFirst().orElseThrow();
+        Permanent relic = findPermanent(player1, "Rusted Relic");
         assertThat(gqs.isCreature(gd, relic)).isTrue();
         assertThat(gqs.getEffectivePower(gd, relic)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, relic)).isEqualTo(5);
@@ -62,9 +57,7 @@ class RustedRelicTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent relic = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rusted Relic"))
-                .findFirst().orElseThrow();
+        Permanent relic = findPermanent(player1, "Rusted Relic");
         var bonus = gqs.computeStaticBonus(gd, relic);
         assertThat(bonus.grantedSubtypes()).contains(CardSubtype.GOLEM);
     }
@@ -77,9 +70,7 @@ class RustedRelicTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
 
-        Permanent relic = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rusted Relic"))
-                .findFirst().orElseThrow();
+        Permanent relic = findPermanent(player1, "Rusted Relic");
         assertThat(gqs.isCreature(gd, relic)).isTrue();
         assertThat(gqs.getEffectivePower(gd, relic)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, relic)).isEqualTo(5);
@@ -94,9 +85,7 @@ class RustedRelicTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent relic = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rusted Relic"))
-                .findFirst().orElseThrow();
+        Permanent relic = findPermanent(player1, "Rusted Relic");
         assertThat(gqs.isCreature(gd, relic)).isTrue();
         assertThat(gqs.getEffectivePower(gd, relic)).isEqualTo(5);
 

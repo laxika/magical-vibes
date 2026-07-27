@@ -27,9 +27,7 @@ class EtchedChampionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent champion = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Etched Champion"))
-                .findFirst().orElseThrow();
+        Permanent champion = findPermanent(player1, "Etched Champion");
 
         assertThat(gqs.hasProtectionFrom(gd, champion, CardColor.WHITE)).isTrue();
         assertThat(gqs.hasProtectionFrom(gd, champion, CardColor.BLUE)).isTrue();
@@ -46,9 +44,7 @@ class EtchedChampionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EtchedChampion());
         // Only one artifact (itself), not enough for metalcraft
 
-        Permanent champion = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Etched Champion"))
-                .findFirst().orElseThrow();
+        Permanent champion = findPermanent(player1, "Etched Champion");
 
         assertThat(gqs.hasProtectionFrom(gd, champion, CardColor.WHITE)).isFalse();
         assertThat(gqs.hasProtectionFrom(gd, champion, CardColor.RED)).isFalse();
@@ -61,9 +57,7 @@ class EtchedChampionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         // Two artifacts, still not enough
 
-        Permanent champion = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Etched Champion"))
-                .findFirst().orElseThrow();
+        Permanent champion = findPermanent(player1, "Etched Champion");
 
         assertThat(gqs.hasProtectionFrom(gd, champion, CardColor.BLACK)).isFalse();
     }
@@ -134,9 +128,7 @@ class EtchedChampionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent champion = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Etched Champion"))
-                .findFirst().orElseThrow();
+        Permanent champion = findPermanent(player1, "Etched Champion");
 
         // With 3 artifacts, has protection
         assertThat(gqs.hasProtectionFrom(gd, champion, CardColor.RED)).isTrue();

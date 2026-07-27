@@ -37,9 +37,7 @@ class BloodtitheHarvesterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bloodTokenCount(player1)).isEqualTo(1);
-        Permanent blood = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blood"))
-                .findFirst().orElseThrow();
+        Permanent blood = findPermanent(player1, "Blood");
         assertThat(blood.getCard().getType()).isEqualTo(CardType.ARTIFACT);
         assertThat(blood.getCard().getSubtypes()).contains(CardSubtype.BLOOD);
         assertThat(blood.getCard().isToken()).isTrue();
@@ -136,9 +134,7 @@ class BloodtitheHarvesterTest extends BaseCardTest {
     void cannotTargetNonCreature() {
         Permanent harvester = addReadyHarvester();
         addBloodToken(player1);
-        Permanent blood = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blood"))
-                .findFirst().orElseThrow();
+        Permanent blood = findPermanent(player1, "Blood");
         forceMainPhase(player1);
 
         UUID bloodId = blood.getId();
@@ -160,9 +156,7 @@ class BloodtitheHarvesterTest extends BaseCardTest {
     }
 
     private long bloodTokenCount(Player owner) {
-        return gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blood"))
-                .count();
+        return countPermanents(owner, "Blood");
     }
 
     private int indexOf(Player player, Permanent permanent) {

@@ -43,9 +43,7 @@ class ShalaiVoiceOfPlentyTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ShalaiVoiceOfPlenty());
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isTrue();
 
-        Permanent shalai = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Shalai, Voice of Plenty"))
-                .findFirst().orElseThrow();
+        Permanent shalai = findPermanent(player1, "Shalai, Voice of Plenty");
         gd.playerBattlefields.get(player1.getId()).remove(shalai);
 
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isFalse();
@@ -59,9 +57,7 @@ class ShalaiVoiceOfPlentyTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ShalaiVoiceOfPlenty());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isTrue();
     }
@@ -71,9 +67,7 @@ class ShalaiVoiceOfPlentyTest extends BaseCardTest {
     void shalaiDoesNotHaveHexproof() {
         harness.addToBattlefield(player1, new ShalaiVoiceOfPlenty());
 
-        Permanent shalai = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Shalai, Voice of Plenty"))
-                .findFirst().orElseThrow();
+        Permanent shalai = findPermanent(player1, "Shalai, Voice of Plenty");
 
         assertThat(gqs.hasKeyword(gd, shalai, Keyword.HEXPROOF)).isFalse();
     }
@@ -84,9 +78,7 @@ class ShalaiVoiceOfPlentyTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ShalaiVoiceOfPlenty());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent opponentBears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
 
         assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.HEXPROOF)).isFalse();
     }
@@ -118,9 +110,7 @@ class ShalaiVoiceOfPlentyTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ShalaiVoiceOfPlenty());
         harness.addToBattlefield(player1, new AjaniGoldmane());
 
-        Permanent ajani = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ajani Goldmane"))
-                .findFirst().orElseThrow();
+        Permanent ajani = findPermanent(player1, "Ajani Goldmane");
 
         assertThat(gqs.hasKeyword(gd, ajani, Keyword.HEXPROOF)).isTrue();
     }
@@ -131,9 +121,7 @@ class ShalaiVoiceOfPlentyTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ShalaiVoiceOfPlenty());
         harness.addToBattlefield(player2, new AjaniGoldmane());
 
-        Permanent opponentAjani = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ajani Goldmane"))
-                .findFirst().orElseThrow();
+        Permanent opponentAjani = findPermanent(player2, "Ajani Goldmane");
 
         assertThat(gqs.hasKeyword(gd, opponentAjani, Keyword.HEXPROOF)).isFalse();
     }
@@ -151,12 +139,8 @@ class ShalaiVoiceOfPlentyTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
-        Permanent shalai = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Shalai, Voice of Plenty"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent shalai = findPermanent(player1, "Shalai, Voice of Plenty");
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(shalai.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -173,9 +157,7 @@ class ShalaiVoiceOfPlentyTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent opponentBears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
 
         assertThat(opponentBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }

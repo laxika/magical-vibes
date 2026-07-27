@@ -109,10 +109,7 @@ class BoundByMoonsilverTest extends BaseCardTest {
         int auraIndex = indexOf(player1, aura);
         harness.activateAbility(player1, auraIndex, null, second.getId());
         // Two forests → choose one to sacrifice
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .findFirst()
-                .orElseThrow();
+        Permanent forest = findPermanent(player1, "Forest");
         if (gd.interaction.activeInteraction() != null) {
             harness.handlePermanentChosen(player1, forest.getId());
         }

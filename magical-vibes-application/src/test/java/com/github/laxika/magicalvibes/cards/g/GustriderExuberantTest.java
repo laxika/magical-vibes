@@ -98,9 +98,7 @@ class GustriderExuberantTest extends BaseCardTest {
 
     private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Card card) {
         harness.addToBattlefield(player1, card);
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(card.getName()))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, card.getName());
         perm.setSummoningSick(false);
         return perm;
     }

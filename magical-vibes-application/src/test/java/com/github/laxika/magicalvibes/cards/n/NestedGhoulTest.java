@@ -45,9 +45,7 @@ class NestedGhoulTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Nested Ghoul");
 
         // A 2/2 Zombie token should be on player2's battlefield
-        List<Permanent> tokens = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player2, "Zombie");
         assertThat(tokens).hasSize(1);
         assertThat(tokens.get(0).getCard().getPower()).isEqualTo(2);
         assertThat(tokens.get(0).getCard().getToughness()).isEqualTo(2);
@@ -83,9 +81,7 @@ class NestedGhoulTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // A Zombie token should be on player2's battlefield
-        List<Permanent> tokens = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player2, "Zombie");
         assertThat(tokens).hasSize(1);
 
         // Nested Ghoul should survive (4/2 takes 1 damage from Fugitive Wizard 1/1)
@@ -127,9 +123,7 @@ class NestedGhoulTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // A Zombie token should still be on player2's battlefield
-        List<Permanent> tokens = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player2, "Zombie");
         assertThat(tokens).hasSize(1);
     }
 
@@ -174,9 +168,7 @@ class NestedGhoulTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Two Zombie tokens should be on player1's battlefield (one per blocker source)
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Zombie");
         assertThat(tokens).hasSize(2);
 
         // Nested Ghoul should be in the graveyard (4/2 takes 4 total combat damage)

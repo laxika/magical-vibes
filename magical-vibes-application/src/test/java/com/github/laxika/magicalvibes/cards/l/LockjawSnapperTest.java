@@ -19,9 +19,7 @@ class LockjawSnapperTest extends BaseCardTest {
      * so the Snapper dies from combat damage.
      */
     private void setupCombatWhereSnapperDies() {
-        Permanent snapperPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Lockjaw Snapper"))
-                .findFirst().orElseThrow();
+        Permanent snapperPerm = findPermanent(player1, "Lockjaw Snapper");
         snapperPerm.setSummoningSick(false);
         snapperPerm.setAttacking(true);
 

@@ -78,9 +78,7 @@ class KnightExemplarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KnightExemplar());
         harness.addToBattlefield(player1, new KnightExemplar());
 
-        List<Permanent> exemplars = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Knight Exemplar"))
-                .toList();
+        List<Permanent> exemplars = findPermanents(player1, "Knight Exemplar");
 
         assertThat(exemplars).hasSize(2);
         for (Permanent exemplar : exemplars) {
@@ -210,9 +208,7 @@ class KnightExemplarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both Knight Exemplars buff each other → both indestructible → both survive
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Knight Exemplar"))
-                .count()).isEqualTo(2);
+        assertThat(countPermanents(player1, "Knight Exemplar")).isEqualTo(2);
 
         // Black Knight survives too
         harness.assertOnBattlefield(player1, "Black Knight");

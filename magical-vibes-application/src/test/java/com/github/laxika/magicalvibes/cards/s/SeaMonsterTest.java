@@ -60,9 +60,7 @@ class SeaMonsterTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sea Monster"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Sea Monster");
         assertThat(perm.isSummoningSick()).isTrue();
     }
 

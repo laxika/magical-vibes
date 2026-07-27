@@ -31,9 +31,7 @@ class AuriokEdgewrightTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new LeoninScimitar());
 
-        Permanent edgewright = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Auriok Edgewright"))
-                .findFirst().orElseThrow();
+        Permanent edgewright = findPermanent(player1, "Auriok Edgewright");
         assertThat(gqs.hasKeyword(gd, edgewright, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
@@ -45,9 +43,7 @@ class AuriokEdgewrightTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
 
-        Permanent edgewright = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Auriok Edgewright"))
-                .findFirst().orElseThrow();
+        Permanent edgewright = findPermanent(player1, "Auriok Edgewright");
         assertThat(gqs.hasKeyword(gd, edgewright, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
@@ -59,9 +55,7 @@ class AuriokEdgewrightTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player1, new BottleGnomes());
 
-        Permanent edgewright = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Auriok Edgewright"))
-                .findFirst().orElseThrow();
+        Permanent edgewright = findPermanent(player1, "Auriok Edgewright");
         assertThat(gqs.hasKeyword(gd, edgewright, Keyword.DOUBLE_STRIKE)).isTrue();
 
         // Remove one artifact — now only 2
@@ -78,9 +72,7 @@ class AuriokEdgewrightTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LeoninScimitar());
         harness.addToBattlefield(player2, new BottleGnomes());
 
-        Permanent edgewright = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Auriok Edgewright"))
-                .findFirst().orElseThrow();
+        Permanent edgewright = findPermanent(player1, "Auriok Edgewright");
         assertThat(gqs.hasKeyword(gd, edgewright, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 }

@@ -183,15 +183,11 @@ class UnwindTest extends BaseCardTest {
 
         gd = harness.getGameData();
         // Island should be untapped
-        Permanent island = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Island"))
-                .findFirst().orElseThrow();
+        Permanent island = findPermanent(player2, "Island");
         assertThat(island.isTapped()).isFalse();
 
         // Creature should still be tapped
-        Permanent creature = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent creature = findPermanent(player2, "Grizzly Bears");
         assertThat(creature.isTapped()).isTrue();
     }
 

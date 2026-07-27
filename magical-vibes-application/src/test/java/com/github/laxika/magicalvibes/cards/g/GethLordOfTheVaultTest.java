@@ -228,10 +228,7 @@ class GethLordOfTheVaultTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Find the stolen creature on player1's battlefield
-        Permanent stolenBears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst()
-                .orElseThrow();
+        Permanent stolenBears = findPermanent(player1, "Grizzly Bears");
 
         // Verify it's tracked as stolen
         assertThat(gd.stolenCreatures).containsKey(stolenBears.getId());

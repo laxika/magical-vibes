@@ -48,9 +48,7 @@ class RocEggTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // A 3/3 Bird token with flying should be on the battlefield
-            List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Bird"))
-                    .toList();
+            List<Permanent> tokens = findPermanents(player1, "Bird");
             assertThat(tokens).hasSize(1);
 
             Permanent birdToken = tokens.getFirst();
@@ -75,18 +73,12 @@ class RocEggTest extends BaseCardTest {
             harness.passBothPriorities(); // Resolve Wrath — Roc Egg dies
             harness.passBothPriorities(); // Resolve death trigger
 
-            GameData gd = harness.getGameData();
-
             // The Bird token should be on player2's battlefield (the Roc Egg's controller)
-            List<Permanent> player2Tokens = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Bird"))
-                    .toList();
+            List<Permanent> player2Tokens = findPermanents(player2, "Bird");
             assertThat(player2Tokens).hasSize(1);
 
             // Player1 should have no Bird tokens
-            List<Permanent> player1Tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Bird"))
-                    .toList();
+            List<Permanent> player1Tokens = findPermanents(player1, "Bird");
             assertThat(player1Tokens).isEmpty();
         }
     }

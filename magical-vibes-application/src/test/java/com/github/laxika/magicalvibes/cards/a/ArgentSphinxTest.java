@@ -98,9 +98,7 @@ class ArgentSphinxTest extends BaseCardTest {
 
         advanceToEndStep();
 
-        Permanent returnedSphinx = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Argent Sphinx"))
-                .findFirst().orElseThrow();
+        Permanent returnedSphinx = findPermanent(player1, "Argent Sphinx");
         assertThat(returnedSphinx.isSummoningSick()).isTrue();
     }
 

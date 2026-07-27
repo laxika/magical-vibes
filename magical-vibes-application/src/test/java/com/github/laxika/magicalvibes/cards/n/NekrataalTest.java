@@ -135,9 +135,7 @@ class NekrataalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Give the target a regeneration shield before ETB resolves
-        Permanent target = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Grizzly Bears");
         target.setRegenerationShield(1);
 
         // Resolve ETB — should destroy despite regeneration shield
@@ -163,9 +161,7 @@ class NekrataalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grant indestructible to the target before ETB resolves
-        Permanent target = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Grizzly Bears");
         target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
 
         // Resolve ETB — should not destroy indestructible creature

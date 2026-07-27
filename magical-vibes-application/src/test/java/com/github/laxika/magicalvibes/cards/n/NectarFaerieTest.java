@@ -20,9 +20,7 @@ class NectarFaerieTest extends BaseCardTest {
 
     private void addNectarFaerieReady() {
         harness.addToBattlefield(player1, new NectarFaerie());
-        Permanent faerie = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Nectar Faerie"))
-                .findFirst().orElseThrow();
+        Permanent faerie = findPermanent(player1, "Nectar Faerie");
         faerie.setSummoningSick(false);
     }
 

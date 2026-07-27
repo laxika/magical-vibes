@@ -57,9 +57,7 @@ class ParallelLivesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Phyrexian Golem");
         assertThat(tokens).hasSize(2);
     }
 
@@ -77,9 +75,7 @@ class ParallelLivesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        List<Permanent> opponentTokens = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .toList();
+        List<Permanent> opponentTokens = findPermanents(player2, "Phyrexian Golem");
         assertThat(opponentTokens).hasSize(1);
     }
 
@@ -97,9 +93,7 @@ class ParallelLivesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Phyrexian Golem");
         assertThat(tokens).hasSize(4);
     }
 
@@ -115,9 +109,7 @@ class ParallelLivesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Phyrexian Golem");
         assertThat(tokens).hasSize(1);
     }
 
@@ -135,9 +127,7 @@ class ParallelLivesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        List<Permanent> tokensAfterFirst = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .toList();
+        List<Permanent> tokensAfterFirst = findPermanents(player1, "Phyrexian Golem");
         assertThat(tokensAfterFirst).hasSize(2);
 
         // Remove Parallel Lives from battlefield
@@ -151,9 +141,7 @@ class ParallelLivesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        List<Permanent> tokensAfterSecond = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .toList();
+        List<Permanent> tokensAfterSecond = findPermanents(player1, "Phyrexian Golem");
         // 2 from first cast + 1 from second cast = 3
         assertThat(tokensAfterSecond).hasSize(3);
     }
@@ -173,9 +161,7 @@ class ParallelLivesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Opponent's tokens are doubled
-        List<Permanent> opponentTokens = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .toList();
+        List<Permanent> opponentTokens = findPermanents(player2, "Phyrexian Golem");
         assertThat(opponentTokens).hasSize(2);
 
         // Player 1's tokens are NOT doubled (no Parallel Lives on their side)
@@ -186,9 +172,7 @@ class ParallelLivesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        List<Permanent> myTokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .toList();
+        List<Permanent> myTokens = findPermanents(player1, "Phyrexian Golem");
         assertThat(myTokens).hasSize(1);
     }
 }

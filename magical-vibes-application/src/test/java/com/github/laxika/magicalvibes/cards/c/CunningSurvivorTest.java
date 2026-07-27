@@ -76,9 +76,6 @@ class CunningSurvivorTest extends BaseCardTest {
     }
 
     private Permanent getSurvivor() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Cunning Survivor"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Cunning Survivor");
     }
 }

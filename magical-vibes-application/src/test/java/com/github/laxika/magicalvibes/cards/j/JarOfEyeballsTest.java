@@ -28,9 +28,7 @@ class JarOfEyeballsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new JarOfEyeballs());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent jar = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Jar of Eyeballs"))
-                .findFirst().orElseThrow();
+        Permanent jar = findPermanent(player1, "Jar of Eyeballs");
         assertThat(jar.getCounterCount(CounterType.EYEBALL)).isZero();
 
         harness.forceActivePlayer(player2);
@@ -72,9 +70,7 @@ class JarOfEyeballsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new JarOfEyeballs());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent jar = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Jar of Eyeballs"))
-                .findFirst().orElseThrow();
+        Permanent jar = findPermanent(player1, "Jar of Eyeballs");
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

@@ -87,9 +87,7 @@ class IronclawCurseTest extends BaseCardTest {
         assertThat(bls.canBlockAttacker(gd, spider, hillGiant,
                 gd.playerBattlefields.get(player1.getId()))).isFalse();
 
-        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ironclaw Curse"))
-                .findFirst().orElseThrow();
+        Permanent aura = findPermanent(player1, "Ironclaw Curse");
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
         // Back to 2/4: power 3 < toughness 4, so blocking is legal again.
@@ -106,9 +104,7 @@ class IronclawCurseTest extends BaseCardTest {
         harness.setHand(player1, List.of(new IronclawCurse()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        Permanent artifact = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fountain of Youth"))
-                .findFirst().orElseThrow();
+        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

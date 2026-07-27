@@ -85,8 +85,6 @@ class CallTheSkybreakerTest extends BaseCardTest {
     }
 
     private List<Permanent> elementals() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elemental"))
-                .toList();
+        return findPermanents(player1, "Elemental");
     }
 }

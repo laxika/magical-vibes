@@ -84,9 +84,7 @@ class TraceOfAbundanceTest extends BaseCardTest {
     void cannotTargetNonLand() {
         harness.addToBattlefield(player1, new Forest()); // valid target so spell is playable
         harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         harness.setHand(player1, List.of(new TraceOfAbundance()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.RED, 1);

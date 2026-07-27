@@ -96,9 +96,7 @@ class ManglehornTest extends BaseCardTest {
         harness.castArtifact(player2, 0);
         harness.passBothPriorities();
 
-        Permanent ornithopter = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ornithopter"))
-                .findFirst().orElseThrow();
+        Permanent ornithopter = findPermanent(player2, "Ornithopter");
         assertThat(ornithopter.isTapped()).isTrue();
     }
 
@@ -114,9 +112,7 @@ class ManglehornTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        Permanent ornithopter = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ornithopter"))
-                .findFirst().orElseThrow();
+        Permanent ornithopter = findPermanent(player1, "Ornithopter");
         assertThat(ornithopter.isTapped()).isFalse();
     }
 }

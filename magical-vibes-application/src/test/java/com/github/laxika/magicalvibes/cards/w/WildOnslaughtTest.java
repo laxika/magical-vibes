@@ -28,9 +28,7 @@ class WildOnslaughtTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        List<Permanent> bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .toList();
+        List<Permanent> bears = findPermanents(player1, "Grizzly Bears");
 
         assertThat(bears).hasSize(2);
         for (Permanent bear : bears) {
@@ -52,9 +50,7 @@ class WildOnslaughtTest extends BaseCardTest {
         harness.castKickedInstant(player1, 0);
         harness.passBothPriorities();
 
-        List<Permanent> bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .toList();
+        List<Permanent> bears = findPermanents(player1, "Grizzly Bears");
 
         assertThat(bears).hasSize(2);
         for (Permanent bear : bears) {
@@ -76,12 +72,8 @@ class WildOnslaughtTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        Permanent ownBear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
-        Permanent opponentBear = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent ownBear = findPermanent(player1, "Grizzly Bears");
+        Permanent opponentBear = findPermanent(player2, "Grizzly Bears");
 
         assertThat(ownBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(opponentBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);

@@ -122,9 +122,7 @@ class RegisaurAlphaTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RegisaurAlpha());
         harness.addToBattlefield(player1, new RegisaurAlpha());
 
-        List<Permanent> alphas = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Regisaur Alpha"))
-                .toList();
+        List<Permanent> alphas = findPermanents(player1, "Regisaur Alpha");
 
         assertThat(alphas).hasSize(2);
         for (Permanent alpha : alphas) {

@@ -18,9 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ScavengerDrakeTest extends BaseCardTest {
 
     private Permanent drake() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Scavenger Drake"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Scavenger Drake");
     }
 
     @Test

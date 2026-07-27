@@ -126,9 +126,7 @@ class VoldarenBloodcasterTest extends BaseCardTest {
     void backFaceAnimatesBloodIntoBat() {
         Permanent caster = transformCaster();
 
-        Permanent blood = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blood"))
-                .findFirst().orElseThrow();
+        Permanent blood = findPermanent(player1, "Blood");
 
         advanceToCombat(player1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -151,9 +149,7 @@ class VoldarenBloodcasterTest extends BaseCardTest {
     void backFaceCanDeclineTarget() {
         transformCaster();
 
-        Permanent blood = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blood"))
-                .findFirst().orElseThrow();
+        Permanent blood = findPermanent(player1, "Blood");
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, player1.getId());
@@ -186,9 +182,7 @@ class VoldarenBloodcasterTest extends BaseCardTest {
     }
 
     private long bloodTokenCount(Player owner) {
-        return gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blood"))
-                .count();
+        return countPermanents(owner, "Blood");
     }
 
     private void addBloodToken(Player player) {

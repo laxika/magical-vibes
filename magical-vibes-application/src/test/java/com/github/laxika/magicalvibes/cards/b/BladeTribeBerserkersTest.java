@@ -172,8 +172,6 @@ class BladeTribeBerserkersTest extends BaseCardTest {
     }
 
     private Permanent findBerserkers() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Blade-Tribe Berserkers"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Blade-Tribe Berserkers");
     }
 }

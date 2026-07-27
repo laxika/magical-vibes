@@ -25,9 +25,7 @@ class UnrulyMobTest extends BaseCardTest {
         harness.addToBattlefield(player1, new UnrulyMob());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent unrulyMob = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Unruly Mob"))
-                .findFirst().orElseThrow();
+        Permanent unrulyMob = findPermanent(player1, "Unruly Mob");
         assertThat(unrulyMob.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         // Kill ally creature with Shock
@@ -74,9 +72,7 @@ class UnrulyMobTest extends BaseCardTest {
         harness.addToBattlefield(player1, new UnrulyMob());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent unrulyMob = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Unruly Mob"))
-                .findFirst().orElseThrow();
+        Permanent unrulyMob = findPermanent(player1, "Unruly Mob");
 
         // Kill first ally creature
         harness.forceActivePlayer(player2);

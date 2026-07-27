@@ -109,9 +109,6 @@ class WardenOfTheWallTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent findWarden(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Warden of the Wall"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player, "Warden of the Wall");
     }
 }

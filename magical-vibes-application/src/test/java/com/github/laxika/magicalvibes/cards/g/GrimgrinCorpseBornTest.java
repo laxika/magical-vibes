@@ -77,8 +77,7 @@ class GrimgrinCorpseBornTest extends BaseCardTest {
 
         // First activation
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, gd.playerBattlefields.get(player1.getId())
-                .stream().filter(p -> p.getCard().getName().equals("Grizzly Bears")).findFirst().get().getId());
+        harness.handlePermanentChosen(player1, findPermanent(player1, "Grizzly Bears").getId());
         harness.passBothPriorities();
 
         assertThat(grimgrin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

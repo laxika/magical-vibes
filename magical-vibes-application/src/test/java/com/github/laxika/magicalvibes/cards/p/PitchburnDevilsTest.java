@@ -27,9 +27,7 @@ class PitchburnDevilsTest extends BaseCardTest {
      * Devils (3/3) will die from combat damage against a 4/4.
      */
     private void setupCombatWhereDevilsDie() {
-        Permanent devilsPerm = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Pitchburn Devils"))
-                .findFirst().orElseThrow();
+        Permanent devilsPerm = findPermanent(player1, "Pitchburn Devils");
         devilsPerm.setSummoningSick(false);
         devilsPerm.setAttacking(true);
 

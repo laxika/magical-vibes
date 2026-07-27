@@ -22,9 +22,7 @@ class CrimsonManticoreTest extends BaseCardTest {
 
     private Permanent addAttacker(Player owner) {
         harness.addToBattlefield(owner, new FugitiveWizard());
-        Permanent attacker = gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fugitive Wizard"))
-                .findFirst().orElseThrow();
+        Permanent attacker = findPermanent(owner, "Fugitive Wizard");
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());
@@ -33,9 +31,7 @@ class CrimsonManticoreTest extends BaseCardTest {
 
     private Permanent addBlocker(Player owner) {
         harness.addToBattlefield(owner, new FugitiveWizard());
-        Permanent blocker = gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fugitive Wizard"))
-                .findFirst().orElseThrow();
+        Permanent blocker = findPermanent(owner, "Fugitive Wizard");
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTargetId(UUID.randomUUID());

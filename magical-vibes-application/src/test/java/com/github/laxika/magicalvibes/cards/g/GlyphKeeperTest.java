@@ -20,9 +20,7 @@ class GlyphKeeperTest extends BaseCardTest {
 
     private UUID addGlyphKeeper() {
         harness.addToBattlefield(player1, new GlyphKeeper());
-        Permanent gk = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Glyph Keeper"))
-                .findFirst().orElseThrow();
+        Permanent gk = findPermanent(player1, "Glyph Keeper");
         gk.setSummoningSick(false);
         return gk.getId();
     }
@@ -54,9 +52,7 @@ class GlyphKeeperTest extends BaseCardTest {
         UUID gkId = addGlyphKeeper();
 
         harness.addToBattlefield(player2, new IcyManipulator());
-        Permanent icy = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Icy Manipulator"))
-                .findFirst().orElseThrow();
+        Permanent icy = findPermanent(player2, "Icy Manipulator");
         icy.setSummoningSick(false);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 

@@ -57,12 +57,8 @@ class CoatOfArmsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new AvenCloudchaser());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
-        Permanent aven = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Aven Cloudchaser"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent aven = findPermanent(player1, "Aven Cloudchaser");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -80,9 +76,7 @@ class CoatOfArmsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        List<Permanent> bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .toList();
+        List<Permanent> bears = findPermanents(player1, "Grizzly Bears");
 
         assertThat(bears).hasSize(2);
         for (Permanent bear : bears) {
@@ -101,9 +95,7 @@ class CoatOfArmsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        List<Permanent> bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .toList();
+        List<Permanent> bears = findPermanents(player1, "Grizzly Bears");
 
         assertThat(bears).hasSize(3);
         for (Permanent bear : bears) {
@@ -123,15 +115,9 @@ class CoatOfArmsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BenalishKnight());
         harness.addToBattlefield(player1, new AvenCloudchaser());
 
-        Permanent ballista = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ballista Squad"))
-                .findFirst().orElseThrow();
-        Permanent knight = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Benalish Knight"))
-                .findFirst().orElseThrow();
-        Permanent aven = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Aven Cloudchaser"))
-                .findFirst().orElseThrow();
+        Permanent ballista = findPermanent(player1, "Ballista Squad");
+        Permanent knight = findPermanent(player1, "Benalish Knight");
+        Permanent aven = findPermanent(player1, "Aven Cloudchaser");
 
         // Ballista shares Human with Benalish → +1/+1
         assertThat(gqs.getEffectivePower(gd, ballista)).isEqualTo(3);
@@ -154,12 +140,8 @@ class CoatOfArmsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent ownBears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
-        Permanent opponentBears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent ownBears = findPermanent(player1, "Grizzly Bears");
+        Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
 
         // Share Bear across battlefields → +1/+1 each
         assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(3);
@@ -178,12 +160,8 @@ class CoatOfArmsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ChangelingWayfinder());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent wayfinder = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Changeling Wayfinder"))
-                .findFirst().orElseThrow();
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent wayfinder = findPermanent(player1, "Changeling Wayfinder");
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         // Changeling shares Bear with Grizzly Bears → each gets +1/+1
         assertThat(gqs.getEffectivePower(gd, wayfinder)).isEqualTo(2);  // 1 base + 1
@@ -199,9 +177,7 @@ class CoatOfArmsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ChangelingWayfinder());
         harness.addToBattlefield(player1, new ChangelingWayfinder());
 
-        List<Permanent> wayfinders = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Changeling Wayfinder"))
-                .toList();
+        List<Permanent> wayfinders = findPermanents(player1, "Changeling Wayfinder");
 
         assertThat(wayfinders).hasSize(2);
         for (Permanent wayfinder : wayfinders) {
@@ -221,9 +197,7 @@ class CoatOfArmsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AvenCloudchaser());
         harness.addToBattlefield(player1, new BenalishKnight());
 
-        Permanent wayfinder = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Changeling Wayfinder"))
-                .findFirst().orElseThrow();
+        Permanent wayfinder = findPermanent(player1, "Changeling Wayfinder");
 
         // Changeling shares types with all 3 other creatures → +3/+3
         assertThat(gqs.getEffectivePower(gd, wayfinder)).isEqualTo(4);     // 1 base + 3
@@ -238,9 +212,7 @@ class CoatOfArmsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CoatOfArms());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         // Only creature on battlefield, no shared types possible
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
@@ -256,9 +228,7 @@ class CoatOfArmsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         // With Coat: shares Bear → +1/+1
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
@@ -282,9 +252,7 @@ class CoatOfArmsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CoatOfArms()));
         harness.addMana(player1, ManaColor.WHITE, 5);
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         // Before casting, no bonus
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
@@ -306,9 +274,7 @@ class CoatOfArmsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         // Simulate a temporary spell boost
         bears.setPowerModifier(bears.getPowerModifier() + 3);
@@ -331,9 +297,7 @@ class CoatOfArmsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         // Shares Bear with 1 other → +1/+1
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
@@ -355,17 +319,13 @@ class CoatOfArmsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         // Shares Bear with 2 others → +2/+2
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
 
         // Remove one GrizzlyBears (not the one we're tracking)
-        List<Permanent> allBears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .toList();
+        List<Permanent> allBears = findPermanents(player1, "Grizzly Bears");
         gd.playerBattlefields.get(player1.getId()).remove(allBears.get(1));
 
         // Now shares Bear with 1 other → +1/+1

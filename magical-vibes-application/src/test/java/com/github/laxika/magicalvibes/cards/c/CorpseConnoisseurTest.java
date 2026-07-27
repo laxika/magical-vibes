@@ -66,9 +66,7 @@ class CorpseConnoisseurTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve ETB MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, false); // Decline the search
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Corpse Connoisseur"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Corpse Connoisseur");
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

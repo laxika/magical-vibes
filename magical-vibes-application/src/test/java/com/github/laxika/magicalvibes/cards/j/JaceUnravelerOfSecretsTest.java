@@ -63,9 +63,7 @@ class JaceUnravelerOfSecretsTest extends BaseCardTest {
     @DisplayName("-2 cannot target a noncreature permanent")
     void minusTwoCannotTargetNoncreature() {
         addReadyJace(player1);
-        Permanent jaceSelf = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Jace, Unraveler of Secrets"))
-                .findFirst().orElseThrow();
+        Permanent jaceSelf = findPermanent(player1, "Jace, Unraveler of Secrets");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, jaceSelf.getId()))
                 .isInstanceOf(IllegalStateException.class);

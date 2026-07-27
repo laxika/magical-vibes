@@ -30,8 +30,7 @@ class StabbingPainTest extends BaseCardTest {
         harness.castInstant(player1, 0, giantId);
         harness.passBothPriorities();
 
-        Permanent giant = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Hill Giant")).findFirst().orElseThrow();
+        Permanent giant = findPermanent(player2, "Hill Giant");
         assertThat(giant.getPowerModifier()).isEqualTo(-1);
         assertThat(giant.getToughnessModifier()).isEqualTo(-1);
         assertThat(giant.isTapped()).isTrue();
@@ -49,8 +48,7 @@ class StabbingPainTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearId);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears")).findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getPowerModifier()).isEqualTo(-1);
         assertThat(bears.getToughnessModifier()).isEqualTo(-1);
         assertThat(bears.isTapped()).isTrue();

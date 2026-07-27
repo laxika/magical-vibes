@@ -52,8 +52,7 @@ class MirranMettleTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearId);
         harness.passBothPriorities();
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId())
-                .stream().filter(p -> p.getCard().getName().equals("Grizzly Bears")).findFirst().orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getEffectivePower()).isEqualTo(6);
         assertThat(bear.getEffectiveToughness()).isEqualTo(6);
     }

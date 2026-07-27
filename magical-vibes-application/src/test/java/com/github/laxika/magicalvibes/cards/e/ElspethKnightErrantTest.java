@@ -33,9 +33,7 @@ class ElspethKnightErrantTest extends BaseCardTest {
 
         assertThat(elspeth.getCounterCount(CounterType.LOYALTY)).isEqualTo(5); // 4 + 1
 
-        Permanent soldier = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Soldier"))
-                .findFirst().orElseThrow();
+        Permanent soldier = findPermanent(player1, "Soldier");
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(1);
         assertThat(soldier.getCard().getColor()).isEqualTo(CardColor.WHITE);
@@ -112,10 +110,8 @@ class ElspethKnightErrantTest extends BaseCardTest {
         assertThat(gd.emblems).hasSize(1);
         assertThat(gd.emblems.getFirst().controllerId()).isEqualTo(player1.getId());
 
-        Permanent ownCreature = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears")).findFirst().orElseThrow();
-        Permanent ownLand = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Plains")).findFirst().orElseThrow();
+        Permanent ownCreature = findPermanent(player1, "Grizzly Bears");
+        Permanent ownLand = findPermanent(player1, "Plains");
         Permanent opponentCreature = gd.playerBattlefields.get(player2.getId()).getFirst();
 
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.INDESTRUCTIBLE)).isTrue();
@@ -138,16 +134,13 @@ class ElspethKnightErrantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        Permanent artifact = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ornithopter")).findFirst().orElseThrow();
-        Permanent enchantment = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Glorious Anthem")).findFirst().orElseThrow();
+        Permanent artifact = findPermanent(player1, "Ornithopter");
+        Permanent enchantment = findPermanent(player1, "Glorious Anthem");
         assertThat(gqs.hasKeyword(gd, artifact, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, enchantment, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.addToBattlefield(player1, new Plains());
-        Permanent laterLand = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Plains")).findFirst().orElseThrow();
+        Permanent laterLand = findPermanent(player1, "Plains");
         assertThat(gqs.hasKeyword(gd, laterLand, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 

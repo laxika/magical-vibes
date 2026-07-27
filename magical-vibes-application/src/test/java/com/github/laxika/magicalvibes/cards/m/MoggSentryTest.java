@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -86,9 +85,6 @@ class MoggSentryTest extends BaseCardTest {
     }
 
     private Permanent sentry() {
-        GameData gd = harness.getGameData();
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Mogg Sentry"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Mogg Sentry");
     }
 }

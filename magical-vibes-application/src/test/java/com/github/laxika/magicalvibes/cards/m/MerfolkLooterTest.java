@@ -72,9 +72,7 @@ class MerfolkLooterTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Merfolk Looter"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Merfolk Looter");
         assertThat(perm.isSummoningSick()).isTrue();
     }
 

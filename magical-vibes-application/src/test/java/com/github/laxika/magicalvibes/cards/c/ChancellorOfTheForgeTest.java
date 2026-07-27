@@ -75,10 +75,7 @@ class ChancellorOfTheForgeTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        Permanent goblinToken = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Goblin"))
-                .findFirst()
-                .orElseThrow();
+        Permanent goblinToken = findPermanent(player1, "Phyrexian Goblin");
 
         assertThat(goblinToken.getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(goblinToken.getCard().getType()).isEqualTo(CardType.CREATURE);

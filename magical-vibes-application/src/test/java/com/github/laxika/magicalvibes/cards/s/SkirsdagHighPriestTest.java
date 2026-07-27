@@ -55,9 +55,7 @@ class SkirsdagHighPriestTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ability
 
         // Verify a 5/5 Demon token with flying was created
-        Permanent demon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Demon"))
-                .findFirst().orElseThrow();
+        Permanent demon = findPermanent(player1, "Demon");
         assertThat(demon.getCard().getPower()).isEqualTo(5);
         assertThat(demon.getCard().getToughness()).isEqualTo(5);
         assertThat(demon.getCard().getSubtypes()).contains(CardSubtype.DEMON);

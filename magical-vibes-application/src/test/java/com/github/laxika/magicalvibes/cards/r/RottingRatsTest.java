@@ -68,9 +68,7 @@ class RottingRatsTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player2, 0);
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rotting Rats"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Rotting Rats");
         assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
         harness.assertNotInGraveyard(player1, "Rotting Rats");
     }

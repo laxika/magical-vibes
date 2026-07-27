@@ -62,9 +62,7 @@ class LifelaceTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Lifelace on the spell
         harness.passBothPriorities(); // resolve the Fugitive Wizard spell
 
-        Permanent wizard = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fugitive Wizard"))
-                .findFirst().orElseThrow();
+        Permanent wizard = findPermanent(player1, "Fugitive Wizard");
         assertThat(gqs.getEffectiveColors(gd, wizard)).containsExactly(CardColor.GREEN);
     }
 }

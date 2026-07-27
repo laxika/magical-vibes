@@ -52,9 +52,7 @@ class EleshNornGrandCenobiteTest extends BaseCardTest {
     void doesNotBuffItself() {
         harness.addToBattlefield(player1, new EleshNornGrandCenobite());
 
-        Permanent norn = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elesh Norn, Grand Cenobite"))
-                .findFirst().orElseThrow();
+        Permanent norn = findPermanent(player1, "Elesh Norn, Grand Cenobite");
 
         assertThat(gqs.getEffectivePower(gd, norn)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, norn)).isEqualTo(7);
@@ -68,9 +66,7 @@ class EleshNornGrandCenobiteTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EleshNornGrandCenobite());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
@@ -82,9 +78,7 @@ class EleshNornGrandCenobiteTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EleshNornGrandCenobite());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent opponentBears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
 
         // Opponent bears get -2/-2 (not +2/+2): 2-2=0, 2-2=0
         assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(0);
@@ -99,9 +93,7 @@ class EleshNornGrandCenobiteTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EleshNornGrandCenobite());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent opponentBears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(0);
@@ -113,9 +105,7 @@ class EleshNornGrandCenobiteTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EleshNornGrandCenobite());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         // Own bears get +2/+2 only: 2+2=4, 2+2=4
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
@@ -130,9 +120,7 @@ class EleshNornGrandCenobiteTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EleshNornGrandCenobite());
         harness.addToBattlefield(player1, new EleshNornGrandCenobite());
 
-        List<Permanent> norns = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elesh Norn, Grand Cenobite"))
-                .toList();
+        List<Permanent> norns = findPermanents(player1, "Elesh Norn, Grand Cenobite");
 
         assertThat(norns).hasSize(2);
         for (Permanent norn : norns) {
@@ -149,9 +137,7 @@ class EleshNornGrandCenobiteTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EleshNornGrandCenobite());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         // 2/2 base + 4/4 from two Norns = 6/6
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
@@ -165,9 +151,7 @@ class EleshNornGrandCenobiteTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EleshNornGrandCenobite());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
 
         // 2/2 base - 4/4 from two Norns = -2/-2
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-2);
@@ -182,9 +166,7 @@ class EleshNornGrandCenobiteTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EleshNornGrandCenobite());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
 
@@ -201,9 +183,7 @@ class EleshNornGrandCenobiteTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EleshNornGrandCenobite());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(0);
 
@@ -224,12 +204,8 @@ class EleshNornGrandCenobiteTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EleshNornGrandCenobite()));
         harness.addMana(player1, ManaColor.WHITE, 7);
 
-        Permanent ownBears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
-        Permanent opponentBears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent ownBears = findPermanent(player1, "Grizzly Bears");
+        Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
 
         // Before casting, no bonus
         assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(2);
@@ -253,9 +229,7 @@ class EleshNornGrandCenobiteTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EleshNornGrandCenobite());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         // Add a temporary spell boost
         bears.setPowerModifier(bears.getPowerModifier() + 3);
@@ -276,9 +250,7 @@ class EleshNornGrandCenobiteTest extends BaseCardTest {
     void hasVigilance() {
         harness.addToBattlefield(player1, new EleshNornGrandCenobite());
 
-        Permanent norn = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elesh Norn, Grand Cenobite"))
-                .findFirst().orElseThrow();
+        Permanent norn = findPermanent(player1, "Elesh Norn, Grand Cenobite");
 
         assertThat(gqs.hasKeyword(gd, norn, Keyword.VIGILANCE)).isTrue();
     }

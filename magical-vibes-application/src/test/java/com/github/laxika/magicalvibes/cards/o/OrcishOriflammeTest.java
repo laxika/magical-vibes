@@ -65,8 +65,6 @@ class OrcishOriflammeTest extends BaseCardTest {
     }
 
     private Permanent findBears(Player controller) {
-        return gd.playerBattlefields.get(controller.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        return findPermanent(controller, "Grizzly Bears");
     }
 }

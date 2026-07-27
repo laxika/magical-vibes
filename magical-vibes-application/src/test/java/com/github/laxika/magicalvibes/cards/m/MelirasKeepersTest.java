@@ -32,9 +32,7 @@ class MelirasKeepersTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Melira's Keepers should still be on the battlefield with no counters
-        Permanent keepers = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Melira's Keepers"))
-                .findFirst().orElseThrow();
+        Permanent keepers = findPermanent(player1, "Melira's Keepers");
         assertThat(keepers.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         assertThat(keepers.getEffectivePower()).isEqualTo(4);
         assertThat(keepers.getEffectiveToughness()).isEqualTo(4);
@@ -45,9 +43,7 @@ class MelirasKeepersTest extends BaseCardTest {
     void cantHavePlusOnePlusOneCounters() {
         harness.addToBattlefield(player1, new MelirasKeepers());
 
-        Permanent keepers = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Melira's Keepers"))
-                .findFirst().orElseThrow();
+        Permanent keepers = findPermanent(player1, "Melira's Keepers");
 
         // Verify the query service correctly reports cant-have-counters
         assertThat(gqs.cantHaveCounters(gd, keepers)).isTrue();
@@ -59,18 +55,14 @@ class MelirasKeepersTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MelirasKeepers());
 
         // Verify other creatures are not protected
-        Permanent keepers = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Melira's Keepers"))
-                .findFirst().orElseThrow();
+        Permanent keepers = findPermanent(player1, "Melira's Keepers");
         assertThat(gqs.cantHaveCounters(gd, keepers)).isTrue();
 
         // A separate creature without the effect should be able to receive counters
         com.github.laxika.magicalvibes.cards.g.GrizzlyBears bears = new com.github.laxika.magicalvibes.cards.g.GrizzlyBears();
         harness.addToBattlefield(player1, bears);
 
-        Permanent bearsPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bearsPerm = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.cantHaveCounters(gd, bearsPerm)).isFalse();
     }
 }

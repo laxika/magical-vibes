@@ -140,9 +140,7 @@ class OxiddaScrapmelterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grant indestructible to the target before ETB resolves
-        Permanent target = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Leonin Scimitar"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Leonin Scimitar");
         target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
 
         // Resolve ETB — should not destroy indestructible artifact

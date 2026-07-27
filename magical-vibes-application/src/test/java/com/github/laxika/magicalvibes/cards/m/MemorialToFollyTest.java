@@ -31,9 +31,7 @@ class MemorialToFollyTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        Permanent memorial = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Memorial to Folly"))
-                .findFirst().orElseThrow();
+        Permanent memorial = findPermanent(player1, "Memorial to Folly");
         assertThat(memorial.isTapped()).isTrue();
     }
 

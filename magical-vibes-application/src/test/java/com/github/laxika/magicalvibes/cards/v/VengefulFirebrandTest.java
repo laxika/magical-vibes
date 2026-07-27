@@ -95,8 +95,6 @@ class VengefulFirebrandTest extends BaseCardTest {
     }
 
     private Permanent findFirebrand() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Vengeful Firebrand"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Vengeful Firebrand");
     }
 }

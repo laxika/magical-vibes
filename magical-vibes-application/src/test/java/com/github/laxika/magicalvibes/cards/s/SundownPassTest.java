@@ -151,8 +151,6 @@ class SundownPassTest extends BaseCardTest {
     }
 
     private Permanent findPass(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sundown Pass"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Sundown Pass");
     }
 }

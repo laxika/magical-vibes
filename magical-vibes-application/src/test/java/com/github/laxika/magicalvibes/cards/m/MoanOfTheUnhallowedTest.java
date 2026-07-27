@@ -24,11 +24,7 @@ class MoanOfTheUnhallowedTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
-        List<Permanent> zombies = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .toList();
+        List<Permanent> zombies = findPermanents(player1, "Zombie");
 
         assertThat(zombies).hasSize(2);
 
@@ -60,11 +56,7 @@ class MoanOfTheUnhallowedTest extends BaseCardTest {
         harness.castFlashback(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
-        List<Permanent> zombies = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie"))
-                .toList();
+        List<Permanent> zombies = findPermanents(player1, "Zombie");
 
         assertThat(zombies).hasSize(2);
 

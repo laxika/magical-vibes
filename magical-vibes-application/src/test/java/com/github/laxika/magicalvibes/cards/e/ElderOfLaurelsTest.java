@@ -36,9 +36,7 @@ class ElderOfLaurelsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Target should get +3/+3 (3 creatures controlled by player1)
-        Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Grizzly Bears");
         assertThat(target.getPowerModifier()).isEqualTo(3);
         assertThat(target.getToughnessModifier()).isEqualTo(3);
     }
@@ -58,9 +56,7 @@ class ElderOfLaurelsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Target should get +1/+1 (only 1 creature: Elder itself)
-        Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player2, "Grizzly Bears");
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isEqualTo(1);
     }
@@ -79,9 +75,7 @@ class ElderOfLaurelsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Target should get +2/+2 (2 creatures controlled by player1)
-        Permanent target = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent target = findPermanent(player1, "Grizzly Bears");
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
     }

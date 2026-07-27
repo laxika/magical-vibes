@@ -98,10 +98,7 @@ class ShrillHowlerTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve create-token trigger
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Eldrazi Horror"))
-                .findFirst()
-                .orElseThrow();
+        Permanent token = findPermanent(player1, "Eldrazi Horror");
         assertThat(token.getCard().isToken()).isTrue();
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);

@@ -46,9 +46,7 @@ class SageOfFablesTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -160,8 +158,6 @@ class SageOfFablesTest extends BaseCardTest {
     }
 
     private Permanent wizardOnBattlefield(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fugitive Wizard"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Fugitive Wizard");
     }
 }

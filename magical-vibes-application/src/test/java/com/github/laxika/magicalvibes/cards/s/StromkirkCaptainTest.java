@@ -100,9 +100,7 @@ class StromkirkCaptainTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, barony)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, barony, Keyword.FIRST_STRIKE)).isTrue();
 
-        List<Permanent> captains = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Stromkirk Captain"))
-                .toList();
+        List<Permanent> captains = findPermanents(player1, "Stromkirk Captain");
         assertThat(captains).hasSize(2);
         for (Permanent captain : captains) {
             // 2/2 base + 1/1 from the other Captain = 3/3

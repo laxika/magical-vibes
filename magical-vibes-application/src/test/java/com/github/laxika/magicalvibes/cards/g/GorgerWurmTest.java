@@ -24,9 +24,7 @@ class GorgerWurmTest extends BaseCardTest {
     }
 
     private Permanent wurm() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gorger Wurm"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Gorger Wurm");
     }
 
     @Test

@@ -29,9 +29,7 @@ class GideonsInterventionTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Grizzly Bears");
 
-        Permanent gi = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gideon's Intervention"))
-                .findFirst().orElseThrow();
+        Permanent gi = findPermanent(player1, "Gideon's Intervention");
         assertThat(gi.getChosenName()).isEqualTo("Grizzly Bears");
     }
 

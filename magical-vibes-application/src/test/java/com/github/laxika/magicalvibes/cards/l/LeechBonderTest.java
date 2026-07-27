@@ -124,8 +124,6 @@ class LeechBonderTest extends BaseCardTest {
     }
 
     private Permanent findBonder(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Leech Bonder"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Leech Bonder");
     }
 }

@@ -256,9 +256,7 @@ class AjaniOutlandChaperoneTest extends BaseCardTest {
         // or one should be automatically removed. Check that there's only one Ajani on battlefield
         // (the exact handling depends on the legend rule implementation)
         GameData gd = harness.getGameData();
-        long ajaniCount = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Ajani, Outland Chaperone"))
-                .count();
+        long ajaniCount = countPermanents(player1, "Ajani, Outland Chaperone");
         // Either legend rule triggers a choice (interaction.isAwaitingInput()) or only one remains
         assertThat(ajaniCount <= 1 || gd.interaction.isAwaitingInput()).isTrue();
     }

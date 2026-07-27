@@ -151,8 +151,6 @@ class ShatteredSanctumTest extends BaseCardTest {
     }
 
     private Permanent findSanctum(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Shattered Sanctum"))
-                .findFirst().orElseThrow();
+        return findPermanent(player, "Shattered Sanctum");
     }
 }
