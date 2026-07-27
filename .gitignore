@@ -22,6 +22,9 @@ scryfall-cache/
 card-data-cache/
 mcp/card-info/cache/
 
+# Comprehensive Rules cache
+mcp/rules-info/cache/
+
 # Card review script output
 scripts/result/
 

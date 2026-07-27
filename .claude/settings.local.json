@@ -56,10 +56,12 @@
       "Bash(xargs sed:*)",
       "Bash(../gradlew compileJava)",
       "Bash(../gradlew compileTestJava)",
-      "Bash(../gradlew :magical-vibes-backend:compileTestJava)"
+      "Bash(../gradlew :magical-vibes-backend:compileTestJava)",
+      "Bash(echo \"EXIT=$?\")"
     ]
   },
   "enabledMcpjsonServers": [
-    "scryfall"
+    "scryfall",
+    "rules"
   ]
 }

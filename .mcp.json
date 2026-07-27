@@ -9,6 +9,16 @@
         "-File",
         "mcp/card-info/start.ps1"
       ]
+    },
+    "rules": {
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "mcp/rules-info/start.ps1"
+      ]
     }
   }
 }
