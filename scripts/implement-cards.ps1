@@ -29,7 +29,7 @@ param(
     # Reasoning effort for the claude runner. Ignored by -Runner grok, which
     # encodes effort in the model name instead.
     [ValidateSet("low", "medium", "high", "xhigh", "max")]
-    [string] $Effort = "medium"
+    [string] $Effort = "low"
 )
 
 $ErrorActionPreference = "Stop"
