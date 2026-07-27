@@ -9,6 +9,10 @@
   border-radius: 4px;
   border: 2px solid var(--color-border-tan);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  /* Everything here is a click target or a readout; only the log is worth
+     selecting, and it opts back in below. */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .card-preview-panel {
@@ -286,6 +290,9 @@
   border: 1px solid var(--color-border-gold);
   scrollbar-color: #c4a06a #e8d5b0;
   scrollbar-width: thin;
+  /* Opts back out of the panel-wide user-select: none — log text is worth copying. */
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .log-entries::-webkit-scrollbar {
@@ -388,7 +395,6 @@
   font-family: var(--font-display);
   height: 100%;
   box-sizing: border-box;
-  user-select: none;
 }
 
 .player-badge.active {

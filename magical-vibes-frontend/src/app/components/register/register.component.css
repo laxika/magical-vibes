@@ -3,6 +3,10 @@
 .login-container {
   min-height: 100vh;
   box-sizing: border-box;
+  /* Labels and readouts here are chrome, not content — only the form fields
+     stay selectable (src/styles.css opts them back out). */
+  user-select: none;
+  -webkit-user-select: none;
   display: flex;
   align-items: center;
   justify-content: center;

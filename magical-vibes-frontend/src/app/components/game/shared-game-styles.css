@@ -62,6 +62,9 @@
   border-radius: 4px;
   border: 2px solid var(--color-border-tan);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  /* The pips are click targets, so dragging across them selected their labels. */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .phase-group {

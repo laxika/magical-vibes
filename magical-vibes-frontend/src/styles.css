@@ -38,6 +38,14 @@ button {
   -webkit-user-select: none;
 }
 
+/* Every screen root sets user-select: none; text fields opt back out here once
+   rather than per component, since a directly-matched rule beats inheritance. */
+input,
+textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 body {
   margin: 0;
   font-family: 'Crimson Text', Georgia, 'Times New Roman', serif;

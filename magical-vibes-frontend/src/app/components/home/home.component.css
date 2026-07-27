@@ -4,6 +4,10 @@
   height: 100vh;
   box-sizing: border-box;
   overflow: hidden;
+  /* Labels and readouts here are chrome, not content — only the form fields
+     stay selectable (src/styles.css opts them back out). */
+  user-select: none;
+  -webkit-user-select: none;
   display: flex;
   flex-direction: column;
   gap: 8px;

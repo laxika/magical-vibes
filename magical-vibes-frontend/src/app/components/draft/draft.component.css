@@ -1,6 +1,10 @@
 .draft-container {
   min-height: 100vh;
   box-sizing: border-box;
+  /* Labels and readouts here are chrome, not content — only the form fields
+     stay selectable (src/styles.css opts them back out). */
+  user-select: none;
+  -webkit-user-select: none;
   background:
     repeating-linear-gradient(
       0deg,

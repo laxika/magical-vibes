@@ -1,5 +1,9 @@
 :host {
   display: block;
+  /* Walkthrough copy is chrome, not content. The embedded side panel keeps its
+     own log carve-out, so the game log stays selectable here too. */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Add positioning context for absolute overlay children */
@@ -23,7 +27,6 @@
 }
 
 .tutorial-tooltip {
-  user-select: none;
   position: absolute;
   z-index: 1000;
   background: var(--gradient-parchment);
