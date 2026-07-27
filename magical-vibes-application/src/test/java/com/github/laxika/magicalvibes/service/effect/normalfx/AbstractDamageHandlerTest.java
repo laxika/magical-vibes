@@ -133,11 +133,6 @@ abstract class AbstractDamageHandlerTest {
         when(damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(eq(gd), any(), anyInt())).thenAnswer(inv -> inv.getArgument(2));
     }
 
-    protected void stubLethalDamage(boolean isLethal) {
-        // Lenient: destruction moved to the SBA check, so most handlers no longer consult this.
-        lenient().when(gameQueryService.isLethalDamage(anyInt(), anyInt(), anyBoolean())).thenReturn(isLethal);
-    }
-
     protected void stubNoKeywordsOnSource(StackEntry entry) {
         // The infect/wither decision goes through sourceDealsCounterDamageToCreatures now,
         // whose mock default (false) is the wanted answer — only deathtouch needs a stub.

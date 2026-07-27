@@ -74,7 +74,7 @@ class GameDataExileTrackingTest {
     @Test
     @DisplayName("ExileService.exileCardFaceDown records a face-down entry; exileCard stays face up")
     void exileServiceFaceDownVariant() {
-        ExileService exileService = new ExileService();
+        ExileService exileService = new ExileService(null);
         Card hidden = card("Hidden");
         Card shown = card("Shown");
 

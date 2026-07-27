@@ -329,13 +329,6 @@ public class GameQueryService {
         return findInBattlefields(gameData, permanentId, (playerId, p) -> playerId);
     }
 
-    public void setImprintedCardOnPermanent(GameData gameData, UUID sourcePermanentId, Card card) {
-        Permanent perm = findPermanentById(gameData, sourcePermanentId);
-        if (perm != null) {
-            gameData.setImprintedCard(perm.getCard(), card);
-        }
-    }
-
     /**
      * Finds a card in any player's graveyard by its unique ID.
      *
@@ -607,7 +600,7 @@ public class GameQueryService {
      * Returns {@code true} while any permanent has a {@link TwistBasicLandManaColorsEffect}
      * (Reality Twist). Global — not controller-scoped.
      */
-    public boolean isTwistBasicLandManaActive(GameData gameData) {
+    private boolean isTwistBasicLandManaActive(GameData gameData) {
         return gameData.anyPermanentMatches(p ->
                 p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof TwistBasicLandManaColorsEffect));
@@ -878,7 +871,7 @@ public class GameQueryService {
      * {@link EnchantedPermanentBecomesCreatureEffect} (e.g. Living Terrain), which continuously
      * makes the enchanted permanent a creature.
      */
-    public boolean hasAuraBecomeCreatureEffect(GameData gameData, Permanent permanent) {
+    private boolean hasAuraBecomeCreatureEffect(GameData gameData, Permanent permanent) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
@@ -990,17 +983,6 @@ public class GameQueryService {
             }
         }
         return count;
-    }
-
-    /**
-     * Returns {@code true} if the given player controls at least one permanent matching
-     * the predicate besides the given source card.
-     */
-    public boolean controlsAnotherPermanent(GameData gameData, UUID controllerId, Card sourceCard, PermanentPredicate predicate) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) return false;
-        return battlefield.stream()
-                .anyMatch(p -> p.getCard() != sourceCard && predicateEvaluationService.matchesPermanentPredicate(gameData, p, predicate));
     }
 
     /**
@@ -1186,7 +1168,7 @@ public class GameQueryService {
      * Returns {@code true} if the permanent has been granted the given effect type
      * by static effects from other permanents (e.g. via {@code GrantEffectEffect}).
      */
-    public boolean hasGrantedEffect(GameData gameData, Permanent permanent, Class<? extends CardEffect> effectType) {
+    private boolean hasGrantedEffect(GameData gameData, Permanent permanent, Class<? extends CardEffect> effectType) {
         return computeStaticBonus(gameData, permanent).grantedEffects().stream()
                 .anyMatch(effectType::isInstance);
     }
@@ -2032,62 +2014,6 @@ public class GameQueryService {
                 losesAllAbilities, ptSwitched);
     }
 
-    // --- CR 614.12 replacement-effect lookahead ---
-
-    /**
-     * CR 614.12 lookahead: determines whether a permanent <em>about to enter the battlefield</em>
-     * would have the given subtype once all static effects are applied. This considers:
-     * <ol>
-     *   <li>The permanent's natural subtypes (from its card).</li>
-     *   <li>Transient and granted subtypes already on the permanent.</li>
-     *   <li>The Changeling keyword (natural or granted by static effects).</li>
-     *   <li>Static effects from permanents already on the battlefield (e.g., Xenograft,
-     *       Conspiracy, lord effects that grant subtypes).</li>
-     * </ol>
-     *
-     * <p>Per CR 614.12, when multiple permanents enter simultaneously they <em>cannot</em>
-     * see each other. The {@code simultaneouslyEntered} parameter lists permanents that were
-     * already placed on the battlefield as part of the same simultaneous batch and must be
-     * <em>excluded</em> from the lookahead.
-     *
-     * <p>Implementation: temporarily adds the entering permanent to the controller's battlefield
-     * (and removes any {@code simultaneouslyEntered} permanents), runs {@link #computeStaticBonus},
-     * then restores the original state.
-     *
-     * @param gameData               current game state
-     * @param entering               the permanent about to enter the battlefield
-     * @param controllerId           the controller under whose control it will enter
-     * @param simultaneouslyEntered  permanents already on the battlefield from this simultaneous
-     *                               batch that should be excluded from the lookahead; may be empty
-     * @param subtype                the subtype to check for
-     * @return {@code true} if the permanent would have the subtype on the battlefield
-     */
-    public boolean permanentWouldHaveSubtype(GameData gameData, Permanent entering, UUID controllerId,
-                                              List<Permanent> simultaneouslyEntered, CardSubtype subtype) {
-        // Quick path: check natural/transient/granted subtypes
-        if (entering.getCard().getSubtypes().contains(subtype)) return true;
-        if (entering.getTransientSubtypes().contains(subtype)) return true;
-        if (entering.getGrantedSubtypes().contains(subtype)) return true;
-
-        // Quick path: Changeling means all creature subtypes
-        if (isCreatureSubtype(subtype) && entering.getCard().getKeywords().contains(Keyword.CHANGELING)) return true;
-
-        // Full lookahead: temporarily add entering permanent and remove simultaneously-entered
-        // permanents, compute static bonus, then restore original state.
-        List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-        bf.add(entering);
-        bf.removeAll(simultaneouslyEntered);
-        try {
-            StaticBonus bonus = computeStaticBonus(gameData, entering);
-            if (bonus.grantedSubtypes().contains(subtype)) return true;
-            // A static effect might grant Changeling
-            return isCreatureSubtype(subtype) && bonus.keywords().contains(Keyword.CHANGELING);
-        } finally {
-            bf.remove(entering);
-            bf.addAll(simultaneouslyEntered);
-        }
-    }
-
     // --- Protection & evasion ---
 
     /**
@@ -2292,7 +2218,7 @@ public class GameQueryService {
      * Returns {@code true} if the target permanent has protection from non-[subtype] creatures
      * and the source permanent is a creature that lacks that subtype.
      */
-    public boolean hasProtectionFromNonSubtypeCreatures(GameData gameData, Permanent target, Permanent source) {
+    private boolean hasProtectionFromNonSubtypeCreatures(GameData gameData, Permanent target, Permanent source) {
         Set<CardSubtype> protectedFrom = target.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn();
         if (protectedFrom.isEmpty()) return false;
         if (!isCreature(gameData, source)) return false;
@@ -2309,7 +2235,7 @@ public class GameQueryService {
      * Returns {@code true} if the target permanent has protection from non-[subtype] creatures
      * and the source card (on the stack) is a creature card that lacks that subtype.
      */
-    public boolean hasProtectionFromNonSubtypeCreatures(Permanent target, Card sourceCard) {
+    private boolean hasProtectionFromNonSubtypeCreatures(Permanent target, Card sourceCard) {
         Set<CardSubtype> protectedFrom = target.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn();
         if (protectedFrom.isEmpty()) return false;
         if (sourceCard.getType() != CardType.CREATURE
@@ -2327,7 +2253,7 @@ public class GameQueryService {
      * Returns {@code true} if the target permanent has protection from mana value N or greater
      * and the source's mana value meets that threshold (e.g. Mistmeadow Skulk).
      */
-    public boolean hasProtectionFromSourceManaValue(Permanent target, Card sourceCard) {
+    private boolean hasProtectionFromSourceManaValue(Permanent target, Card sourceCard) {
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof ProtectionGrantingEffect protection
                     && protection.protectionFromManaValueAtLeast().isPresent()
@@ -2391,7 +2317,7 @@ public class GameQueryService {
      * permanent on the battlefield) is never a creature. Used by Uncle Istvan-style "prevent all damage
      * that would be dealt to this creature by creatures" effects.
      */
-    public boolean isDamageSourceCreature(GameData gameData, StackEntry entry, Permanent explicitSource) {
+    private boolean isDamageSourceCreature(GameData gameData, StackEntry entry, Permanent explicitSource) {
         Permanent source = explicitSource;
         if (source == null && entry != null && entry.getSourcePermanentId() != null) {
             source = findPermanentById(gameData, entry.getSourcePermanentId());
@@ -2485,15 +2411,6 @@ public class GameQueryService {
         }
         return battlefield.stream().anyMatch(p ->
                 p.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectType::isInstance));
-    }
-
-    /**
-     * Returns {@code true} if the given damage amount is lethal. Damage is lethal if it
-     * meets or exceeds the effective toughness, or if the source has deathtouch and deals
-     * at least 1 damage.
-     */
-    public boolean isLethalDamage(int damage, int effectiveToughness, boolean deathtouch) {
-        return damage >= effectiveToughness || (damage >= 1 && deathtouch);
     }
 
     /**
@@ -2894,7 +2811,7 @@ public class GameQueryService {
      * {@link AnimateNoncreatureArtifactsEffect}, which turns all non-creature artifacts
      * into creatures.
      */
-    public boolean hasAnimateArtifactEffect(GameData gameData) {
+    private boolean hasAnimateArtifactEffect(GameData gameData) {
         return anyBattlefieldHasStaticEffect(gameData, AnimateNoncreatureArtifactsEffect.class);
     }
 
@@ -2904,7 +2821,7 @@ public class GameQueryService {
      * animates every land (Nature's Revolt); an effect with a required land subtype (Living Lands:
      * Forest) animates only lands carrying that subtype.
      */
-    public boolean matchesAnimateLand(GameData gameData, Permanent permanent) {
+    private boolean matchesAnimateLand(GameData gameData, Permanent permanent) {
         return gameData.anyPermanentMatches(source ->
                 source.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof AllLandsAreCreaturesEffect animateLands
@@ -3502,7 +3419,7 @@ public class GameQueryService {
      * on the battlefield (e.g. Furnace of Rath). Each instance multiplies by its factor, and multiple
      * instances stack multiplicatively (e.g. two Furnaces = 4x damage).
      */
-    public int getDamageMultiplier(GameData gameData) {
+    private int getDamageMultiplier(GameData gameData) {
         int[] multiplier = {1};
         gameData.forEachPermanent((playerId, p) -> {
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
@@ -3657,7 +3574,7 @@ public class GameQueryService {
      * {@link DoubleEquippedCreatureCombatDamageEffect} on attached equipment.
      * Each such equipment doubles the multiplier.
      */
-    public int getEquippedCreatureCombatDamageMultiplier(GameData gameData, Permanent creature) {
+    private int getEquippedCreatureCombatDamageMultiplier(GameData gameData, Permanent creature) {
         int[] multiplier = {1};
         gameData.forEachPermanent((playerId, p) -> {
             if (p.isAttached() && p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())) {
@@ -3788,7 +3705,7 @@ public class GameQueryService {
     }
 
     /** Whether a floating {@link PermanentLockEffect} forbids the given permanent from blocking. */
-    public boolean isLockedFromBlocking(GameData gameData, UUID permanentId) {
+    private boolean isLockedFromBlocking(GameData gameData, UUID permanentId) {
         return hasPermanentLock(gameData, permanentId, PermanentLockEffect::locksBlocking);
     }
 

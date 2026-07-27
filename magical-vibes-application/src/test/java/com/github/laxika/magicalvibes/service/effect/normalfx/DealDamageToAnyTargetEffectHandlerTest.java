@@ -60,7 +60,6 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
                 stubNoDamageMultiplier();
                 stubCreatureDamageCore(angel, 4);
                 stubNoKeywordsOnSource(entry);
-                stubLethalDamage(false);
                 when(gameQueryService.findPermanentById(gd, angel.getId())).thenReturn(angel);
 
                 dealDamageToAnyTargetHandler.resolve(gd, entry, effect);

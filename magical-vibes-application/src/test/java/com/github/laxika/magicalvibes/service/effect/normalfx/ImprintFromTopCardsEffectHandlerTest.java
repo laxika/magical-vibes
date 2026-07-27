@@ -155,7 +155,7 @@ class ImprintFromTopCardsEffectHandlerTest {
 
                 imprintFromTopCardsEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameQueryService).setImprintedCardOnPermanent(gd, sourcePermanentId, singleCard);
+                verify(exileService).setImprintedCardOnPermanent(gd, sourcePermanentId, singleCard);
             }
 
             @Test

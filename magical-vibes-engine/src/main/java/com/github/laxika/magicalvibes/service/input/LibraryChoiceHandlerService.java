@@ -161,7 +161,7 @@ public class LibraryChoiceHandlerService {
                     exileService.exileCardFaceDown(gameData, playerId, chosenCard, null);
                     UUID sourcePermanentId = followUp.imprintSourcePermanentId();
                     if (sourcePermanentId != null) {
-                        gameQueryService.setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
+                        exileService.setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
                     }
                 } else if (destination == LibrarySearchDestination.EXILE) {
                     exileService.exileCard(gameData, deckOwnerId, chosenCard);
@@ -615,7 +615,7 @@ public class LibraryChoiceHandlerService {
             exileService.exileCard(gameData, playerId, chosenCard);
             UUID sourcePermanentId = followUp.imprintSourcePermanentId();
             if (sourcePermanentId != null) {
-                gameQueryService.setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
+                exileService.setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
             }
         } else if (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PLAYER) {
             Permanent perm = new Permanent(chosenCard);

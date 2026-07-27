@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -479,10 +481,68 @@ public class BattlefieldEntryService {
     }
 
     /**
+     * CR 614.12 lookahead: determines whether a permanent <em>about to enter the battlefield</em>
+     * would have the given subtype once all static effects are applied. This considers:
+     * <ol>
+     *   <li>The permanent's natural subtypes (from its card).</li>
+     *   <li>Transient and granted subtypes already on the permanent.</li>
+     *   <li>The Changeling keyword (natural or granted by static effects).</li>
+     *   <li>Static effects from permanents already on the battlefield (e.g., Xenograft,
+     *       Conspiracy, lord effects that grant subtypes).</li>
+     * </ol>
+     *
+     * <p>Per CR 614.12, when multiple permanents enter simultaneously they <em>cannot</em>
+     * see each other. The {@code simultaneouslyEntered} parameter lists permanents that were
+     * already placed on the battlefield as part of the same simultaneous batch and must be
+     * <em>excluded</em> from the lookahead.
+     *
+     * <p>Implementation: temporarily splices the entering permanent into the controller's live
+     * battlefield list (and removes any {@code simultaneouslyEntered} permanents), runs
+     * {@link GameQueryService#computeStaticBonus}, then restores the original state in a
+     * {@code finally} block. That splice is why this lives here rather than on the read-only
+     * {@link GameQueryService} — it is a real, if transient, battlefield mutation, so it must
+     * run on the game thread like every other entry-time step.
+     *
+     * @param gameData               current game state
+     * @param entering               the permanent about to enter the battlefield
+     * @param controllerId           the controller under whose control it will enter
+     * @param simultaneouslyEntered  permanents already on the battlefield from this simultaneous
+     *                               batch that should be excluded from the lookahead; may be empty
+     * @param subtype                the subtype to check for
+     * @return {@code true} if the permanent would have the subtype on the battlefield
+     */
+    public boolean permanentWouldHaveSubtype(GameData gameData, Permanent entering, UUID controllerId,
+                                              List<Permanent> simultaneouslyEntered, CardSubtype subtype) {
+        // Quick path: check natural/transient/granted subtypes
+        if (entering.getCard().getSubtypes().contains(subtype)) return true;
+        if (entering.getTransientSubtypes().contains(subtype)) return true;
+        if (entering.getGrantedSubtypes().contains(subtype)) return true;
+
+        // Quick path: Changeling means all creature subtypes
+        if (gameQueryService.isCreatureSubtype(subtype)
+                && entering.getCard().getKeywords().contains(Keyword.CHANGELING)) return true;
+
+        // Full lookahead: temporarily add entering permanent and remove simultaneously-entered
+        // permanents, compute static bonus, then restore original state.
+        List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+        bf.add(entering);
+        bf.removeAll(simultaneouslyEntered);
+        try {
+            GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, entering);
+            if (bonus.grantedSubtypes().contains(subtype)) return true;
+            // A static effect might grant Changeling
+            return gameQueryService.isCreatureSubtype(subtype) && bonus.keywords().contains(Keyword.CHANGELING);
+        } finally {
+            bf.remove(entering);
+            bf.addAll(simultaneouslyEntered);
+        }
+    }
+
+    /**
      * Replacement effect (MTG Rule 614.1c): checks the controller's graveyard for cards with
      * {@link GraveyardEnterWithAdditionalCountersEffect} and adds +1/+1 counters to matching
      * creatures as they enter the battlefield. Uses CR 614.12 lookahead via
-     * {@link GameQueryService#permanentWouldHaveSubtype} to determine subtypes.
+     * {@link #permanentWouldHaveSubtype} to determine subtypes.
      *
      * @param simultaneouslyEntered permanents to exclude from lookahead (see CR 614.12)
      */
@@ -499,7 +559,7 @@ public class BattlefieldEntryService {
         for (Card card : graveyard) {
             for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof GraveyardEnterWithAdditionalCountersEffect graveyardEffect) {
-                    if (gameQueryService.permanentWouldHaveSubtype(gameData, permanent, controllerId,
+                    if (permanentWouldHaveSubtype(gameData, permanent, controllerId,
                             simultaneouslyEntered, graveyardEffect.subtype())) {
                         additionalCounters += graveyardEffect.count();
                     }
@@ -535,7 +595,7 @@ public class BattlefieldEntryService {
         for (Permanent source : battlefield) {
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof ControlledCreaturesEnterWithAdditionalCountersEffect controlledEffect) {
-                    if (gameQueryService.permanentWouldHaveSubtype(gameData, permanent, controllerId,
+                    if (permanentWouldHaveSubtype(gameData, permanent, controllerId,
                             simultaneouslyEntered, controlledEffect.subtype())) {
                         additionalCounters += controlledEffect.count();
                     }

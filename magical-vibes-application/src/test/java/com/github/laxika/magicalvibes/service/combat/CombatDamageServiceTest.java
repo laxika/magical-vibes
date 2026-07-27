@@ -176,15 +176,6 @@ class CombatDamageServiceTest {
      * controller lookups, redirect, and win condition. Requires stubCombatSetup().
      */
     private void stubDamageResolution() {
-        // Lenient: lethality moved into the state-based action check (marked damage vs.
-        // toughness); only assignment-time validation still consults isLethalDamage.
-        lenient().when(gameQueryService.isLethalDamage(anyInt(), anyInt(), anyBoolean()))
-                .thenAnswer(inv -> {
-                    int damage = inv.getArgument(0);
-                    int toughness = inv.getArgument(1);
-                    boolean deathtouch = inv.getArgument(2);
-                    return damage >= toughness || (deathtouch && damage >= 1);
-                });
         when(gameQueryService.applyCombatDamageMultiplier(eq(gameData), anyInt(), any(), any()))
                 .thenAnswer(inv -> (int) inv.getArgument(1));
         lenient().when(gameQueryService.getEnchantedPlayerDamageMultiplier(eq(gameData), any(UUID.class)))

@@ -22,22 +22,29 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
+import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -244,5 +251,287 @@ class BattlefieldEntryServiceTest {
         service.putPermanentOntoBattlefield(gd, player1Id, entering);
 
         assertThat(entering.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    /**
+     * Tests for {@link BattlefieldEntryService#permanentWouldHaveSubtype} — the CR 614.12
+     * replacement-effect lookahead that determines what subtypes a permanent would have
+     * on the battlefield before it actually enters.
+     *
+     * <p>Builds its own service graph around a real {@link StaticEffectHandlerRegistry} with
+     * manually registered handlers, rather than the mocked {@link GameQueryService} the outer
+     * class uses — the lookahead's whole job is to run the real static-bonus computation.
+     */
+    @Nested
+    @DisplayName("permanentWouldHaveSubtype — CR 614.12 lookahead")
+    class PermanentWouldHaveSubtype {
+
+        private StaticEffectHandlerRegistry realRegistry;
+        private BattlefieldEntryService lookaheadService;
+        private GameData lookaheadGameData;
+        private UUID playerId;
+        private UUID opponentId;
+
+        @BeforeEach
+        void setUp() {
+            realRegistry = new StaticEffectHandlerRegistry();
+            realRegistry.register(GrantSubtypeEffect.class, (context, effect, accumulator) -> {
+                var grant = (GrantSubtypeEffect) effect;
+                boolean matches = switch (grant.scope()) {
+                    case OWN_CREATURES, OWN_PERMANENTS -> context.targetOnSameBattlefield();
+                    case ALL_CREATURES, ALL_PERMANENTS -> true;
+                    case OPPONENT_CREATURES -> !context.targetOnSameBattlefield();
+                    default -> false;
+                };
+                if (matches) {
+                    accumulator.addGrantedSubtype(grant.subtype());
+                }
+            });
+            realRegistry.register(GrantKeywordEffect.class, (context, effect, accumulator) -> {
+                var grant = (GrantKeywordEffect) effect;
+                boolean matches = switch (grant.scope()) {
+                    case OWN_CREATURES, OWN_PERMANENTS -> context.targetOnSameBattlefield();
+                    case ALL_CREATURES, ALL_PERMANENTS -> true;
+                    default -> false;
+                };
+                if (matches) {
+                    accumulator.addKeywords(grant.keywords());
+                }
+            });
+
+            GameQueryService lookaheadGqs = new GameQueryService(realRegistry);
+            PredicateEvaluationService lookaheadEvaluator = new PredicateEvaluationService(lookaheadGqs);
+            ReflectionTestUtils.setField(lookaheadGqs, "predicateEvaluationService", lookaheadEvaluator);
+            LayerSystemService lookaheadLayerSystem = new LayerSystemService();
+            ReflectionTestUtils.setField(lookaheadLayerSystem, "predicateEvaluationService", lookaheadEvaluator);
+            ReflectionTestUtils.setField(lookaheadLayerSystem, "staticEffectRegistry", realRegistry);
+            ReflectionTestUtils.setField(lookaheadLayerSystem, "gameQueryService", lookaheadGqs);
+            ReflectionTestUtils.setField(lookaheadGqs, "layerSystemService", lookaheadLayerSystem);
+
+            ConditionEvaluationService lookaheadConditions = new ConditionEvaluationService(
+                    lookaheadGqs, lookaheadEvaluator,
+                    new StaticEffectSupport(lookaheadGqs, lookaheadEvaluator));
+            lookaheadService = new BattlefieldEntryService(
+                    lookaheadGqs, gameLogService, playerInputService,
+                    permanentCopierService, triggerCollectionService,
+                    graveyardTargetingService, etbTokenTargetService,
+                    new EtbEffectResolver(lookaheadConditions),
+                    new AmountEvaluationService(lookaheadEvaluator, lookaheadGqs),
+                    lookaheadConditions, lookaheadEvaluator,
+                    new com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport(
+                            lookaheadGqs, lookaheadEvaluator, gameLogService, playerInputService));
+
+            playerId = UUID.randomUUID();
+            opponentId = UUID.randomUUID();
+            lookaheadGameData = new GameData(UUID.randomUUID(), "test", playerId, "TestPlayer");
+            lookaheadGameData.orderedPlayerIds.add(playerId);
+            lookaheadGameData.orderedPlayerIds.add(opponentId);
+            lookaheadGameData.playerBattlefields.put(playerId, Collections.synchronizedList(new ArrayList<>()));
+            lookaheadGameData.playerBattlefields.put(opponentId, Collections.synchronizedList(new ArrayList<>()));
+        }
+
+        private Card createCreatureCard(String name, List<CardSubtype> subtypes) {
+            Card card = new Card();
+            card.setName(name);
+            card.setType(CardType.CREATURE);
+            card.setSubtypes(subtypes);
+            return card;
+        }
+
+        private Card createCreatureCardWithKeywords(String name, List<CardSubtype> subtypes, Keyword... keywords) {
+            Card card = createCreatureCard(name, subtypes);
+            card.setKeywords(java.util.EnumSet.copyOf(java.util.Set.of(keywords)));
+            return card;
+        }
+
+        @Test
+        @DisplayName("Returns true when permanent has the subtype naturally")
+        void naturalSubtype() {
+            Permanent entering = new Permanent(createCreatureCard("Elite Vanguard", List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER)));
+
+            assertThat(lookaheadService.permanentWouldHaveSubtype(
+                    lookaheadGameData, entering, playerId, List.of(), CardSubtype.HUMAN)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Returns false when permanent does not have the subtype and no effects grant it")
+        void noMatchingSubtype() {
+            Permanent entering = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
+
+            assertThat(lookaheadService.permanentWouldHaveSubtype(
+                    lookaheadGameData, entering, playerId, List.of(), CardSubtype.HUMAN)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Returns true when permanent has Changeling keyword (all creature subtypes)")
+        void changelingHasAllCreatureSubtypes() {
+            Permanent entering = new Permanent(
+                    createCreatureCardWithKeywords("Changeling Outcast", List.of(CardSubtype.SHAPESHIFTER), Keyword.CHANGELING));
+
+            assertThat(lookaheadService.permanentWouldHaveSubtype(
+                    lookaheadGameData, entering, playerId, List.of(), CardSubtype.HUMAN)).isTrue();
+            assertThat(lookaheadService.permanentWouldHaveSubtype(
+                    lookaheadGameData, entering, playerId, List.of(), CardSubtype.GOBLIN)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Changeling does not match non-creature subtypes (e.g., Equipment, Aura)")
+        void changelingDoesNotMatchNonCreatureSubtypes() {
+            Permanent entering = new Permanent(
+                    createCreatureCardWithKeywords("Changeling Outcast", List.of(CardSubtype.SHAPESHIFTER), Keyword.CHANGELING));
+
+            assertThat(lookaheadService.permanentWouldHaveSubtype(
+                    lookaheadGameData, entering, playerId, List.of(), CardSubtype.EQUIPMENT)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Returns true when a battlefield permanent grants the subtype to own creatures")
+        void subtypeGrantedByBattlefieldPermanent() {
+            Card xenograftCard = new Card();
+            xenograftCard.setName("Xenograft");
+            xenograftCard.setType(CardType.ENCHANTMENT);
+            xenograftCard.addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
+            Permanent xenograft = new Permanent(xenograftCard);
+            lookaheadGameData.playerBattlefields.get(playerId).add(xenograft);
+
+            Permanent entering = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
+
+            assertThat(lookaheadService.permanentWouldHaveSubtype(
+                    lookaheadGameData, entering, playerId, List.of(), CardSubtype.HUMAN)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Opponent's subtype-granting effect with OWN_CREATURES scope does not affect your creatures")
+        void opponentOwnCreaturesScopeDoesNotAffect() {
+            Card xenograftCard = new Card();
+            xenograftCard.setName("Xenograft");
+            xenograftCard.setType(CardType.ENCHANTMENT);
+            xenograftCard.addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
+            Permanent xenograft = new Permanent(xenograftCard);
+            lookaheadGameData.playerBattlefields.get(opponentId).add(xenograft);
+
+            Permanent entering = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
+
+            assertThat(lookaheadService.permanentWouldHaveSubtype(
+                    lookaheadGameData, entering, playerId, List.of(), CardSubtype.HUMAN)).isFalse();
+        }
+
+        @Test
+        @DisplayName("ALL_CREATURES scope grants subtype regardless of controller")
+        void allCreaturesScopeAffectsEveryone() {
+            Card conspiracyCard = new Card();
+            conspiracyCard.setName("Conspiracy");
+            conspiracyCard.setType(CardType.ENCHANTMENT);
+            conspiracyCard.addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.ALL_CREATURES));
+            Permanent conspiracy = new Permanent(conspiracyCard);
+            lookaheadGameData.playerBattlefields.get(opponentId).add(conspiracy);
+
+            Permanent entering = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
+
+            assertThat(lookaheadService.permanentWouldHaveSubtype(
+                    lookaheadGameData, entering, playerId, List.of(), CardSubtype.HUMAN)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Returns true when a battlefield permanent grants Changeling to own creatures")
+        void changelingGrantedByStaticEffect() {
+            Card maskCard = new Card();
+            maskCard.setName("Maskwood Nexus");
+            maskCard.setType(CardType.ARTIFACT);
+            maskCard.addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.CHANGELING, GrantScope.OWN_CREATURES));
+            Permanent mask = new Permanent(maskCard);
+            lookaheadGameData.playerBattlefields.get(playerId).add(mask);
+
+            Permanent entering = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
+
+            assertThat(lookaheadService.permanentWouldHaveSubtype(
+                    lookaheadGameData, entering, playerId, List.of(), CardSubtype.HUMAN)).isTrue();
+            assertThat(lookaheadService.permanentWouldHaveSubtype(
+                    lookaheadGameData, entering, playerId, List.of(), CardSubtype.GOBLIN)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Simultaneously-entered permanent with subtype grant is excluded from lookahead")
+        void simultaneouslyEnteredExcludedFromLookahead() {
+            Card xenograftCard = new Card();
+            xenograftCard.setName("Xenograft");
+            xenograftCard.setType(CardType.ENCHANTMENT);
+            xenograftCard.addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
+            Permanent xenograft = new Permanent(xenograftCard);
+            lookaheadGameData.playerBattlefields.get(playerId).add(xenograft);
+
+            Permanent entering = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
+
+            assertThat(lookaheadService.permanentWouldHaveSubtype(
+                    lookaheadGameData, entering, playerId, List.of(xenograft), CardSubtype.HUMAN)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Pre-existing battlefield permanent IS visible even when other simultaneous entries are excluded")
+        void preExistingPermanentVisibleDespiteSimultaneousExclusion() {
+            Card xenograftCard = new Card();
+            xenograftCard.setName("Xenograft");
+            xenograftCard.setType(CardType.ENCHANTMENT);
+            xenograftCard.addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
+            Permanent preExistingXenograft = new Permanent(xenograftCard);
+            lookaheadGameData.playerBattlefields.get(playerId).add(preExistingXenograft);
+
+            Permanent simultaneousCreature = new Permanent(createCreatureCard("Elvish Mystic", List.of(CardSubtype.ELF)));
+            lookaheadGameData.playerBattlefields.get(playerId).add(simultaneousCreature);
+
+            Permanent entering = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
+
+            assertThat(lookaheadService.permanentWouldHaveSubtype(
+                    lookaheadGameData, entering, playerId, List.of(simultaneousCreature), CardSubtype.HUMAN)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Empty simultaneous list means all battlefield permanents are visible")
+        void emptySimultaneousListMeansAllVisible() {
+            Permanent entering = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
+
+            assertThat(lookaheadService.permanentWouldHaveSubtype(
+                    lookaheadGameData, entering, playerId, List.of(), CardSubtype.HUMAN)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Lookahead restores battlefield exactly: entering removed, excluded re-added")
+        void lookaheadCleansUpTemporaryPermanents() {
+            Permanent simEntry = new Permanent(createCreatureCard("Another Bear", List.of(CardSubtype.BEAR)));
+            lookaheadGameData.playerBattlefields.get(playerId).add(simEntry);
+
+            Permanent entering = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
+
+            List<Permanent> bfBefore = new ArrayList<>(lookaheadGameData.playerBattlefields.get(playerId));
+
+            lookaheadService.permanentWouldHaveSubtype(lookaheadGameData, entering, playerId, List.of(simEntry), CardSubtype.HUMAN);
+
+            assertThat(lookaheadGameData.playerBattlefields.get(playerId)).containsExactlyElementsOf(bfBefore);
+        }
+
+        @Test
+        @DisplayName("Lookahead restores battlefield even when static bonus computation fails")
+        void lookaheadCleansUpOnException() {
+            realRegistry.register(GrantSubtypeEffect.class, (context, effect, accumulator) -> {
+                throw new RuntimeException("simulated failure");
+            });
+
+            Card badCard = new Card();
+            badCard.setName("Bad Enchantment");
+            badCard.setType(CardType.ENCHANTMENT);
+            badCard.addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
+            lookaheadGameData.playerBattlefields.get(playerId).add(new Permanent(badCard));
+
+            Permanent entering = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
+            List<Permanent> bfBefore = new ArrayList<>(lookaheadGameData.playerBattlefields.get(playerId));
+
+            try {
+                lookaheadService.permanentWouldHaveSubtype(lookaheadGameData, entering, playerId, List.of(), CardSubtype.HUMAN);
+            } catch (RuntimeException ignored) {
+                // expected
+            }
+
+            assertThat(lookaheadGameData.playerBattlefields.get(playerId)).containsExactlyElementsOf(bfBefore);
+        }
     }
 }
