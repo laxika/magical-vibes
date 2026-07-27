@@ -10,10 +10,9 @@ import java.util.UUID;
  * serviced; consumers scan the queue for the first entry of the kind they handle (see the
  * type-filtered helpers on {@link GameData}), which preserves FIFO order per kind.
  *
- * <p>This is the unification point for the legacy pending-choice subsystem: the
- * {@link PermanentChoiceContext} records are the first members, and the remaining
- * {@code Pending*} / {@code ChoiceContext} shapes migrate here incrementally
- * (see {@code REFACTOR-NOTES.md} at the repository root).
+ * <p>This is the unification point for the pending-choice subsystem: the
+ * {@link PermanentChoiceContext} records are members alongside the other
+ * {@code Pending*} / {@code ChoiceContext} shapes, so every queued decision has one type.
  */
 public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingSphinxAmbassadorChoice, PendingCapriciousEfreetState,

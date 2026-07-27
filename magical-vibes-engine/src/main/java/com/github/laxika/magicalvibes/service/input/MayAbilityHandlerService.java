@@ -157,7 +157,7 @@ public class MayAbilityHandlerService {
 
         // Registry dispatch (mayfx): route to the first effect in the ability's list that has a
         // migrated handler. No card bundles two registered may-effect types at the top level of
-        // effects(), so list order matches the old fixed code-order chain (see refactor-docs).
+        // effects(), so list order matches the old fixed code-order chain.
         for (CardEffect effect : ability.effects()) {
             var mayHandler = mayEffectHandlerRegistry.getHandler(effect);
             if (mayHandler != null) {
