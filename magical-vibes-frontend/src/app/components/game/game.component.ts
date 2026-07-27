@@ -10,6 +10,7 @@ import { MulliganModalComponent } from './mulligan-modal/mulligan-modal.componen
 import { SidePanelComponent } from './side-panel/side-panel.component';
 import { ModifierTooltipComponent } from './modifier-tooltip/modifier-tooltip.component';
 import { IndexedPermanent, AttachedAura, LandStack, canFormAttackingBand, splitBattlefield, stackBasicLands, getAttachedAuras, isLandStack, isPermanentCreature, isPermanentArtifact, isPermanentLand } from './battlefield.utils';
+import { BattlefieldFitModel, BattlefieldSide } from './battlefield-zoom';
 import { Subscription } from 'rxjs';
 import { manaSymbolHtml } from '../../utils/mana-symbols';
 import { PermanentClickResolverService } from '../../services/permanent-click-resolver.service';
@@ -311,217 +312,48 @@ export class GameComponent implements OnInit, OnDestroy {
     return this.game()?.battlefields?.[this.opponentPlayerIndex] ?? [];
   }
 
-  /* Dimensions mirrored from shared-game-styles.css, used to fit both
-     battlefields into the area's flex-allocated size. */
-  private static readonly CARD_HEIGHT = 231;
-  private static readonly CARD_WIDTH = 165;
-  /* A tapped card reserves its full rotated footprint (full size, neighbours
-     shift aside — overlapping or shrinking tapped cards were both rejected).
-     Widths are therefore tap-accurate: tapping can re-wrap a crowded row and,
-     rarely, change the side's zoom — the accepted tradeoff. */
-  private static readonly TAPPED_CARD_WIDTH = 231;
-  /* Box offset between stacked basic lands: the visible strip of each land. */
-  private static readonly STACK_STRIP = 32;
-  /* Vertical step between stacked basic lands (MTGO-style diagonal fan);
-     matches the horizontal STACK_STRIP. */
-  private static readonly LAND_STACK_Y_STEP = 32;
-  private static readonly ROW_GAP = 10;
-  /* Attached auras peek out from under their host: 50px to the side
-     (margin-left) and 41px above (231px card minus the -190px overlap). */
-  private static readonly AURA_X_OFFSET = 50;
-  private static readonly AURA_STRIP = 41;
-  private static readonly LANDS_ROW_MODIFIER = 0.9;
-  private static readonly SUB_ROW_PADDING = 8;
-  private static readonly SIDE_LABEL_HEIGHT = 0;
-  /* CSS zoom rounds each scaled line up to whole pixels, so a modeled line runs
-     a few px short of what renders; this per-line and global slack keeps the
-     model a hair conservative so a tight fit shrinks instead of hairline-scrolling. */
-  private static readonly LINE_SLACK = 3;
-  private static readonly FIT_SAFETY = 12;
-  private static readonly ROW_MARGIN = 0;
-  private static readonly EMPTY_MESSAGE_HEIGHT = 20;
-  private static readonly REVEALED_ROW_HEIGHT = 250;
-  /* The divider between the two halves; grows to a visible red line during combat. */
-  private static readonly DIVIDER_HEIGHT = 3;
-  /* Clear strip between each side and the divider (the divider's CSS margin)
-     that attacking/blocking creatures advance into via the ±30px combat nudge,
-     so combat cards never overlap the opposing row. */
-  private static readonly COMBAT_CORRIDOR = 30;
-  /* Low floor so an unbalanced board (one side's content is much taller than
-     half) scales its cards down to stay inside its half instead of scrolling. */
-  private static readonly MIN_BATTLEFIELD_ZOOM = 0.3;
-  /* Cards never render above 80% of natural size; they only shrink further to fit. */
-  private static readonly MAX_BATTLEFIELD_ZOOM = 0.8;
+  /* The fit model lives in battlefield-zoom.ts so the tutorial's fake board sizes its
+     cards exactly like a real one. Auras and exiled-with cards only exist here, so the
+     tucked-card hook is the only part the game supplies. */
+  private readonly fitModel = new BattlefieldFitModel(perm =>
+    this.getAttachedAuras(perm.id).length + this.exiledWithCount(perm));
 
-  /** Greedy flex-wrap simulation: how many lines the given item widths need. */
-  private static packedLines(widths: number[], gap: number, rowWidth: number): number {
-    let lines = 1;
-    let x = 0;
-    for (const w of widths) {
-      const next = x === 0 ? w : x + gap + w;
-      if (next > rowWidth && x > 0) {
-        lines++;
-        x = w;
-      } else {
-        x = next;
-      }
-    }
-    return lines;
-  }
-
-  /** Footprint width (zoom 1) of a permanent plus any attached auras or exiled-with cards. */
-  private stackWidth(perm: Permanent): number {
-    const C = GameComponent;
-    const base = perm.tapped ? C.TAPPED_CARD_WIDTH : C.CARD_WIDTH;
-    const tucked = this.getAttachedAuras(perm.id).length + this.exiledWithCount(perm);
-    return base + (tucked > 0 ? C.AURA_X_OFFSET : 0);
-  }
-
-  /** Reserved footprint height (zoom 1) of a permanent plus any attached auras.
-      Tap state is intentionally ignored: a tapped card renders shorter (rotated,
-      165px), but if the modeled height shrank on tap the whole side's cards would
-      rescale every time a land is tapped for mana or a creature attacks. Reserving
-      the upright height keeps the per-side zoom stable across tap/untap — a tapped
-      card just leaves a little unused vertical space, never an overflow. */
-  private stackHeight(perm: Permanent): number {
-    const C = GameComponent;
-    return C.CARD_HEIGHT + (this.getAttachedAuras(perm.id).length + this.exiledWithCount(perm)) * C.AURA_STRIP;
-  }
-
-  /** Height of one player's battlefield (creatures row + lands row + revealed rows)
-      at the given zoom, including horizontal wrapping of crowded rows. */
-  private computeSideHeight(
-    creatures: IndexedPermanent[],
-    lands: (IndexedPermanent | LandStack)[],
-    isEmpty: boolean,
-    revealedRows: number,
-    zoom: number,
-    rowWidth: number,
-  ): number {
-    const C = GameComponent;
-    const rowHeight = (widths: number[], lineHeight: number): number => {
-      if (widths.length === 0) return 0;
-      const lines = C.packedLines(widths, C.ROW_GAP, rowWidth);
-      return lines * (Math.ceil(lineHeight) + C.LINE_SLACK) + (lines - 1) * C.ROW_GAP + C.SUB_ROW_PADDING;
+  private get opponentSide(): BattlefieldSide {
+    return {
+      creatures: this.opponentCreatures(),
+      lands: this.opponentLandStacks,
+      isEmpty: this.opponentBattlefield.length === 0,
+      revealedRows: (this.opponentHand.length > 0 ? 1 : 0) + (this.opponentRevealedTopCard.length > 0 ? 1 : 0),
     };
-    /* Auras and cards exiled with a permanent peek out past their host, and a stack
-       holding any is that much bigger. Reserved for the stack as a whole rather than per
-       member: over-reserving keeps the fit conservative, and it makes a one-land stack
-       measure exactly like the bare land it replaced, which is what stackBasicLands now
-       emits for a single basic. */
-    const tuckedCount = (perm: Permanent): number =>
-      this.getAttachedAuras(perm.id).length + this.exiledWithCount(perm);
-    const landItemWidth = (item: IndexedPermanent | LandStack, landZoom: number): number => {
-      if (isLandStack(item)) {
-        /* Each land after the first advances by its predecessor's visible
-           strip, so the stack ends at the LAST land's box: strips + that
-           land's (tap-dependent) width. Mirrors the land-stack CSS margins. */
-        const last = item.lands[item.lands.length - 1].perm;
-        const lastWidth = last.tapped ? C.TAPPED_CARD_WIDTH : C.CARD_WIDTH;
-        const tucked = item.lands.some(ip => tuckedCount(ip.perm) > 0) ? C.AURA_X_OFFSET : 0;
-        return ((item.lands.length - 1) * C.STACK_STRIP + lastWidth + tucked) * landZoom;
-      }
-      return this.stackWidth(item.perm) * landZoom;
+  }
+
+  private get mySide(): BattlefieldSide {
+    return {
+      creatures: this.myCreatures(),
+      lands: this.myLandStacks,
+      isEmpty: this.myBattlefield.length === 0,
+      revealedRows: (this.myRevealedTopCard.length > 0 ? 1 : 0) + (this.playableExileCards().length > 0 ? 1 : 0),
     };
-    /* Reserve the upright line height regardless of tap state so the lands row
-       (and thus the side's zoom) doesn't jump when lands tap/untap; see stackHeight. */
-    const landItemHeight = (item: IndexedPermanent | LandStack): number => {
-      if (isLandStack(item)) {
-        /* Each land after the first steps down by LAND_STACK_Y_STEP, so the
-           stack is one card plus the accumulated vertical fan. */
-        const tucked = Math.max(0, ...item.lands.map(ip => tuckedCount(ip.perm)));
-        return C.CARD_HEIGHT + (item.lands.length - 1) * C.LAND_STACK_Y_STEP + tucked * C.AURA_STRIP;
-      }
-      return this.stackHeight(item.perm);
-    };
-
-    let h = C.SIDE_LABEL_HEIGHT + C.ROW_MARGIN + revealedRows * C.REVEALED_ROW_HEIGHT;
-    if (isEmpty) {
-      return h + C.EMPTY_MESSAGE_HEIGHT;
-    }
-    const creatureLine = creatures.length > 0
-      ? Math.max(...creatures.map(ip => this.stackHeight(ip.perm)))
-      : 0;
-    h += rowHeight(creatures.map(ip => this.stackWidth(ip.perm) * zoom), creatureLine * zoom);
-    const landZoom = zoom * C.LANDS_ROW_MODIFIER;
-    const landLine = lands.length > 0 ? Math.max(...lands.map(landItemHeight)) : 0;
-    h += rowHeight(lands.map(item => landItemWidth(item, landZoom)), landLine * landZoom);
-    return h;
-  }
-
-  private opponentSideHeight(zoom: number, rowWidth: number): number {
-    return this.computeSideHeight(
-      this.opponentCreatures(),
-      this.opponentLandStacks,
-      this.opponentBattlefield.length === 0,
-      (this.opponentHand.length > 0 ? 1 : 0) + (this.opponentRevealedTopCard.length > 0 ? 1 : 0),
-      zoom, rowWidth);
-  }
-
-  private mySideHeight(zoom: number, rowWidth: number): number {
-    return this.computeSideHeight(
-      this.myCreatures(),
-      this.myLandStacks,
-      this.myBattlefield.length === 0,
-      (this.myRevealedTopCard.length > 0 ? 1 : 0) + (this.playableExileCards().length > 0 ? 1 : 0),
-      zoom, rowWidth);
-  }
-
-  /** Total board height at the given zoom. The two players are flex halves, so
-      the board fits when the taller side fits into its half; the divider (red
-      during combat) sits between them. Combat doesn't add its own space — the
-      attacking/blocking creatures stay in their rows and merely nudge toward the
-      divider — so the fit is the same in and out of combat. */
-  private modeledBoardHeight(zoom: number, rowWidth: number): number {
-    const C = GameComponent;
-    const total = 2 * Math.max(
-      this.opponentSideHeight(zoom, rowWidth),
-      this.mySideHeight(zoom, rowWidth));
-    return total + C.DIVIDER_HEIGHT + 2 * C.COMBAT_CORRIDOR;
-  }
-
-  /** Largest zoom (MAX→MIN) at which one side's content fits in its half of the
-      area. Each half = (area - safety - divider - corridors) / 2, matching the
-      flex layout. */
-  private sideZoom(sideHeightAtZoom: (zoom: number, width: number) => number): number {
-    const C = GameComponent;
-    const { width, height } = this.battlefieldAreaSize();
-    if (!width || !height) return 1;
-    const budget = (height - C.FIT_SAFETY - C.DIVIDER_HEIGHT) / 2 - C.COMBAT_CORRIDOR;
-    for (let z = C.MAX_BATTLEFIELD_ZOOM; z > C.MIN_BATTLEFIELD_ZOOM; z -= 0.02) {
-      if (sideHeightAtZoom(z, width) <= budget) {
-        return Math.round(z * 100) / 100;
-      }
-    }
-    return C.MIN_BATTLEFIELD_ZOOM;
   }
 
   /* Each player's row is zoomed to fit only its own content into its own half, so
      the opponent's board never resizes our cards (and vice versa) — unchanged by
      combat, since combat creatures stay in their rows at the same size. */
   get myBattlefieldZoom(): number {
-    return this.sideZoom((z, w) => this.mySideHeight(z, w));
+    return this.fitModel.sideZoom(this.mySide, this.battlefieldAreaSize());
   }
 
   get opponentBattlefieldZoom(): number {
-    return this.sideZoom((z, w) => this.opponentSideHeight(z, w));
+    return this.fitModel.sideZoom(this.opponentSide, this.battlefieldAreaSize());
   }
 
   /** Board-wide zoom, kept as the battlefield area's fallback density. */
   get battlefieldZoom(): number {
-    const { width, height } = this.battlefieldAreaSize();
-    if (!width || !height) return 1;
-    const budget = height - GameComponent.FIT_SAFETY;
-    for (let z = GameComponent.MAX_BATTLEFIELD_ZOOM; z > GameComponent.MIN_BATTLEFIELD_ZOOM; z -= 0.02) {
-      if (this.modeledBoardHeight(z, width) <= budget) {
-        return Math.round(z * 100) / 100;
-      }
-    }
-    return GameComponent.MIN_BATTLEFIELD_ZOOM;
+    return this.fitModel.boardZoom([this.mySide, this.opponentSide], this.battlefieldAreaSize());
   }
 
   get handZoom(): number {
-    return this.hand.length > 9 ? 0.6 : 0.68;
+    return BattlefieldFitModel.handZoom(this.hand.length);
   }
 
   get myGraveyard(): Card[] {
@@ -1220,7 +1052,7 @@ export class GameComponent implements OnInit, OnDestroy {
   /* Center-to-center spacing between co-blockers fanned under one attacker:
      a full card width plus the row gap, so they sit side by side instead of
      overlapping ("merging") each other. */
-  private static readonly BLOCKER_SPREAD = GameComponent.CARD_WIDTH + GameComponent.ROW_GAP;
+  private static readonly BLOCKER_SPREAD = BattlefieldFitModel.CARD_WIDTH + BattlefieldFitModel.ROW_GAP;
 
   private battlefieldAreaEl: HTMLElement | null = null;
   private combatShiftFrame: number | null = null;
@@ -1309,7 +1141,7 @@ export class GameComponent implements OnInit, OnDestroy {
       each other. Works in screen px on the transform-free stack rects; pushes
       go into the same local-px shift map as the blocker alignment. */
   private resolveRowOverlaps(creatures: IndexedPermanent[], zoom: number, next: Map<string, number>, area: HTMLElement): void {
-    const gap = GameComponent.ROW_GAP * zoom;
+    const gap = BattlefieldFitModel.ROW_GAP * zoom;
     type Box = { id: string; left: number; right: number; top: number; bottom: number; aligned: boolean };
     const boxes: Box[] = [];
     for (const ip of creatures) {

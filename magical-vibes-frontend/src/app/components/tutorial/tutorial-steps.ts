@@ -2,10 +2,14 @@ export interface TutorialStep {
   id: string;
   title: string;
   description: string;
+  /** Replaces `description` on phone layouts, where there is no hover and no side-panel
+      preview panel — those steps have to describe the long-press instead. */
+  phoneDescription?: string;
   targetSelector: string;
   tooltipPosition: 'top' | 'bottom' | 'left' | 'right' | 'center';
   interactive?: boolean;
   interactionHint?: string;
+  phoneInteractionHint?: string;
   advanceButtonText?: string;
 }
 
@@ -36,6 +40,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'your-creatures',
     title: 'Your Creatures',
     description: 'Your creatures sit above your lands. You can see their power/toughness on the card. Creatures with summoning sickness (just entered the battlefield) appear slightly faded and can\'t attack yet. Hover any card to see a full-size preview in the side panel.',
+    phoneDescription: 'Your creatures sit above your lands. You can see their power/toughness on the card. Creatures with summoning sickness (just entered the battlefield) appear slightly faded and can\'t attack yet. Press and hold any card to see it full size.',
     targetSelector: '.my-creatures-row',
     tooltipPosition: 'bottom'
   },
@@ -67,7 +72,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     targetSelector: '.tutorial-interactive-target',
     tooltipPosition: 'right',
     interactive: true,
-    interactionHint: 'Click an untapped Forest to tap it for mana.'
+    interactionHint: 'Click an untapped Forest to tap it for mana.',
+    phoneInteractionHint: 'Tap an untapped Forest to tap it for mana.'
   },
   {
     id: 'mana-pool',
@@ -87,6 +93,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'side-panel',
     title: 'Side Panel',
     description: 'The side panel shows a full-size preview of whatever card you hover. Below it are tabs for the game log, the stack (spells waiting to resolve), and both graveyards.',
+    phoneDescription: 'On a phone the side panel becomes this control strip under the board. Tap a tab to open the game log, the stack (spells waiting to resolve), or either graveyard; tap it again to close.',
     targetSelector: 'app-side-panel',
     tooltipPosition: 'left'
   },

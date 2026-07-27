@@ -1,12 +1,20 @@
-import { Component, AfterViewInit, OnDestroy, signal, computed, ElementRef } from '@angular/core';
+import { Component, AfterViewInit, OnDestroy, ViewChild, signal, computed, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { Game, Card, Permanent, StackEntry, TurnStep, PHASE_GROUPS } from '../../services/websocket.service';
+import { Game, Card, Permanent, TurnStep, PHASE_GROUPS } from '../../services/websocket.service';
 import { CardDisplayComponent } from '../game/card-display/card-display.component';
 import { SidePanelComponent } from '../game/side-panel/side-panel.component';
-import { IndexedPermanent, LandStack, splitBattlefield, stackBasicLands, isLandStack, isPermanentCreature } from '../game/battlefield.utils';
-import { TUTORIAL_MOCK_GAME, TUTORIAL_TAP_FOREST_INDEX } from './tutorial-mock-data';
+import { IndexedPermanent, LandStack, splitBattlefield, stackBasicLands, isLandStack } from '../game/battlefield.utils';
+import { BattlefieldFitModel, BattlefieldSide } from '../game/battlefield-zoom';
+import { PHONE_LAYOUT_MEDIA } from '../../services/card-preview.service';
+import { TUTORIAL_MOCK_GAME } from './tutorial-mock-data';
 import { TUTORIAL_STEPS, TutorialStep } from './tutorial-steps';
+
+/** Template context for the single #permanentStack definition in tutorial.component.html. */
+export interface TutorialStackContext {
+  $implicit: IndexedPermanent;
+  mine: boolean;
+}
 
 /** Container-relative rectangle (not viewport-relative). */
 interface AbsoluteRect {
@@ -16,6 +24,8 @@ interface AbsoluteRect {
   height: number;
   right: number;
   bottom: number;
+  /** Viewport-relative centre, used to pick which screen edge the phone sheet docks to. */
+  viewportMidY: number;
 }
 
 @Component({
@@ -23,7 +33,7 @@ interface AbsoluteRect {
   standalone: true,
   imports: [CommonModule, CardDisplayComponent, SidePanelComponent],
   templateUrl: './tutorial.component.html',
-  styleUrls: ['../game/shared-game-styles.css', './tutorial.component.css']
+  styleUrls: ['../game/shared-game-styles.css', '../game/game-phone.css', './tutorial.component.css']
 })
 export class TutorialComponent implements AfterViewInit, OnDestroy {
   game = signal<Game>(structuredClone(TUTORIAL_MOCK_GAME));
@@ -49,6 +59,36 @@ export class TutorialComponent implements AfterViewInit, OnDestroy {
 
   private resizeObserver: ResizeObserver | null = null;
 
+  /* Phone layout is the game screen's, shared wholesale: game-phone.css is in this
+     component's styleUrls and SidePanelComponent brings its own phone rules, so the
+     board/hand/panel all reflow exactly like a real match. Only the walkthrough
+     chrome — the tooltip and the copy that says "hover" — needs its own handling. */
+  readonly isPhoneLayout = signal(false);
+  private phoneMedia: MediaQueryList | null = null;
+  private readonly onPhoneMediaChange = (e: MediaQueryListEvent) => {
+    this.isPhoneLayout.set(e.matches);
+    this.updateSpotlight();
+  };
+
+  /* The board is sized by the real game's fit model, so a tutorial board renders its
+     cards at exactly the size the same board would have in a match — the walkthrough
+     tells the player "cards shrink as more permanents enter play", and this is what
+     makes that true here. The area's allocated size is measured the same way too. */
+  private battlefieldAreaObserver: ResizeObserver | null = null;
+  readonly battlefieldAreaSize = signal<{ width: number; height: number }>({ width: 0, height: 0 });
+  private readonly fitModel = new BattlefieldFitModel();
+
+  @ViewChild('battlefieldArea')
+  set battlefieldArea(ref: ElementRef<HTMLElement> | undefined) {
+    this.battlefieldAreaObserver?.disconnect();
+    if (!ref) return;
+    this.battlefieldAreaObserver ??= new ResizeObserver(entries => {
+      const rect = entries[entries.length - 1].contentRect;
+      this.battlefieldAreaSize.set({ width: rect.width, height: rect.height });
+    });
+    this.battlefieldAreaObserver.observe(ref.nativeElement);
+  }
+
   constructor(
     private router: Router,
     private elementRef: ElementRef
@@ -59,10 +99,16 @@ export class TutorialComponent implements AfterViewInit, OnDestroy {
 
     this.resizeObserver = new ResizeObserver(() => this.updateSpotlight());
     this.resizeObserver.observe(this.elementRef.nativeElement);
+
+    this.phoneMedia = window.matchMedia(PHONE_LAYOUT_MEDIA);
+    this.isPhoneLayout.set(this.phoneMedia.matches);
+    this.phoneMedia.addEventListener('change', this.onPhoneMediaChange);
   }
 
   ngOnDestroy(): void {
     this.resizeObserver?.disconnect();
+    this.battlefieldAreaObserver?.disconnect();
+    this.phoneMedia?.removeEventListener('change', this.onPhoneMediaChange);
   }
 
   // ========== Step navigation ==========
@@ -122,6 +168,7 @@ export class TutorialComponent implements AfterViewInit, OnDestroy {
       height: elRect.height,
       right: elRect.right - containerRect.left,
       bottom: elRect.bottom - containerRect.top,
+      viewportMidY: elRect.top + elRect.height / 2,
     });
 
     // Scroll target element into view so the user can see it + the tooltip
@@ -143,9 +190,27 @@ export class TutorialComponent implements AfterViewInit, OnDestroy {
     return this.currentStep().tooltipPosition === 'center';
   }
 
+  /**
+   * On a phone there is no room to park a 400px card next to anything, so the tooltip
+   * becomes a sheet pinned to whichever screen edge is AWAY from the thing being
+   * explained — otherwise the sheet covers its own subject. Centered steps stay centered.
+   */
+  phoneTooltipEdge = computed<'top' | 'bottom' | null>(() => {
+    if (!this.isPhoneLayout()) return null;
+    const rect = this.spotlightRect();
+    if (this.currentStep().tooltipPosition === 'center' || !rect) return null;
+    return rect.viewportMidY < window.innerHeight / 2 ? 'bottom' : 'top';
+  });
+
   tooltipStyle = computed(() => {
     const step = this.currentStep();
     const rect = this.spotlightRect();
+
+    // Anchored positions assume a desktop-sized viewport; the phone sheet is placed
+    // entirely by CSS, and inline styles would outrank it.
+    if (this.isPhoneLayout()) {
+      return {};
+    }
 
     // Center tooltips use position: fixed via CSS class — no inline style needed
     if (step.tooltipPosition === 'center' || !rect) {
@@ -223,6 +288,12 @@ export class TutorialComponent implements AfterViewInit, OnDestroy {
     return this.game().battlefields[1] ?? [];
   }
 
+  /** Drives the same "whose turn it is" glow the real board paints on the active half. */
+  isActivePlayer(playerIndex: number): boolean {
+    const g = this.game();
+    return g.activePlayerId === g.playerIds[playerIndex];
+  }
+
   get myLandStacks(): (IndexedPermanent | LandStack)[] {
     return stackBasicLands(splitBattlefield(this.myBattlefield).lands);
   }
@@ -237,6 +308,44 @@ export class TutorialComponent implements AfterViewInit, OnDestroy {
 
   get opponentCreatures(): IndexedPermanent[] {
     return splitBattlefield(this.opponentBattlefield).creatures;
+  }
+
+  // ========== Card sizing (shared with the real game) ==========
+
+  /* The mock board has no auras, no cards exiled with a permanent and no revealed
+     rows, so a side is just its two rows. */
+  private get mySide(): BattlefieldSide {
+    return {
+      creatures: this.myCreatures,
+      lands: this.myLandStacks,
+      isEmpty: this.myBattlefield.length === 0,
+      revealedRows: 0,
+    };
+  }
+
+  private get opponentSide(): BattlefieldSide {
+    return {
+      creatures: this.opponentCreatures,
+      lands: this.opponentLandStacks,
+      isEmpty: this.opponentBattlefield.length === 0,
+      revealedRows: 0,
+    };
+  }
+
+  get myBattlefieldZoom(): number {
+    return this.fitModel.sideZoom(this.mySide, this.battlefieldAreaSize());
+  }
+
+  get opponentBattlefieldZoom(): number {
+    return this.fitModel.sideZoom(this.opponentSide, this.battlefieldAreaSize());
+  }
+
+  get battlefieldZoom(): number {
+    return this.fitModel.boardZoom([this.mySide, this.opponentSide], this.battlefieldAreaSize());
+  }
+
+  get handZoom(): number {
+    return BattlefieldFitModel.handZoom(this.game().hand.length);
   }
 
   /** Simple playability check for tutorial: card is playable if total mana >= number of mana symbols in cost. */
@@ -257,6 +366,10 @@ export class TutorialComponent implements AfterViewInit, OnDestroy {
 
   isLandStack(item: IndexedPermanent | LandStack): item is LandStack {
     return isLandStack(item);
+  }
+
+  stackCtx(ip: IndexedPermanent, mine: boolean): TutorialStackContext {
+    return { $implicit: ip, mine };
   }
 
   landStackTrackKey(item: IndexedPermanent | LandStack): string {

@@ -44,45 +44,46 @@
       </div>
     </div>
 
-    <div class="battlefield-area">
+    <!-- Mirrors the real board's #permanentStack: same wrapper element, same classes, so
+         the shared fit model sizes what it measures. Only `mine` permanents are clickable —
+         the tap-a-land step indexes into OUR battlefield, so an opponent card must never
+         reach onTutorialCardClick. -->
+    <ng-template #permanentStack let-ip let-mine="mine">
+      <div class="permanent-stack">
+        <app-card-display
+          [card]="ip.perm.card"
+          [permanent]="ip.perm"
+          [class.tapped]="ip.perm.tapped"
+          [class.summoning-sick]="ip.perm.summoningSick"
+          [class.tutorial-interactive-target]="mine && isTutorialInteractiveTarget(ip.originalIndex)"
+          (click)="mine && onTutorialCardClick(ip.originalIndex)"
+          (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
+          (mouseleave)="onCardHoverEnd()" />
+      </div>
+    </ng-template>
+
+    <div class="battlefield-area" #battlefieldArea [style.--density-zoom]="battlefieldZoom">
       <!-- Opponent's battlefield -->
-      <div class="battlefield-row opponent-battlefield">
+      <div class="battlefield-row opponent-battlefield" [style.--density-zoom]="opponentBattlefieldZoom"
+        [class.active-turn]="isActivePlayer(1)">
         <div class="battlefield-sub-row lands-row">
           @for (item of opponentLandStacks; track landStackTrackKey(item)) {
             @if (isLandStack(item)) {
               <div class="land-stack" [attr.data-stack-size]="item.lands.length">
                 @for (ip of item.lands; track ip.perm.id) {
                   <div class="land-stack-item">
-                    <div class="permanent-stack">
-                      <app-card-display
-                        [card]="ip.perm.card"
-                        [permanent]="ip.perm"
-                        [class.tapped]="ip.perm.tapped"
-                        (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
-                        (mouseleave)="onCardHoverEnd()" />
-                    </div>
+                    <ng-container [ngTemplateOutlet]="permanentStack" [ngTemplateOutletContext]="stackCtx(ip, false)"></ng-container>
                   </div>
                 }
               </div>
             } @else {
-              <app-card-display
-                [card]="item.perm.card"
-                [permanent]="item.perm"
-                [class.tapped]="item.perm.tapped"
-                (mouseenter)="onCardHover(item.perm.card, item.perm)"
-                (mouseleave)="onCardHoverEnd()" />
+              <ng-container [ngTemplateOutlet]="permanentStack" [ngTemplateOutletContext]="stackCtx(item, false)"></ng-container>
             }
           }
         </div>
         <div class="battlefield-sub-row creatures-row">
           @for (ip of opponentCreatures; track ip.perm.id) {
-            <app-card-display
-              [card]="ip.perm.card"
-              [permanent]="ip.perm"
-              [class.tapped]="ip.perm.tapped"
-              [class.summoning-sick]="ip.perm.summoningSick"
-              (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
-              (mouseleave)="onCardHoverEnd()" />
+            <ng-container [ngTemplateOutlet]="permanentStack" [ngTemplateOutletContext]="stackCtx(ip, false)"></ng-container>
           }
         </div>
         @if (opponentBattlefield.length === 0) {
@@ -93,16 +94,11 @@
       <div class="battlefield-divider"></div>
 
       <!-- Your battlefield -->
-      <div class="battlefield-row">
+      <div class="battlefield-row" [style.--density-zoom]="myBattlefieldZoom"
+        [class.active-turn]="isActivePlayer(0)">
         <div class="battlefield-sub-row creatures-row my-creatures-row">
           @for (ip of myCreatures; track ip.perm.id) {
-            <app-card-display
-              [card]="ip.perm.card"
-              [permanent]="ip.perm"
-              [class.tapped]="ip.perm.tapped"
-              [class.summoning-sick]="ip.perm.summoningSick"
-              (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
-              (mouseleave)="onCardHoverEnd()" />
+            <ng-container [ngTemplateOutlet]="permanentStack" [ngTemplateOutletContext]="stackCtx(ip, true)"></ng-container>
           }
         </div>
         <div class="battlefield-sub-row lands-row my-lands-row">
@@ -111,28 +107,12 @@
               <div class="land-stack" [attr.data-stack-size]="item.lands.length">
                 @for (ip of item.lands; track ip.perm.id) {
                   <div class="land-stack-item">
-                    <div class="permanent-stack">
-                      <app-card-display
-                        [card]="ip.perm.card"
-                        [permanent]="ip.perm"
-                        [class.tapped]="ip.perm.tapped"
-                        [class.tutorial-interactive-target]="isTutorialInteractiveTarget(ip.originalIndex)"
-                        (click)="onTutorialCardClick(ip.originalIndex)"
-                        (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
-                        (mouseleave)="onCardHoverEnd()" />
-                    </div>
+                    <ng-container [ngTemplateOutlet]="permanentStack" [ngTemplateOutletContext]="stackCtx(ip, true)"></ng-container>
                   </div>
                 }
               </div>
             } @else {
-              <app-card-display
-                [card]="item.perm.card"
-                [permanent]="item.perm"
-                [class.tapped]="item.perm.tapped"
-                [class.tutorial-interactive-target]="isTutorialInteractiveTarget(item.originalIndex)"
-                (click)="onTutorialCardClick(item.originalIndex)"
-                (mouseenter)="onCardHover(item.perm.card, item.perm)"
-                (mouseleave)="onCardHoverEnd()" />
+              <ng-container [ngTemplateOutlet]="permanentStack" [ngTemplateOutletContext]="stackCtx(item, true)"></ng-container>
             }
           }
         </div>
@@ -145,7 +125,7 @@
 
     <!-- Hand -->
     <div class="hand-area">
-      <div class="hand-cards">
+      <div class="hand-cards" [style.--density-zoom]="handZoom">
         @for (card of game().hand; track $index) {
           <app-card-display
             [card]="card"
@@ -201,17 +181,24 @@
       (cardHoverEnd)="onCardHoverEnd()" />
   </div>
 
-  <!-- Transparent click-blocker — prevents interaction with game elements -->
-  <div class="tutorial-backdrop" [class.interactive-step]="currentStep().interactive"></div>
+  <!-- There is deliberately no click-blocking backdrop. One used to cover the board, but
+       pointer-events: auto on a full-container overlay also swallowed mouseenter and
+       touchstart, which killed the hover preview this walkthrough advertises and would
+       have killed the phone long-press preview outright. Nothing behind it needs
+       blocking: the board's only click handler is the tap-a-land one, already gated to
+       its own interactive step, and the side panel is inert here (its outputs are
+       unbound), so letting taps through is what makes its phone tab strip explorable. -->
 
   <div class="tutorial-tooltip"
        [class.center]="currentStep().tooltipPosition === 'center'"
+       [class.phone-sheet-top]="phoneTooltipEdge() === 'top'"
+       [class.phone-sheet-bottom]="phoneTooltipEdge() === 'bottom'"
        [ngStyle]="tooltipStyle()">
     <div class="tutorial-step-counter">Step {{ currentStepIndex() + 1 }} of {{ steps.length }}</div>
     <h3>{{ currentStep().title }}</h3>
-    <p>{{ currentStep().description }}</p>
+    <p>{{ (isPhoneLayout() && currentStep().phoneDescription) || currentStep().description }}</p>
     @if (currentStep().interactive) {
-      <p class="tutorial-hint">{{ currentStep().interactionHint }}</p>
+      <p class="tutorial-hint">{{ (isPhoneLayout() && currentStep().phoneInteractionHint) || currentStep().interactionHint }}</p>
     } @else {
       <div class="tutorial-buttons">
         @if (currentStepIndex() > 0) {
