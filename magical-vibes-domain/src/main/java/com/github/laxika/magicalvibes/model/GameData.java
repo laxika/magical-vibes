@@ -2108,6 +2108,47 @@ public class GameData {
         });
         copy.pendingImprovisationCapstoneCastQueue.addAll(this.pendingImprovisationCapstoneCastQueue);
 
+        // --- Turn-scoped counters ---
+        // Read by ConditionEvaluationService / AmountEvaluationService / TurnProgressionService and
+        // only reset at cleanup, so a copy taken mid-turn must carry them.
+        copy.lifeLostThisTurn.putAll(this.lifeLostThisTurn);
+        copy.skipNextCombatPhaseCount.putAll(this.skipNextCombatPhaseCount);
+        copy.lastClashWonByController.putAll(this.lastClashWonByController);
+        copy.manaAbilityResolutionDepth = this.manaAbilityResolutionDepth;
+        this.permanentTypesCastFromGraveyardThisTurn.forEach((k, v) ->
+                copy.permanentTypesCastFromGraveyardThisTurn.put(k, new HashSet<>(v)));
+
+        // --- Spell-cast payment tracking (X / converge / colors spent) ---
+        copy.spellCastManaSpent.putAll(this.spellCastManaSpent);
+        copy.spellCastConvergeValue.putAll(this.spellCastConvergeValue);
+        this.spellCastColorsSpent.forEach((k, v) ->
+                copy.spellCastColorsSpent.put(k, java.util.EnumSet.copyOf(v)));
+        this.spellCastManaSpentOnX.forEach((k, v) ->
+                copy.spellCastManaSpentOnX.put(k, new java.util.EnumMap<>(v)));
+        copy.revertableManaActivations.addAll(this.revertableManaActivations);
+
+        // --- Until-end-of-turn casting permissions ---
+        copy.cardsGrantedFlashbackUntilEndOfTurn.addAll(this.cardsGrantedFlashbackUntilEndOfTurn);
+        copy.mayTapLandsForSpellsUntilEndOfTurn.addAll(this.mayTapLandsForSpellsUntilEndOfTurn);
+        copy.mayPayLifeForColorlessManaUntilEndOfTurn.addAll(this.mayPayLifeForColorlessManaUntilEndOfTurn);
+        copy.graveyardCreatureCastPermissionsUntilEndOfTurn.putAll(this.graveyardCreatureCastPermissionsUntilEndOfTurn);
+
+        // --- Damage prevention / redirection still pending ---
+        copy.permanentsPreventedFromDealingDamage.addAll(this.permanentsPreventedFromDealingDamage);
+        copy.pendingRedirectDamage.addAll(this.pendingRedirectDamage);
+        copy.pendingSourceRedirectDamage.addAll(this.pendingSourceRedirectDamage);
+        copy.permanentsToTapWhenControlLost.addAll(this.permanentsToTapWhenControlLost);
+
+        // --- Pending discard / search follow-ups (immutable, so the reference is safe to share) ---
+        copy.pendingReturnToHandOnDiscardType = this.pendingReturnToHandOnDiscardType;
+        copy.pendingTransformOnCreatureDiscard = this.pendingTransformOnCreatureDiscard;
+        copy.pendingBoostSourceByDiscardedManaValue = this.pendingBoostSourceByDiscardedManaValue;
+        copy.pendingSearchContext = this.pendingSearchContext;
+
+        // --- Game-creation config ---
+        copy.allRandom = this.allRandom;
+        copy.randomSetCode = this.randomSetCode;
+
         // --- Game log (share reference for simulation — not read during MCTS) ---
         copy.gameLog.addAll(this.gameLog);
 

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +20,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -230,5 +235,70 @@ class GameDataDeepCopyTest {
                 .containsExactly(
                         new DelayedPermanentAction(a, DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP),
                         new DelayedPermanentAction(b, DelayedPermanentActionKind.DESTROY_AT_END_STEP));
+    }
+
+    @Test
+    @DisplayName("Deep copy preserves turn-scoped counters independently")
+    void deepCopyPreservesTurnScopedCounters() {
+        UUID p1 = player1.getId();
+        gd.lifeLostThisTurn.put(p1, 6);
+        gd.skipNextCombatPhaseCount.put(p1, 2);
+        gd.lastClashWonByController.put(p1, true);
+        gd.permanentTypesCastFromGraveyardThisTurn.put(p1, new HashSet<>(Set.of(CardType.CREATURE)));
+
+        GameData copy = gd.simulationCopy();
+
+        // These persist until cleanup, so a copy taken mid-turn must carry them.
+        assertThat(copy.lifeLostThisTurn).containsEntry(p1, 6);
+        assertThat(copy.skipNextCombatPhaseCount).containsEntry(p1, 2);
+        assertThat(copy.lastClashWonByController).containsEntry(p1, true);
+        assertThat(copy.permanentTypesCastFromGraveyardThisTurn.get(p1)).containsExactly(CardType.CREATURE);
+
+        // Independent — simulating a turn must not write back into the real game.
+        copy.lifeLostThisTurn.put(p1, 99);
+        copy.permanentTypesCastFromGraveyardThisTurn.get(p1).add(CardType.LAND);
+        assertThat(gd.lifeLostThisTurn).containsEntry(p1, 6);
+        assertThat(gd.permanentTypesCastFromGraveyardThisTurn.get(p1)).containsExactly(CardType.CREATURE);
+    }
+
+    @Test
+    @DisplayName("Deep copy preserves spell-cast payment tracking independently")
+    void deepCopyPreservesSpellCastPaymentTracking() {
+        UUID cardId = UUID.randomUUID();
+        gd.spellCastManaSpent.put(cardId, 5);
+        gd.spellCastConvergeValue.put(cardId, 3);
+        gd.spellCastColorsSpent.put(cardId, EnumSet.of(ManaColor.RED, ManaColor.BLUE));
+        EnumMap<ManaColor, Integer> spentOnX = new EnumMap<>(ManaColor.class);
+        spentOnX.put(ManaColor.GREEN, 2);
+        gd.spellCastManaSpentOnX.put(cardId, spentOnX);
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.spellCastManaSpent).containsEntry(cardId, 5);
+        assertThat(copy.spellCastConvergeValue).containsEntry(cardId, 3);
+        assertThat(copy.spellCastColorsSpent.get(cardId)).containsExactlyInAnyOrder(ManaColor.RED, ManaColor.BLUE);
+        assertThat(copy.spellCastManaSpentOnX.get(cardId)).containsEntry(ManaColor.GREEN, 2);
+
+        // Independent — the nested EnumSet/EnumMap are copied, not aliased.
+        copy.spellCastColorsSpent.get(cardId).add(ManaColor.WHITE);
+        copy.spellCastManaSpentOnX.get(cardId).put(ManaColor.GREEN, 7);
+        assertThat(gd.spellCastColorsSpent.get(cardId)).containsExactlyInAnyOrder(ManaColor.RED, ManaColor.BLUE);
+        assertThat(gd.spellCastManaSpentOnX.get(cardId)).containsEntry(ManaColor.GREEN, 2);
+    }
+
+    @Test
+    @DisplayName("Deep copy preserves until-end-of-turn casting permissions independently")
+    void deepCopyPreservesUntilEndOfTurnPermissions() {
+        UUID cardId = UUID.randomUUID();
+        gd.cardsGrantedFlashbackUntilEndOfTurn.add(cardId);
+        gd.mayTapLandsForSpellsUntilEndOfTurn.add(player1.getId());
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.cardsGrantedFlashbackUntilEndOfTurn).contains(cardId);
+        assertThat(copy.mayTapLandsForSpellsUntilEndOfTurn).contains(player1.getId());
+
+        copy.cardsGrantedFlashbackUntilEndOfTurn.clear();
+        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(cardId);
     }
 }
