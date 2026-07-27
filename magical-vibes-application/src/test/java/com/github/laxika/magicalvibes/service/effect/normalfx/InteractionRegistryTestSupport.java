@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.ColorChoiceInteractionHandler;
@@ -39,7 +40,7 @@ final class InteractionRegistryTestSupport {
                 mock(WarpWorldService.class), mock(PlayerInputService.class),
                 mock(TurnProgressionService.class), mock(EffectResolutionService.class)));
         registry.register(new HandTopBottomChoiceInteractionHandler(
-                gameLogService, mock(TurnProgressionService.class)));
+                gameLogService, mock(InputCompletionService.class)));
         registry.register(new ScryInteractionHandler(
                 gameLogService,
                 mock(PlayerInputService.class), mock(TurnProgressionService.class),

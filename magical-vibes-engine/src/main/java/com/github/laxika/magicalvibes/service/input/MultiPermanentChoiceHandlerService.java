@@ -87,12 +87,15 @@ public class MultiPermanentChoiceHandlerService {
         List<UUID> validIds = multiPermanentChoice.validIds();
         int maxCount = multiPermanentChoice.maxCount();
 
-        gameData.interaction.clearAwaitingInput();
-
         if (permanentIds == null) {
             permanentIds = List.of();
         }
 
+        // Validate before touching interaction state: a rejected answer must leave the prompt
+        // standing so the player can answer again. Clearing first and then throwing destroys the
+        // only thing that would resume the entry parked in pendingEffectResolutionEntry, wedging
+        // the game (and with it deferPlayerLossCheck) on nothing worse than a stale client answer
+        // — a permanent that died between prompt and answer is an ordinary race.
         if (permanentIds.size() > maxCount) {
             throw new IllegalStateException("Too many permanents selected: " + permanentIds.size() + " > " + maxCount);
         }
@@ -107,6 +110,8 @@ public class MultiPermanentChoiceHandlerService {
                 throw new IllegalStateException("Invalid permanent: " + permId);
             }
         }
+
+        gameData.interaction.clearAwaitingInput();
 
         MultiPermanentChoiceContext context = multiPermanentChoice.context();
         if (context instanceof MultiPermanentChoiceContext.ExileDamagedPlayerControls) {

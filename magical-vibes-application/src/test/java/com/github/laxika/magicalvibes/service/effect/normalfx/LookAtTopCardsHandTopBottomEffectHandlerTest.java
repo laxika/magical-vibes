@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.interaction.HandTopBottomChoiceInteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -84,7 +84,7 @@ class LookAtTopCardsHandTopBottomEffectHandlerTest {
         InteractionHandlerRegistry interactionHandlerRegistry = new InteractionHandlerRegistry(
                 () -> mock(com.github.laxika.magicalvibes.service.event.GameMutationCoordinator.class));
         interactionHandlerRegistry.register(new HandTopBottomChoiceInteractionHandler(
-                gameLogService, mock(TurnProgressionService.class)));
+                gameLogService, mock(InputCompletionService.class)));
         lookAtTopCardsHandTopBottomEffectHandler = new LookAtTopCardsHandTopBottomEffectHandler(
                 gameLogService, interactionHandlerRegistry, libraryRevealSupport);
 

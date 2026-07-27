@@ -123,6 +123,15 @@ public class CardChoiceHandlerService {
 
         UUID playerId = player.getId();
 
+        // Validate before touching interaction state: a rejected answer must leave the prompt
+        // standing so the player can answer again. Clearing first and then throwing destroys the
+        // only thing that would resume the entry parked in pendingEffectResolutionEntry, wedging
+        // the game (and with it deferPlayerLossCheck) on a stale client answer. The copy below
+        // stays as defence.
+        if (cardIndex != -1 && !validIndices.contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
         gameData.interaction.clearAwaitingInput();
 
         if (cardIndex == -1) {

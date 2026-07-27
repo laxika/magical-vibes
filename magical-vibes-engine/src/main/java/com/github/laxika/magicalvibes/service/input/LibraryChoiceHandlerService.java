@@ -404,12 +404,29 @@ public class LibraryChoiceHandlerService {
             // The chosen card leaves the searched library; the owner then shuffles (the chosen card
             // is already removed so it is not shuffled back). The card is cast under the searcher's
             // control without paying its mana cost (e.g. Knowledge Exploitation).
+            //
+            // Knowledge Exploitation never exiles: "Search target opponent's library for an instant
+            // or sorcery card. You may cast that card without paying its mana cost. Then that player
+            // shuffles." A card that can't be cast (CR 601.2c: no legal target) is therefore simply
+            // left in the library it was found in, and is shuffled back in with the rest.
+            boolean castable = canCastWithoutPaying(gameData, chosenCard);
+            if (!castable) {
+                deck.add(chosenCard);
+            }
             if (shuffleAfterSelection) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
                 if (targetPlayerId != null) {
                     String targetName = gameData.playerIdToName.get(targetPlayerId);
                     gameLogService.append(gameData, GameLog.text(targetName + "'s library is shuffled."));
                 }
+            }
+            if (!castable) {
+                gameLogService.append(gameData, GameLog.cardThen(chosenCard,
+                        " has no legal targets, so it can't be cast and stays in the library."));
+                log.info("Game {} - {} cast-without-paying has no legal targets; card stays in library",
+                        gameData.id, chosenCard.getName());
+                finishSearchAndResume(gameData);
+                return;
             }
             castCardWithoutPaying(gameData, player, chosenCard);
             return;
@@ -1055,6 +1072,18 @@ public class LibraryChoiceHandlerService {
         List<Card> allRevealedCards = libraryRevealChoice.allCards();
         String playerName = gameData.playerIdToName.get(controllerId);
 
+        // Validate before touching interaction state, joining the three checks above: a rejected
+        // answer must leave the prompt standing so the player can answer again. Clearing first and
+        // then throwing destroys the only thing that would resume the entry parked in
+        // pendingEffectResolutionEntry, wedging the game on a stale client answer. The punisher
+        // branch below (Sword-Point Diplomacy) is the only reveal flow with a life cost, and it
+        // reads nothing the clear touches, so hoisting its affordability check is a pure move; the
+        // inner copy stays as defence.
+        if (libraryRevealChoice.lifeCostPerSelection() > 0 && libraryRevealChoice.beneficiaryPlayerId() != null) {
+            requirePunisherLifeAffordable(gameData, cardIds.size(),
+                    libraryRevealChoice.beneficiaryPlayerId(), libraryRevealChoice.lifeCostPerSelection());
+        }
+
         // Clear awaiting state
         gameData.interaction.clearAwaitingInput();
 
@@ -1365,6 +1394,25 @@ public class LibraryChoiceHandlerService {
         finishSearchAndResume(gameData);
     }
 
+    /**
+     * Rejects a punisher reveal answer (Sword-Point Diplomacy) that denies more cards than the
+     * choosing opponent can pay life for. Called both before the prompt is cleared — so a rejected
+     * answer leaves it standing — and again inside the branch as defence.
+     */
+    private void requirePunisherLifeAffordable(GameData gameData, int selectedCount,
+                                               UUID controllerId, int lifeCost) {
+        UUID opponentId = gameData.orderedPlayerIds.stream()
+                .filter(id -> !id.equals(controllerId))
+                .findFirst()
+                .orElseThrow();
+        int totalLifeCost = selectedCount * lifeCost;
+        int opponentLife = gameData.playerLifeTotals.get(opponentId);
+        if (totalLifeCost > opponentLife) {
+            throw new IllegalStateException("Not enough life to pay for " + selectedCount
+                    + " cards (need " + totalLifeCost + ", have " + opponentLife + ")");
+        }
+    }
+
     private void handlePunisherRevealChoice(GameData gameData, List<Card> allRevealedCards,
                                               List<UUID> selectedCardIds,
                                               UUID controllerId, int lifeCost) {
@@ -1378,13 +1426,8 @@ public class LibraryChoiceHandlerService {
                 .orElseThrow();
         String opponentName = gameData.playerIdToName.get(opponentId);
 
-        // Validate opponent can afford to pay for all selected cards
+        requirePunisherLifeAffordable(gameData, selectedCardIds.size(), controllerId, lifeCost);
         int totalLifeCost = selectedCardIds.size() * lifeCost;
-        int opponentLife = gameData.playerLifeTotals.get(opponentId);
-        if (totalLifeCost > opponentLife) {
-            throw new IllegalStateException("Not enough life to pay for " + selectedCardIds.size()
-                    + " cards (need " + totalLifeCost + ", have " + opponentLife + ")");
-        }
 
         // Separate selected (denied) cards from unselected (to hand)
         Set<UUID> deniedIds = new HashSet<>(selectedCardIds);
@@ -1435,9 +1478,15 @@ public class LibraryChoiceHandlerService {
 
 
     /**
-     * Handles the player's choice from a Sunbird's Invocation (or similar) "cast without paying"
-     * reveal. If a card is chosen, it is cast without paying its mana cost; remaining revealed
-     * cards go to the bottom of the library in a random order.
+     * Handles the player's choice from a Sunbird's Invocation (or cascade) "cast without paying"
+     * reveal. If a card is chosen, it is cast without paying its mana cost; every card not cast goes
+     * to the bottom of the library in a random order — Sunbird's "Put the rest on the bottom of your
+     * library in a random order" and cascade's CR 702.85a "put all cards exiled this way that
+     * weren't cast on the bottom of your library in a random order".
+     *
+     * <p>A chosen card with no legal target can't be cast at all (CR 601.2c), so it is one of the
+     * cards not cast: it stays in the pile and is bottomed along with the rest, rather than being
+     * singled out into some other zone.
      */
     private void handleCastWithoutPayingChoice(GameData gameData, Player player, int cardIndex,
                                                 boolean canFailToFind, List<Card> searchCards,
@@ -1445,6 +1494,7 @@ public class LibraryChoiceHandlerService {
         String playerName = player.getUsername();
 
         Card chosenCard = null;
+        boolean uncastable = false;
         if (cardIndex == -1) {
             if (!canFailToFind) {
                 throw new IllegalStateException("Cannot fail to find with an unrestricted search");
@@ -1453,13 +1503,22 @@ public class LibraryChoiceHandlerService {
             if (cardIndex < 0 || cardIndex >= searchCards.size()) {
                 throw new IllegalStateException("Invalid card index: " + cardIndex);
             }
-            chosenCard = searchCards.get(cardIndex);
-            // Remove chosen card from sourceCards
-            for (int i = 0; i < sourceCards.size(); i++) {
-                if (sourceCards.get(i).getId().equals(chosenCard.getId())) {
-                    sourceCards.remove(i);
-                    break;
+            Card picked = searchCards.get(cardIndex);
+            if (canCastWithoutPaying(gameData, picked)) {
+                chosenCard = picked;
+                // Remove chosen card from sourceCards
+                for (int i = 0; i < sourceCards.size(); i++) {
+                    if (sourceCards.get(i).getId().equals(chosenCard.getId())) {
+                        sourceCards.remove(i);
+                        break;
+                    }
                 }
+            } else {
+                uncastable = true;
+                gameLogService.append(gameData, GameLog.cardThen(picked,
+                        " has no legal targets, so it can't be cast."));
+                log.info("Game {} - {} cast-without-paying has no legal targets; card is bottomed",
+                        gameData.id, picked.getName());
             }
         }
 
@@ -1472,9 +1531,11 @@ public class LibraryChoiceHandlerService {
         }
 
         if (chosenCard == null) {
-            String logEntry = playerName + " declines to cast a spell.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
-            log.info("Game {} - {} declines Sunbird's Invocation cast", gameData.id, playerName);
+            if (!uncastable) {
+                String logEntry = playerName + " declines to cast a spell.";
+                gameLogService.append(gameData, GameLog.text(logEntry));
+                log.info("Game {} - {} declines Sunbird's Invocation cast", gameData.id, playerName);
+            }
             finishSearchAndResume(gameData);
             return;
         }
@@ -1518,10 +1579,59 @@ public class LibraryChoiceHandlerService {
     }
 
     /**
+     * The legal targets for casting {@code card} without paying its mana cost, or an empty list
+     * when the card needs a target and none is legal. Only meaningful for cards where
+     * {@link EffectResolution#needsTarget} holds.
+     */
+    private List<UUID> computeCastWithoutPayingTargets(GameData gameData, Card card) {
+        Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(card);
+        List<UUID> validTargets = new ArrayList<>();
+
+        if (allowedTargets.contains(TargetType.PERMANENT)) {
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) continue;
+                for (Permanent p : battlefield) {
+                    if (card.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
+                        if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+                            validTargets.add(p.getId());
+                        }
+                    } else if (gameQueryService.isCreature(gameData, p)) {
+                        validTargets.add(p.getId());
+                    }
+                }
+            }
+        }
+
+        if (allowedTargets.contains(TargetType.PLAYER)) {
+            validTargets.addAll(gameData.orderedPlayerIds);
+        }
+
+        return validTargets;
+    }
+
+    /**
+     * Whether a "you may cast this without paying its mana cost" permission can actually be taken up
+     * for {@code card}. A spell that needs a target but has no legal one can't be cast at all
+     * (CR 601.2c), so the permission simply does nothing and the card stays wherever the effect
+     * leaves the cards it didn't cast — which differs per effect, so the caller decides.
+     *
+     * <p>Callers must consult this before moving the card, and only then call
+     * {@link #castCardWithoutPaying}.
+     */
+    private boolean canCastWithoutPaying(GameData gameData, Card card) {
+        return !EffectResolution.needsTarget(card)
+                || !computeCastWithoutPayingTargets(gameData, card).isEmpty();
+    }
+
+    /**
      * Casts {@code chosenCard} (already removed from its library) under {@code player}'s control
      * without paying its mana cost. Targeted spells begin a target choice; non-targeted spells go
      * straight onto the stack. Shared by Sunbird's Invocation and the CAST_WITHOUT_PAYING library
      * search destination (e.g. Knowledge Exploitation).
+     *
+     * <p>Requires {@link #canCastWithoutPaying} to hold — an uncastable card must never reach here,
+     * because where it goes instead is the calling effect's decision, not this method's.
      */
     private void castCardWithoutPaying(GameData gameData, Player player, Card chosenCard) {
         UUID playerId = player.getId();
@@ -1532,37 +1642,11 @@ public class LibraryChoiceHandlerService {
         List<CardEffect> spellEffects = new ArrayList<>(chosenCard.getEffects(EffectSlot.SPELL));
 
         if (EffectResolution.needsTarget(chosenCard)) {
-            Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(chosenCard);
-            List<UUID> validTargets = new ArrayList<>();
-
-            if (allowedTargets.contains(TargetType.PERMANENT)) {
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                    if (battlefield == null) continue;
-                    for (Permanent p : battlefield) {
-                        if (chosenCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                            if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
-                                validTargets.add(p.getId());
-                            }
-                        } else if (gameQueryService.isCreature(gameData, p)) {
-                            validTargets.add(p.getId());
-                        }
-                    }
-                }
-            }
-
-            if (allowedTargets.contains(TargetType.PLAYER)) {
-                validTargets.addAll(gameData.orderedPlayerIds);
-            }
+            List<UUID> validTargets = computeCastWithoutPayingTargets(gameData, chosenCard);
 
             if (validTargets.isEmpty()) {
-                // No valid targets — card goes to graveyard
-                graveyardService.addCardToGraveyard(gameData, playerId, chosenCard);
-                gameLogService.append(gameData, GameLog.cardThen(chosenCard,
-                        " has no valid targets and is put into the graveyard."));
-                log.info("Game {} - {} cast-without-paying has no valid targets", gameData.id, chosenCard.getName());
-                finishSearchAndResume(gameData);
-                return;
+                throw new IllegalStateException("Uncastable card reached castCardWithoutPaying: "
+                        + chosenCard.getName() + " — callers must check canCastWithoutPaying first");
             }
 
             gameData.interaction.setPermanentChoiceContext(
@@ -1592,7 +1676,11 @@ public class LibraryChoiceHandlerService {
                 gameData.id, playerName, chosenCard.getName());
 
         triggerCollectionService.checkSpellCastTriggers(gameData, chosenCard, playerId, false);
-        inputCompletionService.publishStateAfterInput(gameData);
+        // The free spell now sits on the stack, but the ability that cast it is still parked
+        // mid-resolution. Only the shared tail drains that park; a bare view invalidation leaves it
+        // dangling, which strands any later effect on the same ability and wedges
+        // deferPlayerLossCheck so no player can lose to a state-based action again.
+        finishSearchAndResume(gameData);
     }
 
     /** Appends {@code cards} as comma-separated card segments (each hoverable) to {@code builder}. */

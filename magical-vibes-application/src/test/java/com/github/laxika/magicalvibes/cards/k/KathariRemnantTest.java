@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.a.Assassinate;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -69,6 +70,32 @@ class KathariRemnantTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(se -> se.getCard().getName().equals("Grizzly Bears")
                 && se.getEntryType() == StackEntryType.CREATURE_SPELL);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(belowHit, land, skipped);
+    }
+
+    @Test
+    @DisplayName("A hit with no legal target isn't cast and is bottomed with the other exiled cards")
+    void uncastableHitIsBottomedWithTheRest() {
+        setupCasterTurn();
+
+        // Assassinate ({2}{B}, mana value 3 < 4) is a legal cascade hit, but it can only target a
+        // tapped creature and the battlefield is empty, so it can't be cast at all (CR 601.2c).
+        // CR 702.85a then puts every card exiled this way that wasn't cast on the bottom of the
+        // library — the uncast hit included, not off into some other zone.
+        Assassinate hit = new Assassinate();
+        Mountain land = new Mountain();
+        LlanowarElves belowHit = new LlanowarElves();
+        gd.playerDecks.get(player1.getId()).clear();
+        gd.playerDecks.get(player1.getId()).addAll(List.of(land, hit, belowHit));
+
+        castKathariRemnant();
+        harness.passBothPriorities();
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Assassinate"));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(c -> c.getName().equals("Assassinate"));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(belowHit, land, hit);
     }
 
     @Test

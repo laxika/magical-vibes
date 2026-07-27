@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -26,7 +26,7 @@ public class HandTopBottomChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.HandTopBottomChoice> {
 
     private final GameLogService gameLogService;
-    private final TurnProgressionService turnProgressionService;
+    private final InputCompletionService inputCompletionService;
 
     @Override
     public Class<PendingInteraction.HandTopBottomChoice> handledType() {
@@ -90,6 +90,11 @@ public class HandTopBottomChoiceInteractionHandler
         gameLogService.append(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} completed hand/top/bottom choice", gameData.id, player.getUsername());
 
-        turnProgressionService.resolveAutoPass(gameData);
+        // The distribution is one effect among possibly several on the same spell, so the shared
+        // epilogue must resume the entry parked in pendingEffectResolutionEntry rather than going
+        // straight to auto-pass. Even when the distribution is the last effect the resume is
+        // load-bearing: draining the parked entry is what clears deferPlayerLossCheck, so skipping
+        // it suppresses the 0-life state-based action for the rest of the game.
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 }

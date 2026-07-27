@@ -830,16 +830,21 @@ public class ChoiceHandlerService {
     }
 
     private void handleProtectionColorChoice(GameData gameData, Player player, String chosenValue, ChoiceContext.ProtectionColorChoice ctx) {
+        // Parse before touching interaction state, as the dispatcher's own fallback does: an
+        // unparseable answer must leave the prompt standing, since clearing it first destroys the
+        // only thing that would resume the entry parked in pendingEffectResolutionEntry.
+        CardColor chosenColor = "ARTIFACT".equals(chosenValue) ? null : CardColor.valueOf(chosenValue);
+
         gameData.interaction.clearAwaitingInput();
 
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (target != null) {
-            if ("ARTIFACT".equals(chosenValue)) {
+            if (chosenColor == null) {
                 target.getProtectionFromCardTypes().add(CardType.ARTIFACT);
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gains protection from artifacts until end of turn."));
                 log.info("Game {} - {} gains protection from artifacts until end of turn", gameData.id, target.getCard().getName());
             } else {
-                CardColor color = CardColor.valueOf(chosenValue);
+                CardColor color = chosenColor;
                 target.getProtectionFromColorsUntilEndOfTurn().add(color);
                 String colorName = color.name().charAt(0) + color.name().substring(1).toLowerCase();
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gains protection from " + colorName.toLowerCase() + " until end of turn."));
@@ -855,9 +860,13 @@ public class ChoiceHandlerService {
 
     private void handleMassProtectionColorChoice(GameData gameData, Player player, String chosenValue,
             ChoiceContext.MassProtectionColorChoice ctx) {
+        // Parse before touching interaction state, as the dispatcher's own fallback does: an
+        // unparseable answer must leave the prompt standing, since clearing it first destroys the
+        // only thing that would resume the entry parked in pendingEffectResolutionEntry.
+        CardColor color = CardColor.valueOf(chosenValue);
+
         gameData.interaction.clearAwaitingInput();
 
-        CardColor color = CardColor.valueOf(chosenValue);
         String colorName = color.name().charAt(0) + color.name().substring(1).toLowerCase();
 
         // The controller gains protection from the chosen color until end of turn.
@@ -887,11 +896,16 @@ public class ChoiceHandlerService {
     }
 
     private void handleColorSetChoice(GameData gameData, String chosenValue, ChoiceContext.ColorSetChoice ctx) {
+        // Parse before touching interaction state, as the dispatcher's own fallback does: an
+        // unparseable answer must leave the prompt standing, since clearing it first destroys the
+        // only thing that would resume the entry parked in pendingEffectResolutionEntry.
+        CardColor chosenColor = CardColor.valueOf(chosenValue);
+
         gameData.interaction.clearAwaitingInput();
 
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (target != null) {
-            CardColor color = CardColor.valueOf(chosenValue);
+            CardColor color = chosenColor;
 
             // CR 613 layer engine: "becomes [color] until end of turn" is a floating layer-5
             // color-setting effect. We reuse GrantColorUntilEndOfTurnEffect (the L5 setter the
@@ -1060,11 +1074,16 @@ public class ChoiceHandlerService {
      */
     private void handleBecomeChosenColorsChoice(GameData gameData, Player player, String chosenValue,
             ChoiceContext.BecomeChosenColorsChoice ctx) {
+        // Parse before touching interaction state, as the dispatcher's own fallback does: an
+        // unparseable answer must leave the prompt standing, since clearing it first destroys the
+        // only thing that would resume the entry parked in pendingEffectResolutionEntry.
+        CardColor chosenColor = "DONE".equals(chosenValue) ? null : CardColor.valueOf(chosenValue);
+
         gameData.interaction.clearAwaitingInput();
 
         List<CardColor> chosen = new ArrayList<>(ctx.chosen());
-        if (!"DONE".equals(chosenValue)) {
-            CardColor color = CardColor.valueOf(chosenValue);
+        if (chosenColor != null) {
+            CardColor color = chosenColor;
             // A repeated color (e.g. a naive AI re-picking the same color) ends the choice rather
             // than looping forever; otherwise add it and, if fewer than five are chosen, re-prompt.
             if (!chosen.contains(color)) {
@@ -1887,12 +1906,14 @@ public class ChoiceHandlerService {
     }
 
     private void handleSphinxAmbassadorNameChoice(GameData gameData, Player player, String cardName, ChoiceContext.SphinxAmbassadorNameChoice ctx) {
-        gameData.interaction.clearAwaitingInput();
-
+        // Validate before touching interaction state: clearing first and then throwing destroys the
+        // only thing that would resume the entry parked in pendingEffectResolutionEntry.
         PendingSphinxAmbassadorChoice pending = gameData.peekPendingInteraction(PendingSphinxAmbassadorChoice.class);
         if (pending == null || pending.selectedCard() == null) {
             throw new IllegalStateException("No pending Sphinx Ambassador choice");
         }
+
+        gameData.interaction.clearAwaitingInput();
 
         Card selectedCard = pending.selectedCard();
         UUID controllerId = pending.controllerId();

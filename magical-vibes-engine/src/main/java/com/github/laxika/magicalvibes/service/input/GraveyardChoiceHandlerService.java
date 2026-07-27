@@ -73,8 +73,23 @@ public class GraveyardChoiceHandlerService {
         List<Integer> validIndices = graveyardChoice.validIndices();
         List<Card> cardPool = graveyardChoice.cardPool();
 
-        gameData.interaction.clearAwaitingInput();
         GraveyardChoiceDestination destination = graveyardChoice.destination();
+
+        // Validate before touching interaction state: a rejected answer must leave the prompt
+        // standing so the player can answer again. Clearing first and then throwing (both checks
+        // are repeated below as defence) destroys the only thing that would resume the entry
+        // parked in pendingEffectResolutionEntry, wedging the game on a stale client answer.
+        if (cardIndex == -1) {
+            if (destination == GraveyardChoiceDestination.EXILE
+                    || destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
+                    || graveyardChoice.mandatory()) {
+                throw new IllegalStateException("Cannot decline forced graveyard choice");
+            }
+        } else if (!validIndices.contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        gameData.interaction.clearAwaitingInput();
         boolean gainLifeEqualToManaValue = graveyardChoice.gainLifeEqualToManaValue();
         UUID attachToSourcePermanentId = graveyardChoice.attachToSourcePermanentId();
         CardColor grantColor = graveyardChoice.grantColor();
