@@ -23,7 +23,7 @@ class LifetapTest extends BaseCardTest {
 
         tap(forest);
 
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
@@ -58,6 +58,7 @@ class LifetapTest extends BaseCardTest {
 
     private void tap(Permanent permanent) {
         permanent.tap();
-        harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent);
+        harness.inMutationScope(
+                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
     }
 }

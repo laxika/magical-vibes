@@ -260,7 +260,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         // Draw a card (triggers the emblem)
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
 
         // Should be awaiting permanent choice for the emblem trigger target
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isTrue();
@@ -294,7 +294,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         // Draw a card
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
 
         // No valid targets — emblem trigger should be skipped
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isFalse();

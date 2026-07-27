@@ -30,7 +30,7 @@ class MageSlayerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0), null);
 
         // Resolve only the attack trigger (before combat damage) to isolate its damage.
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -45,7 +45,7 @@ class MageSlayerTest extends BaseCardTest {
         slayer.setAttachedTo(creature.getId());
 
         declareAttackers(player1, List.of(0), null);
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
@@ -60,7 +60,7 @@ class MageSlayerTest extends BaseCardTest {
         Permanent planeswalker = addPlaneswalker(player2, 4);
 
         declareAttackers(player1, List.of(0), Map.of(0, planeswalker.getId()));
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2); // 4 - 2
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);

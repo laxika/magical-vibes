@@ -35,7 +35,7 @@ class DelusionsOfMediocrityTest extends BaseCardTest {
                 .filter(p -> p.getCard() instanceof DelusionsOfMediocrity)
                 .findFirst().orElseThrow();
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, delusions);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, delusions));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

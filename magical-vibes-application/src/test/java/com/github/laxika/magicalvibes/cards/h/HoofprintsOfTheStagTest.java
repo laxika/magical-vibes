@@ -48,7 +48,7 @@ class HoofprintsOfTheStagTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HoofprintsOfTheStag());
         Permanent hoofprints = findPermanent(player1, "Hoofprints of the Stag");
 
-        harness.getDrawService().resolveDrawCard(gd, player2.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
 
         assertThat(gd.stack).isEmpty(); // player1's ON_CONTROLLER_DRAWS does not fire on the opponent's draw
         assertThat(hoofprints.getCounterCount(CounterType.HOOFPRINT)).isZero();
@@ -117,7 +117,7 @@ class HoofprintsOfTheStagTest extends BaseCardTest {
     // (CR 603.5); resolving it surfaces the MayAbilityChoice so a choice can be made.
     private void drawAndSurfaceMay(Player player) {
         gd.playerDecks.get(player.getId()).add(new GrizzlyBears()); // ensure a card to draw
-        harness.getDrawService().resolveDrawCard(gd, player.getId());
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player.getId()));
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
     }
 }

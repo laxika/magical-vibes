@@ -22,7 +22,7 @@ class SagesOfTheAnimaTest extends BaseCardTest {
     private void drawWithSages() {
         harness.addToBattlefield(player1, new SagesOfTheAnima());
         harness.setHand(player1, new ArrayList<>());
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
     }
 
     private void answerReorderInOrder() {

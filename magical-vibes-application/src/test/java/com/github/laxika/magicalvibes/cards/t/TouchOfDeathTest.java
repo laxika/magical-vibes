@@ -50,7 +50,7 @@ class TouchOfDeathTest extends BaseCardTest {
 
         StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
         localGd.activePlayerId = player2.getId();
-        stepTriggerService.handleUpkeepTriggers(localGd);
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(localGd));
 
         assertThat(localGd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(localGd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);

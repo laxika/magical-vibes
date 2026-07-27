@@ -129,7 +129,7 @@ class OathOfLimDLTest extends BaseCardTest {
     }
 
     private void loseLife(int amount) {
-        harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), amount, "test");
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), amount, "test"));
         assertThat(gd.stack).isNotEmpty();
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(amount);

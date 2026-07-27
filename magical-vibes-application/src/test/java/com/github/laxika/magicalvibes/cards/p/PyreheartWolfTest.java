@@ -84,7 +84,7 @@ class PyreheartWolfTest extends BaseCardTest {
     void undyingReturnsWithCounter() {
         Permanent wolf = addCreatureReady(player1, new PyreheartWolf());
 
-        harness.getPermanentRemovalService().tryDestroyPermanent(gd, wolf);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, wolf));
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -102,7 +102,7 @@ class PyreheartWolfTest extends BaseCardTest {
         Permanent wolf = addCreatureReady(player1, new PyreheartWolf());
         wolf.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
-        harness.getPermanentRemovalService().tryDestroyPermanent(gd, wolf);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, wolf));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

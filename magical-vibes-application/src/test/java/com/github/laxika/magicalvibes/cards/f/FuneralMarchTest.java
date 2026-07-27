@@ -40,7 +40,7 @@ class FuneralMarchTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(victim);
         attachFuneralMarch(player1, enchanted);
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, enchanted);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, enchanted));
         resolveStack();
 
         // Only the victim remained after the enchanted creature died, so it is auto-sacrificed.
@@ -62,7 +62,7 @@ class FuneralMarchTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(player1Creature);
         attachFuneralMarch(player1, enchanted);
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, enchanted);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, enchanted));
         resolveStack();
 
         // Player2 (the enchanted creature's controller) sacrifices; player1's board is untouched.

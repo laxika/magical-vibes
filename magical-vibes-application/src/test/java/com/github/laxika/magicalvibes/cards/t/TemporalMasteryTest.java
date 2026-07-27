@@ -54,8 +54,8 @@ class TemporalMasteryTest extends BaseCardTest {
         TemporalMastery mastery = new TemporalMastery();
         harness.setLibrary(player1, List.of(mastery));
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
-        harness.getPlayerInputService().processNextMayAbility(gd);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.playerHands.get(player1.getId()))
@@ -68,7 +68,7 @@ class TemporalMasteryTest extends BaseCardTest {
         gd.cardsDrawnThisTurn.put(player1.getId(), 1);
         harness.setLibrary(player1, List.of(new TemporalMastery()));
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
 
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -83,8 +83,8 @@ class TemporalMasteryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
-        harness.getPlayerInputService().processNextMayAbility(gd);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
         harness.handleMayAbilityChosen(player1, true); // reveal
 
         assertThat(gd.stack).isNotEmpty();
@@ -108,8 +108,8 @@ class TemporalMasteryTest extends BaseCardTest {
         TemporalMastery mastery = new TemporalMastery();
         harness.setLibrary(player1, List.of(mastery));
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
-        harness.getPlayerInputService().processNextMayAbility(gd);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
@@ -125,8 +125,8 @@ class TemporalMasteryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
-        harness.getPlayerInputService().processNextMayAbility(gd);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
         harness.handleMayAbilityChosen(player1, true); // reveal
         harness.passBothPriorities(); // cast prompt
         harness.handleMayAbilityChosen(player1, false); // decline cast
@@ -148,8 +148,8 @@ class TemporalMasteryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
-        harness.getPlayerInputService().processNextMayAbility(gd);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

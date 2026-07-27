@@ -97,7 +97,7 @@ class DragonAppeasementTest extends BaseCardTest {
         Card card = permanent.getCard();
         gd.playerBattlefields.get(player1.getId()).remove(permanent);
         gd.playerGraveyards.get(player1.getId()).add(card);
-        harness.getTriggerCollectionService()
-                .checkAllyPermanentSacrificedTriggers(gd, player1.getId(), card);
+        harness.inMutationScope(() -> harness.getTriggerCollectionService()
+                .checkAllyPermanentSacrificedTriggers(gd, player1.getId(), card));
     }
 }

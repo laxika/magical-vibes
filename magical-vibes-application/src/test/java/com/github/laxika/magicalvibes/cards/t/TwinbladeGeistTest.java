@@ -57,7 +57,7 @@ class TwinbladeGeistTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(bears);
         Permanent aura = putInvocationAttachedTo(bears);
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isFalse();
     }
@@ -70,7 +70,7 @@ class TwinbladeGeistTest extends BaseCardTest {
         Permanent aura = putInvocationAttachedTo(bears);
         UUID auraCardId = aura.getOriginalCard().getId();
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(bears);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

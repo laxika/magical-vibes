@@ -25,7 +25,8 @@ class SlithermuseTest extends BaseCardTest {
     }
 
     private void leaveBattlefield(Permanent permanent) {
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, permanent);
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, permanent));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

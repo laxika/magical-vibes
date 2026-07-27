@@ -235,7 +235,8 @@ class BandingMechanicTest {
         beginAttack();
         // Call the sub-service directly so the declaration doesn't auto-advance combat (with no
         // blockers, the whole combat would resolve and clearCombatState would wipe the band id).
-        harness.getCombatAttackService().declareAttackers(gd, player1, List.of(0, 1), null, List.of(List.of(0, 1)));
+        harness.inMutationScope(() -> harness.getCombatAttackService()
+                .declareAttackers(gd, player1, List.of(0, 1), null, List.of(List.of(0, 1))));
 
         assertThat(atkBf().get(0).getBandId()).isNotNull();
         assertThat(atkBf().get(0).getBandId()).isEqualTo(atkBf().get(1).getBandId());

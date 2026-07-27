@@ -28,7 +28,7 @@ class SurgespannerTest extends BaseCardTest {
 
         tap(surgespanner);
 
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, islandId);
 
@@ -50,7 +50,7 @@ class SurgespannerTest extends BaseCardTest {
 
         tap(surgespanner);
 
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bearsId);
 
@@ -70,7 +70,7 @@ class SurgespannerTest extends BaseCardTest {
 
         tap(surgespanner);
 
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -91,6 +91,7 @@ class SurgespannerTest extends BaseCardTest {
 
     private void tap(Permanent permanent) {
         permanent.tap();
-        harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent);
+        harness.inMutationScope(
+                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
     }
 }

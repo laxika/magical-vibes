@@ -54,7 +54,7 @@ class CaltropsTest extends BaseCardTest {
         harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player2, List.of(0));
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(attacker.getMarkedDamage()).isEqualTo(1);
     }
@@ -72,7 +72,7 @@ class CaltropsTest extends BaseCardTest {
 
         // Caltrops is at index 0, the attacking Grizzly Bears at index 1.
         gs.declareAttackers(gd, player1, List.of(1));
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(attacker.getMarkedDamage()).isEqualTo(1);
     }
@@ -92,8 +92,8 @@ class CaltropsTest extends BaseCardTest {
         gs.declareAttackers(gd, player2, List.of(0, 1));
         assertThat(gd.stack).hasSize(2);
 
-        harness.getStackResolutionService().resolveTopOfStack(gd);
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(attacker1.getMarkedDamage()).isEqualTo(1);
         assertThat(attacker2.getMarkedDamage()).isEqualTo(1);

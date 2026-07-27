@@ -21,8 +21,8 @@ class RowenTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         // The revealed Forest plus the extra draw = two cards.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
@@ -36,7 +36,7 @@ class RowenTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
@@ -51,7 +51,7 @@ class RowenTest extends BaseCardTest {
         gd.cardsDrawnThisTurn.put(player1.getId(), 1);
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);

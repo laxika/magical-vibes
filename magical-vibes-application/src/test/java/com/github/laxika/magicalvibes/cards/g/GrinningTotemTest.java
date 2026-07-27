@@ -78,7 +78,7 @@ class GrinningTotemTest extends BaseCardTest {
 
         // Caster's next upkeep.
         gd.activePlayerId = player1.getId();
-        stepTriggerService().handleUpkeepTriggers(gd);
+        harness.inMutationScope(() -> stepTriggerService().handleUpkeepTriggers(gd));
 
         // Card leaves exile, loses permission, and enters its owner's (player2's) graveyard.
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -101,7 +101,7 @@ class GrinningTotemTest extends BaseCardTest {
 
         // Opponent's upkeep — not "your next upkeep".
         gd.activePlayerId = player2.getId();
-        stepTriggerService().handleUpkeepTriggers(gd);
+        harness.inMutationScope(() -> stepTriggerService().handleUpkeepTriggers(gd));
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getId().equals(swamp.getId()));
@@ -126,7 +126,7 @@ class GrinningTotemTest extends BaseCardTest {
 
         // The caster's upkeep cleanup finds nothing to move — the card stays on the battlefield.
         gd.activePlayerId = player1.getId();
-        stepTriggerService().handleUpkeepTriggers(gd);
+        harness.inMutationScope(() -> stepTriggerService().handleUpkeepTriggers(gd));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Swamp"));

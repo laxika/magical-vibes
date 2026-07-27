@@ -109,7 +109,7 @@ class EchocastingSymposiumTest extends BaseCardTest {
         harness.setExile(player1, List.of(copy));
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        paradigmCastSupport.castFromExileWithoutPaying(gd, player1, copy.getId());
+        harness.inMutationScope(() -> paradigmCastSupport.castFromExileWithoutPaying(gd, player1, copy.getId()));
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.handlePermanentChosen(player1, bearId);
@@ -134,7 +134,7 @@ class EchocastingSymposiumTest extends BaseCardTest {
         EchocastingSymposium copy = new EchocastingSymposium();
         harness.setExile(player1, List.of(copy));
 
-        paradigmCastSupport.castFromExileWithoutPaying(gd, player1, copy.getId());
+        harness.inMutationScope(() -> paradigmCastSupport.castFromExileWithoutPaying(gd, player1, copy.getId()));
 
         // No creature the caster controls → no legal target set, so nothing is prompted and the
         // copy ceases to exist rather than being put into a graveyard.

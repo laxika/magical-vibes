@@ -116,7 +116,7 @@ class KjeldoranGuardTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(guard), 0, null, bears.getId());
         harness.passBothPriorities();
 
-        harness.getPermanentRemovalService().removePermanentToHand(gd, bears);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, bears));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Kjeldoran Guard");

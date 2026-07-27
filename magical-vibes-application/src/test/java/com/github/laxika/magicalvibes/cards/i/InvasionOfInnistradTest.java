@@ -78,8 +78,8 @@ class InvasionOfInnistradTest extends BaseCardTest {
 
             Permanent battle = findPermanent(player1, "Invasion of Innistrad");
             battle.setCounterCount(CounterType.DEFENSE, 0);
-            GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
-                    .checkAfterDefenseRemoved(gd, battle);
+            harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
+                    .checkAfterDefenseRemoved(gd, battle));
 
             harness.passBothPriorities(); // resolve defeat trigger (exile + put transformed spell)
             harness.passBothPriorities(); // resolve Deluge spell

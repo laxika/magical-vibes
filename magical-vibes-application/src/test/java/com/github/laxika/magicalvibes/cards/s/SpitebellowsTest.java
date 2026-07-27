@@ -46,7 +46,8 @@ class SpitebellowsTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears()); // 2/2
         Permanent spitebellows = harness.addToBattlefieldAndReturn(player1, new Spitebellows());
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, spitebellows);
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, spitebellows));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -68,7 +69,8 @@ class SpitebellowsTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, bear);
         Permanent spitebellows = harness.addToBattlefieldAndReturn(player1, new Spitebellows());
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, spitebellows);
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, spitebellows));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

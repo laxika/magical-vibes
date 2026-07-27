@@ -20,7 +20,7 @@ class VeteranOfTheDepthsTest extends BaseCardTest {
 
         tap(veteran);
 
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(veteran.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -33,7 +33,7 @@ class VeteranOfTheDepthsTest extends BaseCardTest {
 
         tap(veteran);
 
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(veteran.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
@@ -52,6 +52,7 @@ class VeteranOfTheDepthsTest extends BaseCardTest {
 
     private void tap(Permanent permanent) {
         permanent.tap();
-        harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent);
+        harness.inMutationScope(
+                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
     }
 }

@@ -59,7 +59,7 @@ class LanternBearerTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(bears);
         Permanent aura = putLiftAttachedTo(bears);
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -74,7 +74,7 @@ class LanternBearerTest extends BaseCardTest {
         Permanent aura = putLiftAttachedTo(bears);
         UUID auraCardId = aura.getOriginalCard().getId();
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(bears);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

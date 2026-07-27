@@ -24,7 +24,7 @@ class FallowsageTest extends BaseCardTest {
 
         tap(fallowsage);
 
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
@@ -39,7 +39,7 @@ class FallowsageTest extends BaseCardTest {
 
         tap(fallowsage);
 
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
@@ -58,6 +58,7 @@ class FallowsageTest extends BaseCardTest {
 
     private void tap(Permanent permanent) {
         permanent.tap();
-        harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent);
+        harness.inMutationScope(
+                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
     }
 }

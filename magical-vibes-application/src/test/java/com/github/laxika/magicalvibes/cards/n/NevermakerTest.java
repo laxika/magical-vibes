@@ -54,7 +54,8 @@ class NevermakerTest extends BaseCardTest {
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
         Permanent nevermaker = harness.addToBattlefieldAndReturn(player1, new Nevermaker());
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, nevermaker);
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, nevermaker));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -80,7 +81,8 @@ class NevermakerTest extends BaseCardTest {
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
         Permanent nevermaker = harness.addToBattlefieldAndReturn(player1, new Nevermaker());
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, nevermaker);
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, nevermaker));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

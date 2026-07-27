@@ -73,7 +73,7 @@ class KjeldoranEliteGuardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bounce the pumped creature — Guard's delayed trigger should fire.
-        harness.getPermanentRemovalService().removePermanentToHand(gd, bears);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, bears));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Kjeldoran Elite Guard");

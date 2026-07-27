@@ -46,7 +46,7 @@ class EnduringRenewalTest extends BaseCardTest {
         harness.setHand(player1, new ArrayList<>());
         harness.setLibrary(player1, new ArrayList<>(List.of(new GrizzlyBears(), new Forest())));
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotInHand(player1, "Grizzly Bears");
@@ -61,7 +61,7 @@ class EnduringRenewalTest extends BaseCardTest {
         harness.setHand(player1, new ArrayList<>());
         harness.setLibrary(player1, new ArrayList<>(List.of(new Plains(), new Forest())));
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
 
         harness.assertInHand(player1, "Plains");
         harness.assertNotInGraveyard(player1, "Plains");
@@ -74,7 +74,7 @@ class EnduringRenewalTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EnduringRenewal());
         harness.setLibrary(player1, new ArrayList<>());
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
 
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
         assertThat(gameLogContains("reveals no cards")).isTrue();
@@ -87,7 +87,7 @@ class EnduringRenewalTest extends BaseCardTest {
         harness.setHand(player1, new ArrayList<>());
         harness.setLibrary(player1, new ArrayList<>(List.of(new GrizzlyBears())));
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -103,7 +103,7 @@ class EnduringRenewalTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EnduringRenewal());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Grizzly Bears");
@@ -117,7 +117,7 @@ class EnduringRenewalTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EnduringRenewal());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
 
         assertThat(gd.stack).isNotEmpty();
         Card dead = gd.playerGraveyards.get(player1.getId()).stream()

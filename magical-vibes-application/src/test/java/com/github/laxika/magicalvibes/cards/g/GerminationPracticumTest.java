@@ -79,7 +79,7 @@ class GerminationPracticumTest extends BaseCardTest {
         // Fire the beginning-of-precombat-main paradigm trigger for the active player.
         harness.forceActivePlayer(player1);
         ParadigmService paradigmService = GameTestEngineContext.get().getBean(ParadigmService.class);
-        paradigmService.firePrecombatMainTriggers(gd);
+        harness.inMutationScope(() -> paradigmService.firePrecombatMainTriggers(gd));
         harness.passBothPriorities(); // resolve the trigger -> copy created in exile + may-cast prompt
 
         harness.handleMayAbilityChosen(player1, true); // cast the copy (no target)

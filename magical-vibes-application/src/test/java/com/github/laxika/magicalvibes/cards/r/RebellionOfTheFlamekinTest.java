@@ -33,7 +33,7 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
         gd.playerDecks.get(player2.getId()).addFirst(new Forest());
 
-        harness.getTriggerCollectionService().performClash(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
         harness.passBothPriorities(); // resolve clash trigger → may-pay prompt
         harness.handleMayAbilityChosen(player1, true);
 
@@ -57,7 +57,7 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).addFirst(new Forest());
         gd.playerDecks.get(player2.getId()).addFirst(new GrizzlyBears());
 
-        harness.getTriggerCollectionService().performClash(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -78,7 +78,7 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
         gd.playerDecks.get(player2.getId()).addFirst(new Forest());
 
-        harness.getTriggerCollectionService().performClash(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -98,7 +98,7 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
         gd.playerDecks.get(player2.getId()).addFirst(new Forest());
 
-        harness.getTriggerCollectionService().performClash(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         assertThat(token().hasKeyword(Keyword.HASTE)).isTrue();

@@ -109,7 +109,7 @@ class TawnossWeaponryTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
 
-        harness.getPermanentRemovalService().tryDestroyPermanent(gd, weaponry);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, weaponry));
 
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);

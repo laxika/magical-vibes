@@ -24,7 +24,8 @@ class ReveillarkTest extends BaseCardTest {
     }
 
     private void killReveillark(Permanent reveillark) {
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, reveillark);
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, reveillark));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

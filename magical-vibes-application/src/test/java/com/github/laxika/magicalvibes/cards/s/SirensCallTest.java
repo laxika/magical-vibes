@@ -28,7 +28,8 @@ class SirensCallTest extends BaseCardTest {
 
     private void runEndStep() {
         harness.forceStep(TurnStep.END_STEP);
-        GameTestEngineContext.get().getBean(StepTriggerService.class).handleEndStepTriggers(gd);
+        harness.inMutationScope(
+                () -> GameTestEngineContext.get().getBean(StepTriggerService.class).handleEndStepTriggers(gd));
     }
 
     @Test

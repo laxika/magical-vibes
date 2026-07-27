@@ -68,7 +68,7 @@ class LunarchVeteranTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getLast();
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
         harness.passBothPriorities(); // resolve leave trigger
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
@@ -81,7 +81,7 @@ class LunarchVeteranTest extends BaseCardTest {
         Permanent phantom = putTransformedPhantomOnBattlefield();
         UUID phantomId = phantom.getOriginalCard().getId();
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, phantom);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, phantom));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

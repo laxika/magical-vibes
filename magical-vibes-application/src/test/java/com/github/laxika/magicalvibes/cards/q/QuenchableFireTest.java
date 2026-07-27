@@ -33,7 +33,8 @@ class QuenchableFireTest extends BaseCardTest {
     private void reachUpkeepPrompt() {
         gd.turnNumber = 3; // skip the turn-1 opening-hand handling
         gd.activePlayerId = player1.getId();
-        GameTestEngineContext.get().getBean(StepTriggerService.class).handleUpkeepTriggers(gd);
+        harness.inMutationScope(
+                () -> GameTestEngineContext.get().getBean(StepTriggerService.class).handleUpkeepTriggers(gd));
         harness.passBothPriorities(); // resolve the pushed trigger -> pay-or-damage may prompt
     }
 

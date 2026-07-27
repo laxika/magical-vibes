@@ -29,7 +29,7 @@ class CovetousCastawayTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CovetousCastaway());
         Permanent castaway = gd.playerBattlefields.get(player1.getId()).getFirst();
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, castaway);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, castaway));
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -96,7 +96,8 @@ class CovetousCastawayTest extends BaseCardTest {
         Permanent castigator = putTransformedCastigatorOnBattlefield();
         UUID castigatorId = castigator.getOriginalCard().getId();
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, castigator);
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, castigator));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

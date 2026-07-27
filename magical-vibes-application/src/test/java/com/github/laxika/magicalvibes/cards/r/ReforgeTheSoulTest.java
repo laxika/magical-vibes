@@ -54,8 +54,8 @@ class ReforgeTheSoulTest extends BaseCardTest {
         ReforgeTheSoul reforge = new ReforgeTheSoul();
         harness.setLibrary(player1, List.of(reforge));
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
-        harness.getPlayerInputService().processNextMayAbility(gd);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.playerHands.get(player1.getId()))
@@ -68,7 +68,7 @@ class ReforgeTheSoulTest extends BaseCardTest {
         gd.cardsDrawnThisTurn.put(player1.getId(), 1);
         harness.setLibrary(player1, List.of(new ReforgeTheSoul()));
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
 
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -90,8 +90,8 @@ class ReforgeTheSoulTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
-        harness.getPlayerInputService().processNextMayAbility(gd);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
         harness.handleMayAbilityChosen(player1, true); // reveal
         harness.passBothPriorities(); // miracle trigger → cast prompt
         harness.handleMayAbilityChosen(player1, true); // cast for miracle cost

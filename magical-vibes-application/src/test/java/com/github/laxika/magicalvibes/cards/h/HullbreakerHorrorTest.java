@@ -55,10 +55,10 @@ class HullbreakerHorrorTest extends BaseCardTest {
 
         harness.castInstant(player1, 0);
         // Trigger on top of Opt — resolve trigger into mode prompt
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleListChoice(player1, ChoiceContext.HullbreakerHorrorModeChoice.PERMANENT);
         harness.handlePermanentChosen(player1, bears.getId());
-        harness.getStackResolutionService().resolveTopOfStack(gd); // bounce effect
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd)); // bounce effect
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
@@ -82,10 +82,10 @@ class HullbreakerHorrorTest extends BaseCardTest {
 
         harness.castInstant(player1, 0);
         // Stack: bears, Opt, Hullbreaker trigger (top)
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleListChoice(player1, ChoiceContext.HullbreakerHorrorModeChoice.SPELL);
         harness.handlePermanentChosen(player1, bears.getId());
-        harness.getStackResolutionService().resolveTopOfStack(gd); // bounce spell
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd)); // bounce spell
 
         assertThat(gd.stack.stream().noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"))).isTrue();
         assertThat(gd.playerHands.get(player2.getId()))
@@ -104,7 +104,7 @@ class HullbreakerHorrorTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
 
         harness.castInstant(player1, 0);
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleListChoice(player1, ChoiceContext.HullbreakerHorrorModeChoice.NONE);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))

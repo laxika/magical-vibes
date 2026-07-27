@@ -73,7 +73,7 @@ class ElkinBottleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         gd.activePlayerId = player1.getId();
-        stepTriggerService().handleUpkeepTriggers(gd);
+        harness.inMutationScope(() -> stepTriggerService().handleUpkeepTriggers(gd));
 
         assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
         // Elkin Bottle never moves the card anywhere — it just stays in exile.
@@ -94,7 +94,7 @@ class ElkinBottleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         gd.activePlayerId = player2.getId();
-        stepTriggerService().handleUpkeepTriggers(gd);
+        harness.inMutationScope(() -> stepTriggerService().handleUpkeepTriggers(gd));
 
         assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player1.getId());
         assertThat(gd.getDelayedActions(RevokeExilePlayPermissionAtNextUpkeep.class)).hasSize(1);

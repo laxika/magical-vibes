@@ -59,7 +59,8 @@ class FloatingEffectLifecycleTest extends BaseCardTest {
             FloatingContinuousEffect survivor = gd.addFloatingEffect(
                     floating(null, player1.getId(), EffectDuration.UNTIL_YOUR_NEXT_TURN));
 
-            GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+            harness.inMutationScope(
+                    () -> GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
 
             assertThat(gd.floatingEffects).containsExactly(survivor);
         }
@@ -79,7 +80,7 @@ class FloatingEffectLifecycleTest extends BaseCardTest {
             FloatingContinuousEffect unrelated = gd.addFloatingEffect(floating(other.getId(),
                     player1.getId(), EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD));
 
-            harness.getPermanentRemovalService().tryDestroyPermanent(gd, source);
+            harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, source));
 
             harness.assertInGraveyard(player1, "Grizzly Bears");
             assertThat(gd.floatingEffects).containsExactly(unrelated);
@@ -104,7 +105,7 @@ class FloatingEffectLifecycleTest extends BaseCardTest {
 
             // Destroying the equipped creature unattaches the equipment (CR 301.5c) but keeps
             // it on the battlefield, so only the WHILE_ATTACHED effect ends.
-            harness.getPermanentRemovalService().tryDestroyPermanent(gd, creature);
+            harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, creature));
 
             assertThat(equipment.getAttachedTo()).isNull();
             assertThat(gd.floatingEffects).containsExactly(sourceBacked);

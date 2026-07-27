@@ -88,7 +88,8 @@ class StromkirkOccultistTest extends BaseCardTest {
         resolveCombatDamageTrigger();
         assertThat(gd.exilePlayPermissions).containsKey(top.getId());
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.inMutationScope(
+                () -> GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
 
         assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
         assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(top.getId());

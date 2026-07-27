@@ -125,7 +125,8 @@ class RelicBindTest extends BaseCardTest {
         int p2Before = gd.playerLifeTotals.get(player2.getId());
 
         artifact.tap();
-        harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact);
+        harness.inMutationScope(
+                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -144,10 +145,13 @@ class RelicBindTest extends BaseCardTest {
 
     private void tapAndResolveModal(Permanent artifact, String mode, UUID targetId) {
         artifact.tap();
-        harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact);
-        harness.getStackResolutionService().resolveTopOfStack(gd); // resolve trigger -> mode prompt
-        harness.handleListChoice(player1, mode);                    // choose mode -> target prompt
-        harness.handlePermanentChosen(player1, targetId);           // choose target -> chosen mode's effect onto stack
-        harness.getStackResolutionService().resolveTopOfStack(gd);  // resolve the chosen mode's effect
+        harness.inMutationScope(
+                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
+        // resolve trigger -> mode prompt
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.handleListChoice(player1, mode);          // choose mode -> target prompt
+        harness.handlePermanentChosen(player1, targetId); // choose target -> chosen mode's effect onto stack
+        // resolve the chosen mode's effect
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
     }
 }

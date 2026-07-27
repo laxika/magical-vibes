@@ -50,7 +50,7 @@ class RakingCanopyTest extends BaseCardTest {
         Permanent attacker = setUpAttack(new Permanent(new AirElemental()));
 
         gs.declareAttackers(gd, player2, List.of(0));
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(attacker.getMarkedDamage()).isEqualTo(4);
     }

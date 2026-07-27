@@ -45,7 +45,8 @@ class OffalsnoutTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(bears));
         Permanent offalsnout = harness.addToBattlefieldAndReturn(player1, new Offalsnout());
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, offalsnout);
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, offalsnout));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

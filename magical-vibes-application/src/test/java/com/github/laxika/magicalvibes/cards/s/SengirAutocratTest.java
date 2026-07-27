@@ -50,7 +50,8 @@ class SengirAutocratTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Sengir Autocrat"))
                 .findFirst()
                 .orElseThrow();
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, autocrat);
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, autocrat));
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // resolve LTB trigger -> exile Serfs
 

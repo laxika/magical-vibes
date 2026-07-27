@@ -79,7 +79,8 @@ class DanceOfManyTest extends BaseCardTest {
         castDanceCopying(harness.getPermanentId(player2, "Grizzly Bears"));
         assertThat(tokenCopy(player1)).isNotNull();
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, danceOfMany(player1));
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, danceOfMany(player1)));
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // resolve LTB trigger -> exile the token
 
@@ -94,7 +95,7 @@ class DanceOfManyTest extends BaseCardTest {
         Permanent token = tokenCopy(player1);
         assertThat(token).isNotNull();
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, token);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, token));
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // resolve LTB trigger -> sacrifice the enchantment
 

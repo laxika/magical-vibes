@@ -69,7 +69,8 @@ class PhantasmalMountTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(mount), 0, null, wizard.getId());
         harness.passBothPriorities();
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.inMutationScope(
+                () -> GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
 
         Permanent after = gqs.findPermanentById(gd, wizard.getId());
         assertThat(gqs.getEffectivePower(gd, after)).isEqualTo(basePower);
@@ -88,7 +89,7 @@ class PhantasmalMountTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(mount), 0, null, wizard.getId());
         harness.passBothPriorities();
 
-        harness.getPermanentRemovalService().removePermanentToHand(gd, wizard);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, wizard));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Phantasmal Mount");
@@ -107,7 +108,7 @@ class PhantasmalMountTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(mount), 0, null, wizard.getId());
         harness.passBothPriorities();
 
-        harness.getPermanentRemovalService().removePermanentToHand(gd, mount);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, mount));
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Phantasmal Mount");

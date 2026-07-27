@@ -24,7 +24,7 @@ class SylvanEchoesTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.getTriggerCollectionService().performClash(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
         harness.passBothPriorities(); // resolve clash trigger → may-draw prompt
         harness.handleMayAbilityChosen(player1, true);
 
@@ -44,7 +44,7 @@ class SylvanEchoesTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.getTriggerCollectionService().performClash(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -66,7 +66,7 @@ class SylvanEchoesTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.getTriggerCollectionService().performClash(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);

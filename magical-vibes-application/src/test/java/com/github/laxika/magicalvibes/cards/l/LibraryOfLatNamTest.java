@@ -56,7 +56,7 @@ class LibraryOfLatNamTest extends BaseCardTest {
         // Simulate the next turn's upkeep — the controller draws three cards
         StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
         gd.activePlayerId = player2.getId();
-        stepTriggerService.handleUpkeepTriggers(gd);
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 3);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 3);

@@ -25,7 +25,7 @@ class EntanglingTrapTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
         gd.playerDecks.get(player2.getId()).addFirst(new Forest());
 
-        harness.getTriggerCollectionService().performClash(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, opponentCreature.getId());
@@ -48,7 +48,7 @@ class EntanglingTrapTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).addFirst(new Forest());
         gd.playerDecks.get(player2.getId()).addFirst(new GrizzlyBears());
 
-        harness.getTriggerCollectionService().performClash(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, opponentCreature.getId());
@@ -71,7 +71,7 @@ class EntanglingTrapTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
         gd.playerDecks.get(player2.getId()).addFirst(new Forest());
 
-        harness.getTriggerCollectionService().performClash(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -90,7 +90,7 @@ class EntanglingTrapTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
         gd.playerDecks.get(player2.getId()).addFirst(new Forest());
 
-        harness.getTriggerCollectionService().performClash(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }

@@ -51,7 +51,8 @@ class MeadowboonTest extends BaseCardTest {
         Permanent oppCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent meadowboon = harness.addToBattlefieldAndReturn(player1, new Meadowboon());
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, meadowboon);
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, meadowboon));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

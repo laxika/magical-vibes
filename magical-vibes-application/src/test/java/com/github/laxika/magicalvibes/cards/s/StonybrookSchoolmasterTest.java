@@ -19,7 +19,7 @@ class StonybrookSchoolmasterTest extends BaseCardTest {
 
         tap(schoolmaster);
 
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(tokenCount()).isEqualTo(1);
@@ -32,7 +32,7 @@ class StonybrookSchoolmasterTest extends BaseCardTest {
 
         tap(schoolmaster);
 
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(tokenCount()).isZero();
@@ -57,6 +57,7 @@ class StonybrookSchoolmasterTest extends BaseCardTest {
 
     private void tap(Permanent permanent) {
         permanent.tap();
-        harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent);
+        harness.inMutationScope(
+                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
     }
 }

@@ -104,7 +104,7 @@ class OraclesVaultTest extends BaseCardTest {
 
         // Player has no mana at all — the play must still succeed for free.
         gd.playerManaPools.get(player1.getId()).clear();
-        spellCastingService().playCardFromExile(gd, player1, top.getId(), 0, null);
+        harness.inMutationScope(() -> spellCastingService().playCardFromExile(gd, player1, top.getId(), 0, null));
 
         assertThat(gd.stack).anyMatch(e -> e.getCard().getId().equals(top.getId())
                 && e.getEntryType() == StackEntryType.INSTANT_SPELL);
@@ -125,8 +125,9 @@ class OraclesVaultTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.exilePlayWithoutPayingManaCost).contains(top.getId());
 
-        GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.service.turn.TurnCleanupService.class)
-                .applyCleanupResets(gd);
+        harness.inMutationScope(() ->
+                GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.service.turn.TurnCleanupService.class)
+                        .applyCleanupResets(gd));
 
         assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(top.getId());
         assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());

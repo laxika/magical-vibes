@@ -23,7 +23,7 @@ class ThoughtleechTest extends BaseCardTest {
 
         tap(island);
 
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
@@ -39,7 +39,7 @@ class ThoughtleechTest extends BaseCardTest {
 
         tap(island);
 
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
@@ -75,6 +75,7 @@ class ThoughtleechTest extends BaseCardTest {
 
     private void tap(Permanent permanent) {
         permanent.tap();
-        harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent);
+        harness.inMutationScope(
+                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
     }
 }

@@ -61,7 +61,7 @@ class LostInTheWoodsTest extends BaseCardTest {
         assertThat(attacker.isAttacking()).isTrue();
 
         // Resolve only the trigger (not the whole turn, which would end combat anyway)
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         // Forest revealed -> attacker removed from combat
         assertThat(attacker.isAttacking()).isFalse();
@@ -83,7 +83,7 @@ class LostInTheWoodsTest extends BaseCardTest {
         assertThat(attacker.isAttacking()).isTrue();
 
         // Resolve only the trigger (not the whole turn, which would end combat anyway)
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         // Island revealed -> attacker stays in combat
         assertThat(attacker.isAttacking()).isTrue();

@@ -47,7 +47,7 @@ class IllusionsOfGrandeurTest extends BaseCardTest {
                 .filter(p -> p.getCard() instanceof IllusionsOfGrandeur)
                 .findFirst().orElseThrow();
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, illusions);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, illusions));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
