@@ -4,6 +4,7 @@
 - Rules accuracy is the number one priority — never ship rules-incorrect engine behavior. If a card's behavior is at all ambiguous, search the web for the official ruling.
 - Reuse over creation: build effects by combining existing ones (e.g. "2 damage to any target and 3 to you" = `DealDamageToAnyTargetEffect` + `DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER)`) and parameterize with predicates (`DestroyTargetPermanentEffect` + a `PermanentPredicate`, not `DestroyTargetArtifactEffect`) rather than adding new classes. When you do add a new effect/predicate, update the relevant `agent-docs/` files.
 - If unit tests exist for a service you extend, add tests for the new behavior too.
+- Never write banner/section comments — `// --- Aura & enchantment ---`, `// ===== Helpers =====`, `//////// Combat ////////` and any similar divider one-liner. They are not documentation. Javadoc on the type and its members is the only place to explain grouping.
 - Do not ever run the full test suite! Ask me and I'll run it for you.
 
 ## Implementing cards
