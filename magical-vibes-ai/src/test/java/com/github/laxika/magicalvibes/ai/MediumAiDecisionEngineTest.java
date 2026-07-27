@@ -27,7 +27,12 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
@@ -927,6 +932,62 @@ class MediumAiDecisionEngineTest {
         ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    // ===== X value cap handling =====
+
+    @Test
+    @DisplayName("Medium AI respects a binding X value cap instead of attempting an illegal cast")
+    void respectsBindingXValueCap() {
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            giveAiPriority();
+            giveAiIslands(4); // 4U total; {X}{U}{U} -> maxX = 2 on mana alone
+
+            Permanent bears = new Permanent(new GrizzlyBears()); // MV=2
+            bears.setSummoningSick(false);
+            gd.playerBattlefields.get(human.getId()).add(bears);
+
+            // Hypothetical "X can't be greater than the number of snow lands you control" (the
+            // shape Winter's Chill uses). The AI controls plain Islands, so the cap is 0.
+            EntrancingMelody capped = new EntrancingMelody();
+            capped.setXValueCap(new PermanentCount(
+                    new PermanentHasSupertypePredicate(CardSupertype.SNOW), CountScope.CONTROLLER));
+            harness.setHand(aiPlayer, List.of(capped));
+
+            ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+            // The spell is uncastable either way, so an empty stack proves nothing on its own.
+            // What the clamp changes is whether the AI ANNOUNCES an illegal X=2 and has
+            // SpellCastingService reject it ("X can't be greater than 0"), burning its priority.
+            // That rejection surfaces as a "PlayCard failed silently" legality disagreement.
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gd.stack).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    @DisplayName("Medium AI still casts when the X value cap is not binding")
+    void castsWhenXValueCapNotBinding() {
+        giveAiPriority();
+        giveAiIslands(4); // maxX = 2
+
+        Permanent bears = new Permanent(new GrizzlyBears()); // MV=2
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(bears);
+
+        // Cap counts lands you control (4) — above the affordable X, so it must not restrict.
+        EntrancingMelody capped = new EntrancingMelody();
+        capped.setXValueCap(new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER));
+        harness.setHand(aiPlayer, List.of(capped));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
     }
 
     // ===== X-spell cost modifier handling =====

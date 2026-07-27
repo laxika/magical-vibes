@@ -195,6 +195,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
                 // X must match the target permanent's mana value — use max affordable X
                 // (not smartX which clamps to toughness) and co-select target + X.
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
+                maxX = manaManager.clampByXValueCap(gameData, aiPlayer.getId(), card, maxX);
                 if (maxX <= 0) {
                     return false;
                 }
@@ -325,6 +326,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         if (castCost.hasX() && xValue == null) {
             if (hasPermanentManaValueEqualsXTarget(card)) {
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, instantCostModifier);
+                maxX = manaManager.clampByXValueCap(gameData, aiPlayer.getId(), card, maxX);
                 if (maxX <= 0) return false;
                 List<Permanent> validTargets = targetSelector.findValidPermanentTargetsForManaValueX(
                         gameData, card, aiPlayer.getId(), maxX);

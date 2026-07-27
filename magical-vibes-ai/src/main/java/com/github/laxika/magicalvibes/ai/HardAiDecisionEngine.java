@@ -1332,6 +1332,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (hasPermanentManaValueEqualsXTarget(card) && new ManaCost(card.getManaCost()).hasX()) {
                 int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card);
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
+                maxX = manaManager.clampByXValueCap(gameData, aiPlayer.getId(), card, maxX);
                 if (maxX <= 0 || targetSelector.findValidPermanentTargetsForManaValueX(
                         gameData, card, aiPlayer.getId(), maxX).isEmpty()) {
                     continue;
