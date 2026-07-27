@@ -11,8 +11,9 @@ magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/TargetPolarityC
 magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/simulation/GameSimulator.java=2
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/DamagePreventionService.java=14
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/DrawService.java=10
-magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/GameActionAvailabilityService.java=10
+magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/GameActionAvailabilityService.java=5
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/GameService.java=1
+magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/GameViewProjectionFactory.java=5
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/MulliganService.java=1
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/StackResolutionService.java=15
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/TriggeredAbilityQueueService.java=4
@@ -20,9 +21,10 @@ magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/WarpWo
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/ability/AbilityActivationService.java=40
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/ability/ActivatedAbilityExecutionService.java=46
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/BattlefieldEntryService.java=30
+magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/BlockLegalityService.java=2
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/CloneService.java=1
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/CreatureControlService.java=2
-magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/GameQueryService.java=37
+magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/GameQueryService.java=35
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/GraveyardTargetingService.java=3
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/PermanentRemovalService.java=1
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/cast/CastingCostService.java=8

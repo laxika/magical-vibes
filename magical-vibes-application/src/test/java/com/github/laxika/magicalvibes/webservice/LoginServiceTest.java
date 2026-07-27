@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.webservice;
 
+import com.github.laxika.magicalvibes.cards.CardCatalog;
+import com.github.laxika.magicalvibes.cards.RandomDeckGenerator;
 import com.github.laxika.magicalvibes.entity.User;
 import com.github.laxika.magicalvibes.networking.message.LoginRequest;
 import com.github.laxika.magicalvibes.networking.message.LoginResponse;
@@ -36,6 +38,8 @@ class LoginServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private LobbyService lobbyService;
     @Mock private DeckService deckService;
+    @Mock private CardCatalog cardCatalog;
+    @Mock private RandomDeckGenerator randomDeckGenerator;
 
     @InjectMocks private LoginService loginService;
 
