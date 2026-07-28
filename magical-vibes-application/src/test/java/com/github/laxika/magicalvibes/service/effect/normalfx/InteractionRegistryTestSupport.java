@@ -4,11 +4,9 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
-import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.ColorChoiceInteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.LibraryRevealChoiceInteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.LibrarySearchInteractionHandler;
@@ -16,7 +14,6 @@ import com.github.laxika.magicalvibes.service.interaction.HandTopBottomChoiceInt
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.interaction.LibraryReorderInteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.ScryInteractionHandler;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 
 import static org.mockito.Mockito.mock;
 
@@ -36,15 +33,11 @@ final class InteractionRegistryTestSupport {
         InteractionHandlerRegistry registry = new InteractionHandlerRegistry(
                 () -> mock(com.github.laxika.magicalvibes.service.event.GameMutationCoordinator.class));
         registry.register(new LibraryReorderInteractionHandler(
-                gameLogService,
-                mock(WarpWorldService.class), mock(PlayerInputService.class),
-                mock(TurnProgressionService.class), mock(EffectResolutionService.class)));
+                gameLogService, mock(WarpWorldService.class), mock(InputCompletionService.class)));
         registry.register(new HandTopBottomChoiceInteractionHandler(
                 gameLogService, mock(InputCompletionService.class)));
         registry.register(new ScryInteractionHandler(
-                gameLogService,
-                mock(PlayerInputService.class), mock(TurnProgressionService.class),
-                mock(EffectResolutionService.class)));
+                gameLogService, mock(InputCompletionService.class)));
         registry.register(new ColorChoiceInteractionHandler(mock(ChoiceHandlerService.class)));
         registry.register(new LibraryRevealChoiceInteractionHandler(
                 mock(LibraryChoiceHandlerService.class)));

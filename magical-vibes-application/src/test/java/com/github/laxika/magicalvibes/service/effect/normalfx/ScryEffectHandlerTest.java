@@ -17,12 +17,10 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.interaction.ScryInteractionHandler;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -89,9 +87,7 @@ class ScryEffectHandlerTest {
         InteractionHandlerRegistry interactionHandlerRegistry = new InteractionHandlerRegistry(
                 () -> mock(com.github.laxika.magicalvibes.service.event.GameMutationCoordinator.class));
         interactionHandlerRegistry.register(new ScryInteractionHandler(
-                gameLogService,
-                mock(PlayerInputService.class), mock(TurnProgressionService.class),
-                mock(EffectResolutionService.class)));
+                gameLogService, mock(InputCompletionService.class)));
         scryEffectHandler = new ScryEffectHandler(
                 gameLogService,
                 interactionHandlerRegistry,

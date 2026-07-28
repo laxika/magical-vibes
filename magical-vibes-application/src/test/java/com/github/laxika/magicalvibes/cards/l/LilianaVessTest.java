@@ -260,6 +260,9 @@ class LilianaVessTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
+        // Finish the +1 (the discard it prompts for) before trying again: activating through the
+        // harness clears any open prompt, which would strand the ability mid-resolution.
+        harness.handleCardChosen(player2, 0);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)

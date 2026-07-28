@@ -63,6 +63,18 @@ class LivingLandsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Animated Forests stay colorless — Living Lands names no color")
+    void animatedForestsStayColorless() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new LivingLands());
+
+        Permanent forest = named(player1, "Forest");
+        // "All Forests are 1/1 creatures that are still lands" — no color, and a land has no mana
+        // cost to take one from (CR 202.2). Contrast Kormus Bell's "1/1 black creatures".
+        assertThat(gqs.getEffectiveColors(gd, forest)).isEmpty();
+    }
+
+    @Test
     @DisplayName("Forests revert to non-creatures when Living Lands leaves")
     void revertsWhenLeaves() {
         harness.addToBattlefield(player1, new Forest());

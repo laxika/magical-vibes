@@ -6,9 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,9 +26,7 @@ import java.util.UUID;
 public class ScryInteractionHandler implements InteractionHandler<PendingInteraction.Scry> {
 
     private final GameLogService gameLogService;
-    private final PlayerInputService playerInputService;
-    private final TurnProgressionService turnProgressionService;
-    private final EffectResolutionService effectResolutionService;
+    private final InputCompletionService inputCompletionService;
 
     @Override
     public Class<PendingInteraction.Scry> handledType() {
@@ -122,19 +118,9 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
         log.info("Game {} - {} {} completed: {} top, {} reject", gameData.id, player.getUsername(),
                 interaction.toGraveyard() ? "surveil" : "scry", topCardOrder.size(), bottomCardOrder.size());
 
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        // Resume resolving remaining effects on the same spell/ability
-        // (e.g. Foresee: "Scry 4, then draw two cards.")
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        turnProgressionService.resolveAutoPass(gameData);
+        // Resumes the remaining effects on the same spell/ability (e.g. Foresee: "Scry 4, then draw
+        // two cards.") before auto-passing. The hand-rolled version this replaced auto-passed even
+        // when those resumed effects had opened a new prompt.
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

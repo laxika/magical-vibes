@@ -5,9 +5,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AdNauseamSupport;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,8 +26,7 @@ public class AdNauseamRepeatChoiceInteractionHandler
 
     private final AdNauseamSupport adNauseamSupport;
     private final GameLogService gameLogService;
-    private final EffectResolutionService effectResolutionService;
-    private final TurnProgressionService turnProgressionService;
+    private final InputCompletionService inputCompletionService;
 
     @Override
     public Class<PendingInteraction.AdNauseamRepeatChoice> handledType() {
@@ -63,18 +61,9 @@ public class AdNauseamRepeatChoiceInteractionHandler
             gameLogService.append(gameData, GameLog.text(playerName + " stops revealing cards (" + sourceName + ")."));
         }
 
-        finishResolution(gameData);
-    }
-
-    /** Resumes any remaining spell effects, then auto-passes so the spell leaves the stack. */
-    private void finishResolution(GameData gameData) {
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-        if (!gameData.interaction.isAwaitingInput()) {
-            turnProgressionService.resolveAutoPass(gameData);
-        }
+        // Resumes the spell's remaining effects and auto-passes. The shared epilogue matters here:
+        // the reveals lose life, so the controller may already have lost — it stops on a finished
+        // game where a bare resolveAutoPass would not.
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

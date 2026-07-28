@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -31,8 +30,7 @@ public class DoomsdayChoiceInteractionHandler
 
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final TurnProgressionService turnProgressionService;
-    private final EffectResolutionService effectResolutionService;
+    private final InputCompletionService inputCompletionService;
 
     @Override
     public Class<PendingInteraction.DoomsdayChoice> handledType() {
@@ -118,16 +116,11 @@ public class DoomsdayChoiceInteractionHandler
 
     /**
      * Finishes the Doomsday resolution when no library-reorder step is needed (zero or one card
-     * kept): resumes any remaining spell effects and then auto-passes so the spell leaves the stack.
+     * kept). The shared epilogue resumes the stack entry parked in
+     * {@code GameData.pendingEffectResolutionEntry} and only then auto-passes, so the spell's
+     * remaining effects still run and a may ability they queue is still presented.
      */
     private void finishResolution(GameData gameData) {
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-        if (!gameData.interaction.isAwaitingInput()) {
-            turnProgressionService.resolveAutoPass(gameData);
-        }
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

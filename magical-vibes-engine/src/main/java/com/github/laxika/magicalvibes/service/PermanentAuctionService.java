@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -28,15 +28,30 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class PermanentAuctionService {
 
     private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
     private final GameMutationCoordinator mutationCoordinator;
-    private final TurnProgressionService turnProgressionService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final InputCompletionService inputCompletionService;
+
+    // @Lazy mirrors ExileSupport: the completion epilogue resumes effect resolution, which reaches
+    // this service again through the effect-handler registry.
+    public PermanentAuctionService(PermanentRemovalService permanentRemovalService,
+                                   BattlefieldEntryService battlefieldEntryService,
+                                   GameLogService gameLogService,
+                                   GameMutationCoordinator mutationCoordinator,
+                                   InteractionHandlerRegistry interactionHandlerRegistry,
+                                   @Lazy InputCompletionService inputCompletionService) {
+        this.permanentRemovalService = permanentRemovalService;
+        this.battlefieldEntryService = battlefieldEntryService;
+        this.gameLogService = gameLogService;
+        this.mutationCoordinator = mutationCoordinator;
+        this.interactionHandlerRegistry = interactionHandlerRegistry;
+        this.inputCompletionService = inputCompletionService;
+    }
 
     /** Exiles all nontoken permanents and begins the auction with the controller. */
     public void beginAuction(GameData gameData, UUID controllerId, String sourceName) {
@@ -59,8 +74,10 @@ public class PermanentAuctionService {
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         if (pool.isEmpty()) {
+            // Nothing to auction, and nothing has paused: this still runs inside the spell's
+            // resolution, so the effect loop and StackResolutionService carry it the rest of the
+            // way. Auto-passing from here would advance the game with the spell still on the stack.
             gameLogService.append(gameData, GameLog.text(sourceName + " exiles no permanents."));
-            turnProgressionService.resolveAutoPass(gameData);
             return;
         }
 
@@ -131,9 +148,16 @@ public class PermanentAuctionService {
                 new PendingInteraction.PermanentAuctionChoice(chooserId, pool, playerOrder, placed));
     }
 
+    /**
+     * Every card has been claimed, so the auction's last pick ends the spell's resolution. The picks
+     * were answered mid-resolution, so this must end through {@link InputCompletionService}: it
+     * resumes the stack entry parked in {@code GameData.pendingEffectResolutionEntry}, and leaving it
+     * parked would wedge {@code GameData.deferPlayerLossCheck} for the rest of the game.
+     */
     private void finishAuction(GameData gameData, List<PendingInteraction.PermanentAuctionPlacement> placed) {
         // Enter-the-battlefield abilities fire after every card has been chosen (all entered as part
-        // of this resolution). Stop early if an ETB begins its own interaction.
+        // of this resolution). Stop early if an ETB begins its own interaction — that interaction's
+        // own completion resumes the parked resolution.
         for (PendingInteraction.PermanentAuctionPlacement placement : placed) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(
                     gameData, placement.controllerId(), placement.card(), null, false);
@@ -141,6 +165,6 @@ public class PermanentAuctionService {
                 return;
             }
         }
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

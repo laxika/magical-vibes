@@ -10,11 +10,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Fills the creature-ness and fixed base P/T of an {@link AllLandsAreCreaturesEffect} (Nature's
- * Revolt) into every land's static bonus. The layer-4 creature type is added by the layered pass;
- * this handler contributes the layer-7 base P/T (the effect's fixed values) for the accumulator and
- * the view. Manlands that animate themselves keep their own base P/T (their self-animation defines
- * it, so it is left untouched here).
+ * Fills the creature-ness, fixed base P/T and colour of an {@link AllLandsAreCreaturesEffect}
+ * (Nature's Revolt) into every land's static bonus. The layer-4 creature type is added by the
+ * layered pass; this handler contributes the layer-7 base P/T (the effect's fixed values) and, when
+ * the effect names one, the layer-5 colour the land becomes (Kormus Bell's "black", replacing the
+ * land's own colours per CR 105.3) for the accumulator and the view. Manlands that animate
+ * themselves keep their own base P/T (their self-animation defines it, so it is left untouched
+ * here).
  */
 @Component
 @RequiredArgsConstructor
@@ -37,6 +39,10 @@ public class AllLandsAreCreaturesEffectHandler implements StaticEffectHandlerBea
             accumulator.setAnimatedCreature(true);
             accumulator.setBasePTOverride(e.power(), e.toughness());
             accumulator.addGrantedCardType(CardType.CREATURE);
+            if (e.color() != null) {
+                accumulator.addGrantedColor(e.color());
+                accumulator.setColorOverriding(true);
+            }
         }
     }
 }

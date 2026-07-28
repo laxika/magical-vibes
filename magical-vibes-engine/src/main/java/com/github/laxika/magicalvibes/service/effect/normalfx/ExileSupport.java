@@ -264,6 +264,11 @@ public class ExileSupport {
     /**
      * Handles the player's Mirror of Fate exiled card choice.
      * Called from GameService.handleMultipleCardsChosen dispatch.
+     *
+     * <p>The choice was begun mid-resolution, so unless the ordering prompt takes over this must end
+     * through the shared {@link InputCompletionService} epilogue, which resumes the stack entry
+     * parked in {@code GameData.pendingEffectResolutionEntry}. Ending any other way leaves that entry
+     * dangling and wedges {@code GameData.deferPlayerLossCheck}.
      */
     public void handleMirrorOfFateChoice(GameData gameData, Player player, List<UUID> cardIds) {
         if (gameData.interaction.activeInteraction(PendingInteraction.MirrorOfFateChoice.class) == null) {
@@ -289,8 +294,18 @@ public class ExileSupport {
         gameData.interaction.clearAwaitingInput();
 
         exileLibraryAndPutChosenOnTop(gameData, player.getId(), cardIds);
+
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
+    /**
+     * Exiles the controller's library and puts the chosen exiled cards back on top. Reached both
+     * mid-resolution (nothing exiled, so nothing to choose) and from the choice above, so it never
+     * runs a completion epilogue itself — asking for the ordering of two or more chosen cards is the
+     * only thing it does beyond moving cards.
+     */
     void exileLibraryAndPutChosenOnTop(GameData gameData, UUID controllerId, List<UUID> chosenCardIds) {
         String controllerName = gameData.playerIdToName.get(controllerId);
 
@@ -329,8 +344,6 @@ public class ExileSupport {
         if (chosenCards.isEmpty()) {
             String emptyLog = controllerName + "'s library is now empty (Mirror of Fate).";
             gameLogService.append(gameData, GameLog.text(emptyLog));
-            gameData.priorityPassedBy.clear();
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
         } else if (chosenCards.size() == 1) {
             // Single card: put directly on top, no ordering needed
             library.addFirst(chosenCards.getFirst());
@@ -338,8 +351,6 @@ public class ExileSupport {
                     chosenCards.getFirst(), " on top of their library (Mirror of Fate)."));
             log.info("Game {} - {} puts 1 exiled card on top of library (Mirror of Fate)",
                     gameData.id, controllerName);
-            gameData.priorityPassedBy.clear();
-            mutationCoordinator.invalidateAllPlayerViews(gameData);
         } else {
             // Multiple cards: player chooses the order via library reorder interaction
             String putLog = controllerName + " puts " + chosenCards.size()

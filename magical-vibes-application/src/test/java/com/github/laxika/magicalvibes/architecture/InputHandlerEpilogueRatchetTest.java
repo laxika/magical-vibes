@@ -29,15 +29,34 @@ import static org.assertj.core.api.Assertions.assertThat;
  * dangling — the spell's remaining effects are silently dropped and
  * {@code GameData.deferPlayerLossCheck} stays wedged (the Fleshbag Marauder bug class).
  *
- * <p>This test counts direct {@code resolveAutoPass(} call sites per file under
- * {@code service/input/} (excluding {@code InputCompletionService}, the sanctioned owner) and
- * fails when any file's count exceeds its baseline — or silently drops below it, so the baseline
- * stays honest as remaining hand-rolled tails are converted.
+ * <p>This test counts direct {@code resolveAutoPass(} call sites per file across every package that
+ * answers player input — {@code service/input/} and {@code service/interaction/}, plus the
+ * input-answer dispatchers that live elsewhere ({@link #EXTRA_FILES}) — excluding
+ * {@code InputCompletionService}, the sanctioned owner. It fails when any file's count exceeds its
+ * baseline, or silently drops below it, so the baseline stays honest as remaining hand-rolled tails
+ * are converted.
+ *
+ * <p>The scan originally covered {@code service/input/} alone, which is exactly why the dangling
+ * parks in {@code ExileSupport} (Mirror of Fate) and {@code PermanentAuctionService} (Thieves'
+ * Auction) went unnoticed: both answer player input from outside that package.
  */
 class InputHandlerEpilogueRatchetTest {
 
-    private static final String INPUT_PKG =
-            "magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/input";
+    private static final String ENGINE_SRC =
+            "magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes";
+
+    /** Package trees whose every file answers player input. */
+    private static final List<String> SCANNED_PKGS = List.of(
+            ENGINE_SRC + "/service/input",
+            ENGINE_SRC + "/service/interaction");
+
+    /**
+     * Input-answer dispatchers outside the scanned packages. Add a file here when it grows a
+     * {@code handle...Choice}/{@code applyPick}-style entry point reached from player input.
+     */
+    private static final List<String> EXTRA_FILES = List.of(
+            ENGINE_SRC + "/service/PermanentAuctionService.java",
+            ENGINE_SRC + "/service/effect/normalfx/ExileSupport.java");
 
     /** The one file allowed to call resolveAutoPass freely: it IS the shared epilogue. */
     private static final Set<String> SANCTIONED_FILES = Set.of("InputCompletionService.java");
@@ -55,25 +74,15 @@ class InputHandlerEpilogueRatchetTest {
     @Test
     @DisplayName("No input handler file gains a hand-rolled resolveAutoPass epilogue")
     void resolveAutoPassCountsMatchBaseline() throws IOException {
-        Path inputPkg = locateRepoRoot().resolve(INPUT_PKG);
-        assertThat(inputPkg).isDirectory();
-
         Map<String, Integer> current = new TreeMap<>();
-        try (Stream<Path> files = Files.list(inputPkg)) {
-            for (Path path : (Iterable<Path>) files.sorted()::iterator) {
-                String name = path.getFileName().toString();
-                if (!name.endsWith(".java") || SANCTIONED_FILES.contains(name)) {
-                    continue;
-                }
-                Matcher m = RESOLVE_AUTO_PASS_RE.matcher(
-                        new String(Files.readAllBytes(path), StandardCharsets.UTF_8));
-                int count = 0;
-                while (m.find()) {
-                    count++;
-                }
-                if (count > 0) {
-                    current.put(name, count);
-                }
+        for (Path path : scannedFiles()) {
+            Matcher m = RESOLVE_AUTO_PASS_RE.matcher(Files.readString(path, StandardCharsets.UTF_8));
+            int count = 0;
+            while (m.find()) {
+                count++;
+            }
+            if (count > 0) {
+                current.put(path.getFileName().toString(), count);
             }
         }
 
@@ -110,7 +119,7 @@ class InputHandlerEpilogueRatchetTest {
     @Test
     @DisplayName("Generic input handlers publish state only through InputCompletionService")
     void genericInputInvalidationsUseTheSharedCompletionEpilogue() throws IOException {
-        Path inputPkg = locateRepoRoot().resolve(INPUT_PKG);
+        Path inputPkg = locateRepoRoot().resolve(ENGINE_SRC + "/service/input");
         List<String> failures = new java.util.ArrayList<>();
 
         try (Stream<Path> files = Files.list(inputPkg)) {
@@ -131,6 +140,29 @@ class InputHandlerEpilogueRatchetTest {
                 .withFailMessage(() -> "Generic input completion ownership regressed:\n  "
                         + String.join("\n  ", failures))
                 .isEmpty();
+    }
+
+    /** Every scanned source file: the input-answering package trees plus {@link #EXTRA_FILES}. */
+    private static List<Path> scannedFiles() throws IOException {
+        Path root = locateRepoRoot();
+        List<Path> paths = new java.util.ArrayList<>();
+        for (String pkg : SCANNED_PKGS) {
+            Path dir = root.resolve(pkg);
+            assertThat(dir).isDirectory();
+            try (Stream<Path> files = Files.walk(dir)) {
+                files.filter(Files::isRegularFile)
+                        .filter(file -> file.toString().endsWith(".java"))
+                        .filter(file -> !SANCTIONED_FILES.contains(file.getFileName().toString()))
+                        .sorted()
+                        .forEach(paths::add);
+            }
+        }
+        for (String extra : EXTRA_FILES) {
+            Path file = root.resolve(extra);
+            assertThat(file).isRegularFile();
+            paths.add(file);
+        }
+        return paths;
     }
 
     /** Walk up from the test working directory until a Gradle settings file is found. */

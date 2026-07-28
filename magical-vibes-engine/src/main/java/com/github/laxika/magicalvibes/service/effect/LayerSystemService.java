@@ -1542,7 +1542,7 @@ public class LayerSystemService {
             }
             return;
         }
-        applyStaticInstanceViaHandlers(gameData, instance, slots, board, (target, harvested) -> {
+        HarvestConsumer colorHarvest = (target, harvested) -> {
             if (harvested.getGrantedColors().isEmpty() && !harvested.isColorOverriding()) {
                 return;
             }
@@ -1553,7 +1553,12 @@ public class LayerSystemService {
                 harvested.getGrantedColors().forEach(state::addColor);
             }
             board.l56Touched().add(target.permanent().getId());
-        });
+        };
+        // Kormus Bell names the colour its animated lands become, but the effect must NOT be marked
+        // managed here: its handler still has to run in the accumulator pass to fill the base P/T
+        // and creature-ness (see the layer-4 case). Only the colour is harvested at this layer.
+        boolean manage = !(instance.effect() instanceof AllLandsAreCreaturesEffect);
+        applyStaticInstanceViaHandlers(gameData, instance, slots, board, manage, colorHarvest);
     }
 
     /**

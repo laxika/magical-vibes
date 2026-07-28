@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,6 +57,7 @@ class MirrorOfFateEffectHandlerTest {
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private ExileService exileService;
     @Mock private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    @Mock private InputCompletionService inputCompletionService;
     @InjectMocks
     private ExileSupport exileSupport;
     private GameData gd;
@@ -218,7 +220,9 @@ class MirrorOfFateEffectHandlerTest {
                 assertThat(gd.playerDecks.get(player1Id)).containsExactly(exiledCard);
                 assertThat(gd.getPlayerExiledCards(player1Id)).contains(libraryCard);
                 assertThat(gd.getPlayerExiledCards(player1Id)).doesNotContain(exiledCard);
-                verify(mutationCoordinator).invalidateAllPlayerViews(gd);
+                // No ordering step follows, so the ability's resolution has to be resumed through the
+                // shared epilogue — a bare view invalidation here left it parked forever.
+                verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
             }
 
             @Test

@@ -6,9 +6,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -32,8 +31,7 @@ public class SylvanLibraryChoiceInteractionHandler
 
     private final GameLogService gameLogService;
     private final LifeSupport lifeSupport;
-    private final EffectResolutionService effectResolutionService;
-    private final TurnProgressionService turnProgressionService;
+    private final InputCompletionService inputCompletionService;
 
     @Override
     public Class<PendingInteraction.SylvanLibraryChoice> handledType() {
@@ -111,7 +109,9 @@ public class SylvanLibraryChoiceInteractionHandler
         log.info("Game {} - Sylvan Library: {} put {} card(s) on top, resolved {} total",
                 gameData.id, playerName, topped.size(), interaction.resolveCount());
 
-        finishResolution(gameData);
+        // The forced-top fallback and the 4-life payments can end the game, and the resumed
+        // resolution may queue a may ability — both handled by the shared epilogue.
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private static Card removeFromHand(List<Card> hand, UUID id) {
@@ -138,16 +138,5 @@ public class SylvanLibraryChoiceInteractionHandler
             }
         }
         return null;
-    }
-
-    private void finishResolution(GameData gameData) {
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-        if (!gameData.interaction.isAwaitingInput()) {
-            turnProgressionService.resolveAutoPass(gameData);
-        }
     }
 }

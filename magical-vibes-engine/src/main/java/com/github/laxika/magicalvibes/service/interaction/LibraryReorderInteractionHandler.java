@@ -7,9 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
-import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -31,9 +29,7 @@ public class LibraryReorderInteractionHandler implements InteractionHandler<Pend
 
     private final GameLogService gameLogService;
     private final WarpWorldService warpWorldService;
-    private final PlayerInputService playerInputService;
-    private final TurnProgressionService turnProgressionService;
-    private final EffectResolutionService effectResolutionService;
+    private final InputCompletionService inputCompletionService;
 
     @Override
     public Class<PendingInteraction.LibraryReorder> handledType() {
@@ -104,24 +100,8 @@ public class LibraryReorderInteractionHandler implements InteractionHandler<Pend
             warpWorldService.finalizePendingWarpWorld(gameData);
         }
 
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        // Resume resolving remaining effects on the same spell/ability
-        // (e.g. Ponder: "Look at top 3, reorder, you may shuffle, then draw a card.")
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        turnProgressionService.resolveAutoPass(gameData);
+        // Resumes the remaining effects on the same spell/ability (e.g. Ponder: "Look at top 3,
+        // reorder, you may shuffle, then draw a card.") before auto-passing.
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

@@ -191,8 +191,14 @@ public final class LayerClassifier {
         // layer 4; the handler fills colour (5) and base P/T (7b) in the accumulator pass.
         map.put(EnchantedPermanentBecomesCreatureEffect.class, fixed(Layer.L4_TYPE));
         // All lands become creatures (Nature's Revolt): the creature type is added in layer 4;
-        // the handler fills the fixed base P/T in the accumulator pass.
-        map.put(AllLandsAreCreaturesEffect.class, fixed(Layer.L4_TYPE));
+        // the handler fills the fixed base P/T in the accumulator pass. When the effect also names
+        // the colour the land becomes (Kormus Bell's "1/1 black creatures"), it is a colour-setting
+        // layer-5 contribution as well, so a later-layer lord like Bad Moon sees the black.
+        map.put(AllLandsAreCreaturesEffect.class,
+                new Entry(Set.of(Layer.L4_TYPE, Layer.L5_COLOR), (effect, fromOwnStaticSlot) ->
+                        ((AllLandsAreCreaturesEffect) effect).color() == null
+                                ? new LayerClassification(Set.of(Layer.L4_TYPE), false, false)
+                                : new LayerClassification(Set.of(Layer.L4_TYPE, Layer.L5_COLOR), false, true)));
         map.put(NonbasicLandsBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(LandsOfSubtypeBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(BasicLandsOfChosenTypesBecomeTypeEffect.class, fixed(Layer.L4_TYPE));

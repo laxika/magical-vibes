@@ -442,6 +442,15 @@ Reasoning behind the non-obvious mappings:
   setter, instead). Incite "becomes red" and Grand Architect "becomes blue" replace colors
   (CR 105.3) → `GrantColorUntilEndOfTurnEffect` is always setting. Nim Deathmantle "is black"
   (no "in addition") → setting (`overriding=true`).
+- **`AllLandsAreCreaturesEffect` is L4, plus L5 when it names a colour.** The creature type is a
+  layer-4 contribution; the fixed base P/T and creature-ness are filled by the effect's handler in
+  the accumulator pass, so the layer-4 case deliberately does NOT mark the effect managed. Kormus
+  Bell ("All Swamps are 1/1 **black** creatures") additionally sets the colour — a land has no mana
+  cost and is therefore colourless (CR 202.2), so without a layer-5 contribution a later-layer lord
+  reading the layer-5 state (Bad Moon's "black creatures get +1/+1") would not see the black. The
+  L5 pass harvests only the colour from the same handler and, again, leaves the effect unmanaged so
+  the accumulator pass still runs it. Living Lands and Nature's Revolt pass no colour and classify
+  as L4 alone.
 - **Changeling keyword grants are L4 + L6** (`GrantKeywordEffect` whose keywords contain
   `CHANGELING` → both layers, one timestamp): "gains all creature types" defines the object's
   creature types (CR 702.73a), a layer-4 contribution — so an Elf lord with an EARLIER
