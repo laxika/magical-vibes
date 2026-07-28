@@ -48,4 +48,11 @@ public class GraveyardTargetOperationState {
      * {@code ExileOwnCreatureFromGraveyardCreateZombieTokenCopyEffectHandler}.
      */
     public boolean resolutionTimeExileCreateZombieTokenCopyResume;
+    /**
+     * Resolution-time "target opponent chooses a card in your graveyard" (Forgotten Lore). When set,
+     * {@code GraveyardChoiceHandlerService.handleGraveyardCardChosen} only records the chosen card on
+     * {@code GameData.forgottenLore} and resumes the paused resolution — the card is not moved. Set by
+     * {@code ForgottenLoreEffectHandler}.
+     */
+    public boolean resolutionTimeForgottenLoreResume;
 }

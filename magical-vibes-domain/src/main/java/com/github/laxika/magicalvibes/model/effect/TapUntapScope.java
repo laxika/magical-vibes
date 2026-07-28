@@ -15,6 +15,13 @@ public enum TapUntapScope {
     ALL_TARGETS,
     /** The source permanent itself. */
     SELF,
+    /**
+     * The source permanent itself, read strictly from {@code entry.getSourcePermanentId()}.
+     * Unlike {@link #SELF} it never falls back to the entry's target, so it is the scope to use
+     * when the same stack entry also has a real target ("untap target creature an opponent
+     * controls. If you do, untap this creature." — Soldevi Golem).
+     */
+    SOURCE_PERMANENT,
     /** The permanent the source aura is attached to. */
     ENCHANTED,
     /** Every permanent the controller controls that matches the predicate. */
@@ -25,6 +32,8 @@ public enum TapUntapScope {
     TARGET_PLAYERS_PERMANENTS,
     /** Every creature on every battlefield that matches the predicate. */
     ALL_CREATURES,
+    /** Every permanent on every battlefield that matches the predicate (Curse of Marit Lage). */
+    ALL_PERMANENTS,
     /** Every creature on every battlefield that attacked this turn. */
     ATTACKED_CREATURES
 }

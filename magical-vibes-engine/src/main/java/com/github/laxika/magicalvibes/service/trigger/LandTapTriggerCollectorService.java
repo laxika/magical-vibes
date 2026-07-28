@@ -278,7 +278,7 @@ public class LandTapTriggerCollectorService {
         if (tappedLand == null) return false;
         if (!tappedLand.getCard().getSubtypes().contains(trigger.subtype())) return false;
 
-        boolean snow = tappedLand.getCard().getSupertypes().contains(CardSupertype.SNOW);
+        boolean snow = gameQueryService.hasEffectiveSupertype(match.gameData(), tappedLand, CardSupertype.SNOW);
         int amount = snow ? trigger.snowAmount() : trigger.amount();
         ManaPool pool = match.gameData().playerManaPools.get(lt.tappingPlayerId());
         trigger.restriction().applyTo(pool, trigger.color(), amount);

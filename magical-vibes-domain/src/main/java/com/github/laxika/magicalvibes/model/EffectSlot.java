@@ -437,6 +437,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  set as the (non-targeting) targetId on the stack entry so the resolved effect can act on it.
      *  Checked in {@code CombatAttackService.declareAttackers}. Used by Caltrops. */
     ON_ANY_CREATURE_ATTACKS,
+    /** Triggers once per combat whenever a player attacks with one or more creatures, regardless of
+     *  who controls the attackers. Fires on every permanent with this slot across all battlefields.
+     *  The attacking player's ID is set as the (non-targeting) targetId on the stack entry, so
+     *  player-scoped effects (e.g. {@code EachPermanentScope.TARGET_PLAYER}) act on "that player".
+     *  Checked in {@code CombatAttackService.declareAttackers}. Used by Total War. */
+    ON_ANY_PLAYER_ATTACKS,
     /** Triggers when this instant/sorcery spell is cast (a "when you cast this spell" ability on the
      *  spell itself). Scanned against the just-cast card in
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. Used by the SOS Infusion copy cycle

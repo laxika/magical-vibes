@@ -14,6 +14,7 @@ import java.util.List;
  * That creature deals damage equal to its power to this creature. (fight mechanic)
  */
 @CardRegistration(set = "9ED", collectorNumber = "198")
+@CardRegistration(set = "ICE", collectorNumber = "197")
 public class KarplusanYeti extends Card {
 
     public KarplusanYeti() {

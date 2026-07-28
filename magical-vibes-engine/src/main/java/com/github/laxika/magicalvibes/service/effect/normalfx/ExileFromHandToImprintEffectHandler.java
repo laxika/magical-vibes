@@ -60,6 +60,7 @@ public class ExileFromHandToImprintEffectHandler implements NormalEffectHandlerB
         }
 
         playerInputService.beginImprintFromHandChoice(gameData, controllerId, validIndices,
-                "Choose " + e.description() + " from your hand to exile and imprint.", sourcePermanent.getId());
+                "Choose " + e.description() + " from your hand to exile and imprint.", sourcePermanent.getId(),
+                e.grantCastPermission());
     }
 }

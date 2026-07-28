@@ -784,7 +784,8 @@ public class CardChoiceHandlerService {
         if (!validIndices.contains(cardIndex)) {
             log.warn("Game {} - {} sent invalid imprint card index {}, re-prompting", gameData.id, player.getUsername(), cardIndex);
             playerInputService.beginImprintFromHandChoice(gameData, player.getId(),
-                    new ArrayList<>(validIndices), "Choose a card from your hand.", imprintChoice.sourcePermanentId());
+                    new ArrayList<>(validIndices), "Choose a card from your hand.", imprintChoice.sourcePermanentId(),
+                    imprintChoice.grantCastPermission());
             return;
         }
 
@@ -798,6 +799,11 @@ public class CardChoiceHandlerService {
 
         // Add to controller's exile zone
         exileService.exileCard(gameData, playerId, card);
+
+        // "You may cast that card for as long as it remains exiled" (Ice Cauldron) — no expiry.
+        if (imprintChoice.grantCastPermission()) {
+            gameData.exilePlayPermissions.put(card.getId(), playerId);
+        }
 
         // Imprint on source permanent
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);

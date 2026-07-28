@@ -103,7 +103,23 @@ public class StackEntry {
      * {@code ON_DAMAGED_CREATURE_DIES} return. Not a target: it is never validated or fizzled.
      */
     @Setter private UUID triggeringCardId;
+    /**
+     * Id of the permanent whose event produced this triggered ability, when an effect needs to act on
+     * "it" rather than a chosen target — e.g. the permanent that became tapped for Freyalise's Winds'
+     * {@code ON_ALLY_PERMANENT_BECOMES_TAPPED} / {@code ON_OPPONENT_PERMANENT_BECOMES_TAPPED} counter.
+     * Not a target: it is never validated or fizzled.
+     */
+    @Setter private UUID triggeringPermanentId;
     private final List<UUID> targetIds;
+    /**
+     * Whether {@link #targetIds} was derived from the controller-announced amount assignments
+     * (divided damage / prevention / counter distribution) rather than from the card's declared
+     * target groups. When it is, the card's target groups describe the separate primary target
+     * carried on {@link #targetId} — Fiery Justice's "target opponent gains 5 life" next to its
+     * 5 divided damage — so group slicing and per-position filters must not be applied to the
+     * assignment positions.
+     */
+    private boolean targetIdsFromAssignments;
     /**
      * Flat target positions that became illegal while this entry was resolving. Keeping positions
      * instead of removing IDs preserves target-group boundaries when an earlier target becomes
@@ -203,6 +219,7 @@ public class StackEntry {
         this.targetCardIds = List.of();
         this.targetFilter = null;
         this.targetIds = assignmentTargetIds(this.damageAssignments);
+        this.targetIdsFromAssignments = !this.targetIds.isEmpty();
     }
 
     // Triggered ability with source permanent and xValue constructor (e.g. spell-cast self-boost by mana spent)
@@ -274,9 +291,9 @@ public class StackEntry {
         this.targetZone = targetZone;
         this.targetCardIds = targetCardIds != null ? targetCardIds : List.of();
         this.targetFilter = null;
-        this.targetIds = targetIds != null && !targetIds.isEmpty()
-                ? targetIds
-                : assignmentTargetIds(this.damageAssignments);
+        boolean explicitTargetIds = targetIds != null && !targetIds.isEmpty();
+        this.targetIds = explicitTargetIds ? targetIds : assignmentTargetIds(this.damageAssignments);
+        this.targetIdsFromAssignments = !explicitTargetIds && !this.targetIds.isEmpty();
     }
 
     // Multi-target triggered ability constructor (e.g. exile up to N cards from graveyards)
@@ -334,7 +351,9 @@ public class StackEntry {
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
         this.chosenPermanentId = source.chosenPermanentId;
         this.triggeringCardId = source.triggeringCardId;
+        this.triggeringPermanentId = source.triggeringPermanentId;
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
+        this.targetIdsFromAssignments = source.targetIdsFromAssignments;
         this.illegalTargetIndices.addAll(source.illegalTargetIndices);
         this.grantedKeywordsOnEntry.addAll(source.grantedKeywordsOnEntry);
     }
@@ -473,6 +492,11 @@ public class StackEntry {
      * only the later groups' targets and slicing starts at group 1.</p>
      */
     public List<UUID> targetsForGroup(int group) {
+        if (targetIdsFromAssignments) {
+            // The flat list holds assignment keys, not this group's chosen targets; the card's
+            // declared group targets the separately stored primary target.
+            return targetId != null ? List.of(targetId) : List.of();
+        }
         List<SpellTarget> groups = card == null ? List.of() : card.getSpellTargets();
         if (groups.isEmpty()) {
             return group >= 0 && group < targetIds.size() && !illegalTargetIndices.contains(group)

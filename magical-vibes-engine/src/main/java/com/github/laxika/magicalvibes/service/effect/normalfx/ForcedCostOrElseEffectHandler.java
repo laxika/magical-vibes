@@ -50,8 +50,13 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                         com.github.laxika.magicalvibes.service.effect.AmountContext.forStackEntry(entry, source));
                 effectiveCost = reduceGenericManaCost(payCost.manaCost(), reduction);
             }
-            String prompt = entry.getCard().getName() + " - Pay " + effectiveCost
-                    + (payCost.lifeAmount() > 0 ? " and " + payCost.lifeAmount() + " life" : "") + "?";
+            // A blank mana cost means the payment is life-only (Glacial Chasm's "Pay 2 life"
+            // cumulative upkeep), so the prompt drops the "{cost} and " part entirely.
+            String lifePart = payCost.lifeAmount() > 0 ? payCost.lifeAmount() + " life" : "";
+            String costText = effectiveCost.isEmpty()
+                    ? lifePart
+                    : effectiveCost + (lifePart.isEmpty() ? "" : " and " + lifePart);
+            String prompt = entry.getCard().getName() + " - Pay " + costText + "?";
             if (e.anyPlayerMayPay()) {
                 // "unless any player pays {cost}" (Icy Prison): offer each player in APNAP order;
                 // first accept stops the sequence, full decline resolves the fallback.

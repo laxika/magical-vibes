@@ -727,9 +727,23 @@ public class AmountEvaluationService {
             case OPPONENTS -> !playerId.equals(ctx.controllerId());
             case ANY_PLAYER -> true;
             // The target channel carries the target player's id for player-targeting effects.
-            case TARGET_PLAYER -> playerId.equals(ctx.targetPermanentId());
+            case TARGET_PLAYER -> playerId.equals(targetPlayerId(gameData, ctx));
             case DEFENDING_PLAYER -> playerId.equals(defendingPlayerId(gameData, ctx));
         };
+    }
+
+    /**
+     * The player named by the target channel: the targeted player itself, or — when the target is a
+     * permanent (a targeted planeswalker) — that permanent's controller. Models the
+     * "that player or that planeswalker's controller" wordings (Goblin Lyre) with the same scope
+     * that plain "target player" effects use.
+     */
+    private UUID targetPlayerId(GameData gameData, AmountContext ctx) {
+        UUID targetId = ctx.targetPermanentId();
+        if (targetId == null || gameData.playerIds.contains(targetId)) {
+            return targetId;
+        }
+        return gameQueryService.findPermanentController(gameData, targetId);
     }
 
     /**

@@ -85,6 +85,13 @@ public record DealDividedDamageEffect(
                 new PermanentIsAttackingPredicate(), 0, false, false, false);
     }
 
+    /** X damage divided as you choose among any number of target creatures (Fire Covenant). */
+    public static DealDividedDamageEffect xAmongTargetCreatures() {
+        return new DealDividedDamageEffect(
+                new XValue(), null, DivisionMode.CHOSEN,
+                new PermanentIsCreaturePredicate(), 0, false, false, false);
+    }
+
     /**
      * X damage divided as you choose among any number of target creatures; creatures dealt damage
      * this way can't block this turn (Huatli, Warrior Poet).

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "5ED", collectorNumber = "232")
+@CardRegistration(set = "ICE", collectorNumber = "186")
 public class GameOfChaos extends Card {
 
     public GameOfChaos() {

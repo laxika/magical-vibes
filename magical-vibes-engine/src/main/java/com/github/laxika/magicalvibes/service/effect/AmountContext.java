@@ -75,6 +75,14 @@ public record AmountContext(
      * (graveyard/battlefield counts) are meaningful here.
      */
     public static AmountContext forCasting(UUID castingPlayerId) {
-        return new AmountContext(castingPlayerId, null, null, 0, 0, false, null);
+        return forCasting(castingPlayerId, 0);
+    }
+
+    /**
+     * Cast-time context that also carries the announced X, for amounts that depend on it before a
+     * stack entry exists (Meteor Shower — "X plus 1 damage divided as you choose").
+     */
+    public static AmountContext forCasting(UUID castingPlayerId, int xValue) {
+        return new AmountContext(castingPlayerId, null, null, xValue, 0, false, null);
     }
 }

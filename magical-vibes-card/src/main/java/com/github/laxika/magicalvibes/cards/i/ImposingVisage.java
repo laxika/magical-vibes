@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5ED", collectorNumber = "241")
+@CardRegistration(set = "ICE", collectorNumber = "193")
 public class ImposingVisage extends Card {
 
     public ImposingVisage() {

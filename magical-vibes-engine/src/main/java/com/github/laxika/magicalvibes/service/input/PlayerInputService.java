@@ -677,8 +677,13 @@ public class PlayerInputService {
     }
 
     public void beginImprintFromHandChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID sourcePermanentId) {
+        beginImprintFromHandChoice(gameData, playerId, validIndices, prompt, sourcePermanentId, false);
+    }
+
+    public void beginImprintFromHandChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                           UUID sourcePermanentId, boolean grantCastPermission) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ImprintFromHandChoice(
-                playerId, new ArrayList<>(validIndices), sourcePermanentId, prompt));
+                playerId, new ArrayList<>(validIndices), sourcePermanentId, prompt, grantCastPermission));
     }
 
     public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId, int remainingCount) {

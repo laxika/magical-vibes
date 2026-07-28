@@ -403,6 +403,13 @@ public class AutoPassService {
                     continue;
                 }
 
+                // Skip declare-blockers-only abilities that also require the creature to be blocked
+                if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_DECLARE_BLOCKERS_IF_BLOCKED
+                        && (gameData.currentStep != TurnStep.DECLARE_BLOCKERS
+                                || !gameQueryService.isBlockedByAnyCreature(gameData, perm))) {
+                    continue;
+                }
+
                 // Skip mana abilities (any effect that produces mana makes the whole ability a mana ability per CR 605.1a)
                 boolean isManaAbility = ability.getEffects().stream()
                         .anyMatch(e -> e instanceof ManaProducingEffect);

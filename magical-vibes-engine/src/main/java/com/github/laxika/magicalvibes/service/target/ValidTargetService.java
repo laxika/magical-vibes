@@ -231,6 +231,15 @@ public class ValidTargetService {
     }
 
     public ValidTargetsResponse computeValidTargetsForAbility(GameData gameData, Card sourceCard, ActivatedAbility ability, UUID controllerId, int permanentIndex, List<UUID> alreadySelectedIds) {
+        return computeValidTargetsForAbility(gameData, sourceCard, ability, controllerId, permanentIndex, alreadySelectedIds, null);
+    }
+
+    /**
+     * Enumerates an ability's legal targets. {@code xValue} is the X the player announced for an
+     * {@code {X}} cost and bounds the target count for X-scaled abilities (Runed Arch's
+     * "X target creatures with power 2 or less").
+     */
+    public ValidTargetsResponse computeValidTargetsForAbility(GameData gameData, Card sourceCard, ActivatedAbility ability, UUID controllerId, int permanentIndex, List<UUID> alreadySelectedIds, Integer xValue) {
         List<UUID> validPermanentIds = new ArrayList<>();
         List<UUID> validPlayerIds = new ArrayList<>();
         Set<UUID> excludeIds = alreadySelectedIds != null && !alreadySelectedIds.isEmpty() ? Set.copyOf(alreadySelectedIds) : Set.of();
@@ -293,6 +302,13 @@ public class ValidTargetService {
         int minTargets = 1;
         int maxTargets = 1;
         String prompt = "Select a target for " + sourceCard.getName() + " ability";
+
+        if (ability.isXScaledTargets()) {
+            int effectiveX = xValue != null ? xValue : 0;
+            minTargets = ability.getEffectiveMinTargets(effectiveX);
+            maxTargets = ability.getEffectiveMaxTargets(effectiveX);
+            prompt = "Select targets for " + sourceCard.getName() + " ability";
+        }
 
         // Multi-target graveyard ability (e.g. "exile two target cards")
         for (CardEffect effect : ability.getEffects()) {

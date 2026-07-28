@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
@@ -256,7 +257,15 @@ public class TargetLegalityService {
     }
 
     public void validateMultiTargetAbility(GameData gameData, UUID playerId, ActivatedAbility ability, List<UUID> targetIds, Card sourceCard) {
-        validateMultiTargetCount(targetIds, ability.getMinTargets(), ability.getMaxTargets());
+        validateMultiTargetAbility(gameData, playerId, ability, targetIds, sourceCard, 0);
+    }
+
+    /**
+     * Validates a multi-target ability's chosen targets. {@code xValue} is the X paid for the
+     * ability's {@code {X}} cost and bounds the target count for X-scaled abilities (Runed Arch).
+     */
+    public void validateMultiTargetAbility(GameData gameData, UUID playerId, ActivatedAbility ability, List<UUID> targetIds, Card sourceCard, int xValue) {
+        validateMultiTargetCount(targetIds, ability.getEffectiveMinTargets(xValue), ability.getEffectiveMaxTargets(xValue));
 
         List<TargetFilter> perPositionFilters = ability.getMultiTargetFilters();
         for (int i = 0; i < targetIds.size(); i++) {
@@ -719,7 +728,8 @@ public class TargetLegalityService {
                                 predicateEvaluationService.validateTargetFilter(effectiveTargetFilter, targetPerm,
                                         filterContext(gameData,
                                                 entry.getCard() != null ? entry.getCard().getId() : null,
-                                                entry.getControllerId()).withXValue(entry.getXValue()));
+                                                entry.getControllerId()).withXValue(entry.getXValue())
+                                                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot()));
                             } catch (IllegalStateException e) {
                                 targetFizzled = true;
                             }
@@ -824,7 +834,8 @@ public class TargetLegalityService {
             try {
                 predicateEvaluationService.validateTargetFilter(targetFilter, target,
                         filterContext(gameData, entry.getCard() != null ? entry.getCard().getId() : null,
-                                entry.getControllerId()).withXValue(entry.getXValue()));
+                                entry.getControllerId()).withXValue(entry.getXValue())
+                                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot()));
             } catch (IllegalStateException e) {
                 return false;
             }
@@ -864,6 +875,17 @@ public class TargetLegalityService {
         if (entry.getTargetFilter() != null) {
             for (int i = 0; i < targetCount; i++) {
                 filters.add(entry.getTargetFilter());
+            }
+            return filters;
+        }
+
+        // An amount-assignment entry derives its flat target list from the assignment keys, not from
+        // the card's declared target groups. Those groups describe the separate primary target that
+        // rides alongside the assignments (Fiery Justice's "target opponent gains 5 life"), so they
+        // must not be applied to the assignment positions.
+        if (entry.isTargetIdsFromAssignments()) {
+            for (int i = 0; i < targetCount; i++) {
+                filters.add(null);
             }
             return filters;
         }
@@ -1242,6 +1264,9 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryColorInPredicate colorInPredicate) {
             return colorInPredicate.colors().contains(stackEntry.getCard().getColor());
         }
+        if (predicate instanceof StackEntryCardTypeInPredicate cardTypeInPredicate) {
+            return cardTypeInPredicate.cardTypes().stream().anyMatch(stackEntry.getCard()::hasType);
+        }
         if (predicate instanceof StackEntrySubtypeInPredicate subtypeInPredicate) {
             return stackEntry.getCard().getSubtypes().stream()
                     .anyMatch(subtypeInPredicate.subtypes()::contains);
@@ -1430,6 +1455,22 @@ public class TargetLegalityService {
             }
         }
         return false;
+    }
+
+    /**
+     * Validates a player target that rides alongside a divided-damage cast, where the divided
+     * branch owns the cast and the regular single-target validation path never runs (Fiery
+     * Justice's "Target opponent gains 5 life" next to its 5 divided damage). Checks that the
+     * target is a player matching the card's {@link PlayerPredicateTargetFilter} and that it is
+     * targetable (shroud / hexproof).
+     */
+    public void validateSpellPlayerTarget(GameData gameData, UUID targetPlayerId, UUID controllerId,
+                                          PlayerPredicateTargetFilter filter) {
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)
+                || !matchesPlayerPredicate(gameData, controllerId, targetPlayerId, filter.predicate())) {
+            throw new IllegalStateException(filter.errorMessage());
+        }
+        validatePlayerTargetable(gameData, targetPlayerId, controllerId);
     }
 
     private boolean matchesPlayerPredicate(GameData gameData, UUID controllerId, UUID targetPlayerId, PlayerPredicate predicate) {

@@ -36,11 +36,15 @@ import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffe
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -239,6 +243,30 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingMayAbilities).hasSize(1);
             assertThat(gd.pendingMayAbilities.getFirst().description()).contains("Angel's Feather");
+        }
+
+        @Test
+        @DisplayName("targeting trigger with a manaCost queues the target choice with the effect wrapped in MayPayManaEffect")
+        void targetingTriggerWithManaCostWrapsInMayPayMana() {
+            Permanent perm = createPermanent("Malachite Talisman");
+            var innerEffect = new UntapPermanentsEffect(TapUntapScope.TARGET);
+            var effect = new SpellCastTriggerEffect(null, List.of(innerEffect), "{3}", TargetFilters.permanent());
+            Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
+            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance).hasSize(1);
+            var queued = (PermanentChoiceContext.SpellTargetTriggerAnyTarget) gd.pendingInteractions.getFirst();
+            assertThat(queued.controllerId()).isEqualTo(player1Id);
+            assertThat(queued.effects()).singleElement()
+                    .isEqualTo(new MayPayManaEffect("{3}", innerEffect, "Pay {3}?"));
         }
     }
 

@@ -83,6 +83,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             resolveMayRevealToHand(gameData, entry, e, lookCount, chooseCount);
         } else if (e.restDestination() == LookDestination.GRAVEYARD) {
             resolveRestToGraveyard(gameData, entry, e, lookCount, chooseCount);
+        } else if (e.restDestination() == LookDestination.TOP_OF_LIBRARY) {
+            resolveRestOnTop(gameData, entry, lookCount);
         } else if (e.restDestination() == LookDestination.EXILE) {
             resolveRestToExile(gameData, entry, lookCount, chooseCount);
         } else if (e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM) {
@@ -153,6 +155,42 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         .shuffleAfterSelection(false)
                         .prompt(prompt)
                         .destination(LibrarySearchDestination.TOP_OF_LIBRARY)
+                        .build(),
+                prompt,
+                false));
+    }
+
+    /**
+     * One looked-at card into hand, the rest back on top of the library in an order the player
+     * chooses (Diabolic Vision). The pick and the reorder both run through the
+     * {@code LibrarySearch} flow, which puts the leftovers back on top when
+     * {@code reorderRemainingToTop} is set.
+     */
+    private void resolveRestOnTop(GameData gameData, StackEntry entry, int lookCount) {
+        LibraryRevealSupport.TopCardsResult result =
+                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
+        if (result == null) return;
+        UUID controllerId = result.controllerId();
+        List<Card> topCards = result.topCards();
+        String playerName = result.playerName();
+
+        // A single looked-at card leaves nothing to put back on top.
+        if (topCards.size() == 1) {
+            gameData.addCardToHand(controllerId, topCards.getFirst());
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " looks at the top card of their library and puts it into their hand."));
+            return;
+        }
+
+        String prompt = "Put one of these cards into your hand. The rest go back on top of your "
+                + "library in any order.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(controllerId, topCards)
+                        .sourceCards(new ArrayList<>(topCards))
+                        .reorderRemainingToTop(true)
+                        .shuffleAfterSelection(false)
+                        .prompt(prompt)
+                        .destination(LibrarySearchDestination.HAND)
                         .build(),
                 prompt,
                 false));

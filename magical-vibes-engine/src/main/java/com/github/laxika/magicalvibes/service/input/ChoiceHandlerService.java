@@ -265,6 +265,10 @@ public class ChoiceHandlerService {
             handleWintersChillPaymentChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.ForgottenLorePaymentChoice ctx) {
+            handleForgottenLorePaymentChoice(gameData, player, colorName, ctx);
+            return;
+        }
         CardColor color = CardColor.valueOf(colorName);
         UUID permanentId = colorChoice.permanentId();
         UUID etbTargetId = colorChoice.etbTargetId();
@@ -1209,6 +1213,29 @@ public class ChoiceHandlerService {
                 player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
         log.info("Game {} - {} chooses {} for Winter's Chill target {}",
                 gameData.id, player.getUsername(), chosen, ctx.targetPermanentId());
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Forgotten Lore: the controller chose whether to pay {G} and repeat the process. Record the
+     * choice on {@link GameData#forgottenLore} and resume so {@code ForgottenLoreEffectHandler}
+     * either charges the mana and prompts the opponent again, or ends the loop.
+     */
+    private void handleForgottenLorePaymentChoice(GameData gameData, Player player, String chosen,
+            ChoiceContext.ForgottenLorePaymentChoice ctx) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active == null || !active.options().contains(chosen)) {
+            throw new IllegalArgumentException("Invalid Forgotten Lore choice: " + chosen);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.forgottenLore.chosenMode = chosen;
+
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
+        log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), chosen, ctx.sourceCardName());
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

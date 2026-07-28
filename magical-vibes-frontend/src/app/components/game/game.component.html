@@ -357,11 +357,11 @@
           [class.can-attack]="mine && creature && canAttack(ip.originalIndex) && !isSelectedAttacker(ip.originalIndex)"
           [class.selected-attacker]="mine && creature && declaringAttackers() && isSelectedAttacker(ip.originalIndex)"
           [class.must-attack]="mine && creature && mustAttackIndices().has(ip.originalIndex)"
-          [class.can-block]="mine && creature && canBlock(ip.originalIndex) && !isAssignedBlocker(ip.originalIndex) && selectedBlockerIndex() !== ip.originalIndex"
-          [class.selected-blocker]="mine && creature && selectedBlockerIndex() === ip.originalIndex"
-          [class.assigned-blocker]="mine && creature && isAssignedBlocker(ip.originalIndex)"
-          [class.block-target]="!mine && creature && isBlockTarget(ip.originalIndex)"
-          [class.blocked-attacker]="!mine && creature && declaringBlockers() && isAttackerBlocked(ip.originalIndex)"
+          [class.can-block]="isBlockerSide(mine) && creature && canBlock(ip.originalIndex) && !isAssignedBlocker(ip.originalIndex) && selectedBlockerIndex() !== ip.originalIndex"
+          [class.selected-blocker]="isBlockerSide(mine) && creature && selectedBlockerIndex() === ip.originalIndex"
+          [class.assigned-blocker]="isBlockerSide(mine) && creature && isAssignedBlocker(ip.originalIndex)"
+          [class.block-target]="isAttackerSide(mine) && creature && isBlockTarget(ip.originalIndex)"
+          [class.blocked-attacker]="isAttackerSide(mine) && creature && declaringBlockers() && isAttackerBlocked(ip.originalIndex)"
           [class.targetable]="((choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(ip.perm)) || (creature && choice.damage.distributingDamage && ip.perm.attacking)"
           [class.stack-targeted]="stackTargetId() === ip.perm.id"
           [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
@@ -388,13 +388,13 @@
             @if (mine ? isBlockingCreature(ip.originalIndex, true) : ip.perm.blocking) {
               <div badge-tl class="card-combat-badge blocking-badge">{{ getBlockingBadgeText(ip.originalIndex, mine) }}</div>
             }
-            @if (!mine && declaringBlockers() && isAttackerBlocked(ip.originalIndex)) {
+            @if (isAttackerSide(mine) && declaringBlockers() && isAttackerBlocked(ip.originalIndex)) {
               <div badge-tr class="card-combat-badge blocked-badge">Blocked</div>
             }
-            @if (!mine && declaringBlockers() && mustBeBlockedAttackerIndices().has(ip.originalIndex)) {
+            @if (isAttackerSide(mine) && declaringBlockers() && mustBeBlockedAttackerIndices().has(ip.originalIndex)) {
               <div badge-bl class="card-combat-badge must-block-badge">Must Block</div>
             }
-            @if (!mine && declaringBlockers() && menaceAttackerIndices().has(ip.originalIndex)) {
+            @if (isAttackerSide(mine) && declaringBlockers() && menaceAttackerIndices().has(ip.originalIndex)) {
               <div badge-br class="card-combat-badge menace-badge">Needs 2 Blockers</div>
             }
             @if (choice.damage.distributingDamage && choice.damage.getDamageAssigned(ip.perm.id) > 0) {

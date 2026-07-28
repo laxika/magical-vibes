@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerNameCardRevealTop
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "319")
+@CardRegistration(set = "ICE", collectorNumber = "344")
 public class VexingArcanix extends Card {
 
     public VexingArcanix() {

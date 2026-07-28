@@ -33,6 +33,9 @@ public enum PreventionScope {
     /** "Prevent all damage that would be dealt to ~ this turn" — the source permanent
      *  (Gideon of the Trials 0). */
     ALL_TO_SELF,
+    /** "Prevent all [combat] damage that would be dealt by ~ this turn" — the source permanent
+     *  (Goblin Snowman). The by-side counterpart of {@link #ALL_TO_SELF}. */
+    ALL_BY_SELF,
     /** "Prevent all damage that would be dealt to you and creatures you control this turn" (Safe Passage). */
     ALL_TO_CONTROLLER_AND_CREATURES,
     /** "Prevent all damage attacking creatures would deal to you this turn" (Deep Wood). */

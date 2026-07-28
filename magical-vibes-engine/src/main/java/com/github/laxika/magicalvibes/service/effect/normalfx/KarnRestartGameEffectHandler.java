@@ -193,6 +193,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();
         gameData.activatedAbilityUsesThisTurn.clear();
+        gameData.activatedAbilityUsesThisGame.clear();
         gameData.permanentAbilityResolutionsThisTurn.clear();
         gameData.pendingTurnControl.clear();
         gameData.pendingTurnControlExtraTurn.clear();
@@ -204,6 +205,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.controllersDealtCombatDamageWithChangelingThisTurn.clear();
         gameData.combatBlockOpponentSubtypesThisTurn.clear();
         gameData.creaturesInCombatWithChangelingThisTurn.clear();
+        gameData.combatBlockOpponentIdsThisTurn.clear();
         gameData.paidSearchTaxPermanentIds.clear();
         gameData.combatDamagePlayerAssignments.clear();
         gameData.combatDamagePendingIndices.clear();

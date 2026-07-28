@@ -21,6 +21,7 @@ All paths relative to `cards/`.
 | Draw + discard | `m/MerfolkLooter.java` | DrawCardEffect + DiscardEffect(1, CONTROLLER) |
 | Grant keyword to target | `m/MightWeaver.java` | GrantKeywordEffect with color filter |
 | Sacrifice self for effect | `b/BottleGnomes.java` | SacrificeSelfCost + effect |
+| Sacrifice self for mana + sacrifice self to damage blocked creature | `t/TinderWall.java` | Two no-tap abilities: SacrificeSelfCost+AwardManaEffect(RED, 2) and {R}+SacrificeSelfCost+DealDamageToTargetCreatureEffect(2) with `PermanentAllOfPredicate(IsCreature, BlockedBySource)` — the sacrificed source's last known information keeps the target legal (CR 608.2b) |
 | Sacrifice self + multi-target creature damage | `f/FireShrineKeeper.java` | tap+mana+SacrificeSelfCost+DealDamageToTargetCreatureEffect(3) with multi-target ability constructor (0-2 creature targets) — "up to two target creatures" pattern |
 | Sacrifice self + damage player/pw | `v/VulshokReplica.java` | SacrificeSelfCost + DealDamageToAnyTargetEffect + PermanentIsPlaneswalkerPredicate filter (restricts to players + planeswalkers) |
 | Sacrifice self + choose source prevention | `a/AuriokReplica.java` | SacrificeSelfCost + `PreventDamageFromChosenSourceEffect.allDamageToYou()` (controller-only). `b/BurrentonForgeTender.java` uses `allDamage(new PermanentColorInPredicate(Set.of(RED)), "red")` for global red-source prevention |

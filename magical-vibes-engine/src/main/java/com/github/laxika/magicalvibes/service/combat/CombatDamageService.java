@@ -758,10 +758,10 @@ public class CombatDamageService {
                     if (!defenderStats.containsKey(blkIdx)) {
                         defenderStats.put(blkIdx, snapshotCombatant(gameData, blk));
                     }
-                    if (gameQueryService.hasProtectionFromSource(gameData, atk, blk)) {
+                    if (gameQueryService.hasProtectionFromDamageSource(gameData, atk, blk)) {
                         attackerProtectedFromBlocker.add(DamagePhaseSnapshot.pairKey(atkIdx, blkIdx));
                     }
-                    if (gameQueryService.hasProtectionFromSource(gameData, blk, atk)) {
+                    if (gameQueryService.hasProtectionFromDamageSource(gameData, blk, atk)) {
                         blockerProtectedFromAttacker.add(DamagePhaseSnapshot.pairKey(atkIdx, blkIdx));
                     }
                 }
@@ -844,7 +844,7 @@ public class CombatDamageService {
                 }
                 if (targetIdx >= 0) {
                     Permanent blk = defBf.get(targetIdx);
-                    if (!(damagePreventable && gameQueryService.hasProtectionFromSource(gameData, blk, atk))) {
+                    if (!(damagePreventable && gameQueryService.hasProtectionFromDamageSource(gameData, blk, atk))) {
                         int actualDmg = gameQueryService.applyCombatDamageMultiplier(gameData, dmg, atk, blk);
                         applyCombatCreatureDamage(gameData, atk, atkStats, blk, targetIdx, actualDmg, state.defDamageTaken, state.deathtouchDamagedDefenderIndices);
                         state.combatDamageDealt.merge(atk, actualDmg, Integer::sum);
@@ -1646,6 +1646,10 @@ public class CombatDamageService {
         state.damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, state.damageToDefendingPlayer, "combat", true);
         // Immortal Coil: prevent all combat damage to its controller and exile a card from their
         // graveyard for each 1 damage prevented (before any infect conversion, so it never becomes poison).
+        // Glacial Chasm: prevent all combat damage that would be dealt to its controller.
+        if (state.damageToDefendingPlayer > 0) {
+            state.damageToDefendingPlayer -= damageSupport.applyControllerAllDamagePrevention(gameData, defenderId, state.damageToDefendingPlayer);
+        }
         if (state.damageToDefendingPlayer > 0) {
             state.damageToDefendingPlayer -= damageSupport.applyImmortalCoilPrevention(gameData, defenderId, state.damageToDefendingPlayer);
         }
@@ -1678,6 +1682,10 @@ public class CombatDamageService {
         }
 
         state.poisonDamageToDefendingPlayer = damagePreventionService.applyPlayerPreventionShield(gameData, defenderId, state.poisonDamageToDefendingPlayer);
+        // Glacial Chasm also prevents infect combat damage (still damage, so no poison counters).
+        if (state.poisonDamageToDefendingPlayer > 0) {
+            state.poisonDamageToDefendingPlayer -= damageSupport.applyControllerAllDamagePrevention(gameData, defenderId, state.poisonDamageToDefendingPlayer);
+        }
         // Immortal Coil also prevents infect combat damage (still damage), exiling per point prevented.
         if (state.poisonDamageToDefendingPlayer > 0) {
             state.poisonDamageToDefendingPlayer -= damageSupport.applyImmortalCoilPrevention(gameData, defenderId, state.poisonDamageToDefendingPlayer);
@@ -1886,7 +1894,8 @@ public class CombatDamageService {
             // Saving Grace: redirect all combat damage this turn to the defending player onto the enchanted creature.
             damage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, defenderId, null, damage);
             processSourceRedirectDamage(gameData);
-            CardColor attackerColor = atkStats.color();
+            // Ghostly Flame can make the attacker a colourless source of damage.
+            CardColor attackerColor = gameQueryService.getDamageSourceColor(gameData, atkStats.color());
             if (damage > 0
                     && !(gameQueryService.isDamagePreventable(gameData)
                             && gameQueryService.playerHasProtectionFromColor(gameData, defenderId, attackerColor))

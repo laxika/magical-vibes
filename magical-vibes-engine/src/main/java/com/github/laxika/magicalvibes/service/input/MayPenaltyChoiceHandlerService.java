@@ -80,12 +80,50 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DiscardHandUnlessPaysLifeEffectHandler discardHandUnlessPaysLifeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.StealDyingOpponentPermanentUnlessPaysLifeEffectHandler stealDyingOpponentPermanentUnlessPaysLifeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TapTargetCreatureUnlessControllerPaysLifeEffectHandler tapTargetCreatureUnlessControllerPaysLifeEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.DestroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler destroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler;
     private final CounterSupport counterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerTakesDamageUnlessPaysEffectHandler eachPlayerTakesDamageUnlessPaysEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageControllerUnlessDiscardThenTapSourceEffectHandler damageControllerUnlessDiscardThenTapSourceEffectHandler;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.MustAttackUnlessControllerPaysManaValueEffectHandler mustAttackUnlessControllerPaysManaValueEffectHandler;
+
+    /**
+     * Arcum's Whistle: the active player may pay {X} (X = the target creature's mana value).
+     * Paying spends the mana and nothing else happens; declining — or accepting without enough
+     * mana — makes the creature attack this turn if able and schedules the conditional end-step
+     * destruction.
+     */
+    public void handleMustAttackUnlessControllerPaysManaValueChoice(GameData gameData, Player player,
+            boolean accepted, PendingMayAbility ability) {
+        UUID payingPlayerId = ability.controllerId();
+        UUID targetPermanentId = ability.targetCardId();
+
+        if (accepted) {
+            ManaCost cost = new ManaCost(ability.manaCost());
+            ManaPool pool = gameData.playerManaPools.get(payingPlayerId);
+            if (cost.canPay(pool)) {
+                cost.pay(pool);
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " pays " + ability.manaCost() + ". (", ability.sourceCard(), ")"));
+                log.info("Game {} - {} pays {} to avoid the must-attack penalty ({})", gameData.id,
+                        player.getUsername(), ability.manaCost(), ability.sourceCard().getName());
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            // Accepted but can't actually pay — fall through to the penalty.
+        }
+
+        UUID abilityControllerId = gameQueryService.findPermanentController(gameData, ability.sourcePermanentId());
+        if (abilityControllerId == null) {
+            abilityControllerId = payingPlayerId;
+        }
+        mustAttackUnlessControllerPaysManaValueEffectHandler.applyPenalty(
+                gameData, ability.sourceCard(), abilityControllerId, targetPermanentId);
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
 
     public void handleCounterUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         CounterUnlessPaysEffect effect = ability.effects().stream()
@@ -715,6 +753,39 @@ public class MayPenaltyChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleDestroyTargetCreatureUnlessControllerPaysToughnessLifeChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        UUID payingPlayerId = ability.controllerId();    // the target creature's controller — decision maker
+        UUID targetPermanentId = ability.targetCardId(); // the creature to destroy on decline
+
+        Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
+        if (target == null) {
+            // The creature left the battlefield after the prompt — nothing to pay for or destroy.
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        int lifeCost = destroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler.lifeCostFor(gameData, target);
+        boolean canPay = lifeCost == 0
+                || (gameQueryService.canPlayerLifeChange(gameData, payingPlayerId)
+                        && gameData.getLife(payingPlayerId) >= lifeCost);
+
+        if (accepted && canPay) {
+            if (lifeCost > 0) {
+                gameData.playerLifeTotals.put(payingPlayerId, gameData.getLife(payingPlayerId) - lifeCost);
+            }
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " pays " + lifeCost + " life. (", ability.sourceCard(), ")"));
+            log.info("Game {} - {} pays {} life to save their creature ({})", gameData.id,
+                    player.getUsername(), lifeCost, ability.sourceCard().getName());
+        } else {
+            // Declined (or can no longer pay) — destroy the creature; it can't be regenerated.
+            destroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler.destroyTargetCreature(
+                    gameData, ability.sourceCard(), targetPermanentId);
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleOpponentExileChoice(GameData gameData, Player player, boolean accepted,
                                            PendingMayAbility ability, OpponentMayReturnExiledCardOrDrawEffect effect) {
         UUID opponentId = ability.controllerId(); // opponent is the decision maker
@@ -951,9 +1022,12 @@ public class MayPenaltyChoiceHandlerService {
                 if (lifeAmount > 0) {
                     gameData.playerLifeTotals.put(
                             decidingPlayerId, gameData.getLife(decidingPlayerId) - lifeAmount);
+                    // A blank mana cost means the payment is life-only (Glacial Chasm).
+                    String paidText = costString == null || costString.isEmpty()
+                            ? lifeAmount + " life"
+                            : costString + " and " + lifeAmount + " life";
                     gameLogService.append(gameData, GameLog.textCardText(
-                            player.getUsername() + " pays " + costString + " and " + lifeAmount
-                                    + " life. (", ability.sourceCard(), ")"));
+                            player.getUsername() + " pays " + paidText + ". (", ability.sourceCard(), ")"));
                     log.info("Game {} - {} pays {} and {} life to avoid penalty ({})",
                             gameData.id, player.getUsername(), costString, lifeAmount,
                             ability.sourceCard().getName());

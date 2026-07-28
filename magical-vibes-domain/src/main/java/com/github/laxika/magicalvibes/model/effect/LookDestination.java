@@ -5,13 +5,16 @@ package com.github.laxika.magicalvibes.model.effect;
  * Used by {@link LookAtTopCardsEffect}'s {@code restDestination} for the not-chosen cards.
  *
  * <p>{@code restDestination} is always {@code GRAVEYARD}, {@code BOTTOM_OF_LIBRARY},
- * {@code BOTTOM_OF_LIBRARY_RANDOM}, or {@code EXILE}; {@code HAND} is unused (the chosen cards'
- * destination is the separate {@code chosenDestination} axis, a {@code LibrarySearchDestination}).
+ * {@code BOTTOM_OF_LIBRARY_RANDOM}, {@code TOP_OF_LIBRARY}, or {@code EXILE}; {@code HAND} is
+ * unused (the chosen cards' destination is the separate {@code chosenDestination} axis, a
+ * {@code LibrarySearchDestination}).
  */
 public enum LookDestination {
     HAND,
     GRAVEYARD,
     BOTTOM_OF_LIBRARY,
+    /** Rest go back on top of the library in an order the player chooses — Diabolic Vision. */
+    TOP_OF_LIBRARY,
     /** Rest go to the bottom in a random order (no player reorder) — Memory Deluge. */
     BOTTOM_OF_LIBRARY_RANDOM,
     EXILE

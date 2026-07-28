@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -20,6 +21,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -78,6 +80,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -104,6 +107,39 @@ public class TriggerCollectionService {
 
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId) {
         checkSpellCastTriggers(gameData, spellCard, castingPlayerId, true);
+    }
+
+    /**
+     * Fires delayed "until end of turn, whenever you cast a [filter] spell, …" triggers registered
+     * this turn (Mountain Titan). One trigger per registration; a registration whose source permanent
+     * has left the battlefield is skipped.
+     */
+    private void processDelayedControllerSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId) {
+        if (!gameData.hasDelayedAction(DelayedControllerSpellCastTrigger.class)) {
+            return;
+        }
+        for (DelayedControllerSpellCastTrigger delayed
+                : gameData.getDelayedActions(DelayedControllerSpellCastTrigger.class)) {
+            if (!delayed.controllerId().equals(castingPlayerId)) continue;
+            Permanent source = gameQueryService.findPermanentById(gameData, delayed.sourcePermanentId());
+            if (source == null) continue;
+            if (!predicateEvaluationService.matchesCardPredicate(spellCard, delayed.spellFilter(), null)) continue;
+
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    delayed.sourceCard(),
+                    delayed.controllerId(),
+                    delayed.sourceCard().getName() + "'s delayed trigger",
+                    new ArrayList<>(delayed.resolvedEffects()),
+                    null,
+                    delayed.sourcePermanentId());
+            entry.setNonTargeting(true);
+            gameData.stack.add(entry);
+            gameLogService.append(gameData, GameLog.cardTextCard(
+                    delayed.sourceCard(), "'s delayed trigger fires for ", spellCard, "."));
+            log.info("Game {} - {} delayed spell-cast trigger fires for {}",
+                    gameData.id, delayed.sourceCard().getName(), spellCard.getName());
+        }
     }
 
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId, boolean castFromHand) {
@@ -140,6 +176,8 @@ public class TriggerCollectionService {
             if (!playerId.equals(castingPlayerId)) return;
             dispatchSlot(gameData, perm, playerId, EffectSlot.ON_CONTROLLER_CASTS_SPELL, ctx);
         });
+
+        processDelayedControllerSpellCastTriggers(gameData, spellCard, castingPlayerId);
 
         // ON_OPPONENT_CASTS_SPELL (only opponents' permanents)
         gameData.forEachPermanent((playerId, perm) -> {
@@ -772,8 +810,42 @@ public class TriggerCollectionService {
             }
         });
 
+        applyTurnScopedExtraLandTapMana(gameData, tappingPlayerId, tappedLandId);
+
         if (anyTriggered[0]) {
             gameOutcomeService.checkWinCondition(gameData);
+        }
+    }
+
+    /**
+     * Applies {@code GameData.extraManaOnLandSubtypeTapThisTurn} — a turn-scoped, symmetric
+     * "whenever a player taps a land of this subtype for mana, that player adds an additional
+     * {X}" granted by a resolved effect rather than a permanent's static ability (Chaos Moon's
+     * odd branch). Like the static land-tap triggers above it is a triggered mana ability, so it
+     * pays straight into the tapping player's pool without using the stack.
+     */
+    private void applyTurnScopedExtraLandTapMana(GameData gameData, UUID tappingPlayerId, UUID tappedLandId) {
+        if (gameData.extraManaOnLandSubtypeTapThisTurn.isEmpty()) {
+            return;
+        }
+        Permanent tappedLand = gameQueryService.findPermanentById(gameData, tappedLandId);
+        if (tappedLand == null) {
+            return;
+        }
+        Set<CardSubtype> types = gameQueryService.effectiveBasicLandTypes(gameData, tappedLand);
+        ManaPool pool = gameData.playerManaPools.get(tappingPlayerId);
+        if (pool == null) {
+            return;
+        }
+        for (var entry : gameData.extraManaOnLandSubtypeTapThisTurn.entrySet()) {
+            if (!types.contains(entry.getKey())) {
+                continue;
+            }
+            pool.add(entry.getValue());
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(gameData.playerIdToName.get(tappingPlayerId) + " adds 1 additional "
+                            + entry.getValue().getCode() + " mana.")
+                    .build());
         }
     }
 
@@ -1485,7 +1557,7 @@ public class TriggerCollectionService {
                     }
                     resolved = conditional.wrapped();
                 }
-                gameData.enqueueTrigger(new StackEntry(
+                StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         ownerId,
@@ -1493,7 +1565,12 @@ public class TriggerCollectionService {
                         new ArrayList<>(List.of(resolved)),
                         null,
                         perm.getId()
-                ));
+                );
+                // "put a counter on it" — the tapped permanent is carried as a non-target reference
+                // so effects that act on it (Freyalise's Winds) can find it without disturbing
+                // genuinely targeted tap triggers (Surgespanner).
+                entry.setTriggeringPermanentId(tappedPermanent.getId());
+                gameData.enqueueTrigger(entry);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} triggers on ally permanent tap ({})",
                         gameData.id, perm.getCard().getName(), tappedPermanent.getCard().getName());
@@ -1514,7 +1591,7 @@ public class TriggerCollectionService {
                     }
                     resolved = conditional.wrapped();
                 }
-                gameData.enqueueTrigger(new StackEntry(
+                StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         ownerId,
@@ -1522,7 +1599,9 @@ public class TriggerCollectionService {
                         new ArrayList<>(List.of(resolved)),
                         null,
                         perm.getId()
-                ));
+                );
+                entry.setTriggeringPermanentId(tappedPermanent.getId());
+                gameData.enqueueTrigger(entry);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} triggers on opponent permanent tap ({})",
                         gameData.id, perm.getCard().getName(), tappedPermanent.getCard().getName());

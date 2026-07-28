@@ -654,6 +654,27 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, damageAssignments);
     }
 
+    /**
+     * Cast a divided-damage sorcery that also has a separate single target (Fiery Justice's
+     * "Target opponent gains 5 life" alongside its 5 divided damage).
+     */
+    public void castSorcery(Player player, int cardIndex, UUID targetId, Map<UUID, Integer> damageAssignments) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, damageAssignments);
+    }
+
+    /** Cast an X instant whose damage is divided as you choose (Fire Covenant). */
+    public void castInstantForX(Player player, int cardIndex, int xValue, Map<UUID, Integer> damageAssignments) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, xValue, null, damageAssignments);
+    }
+
+    /** Cast an X sorcery whose damage is divided as you choose (Meteor Shower). */
+    public void castSorceryForX(Player player, int cardIndex, int xValue, Map<UUID, Integer> damageAssignments) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, xValue, null, damageAssignments);
+    }
+
     public void castInstantWithSacrifice(Player player, int cardIndex, UUID targetId, UUID sacrificePermanentId) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, sacrificePermanentId);
@@ -829,6 +850,12 @@ public class GameTestHarness {
     public void activateAbilityWithMultiTargets(Player player, int permanentIndex, int abilityIndex, List<UUID> targetIds) {
         ensurePriority(player);
         gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, null, null, null, targetIds);
+    }
+
+    /** Activates a multi-target ability paying {@code xValue} for its {X} cost (Runed Arch). */
+    public void activateAbilityWithMultiTargets(Player player, int permanentIndex, int abilityIndex, Integer xValue, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, null, null, targetIds);
     }
 
     public void activateAbilityWithGraveyardTargets(Player player, int permanentIndex, int abilityIndex, List<UUID> graveyardCardIds) {

@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.TapPlayersPermanentsAndDamageEqualToCountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -1100,6 +1101,33 @@ class StepTriggerServiceTest {
 
             assertThat(gd.stack).isNotEmpty();
             assertThat(gd.stack.getFirst().getDescription()).contains("End Step Card");
+        }
+
+        @Test
+        @DisplayName("END_STEP_TRIGGERED EndStepPlayerTargetedEffect bakes the end-step player into targetId")
+        void endStepPlayerTargetedEffectBakesActivePlayer() {
+            Card card = createCardWithName("Monsoon-like Card");
+            card.addEffect(EffectSlot.END_STEP_TRIGGERED,
+                    new TapPlayersPermanentsAndDamageEqualToCountEffect(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(card));
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(gd.activePlayerId);
+        }
+
+        @Test
+        @DisplayName("END_STEP_TRIGGERED with a plain effect gets a null targetId")
+        void endStepPlainEffectHasNoTargetId() {
+            Card card = createCardWithName("Plain End Step Card");
+            card.addEffect(EffectSlot.END_STEP_TRIGGERED, new GainLifeEffect(1));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(card));
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getTargetId()).isNull();
         }
 
         @Test

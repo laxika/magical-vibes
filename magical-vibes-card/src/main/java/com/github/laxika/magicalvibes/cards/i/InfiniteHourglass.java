@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "378")
+@CardRegistration(set = "ICE", collectorNumber = "323")
 public class InfiniteHourglass extends Card {
 
     public InfiniteHourglass() {

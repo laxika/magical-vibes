@@ -925,8 +925,16 @@ public class SpellCastTriggerCollectorService {
             log.info("Game {} - {} spell-cast graveyard-target trigger queued",
                     match.gameData().id, match.permanent().getCard().getName());
         } else if (needsTargeting) {
+            // "You may pay {C}. If you do, [targeted effect]" (Malachite Talisman): the target is chosen
+            // as the trigger goes on the stack (CR 603.3d), while the payment choice waits for resolution
+            // (CR 603.5) —
+            // so wrap after the targeting decision has been made from the unwrapped effects.
+            List<CardEffect> queued = trigger.manaCost() == null
+                    ? resolved
+                    : resolved.stream().map(e -> (CardEffect) new MayPayManaEffect(
+                            trigger.manaCost(), e, "Pay " + trigger.manaCost() + "?")).toList();
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    match.permanent().getCard(), match.controllerId(), resolved, playerTargetOnly, trigger.targetFilter(),
+                    match.permanent().getCard(), match.controllerId(), queued, playerTargetOnly, trigger.targetFilter(),
                     spellManaSpentX, match.permanent().getId()
             ));
             gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),

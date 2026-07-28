@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastPermanentSpellsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardPermission;
 import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentControllerCantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsForControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsForEnchantedPlayerEffect;
@@ -158,6 +159,13 @@ public class CastingPermissionService {
                     if (effect instanceof CantCastSpellTypeEffect cantCast
                             && (cantCast.appliesToAllPlayers() || pid.equals(playerId))) {
                         restricted.addAll(cantCast.restrictedTypes());
+                    }
+                    // Brand of Ill Omen etc.: the enchanted permanent's controller is restricted,
+                    // which may be a different player than the Aura's controller.
+                    if (effect instanceof EnchantedPermanentControllerCantCastSpellTypeEffect enchantedCantCast
+                            && perm.isAttached()
+                            && playerId.equals(gameQueryService.findPermanentController(gameData, perm.getAttachedTo()))) {
+                        restricted.addAll(enchantedCantCast.restrictedTypes());
                     }
                 }
             }
@@ -406,6 +414,10 @@ public class CastingPermissionService {
                             && playerId.equals(gameData.activePlayerId);
             case COMBAT_BEFORE_BLOCKERS ->
                     gameData.currentStep.isCombatPhase()
+                            && gameData.currentStep.ordinal() < TurnStep.DECLARE_BLOCKERS.ordinal();
+            case YOUR_COMBAT_BEFORE_BLOCKERS ->
+                    playerId.equals(gameData.activePlayerId)
+                            && gameData.currentStep.isCombatPhase()
                             && gameData.currentStep.ordinal() < TurnStep.DECLARE_BLOCKERS.ordinal();
             case OPPONENTS_TURN_BEFORE_ATTACKERS ->
                     !playerId.equals(gameData.activePlayerId)

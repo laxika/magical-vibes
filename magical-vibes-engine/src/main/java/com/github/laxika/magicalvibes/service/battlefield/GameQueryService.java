@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantTransformEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
@@ -55,6 +56,7 @@ import com.github.laxika.magicalvibes.model.effect.NoncombatDamageToOpponentCrea
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantReduceLifeBelowOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSourcesOfColorsAreColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromChosenNameEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenNameEffect;
@@ -295,6 +297,32 @@ public class GameQueryService {
             }
         }
         return false;
+    }
+
+    /**
+     * Returns {@code true} if the permanent currently has the given supertype, accounting for
+     * global static supertype removals ({@link PermanentsMatchingLoseSupertypeEffect}, e.g.
+     * Melting's "All lands are no longer snow") and per-permanent supertype changes recorded by
+     * {@code SetTargetPermanentSupertypeEffect} (Arcum's Weathervane). Every supertype check that
+     * such an effect can touch must route through this instead of reading the printed supertypes.
+     * An explicit per-permanent grant is the most recent effect on that permanent, so it wins over
+     * a global removal.
+     */
+    public boolean hasEffectiveSupertype(GameData gameData, Permanent permanent, CardSupertype supertype) {
+        if (permanent.getPersistentGrantedSupertypes().contains(supertype)) {
+            return true;
+        }
+        if (permanent.getPersistentRemovedSupertypes().contains(supertype)
+                || !permanent.getCard().getSupertypes().contains(supertype)) {
+            return false;
+        }
+        if (gameData == null) {
+            return true;
+        }
+        return !gameData.anyPermanentMatches(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(effect -> effect instanceof PermanentsMatchingLoseSupertypeEffect lose
+                        && lose.supertype() == supertype
+                        && predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, lose.filter())));
     }
 
     private boolean anyBattlefieldHasStaticEffect(GameData gameData, Class<? extends CardEffect> effectType) {
@@ -590,28 +618,56 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} while any permanent has a {@link TwistBasicLandManaColorsEffect}
-     * (Reality Twist). Global — not controller-scoped.
+     * Basic-land-type to color remappings contributed by every {@link TwistBasicLandManaColorsEffect}
+     * on the battlefield (Reality Twist, Naked Singularity). Global — not controller-scoped. When
+     * several such effects are active a type may map to more than one color, and the controller
+     * chooses among them.
      */
-    private boolean isTwistBasicLandManaActive(GameData gameData) {
-        return gameData.anyPermanentMatches(p ->
-                p.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> e instanceof TwistBasicLandManaColorsEffect));
-    }
-
-    /**
-     * Fixed color lands produce under Infernal Darkness-style replacement
-     * ({@link LandManaProducesFixedColorEffect}). Null when inactive. Global — not
-     * controller-scoped. Amount is unchanged; only the type is replaced.
-     */
-    public ManaColor fixedLandManaColor(GameData gameData) {
+    private Map<CardSubtype, Set<ManaColor>> activeTwistLandManaMappings(GameData gameData) {
+        Map<CardSubtype, Set<ManaColor>> mappings = new EnumMap<>(CardSubtype.class);
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) {
                 continue;
             }
-            for (Permanent permanent : battlefield) {
-                for (var effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (Permanent source : battlefield) {
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof TwistBasicLandManaColorsEffect twist) {
+                        twist.landColorMapping().forEach((type, color) -> mappings
+                                .computeIfAbsent(type, t -> EnumSet.noneOf(ManaColor.class))
+                                .add(color));
+                    }
+                }
+            }
+        }
+        return mappings;
+    }
+
+    /**
+     * Fixed color {@code permanent} produces under Infernal Darkness-style replacement
+     * ({@link LandManaProducesFixedColorEffect}). Null when inactive. Global — not
+     * controller-scoped. Amount is unchanged; only the type is replaced.
+     *
+     * <p>A turn-scoped, land-subtype-scoped replacement recorded in
+     * {@code GameData.landSubtypeFixedManaColorThisTurn} (Chaos Moon's even branch) takes
+     * precedence, matched against the permanent's effective basic land types.
+     */
+    public ManaColor fixedLandManaColor(GameData gameData, Permanent permanent) {
+        if (permanent != null && !gameData.landSubtypeFixedManaColorThisTurn.isEmpty()) {
+            Set<CardSubtype> types = effectiveBasicLandTypes(gameData, permanent);
+            for (var entry : gameData.landSubtypeFixedManaColorThisTurn.entrySet()) {
+                if (types.contains(entry.getKey())) {
+                    return entry.getValue();
+                }
+            }
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent source : battlefield) {
+                for (var effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof LandManaProducesFixedColorEffect fixed) {
                         return fixed.color();
                     }
@@ -622,13 +678,15 @@ public class GameQueryService {
     }
 
     /**
-     * Mana colors a land produces under Reality Twist based on its effective basic land types:
-     * Plains→{R}, Swamp→{G}, Mountain→{W}, Forest→{B}, Island→{U} (unchanged). Empty when twist
-     * is inactive or the permanent has no basic land types. When multiple types apply the
-     * controller chooses one color for all mana produced (Gatherer 2013-04-15).
+     * Mana colors a land produces under a Reality Twist-style replacement, based on its effective
+     * basic land types and the remappings of every {@link TwistBasicLandManaColorsEffect} on the
+     * battlefield. Empty when no such effect is active or the permanent has no remapped basic land
+     * type. When multiple colors apply the controller chooses one for all mana produced
+     * (Gatherer 2013-04-15).
      */
     public Set<ManaColor> twistedLandManaColors(GameData gameData, Permanent permanent) {
-        if (!isTwistBasicLandManaActive(gameData)) {
+        Map<CardSubtype, Set<ManaColor>> mappings = activeTwistLandManaMappings(gameData);
+        if (mappings.isEmpty()) {
             return Set.of();
         }
         Set<CardSubtype> types = effectiveBasicLandTypes(gameData, permanent);
@@ -636,20 +694,8 @@ public class GameQueryService {
             return Set.of();
         }
         Set<ManaColor> colors = EnumSet.noneOf(ManaColor.class);
-        if (types.contains(CardSubtype.PLAINS)) {
-            colors.add(ManaColor.RED);
-        }
-        if (types.contains(CardSubtype.SWAMP)) {
-            colors.add(ManaColor.GREEN);
-        }
-        if (types.contains(CardSubtype.MOUNTAIN)) {
-            colors.add(ManaColor.WHITE);
-        }
-        if (types.contains(CardSubtype.FOREST)) {
-            colors.add(ManaColor.BLACK);
-        }
-        if (types.contains(CardSubtype.ISLAND)) {
-            colors.add(ManaColor.BLUE);
+        for (CardSubtype type : types) {
+            colors.addAll(mappings.getOrDefault(type, Set.of()));
         }
         return colors;
     }
@@ -982,6 +1028,20 @@ public class GameQueryService {
      * Returns {@code true} if a creature died this turn (morbid condition).
      * Checks all players' death counts since morbid is not controller-specific.
      */
+    /**
+     * Returns {@code true} if at least one creature is blocking the given attacking creature.
+     */
+    public boolean isBlockedByAnyCreature(GameData gameData, Permanent attacker) {
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent blocker : battlefield) {
+                if (blocker.isBlocking() && blocker.getBlockingTargetIds().contains(attacker.getId())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public boolean isMorbidMet(GameData gameData) {
         return gameData.creatureDeathCountThisTurn.values().stream()
                 .anyMatch(count -> count > 0);
@@ -1991,9 +2051,12 @@ public class GameQueryService {
     public boolean isColorDamageToEnchantedCreaturePrevented(GameData gameData, Permanent creature, Set<CardColor> sourceColors) {
         if (creature == null || sourceColors == null || sourceColors.isEmpty()) return false;
         if (!isDamagePreventable(gameData)) return false;
+        sourceColors = getDamageSourceColors(gameData, sourceColors);
+        if (sourceColors.isEmpty()) return false;
+        final Set<CardColor> effectiveColors = sourceColors;
         return gameData.anyPermanentMatches(aura ->
                 aura.isAttached() && creature.getId().equals(aura.getAttachedTo())
-                        && aura.getChosenColor() != null && sourceColors.contains(aura.getChosenColor())
+                        && aura.getChosenColor() != null && effectiveColors.contains(aura.getChosenColor())
                         && aura.getCard().getEffects(EffectSlot.STATIC).stream()
                                 .anyMatch(PreventColorDamageToEnchantedCreatureEffect.class::isInstance));
     }
@@ -2224,6 +2287,25 @@ public class GameQueryService {
      * (a spell on the stack), checking color-based, card-type-based, subtype-based,
      * and non-subtype-creature protection.
      */
+    /**
+     * Damage-path variant of {@link #hasProtectionFromSource(GameData, Permanent, Permanent)}: the
+     * source's colours are first passed through {@link #getDamageSourceColor} so a Ghostly Flame
+     * effect can make it a colourless source of damage. Non-colour protection is unaffected.
+     */
+    public boolean hasProtectionFromDamageSource(GameData gameData, Permanent target, Permanent source) {
+        return hasProtectionFromSource(gameData, target, source,
+                getDamageSourceColors(gameData, getEffectiveColors(gameData, source)));
+    }
+
+    /** Damage-path variant of {@link #hasProtectionFromSource(GameData, Permanent, Card)}. */
+    public boolean hasProtectionFromDamageSource(GameData gameData, Permanent target, Card sourceCard) {
+        return hasProtectionFrom(gameData, target, getDamageSourceColor(gameData, sourceCard.getColor()))
+                || hasProtectionFromSourceCardTypes(target, sourceCard)
+                || hasProtectionFromSourceSubtypes(target, sourceCard)
+                || hasProtectionFromNonSubtypeCreatures(target, sourceCard)
+                || hasProtectionFromSourceManaValue(target, sourceCard);
+    }
+
     public boolean hasProtectionFromSource(GameData gameData, Permanent target, Card sourceCard) {
         return hasProtectionFrom(gameData, target, sourceCard.getColor())
                 || hasProtectionFromSourceCardTypes(target, sourceCard)
@@ -3214,7 +3296,35 @@ public class GameQueryService {
      * (e.g. by a "prevent all damage from [color] sources" effect).
      */
     public boolean isDamageFromSourcePrevented(GameData gameData, CardColor sourceColor) {
+        sourceColor = getDamageSourceColor(gameData, sourceColor);
         return sourceColor != null && gameData.preventDamageFromColors.contains(sourceColor);
+    }
+
+    /**
+     * Ghostly Flame: returns the colour a damage source is treated as having <em>for damage
+     * purposes</em>. Yields {@code null} (colourless) when a {@link DamageSourcesOfColorsAreColorlessEffect}
+     * on the battlefield covers {@code sourceColor}; otherwise returns {@code sourceColor} unchanged.
+     * Only damage paths may use this — the source keeps its real colour for blocking, targeting,
+     * and enchanting.
+     */
+    public CardColor getDamageSourceColor(GameData gameData, CardColor sourceColor) {
+        return isDamageSourceColorNullified(gameData, sourceColor) ? null : sourceColor;
+    }
+
+    /** Damage-purposes colour set: {@link #getDamageSourceColor} applied to every colour. */
+    public Set<CardColor> getDamageSourceColors(GameData gameData, Set<CardColor> sourceColors) {
+        if (sourceColors == null || sourceColors.isEmpty()) return Set.of();
+        Set<CardColor> result = new HashSet<>(sourceColors);
+        result.removeIf(color -> isDamageSourceColorNullified(gameData, color));
+        return result;
+    }
+
+    private boolean isDamageSourceColorNullified(GameData gameData, CardColor sourceColor) {
+        if (sourceColor == null) return false;
+        return gameData.anyPermanentMatches(permanent ->
+                permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(effect -> effect instanceof DamageSourcesOfColorsAreColorlessEffect colorless
+                                && colorless.colors().contains(sourceColor)));
     }
 
     /**

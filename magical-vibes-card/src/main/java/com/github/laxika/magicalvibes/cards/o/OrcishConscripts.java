@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "255")
+@CardRegistration(set = "ICE", collectorNumber = "206")
 public class OrcishConscripts extends Card {
 
     public OrcishConscripts() {

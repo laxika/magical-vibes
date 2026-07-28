@@ -431,6 +431,9 @@ export interface AvailableBlockersNotification {
   mustBeBlockedAttackerIndices: number[];
   menaceAttackerIndices: number[];
   mustBlockRequirements: Record<number, number[]>;
+  /** True when the recipient chooses blocks for an opponent's creatures (Melee): the blocker
+      indices then refer to the opponent's battlefield and the attacker indices to the recipient's. */
+  choosingForOpponent?: boolean;
 }
 
 export interface GameOverNotification {

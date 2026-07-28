@@ -71,6 +71,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
@@ -87,12 +88,15 @@ import com.github.laxika.magicalvibes.model.effect.GrantConspireToSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSourceActivatedAbilitiesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -1337,6 +1341,9 @@ public class SpellCastingService {
             // later in the pay chain would keep the mana (and costs) already paid.
             KickerEffect kickerEffect = findKickerEffect(card);
             additionalSpellCostService.validateAll(gameData, player, card, additionalCosts, costSelection);
+            if (additionalCosts.payXLife()) {
+                additionalSpellCostService.validatePayXLifeCost(gameData, player, card, resolvedXValue);
+            }
             validateImposedSacrificeTax(gameData, player, card, imposedSacrificePermanentIds);
             if (kicked && kickerEffect != null && kickerEffect.hasSacrificeCost()) {
                 additionalSpellCostService.validateSingleSacrificeCost(gameData, player, card, sacrificePermanentId,
@@ -1622,8 +1629,12 @@ public class SpellCastingService {
                         boolean canTargetPlayers = dividedEffect.canTargetPlayers();
                         // Unbounded (maxTargets 0) among any number of targets: each target needs at
                         // least 1 damage, so the total damage is the effective cap (Pyrotechnics).
+                        // A player target group belongs to a separate effect (Fiery Justice's
+                        // "target opponent gains 5 life"), so it must not cap the damage targets.
+                        boolean cardTargetGroupIsDamage = card.getMaxTargets() > 0
+                                && !(card.getTargetFilter() instanceof PlayerPredicateTargetFilter);
                         int maxTargets = dividedEffect.maxTargets() > 0 ? dividedEffect.maxTargets()
-                                : (card.getMaxTargets() > 0 ? card.getMaxTargets() : fixedTotal.value());
+                                : (cardTargetGroupIsDamage ? card.getMaxTargets() : fixedTotal.value());
                         if (damageAssignments.size() > maxTargets) {
                             throw new IllegalStateException("Too many targets");
                         }
@@ -1638,7 +1649,8 @@ public class SpellCastingService {
                                 if (target == null || !gameQueryService.isCreature(gameData, target)) {
                                     throw new IllegalStateException("All targets must be creatures");
                                 }
-                                if (card.getTargetFilter() != null) {
+                                if (card.getTargetFilter() != null
+                                        && !(card.getTargetFilter() instanceof PlayerPredicateTargetFilter)) {
                                     predicateEvaluationService.validateTargetFilter(gameData, card.getTargetFilter(), target);
                                 }
                             }
@@ -1652,7 +1664,7 @@ public class SpellCastingService {
                         // and/or players (e.g. Jaws of Stone — X = Mountains you control at cast time).
                         int expectedTotal = amountEvaluationService.evaluate(gameData,
                                 dividedEffect.totalDamage(),
-                                com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(playerId));
+                                com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(playerId, resolvedXValue));
                         if (totalDamage != expectedTotal) {
                             throw new IllegalStateException("Damage assignments must sum to " + expectedTotal);
                         }
@@ -1667,14 +1679,20 @@ public class SpellCastingService {
                             }
                         }
                     } else {
-                        // X-damage attacking creature divided damage spell (e.g. Hail of Arrows)
+                        // X-damage divided among target creatures — attacking creatures only for
+                        // Hail of Arrows, any creature for Fire Covenant.
+                        boolean requireAttacking = dividedEffect == null
+                                || dividedEffect.targetRestriction() instanceof PermanentIsAttackingPredicate;
                         if (totalDamage != resolvedXValue) {
                             throw new IllegalStateException("Damage assignments must sum to X (" + resolvedXValue + ")");
                         }
                         for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
                             Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
-                            if (target == null || !gameQueryService.isCreature(gameData, target) || !target.isAttacking()) {
-                                throw new IllegalStateException("All targets must be attacking creatures");
+                            if (target == null || !gameQueryService.isCreature(gameData, target)
+                                    || (requireAttacking && !target.isAttacking())) {
+                                throw new IllegalStateException(requireAttacking
+                                        ? "All targets must be attacking creatures"
+                                        : "All targets must be creatures");
                             }
                             if (assignment.getValue() <= 0) {
                                 throw new IllegalStateException("Each damage assignment must be positive");
@@ -1682,9 +1700,16 @@ public class SpellCastingService {
                         }
                     }
                 }
+                // A divided-damage spell may also target a player with a separate effect ("Target
+                // opponent gains 5 life" — Fiery Justice). That target rides on targetId, is
+                // validated against the card's player filter here, and is carried on the stack
+                // entry alongside the damage assignments.
+                if (card.getTargetFilter() instanceof PlayerPredicateTargetFilter playerFilter) {
+                    targetLegalityService.validateSpellPlayerTarget(gameData, targetId, playerId, playerFilter);
+                }
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),
-                        filteredSpellEffects, resolvedXValue, null, damageAssignments
+                        filteredSpellEffects, resolvedXValue, targetId, damageAssignments
                 ));
             } else if (unwrappedNeedsSpellTarget && targetingSpellOnStack) {
                 if (multipleSpellTargets) {
@@ -1791,6 +1816,12 @@ public class SpellCastingService {
                                    AdditionalSpellCostService.ExtractedCosts costs,
                                    AdditionalSpellCostService.CostSelection selection, int resolvedXValue,
                                    ManaPool preManaPaymentPool) {
+        if (costs.payXLife()) {
+            payXLifeCost(gameData, player, card, resolvedXValue);
+        }
+        if (costs.payLifeCost() != null) {
+            payLifeCost(gameData, player, card, costs.payLifeCost());
+        }
         resolvedXValue = payAllSacrificeCosts(gameData, player, card, selection.sacrificePermanentId(), costs, resolvedXValue);
         paySacrificeCreatureOrPayManaCost(gameData, player, card, costs.sacrificeCreatureOrPayManaCost(),
                 selection.sacrificePermanentId(), preManaPaymentPool);
@@ -1807,6 +1838,37 @@ public class SpellCastingService {
         payEscalateDiscardCost(gameData, player, card, costs.escalateDiscardCost(),
                 selection.escalateModeCount(), selection.discardHandCardIndices(), selection.spellCardIndex());
         return resolvedXValue;
+    }
+
+    /**
+     * Pays the "pay X life" additional cast cost (Fire Covenant) for the announced X. Legality
+     * (life total at least X, CR 119.4) is checked by
+     * {@code AdditionalSpellCostService.validatePayXLifeCost} before any cost is consumed.
+     */
+    private void payXLifeCost(GameData gameData, Player player, Card card, int announcedX) {
+        if (announcedX <= 0) {
+            return;
+        }
+        UUID playerId = player.getId();
+        gameData.playerLifeTotals.put(playerId, gameData.getLife(playerId) - announcedX);
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " pays " + announcedX + " life to cast " + card.getName() + "."));
+    }
+
+    /**
+     * Pays a fixed "pay N life" additional cast cost (Fumarole). Legality (life total at least N,
+     * CR 119.4) is checked by {@code AdditionalSpellCostService.validatePayLifeCost} before any
+     * cost is consumed.
+     */
+    private void payLifeCost(GameData gameData, Player player, Card card, PayLifeCost cost) {
+        UUID playerId = player.getId();
+        int amount = cost.effectiveAmount(gameData.getLife(playerId));
+        if (amount <= 0) {
+            return;
+        }
+        gameData.playerLifeTotals.put(playerId, gameData.getLife(playerId) - amount);
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " pays " + amount + " life to cast " + card.getName() + "."));
     }
 
     /**
@@ -2666,7 +2728,27 @@ public class SpellCastingService {
             ManaCost cost = new ManaCost(card.getManaCost());
             cost.payAsGeneric(gameData.playerManaPools.get(playerId));
         } else {
-            paySpellManaCost(gameData, playerId, card, effectiveXValue, List.of(), null);
+            // Mana reserved for this exact card (Ice Cauldron) is promoted into the regular pool for
+            // the payment, and whatever the payment left behind is taken back out of it — so it
+            // never turns into unrestricted mana.
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            Map<ManaColor, Integer> reserved = pool.promoteExiledCardOnlyMana(exileCardId);
+            EnumMap<ManaColor, Integer> promotedPool = new EnumMap<>(ManaColor.class);
+            reserved.keySet().forEach(color -> promotedPool.put(color, pool.get(color)));
+            try {
+                paySpellManaCost(gameData, playerId, card, effectiveXValue, List.of(), null);
+            } finally {
+                if (!reserved.isEmpty()) {
+                    // The reserved mana counts as spent first (it is the only thing it can pay for),
+                    // so only what the payment didn't consume goes back into the bucket.
+                    EnumMap<ManaColor, Integer> unspent = new EnumMap<>(ManaColor.class);
+                    reserved.forEach((color, amount) -> {
+                        int spent = promotedPool.getOrDefault(color, 0) - pool.get(color);
+                        unspent.put(color, Math.max(0, Math.min(amount - spent, pool.get(color))));
+                    });
+                    pool.returnExiledCardOnlyMana(exileCardId, unspent);
+                }
+            }
         }
 
         StackEntryType entryType = cardTypeToStackEntryType(card.getType());

@@ -406,4 +406,16 @@ public sealed interface ChoiceContext {
         public static final String PAY_ONE = "Pay {1}";
         public static final String PAY_NOTHING = "Pay nothing";
     }
+
+    /**
+     * Forgotten Lore: after the targeted opponent has chosen a card in the controller's graveyard,
+     * the controller chooses whether to pay {G} and repeat the process. Only offered when the
+     * controller can afford {G} and at least one unchosen card remains. Answered via
+     * {@code handleListChoice}.
+     */
+    record ForgottenLorePaymentChoice(UUID affectedPlayerId, String sourceCardName) implements ChoiceContext {
+
+        public static final String PAY = "Pay {G}";
+        public static final String DECLINE = "Don't pay";
+    }
 }

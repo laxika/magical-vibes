@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "5ED", collectorNumber = "327")
+@CardRegistration(set = "ICE", collectorNumber = "265")
 public class Stampede extends Card {
 
     public Stampede() {

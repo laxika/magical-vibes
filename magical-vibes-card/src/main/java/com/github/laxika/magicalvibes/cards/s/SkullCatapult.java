@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
 
+@CardRegistration(set = "ICE", collectorNumber = "336")
 @CardRegistration(set = "6ED", collectorNumber = "310")
 @CardRegistration(set = "5ED", collectorNumber = "399")
 public class SkullCatapult extends Card {

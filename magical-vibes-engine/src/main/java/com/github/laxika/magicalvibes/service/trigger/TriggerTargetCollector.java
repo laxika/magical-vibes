@@ -136,7 +136,7 @@ public class TriggerTargetCollector {
 
         if (canTargetPermanents) {
             FilterContext filterCtx = targetFilter != null
-                    ? new FilterContext(gameData, sourceCard.getId(), controllerId, null)
+                    ? new FilterContext(gameData, sourceCard.getId(), controllerId, null, null)
                     : null;
 
             PermanentPredicate effectPredicate = null;
@@ -149,7 +149,7 @@ public class TriggerTargetCollector {
                         .map(EffectResolution::targetPredicateOf)
                         .findFirst().orElse(null);
                 if (effectPredicate != null) {
-                    effectFilterCtx = new FilterContext(gameData, sourceCard.getId(), controllerId, null);
+                    effectFilterCtx = new FilterContext(gameData, sourceCard.getId(), controllerId, null, null);
                 }
             }
 

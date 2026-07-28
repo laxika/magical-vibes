@@ -20,7 +20,11 @@ import com.github.laxika.magicalvibes.model.effect.BlockCostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
+import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerPowerDamage;
+import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerUntapRemoveFromCombat;
+import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
@@ -185,6 +189,7 @@ public class CombatBlockService {
             collectUnblockedAttackTriggers(gameData, activeId, defenderId);
             checkUnblockedAttackerTriggers(gameData, activeId, unblockedAttackers);
             processDelayedUnblockedAttackerPowerDamageTriggers(gameData, activeId, unblockedAttackers);
+            processDelayedUnblockedAttackerUntapRemoveTriggers(gameData, unblockedAttackers);
             // CR 509.4: players still get priority during the declare blockers step even
             // when zero blocks were declared (e.g. the attacker may pump an unblocked
             // creature). AUTO_PASS_ONLY runs that priority round; when nobody can act,
@@ -193,7 +198,8 @@ public class CombatBlockService {
         }
 
         interactionHandlerRegistry.begin(gameData, buildBlockerDeclaration(
-                gameData, blockable, attackerIndices, defenderId, activeId));
+                gameData, blockable, attackerIndices, defenderId, activeId,
+                blockerDeclarationChooser(gameData, defenderId)));
         return CombatResult.DONE;
     }
 
@@ -201,15 +207,20 @@ public class CombatBlockService {
      * Validates and processes a player's blocker declaration.
      */
     public CombatResult declareBlockers(GameData gameData, Player player, List<BlockerAssignment> blockerAssignments) {
-        if (gameData.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class) == null) {
+        PendingInteraction.BlockerDeclaration pending =
+                gameData.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class);
+        if (pending == null) {
             throw new IllegalStateException("Not awaiting blocker declaration");
         }
 
         UUID activeId = gameData.activePlayerId;
         UUID defenderId = gameQueryService.getOpponentId(gameData, activeId);
 
-        if (!player.getId().equals(defenderId)) {
-            throw new IllegalStateException("Only the defending player can declare blockers");
+        // Normally the defending player declares; Melee hands the declaration to its controller.
+        if (!player.getId().equals(pending.chooserId())) {
+            throw new IllegalStateException(pending.choosingForOpponent()
+                    ? "Only the player choosing blockers can declare blockers"
+                    : "Only the defending player can declare blockers");
         }
 
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
@@ -565,6 +576,10 @@ public class CombatBlockService {
         // (Gaze of Pain delayed trigger).
         processDelayedUnblockedAttackerPowerDamageTriggers(gameData, activeId, unblockedAttackers);
 
+        // "Whenever a creature attacks and isn't blocked this combat, untap it and remove it from
+        // combat" delayed triggers (Melee).
+        processDelayedUnblockedAttackerUntapRemoveTriggers(gameData, unblockedAttackers);
+
         // "Whenever a creature blocks this turn, it gets +X/+Y" delayed triggers (Battle Cry).
         // Once per unique blocker, not once per attacker blocked.
         processDelayedBlockerBoostTriggers(gameData, blockerAssignments, defenderBattlefield);
@@ -630,6 +645,41 @@ public class CombatBlockService {
     }
 
     /**
+     * Fires delayed "whenever a creature attacks and isn't blocked this combat, untap it and remove
+     * it from combat" triggers (Melee). One trigger per unblocked attacker per registered delayed
+     * action; unlike the Gaze of Pain family this is not restricted to the registering player's
+     * creatures, because Melee's trigger reads "whenever a creature attacks".
+     */
+    private void processDelayedUnblockedAttackerUntapRemoveTriggers(GameData gameData,
+                                                                    List<Permanent> unblockedAttackers) {
+        if (unblockedAttackers.isEmpty()
+                || !gameData.hasDelayedAction(DelayedUnblockedAttackerUntapRemoveFromCombat.class)) {
+            return;
+        }
+        for (DelayedUnblockedAttackerUntapRemoveFromCombat delayed
+                : gameData.getDelayedActions(DelayedUnblockedAttackerUntapRemoveFromCombat.class)) {
+            for (Permanent attacker : unblockedAttackers) {
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        delayed.sourceCard(),
+                        delayed.controllerId(),
+                        delayed.sourceCard().getName() + "'s delayed trigger",
+                        List.of(new UntapPermanentsEffect(TapUntapScope.TARGET),
+                                new RemoveTargetFromCombatEffect()),
+                        attacker.getId(),
+                        attacker.getId());
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData, GameLog.cardTextCard(
+                        delayed.sourceCard(), " — ", attacker.getCard(),
+                        " is untapped and removed from combat."));
+                log.info("Game {} - {} delayed untap-and-remove-from-combat fires for {}",
+                        gameData.id, delayed.sourceCard().getName(), attacker.getCard().getName());
+            }
+        }
+    }
+
+    /**
      * Fires delayed "whenever a creature blocks this turn, it gets +X/+Y" triggers (Battle Cry).
      * One trigger per unique blocker per registered delayed action.
      */
@@ -674,7 +724,8 @@ public class CombatBlockService {
             List<Integer> blockable,
             List<Integer> attackerIndices,
             UUID defenderId,
-            UUID activeId) {
+            UUID activeId,
+            UUID chooserId) {
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
 
@@ -725,7 +776,18 @@ public class CombatBlockService {
 
         return new PendingInteraction.BlockerDeclaration(
                 defenderId, blockable, attackerIndices, legalPairs,
-                mustBeBlockedIndices, menaceIndices, mustBlockReqs);
+                mustBeBlockedIndices, menaceIndices, mustBlockReqs, chooserId);
+    }
+
+    /**
+     * Returns the player who declares this combat's blocks: the defending player, unless a
+     * "you choose which creatures block this combat" effect (Melee) is in force, in which case the
+     * most recently registered chooser takes over.
+     */
+    private UUID blockerDeclarationChooser(GameData gameData, UUID defenderId) {
+        List<DelayedBlockerDeclarationControl> controls =
+                gameData.getDelayedActions(DelayedBlockerDeclarationControl.class);
+        return controls.isEmpty() ? defenderId : controls.getLast().chooserId();
     }
 
 
@@ -888,6 +950,7 @@ public class CombatBlockService {
                     blocker.setBlocking(true);
                     blocker.addBlockingTarget(memberIdx);
                     blocker.addBlockingTargetId(member.getId());
+                    member.setBlockedOrWasBlockedSinceLastUpkeep(true);
                 }
             }
         }
@@ -1322,6 +1385,8 @@ public class CombatBlockService {
      * set). The blocker "blocked" the attacker and the attacker "was blocked by" the blocker, so both
      * directions are recorded. Time to Reflect reads this to target a creature that blocked or was
      * blocked by a Zombie this turn, even after combat ends or the other creature leaves / changes types.
+     * The opponent's ID is also recorded into {@link GameData#combatBlockOpponentIdsThisTurn} for
+     * Venomous Breath's "destroy all creatures that blocked or were blocked by it this turn".
      */
     private void recordCombatBlockOpponentSubtypes(GameData gameData, Permanent blocker, Permanent attacker) {
         recordCombatOpponentSubtypes(gameData, blocker, attacker);
@@ -1329,11 +1394,15 @@ public class CombatBlockService {
     }
 
     private void recordCombatOpponentSubtypes(GameData gameData, Permanent creature, Permanent opponent) {
+        creature.setBlockedOrWasBlockedSinceLastUpkeep(true);
         Set<CardSubtype> subtypes = gameData.combatBlockOpponentSubtypesThisTurn
                 .computeIfAbsent(creature.getId(), k -> ConcurrentHashMap.newKeySet());
         subtypes.addAll(opponent.getCard().getSubtypes());
         subtypes.addAll(opponent.getGrantedSubtypes());
         subtypes.addAll(opponent.getTransientSubtypes());
+        gameData.combatBlockOpponentIdsThisTurn
+                .computeIfAbsent(creature.getId(), k -> ConcurrentHashMap.newKeySet())
+                .add(opponent.getId());
         if (gameQueryService.hasKeyword(gameData, opponent, Keyword.CHANGELING)) {
             gameData.creaturesInCombatWithChangelingThisTurn.add(creature.getId());
         }

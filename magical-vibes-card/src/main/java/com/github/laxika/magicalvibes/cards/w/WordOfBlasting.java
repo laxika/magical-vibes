@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "5ED", collectorNumber = "276")
+@CardRegistration(set = "ICE", collectorNumber = "224")
 public class WordOfBlasting extends Card {
 
     public WordOfBlasting() {

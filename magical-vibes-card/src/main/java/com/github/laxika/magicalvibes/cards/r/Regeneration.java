@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "7ED", collectorNumber = "265")
 @CardRegistration(set = "6ED", collectorNumber = "248")
 @CardRegistration(set = "4ED", collectorNumber = "268")
+@CardRegistration(set = "ICE", collectorNumber = "259")
 public class Regeneration extends Card {
 
     public Regeneration() {

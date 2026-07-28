@@ -90,6 +90,19 @@ public class GraveyardChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
+
+        // Forgotten Lore: the opponent only *names* a card in the controller's graveyard — nothing
+        // moves yet. Record it and resume the paused resolution so the handler can offer the {G}.
+        if (gameData.graveyardTargetOperation.resolutionTimeForgottenLoreResume) {
+            gameData.graveyardTargetOperation.resolutionTimeForgottenLoreResume = false;
+            Card chosen = cardPool.get(cardIndex);
+            gameData.forgottenLore.pendingChosenCardId = chosen.getId();
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " chooses ", chosen, " from the graveyard."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         boolean gainLifeEqualToManaValue = graveyardChoice.gainLifeEqualToManaValue();
         UUID attachToSourcePermanentId = graveyardChoice.attachToSourcePermanentId();
         CardColor grantColor = graveyardChoice.grantColor();

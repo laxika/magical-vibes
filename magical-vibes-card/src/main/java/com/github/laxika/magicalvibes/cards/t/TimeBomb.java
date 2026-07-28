@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "404")
+@CardRegistration(set = "ICE", collectorNumber = "342")
 public class TimeBomb extends Card {
 
     public TimeBomb() {

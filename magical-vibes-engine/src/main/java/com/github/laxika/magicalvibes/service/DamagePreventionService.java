@@ -558,6 +558,9 @@ public class DamagePreventionService {
 
     public boolean applyColorDamagePreventionForPlayer(GameData gameData, UUID playerId, CardColor sourceColor) {
         if (!gameQueryService.isDamagePreventable(gameData)) return false;
+        // Ghostly Flame: a source it covers is colourless for damage, so a Circle of Protection
+        // for its printed colour no longer applies.
+        sourceColor = gameQueryService.getDamageSourceColor(gameData, sourceColor);
         if (sourceColor == null) return false;
         Map<CardColor, Integer> colorMap = gameData.playerColorDamagePreventionCount.get(playerId);
         if (colorMap == null) return false;

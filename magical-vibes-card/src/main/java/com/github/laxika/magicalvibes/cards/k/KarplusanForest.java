@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "9ED", collectorNumber = "321")
 @CardRegistration(set = "7ED", collectorNumber = "336")
 @CardRegistration(set = "5ED", collectorNumber = "421")
+@CardRegistration(set = "ICE", collectorNumber = "356")
 public class KarplusanForest extends Card {
 
     public KarplusanForest() {

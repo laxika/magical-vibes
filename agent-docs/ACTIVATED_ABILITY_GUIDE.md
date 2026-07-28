@@ -36,6 +36,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `ONLY_DURING_COMBAT` | Activate only during the combat phase (checks `gameData.currentStep.isCombatPhase()`). Jade Statue |
 | `ONLY_DURING_DECLARE_ATTACKERS_IF_ATTACKED` | Activate only during the declare attackers step and only if you've been attacked this step (a creature is attacking you or a planeswalker you control). Kongming's Contraptions. Checks `gameData.currentStep == DECLARE_ATTACKERS` + `gameQueryService.isPlayerBeingAttacked(gd, playerId)` |
 | `ONLY_DURING_DECLARE_BLOCKERS` | Activate only during the declare blockers step (`currentStep == DECLARE_BLOCKERS`). General Jarkeld |
+| `ONLY_DURING_DECLARE_BLOCKERS_IF_BLOCKED` | Activate only during the declare blockers step and only if at least one creature is blocking this creature (`gameQueryService.isBlockedByAnyCreature`). Grizzled Wolverine |
 | `ONLY_WHILE_CREATURE` | Abilities on creature lands that only work while animated |
 | `CAST_NONCREATURE_SPELL_THIS_TURN` | Activate only if you've cast a noncreature spell this turn (checks `gameQueryService.playerCastNoncreatureSpellThisTurn()`). Seeker of Insight |
 | `METALCRAFT` | Activate only if you control three or more artifacts |
@@ -127,6 +128,30 @@ new ActivatedAbility(false, "{2}", List.of(new BoostSelfEffect(2, 2)),
 ```
 
 **Note:** This overload has the same parameter types as the targetFilter variant (`String` for description, then `Integer` vs `TargetFilter`), so the compiler resolves them by type. Use this when you need a per-turn limit but no target filter.
+
+---
+
+### 3b. Ability with max activations per *game* (`.withMaxActivationsPerGame`)
+
+```java
+new ActivatedAbility(...).withMaxActivationsPerGame(1)
+```
+
+**Use when:** Ability text says "Activate only once" (no "each turn") — the cap spans the whole game, not the turn.
+
+```java
+// {1}{R}: This creature gets +2/+0 and gains flying. … Activate only once and only if you control a snow Mountain.
+new ActivatedAbility(false, "{1}{R}",
+        List.of(new BoostSelfEffect(2, 0), new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF),
+                new SacrificeSelfAtEndStepEffect()),
+        "…")
+    .withMaxActivationsPerGame(1)
+    .withRequiredControlledPermanents(new PermanentAllOfPredicate(List.of(
+            new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN),
+            new PermanentHasSupertypePredicate(CardSupertype.SNOW))), 1, "snow Mountains")
+```
+
+Counted in `GameData.activatedAbilityUsesThisGame` (permanent id → ability index → count), which is never cleared at turn cleanup — only by Karn's game restart. Because the count is keyed by permanent id, a permanent that leaves and re-enters the battlefield is a new object and may activate again (CR 400.7). Goblin Ski Patrol.
 
 ---
 
@@ -440,6 +465,18 @@ new ActivatedAbility(requiresTap, manaCost, effects, description,
 
 Cards: `BrassSquire` (2 targets: Equipment + creature), `SoulConduit` (2 targets: player + player)
 
+**X-scaled target count** ("{X}, {T}, Sacrifice this artifact: X target creatures with power 2 or less can't be blocked this turn" — Runed Arch): use the full ctor with a single `targetFilter`, empty `multiTargetFilters`, `minTargets = 0` and a sanity `maxTargets` cap, then chain `.withXScaledTargets()`. This is the ability-side counterpart of `Card.targetX`: the paid X bounds the target count via `ActivatedAbility.getEffectiveMinTargets/MaxTargets(x)`, honoured by `TargetLegalityService.validateMultiTargetAbility(..., xValue)` and `ValidTargetService.computeValidTargetsForAbility(..., xValue)`. Per-position filtering falls back to the ability's single `targetFilter`, and the chosen group rides on `StackEntry.getTargetIds()` (so any handler that fans over `getTargetIds()` — e.g. `MakeCreatureUnblockableEffect` — works unchanged).
+
+```java
+addActivatedAbility(new ActivatedAbility(true, "{X}",
+        List.of(new SacrificeSelfCost(), new MakeCreatureUnblockableEffect()),
+        "{X}, {T}, Sacrifice this artifact: X target creatures with power 2 or less can't be blocked this turn.",
+        creatureWithPowerAtMost2Filter, null, null, null, List.of(), 0, 100)
+        .withXScaledTargets());
+```
+
+Test harness: `activateAbilityWithMultiTargets(player, permanentIndex, abilityIndex, xValue, targetIds)`.
+
 ---
 
 ### 12. Graveyard activated ability
@@ -634,7 +671,7 @@ All cost effects implement the `CostEffect` marker interface (which extends `Car
 | `SacrificeCreatureCost` | `()` | "Sacrifice a creature: ..." |
 | `SacrificeCreatureCost` | `(false, false, false, true)` | "Sacrifice another creature: ..." (excludeSelf prevents sacrificing the source) |
 | `SacrificeArtifactCost` | `()` | "Sacrifice an artifact: ..." |
-| `SacrificePermanentCost` | `(PermanentPredicate filter, String description)` or `(PermanentPredicate filter, String description, boolean excludeSource)` | "Sacrifice an artifact or creature: ..." or "Sacrifice a Goblin: ..." — generic predicate-based sacrifice. Use `PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)))` and `excludeSource=false` for subtype creature costs that can sacrifice the source |
+| `SacrificePermanentCost` | `(PermanentPredicate filter, String description)` or `(PermanentPredicate filter, String description, boolean excludeSource)` | "Sacrifice an artifact or creature: ..." or "Sacrifice a Goblin: ..." — generic predicate-based sacrifice. Use `PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)))` and `excludeSource=false` for subtype creature costs that can sacrifice the source. The 4-arg form `(filter, description, excludeSource, trackSacrificedPower)` snapshots the sacrificed permanent's effective power into the ability's xValue at payment — Freyalise Supplicant (`PermanentAllOfPredicate(creature + PermanentColorInPredicate(RED, WHITE))` + `DealDamageToAnyTargetEffect(new Divided(new XValue(), 2))`) |
 | `SacrificeMultiplePermanentsCost` | `(int count, PermanentPredicate filter)` | "Sacrifice three artifacts: ..." (use with matching predicate) |
 | `SacrificePermanentsSequenceCost` | `(List<PermanentPredicate> filters, List<String> descriptions)` | "Sacrifice a green creature, a white creature, and a blue creature: ..." (Angel's Herald) — one distinct permanent per per-slot filter, in order. Use this single cost, NOT several `SacrificePermanentCost` entries: the activation resume path carries only one cost effect through interactive picks, so multiple distinct sacrifice costs on one ability would silently skip the 2nd/3rd. Only offers a slot permanents whose selection still leaves a full matching for the remaining slots (no dead-end mid-payment) |
 | `ReturnMultiplePermanentsToHandCost` | `(int count, PermanentPredicate filter)` | "Return two lands you control to their owner's hand: ..." (bounces N matching permanents as cost). Works with both battlefield and graveyard activated abilities |
@@ -647,10 +684,12 @@ All cost effects implement the `CostEffect` marker interface (which extends `Car
 | `DiscardRandomCardCost` | `()` | "Discard a card at random: ..." — discards one uniformly-random card from the controller's hand as a cost (no player choice). Requires a non-empty hand to activate. Fires the discarded card's discard triggers. Coral Helm |
 | `ExileCardFromGraveyardCost` | `(CardType)`, `(CardSubtype)`, or `(CardType, boolean payManaCost, boolean imprint, boolean trackPower)` | "Exile a [type] card from your graveyard: ..." (null = any type). Use the `(CardSubtype)` ctor for "Exile an Elf card" (Scarred Vinebreeder). For spells: use in SPELL slot with `trackExiledPower=true` to set X to exiled card's power |
 | `ExileNCardsFromGraveyardCost` | `(int count, CardType requiredType)` | "Exile N [type] cards from your graveyard: ..." (null type = any). On a **battlefield** ability the front N cards are exiled deterministically (Immortal Coil, `count=2, null`). On a **graveyard-activated** ability (Salvage Titan, `count=3, ARTIFACT`) the path exiles N cards matching the type via `hasType` (artifact creatures count) **excluding the source card**, so a self-return ability doesn't exile the card it means to bring back — needs N *other* matching cards to activate |
+| `TapEnchantedPermanentCost` | `()` | "Tap enchanted [land]: ..." on an Aura's own activated ability (Earthlore). Taps the permanent the source Aura is attached to — not the Aura — and fires that permanent's tap triggers (Psychic Venom). Since an already-tapped permanent can't pay it, it also covers the printed "Activate only if enchanted land is untapped" clause; no separate activation condition is needed. Pair with `requiresTap = false`. |
 | `TapTwoCreaturesSharingTypeCost` | `()` | "Tap two untapped creatures you control that share a creature type: ..." (Weight of Conscience). The two tapped creatures must share a creature type with each other (Changeling-aware, mutual constraint) — not expressible with `TapMultiplePermanentsCost`'s per-permanent filter. |
 | `RevealTwoCardsSharingColorCost` | `()` | "Reveal two cards from your hand that share a color: ..." (Illuminated Folio). Revealed cards stay in hand; the cost only gates the ability, so payment auto-reveals any qualifying pair (a valid pair must exist to activate; colorless cards never qualify). |
 | `RemoveCounterFromSourceCost` | `()` | "Remove a counter from this: ..." |
 | `PutCounterOnSourceCost` | `()` = -1/-1 ×1, or `(powerMod, toughnessMod, count)` | "Put a -1/-1 counter on this creature: ..." — puts counters on the source as a cost (paid immediately on activation). Respects `cantHaveCounters`/`cantHaveMinusOneMinusOneCounters`. Barrenton Medic |
+| `IncreaseActivationCostPerCounterEffect` | `(CounterType, int increasePerCounter)` | raises the generic activation cost by N per counter of that type on the source, counted at activation time. Pair with a printed `{0}` cost for "{X}: … X is the number of [type] counters on this permanent" (Chromatic Armor). Mirror of `ReduceActivationCostPerCounterEffect` (Diary of Dreams) |
 | `PutCounterOnControlledCreatureCost` | `(CounterType counterType, int count)` | "Put a -1/-1 counter on a creature you control: ..." — puts counter(s) on any creature you control (not just the source), chosen via the `PermanentChoiceCostHandler` pattern (auto-selects when only one creature exists, prompts when multiple). Also valid as a SPELL-slot cost (Scarscale Ritual). Hatchet Bully |
 | `PayManaCost` | `(String manaCost)` | Payable side of `ForcedCostOrElseEffect` only (not an `ActivatedAbility` cost). "you may pay {cost}; if you don't, [penalty]" — e.g. Force of Nature `ForcedCostOrElseEffect(PayManaCost("{G}{G}{G}{G}"), penalties, true)` |
 
@@ -748,7 +787,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_CONTROLLER_DISCARDS` | The controller discards a card ("whenever you discard a card"; cycling counts, CR 702.29e). Scanned on the discarding player's own battlefield in `TriggerCollectionService.checkDiscardTriggers`. Used by Necropotence (`ExileDiscardedCardFromGraveyardEffect`, resolved inline), Curator of Mysteries (`ScryEffect`, enqueued as a `TRIGGERED_ABILITY`), Drake Haven (`MayPayManaEffect`, enqueued as a `TRIGGERED_ABILITY` — its may-pay prompt comes up at resolution) and Hekma Sentinels (`BoostSelfEffect`, enqueued as a `TRIGGERED_ABILITY` carrying the source permanent id so "this creature gets +1/+1"). Targeted variants queue a `PermanentChoiceContext.DiscardControllerTriggerTarget` instead: Zenith Seeker (`GrantKeywordEffect` with `GrantScope.TARGET`) and Ominous Sphinx (`BoostTargetCreatureEffect` with an opponent-creature `filter`) — the effect's own predicate narrows the target |
 | `ON_SELF_DISCARDED` | This card is discarded for any reason ("When you discard this card"). Non-targeting effects (e.g. `MayPayManaEffect`) enqueue a `TRIGGERED_ABILITY`; any-target effects use `DiscardTriggerAnyTarget`. Used by Edgar's Awakening |
 | `ON_SELF_DISCARDED_BY_OPPONENT` | This card is discarded by an opponent |
-| `END_STEP_TRIGGERED` | End step (any player's turn — "at the beginning of the end step") |
+| `END_STEP_TRIGGERED` | End step (any player's turn — "at the beginning of the end step"). The stack entry's `targetId` is `null` unless the effect implements the `EndStepPlayerTargetedEffect` marker, which makes `StepTriggerService` bake the end-step (active) player into `targetId` — use it for "at the beginning of each player's end step, … that player …" effects (Monsoon's `TapPlayersPermanentsAndDamageEqualToCountEffect`) |
 | `CONTROLLER_END_STEP_TRIGGERED` | Controller's end step only ("at the beginning of your end step") |
 | `ON_ATTACK` | This creature attacks |
 | `ON_ALLY_CREATURES_ATTACK` | One or more creatures the controller controls attack (fires once per combat, not per creature). Scans all controller's permanents after attackers declared |
@@ -758,6 +797,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ALLY_CREATURE_ATTACKS` | Fires once per attacking creature the controller controls (unlike ON_ALLY_CREATURES_ATTACK which fires once per combat). Scans all controller's permanents for each attacker. Supports `TriggeringCardConditionalEffect` (filter by the attacking creature's card) and `TriggeringPermanentConditionalEffect` (filter by the attacking permanent, e.g. "with a +1/+1 counter on it"). Mandatory effects go on the stack sourced by the ability's owner (attacked target captured for `DealDamageToAttackedTargetEffect`). A `MayEffect` is queued as a CR 603.5 resolution-time may whose source **permanent** is the *attacking* creature ("that creature") while the source **card** is the ability's owner — so the owner's card-level `target(...)` filter governs legal targets (give it a `PermanentPredicateTargetFilter(new PermanentIsPlaneswalkerPredicate())` for player-or-planeswalker damage). Used by Sanctum Seeker (Vampire drain), Hellrider (attacked-target damage), Rage Forger (counter-bearing attacker may ping a player/planeswalker) |
 | `ON_ALLY_CREATURE_ATTACKS_UNBLOCKED` | Fires once per **unblocked** attacking creature the controller controls, during the declare-blockers step (both when the defender declares blocks and when no blockers exist). Supports `TriggeringCardConditionalEffect` to filter by the unblocked creature. The unblocked creature is set as the trigger's non-targeting `sourcePermanentId`, so self-scoped effects like `BoostSelfEffect` apply to "it" (the unblocked creature), not the source. Checked in `CombatBlockService`. Used by Stinkdrinker Bandit (Rogues get +2/+1) |
 | `ON_CREATURE_ATTACKS_YOU` | Whenever a creature attacks you or a planeswalker you control. Fires once per attacking creature, on the defending player's permanents (the player being attacked, directly or via their planeswalker). The attacking creature's permanent ID is set as the non-targeting `targetId` on the stack entry. Checked in `CombatAttackService.declareAttackers`. Used by Lost in the Woods |
+| `ON_ANY_PLAYER_ATTACKS` | Whenever ANY player attacks with one or more creatures. Fires once per combat (not per creature), on every permanent with this slot across all battlefields. The attacking player is set as the non-targeting `targetId`, so player-scoped effects (e.g. `DestroyAllPermanentsEffect` with `EachPermanentScope.TARGET_PLAYER`) act on "that player". Checked in `CombatAttackService.declareAttackers`. Used by Total War |
 | `ON_ANY_CREATURE_ATTACKS` | Whenever ANY creature attacks (any controller, any defender). Fires once per attacking creature, on every permanent with this slot across all battlefields. The attacking creature is set as the non-targeting `targetId`, so a plain `DealDamageToTargetCreatureEffect` hits "it". Checked in `CombatAttackService.declareAttackers`. Used by Caltrops |
 | `ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY` | Whenever ANY creature (any controller) becomes the target of ANY spell or ability. Fires on ALL permanents with this slot across every battlefield. The targeted creature is set as the non-targeting `targetId`. Checked in `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers`. Used by Cowardice (`ReturnToHandEffect.target()`) |
 | `ON_ALLY_CREATURE_EXPLORES` | Whenever a creature you control explores. Fires after the explore process completes (land into hand, or +1/+1 counter and may-graveyard choice). Supports targeted effects (e.g. BoostTargetCreatureEffect) via `ExploreTriggerTarget` queue — targets restricted to opponent's creatures. Used by Lurking Chupacabra |
@@ -793,7 +833,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ANY_PLAYER_CASTS_SPELL` | Any player casts a spell |
 | `ON_CONTROLLER_CASTS_SPELL` | Controller casts a spell ("whenever you cast...") |
 | `ON_ANY_PLAYER_TAPS_LAND` | Any player taps a land |
-| `ON_OPPONENT_PERMANENT_BECOMES_TAPPED` | A permanent an opponent of the controller controls becomes tapped (any tap — for mana or forced). Opponent-scoped counterpart of `ON_ALLY_PERMANENT_BECOMES_TAPPED`; wrap in `TriggeringPermanentConditionalEffect` to filter the tapped permanent. Used by Thoughtleech |
+| `ON_OPPONENT_PERMANENT_BECOMES_TAPPED` | A permanent an opponent of the controller controls becomes tapped (any tap — for mana or forced). Opponent-scoped counterpart of `ON_ALLY_PERMANENT_BECOMES_TAPPED`; wrap in `TriggeringPermanentConditionalEffect` to filter the tapped permanent. Both tap slots set `StackEntry.triggeringPermanentId` to the tapped permanent (a non-target reference, never validated or fizzled) so `PutCounterOnTriggeringPermanentEffect` can act on "it" — Freyalise's Winds uses both slots for "whenever *a* permanent becomes tapped". Used by Thoughtleech |
 | `ON_ENCHANTED_PERMANENT_TAPPED` | The permanent this aura is attached to becomes tapped. Does NOT fire for "enters tapped" (CR 603.6d). `affectedPlayerId` is baked in at trigger time with the enchanted permanent's controller. Effects: `GivePoisonCountersEffect` (Relic Putrescence), `DestroyEnchantedPermanentEffect` (Spreading Algae — "destroy it"), `DealDamageToPlayersEffect(N, TRIGGERING_PERMANENT_CONTROLLER)` (Psychic Venom — "deals N damage to that land's controller"; collector bakes the target to the tapped permanent's controller). When the land taps for mana the trigger is deferred into `pendingManaAbilityTriggers` (CR 603.3) until a player next receives priority |
 | `ON_ENCHANTED_CREATURE_DEALT_DAMAGE` | The creature this aura is attached to is dealt damage (combat or non-combat). Damage amount passed via `TriggerContext.DamageToCreature` and snapshotted to xValue for "that much damage" effects |
 | `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` | Any permanent deals damage to this permanent's controller |

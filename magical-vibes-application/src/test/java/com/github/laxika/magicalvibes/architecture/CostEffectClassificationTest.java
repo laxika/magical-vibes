@@ -42,7 +42,6 @@ class CostEffectClassificationTest {
             "ExileSelfCost",
             "ExileSelfFromGraveyardCost",
             "MillControllerCost",
-            "PayLifeCost",
             "PayManaCost",
             "PutCounterOnSourceCost",
             "ReduceActivationCostPerCounterEffect",

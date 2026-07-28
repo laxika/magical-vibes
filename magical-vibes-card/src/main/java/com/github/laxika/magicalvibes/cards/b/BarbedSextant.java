@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "351")
+@CardRegistration(set = "ICE", collectorNumber = "312")
 public class BarbedSextant extends Card {
 
     public BarbedSextant() {

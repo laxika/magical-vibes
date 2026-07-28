@@ -80,6 +80,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
+import com.github.laxika.magicalvibes.model.effect.IncreaseActivationCostPerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostPerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -95,6 +96,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSequenceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeXPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.TapEnchantedPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.UntapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
@@ -212,7 +214,7 @@ public class AbilityActivationService {
         // Mana Reflection: tapping a permanent for mana produces twice as much of that mana (2^count).
         int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId);
         ManaColor fixedLandColor = permanent.getCard().hasType(CardType.LAND)
-                ? gameQueryService.fixedLandManaColor(gameData)
+                ? gameQueryService.fixedLandManaColor(gameData, permanent)
                 : null;
         Set<ManaColor> twistedColors = permanent.getCard().hasType(CardType.LAND) && fixedLandColor == null
                 ? gameQueryService.twistedLandManaColors(gameData, permanent)
@@ -462,7 +464,7 @@ public class AbilityActivationService {
         permanent.tap();
 
         ManaPool manaPool = gameData.playerManaPools.get(playerId);
-        ManaColor fixedLandColor = gameQueryService.fixedLandManaColor(gameData);
+        ManaColor fixedLandColor = gameQueryService.fixedLandManaColor(gameData, permanent);
         Set<ManaColor> twistedColors = fixedLandColor == null
                 ? gameQueryService.twistedLandManaColors(gameData, permanent)
                 : Set.of();
@@ -1461,6 +1463,12 @@ public class AbilityActivationService {
                             genericCost);
                     targetingTax -= reduction;
                 }
+                // Per-counter generic cost increase (Chromatic Armor: "{X}: ... X is the number of
+                // sleight counters on this Aura"). Counted at activation, before the ability's own
+                // counter is added.
+                if (e instanceof IncreaseActivationCostPerCounterEffect increase) {
+                    targetingTax += permanent.getCounterCount(increase.counterType()) * increase.increasePerCounter();
+                }
             }
         }
 
@@ -1498,7 +1506,7 @@ public class AbilityActivationService {
         // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
         if (ability.isMultiTarget() || (ability.getMaxTargets() > 1 && targetIds != null)) {
             targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability,
-                    targetIds != null ? targetIds : List.of(), permanent.getCard());
+                    targetIds != null ? targetIds : List.of(), permanent.getCard(), effectiveXValue);
         } else if (targetZone == Zone.GRAVEYARD && targetIds != null && !targetIds.isEmpty()) {
             targetLegalityService.validateMultiTargetGraveyardAbility(gameData, playerId, abilityEffects, targetIds);
         } else {
@@ -1586,7 +1594,10 @@ public class AbilityActivationService {
             boolean artifactContext = gameQueryService.isArtifact(permanent);
             boolean myrContext = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
             Set<CardSubtype> subtypeSpellOrAbilityContext = effectiveSubtypes(permanent);
+            ManaPool payingPool = gameData.playerManaPools.get(playerId);
+            EnumMap<ManaColor, Integer> manaBefore = payingPool.getAllManaTotals();
             payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext, subtypeSpellOrAbilityContext, targetingTax);
+            recordActivationManaSpent(gameData, permanent, manaBefore, payingPool.getAllManaTotals());
         } else if (targetingTax > 0) {
             // No base mana cost but targeting tax applies — pay generic mana for the tax
             ManaPool pool = gameData.playerManaPools.get(playerId);
@@ -1709,6 +1720,15 @@ public class AbilityActivationService {
             }
         }
 
+        // Pay "tap enchanted permanent" cost (Earthlore): the Aura's target, not the Aura, taps.
+        if (abilityEffects.stream().anyMatch(e -> e instanceof TapEnchantedPermanentCost)) {
+            Permanent enchanted = enchantedPermanentForTapCost(gameData, permanent);
+            enchanted.tap();
+            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, enchanted);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " taps ", enchanted.getCard(), " as a cost."));
+        }
+
         // Pay mill-controller cost
         if (millControllerCost.isPresent()) {
             graveyardService.resolveMillPlayer(gameData, playerId, millControllerCost.get().count());
@@ -1756,6 +1776,16 @@ public class AbilityActivationService {
                     }
                 }
             }
+            // Same for a predicate-based sacrifice cost that scales off the sacrificed permanent's power
+            if (handler.costEffect() instanceof SacrificePermanentCost sacPermCost && sacPermCost.trackSacrificedPower()) {
+                List<UUID> autoPayIds = handler.getValidChoiceIds(gameData, playerId);
+                if (autoPayIds.size() <= handler.requiredCount() && !autoPayIds.isEmpty()) {
+                    Permanent autoTarget = gameQueryService.findPermanentById(gameData, autoPayIds.getFirst());
+                    if (autoTarget != null) {
+                        effectiveXValue = gameQueryService.getEffectivePower(gameData, autoTarget);
+                    }
+                }
+            }
             // Remember the auto-tapped creature so ChosenPermanentPower can read its power at
             // resolution (Impelled Giant). Only the single-valid-choice case auto-pays here;
             // multi-choice payment records the pick in completeActivatedAbilityCostChoice.
@@ -1800,6 +1830,22 @@ public class AbilityActivationService {
         if (effect instanceof RemoveCounterFromControlledCreatureCost c) return new RemoveCounterFromCreatureCostHandler(c, gameQueryService, gameLogService);
         if (effect instanceof PutCounterOnControlledCreatureCost c) return new PutCounterOnCreatureCostHandler(c, gameQueryService, gameLogService);
         return null;
+    }
+
+    /**
+     * Resolves the permanent a {@link TapEnchantedPermanentCost} taps — the one the source Aura is
+     * attached to — and asserts it can still be tapped. Throws when the Aura is unattached, the
+     * enchanted permanent has left the battlefield, or it is already tapped.
+     */
+    private Permanent enchantedPermanentForTapCost(GameData gameData, Permanent aura) {
+        Permanent enchanted = aura.isAttached() ? gameQueryService.findPermanentById(gameData, aura.getAttachedTo()) : null;
+        if (enchanted == null) {
+            throw new IllegalStateException(aura.getCard().getName() + " is not attached to a permanent");
+        }
+        if (enchanted.isTapped()) {
+            throw new IllegalStateException(enchanted.getCard().getName() + " is already tapped");
+        }
+        return enchanted;
     }
 
     private boolean handlePermanentChoiceCost(GameData gameData, Player player, Permanent source,
@@ -1879,6 +1925,10 @@ public class AbilityActivationService {
                 var mc = chosen.getCard().getParsedManaCost();
                 updatedXValue = mc != null ? mc.countColorSymbols(sacCost.trackSacrificedColorSymbols()) : 0;
             }
+        }
+
+        if (context.costEffect() instanceof SacrificePermanentCost sacPermCost && sacPermCost.trackSacrificedPower()) {
+            updatedXValue = gameQueryService.getEffectivePower(gameData, chosen);
         }
 
         handler.validateAndPay(gameData, player, chosen);
@@ -2214,6 +2264,11 @@ public class AbilityActivationService {
             }
         }
 
+        // "Tap enchanted permanent" cost needs the Aura to be attached to an untapped permanent
+        if (abilityEffects.stream().anyMatch(e -> e instanceof TapEnchantedPermanentCost)) {
+            enchantedPermanentForTapCost(gameData, permanent);
+        }
+
         // Mill-controller cost (e.g. Deranged Assistant: "{T}, Mill a card: Add {C}.")
         Optional<MillControllerCost> millControllerCost = abilityEffects.stream()
                 .filter(e -> e instanceof MillControllerCost)
@@ -2384,6 +2439,14 @@ public class AbilityActivationService {
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_DECLARE_BLOCKERS) {
                 if (gameData.currentStep != TurnStep.DECLARE_BLOCKERS) {
                     throw new IllegalStateException("This ability can only be activated during the declare blockers step");
+                }
+            }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_DECLARE_BLOCKERS_IF_BLOCKED) {
+                if (gameData.currentStep != TurnStep.DECLARE_BLOCKERS) {
+                    throw new IllegalStateException("This ability can only be activated during the declare blockers step");
+                }
+                if (!gameQueryService.isBlockedByAnyCreature(gameData, permanent)) {
+                    throw new IllegalStateException("This ability can only be activated if a creature is blocking this creature");
                 }
             }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_WHILE_CREATURE) {
@@ -2664,6 +2727,23 @@ public class AbilityActivationService {
     }
 
     /**
+     * Records the per-color mana just spent on this permanent's activation cost, so a
+     * {@code NoteManaSpentForActivationEffect} on the ability can read it back when it resolves
+     * (Ice Cauldron). Keyed by card id like the imprint map, and overwritten on every activation.
+     */
+    private void recordActivationManaSpent(GameData gameData, Permanent permanent,
+                                           EnumMap<ManaColor, Integer> before, EnumMap<ManaColor, Integer> after) {
+        EnumMap<ManaColor, Integer> spent = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            int amount = before.getOrDefault(color, 0) - after.getOrDefault(color, 0);
+            if (amount > 0) {
+                spent.put(color, amount);
+            }
+        }
+        gameData.abilityActivationManaSpent.put(permanent.getCard().getId(), spent);
+    }
+
+    /**
      * The permanent's effective creature subtypes (base + transient + granted). Used as the context
      * for spell-or-ability restricted mana (e.g. Smokebraider) when paying an activated ability's cost.
      */
@@ -2910,6 +2990,8 @@ public class AbilityActivationService {
     }
 
     private void validateActivationLimitPerTurn(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability, int abilityIndex) {
+        validateActivationLimitPerGame(gameData, permanent, ability, abilityIndex);
+
         Integer maxActivationsPerTurn = ability.getMaxActivationsPerTurn();
         if (maxActivationsPerTurn == null && ability.getMaxActivationsPerTurnAmount() == null) {
             return;
@@ -2935,10 +3017,33 @@ public class AbilityActivationService {
         }
     }
 
+    /**
+     * "Activate only once" (Goblin Ski Patrol): counted for the whole game against this permanent
+     * object, so a permanent that leaves and re-enters the battlefield may activate again (CR 400.7).
+     */
+    private void validateActivationLimitPerGame(GameData gameData, Permanent permanent, ActivatedAbility ability, int abilityIndex) {
+        Integer maxActivationsPerGame = ability.getMaxActivationsPerGame();
+        if (maxActivationsPerGame == null) {
+            return;
+        }
+
+        Map<Integer, Integer> perAbilityCounts = gameData.activatedAbilityUsesThisGame.get(permanent.getId());
+        int currentCount = perAbilityCounts != null ? perAbilityCounts.getOrDefault(abilityIndex, 0) : 0;
+        if (currentCount >= maxActivationsPerGame) {
+            throw new IllegalStateException(maxActivationsPerGame == 1
+                    ? "This ability can be activated only once"
+                    : "This ability can be activated no more than " + maxActivationsPerGame + " times");
+        }
+    }
+
     private void recordAbilityActivationUse(GameData gameData, Permanent permanent, int abilityIndex) {
         Map<Integer, Integer> perAbilityCounts = gameData.activatedAbilityUsesThisTurn
                 .computeIfAbsent(permanent.getId(), ignored -> new ConcurrentHashMap<>());
         perAbilityCounts.merge(abilityIndex, 1, Integer::sum);
+
+        gameData.activatedAbilityUsesThisGame
+                .computeIfAbsent(permanent.getId(), ignored -> new ConcurrentHashMap<>())
+                .merge(abilityIndex, 1, Integer::sum);
     }
 
     private void validateNotBlockedByPithingNeedle(GameData gameData, Permanent permanent, ActivatedAbility ability) {

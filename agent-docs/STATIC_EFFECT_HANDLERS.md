@@ -48,6 +48,15 @@ controller as the amount controller — so `CountScope.CONTROLLER` resolves to t
 controller ("you"/"you control", CR 109.5), not the enchanted/equipped creature's controller. Do
 NOT add per-derivation `BoostCreaturePer*` handlers.
 
+`ShrinkEnchantedCreatureEffect(DynamicAmount)` / `ShrinkEnchantedCreatureEffectHandler` is the one
+deliberate exception to that "source is the attachment" rule: it gates on `ENCHANTED_CREATURE` the
+same way, but evaluates the amount with the **enchanted creature** as the amount source and its
+controller as the amount controller, because the wordings that need it say "its controller" and
+switch on whether *that creature* is attacking (Snowblind). It also floors the toughness reduction
+at `toughness - 1`, measuring toughness-so-far as the creature's own effective toughness plus the
+bonuses already in the `StaticBonusAccumulator` — never by re-querying `getEffectiveToughness`,
+which would recurse into static bonus assembly for the same permanent.
+
 Both evaluate under `AmountContext.forStaticEffect` (static recursion guard). New count sources
 become new `model/amount/DynamicAmount` records with a case in `AmountEvaluationService.evaluate`.
 Recursion safety in static contexts is two mechanisms working together: while the layered pass

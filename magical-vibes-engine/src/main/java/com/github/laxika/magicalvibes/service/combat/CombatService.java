@@ -2,8 +2,11 @@ package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerUntapRemoveFromCombat;
 import com.github.laxika.magicalvibes.model.action.GainControlOfPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.PutMinusOneCounterAtEndOfCombat;
@@ -42,6 +45,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -161,6 +165,9 @@ public class CombatService {
         gameData.combatDamageFirstStrikeStepComplete = false;
         gameData.combatDamagePhase1Complete = false;
         gameData.combatDamagePhase1State = null;
+        // Melee's two combat-scoped delayed abilities ("this combat") expire here.
+        gameData.clearDelayedActions(DelayedBlockerDeclarationControl.class);
+        gameData.clearDelayedActions(DelayedUnblockedAttackerUntapRemoveFromCombat.class);
     }
 
     /**
@@ -240,6 +247,35 @@ public class CombatService {
     public void processEndOfCombatDestructions(GameData gameData) {
         permanentRemovalService.processDelayedPermanentActions(gameData,
                 DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT);
+        permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Destroys, for each creature scheduled by Venomous Breath, every creature that blocked or was
+     * blocked by it this turn. The opponent set is read here rather than at spell resolution, so
+     * blocks declared after the spell resolved are included. Respects indestructible and
+     * regeneration via {@link PermanentRemovalService#tryDestroyPermanent}.
+     */
+    public void processEndOfCombatCombatOpponentDestructions(GameData gameData) {
+        List<DestroyCombatOpponentsAtEndOfCombat> scheduled =
+                gameData.drainDelayedActions(DestroyCombatOpponentsAtEndOfCombat.class);
+        for (DestroyCombatOpponentsAtEndOfCombat action : scheduled) {
+            Set<UUID> opponentIds = gameData.combatBlockOpponentIdsThisTurn.get(action.creatureId());
+            if (opponentIds == null) {
+                continue;
+            }
+            for (UUID opponentId : opponentIds) {
+                Permanent opponent = gameQueryService.findPermanentById(gameData, opponentId);
+                if (opponent == null) {
+                    continue;
+                }
+                if (permanentRemovalService.tryDestroyPermanent(gameData, opponent, false)) {
+                    gameLogService.append(gameData, GameLog.isDestroyed(opponent.getCard()));
+                    log.info("Game {} - {} destroyed at end of combat (Venomous Breath)",
+                            gameData.id, opponent.getCard().getName());
+                }
+            }
+        }
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 

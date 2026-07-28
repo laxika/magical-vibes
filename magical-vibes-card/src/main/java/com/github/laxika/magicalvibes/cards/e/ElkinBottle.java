@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayUntilNextU
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "367")
+@CardRegistration(set = "ICE", collectorNumber = "317")
 public class ElkinBottle extends Card {
 
     public ElkinBottle() {

@@ -223,6 +223,10 @@ public class CombatAttackService {
             return CombatResult.AUTO_PASS_ONLY;
         }
 
+        // Flooded Woodlands: the sacrifice cost is per matching attacker, so the whole declaration
+        // must be affordable together, not just each attacker on its own.
+        attackSacrificeCostService.validateGlobalSacrificeAttackCosts(gameData, playerId, attackerIndices);
+
         // Validate attack tax (e.g. Windborn Muse / Ghostly Prison — uniform per-attacker tax from the
         // defender's side; plus per-attacker aura taxes scoped to a single creature, e.g. Brainwash {3})
         int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, playerId);
@@ -807,6 +811,35 @@ public class CombatAttackService {
                     log.info("Game {} - {} ON_ANY_CREATURE_ATTACKS trigger for {} attacking",
                             gameData.id, perm.getCard().getName(), attacker.getCard().getName());
                 }
+            }
+        }
+
+        // Check for "whenever a player attacks with one or more creatures" triggers
+        // (ON_ANY_PLAYER_ATTACKS). Unlike ON_ALLY_CREATURES_ATTACK these fire for any attacking
+        // player, on every permanent with this slot across all battlefields, and only once per
+        // combat. The attacking player is stored as a non-targeting targetId so player-scoped
+        // effects can act on "that player" (e.g. Total War's sweep of their non-attackers).
+        for (Map.Entry<UUID, List<Permanent>> bf : gameData.playerBattlefields.entrySet()) {
+            UUID permController = bf.getKey();
+            for (Permanent perm : new ArrayList<>(bf.getValue())) {
+                List<CardEffect> playerAttackEffects = perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_ATTACKS);
+                if (playerAttackEffects.isEmpty()) continue;
+
+                StackEntry playerAttackTrigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        permController,
+                        perm.getCard().getName() + "'s trigger",
+                        new ArrayList<>(playerAttackEffects),
+                        playerId,
+                        perm.getId()
+                );
+                playerAttackTrigger.setNonTargeting(true);
+                gameData.stack.add(playerAttackTrigger);
+                gameLogService.append(gameData,
+                        GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
+                log.info("Game {} - {} ON_ANY_PLAYER_ATTACKS trigger for attacking player {}",
+                        gameData.id, perm.getCard().getName(), playerId);
             }
         }
 

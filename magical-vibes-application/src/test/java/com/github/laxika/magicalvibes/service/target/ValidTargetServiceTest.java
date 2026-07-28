@@ -1261,6 +1261,39 @@ class ValidTargetServiceTest {
             assertThat(response.minTargets()).isEqualTo(2);
             assertThat(response.maxTargets()).isEqualTo(3);
         }
+
+        @Test
+        @DisplayName("X-scaled ability caps its max targets at the announced X")
+        void xScaledTargets_boundedByAnnouncedX() {
+            Card sourceCard = createCreatureCard();
+            sourceCard.setColor(CardColor.RED);
+            ActivatedAbility ability = new ActivatedAbility(true, "{X}",
+                    List.of(new DealDamageToTargetCreatureEffect(2)),
+                    "X target creatures", null, null, null, null, List.of(), 0, 100)
+                    .withXScaledTargets();
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
+                    gameData, sourceCard, ability, player1Id, 0, List.of(), 2);
+
+            assertThat(response.minTargets()).isZero();
+            assertThat(response.maxTargets()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("X-scaled ability allows no targets when no X was announced")
+        void xScaledTargets_defaultsToZeroWithoutX() {
+            Card sourceCard = createCreatureCard();
+            sourceCard.setColor(CardColor.RED);
+            ActivatedAbility ability = new ActivatedAbility(true, "{X}",
+                    List.of(new DealDamageToTargetCreatureEffect(2)),
+                    "X target creatures", null, null, null, null, List.of(), 0, 100)
+                    .withXScaledTargets();
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
+                    gameData, sourceCard, ability, player1Id, 0, List.of());
+
+            assertThat(response.maxTargets()).isZero();
+        }
     }
 
     // =====================================================================

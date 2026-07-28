@@ -19,21 +19,31 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  *                           effect expires and it reverts to its owner (Magus of the Unseen's
  *                           "When you lose control of the artifact, tap it"). Only meaningful for
  *                           {@code END_OF_TURN} duration.
+ * @param linkStolenPermanentToSource when true, the stolen permanent's id is recorded on the source
+ *                           permanent ({@code Permanent.chosenPermanentId}) so a later trigger on
+ *                           the source can still refer to "that creature" after the control effect
+ *                           is gone (Merieke Ri Berit's "destroy that creature" on leave/untap).
+ *                           Only meaningful for the {@code WHILE_SOURCE_*} durations.
  */
 public record GainControlOfTargetEffect(ControlDuration duration, CardSubtype grantedSubtype,
-                                        boolean tapWhenControlLost)
+                                        boolean tapWhenControlLost, boolean linkStolenPermanentToSource)
         implements ControlStealingEffect {
 
     public GainControlOfTargetEffect(ControlDuration duration) {
-        this(duration, null, false);
+        this(duration, null, false, false);
     }
 
     public GainControlOfTargetEffect(ControlDuration duration, CardSubtype grantedSubtype) {
-        this(duration, grantedSubtype, false);
+        this(duration, grantedSubtype, false, false);
     }
 
     public GainControlOfTargetEffect(ControlDuration duration, boolean tapWhenControlLost) {
-        this(duration, null, tapWhenControlLost);
+        this(duration, null, tapWhenControlLost, false);
+    }
+
+    /** Control for the given duration, recording the stolen permanent on the source (Merieke Ri Berit). */
+    public static GainControlOfTargetEffect linkingToSource(ControlDuration duration) {
+        return new GainControlOfTargetEffect(duration, null, false, true);
     }
 
     @Override

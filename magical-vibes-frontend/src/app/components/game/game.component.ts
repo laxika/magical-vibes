@@ -93,6 +93,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.gameOverWinnerId.set(null);
     this.declaringAttackers.set(false);
     this.declaringBlockers.set(false);
+    this.choosingBlocksForOpponent.set(false);
     this.attackTaxPerCreature.set(0);
     this.mustAttackWithAtLeastOne.set(false);
     this.availableAttackerIndices.set(new Set());
@@ -689,6 +690,10 @@ export class GameComponent implements OnInit, OnDestroy {
 
   declaringAttackers = signal(false);
   declaringBlockers = signal(false);
+  /** True while this player is declaring blocks for creatures they do NOT control
+      (Melee: "you choose which creatures block this combat"). Inverts which side of the
+      board holds the blockers and which holds the attackers. */
+  choosingBlocksForOpponent = signal(false);
   attackTaxPerCreature = signal(0);
   availableAttackerIndices = signal(new Set<number>());
   mustAttackIndices = signal(new Set<number>());
@@ -725,6 +730,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private handleAvailableBlockers(msg: AvailableBlockersNotification): void {
     this.declaringBlockers.set(true);
+    this.choosingBlocksForOpponent.set(msg.choosingForOpponent === true);
     this.availableBlockerIndices.set(new Set(msg.blockerIndices));
     this.opponentAttackerIndices.set(msg.attackerIndices);
     const pairs = new Map<number, number[]>();
@@ -882,6 +888,25 @@ export class GameComponent implements OnInit, OnDestroy {
     return this.declaringBlockers() && this.availableBlockerIndices().has(index);
   }
 
+  /** Whether the given side of the board holds the blocking creatures for the current
+      declaration. Normally the local player's side; inverted while choosing an opponent's blocks. */
+  isBlockerSide(isMine: boolean): boolean {
+    return isMine !== this.choosingBlocksForOpponent();
+  }
+
+  /** The complement of isBlockerSide: the side holding the attackers. */
+  isAttackerSide(isMine: boolean): boolean {
+    return !this.isBlockerSide(isMine);
+  }
+
+  private get blockerSideBattlefield(): Permanent[] {
+    return this.choosingBlocksForOpponent() ? this.opponentBattlefield : this.myBattlefield;
+  }
+
+  private get attackerSideBattlefield(): Permanent[] {
+    return this.choosingBlocksForOpponent() ? this.myBattlefield : this.opponentBattlefield;
+  }
+
   isAssignedBlocker(index: number): boolean {
     return this.blockerAssignments().has(index);
   }
@@ -900,14 +925,14 @@ export class GameComponent implements OnInit, OnDestroy {
 
   isBlockTarget(index: number): boolean {
     if (!this.declaringBlockers() || this.selectedBlockerIndex() === null) return false;
-    if (!this.opponentBattlefield[index]?.attacking) return false;
+    if (!this.attackerSideBattlefield[index]?.attacking) return false;
     const legal = this.legalBlockPairs().get(this.selectedBlockerIndex()!);
     return legal != null && legal.includes(index);
   }
 
   assignBlock(attackerIndex: number): void {
     if (this.selectedBlockerIndex() === null || !this.declaringBlockers()) return;
-    const perm = this.opponentBattlefield[attackerIndex];
+    const perm = this.attackerSideBattlefield[attackerIndex];
     if (!perm || !perm.attacking) return;
     const legal = this.legalBlockPairs().get(this.selectedBlockerIndex()!);
     if (!legal || !legal.includes(attackerIndex)) return;
@@ -930,6 +955,7 @@ export class GameComponent implements OnInit, OnDestroy {
       blockerAssignments: assignments
     });
     this.declaringBlockers.set(false);
+    this.choosingBlocksForOpponent.set(false);
     this.selectedBlockerIndex.set(null);
     this.availableBlockerIndices.set(new Set());
     this.legalBlockPairs.set(new Map());
@@ -1205,7 +1231,7 @@ export class GameComponent implements OnInit, OnDestroy {
   getBlockingBadgeText(index: number, isMine: boolean): string {
     const own = isMine ? this.myBattlefield : this.opponentBattlefield;
     const enemy = isMine ? this.opponentBattlefield : this.myBattlefield;
-    if (isMine && this.declaringBlockers()) {
+    if (this.declaringBlockers() && this.isBlockerSide(isMine)) {
       const attackerIndex = this.blockerAssignments().get(index);
       const name = attackerIndex != null ? enemy[attackerIndex]?.card.name : null;
       return name ? `Blocks ${name}` : 'Blocking';
@@ -1280,7 +1306,11 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       this.toggleAttacker(index);
     } else if (this.declaringBlockers()) {
-      this.selectBlocker(index);
+      if (this.isBlockerSide(true)) {
+        this.selectBlocker(index);
+      } else {
+        this.assignBlock(index);
+      }
     } else {
       this.choice.targeting.tapPermanent(index);
       if (this.choice.targeting.choosingAbility) {
@@ -1293,7 +1323,11 @@ export class GameComponent implements OnInit, OnDestroy {
     const perm = this.opponentBattlefield[index];
     if (this.clickResolver.tryResolveClick(perm, this.attackingCreatureFilter)) return;
     if (this.declaringBlockers()) {
-      this.assignBlock(index);
+      if (this.isBlockerSide(false)) {
+        this.selectBlocker(index);
+      } else {
+        this.assignBlock(index);
+      }
     }
   }
 

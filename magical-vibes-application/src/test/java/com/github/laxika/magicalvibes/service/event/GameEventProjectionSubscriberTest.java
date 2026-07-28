@@ -283,7 +283,8 @@ class GameEventProjectionSubscriberTest {
                 Map.of(0, List.of(1), 2, List.of(1, 3)),
                 List.of(3),
                 List.of(1),
-                Map.of(2, List.of(3))));
+                Map.of(2, List.of(3)),
+                player2Id));
 
         emitActiveDecision(
                 player2Id,

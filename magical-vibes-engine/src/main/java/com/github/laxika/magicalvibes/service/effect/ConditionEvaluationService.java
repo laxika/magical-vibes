@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
 import com.github.laxika.magicalvibes.model.condition.NoPlayerHasCardsInHand;
+import com.github.laxika.magicalvibes.model.condition.TotalPermanentCountEven;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
@@ -249,6 +250,8 @@ public class ConditionEvaluationService {
                     hasMatchingAttacker(gameData, ctx, c.predicate());
             case NoPlayerHasCardsInHand ignored ->
                     noPlayerHasCardsInHand(gameData);
+            case TotalPermanentCountEven ignored ->
+                    totalPermanentCount(gameData) % 2 == 0;
             case AnOpponentHandEmpty ignored ->
                     isAnyOpponentHandEmpty(gameData, ctx.controllerId());
             case NoSpellsCastLastTurn ignored ->
@@ -744,6 +747,18 @@ public class ConditionEvaluationService {
             }
         }
         return true;
+    }
+
+    /** Total permanents on the battlefield across every player. */
+    private int totalPermanentCount(GameData gameData) {
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null) {
+                count += battlefield.size();
+            }
+        }
+        return count;
     }
 
     private boolean noSpellsCastLastTurn(GameData gameData) {

@@ -20,12 +20,16 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourc
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerDiscardsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMayDrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerSacrificesPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedControllerSacrificesCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
@@ -890,6 +894,24 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = DyingCreatureControllerSacrificesPermanentsEffect.class,
+            slot = EffectSlot.ON_ANY_CREATURE_DIES)
+    boolean handleAnyCreatureDeathDyingControllerSacrifices(TriggerMatchContext match,
+            DyingCreatureControllerSacrificesPermanentsEffect effect, TriggerContext ctx) {
+        // Earthlink: the dying creature's controller (not the source's controller) sacrifices.
+        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                cd.dyingCreatureControllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new SacrificePermanentsEffect(
+                        effect.count(), effect.filter(), SacrificeRecipient.CONTROLLER)))
+        ));
+        logAnyCreatureDeath(match);
+        return true;
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
@@ -1116,6 +1138,28 @@ public class DeathTriggerCollectorService {
                 sl.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new RemoveLinkedPermanentEffect(effect.mode(), linkedId)))
+        ));
+        logSelfLeaves(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = DestroyLinkedPermanentEffect.class, slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handleDestroyLinkedPermanentOnLeave(TriggerMatchContext match,
+            DestroyLinkedPermanentEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        // Capture the linked permanent before the source is gone; the link is cleared so a
+        // simultaneous becomes-untapped trigger cannot destroy the same creature twice.
+        UUID linkedId = match.permanent().getChosenPermanentId();
+        if (linkedId == null) {
+            return false;
+        }
+        match.permanent().setChosenPermanentId(null);
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                sl.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new DestroyLinkedPermanentEffect(effect.cannotBeRegenerated(), linkedId)))
         ));
         logSelfLeaves(match);
         return true;

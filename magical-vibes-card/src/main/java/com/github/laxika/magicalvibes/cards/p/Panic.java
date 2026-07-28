@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5ED", collectorNumber = "260")
+@CardRegistration(set = "ICE", collectorNumber = "212")
 public class Panic extends Card {
 
     public Panic() {

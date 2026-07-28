@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "5ED", collectorNumber = "330")
+@CardRegistration(set = "ICE", collectorNumber = "267")
 public class Tarpan extends Card {
 
     public Tarpan() {

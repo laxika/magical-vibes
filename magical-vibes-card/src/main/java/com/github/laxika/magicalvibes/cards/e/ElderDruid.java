@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "7ED", collectorNumber = "238")
 @CardRegistration(set = "6ED", collectorNumber = "223")
 @CardRegistration(set = "5ED", collectorNumber = "290")
+@CardRegistration(set = "ICE", collectorNumber = "232")
 public class ElderDruid extends Card {
 
     public ElderDruid() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "256")
+@CardRegistration(set = "ICE", collectorNumber = "207")
 public class OrcishFarmer extends Card {
 
     public OrcishFarmer() {

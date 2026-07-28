@@ -3,10 +3,12 @@ import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
+import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerPowerDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
@@ -70,11 +72,14 @@ public class TurnProgressionService {
                     || gameData.hasDelayedAction(PutCounterOnPermanentAtEndOfCombat.class)
                     || gameData.hasDelayedAction(RemoveCounterFromSourceAtEndOfCombat.class)
                     || gameData.hasDelayedAction(GainControlOfPermanentAtEndOfCombat.class)
-                    || gameData.hasDelayedAction(ExileAndReturnTransformedAtEndOfCombat.class))) {
+                    || gameData.hasDelayedAction(ExileAndReturnTransformedAtEndOfCombat.class)
+                    || gameData.hasDelayedAction(DestroyCombatOpponentsAtEndOfCombat.class))) {
             combatService.processEndOfCombatSacrifices(gameData);
             combatService.processEndOfCombatExiles(gameData);
             combatService.processEndOfCombatEquipmentDestruction(gameData);
             combatService.processEndOfCombatDestructions(gameData);
+            combatService.processEndOfCombatCombatOpponentDestructions(gameData);
+            combatService.processEndOfCombatCombatOpponentDestructions(gameData);
             combatService.processEndOfCombatSourceCounters(gameData);
             combatService.processEndOfCombatOpponentCounters(gameData);
             combatService.processEndOfCombatCounterRemovals(gameData);
@@ -269,6 +274,7 @@ public class TurnProgressionService {
         // Conduit of Storms: "next main phase this turn" — drop any that never fired.
         gameData.clearDelayedActions(AddManaAtNextMainPhase.class, AddManaAtNextMainPhase::thisTurnOnly);
         gameData.clearDelayedActions(DelayedBlockerBoost.class);
+        gameData.clearDelayedActions(DelayedControllerSpellCastTrigger.class);
         gameData.clearDelayedActions(DelayedUnblockedAttackerPowerDamage.class);
         gameData.clearDelayedActions(DelayedSacrificeSourceWhenTargetLeaves.class);
         gameData.clearDelayedActions(DelayedSacrificeTargetWhenSourceLeaves.class);
@@ -278,6 +284,7 @@ public class TurnProgressionService {
         gameData.controllersDealtCombatDamageWithChangelingThisTurn.clear();
         gameData.combatBlockOpponentSubtypesThisTurn.clear();
         gameData.creaturesInCombatWithChangelingThisTurn.clear();
+        gameData.combatBlockOpponentIdsThisTurn.clear();
         gameData.playersDealtDamageThisTurn.clear();
         gameData.damageDealtToPlayersThisTurn.clear();
         gameData.untappedLandsAtTurnStart.clear();
@@ -309,6 +316,9 @@ public class TurnProgressionService {
         List<Permanent> activePlayerBf = gameData.playerBattlefields.get(nextActive);
         if (activePlayerBf != null) {
             activePlayerBf.forEach(Permanent::clearUntilNextTurnEffects);
+            // Halls of Mist: "attacked during their controller's last turn" is scoped to the
+            // controller's own turns, so the record shifts only when that player's turn begins.
+            activePlayerBf.forEach(Permanent::rollOverAttackRecord);
             // Promote/expire Wall of Dust "can't attack next turn" restrictions on the active player's
             // creatures (scoped to their controller's turn so it never arms on an opponent's turn).
             activePlayerBf.forEach(Permanent::promoteCantAttackNextTurn);

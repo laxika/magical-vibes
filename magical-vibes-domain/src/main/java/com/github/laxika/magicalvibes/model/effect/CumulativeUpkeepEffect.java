@@ -8,11 +8,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * <p>Mana costs use {@link #costPerAge} (payment flagged so cumulative-upkeep-only mana works).
  * Optional {@link #lifePerAge} adds life paid per age counter alongside the mana (Infernal Darkness
- * — "Pay {B} and 1 life"). Non-mana costs use {@link #sacrificeFilter}: sacrifice one matching
- * permanent per age counter (Polar Kraken — "Sacrifice a land").
+ * — "Pay {B} and 1 life"); an empty {@link #costPerAge} makes the cost life-only (Glacial Chasm —
+ * "Pay 2 life"). Non-mana costs use {@link #sacrificeFilter}: sacrifice one matching permanent per
+ * age counter (Polar Kraken — "Sacrifice a land").
  *
- * @param costPerAge mana cost string paid once per age counter (e.g. {@code "{U}"}), or null when
- *     the cost is a sacrifice
+ * @param costPerAge mana cost string paid once per age counter (e.g. {@code "{U}"}), empty for a
+ *     life-only cost, or null when the cost is a sacrifice
  * @param sacrificeFilter permanent filter for a sacrifice-per-age-counter cost, or null for mana
  * @param lifePerAge life paid once per age counter (0 when the cost is mana-only or sacrifice)
  */
@@ -31,6 +32,14 @@ public record CumulativeUpkeepEffect(
         if (sacrificeFilter != null && lifePerAge > 0) {
             throw new IllegalArgumentException("lifePerAge is only valid with a mana costPerAge");
         }
+        if (costPerAge != null && costPerAge.isEmpty() && lifePerAge <= 0) {
+            throw new IllegalArgumentException("An empty costPerAge requires a positive lifePerAge");
+        }
+    }
+
+    /** Cumulative upkeep — Pay N life (Glacial Chasm); no mana component. */
+    public static CumulativeUpkeepEffect life(int lifePerAge) {
+        return new CumulativeUpkeepEffect("", null, lifePerAge);
     }
 
     /** Cumulative upkeep {mana} — e.g. {@code new CumulativeUpkeepEffect("{1}")}. */

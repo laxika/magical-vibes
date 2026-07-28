@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "231")
+@CardRegistration(set = "ICE", collectorNumber = "242")
 public class FyndhornBrownie extends Card {
 
     public FyndhornBrownie() {

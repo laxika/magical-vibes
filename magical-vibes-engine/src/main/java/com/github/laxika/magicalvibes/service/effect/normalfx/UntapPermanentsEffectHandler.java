@@ -39,6 +39,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
             case TARGET -> resolveTarget(gameData, entry);
             case ALL_TARGETS -> resolveAllTargets(gameData, entry);
             case SELF -> resolveSelf(gameData, entry);
+            case SOURCE_PERMANENT -> resolveSourcePermanent(gameData, entry);
             case ENCHANTED -> resolveEnchanted(gameData, entry);
             case CONTROLLED -> resolveControlled(gameData, entry, e);
             case OTHER_CONTROLLED_CREATURES -> resolveOtherControlledCreatures(gameData, entry, e);
@@ -88,6 +89,19 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
         }
 
         tapUntapSupport.untapPermanent(gameData, self);
+
+        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " untaps."));
+
+        log.info("Game {} - {} untaps", gameData.id, entry.getCard().getName());
+    }
+
+    private void resolveSourcePermanent(GameData gameData, StackEntry entry) {
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            return;
+        }
+
+        tapUntapSupport.untapPermanent(gameData, source);
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " untaps."));
 

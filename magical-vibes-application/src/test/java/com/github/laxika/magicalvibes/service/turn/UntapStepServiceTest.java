@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.GameLog;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.StorageMatrixEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
@@ -159,6 +161,33 @@ class UntapStepServiceTest {
             sut.untapPermanents(gd, player1Id);
 
             assertThat(perm.isTapped()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Permanent with DoesntUntapWithCounterEffect stays tapped while it has such a counter")
+        void doesntUntapWhileCounterPresent() {
+            Card card = createCardWithName("Land Cap");
+            card.addEffect(EffectSlot.STATIC, new DoesntUntapWithCounterEffect(CounterType.DEPLETION));
+            Permanent perm = addPermanent(player1Id, card);
+            perm.tap();
+            perm.setCounterCount(CounterType.DEPLETION, 1);
+
+            sut.untapPermanents(gd, player1Id);
+
+            assertThat(perm.isTapped()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Permanent with DoesntUntapWithCounterEffect untaps once the counter is gone")
+        void untapsWhenCounterAbsent() {
+            Card card = createCardWithName("Land Cap");
+            card.addEffect(EffectSlot.STATIC, new DoesntUntapWithCounterEffect(CounterType.DEPLETION));
+            Permanent perm = addPermanent(player1Id, card);
+            perm.tap();
+
+            sut.untapPermanents(gd, player1Id);
+
+            assertThat(perm.isTapped()).isFalse();
         }
 
         @Test

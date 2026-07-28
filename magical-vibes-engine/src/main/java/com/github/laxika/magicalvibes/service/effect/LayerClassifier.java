@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.ShrinkEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
@@ -285,6 +286,7 @@ public final class LayerClassifier {
                 }));
         map.put(BoostSelfEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(AttachedBoostEffect.class, fixed(Layer.L7C_MODIFY_PT));
+        map.put(ShrinkEnchantedCreatureEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostTargetCreatureEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostByOtherCreaturesWithSameNameEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostBySharedCreatureTypeEffect.class, fixed(Layer.L7C_MODIFY_PT));

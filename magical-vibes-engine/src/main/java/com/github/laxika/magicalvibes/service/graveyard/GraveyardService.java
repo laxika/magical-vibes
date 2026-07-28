@@ -358,7 +358,7 @@ public class GraveyardService {
 
 
     public boolean tryRegenerate(GameData gameData, Permanent perm) {
-        if (perm.isCantRegenerateThisTurn()) {
+        if (perm.isCantRegenerateThisTurn() || damagedByRegenerationDenyingSource(gameData, perm)) {
             return false;
         }
         // Always-on intrinsic regeneration ("If this creature would be destroyed, regenerate it")
@@ -373,6 +373,24 @@ public class GraveyardService {
             perm.setRegenerationShield(perm.getRegenerationShield() - 1);
             performRegeneration(gameData, perm);
             return true;
+        }
+        return false;
+    }
+
+    /**
+     * True when some permanent on the battlefield currently has "creatures dealt damage by this creature
+     * this turn can't be regenerated this turn" (Bone Shaman) and damaged this creature this turn.
+     */
+    private boolean damagedByRegenerationDenyingSource(GameData gameData, Permanent perm) {
+        UUID cardId = perm.getCard().getId();
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent source : battlefield) {
+                if (source.isDamagedCreaturesCantRegenerateThisTurn()
+                        && gameData.creatureCardsDamagedThisTurnBySourcePermanent
+                        .getOrDefault(source.getId(), Set.of()).contains(cardId)) {
+                    return true;
+                }
+            }
         }
         return false;
     }

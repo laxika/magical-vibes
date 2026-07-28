@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
@@ -1097,6 +1098,64 @@ class PredicateEvaluationServiceTest {
             StackEntry creature = new StackEntry(
                     StackEntryType.CREATURE_SPELL, bears, player2Id, "Grizzly Bears", new ArrayList<>());
             assertThat(evaluator.matchesStackEntryPredicate(creature, filter, player2Id)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("PermanentBlockedBySourcePredicate")
+    class BlockedBySource {
+
+        private Permanent attacker;
+        private Permanent blocker;
+
+        @BeforeEach
+        void setUpCombat() {
+            attacker = new Permanent(createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            gd.playerBattlefields.get(player1Id).add(attacker);
+            attacker.setAttacking(true);
+
+            blocker = new Permanent(createCreature("Wall", 0, 3, CardColor.GREEN));
+            gd.playerBattlefields.get(player2Id).add(blocker);
+            blocker.setBlocking(true);
+            blocker.getBlockingTargetIds().add(attacker.getId());
+        }
+
+        @Test
+        @DisplayName("Matches the creature the source is blocking")
+        void matchesBlockedCreature() {
+            FilterContext context = FilterContext.of(gd)
+                    .withSourceCardId(blocker.getOriginalCard().getId())
+                    .withSourceControllerId(player2Id);
+
+            assertThat(evaluator.matchesPermanentPredicate(attacker, new PermanentBlockedBySourcePredicate(), context))
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("Uses the source's last known information once it has left the battlefield (CR 608.2b)")
+        void usesLastKnownInformationForSacrificedSource() {
+            gd.playerBattlefields.get(player2Id).remove(blocker);
+
+            FilterContext context = FilterContext.of(gd)
+                    .withSourceCardId(blocker.getOriginalCard().getId())
+                    .withSourceControllerId(player2Id)
+                    .withSourcePermanentSnapshot(blocker);
+
+            assertThat(evaluator.matchesPermanentPredicate(attacker, new PermanentBlockedBySourcePredicate(), context))
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("Does not match without the source on the battlefield and no snapshot")
+        void noMatchWithoutSourceOrSnapshot() {
+            gd.playerBattlefields.get(player2Id).remove(blocker);
+
+            FilterContext context = FilterContext.of(gd)
+                    .withSourceCardId(blocker.getOriginalCard().getId())
+                    .withSourceControllerId(player2Id);
+
+            assertThat(evaluator.matchesPermanentPredicate(attacker, new PermanentBlockedBySourcePredicate(), context))
+                    .isFalse();
         }
     }
 

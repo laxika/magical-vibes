@@ -179,7 +179,7 @@ class AbilityActivationServiceTest {
             when(gameQueryService.hasAuraWithEffect(
                     eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
-            when(gameQueryService.fixedLandManaColor(gameData)).thenReturn(ManaColor.BLACK);
+            when(gameQueryService.fixedLandManaColor(gameData, perm)).thenReturn(ManaColor.BLACK);
 
             service.tapPermanent(gameData, player1, 0);
 
@@ -1210,6 +1210,41 @@ class AbilityActivationServiceTest {
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("no more than 1 times each turn");
         }
+
+        @Test
+        @DisplayName("Activate-only-once blocks a second activation in a later turn")
+        void activateOnlyOnceBlocksLaterTurn() {
+            Card card = createArtifactWithOnceOnlyAbility();
+            Permanent perm = addReadyPermanent(player1Id, card);
+
+            // A previous turn's activation: the per-turn map has been cleared, the per-game one has not.
+            gameData.activatedAbilityUsesThisGame
+                    .computeIfAbsent(perm.getId(), k -> new java.util.concurrent.ConcurrentHashMap<>())
+                    .put(0, 1);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("only once");
+        }
+
+        @Test
+        @DisplayName("Activate-only-once allows the first activation and records it for the game")
+        void activateOnlyOnceAllowsFirstActivation() {
+            Card card = createArtifactWithOnceOnlyAbility();
+            Permanent perm = addReadyPermanent(player1Id, card);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            service.activateAbility(gameData, player1, 0, null, null, null, null);
+
+            assertThat(gameData.activatedAbilityUsesThisGame.get(perm.getId()).get(0)).isEqualTo(1);
+        }
     }
 
     // =========================================================================
@@ -1657,6 +1692,19 @@ class AbilityActivationServiceTest {
                 false, null, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
                 "Limited ability", maxPerTurn
         ));
+        return card;
+    }
+
+    private Card createArtifactWithOnceOnlyAbility() {
+        Card card = new Card();
+        card.setName("Test Once Only Artifact");
+        card.setType(CardType.ARTIFACT);
+        card.setManaCost("{0}");
+        card.setColor(null);
+        card.addActivatedAbility(new ActivatedAbility(
+                false, null, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                "Once-only ability"
+        ).withMaxActivationsPerGame(1));
         return card;
     }
 }

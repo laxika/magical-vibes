@@ -894,6 +894,33 @@ class TargetLegalityServiceTest {
         }
 
         @Test
+        @DisplayName("X-scaled ability throws when more targets than the paid X are chosen")
+        void throwsWhenMoreTargetsThanPaidX() {
+            Card source = createCreature("Source", CardColor.RED);
+            ActivatedAbility ability = new ActivatedAbility(true, "{X}", List.of(), "test",
+                    null, null, null, null, List.of(), 0, 100).withXScaledTargets();
+            Permanent p1 = addPermanent(player2Id, createCreature("Bear1", CardColor.GREEN));
+            Permanent p2 = addPermanent(player2Id, createCreature("Bear2", CardColor.GREEN));
+
+            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
+                    List.of(p1.getId(), p2.getId()), source, 1))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Must target between 0 and 1 targets");
+        }
+
+        @Test
+        @DisplayName("X-scaled ability accepts exactly the paid X targets")
+        void acceptsExactlyPaidXTargets() {
+            Card source = createCreature("Source", CardColor.RED);
+            ActivatedAbility ability = new ActivatedAbility(true, "{X}", List.of(), "test",
+                    null, null, null, null, List.of(), 0, 100).withXScaledTargets();
+            Permanent p1 = addPermanent(player2Id, createCreature("Bear1", CardColor.GREEN));
+            Permanent p2 = addPermanent(player2Id, createCreature("Bear2", CardColor.GREEN));
+
+            sut.validateMultiTargetAbility(gd, player1Id, ability, List.of(p1.getId(), p2.getId()), source, 2);
+        }
+
+        @Test
         @DisplayName("throws when targets are duplicated")
         void throwsWhenDuplicateTargets() {
             Card source = createCreature("Source", CardColor.RED);

@@ -1078,8 +1078,13 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
     /** Exile a card from hand and imprint it on {@code sourcePermanentId} (IMPRINT_FROM_HAND_CHOICE). */
     record ImprintFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
-                                 UUID sourcePermanentId, String prompt)
+                                 UUID sourcePermanentId, String prompt, boolean grantCastPermission)
             implements PendingInteraction, HandChoice {
+
+        public ImprintFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                     UUID sourcePermanentId, String prompt) {
+            this(playerId, validIndices, sourcePermanentId, prompt, false);
+        }
 
         @Override
         public UUID decidingPlayerId() {
@@ -1283,9 +1288,13 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
-     * The defending player's blocker declaration. Legal pairs and requirement metadata are
-     * captured before the decision event is emitted so no later projection can observe a
-     * partially-computed or changed legal answer space.
+     * The blocker declaration. Legal pairs and requirement metadata are captured before the
+     * decision event is emitted so no later projection can observe a partially-computed or changed
+     * legal answer space.
+     *
+     * <p>{@code defenderId} always owns the blocking creatures the indices refer to.
+     * {@code chooserId} is the player who actually makes the declaration — normally the defender,
+     * but a "you choose which creatures block this combat" effect (Melee) hands it to someone else.
      */
     record BlockerDeclaration(UUID defenderId,
                               java.util.List<Integer> blockerIndices,
@@ -1293,10 +1302,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                               java.util.Map<Integer, java.util.List<Integer>> legalBlockPairs,
                               java.util.List<Integer> mustBeBlockedAttackerIndices,
                               java.util.List<Integer> menaceAttackerIndices,
-                              java.util.Map<Integer, java.util.List<Integer>> mustBlockRequirements)
+                              java.util.Map<Integer, java.util.List<Integer>> mustBlockRequirements,
+                              UUID chooserId)
             implements PendingInteraction {
 
         public BlockerDeclaration {
+            if (chooserId == null) {
+                chooserId = defenderId;
+            }
             blockerIndices = java.util.List.copyOf(blockerIndices);
             attackerIndices = java.util.List.copyOf(attackerIndices);
             legalBlockPairs = copyIndexMap(legalBlockPairs);
@@ -1307,7 +1320,15 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         public BlockerDeclaration(UUID defenderId) {
             this(defenderId, java.util.List.of(), java.util.List.of(), java.util.Map.of(),
-                    java.util.List.of(), java.util.List.of(), java.util.Map.of());
+                    java.util.List.of(), java.util.List.of(), java.util.Map.of(), defenderId);
+        }
+
+        /**
+         * True when the declaring player is choosing blocks for an opponent's creatures (Melee),
+         * i.e. the blocker indices refer to a battlefield the chooser does not control.
+         */
+        public boolean choosingForOpponent() {
+            return !chooserId.equals(defenderId);
         }
 
         private static java.util.Map<Integer, java.util.List<Integer>> copyIndexMap(
@@ -1319,7 +1340,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public UUID decidingPlayerId() {
-            return defenderId;
+            return chooserId;
         }
 
         @Override

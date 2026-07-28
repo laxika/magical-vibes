@@ -9,8 +9,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersInsteadOfUntappingEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticOrbEffect;
 import com.github.laxika.magicalvibes.model.effect.StorageMatrixEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -172,6 +174,8 @@ public class UntapStepService {
                 // Paralyzation counters (Dread Wight): doesn't untap during the untap step for as
                 // long as it has such a counter — source-independent continuous rule.
                 boolean hasParalyzationLock = p.getCounterCount(CounterType.PARALYZATION) > 0;
+                // Depletion lands (Land Cap): a self-scoped static lock conditioned on a counter.
+                boolean hasCounterLock = counterLockPreventsUntap(p);
 
                 boolean blockedByStorageMatrix = restrictPredicate != null
                         && !predicateEvaluationService.matchesPermanentPredicate(gameData, p, restrictPredicate);
@@ -192,8 +196,12 @@ public class UntapStepService {
                     // Present choice to controller later — skip untap for now
                     mayNotUntapPermanents.add(p);
                 } else if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasUntapLock
-                        && !hasMatchingDoesntUntap && !hasParalyzationLock) {
-                    tapUntapSupport.untapPermanent(gameData, p);
+                        && !hasMatchingDoesntUntap && !hasParalyzationLock && !hasCounterLock) {
+                    // Freyalise's Winds: the untap is replaced by removing all counters of the
+                    // named type, so the permanent stays tapped this step.
+                    if (!removeCountersInsteadOfUntapping(gameData, p)) {
+                        tapUntapSupport.untapPermanent(gameData, p);
+                    }
                 }
                 p.setSummoningSick(false);
                 p.setLoyaltyActivationsThisTurn(0);
@@ -323,8 +331,9 @@ public class UntapStepService {
                     || !p.getUntapPreventedWhileSourceOnBattlefieldIds().isEmpty();
             boolean hasMatchingDoesntUntap = matchingStaticPreventsUntap(gameData, p);
             boolean hasParalyzationLock = p.getCounterCount(CounterType.PARALYZATION) > 0;
+            boolean hasCounterLock = counterLockPreventsUntap(p);
             if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasMayNotUntap
-                    && !hasUntapLock && !hasMatchingDoesntUntap && !hasParalyzationLock) {
+                    && !hasUntapLock && !hasMatchingDoesntUntap && !hasParalyzationLock && !hasCounterLock) {
                 candidates.add(p.getId());
             }
         }
@@ -332,10 +341,54 @@ public class UntapStepService {
     }
 
     /**
+     * Applies any {@link RemoveCountersInsteadOfUntappingEffect} in force (Freyalise's Winds) to a
+     * tapped permanent that is about to untap during its controller's untap step: all counters of
+     * the named type are removed from it and it stays tapped.
+     *
+     * @return {@code true} if the untap was replaced, {@code false} if the permanent should untap
+     */
+    private boolean removeCountersInsteadOfUntapping(GameData gameData, Permanent permanent) {
+        if (!permanent.isTapped()) {
+            return false;
+        }
+        List<CounterType> replaced = new ArrayList<>();
+        gameData.forEachPermanent((pid, source) -> {
+            for (CardEffect e : source.getCard().getEffects(EffectSlot.STATIC)) {
+                if (e instanceof RemoveCountersInsteadOfUntappingEffect replacement
+                        && permanent.getCounterCount(replacement.counterType()) > 0) {
+                    replaced.add(replacement.counterType());
+                }
+            }
+        });
+        if (replaced.isEmpty()) {
+            return false;
+        }
+        for (CounterType counterType : replaced) {
+            permanent.setCounterCount(counterType, 0);
+        }
+        gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(),
+                " doesn't untap; its counters are removed instead."));
+        log.info("Game {} - {} does not untap; counters {} removed instead",
+                gameData.id, permanent.getCard().getName(), replaced);
+        return true;
+    }
+
+    /**
      * Returns {@code true} if any permanent on any battlefield carries a
      * {@link MatchingPermanentsDoesntUntapEffect} whose filter matches the given permanent
      * (e.g. Marble Titan locking every creature with power 3 or greater, including its own).
      */
+    /**
+     * Returns {@code true} if the permanent carries a {@link DoesntUntapWithCounterEffect} and
+     * currently has at least one counter of that type on it (Land Cap and the other Ice Age
+     * depletion lands).
+     */
+    private boolean counterLockPreventsUntap(Permanent permanent) {
+        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof DoesntUntapWithCounterEffect lock
+                        && permanent.getCounterCount(lock.counterType()) > 0);
+    }
+
     private boolean matchingStaticPreventsUntap(GameData gameData, Permanent permanent) {
         return gameData.anyPermanentMatches(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof MatchingPermanentsDoesntUntapEffect lock

@@ -28,6 +28,13 @@ public class Permanent {
     /** The UUID of the player or planeswalker this creature is attacking. Null when not attacking. */
     @Setter private UUID attackTarget;
     private boolean attackedThisTurn;
+    /** Set when this creature is declared as an attacker; unlike {@link #attackedThisTurn} it survives
+     *  the intervening opponent turns and is rolled into {@link #attackedDuringControllersLastTurn} at
+     *  the start of its controller's next turn by {@link #rollOverAttackRecord()}. */
+    @Setter private boolean attackedDuringControllersCurrentTurn;
+    /** True when this creature attacked during its controller's previous turn (Halls of Mist). Read by
+     *  {@code PermanentAttackedDuringControllersLastTurnPredicate}. */
+    @Setter private boolean attackedDuringControllersLastTurn;
     /** When true, this creature can't be declared as an attacker during its controller's next turn
      *  (Wall of Dust's block trigger). Promoted into {@link #cantAttackThisTurn} at the start of the
      *  controller's next turn by {@link #promoteCantAttackNextTurn()}. */
@@ -41,6 +48,10 @@ public class Permanent {
      *  {@link #attackedThisTurn}) and is reset at each turn start. Read by
      *  {@code PermanentAttackedOrBlockedThisTurnPredicate} (Vizier of Deferment). */
     private boolean blockedThisTurn;
+    /** Set when this creature blocks or becomes blocked. Unlike {@link #blockedThisTurn} it is NOT
+     *  cleared at turn start — it stays set until an effect that reads a "since your last upkeep"
+     *  window consumes it (Wiitigo's upkeep trigger clears it after resolving). */
+    @Setter private boolean blockedOrWasBlockedSinceLastUpkeep;
     /** Set when this permanent's "whenever this becomes the target of a spell or ability for the first
      *  time each turn, counter that spell or ability" trigger (Glyph Keeper) has already fired this
      *  turn, so it won't trigger again until the flag is reset at the next turn start. */
@@ -97,6 +108,9 @@ public class Permanent {
     /** When true, all creatures able to block this creature this turn do so (Lure-style, one-shot, e.g. Alluring Scent). Cleared at end of turn. */
     @Setter private boolean mustBeBlockedByAllThisTurn;
     @Setter private boolean cantRegenerateThisTurn;
+    /** When true, creatures this permanent dealt damage to this turn can't be regenerated this turn
+     *  (Bone Shaman's activated ability). Cleared at end of turn. */
+    @Setter private boolean damagedCreaturesCantRegenerateThisTurn;
     /** If true, this creature is exiled instead of dying this turn (e.g. Red Sun's Zenith). Cleared at end of turn. */
     @Setter private boolean exileInsteadOfDieThisTurn;
     /** Secrets of Strixhaven "Prepared": true while this permanent is prepared (CR-style designation). While
@@ -182,6 +196,16 @@ public class Permanent {
      *  NOT cleared by {@link #resetModifiers()} — survives turn resets.
      *  For transient card type grants from static/activated effects, see {@link #grantedCardTypes}. */
     private final Set<CardType> persistentGrantedCardTypes = EnumSet.noneOf(CardType.class);
+    /** Supertypes granted to this permanent for as long as it stays on the battlefield by a one-shot
+     *  effect ({@code SetTargetPermanentSupertypeEffect}, e.g. Arcum's Weathervane "target nonsnow
+     *  basic land becomes snow"). Read via {@code GameQueryService.hasEffectiveSupertype}, never by
+     *  inspecting the printed supertypes. NOT cleared by {@link #resetModifiers()}. */
+    private final Set<CardSupertype> persistentGrantedSupertypes = EnumSet.noneOf(CardSupertype.class);
+    /** Supertypes removed from this permanent for as long as it stays on the battlefield by a one-shot
+     *  effect (Arcum's Weathervane "target snow land is no longer snow"). Mutually exclusive with
+     *  {@link #persistentGrantedSupertypes} — the later activation wins. NOT cleared by
+     *  {@link #resetModifiers()}. */
+    private final Set<CardSupertype> persistentRemovedSupertypes = EnumSet.noneOf(CardSupertype.class);
     private final List<TextReplacement> textReplacements = new ArrayList<>();
     private final Set<CardType> protectionFromCardTypes = EnumSet.noneOf(CardType.class);
     private final Set<CardColor> protectionFromColorsUntilEndOfTurn = EnumSet.noneOf(CardColor.class);
@@ -363,10 +387,13 @@ public class Permanent {
         this.attacking = source.attacking;
         this.attackTarget = source.attackTarget;
         this.attackedThisTurn = source.attackedThisTurn;
+        this.attackedDuringControllersCurrentTurn = source.attackedDuringControllersCurrentTurn;
+        this.attackedDuringControllersLastTurn = source.attackedDuringControllersLastTurn;
         this.cantAttackNextTurn = source.cantAttackNextTurn;
         this.cantAttackThisTurn = source.cantAttackThisTurn;
         this.blocking = source.blocking;
         this.blockedThisTurn = source.blockedThisTurn;
+        this.blockedOrWasBlockedSinceLastUpkeep = source.blockedOrWasBlockedSinceLastUpkeep;
         this.becomeTargetCounterUsedThisTurn = source.becomeTargetCounterUsedThisTurn;
         this.blockingTargets.addAll(source.blockingTargets);
         this.blockingTargetIds.addAll(source.blockingTargetIds);
@@ -395,6 +422,7 @@ public class Permanent {
         this.mustBeBlockedThisTurn = source.mustBeBlockedThisTurn;
         this.mustBeBlockedByAllThisTurn = source.mustBeBlockedByAllThisTurn;
         this.cantRegenerateThisTurn = source.cantRegenerateThisTurn;
+        this.damagedCreaturesCantRegenerateThisTurn = source.damagedCreaturesCantRegenerateThisTurn;
         this.exileInsteadOfDieThisTurn = source.exileInsteadOfDieThisTurn;
         this.prepared = source.prepared;
         this.preparedSpellCardId = source.preparedSpellCardId;
@@ -427,6 +455,8 @@ public class Permanent {
         this.transientCreatureTypeOverride = source.transientCreatureTypeOverride;
         this.grantedCardTypes.addAll(source.grantedCardTypes);
         this.persistentGrantedCardTypes.addAll(source.persistentGrantedCardTypes);
+        this.persistentGrantedSupertypes.addAll(source.persistentGrantedSupertypes);
+        this.persistentRemovedSupertypes.addAll(source.persistentRemovedSupertypes);
         this.textReplacements.addAll(source.textReplacements);
         this.protectionFromCardTypes.addAll(source.protectionFromCardTypes);
         this.protectionFromColorsUntilEndOfTurn.addAll(source.protectionFromColorsUntilEndOfTurn);
@@ -503,7 +533,18 @@ public class Permanent {
         this.attacking = attacking;
         if (attacking) {
             this.attackedThisTurn = true;
+            this.attackedDuringControllersCurrentTurn = true;
         }
+    }
+
+    /**
+     * Shifts the "attacked on my controller's turn" record one controller-turn back. Called at the
+     * start of a turn for the permanents the new active player controls, so that during that turn
+     * {@link #attackedDuringControllersLastTurn} means "attacked during their previous turn".
+     */
+    public void rollOverAttackRecord() {
+        this.attackedDuringControllersLastTurn = this.attackedDuringControllersCurrentTurn;
+        this.attackedDuringControllersCurrentTurn = false;
     }
 
     public void setBlocking(boolean blocking) {
@@ -622,7 +663,8 @@ public class Permanent {
      */
     public int getPowerModifiers() {
         return powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
-                + getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO);
+                + getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)
+                + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO);
     }
 
     /**
@@ -632,6 +674,7 @@ public class Permanent {
      */
     public int getToughnessModifiers() {
         return toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+                + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)
                 + getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)
                 - getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)
                 - 2 * getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO);
@@ -646,12 +689,14 @@ public class Permanent {
      */
     public int getEffectivePower() {
         return getBasePower() + powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
-                + getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO);
+                + getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)
+                + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO);
     }
 
     /** The toughness counterpart of {@link #getEffectivePower()} — same pre-switch caveat. */
     public int getEffectiveToughness() {
         return getBaseToughness() + toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+                + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)
                 + getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)
                 - getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)
                 - 2 * getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO);
@@ -811,6 +856,7 @@ public class Permanent {
         this.mustBeBlockedThisTurn = false;
         this.mustBeBlockedByAllThisTurn = false;
         this.cantRegenerateThisTurn = false;
+        this.damagedCreaturesCantRegenerateThisTurn = false;
         this.exileInsteadOfDieThisTurn = false;
         this.hasDamageToOpponentCreatureBounce = false;
         this.temporaryTriggeredEffects.clear();

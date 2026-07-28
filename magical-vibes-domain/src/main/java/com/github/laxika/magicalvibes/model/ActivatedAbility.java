@@ -76,6 +76,22 @@ public class ActivatedAbility {
     private DynamicAmount maxActivationsPerTurnAmount;
     /** Human-readable description of the dynamic cap, used in the activation error message. */
     private String maxActivationsPerTurnDescription;
+    /**
+     * When true the number of targets scales with the X paid for this ability's {@code {X}} mana
+     * cost ("{X}, {T}, Sacrifice this artifact: X target creatures … " — Runed Arch). The ability
+     * declares {@code minTargets = 0} and {@code maxTargets} as a sanity cap; the effective bounds
+     * are computed from the paid X by {@link #getEffectiveMinTargets(int)} /
+     * {@link #getEffectiveMaxTargets(int)}. The ability-side counterpart of {@code Card.targetX}.
+     * Set via {@link #withXScaledTargets()}.
+     */
+    private boolean xScaledTargets;
+    /**
+     * Whole-game activation cap for "Activate only once" (e.g. Goblin Ski Patrol). Null = no such
+     * cap. Counted per permanent object in {@code GameData.activatedAbilityUsesThisGame}, so a
+     * permanent that leaves and re-enters the battlefield may activate again (CR 400.7). Set via
+     * {@link #withMaxActivationsPerGame(int)}.
+     */
+    private Integer maxActivationsPerGame;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
@@ -188,6 +204,8 @@ public class ActivatedAbility {
         copy.activationConditionDescription = this.activationConditionDescription;
         copy.maxActivationsPerTurnAmount = this.maxActivationsPerTurnAmount;
         copy.maxActivationsPerTurnDescription = this.maxActivationsPerTurnDescription;
+        copy.maxActivationsPerGame = this.maxActivationsPerGame;
+        copy.xScaledTargets = this.xScaledTargets;
         return copy;
     }
 
@@ -200,6 +218,16 @@ public class ActivatedAbility {
     public ActivatedAbility withMaxActivationsPerTurn(DynamicAmount amount, String description) {
         this.maxActivationsPerTurnAmount = amount;
         this.maxActivationsPerTurnDescription = description;
+        return this;
+    }
+
+    /**
+     * Fluent setter for a whole-game activation cap ("Activate only once", Goblin Ski Patrol). The
+     * count is kept per permanent object, so a permanent that leaves and re-enters the battlefield is
+     * a new object and may activate again (CR 400.7). Returns this ability for chaining.
+     */
+    public ActivatedAbility withMaxActivationsPerGame(int maxActivations) {
+        this.maxActivationsPerGame = maxActivations;
         return this;
     }
 
@@ -310,6 +338,31 @@ public class ActivatedAbility {
 
     public boolean isMultiTarget() {
         return !multiTargetFilters.isEmpty();
+    }
+
+    /**
+     * Fluent setter marking this ability's target count as scaling with the paid X (Runed Arch's
+     * "X target creatures with power 2 or less"). Pair with an {@code {X}} mana cost, a single
+     * {@code targetFilter}, {@code minTargets = 0} and a sanity {@code maxTargets} cap. Returns this
+     * ability for chaining in card constructors.
+     */
+    public ActivatedAbility withXScaledTargets() {
+        this.xScaledTargets = true;
+        return this;
+    }
+
+    /**
+     * Minimum number of targets required for the given paid X. Mirrors {@code Card.getEffectiveMinTargets}:
+     * an X-scaled group is declared with {@code minTargets = 0}, so fewer than X targets stay legal
+     * when not enough legal targets exist.
+     */
+    public int getEffectiveMinTargets(int xValue) {
+        return xScaledTargets ? Math.min(xValue, minTargets) : minTargets;
+    }
+
+    /** Maximum number of targets allowed for the given paid X ({@code min(X, maxTargets)} when X-scaled). */
+    public int getEffectiveMaxTargets(int xValue) {
+        return xScaledTargets ? Math.min(xValue, maxTargets) : maxTargets;
     }
 
     public boolean isNeedsSpellTarget() {

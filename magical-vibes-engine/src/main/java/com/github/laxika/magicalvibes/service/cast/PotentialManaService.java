@@ -86,7 +86,7 @@ public class PotentialManaService {
                 // Check for land type overrides (e.g. Evil Presence making a Plains into a Swamp)
                 ManaColor overriddenColor = gameQueryService.getOverriddenLandManaColor(gameData, perm);
                 ManaColor fixedLandColor = perm.getCard().hasType(CardType.LAND)
-                        ? gameQueryService.fixedLandManaColor(gameData)
+                        ? gameQueryService.fixedLandManaColor(gameData, perm)
                         : null;
                 Set<ManaColor> twisted = fixedLandColor == null
                         ? gameQueryService.twistedLandManaColors(gameData, perm)
@@ -167,7 +167,7 @@ public class PotentialManaService {
                 }
                 ManaColor overriddenColor = gameQueryService.getOverriddenLandManaColor(gameData, perm);
                 ManaColor fixedLandColor = perm.getCard().hasType(CardType.LAND)
-                        ? gameQueryService.fixedLandManaColor(gameData)
+                        ? gameQueryService.fixedLandManaColor(gameData, perm)
                         : null;
                 Set<ManaColor> twisted = fixedLandColor == null
                         ? gameQueryService.twistedLandManaColors(gameData, perm)
@@ -233,7 +233,7 @@ public class PotentialManaService {
                 }
                 ManaColor overriddenColor = gameQueryService.getOverriddenLandManaColor(gameData, perm);
                 ManaColor fixedLandColor = perm.getCard().hasType(CardType.LAND)
-                        ? gameQueryService.fixedLandManaColor(gameData)
+                        ? gameQueryService.fixedLandManaColor(gameData, perm)
                         : null;
                 Set<ManaColor> twisted = fixedLandColor == null
                         ? gameQueryService.twistedLandManaColors(gameData, perm)
@@ -421,6 +421,8 @@ public class PotentialManaService {
             case ONLY_DURING_DECLARE_ATTACKERS_IF_ATTACKED -> gameData.currentStep == TurnStep.DECLARE_ATTACKERS
                     && gameQueryService.isPlayerBeingAttacked(gameData, playerId);
             case ONLY_DURING_DECLARE_BLOCKERS -> gameData.currentStep == TurnStep.DECLARE_BLOCKERS;
+            case ONLY_DURING_DECLARE_BLOCKERS_IF_BLOCKED -> gameData.currentStep == TurnStep.DECLARE_BLOCKERS
+                    && permanent != null && gameQueryService.isBlockedByAnyCreature(gameData, permanent);
             case ONLY_WHILE_CREATURE -> permanent != null && gameQueryService.isCreature(gameData, permanent);
             case POWER_4_OR_GREATER -> permanent != null && gameQueryService.getEffectivePower(gameData, permanent) >= 4;
             case RAID -> gameData.playersDeclaredAttackersThisTurn.contains(playerId);

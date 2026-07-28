@@ -16,4 +16,18 @@ public record FlipCoinWinEffect(CardEffect wrapped, CardEffect lost) implements 
     public FlipCoinWinEffect(CardEffect wrapped) {
         this(wrapped, null);
     }
+
+    /**
+     * Delegates to whichever branch targets, so a targeted flip reward works on a spell or
+     * activated ability (the target is chosen when the ability goes on the stack, before the flip).
+     * Goblin Lyre's win branch targets an opponent or planeswalker; the loss branch does not.
+     */
+    @Override
+    public TargetSpec targetSpec() {
+        TargetSpec wonSpec = wrapped == null ? TargetSpec.NONE : wrapped.targetSpec();
+        if (wonSpec.category() != TargetCategory.NONE) {
+            return wonSpec;
+        }
+        return lost == null ? TargetSpec.NONE : lost.targetSpec();
+    }
 }

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "279")
+@CardRegistration(set = "ICE", collectorNumber = "225")
 public class Aurochs extends Card {
 
     public Aurochs() {

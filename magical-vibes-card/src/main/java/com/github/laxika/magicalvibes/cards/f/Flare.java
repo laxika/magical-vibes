@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "230")
+@CardRegistration(set = "ICE", collectorNumber = "185")
 public class Flare extends Card {
 
     public Flare() {

@@ -200,7 +200,7 @@ public class AuraAttachmentService {
         if (filter instanceof PermanentPredicateTargetFilter
                 || filter instanceof ControlledPermanentPredicateTargetFilter
                 || filter instanceof OwnedPermanentPredicateTargetFilter) {
-            FilterContext context = new FilterContext(gameData, attachment.getCard().getId(), controllerId, null);
+            FilterContext context = new FilterContext(gameData, attachment.getCard().getId(), controllerId, null, null);
             if (predicateEvaluationService.checkTargetFilter(filter, host, context).isPresent()) {
                 return "it can no longer enchant " + host.getCard().getName();
             }

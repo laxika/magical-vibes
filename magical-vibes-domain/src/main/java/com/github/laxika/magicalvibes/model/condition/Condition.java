@@ -96,6 +96,7 @@ public sealed interface Condition permits
         TargetPermanentMatches,
         TargetSpellMatches,
         TopCardOfLibraryColor,
+        TotalPermanentCountEven,
         TwoOrMoreSpellsCastLastTurn,
         WonClash {
 

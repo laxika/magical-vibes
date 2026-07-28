@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -29,7 +29,7 @@ public class PutCardsFromHandOnLibraryDestinationChoiceInteractionHandler
     private static final String TOP = PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice.OPTIONS.get(0);
 
     private final GameLogService gameLogService;
-    private final TurnProgressionService turnProgressionService;
+    private final InputCompletionService inputCompletionService;
 
     @Override
     public Class<PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice> handledType() {
@@ -79,6 +79,6 @@ public class PutCardsFromHandOnLibraryDestinationChoiceInteractionHandler
         log.info("Game {} - {} put {} card(s) on {} of library", gameData.id, player.getUsername(),
                 moving.size(), onTop ? "top" : "bottom");
 
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

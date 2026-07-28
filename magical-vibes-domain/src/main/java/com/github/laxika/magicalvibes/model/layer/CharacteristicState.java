@@ -107,8 +107,10 @@ public class CharacteristicState {
         this.grantedActivatedAbilities.addAll(permanent.getPersistentGrantedActivatedAbilities());
         this.basePower = card.getPower() != null ? card.getPower() : 0;
         this.baseToughness = card.getToughness() != null ? card.getToughness() : 0;
+        // +2/+2 counters (e.g. Dwarven Armory) add two to both power and toughness.
         int counterDelta = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)
-                - permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
+                - permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+                + 2 * permanent.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO);
         // +1/+0 counters (e.g. Clockwork Beast) add power only.
         this.powerDelta = counterDelta + permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO);
         // +0/+1 counters (e.g. Sacred Boon) add toughness only; -0/-1 (Essence Flare) and

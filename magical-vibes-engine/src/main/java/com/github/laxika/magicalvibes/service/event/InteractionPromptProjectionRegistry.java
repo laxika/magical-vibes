@@ -503,7 +503,8 @@ public class InteractionPromptProjectionRegistry {
                 interaction.legalBlockPairs(),
                 interaction.mustBeBlockedAttackerIndices(),
                 interaction.menaceAttackerIndices(),
-                interaction.mustBlockRequirements());
+                interaction.mustBlockRequirements(),
+                interaction.choosingForOpponent());
     }
 
     private CombatDamageAssignmentNotification projectCombatDamageAssignment(

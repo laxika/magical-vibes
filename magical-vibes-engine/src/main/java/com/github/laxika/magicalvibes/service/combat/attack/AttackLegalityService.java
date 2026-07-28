@@ -15,7 +15,9 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesCantAttackUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithPowerGreaterThanAmountCantAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughHasteUnlessEnteredThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanAttackAsThoughHasteEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
@@ -25,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.NoDefenderAttackPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatHelper;
@@ -80,7 +83,8 @@ public class AttackLegalityService {
         if (gameQueryService.isLockedFromAttacking(gameData, creature.getId())) return false;
         if (isRestrictedByOtherCreaturesCantAttack(gameData, creature)) return false;
         if (creature.isSummoningSick() && !gameQueryService.hasKeyword(gameData, creature, Keyword.HASTE)
-                && !gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCanAttackAsThoughHasteEffect.class)) return false;
+                && !gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCanAttackAsThoughHasteEffect.class)
+                && !canAttackAsThoughHasteFromOwnStatic(gameData, creature)) return false;
         if (gameQueryService.hasKeyword(gameData, creature, Keyword.DEFENDER)
                 && !canAttackDespiteDefender(gameData, creature)) return false;
         if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackOrBlockEffect.class)) return false;
@@ -89,6 +93,20 @@ public class AttackLegalityService {
         if (isCantAttackUnlessConditionUnmet(gameData, creature, controllerId)) return false;
         if (isCantAttackDueToGlobalRestriction(gameData, creature)) return false;
         return true;
+    }
+
+    /**
+     * Chaos Lord: "can attack as though it had haste unless it entered this turn". The permission is
+     * printed on the creature itself, so it survives a change of control, but it is switched off for
+     * the turn the permanent entered the battlefield.
+     */
+    private boolean canAttackAsThoughHasteFromOwnStatic(GameData gameData, Permanent creature) {
+        boolean hasPermission = creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CanAttackAsThoughHasteUnlessEnteredThisTurnEffect.class::isInstance);
+        if (!hasPermission) return false;
+        return gameData.permanentsEnteredBattlefieldThisTurn.values().stream()
+                .flatMap(List::stream)
+                .noneMatch(card -> card.getId().equals(creature.getCard().getId()));
     }
 
     /**
@@ -258,6 +276,15 @@ public class AttackLegalityService {
                     if (predicateEvaluationService.matchesPermanentPredicate(creature, restriction.globallyCantAttackOrBlock(), context)) {
                         restricted[0] = true;
                     }
+                } else if (effect instanceof CreaturesCantAttackUnlessSacrificeEffect restriction) {
+                    // Flooded Woodlands: matching creatures can't be declared at all unless their
+                    // controller controls enough permanents to pay the sacrifice for this one attacker.
+                    // The whole-declaration total is checked in CombatAttackService.declareAttackers.
+                    if (predicateEvaluationService.matchesPermanentPredicate(gameData, creature, restriction.attackerPredicate())
+                            && countMatching(gameData, creatureController, restriction.sacrificeFilter())
+                            < restriction.countPerAttacker()) {
+                        restricted[0] = true;
+                    }
                 } else if (effect instanceof ControlledCreaturesCantAttackUnlessPredicateEffect restriction) {
                     if (playerId.equals(creatureController)
                             && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature, restriction.exemptionPredicate())) {
@@ -267,6 +294,24 @@ public class AttackLegalityService {
             }
         });
         return restricted[0];
+    }
+
+    /**
+     * Counts the permanents the given player controls that match {@code filter}. Used to check that a
+     * sacrifice-to-attack cost can be paid.
+     */
+    private int countMatching(GameData gameData, UUID playerId, PermanentPredicate filter) {
+        List<Permanent> battlefield = playerId == null ? null : gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return 0;
+        }
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, filter)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /**

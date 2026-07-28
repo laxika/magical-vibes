@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -117,6 +118,18 @@ public class GameData {
      * (e.g. Hoarding Dragon's death trigger, Clone Shell's sacrifice ability).
      */
     public final Map<UUID, Card> imprintedCards = new ConcurrentHashMap<>();
+    /**
+     * Type and amount of mana noted on a permanent (Ice Cauldron — "note the type and amount of
+     * mana spent to pay this activation cost"), keyed by the noting card's id like
+     * {@link #imprintedCards}. Overwritten by each new note.
+     */
+    public final Map<UUID, Map<ManaColor, Integer>> notedMana = new ConcurrentHashMap<>();
+    /**
+     * Mana that was just spent to activate an ability, per color, keyed by the source permanent's
+     * card id. Written by {@code AbilityActivationService} at activation time so a "note the mana
+     * spent to pay this activation cost" effect can read it when the ability resolves.
+     */
+    public final Map<UUID, Map<ManaColor, Integer>> abilityActivationManaSpent = new ConcurrentHashMap<>();
     public final Map<UUID, List<Permanent>> playerBattlefields = new ConcurrentHashMap<>();
     public final Map<UUID, ManaPool> playerManaPools = new ConcurrentHashMap<>();
     public final Map<UUID, Set<TurnStep>> playerAutoStopSteps = new ConcurrentHashMap<>();
@@ -278,6 +291,8 @@ public class GameData {
     public final TormentState torment = new TormentState();
     /** Progress state for Winter's Chill's per-target "may pay {1} or {2}" flow. */
     public final WintersChillState wintersChill = new WintersChillState();
+    /** Progress state for Forgotten Lore's "opponent chooses a card; you may pay {G} to repeat" flow. */
+    public final ForgottenLoreState forgottenLore = new ForgottenLoreState();
     /**
      * Unified queue of scheduled {@link DelayedAction}s ("do X later at timing point Y"). Replaces the
      * former per-mechanic ad-hoc fields (end-of-combat sacrifice/exile/equipment-destruction, end-step
@@ -299,6 +314,11 @@ public class GameData {
      *  draw in {@code DrawService.resolveDrawCard} and cleared at end-of-turn cleanup. */
     public final Map<UUID, Integer> pendingNextDrawLookAtTop = new ConcurrentHashMap<>();
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisTurn = new ConcurrentHashMap<>();
+    /** Per-permanent, per-ability-index count of activations for the whole game, backing "Activate
+     *  only once" ({@code ActivatedAbility.maxActivationsPerGame}, e.g. Goblin Ski Patrol). Keyed by
+     *  permanent id, so a permanent that leaves and re-enters the battlefield is a new object and may
+     *  activate again (CR 400.7). Never cleared at turn cleanup — only by Karn's game restart. */
+    public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisGame = new ConcurrentHashMap<>();
     /** Per-permanent count of how many times its resolution-counting activated ability has resolved
      *  this turn (the {@code NthAbilityResolutionThisTurn} condition, e.g. Ashling the Pilgrim).
      *  Keyed by source permanent id; reset at the start of each turn. */
@@ -442,6 +462,16 @@ public class GameData {
 
     /** Players who can't cast spells this turn (e.g. Silence). Cleared at end of turn and on new turn. */
     public final Set<UUID> playersSilencedThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Land subtype -&gt; extra mana color added whenever a player taps a land of that subtype for mana
+     *  this turn (Chaos Moon's odd branch: "whenever a player taps a Mountain for mana, that player
+     *  adds an additional {R}"). Cleared at end of turn. */
+    public final Map<CardSubtype, ManaColor> extraManaOnLandSubtypeTapThisTurn = new ConcurrentHashMap<>();
+
+    /** Land subtype -&gt; the mana color lands of that subtype produce instead of any other type this
+     *  turn (Chaos Moon's even branch: "that Mountain produces colorless mana instead of any other
+     *  type"). Amount is unchanged. Cleared at end of turn. */
+    public final Map<CardSubtype, ManaColor> landSubtypeFixedManaColorThisTurn = new ConcurrentHashMap<>();
 
     /** Players who can't play lands this turn (e.g. Moonhold). Cleared at end of turn. */
     public final Set<UUID> playersCantPlayLandsThisTurn = ConcurrentHashMap.newKeySet();
@@ -665,6 +695,12 @@ public class GameData {
     /** Tracks creatures that blocked or were blocked by a Changeling creature this turn (which counts as
      *  every creature subtype). Complements {@link #combatBlockOpponentSubtypesThisTurn}. */
     public final Set<UUID> creaturesInCombatWithChangelingThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Tracks, per creature that participated in a block this turn, the IDs of the creatures it blocked or
+     *  was blocked by (recorded at declare-blockers time, both directions). Turn-scoped and independent of
+     *  the current combat, so it still answers "all creatures that blocked or were blocked by it this turn"
+     *  across multiple combat phases. Used by Venomous Breath. */
+    public final Map<UUID, Set<UUID>> combatBlockOpponentIdsThisTurn = new ConcurrentHashMap<>();
 
     /** Tracks which Leonin Arbiter permanent IDs each player has paid {2} for this turn. */
     public final Map<UUID, Set<UUID>> paidSearchTaxPermanentIds = new ConcurrentHashMap<>();
@@ -1793,6 +1829,11 @@ public class GameData {
         copy.wintersChill.remainingTargetIds.addAll(this.wintersChill.remainingTargetIds);
         copy.wintersChill.currentTargetId = this.wintersChill.currentTargetId;
         copy.wintersChill.chosenMode = this.wintersChill.chosenMode;
+        copy.forgottenLore.active = this.forgottenLore.active;
+        copy.forgottenLore.chosenCardIds.addAll(this.forgottenLore.chosenCardIds);
+        copy.forgottenLore.lastChosenCardId = this.forgottenLore.lastChosenCardId;
+        copy.forgottenLore.pendingChosenCardId = this.forgottenLore.pendingChosenCardId;
+        copy.forgottenLore.chosenMode = this.forgottenLore.chosenMode;
         copy.pendingAbilityActivation = this.pendingAbilityActivation; // immutable record
         copy.pendingGraveyardAbilityActivation = this.pendingGraveyardAbilityActivation; // immutable record
         copy.endTurnRequested = this.endTurnRequested;
@@ -1850,6 +1891,9 @@ public class GameData {
         // --- Map<UUID, String/Integer> ---
         copy.playerIdToName.putAll(this.playerIdToName);
         copy.imprintedCards.putAll(this.imprintedCards);
+        this.notedMana.forEach((cardId, mana) -> copy.notedMana.put(cardId, new EnumMap<>(mana)));
+        this.abilityActivationManaSpent.forEach((cardId, mana) ->
+                copy.abilityActivationManaSpent.put(cardId, new EnumMap<>(mana)));
         copy.playerDeckChoices.putAll(this.playerDeckChoices);
         copy.mulliganCounts.putAll(this.mulliganCounts);
         copy.playerNeedsToBottom.putAll(this.playerNeedsToBottom);
@@ -1897,6 +1941,8 @@ public class GameData {
         this.combatBlockOpponentSubtypesThisTurn.forEach((k, v) ->
                 copy.combatBlockOpponentSubtypesThisTurn.put(k, new HashSet<>(v)));
         copy.creaturesInCombatWithChangelingThisTurn.addAll(this.creaturesInCombatWithChangelingThisTurn);
+        this.combatBlockOpponentIdsThisTurn.forEach((k, v) ->
+                copy.combatBlockOpponentIdsThisTurn.put(k, new HashSet<>(v)));
 
         // --- Map<UUID, Set<TurnStep>> ---
         this.playerAutoStopSteps.forEach((k, v) -> copy.playerAutoStopSteps.put(k, new HashSet<>(v)));
@@ -1985,6 +2031,8 @@ public class GameData {
         copy.graveyardTargetOperation.singleGraveyard = this.graveyardTargetOperation.singleGraveyard;
         copy.graveyardTargetOperation.spellCounterTargetId = this.graveyardTargetOperation.spellCounterTargetId;
         copy.graveyardTargetOperation.resolutionTimeExileResume = this.graveyardTargetOperation.resolutionTimeExileResume;
+        copy.graveyardTargetOperation.resolutionTimeForgottenLoreResume =
+                this.graveyardTargetOperation.resolutionTimeForgottenLoreResume;
 
         // --- CloneOperationState ---
         copy.cloneOperation.card = this.cloneOperation.card;
@@ -2007,6 +2055,8 @@ public class GameData {
         // --- Map<UUID, Map<Integer, Integer>> (activated ability uses) ---
         this.activatedAbilityUsesThisTurn.forEach((k, v) ->
                 copy.activatedAbilityUsesThisTurn.put(k, new HashMap<>(v)));
+        this.activatedAbilityUsesThisGame.forEach((k, v) ->
+                copy.activatedAbilityUsesThisGame.put(k, new HashMap<>(v)));
         copy.permanentAbilityResolutionsThisTurn.putAll(this.permanentAbilityResolutionsThisTurn);
 
         // --- Deques ---
@@ -2053,6 +2103,8 @@ public class GameData {
 
         // --- Silence-style "opponents can't cast" flag ---
         copy.playersSilencedThisTurn.addAll(this.playersSilencedThisTurn);
+        copy.extraManaOnLandSubtypeTapThisTurn.putAll(this.extraManaOnLandSubtypeTapThisTurn);
+        copy.landSubtypeFixedManaColorThisTurn.putAll(this.landSubtypeFixedManaColorThisTurn);
         copy.playersCantPlayLandsThisTurn.addAll(this.playersCantPlayLandsThisTurn);
         copy.playersCantCastCreatureSpellsThisTurn.addAll(this.playersCantCastCreatureSpellsThisTurn);
         copy.playersCantActivateAbilitiesThisTurn.addAll(this.playersCantActivateAbilitiesThisTurn);

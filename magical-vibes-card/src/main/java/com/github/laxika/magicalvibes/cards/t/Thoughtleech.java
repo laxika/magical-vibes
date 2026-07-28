@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "7ED", collectorNumber = "274")
+@CardRegistration(set = "ICE", collectorNumber = "269")
 public class Thoughtleech extends Card {
 
     public Thoughtleech() {

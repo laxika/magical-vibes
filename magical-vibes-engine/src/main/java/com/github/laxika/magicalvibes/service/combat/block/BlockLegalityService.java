@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerGr
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -87,6 +88,7 @@ public class BlockLegalityService {
         List<MatchingCreaturesCantBlockMatchingCreaturesEffect> globalBlockRestrictions = new ArrayList<>();
         List<GlobalAttackOrBlockRestriction> globalAttackOrBlockRestrictions = new ArrayList<>();
         Map<UUID, List<Permanent>> attachedByHostId = new HashMap<>();
+        boolean[] landwalkIgnored = {false};
         gameData.forEachPermanent((playerId, source) -> {
             if (source.isAttached()) {
                 attachedByHostId.computeIfAbsent(source.getAttachedTo(), id -> new ArrayList<>(1)).add(source);
@@ -94,6 +96,9 @@ public class BlockLegalityService {
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof MatchingCreaturesCantBlockMatchingCreaturesEffect restriction) {
                     globalBlockRestrictions.add(restriction);
+                }
+                if (effect instanceof LandwalkIgnoredForBlockingEffect) {
+                    landwalkIgnored[0] = true;
                 }
                 if (effect instanceof AttackOrBlockRestrictionEffect restriction
                         && restriction.globallyCantAttackOrBlock() != null) {
@@ -111,7 +116,7 @@ public class BlockLegalityService {
             defenderCardSubtypes.addAll(defender.getCard().getSubtypes());
         }
         return new BlockLegalityContext(gameData, defenders, globalBlockRestrictions,
-                globalAttackOrBlockRestrictions, attachedByHostId, defenderCardSubtypes);
+                globalAttackOrBlockRestrictions, attachedByHostId, defenderCardSubtypes, landwalkIgnored[0]);
     }
 
     /**
@@ -368,6 +373,7 @@ public class BlockLegalityService {
                 if (!unblockable) {
                     // Defender-condition unblockable (e.g. "can't be blocked if defending player controls a Forest")
                     if (restriction.unblockableIfDefenderControls() != null
+                            && !(restriction.unblockableIfDefenderControlsIsLandwalk() && context.landwalkIgnored)
                             && defenderControls(context, restriction.unblockableIfDefenderControls())) {
                         unblockable = true;
                     }
@@ -389,7 +395,7 @@ public class BlockLegalityService {
                 }
             }
         }
-        if (!unblockable) {
+        if (!unblockable && !context.landwalkIgnored) {
             // Until-end-of-turn defender-condition grants (Barbarian Guides' snow landwalk).
             for (PermanentPredicate predicate : attacker.getUnblockableIfDefenderControlsUntilEndOfTurn()) {
                 if (defenderControls(context, predicate)) {
@@ -402,12 +408,14 @@ public class BlockLegalityService {
         GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, attacker);
         boolean intimidate = gameQueryService.hasKeyword(attacker, bonus, Keyword.INTIMIDATE);
         BlockDenial landwalkDenial = null;
-        for (var entry : Keyword.LANDWALK_MAP.entrySet()) {
-            if (gameQueryService.hasKeyword(attacker, bonus, entry.getKey())
-                    && context.defenderCardSubtypes.contains(entry.getValue())) {
-                landwalkDenial = new BlockDenial(BlockDenial.Reason.LANDWALK,
-                        entry.getValue().getDisplayName().toLowerCase());
-                break;
+        if (!context.landwalkIgnored) {
+            for (var entry : Keyword.LANDWALK_MAP.entrySet()) {
+                if (gameQueryService.hasKeyword(attacker, bonus, entry.getKey())
+                        && context.defenderCardSubtypes.contains(entry.getValue())) {
+                    landwalkDenial = new BlockDenial(BlockDenial.Reason.LANDWALK,
+                            entry.getValue().getDisplayName().toLowerCase());
+                    break;
+                }
             }
         }
         return new BlockLegalityContext.AttackerFacts(

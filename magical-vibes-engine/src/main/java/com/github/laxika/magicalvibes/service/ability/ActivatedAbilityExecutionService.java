@@ -32,6 +32,8 @@ import com.github.laxika.magicalvibes.model.effect.ManaColorLandScope;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaToChosenPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.AddNotedManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AddNotedManaForLastExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
@@ -423,7 +425,7 @@ public class ActivatedAbilityExecutionService {
         boolean twistReplacement = false;
         ManaColor fixedLandColor = null;
         if (!dampingReplacement && permanent.getCard().hasType(CardType.LAND)) {
-            fixedLandColor = gameQueryService.fixedLandManaColor(gameData);
+            fixedLandColor = gameQueryService.fixedLandManaColor(gameData, permanent);
             if (fixedLandColor != null) {
                 int totalMana = calculateTotalManaProduction(gameData, playerId, permanent, snapshotEffects, xValue)
                         * manaMultiplier;
@@ -615,6 +617,10 @@ public class ActivatedAbilityExecutionService {
                 log.info("Game {} - Awaiting {} to choose a flashback-only mana color", gameData.id, player.getUsername());
             } else if (effect instanceof AwardRestrictedManaEffect arm) {
                 arm.applyTo(gameData.playerManaPools.get(playerId));
+            } else if (effect instanceof AddNotedManaForLastExiledCardEffect) {
+                addNotedManaForLastExiledCard(gameData, player, permanent);
+            } else if (effect instanceof AddNotedManaEffect) {
+                addNotedMana(gameData, player, permanent, manaMultiplier);
             } else if (effect instanceof AwardManaOfColorsAmongControlledEffect manaAmong) {
                 Set<CardColor> availableColors = collectColorsAmongControlled(gameData, playerId, manaAmong);
                 if (availableColors.size() == 1) {
@@ -886,11 +892,74 @@ public class ActivatedAbilityExecutionService {
                 if (!collectColorsLandsCouldProduce(gameData, playerId, landColors).isEmpty()) {
                     total += 1;
                 }
+            } else if (effect instanceof AddNotedManaForLastExiledCardEffect) {
+                for (int amount : notedManaOf(gameData, permanent).values()) {
+                    total += amount;
+                }
             } else if (effect instanceof DoubleManaPoolEffect) {
                 total += gameData.playerManaPools.get(playerId).getTotal();
             }
         }
         return total;
+    }
+
+    /** The mana noted on {@code permanent} by {@code NoteManaSpentForActivationEffect}, per color. */
+    private Map<ManaColor, Integer> notedManaOf(GameData gameData, Permanent permanent) {
+        return gameData.notedMana.getOrDefault(permanent.getCard().getId(), Map.of());
+    }
+
+    /**
+     * Ice Cauldron's second ability: add the noted mana, reserved for casting the card the artifact
+     * last exiled. Reserved mana is keyed by that card's id, so it is unspendable once the card
+     * leaves exile.
+     */
+    private void addNotedManaForLastExiledCard(GameData gameData, Player player, Permanent permanent) {
+        Map<ManaColor, Integer> noted = notedManaOf(gameData, permanent);
+        Card exiledCard = gameData.getImprintedCard(permanent.getCard());
+        if (noted.isEmpty() || exiledCard == null) {
+            log.info("Game {} - {} has no noted mana or no exiled card, adds nothing", gameData.id, permanent.getCard().getName());
+            return;
+        }
+
+        ManaPool pool = gameData.playerManaPools.get(player.getId());
+        StringBuilder added = new StringBuilder();
+        for (Map.Entry<ManaColor, Integer> entry : noted.entrySet()) {
+            if (entry.getValue() <= 0) {
+                continue;
+            }
+            pool.addExiledCardOnlyMana(exiledCard.getId(), entry.getKey(), entry.getValue());
+            added.append(("{" + entry.getKey().getCode() + "}").repeat(entry.getValue()));
+        }
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " adds " + added.toString().trim() + ", spendable only to cast ",
+                exiledCard, "."));
+        log.info("Game {} - {} adds noted mana {} for exiled card {}", gameData.id, player.getUsername(), noted, exiledCard.getName());
+    }
+
+    /**
+     * Jeweled Amulet's second ability: add one mana of the source's last noted type, with no
+     * restriction on how it may be spent. The noted map holds the mana spent to pay the noting
+     * activation cost, which for Jeweled Amulet is exactly one mana.
+     */
+    private void addNotedMana(GameData gameData, Player player, Permanent permanent, int manaMultiplier) {
+        Map<ManaColor, Integer> noted = notedManaOf(gameData, permanent);
+        ManaColor notedColor = noted.entrySet().stream()
+                .filter(entry -> entry.getValue() > 0)
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(null);
+        if (notedColor == null) {
+            log.info("Game {} - {} has no noted mana, adds nothing", gameData.id, permanent.getCard().getName());
+            return;
+        }
+
+        gameData.playerManaPools.get(player.getId()).add(notedColor, manaMultiplier);
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " adds " + ("{" + notedColor.getCode() + "}").repeat(manaMultiplier) + " from ",
+                permanent.getCard(), "."));
+        log.info("Game {} - {} adds noted mana {} from {}", gameData.id, player.getUsername(), notedColor,
+                permanent.getCard().getName());
     }
 
     private Set<CardColor> collectColorsAmongControlled(GameData gameData, UUID playerId,

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatch
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "5ED", collectorNumber = "271")
+@CardRegistration(set = "ICE", collectorNumber = "218")
 public class StoneSpirit extends Card {
 
     public StoneSpirit() {

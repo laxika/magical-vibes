@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
@@ -179,7 +180,7 @@ class ExileFromHandToImprintEffectHandlerTest {
                 verify(playerInputService).beginImprintFromHandChoice(
                         eq(gd), eq(player1Id), eq(List.of(0)),
                         eq("Choose a nonland card from your hand to exile and imprint."),
-                        eq(anvilPerm.getId()));
+                        eq(anvilPerm.getId()), eq(false));
             }
 
             @Test
@@ -200,7 +201,7 @@ class ExileFromHandToImprintEffectHandlerTest {
 
                 exileFromHandToImprintHandler.resolve(gd, entry, effect);
 
-                verify(playerInputService, never()).beginImprintFromHandChoice(any(), any(), any(), any(), any());
+                verify(playerInputService, never()).beginImprintFromHandChoice(any(), any(), any(), any(), any(), anyBoolean());
             }
 
             @Test
@@ -224,7 +225,7 @@ class ExileFromHandToImprintEffectHandlerTest {
 
                 exileFromHandToImprintHandler.resolve(gd, entry, effect);
 
-                verify(playerInputService, never()).beginImprintFromHandChoice(any(), any(), any(), any(), any());
+                verify(playerInputService, never()).beginImprintFromHandChoice(any(), any(), any(), any(), any(), anyBoolean());
             }
 
             @Test
@@ -243,6 +244,6 @@ class ExileFromHandToImprintEffectHandlerTest {
 
                 exileFromHandToImprintHandler.resolve(gd, entry, effect);
 
-                verify(playerInputService, never()).beginImprintFromHandChoice(any(), any(), any(), any(), any());
+                verify(playerInputService, never()).beginImprintFromHandChoice(any(), any(), any(), any(), any(), anyBoolean());
             }
 }

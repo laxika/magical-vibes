@@ -103,6 +103,7 @@ public class TurnCleanupService {
                     || p.getDamagePreventionShield() != 0 || p.getDamageToCounterPreventionShield() != 0
                     || p.getRegenerationShield() != 0 || p.isCantBeBlocked() || p.isCantBlockThisTurn()
                     || p.isAnimatedUntilEndOfTurn() || p.isAnimatedUntilEndOfCombat() || p.isCantRegenerateThisTurn()
+                    || p.isDamagedCreaturesCantRegenerateThisTurn()
                     || p.isExileInsteadOfDieThisTurn() || !p.getGrantedCardTypes().isEmpty()
                     || p.isMustAttackThisTurn() || p.isMustBeBlockedByAllThisTurn()
                     || p.isBasePowerToughnessOverriddenUntilEndOfTurn()
@@ -157,6 +158,8 @@ public class TurnCleanupService {
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
         gameData.playerProtectionFromColorsUntilEndOfTurn.clear();
         gameData.playersSilencedThisTurn.clear();
+        gameData.extraManaOnLandSubtypeTapThisTurn.clear();
+        gameData.landSubtypeFixedManaColorThisTurn.clear();
         gameData.playersCantPlayLandsThisTurn.clear();
         gameData.playersCantCastCreatureSpellsThisTurn.clear();
         gameData.playersCantActivateAbilitiesThisTurn.clear();

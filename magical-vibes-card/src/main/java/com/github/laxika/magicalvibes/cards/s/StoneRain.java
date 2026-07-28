@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "PTK", collectorNumber = "123")
 @CardRegistration(set = "4ED", collectorNumber = "224")
 @CardRegistration(set = "5ED", collectorNumber = "270")
+@CardRegistration(set = "ICE", collectorNumber = "217")
 public class StoneRain extends Card {
 
     public StoneRain() {

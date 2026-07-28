@@ -96,7 +96,7 @@ public class SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffectHand
                 && !(filter instanceof OwnedPermanentPredicateTargetFilter)) {
             return false;
         }
-        FilterContext context = new FilterContext(gameData, card.getId(), controllerId, null);
+        FilterContext context = new FilterContext(gameData, card.getId(), controllerId, null, null);
         return predicateEvaluationService.checkTargetFilter(filter, host, context).isEmpty();
     }
 }

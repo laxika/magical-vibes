@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5ED", collectorNumber = "224")
+@CardRegistration(set = "ICE", collectorNumber = "183")
 public class Errantry extends Card {
 
     public Errantry() {

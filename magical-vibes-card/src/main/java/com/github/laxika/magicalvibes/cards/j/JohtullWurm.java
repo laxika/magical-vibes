@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "306")
+@CardRegistration(set = "ICE", collectorNumber = "250")
 public class JohtullWurm extends Card {
 
     public JohtullWurm() {

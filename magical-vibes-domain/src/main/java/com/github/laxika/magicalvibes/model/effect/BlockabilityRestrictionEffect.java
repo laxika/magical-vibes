@@ -38,6 +38,16 @@ public interface BlockabilityRestrictionEffect extends CardEffect {
     }
 
     /**
+     * Whether {@link #unblockableIfDefenderControls()} models a landwalk ability (CR 702.14a) — snow
+     * landwalk in particular, which checks a supertype as well as a land type and so cannot be a
+     * landwalk {@code Keyword}. Effects that switch landwalk off (Staff of the Ages) suppress only
+     * the flagged ones; a plain defender-condition evasion such as Scrapdiver Serpent is unaffected.
+     */
+    default boolean unblockableIfDefenderControlsIsLandwalk() {
+        return false;
+    }
+
+    /**
      * Whether this creature can't be blocked as long as its controller has cast a historic spell this
      * turn (artifacts, legendaries, and Sagas).
      */

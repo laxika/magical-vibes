@@ -21,7 +21,8 @@ public class LegionsOfLimDL extends Card {
                 new PermanentAllOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.SWAMP),
                         new PermanentHasSupertypePredicate(CardSupertype.SNOW)
-                ))
+                )),
+                true
         ));
     }
 }

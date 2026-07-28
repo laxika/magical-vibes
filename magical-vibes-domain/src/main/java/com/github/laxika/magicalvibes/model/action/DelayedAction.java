@@ -20,6 +20,7 @@ package com.github.laxika.magicalvibes.model.action;
 public sealed interface DelayedAction permits
         DelayedPermanentAction,
         SacrificeAtEndOfCombat,
+        DestroyCombatOpponentsAtEndOfCombat,
         DestroyEquipmentAtEndOfCombat,
         PutMinusOneCounterAtEndOfCombat,
         PutCounterOnPermanentAtEndOfCombat,
@@ -40,7 +41,10 @@ public sealed interface DelayedAction permits
         DelayedCombatDamageLoot,
         DelayedCombatDamageReflection,
         DelayedBlockerBoost,
+        DelayedControllerSpellCastTrigger,
         DelayedUnblockedAttackerPowerDamage,
+        DelayedUnblockedAttackerUntapRemoveFromCombat,
+        DelayedBlockerDeclarationControl,
         DelayedSacrificeSourceWhenTargetLeaves,
         DelayedSacrificeTargetWhenSourceLeaves,
         AddManaAtNextMainPhase,

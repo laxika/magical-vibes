@@ -78,6 +78,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GrantedUpkeepEffectSupport;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfDidntCastSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.EndStepPlayerTargetedEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyRandomOpponentPermanentWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlIfSubtypesDealtCombatDamageEffect;
@@ -2313,13 +2314,16 @@ public class StepTriggerService {
                                 GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
                         log.info("Game {} - {} end-step conditional-may trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else {
+                        // EndStepPlayerTargetedEffect ("... that player ...") reads the end-step
+                        // player off targetId; every other end-step effect gets a null target id.
+                        UUID endStepTargetId = effect instanceof EndStepPlayerTargetedEffect ? activePlayerId : null;
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 playerId,
                                 perm.getCard().getName() + "'s end step ability",
                                 new ArrayList<>(List.of(effect)),
-                                null,
+                                endStepTargetId,
                                 perm.getId()
                         ));
 

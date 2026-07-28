@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
@@ -67,6 +69,8 @@ public class AdditionalSpellCostService {
             SacrificePermanentCost.class,
             ReturnCreatureToHandCost.class,
             PutCounterOnControlledCreatureCost.class,
+            PayXLifeCost.class,
+            PayLifeCost.class,
             ExileCardFromGraveyardCost.class,
             ExileXCardsFromGraveyardCost.class,
             ExileNCardsFromGraveyardCost.class,
@@ -91,6 +95,8 @@ public class AdditionalSpellCostService {
             SacrificePermanentCost sacrificePermanentCost,
             boolean returnCreatureToHand,
             PutCounterOnControlledCreatureCost putCounterCost,
+            boolean payXLife,
+            PayLifeCost payLifeCost,
             ExileCardFromGraveyardCost exileGraveyardCost,
             ExileXCardsFromGraveyardCost exileXCardsCost,
             ExileNCardsFromGraveyardCost exileNCardsCost,
@@ -104,6 +110,7 @@ public class AdditionalSpellCostService {
             return sacrificeAllCreatures || sacrificeCreature || sacrificeCreatureOrPayManaCost != null
                     || sacrificeArtifact
                     || sacrificePermanentCost != null || returnCreatureToHand || putCounterCost != null
+                    || payXLife || payLifeCost != null
                     || exileGraveyardCost != null || exileXCardsCost != null || exileNCardsCost != null
                     || discardCost != null || discardCardOrPayManaCost != null
                     || escalateDiscardCost != null || escalateManaCost != null;
@@ -159,6 +166,8 @@ public class AdditionalSpellCostService {
         SacrificePermanentCost permCost = removeFirst(effects, SacrificePermanentCost.class);
         boolean returnCreature = effects.removeIf(ReturnCreatureToHandCost.class::isInstance);
         PutCounterOnControlledCreatureCost putCounterCost = removeFirst(effects, PutCounterOnControlledCreatureCost.class);
+        boolean payXLife = effects.removeIf(PayXLifeCost.class::isInstance);
+        PayLifeCost payLifeCost = removeFirst(effects, PayLifeCost.class);
         ExileCardFromGraveyardCost exileGraveyardCost = removeFirst(effects, ExileCardFromGraveyardCost.class);
         ExileXCardsFromGraveyardCost exileXCardsCost = removeFirst(effects, ExileXCardsFromGraveyardCost.class);
         ExileNCardsFromGraveyardCost exileNCardsCost = removeFirst(effects, ExileNCardsFromGraveyardCost.class);
@@ -167,7 +176,7 @@ public class AdditionalSpellCostService {
         EscalateDiscardCost escalateDiscardCost = removeFirst(effects, EscalateDiscardCost.class);
         EscalateManaCost escalateManaCost = removeFirst(effects, EscalateManaCost.class);
         return new ExtractedCosts(sacAllCreatures, sacCreature, sacOrPay, sacArtifact, permCost, returnCreature,
-                putCounterCost, exileGraveyardCost, exileXCardsCost, exileNCardsCost, discardCost, discardOrPay,
+                putCounterCost, payXLife, payLifeCost, exileGraveyardCost, exileXCardsCost, exileNCardsCost, discardCost, discardOrPay,
                 escalateDiscardCost, escalateManaCost);
     }
 
@@ -245,6 +254,13 @@ public class AdditionalSpellCostService {
                 case DiscardCardTypeCost cost -> {
                     if (discardCostIndices(gameData, playerId, card, cost).isEmpty()) return false;
                 }
+                // Paying X life is always payable — X may be announced as 0.
+                case PayXLifeCost ignored -> { }
+                // A fixed life payment is only legal while the life total covers it (CR 119.4).
+                case PayLifeCost cost -> {
+                    int life = gameData.getLife(playerId);
+                    if (life < cost.effectiveAmount(life)) return false;
+                }
                 // Escalate is payable with a single mode (zero extra payments), so it never blocks
                 // playability by itself — concrete mode+payment selections are validated at cast.
                 case EscalateDiscardCost ignored -> { }
@@ -300,6 +316,9 @@ public class AdditionalSpellCostService {
      */
     public void validateAll(GameData gameData, Player player, Card card,
                             ExtractedCosts costs, CostSelection selection) {
+        if (costs.payLifeCost() != null) {
+            validatePayLifeCost(gameData, player, card, costs.payLifeCost());
+        }
         if (costs.sacrificeCreature()) {
             validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
                     "a creature", p -> gameQueryService.isCreature(gameData, p));
@@ -365,6 +384,32 @@ public class AdditionalSpellCostService {
         }
         if (costs.escalateManaCost() != null) {
             validateEscalateManaCost(card, costs.escalateManaCost(), selection.escalateModeCount());
+        }
+    }
+
+    /**
+     * Validates a fixed "pay N life" additional cast cost (Fumarole). A player may pay life only
+     * while their life total is at least the amount paid (CR 119.4).
+     */
+    public void validatePayLifeCost(GameData gameData, Player player, Card card, PayLifeCost cost) {
+        int life = gameData.getLife(player.getId());
+        int amount = cost.effectiveAmount(life);
+        if (life < amount) {
+            throw new IllegalStateException("Not enough life to pay " + amount + " life for " + card.getName());
+        }
+    }
+
+    /**
+     * Validates the "pay X life" additional cast cost (Fire Covenant) against the announced X.
+     * A player may pay life only while their life total is at least the amount paid (CR 119.4).
+     * Kept out of {@link #validateAll} because only the cast path knows the announced X.
+     */
+    public void validatePayXLifeCost(GameData gameData, Player player, Card card, int announcedX) {
+        if (announcedX < 0) {
+            throw new IllegalStateException("X cannot be negative for " + card.getName());
+        }
+        if (gameData.getLife(player.getId()) < announcedX) {
+            throw new IllegalStateException("Not enough life to pay " + announcedX + " life for " + card.getName());
         }
     }
 

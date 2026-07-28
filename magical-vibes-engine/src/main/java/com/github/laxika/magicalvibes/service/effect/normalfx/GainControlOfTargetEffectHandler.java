@@ -103,5 +103,11 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
 
         creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
                 e, e.duration().toEffectDuration(), sourcePermanentId, entry.getCard().getName());
+
+        // Merieke Ri Berit: "destroy that creature" fires after the control effect has already been
+        // expired (source left or untapped), so the stolen permanent is remembered on the source.
+        if (e.linkStolenPermanentToSource()) {
+            source.setChosenPermanentId(target.getId());
+        }
     }
 }

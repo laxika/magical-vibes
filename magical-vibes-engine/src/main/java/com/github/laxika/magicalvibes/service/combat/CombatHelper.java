@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquipp
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfAttackingAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -36,16 +37,21 @@ public final class CombatHelper {
                                                           GameData gameData,
                                                           Permanent attacker,
                                                           List<Permanent> defenderBattlefield) {
+        boolean landwalkIgnored = isLandwalkIgnoredForBlocking(gameData);
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof BlockabilityRestrictionEffect restriction) {
                 PermanentPredicate defenderPredicate = restriction.unblockableIfDefenderControls();
-                if (defenderPredicate == null) {
+                if (defenderPredicate == null
+                        || (landwalkIgnored && restriction.unblockableIfDefenderControlsIsLandwalk())) {
                     continue;
                 }
                 if (defenderControls(predicateEvaluationService, gameData, defenderBattlefield, defenderPredicate)) {
                     return true;
                 }
             }
+        }
+        if (landwalkIgnored) {
+            return false;
         }
         // Until-end-of-turn defender-condition grants (Barbarian Guides' snow landwalk).
         for (PermanentPredicate predicate : attacker.getUnblockableIfDefenderControlsUntilEndOfTurn()) {
@@ -54,6 +60,21 @@ public final class CombatHelper {
             }
         }
         return false;
+    }
+
+    /**
+     * Whether a permanent on the board switches landwalk off for blocking purposes (Staff of the
+     * Ages). Landwalk abilities (CR 702.14a) are then ignored; all other evasion still applies.
+     */
+    public static boolean isLandwalkIgnoredForBlocking(GameData gameData) {
+        boolean[] found = {false};
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (!found[0] && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(LandwalkIgnoredForBlockingEffect.class::isInstance)) {
+                found[0] = true;
+            }
+        });
+        return found[0];
     }
 
     private static boolean defenderControls(PredicateEvaluationService predicateEvaluationService,

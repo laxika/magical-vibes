@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5ED", collectorNumber = "295")
+@CardRegistration(set = "ICE", collectorNumber = "238")
 public class Foxfire extends Card {
 
     public Foxfire() {

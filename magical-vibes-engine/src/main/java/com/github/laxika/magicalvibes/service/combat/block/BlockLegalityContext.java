@@ -52,6 +52,12 @@ public final class BlockLegalityContext {
     /** Union of printed card subtypes on the defender battlefield, for landwalk checks. */
     final Set<CardSubtype> defenderCardSubtypes;
 
+    /**
+     * True while a permanent on the board switches landwalk off (Staff of the Ages): landwalk
+     * abilities (CR 702.14a) are ignored when checking blocks, everything else still applies.
+     */
+    final boolean landwalkIgnored;
+
     final Map<UUID, AttackerFacts> attackerFacts = new HashMap<>();
     final Map<UUID, BlockerFacts> blockerFacts = new HashMap<>();
 
@@ -67,13 +73,15 @@ public final class BlockLegalityContext {
                          List<MatchingCreaturesCantBlockMatchingCreaturesEffect> globalBlockRestrictions,
                          List<GlobalAttackOrBlockRestriction> globalAttackOrBlockRestrictions,
                          Map<UUID, List<Permanent>> attachedByHostId,
-                         Set<CardSubtype> defenderCardSubtypes) {
+                         Set<CardSubtype> defenderCardSubtypes,
+                         boolean landwalkIgnored) {
         this.gameData = gameData;
         this.defenderBattlefield = defenderBattlefield;
         this.globalBlockRestrictions = globalBlockRestrictions;
         this.globalAttackOrBlockRestrictions = globalAttackOrBlockRestrictions;
         this.attachedByHostId = attachedByHostId;
         this.defenderCardSubtypes = defenderCardSubtypes;
+        this.landwalkIgnored = landwalkIgnored;
     }
 
     /** The attached permanents on {@code host}, or an empty list when it has none. */

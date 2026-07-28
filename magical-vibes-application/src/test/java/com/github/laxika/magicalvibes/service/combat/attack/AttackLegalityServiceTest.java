@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AngelicArbiter;
 import com.github.laxika.magicalvibes.cards.a.AnimateWall;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.c.ChaosLord;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.c.CurseOfTheNightlyHunt;
 import com.github.laxika.magicalvibes.cards.e.EnsnaringBridge;
@@ -33,6 +34,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -88,6 +90,21 @@ class AttackLegalityServiceTest extends BaseCardTest {
 
         instillEnergy.setAttachedTo(bears.getId());
         assertThat(als.canAttack(gd, bears, player1.getId())).isTrue();
+    }
+
+    @Test
+    @DisplayName("A printed \"attacks as though it had haste unless it entered this turn\" permission lifts summoning sickness only after the turn it entered")
+    void printedHastePermissionIsGatedOnTheTurnItEntered() {
+        harness.addToBattlefield(player1, new ChaosLord());
+        Permanent chaosLord = findPermanent(player1, "Chaos Lord");
+        assertThat(chaosLord.isSummoningSick()).isTrue();
+
+        assertThat(als.canAttack(gd, chaosLord, player1.getId())).isTrue();
+
+        gd.permanentsEnteredBattlefieldThisTurn
+                .computeIfAbsent(player1.getId(), id -> new ArrayList<>())
+                .add(chaosLord.getCard());
+        assertThat(als.canAttack(gd, chaosLord, player1.getId())).isFalse();
     }
 
     @Test

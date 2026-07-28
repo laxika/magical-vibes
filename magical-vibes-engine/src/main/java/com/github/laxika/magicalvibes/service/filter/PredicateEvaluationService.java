@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTarget
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToSourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttackedDuringControllersLastTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedOrBlockedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedOrWasBlockedBySubtypeThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -65,6 +66,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongAl
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -104,6 +106,7 @@ import com.github.laxika.magicalvibes.model.filter.PhyrexianManaPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
@@ -393,6 +396,8 @@ public class PredicateEvaluationService {
                             && sourceControllerId.equals(permanent.getAttackTarget());
             case PermanentIsBlockingPredicate ignored ->
                     permanent.isBlocking();
+            case PermanentAttackedDuringControllersLastTurnPredicate ignored ->
+                    permanent.isAttackedDuringControllersLastTurn();
             case PermanentAttackedOrBlockedThisTurnPredicate ignored ->
                     permanent.isAttackedThisTurn() || permanent.isBlockedThisTurn();
             case PermanentIsBlockedPredicate ignored ->
@@ -465,7 +470,7 @@ public class PredicateEvaluationService {
                 yield gameQueryService.getEffectiveToughness(gameData, permanent) >= toughnessAtLeastPredicate.minToughness();
             }
             case PermanentHasSupertypePredicate hasSupertypePredicate ->
-                    permanent.getCard().getSupertypes().contains(hasSupertypePredicate.supertype());
+                    gameQueryService.hasEffectiveSupertype(gameData, permanent, hasSupertypePredicate.supertype());
             case PermanentColorInPredicate colorInPredicate -> {
                 // While a CR 613 layered pass is active, colors come from the layer-5 state
                 // (answering from the state also avoids recursing into computeStaticBonus for
@@ -616,6 +621,20 @@ public class PredicateEvaluationService {
                 }
                 int targetPower = gameQueryService.getEffectivePower(gameData, permanent);
                 yield targetPower <= sourcePower;
+            }
+            case PermanentBlockedBySourcePredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                // CR 608.2b: once the source has left the battlefield (e.g. sacrificed to pay the
+                // ability's cost), its last known information answers "creature it's blocking".
+                Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                if (sourcePermanent == null && filterContext != null) {
+                    sourcePermanent = filterContext.sourcePermanentSnapshot();
+                }
+                yield sourcePermanent != null
+                        && sourcePermanent.isBlocking()
+                        && sourcePermanent.getBlockingTargetIds().contains(permanent.getId());
             }
             case PermanentInCombatWithSourcePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
@@ -877,6 +896,8 @@ public class PredicateEvaluationService {
                 }
                 yield false;
             }
+            case StackEntryCardTypeInPredicate cardTypeIn ->
+                    cardTypeIn.cardTypes().stream().anyMatch(entry.getCard()::hasType);
             case StackEntrySubtypeInPredicate subtypeIn ->
                     entry.getCard().getSubtypes().stream().anyMatch(subtypeIn.subtypes()::contains);
             case StackEntryAllOfPredicate allOf -> {

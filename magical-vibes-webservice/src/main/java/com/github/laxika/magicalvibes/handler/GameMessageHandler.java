@@ -813,7 +813,8 @@ public class GameMessageHandler implements MessageHandler {
                     com.github.laxika.magicalvibes.model.ActivatedAbility ability = abilities.get(request.abilityIndex());
                     response = validTargetService.computeValidTargetsForAbility(
                             gameData, permanent.getCard(), ability, player.getId(), request.permanentIndex(),
-                            request.alreadySelectedIds() != null ? request.alreadySelectedIds() : java.util.List.of());
+                            request.alreadySelectedIds() != null ? request.alreadySelectedIds() : java.util.List.of(),
+                            request.xValue());
                 } else {
                     handleError(connection, "Invalid valid targets request");
                     return;

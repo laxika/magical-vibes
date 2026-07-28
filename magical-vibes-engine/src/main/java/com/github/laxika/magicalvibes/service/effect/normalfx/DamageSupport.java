@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndExileFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.PendingSourceDamage;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -386,7 +387,7 @@ public class DamageSupport {
         Card source = entry.getEffectiveDamageSourceCard();
         if (gameQueryService.isDamagePreventable(gameData)
                 && (gameQueryService.isDamageFromSourcePrevented(gameData, source.getColor())
-                    || gameQueryService.hasProtectionFromSource(gameData, target, source))) {
+                    || gameQueryService.hasProtectionFromDamageSource(gameData, target, source))) {
             gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
             return true;
         }
@@ -413,7 +414,7 @@ public class DamageSupport {
         } else {
             if (gameQueryService.isDamagePreventable(gameData)
                     && (isSourcePermanentPreventedFromDealingDamage(gameData, entry)
-                        || gameQueryService.hasProtectionFromSource(gameData, targetPermanent, source))) {
+                        || gameQueryService.hasProtectionFromDamageSource(gameData, targetPermanent, source))) {
                 gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
                 return;
             }
@@ -476,7 +477,7 @@ public class DamageSupport {
     public void damageFilteredCreatures(GameData gameData, StackEntry entry, int damage, Collection<Permanent> permanents, Predicate<Permanent> filter) {
         for (Permanent p : permanents) {
             if (!filter.test(p)) continue;
-            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, p, entry.getCard())) continue;
+            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromDamageSource(gameData, p, entry.getCard())) continue;
             dealCreatureDamage(gameData, entry, p, damage);
         }
     }
@@ -501,7 +502,8 @@ public class DamageSupport {
         }
         // Protection from color (e.g. Faith's Shield) prevents all damage from sources of that color.
         if (gameQueryService.isDamagePreventable(gameData)
-                && gameQueryService.playerHasProtectionFromColor(gameData, playerId, source.getColor())) {
+                && gameQueryService.playerHasProtectionFromColor(gameData, playerId,
+                        gameQueryService.getDamageSourceColor(gameData, source.getColor()))) {
             gameLogService.append(gameData, GameLog.cardThen(source,
                     "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
             return;
@@ -574,6 +576,14 @@ public class DamageSupport {
                         "'s " + hostilityPrevented + " damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
                 permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(),
                         hostility.token(), hostilityPrevented, entry.getCard().getSetCode());
+            }
+
+            // Glacial Chasm: prevent all remaining damage that would be dealt to its controller.
+            int chasmPrevented = applyControllerAllDamagePrevention(gameData, playerId, effectiveDamage);
+            if (chasmPrevented > 0) {
+                effectiveDamage -= chasmPrevented;
+                gameLogService.append(gameData, GameLog.cardThen(source,
+                        "'s " + chasmPrevented + " damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
             }
 
             // Immortal Coil: prevent all remaining damage to the controller and exile a card from
@@ -799,7 +809,7 @@ public class DamageSupport {
             if (targetIsPlayer) {
                 dealDamageToPlayer(gameData, tempEntry, targetId, rawDamage);
             } else {
-                if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, targetPermanent, sourceCard))) {
+                if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromDamageSource(gameData, targetPermanent, sourceCard))) {
                     dealCreatureDamage(gameData, tempEntry, targetPermanent, rawDamage);
                 } else {
                     gameLogService.append(gameData, GameLog.cardTextCard(sourceCard,
@@ -854,6 +864,24 @@ public class DamageSupport {
      * present. Shared by the noncombat ({@link #dealDamageToPlayer}) and combat
      * ({@code CombatDamageService.applyPlayerDamage}) paths.
      */
+    /**
+     * Glacial Chasm: "Prevent all damage that would be dealt to you." Returns how much of the
+     * damage aimed at {@code playerId} is prevented (all of it, when they control a permanent with
+     * {@link PreventAllDamageToControllerEffect} and the damage is preventable).
+     */
+    public int applyControllerAllDamagePrevention(GameData gameData, UUID playerId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return 0;
+        if (damage <= 0) return 0;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return 0;
+
+        boolean hasEffect = battlefield.stream().anyMatch(p ->
+                p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof PreventAllDamageToControllerEffect));
+        return hasEffect ? damage : 0;
+    }
+
     public int applyImmortalCoilPrevention(GameData gameData, UUID playerId, int damage) {
         if (!gameQueryService.isDamagePreventable(gameData)) return 0;
         if (damage <= 0) return 0;

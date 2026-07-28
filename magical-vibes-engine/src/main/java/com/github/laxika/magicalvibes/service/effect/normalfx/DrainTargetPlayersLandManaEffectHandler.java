@@ -106,7 +106,7 @@ public class DrainTargetPlayersLandManaEffectHandler implements NormalEffectHand
      * {@code AwardManaEffect} outputs are exact; any-color producers contribute colorless.
      */
     private boolean produceLandMana(GameData gameData, UUID playerId, ManaPool pool, Permanent perm, int multiplier) {
-        ManaColor fixedLandColor = gameQueryService.fixedLandManaColor(gameData);
+        ManaColor fixedLandColor = gameQueryService.fixedLandManaColor(gameData, perm);
         if (fixedLandColor != null) {
             int amount = 0;
             ManaColor overridden = gameQueryService.getOverriddenLandManaColor(gameData, perm);

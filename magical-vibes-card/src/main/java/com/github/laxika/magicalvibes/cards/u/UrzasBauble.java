@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "406")
+@CardRegistration(set = "ICE", collectorNumber = "343")
 public class UrzasBauble extends Card {
 
     public UrzasBauble() {

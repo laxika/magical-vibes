@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "5ED", collectorNumber = "258")
+@CardRegistration(set = "ICE", collectorNumber = "211")
 public class OrcishSquatters extends Card {
 
     public OrcishSquatters() {
