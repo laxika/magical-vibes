@@ -924,6 +924,22 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         send(() -> gameActions.answerInteraction(new InteractionAnswer.CardIndexChosen(chosen)));
     }
 
+    @Override
+    protected void handleMayAbilityChoice(GameData gameData) {
+        PendingInteraction.MayAbilityChoice mayChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        if (mayChoice == null
+                || !AiUtils.isRespondingFor(gameData, aiPlayer.getId(), mayChoice.playerId())) {
+            choiceHandler.handleMayAbilityChoice(gameData);
+            return;
+        }
+
+        boolean accept = rng.nextBoolean() && floatManaForMayCost(gameData);
+        log.info("Random AI: {} may ability '{}' in game {}",
+                accept ? "Accepting" : "Declining", mayChoice.description(), gameId);
+        send(() -> gameActions.answerInteraction(new InteractionAnswer.MayAbilityChosen(accept)));
+    }
+
     // ===== Mulligan: mostly keep, occasionally mulligan =====
 
     @Override
