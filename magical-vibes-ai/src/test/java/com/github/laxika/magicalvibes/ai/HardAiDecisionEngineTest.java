@@ -91,6 +91,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -1338,6 +1339,25 @@ class HardAiDecisionEngineTest {
         Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
                 .thenThrow(new RuntimeException("MCTS disabled for test"));
         ai.setMctsEngine(failingMcts);
+    }
+
+    /**
+     * Replaces both players' hands and libraries with cards that cannot change the board, so the
+     * rollouts measure the decision under test and nothing else. A seeded {@link MCTSEngine} is not
+     * on its own enough for a reproducible verdict: {@code GameSetupService} shuffles both libraries
+     * with an unseeded {@code Random} and deals random opening hands, and the rollouts draw from
+     * them and cast what they draw. Use this wherever the margin between the two root actions is
+     * thinner than the swing one drawn creature is worth.
+     */
+    private void pinLibrariesAndHands() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, inertLibrary());
+        harness.setLibrary(player2, inertLibrary());
+    }
+
+    private static List<Card> inertLibrary() {
+        return IntStream.range(0, 30).mapToObj(i -> (Card) new Forest()).toList();
     }
 
     @Test
@@ -2609,7 +2629,11 @@ class HardAiDecisionEngineTest {
         bigCreature.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(bigCreature);
 
-        harness.setHand(player1, List.of());
+        // Sacrificing the Fanatic costs a creature and buys nothing the evaluator scores: it does
+        // not count marked damage, so 1 damage to a 4/4 is worth zero. That margin is still thinner
+        // than what a shuffled library hands the rollouts, and the search activated the ability
+        // roughly one run in twelve until both decks were pinned.
+        pinLibrariesAndHands();
 
         ai.handleEvent(AiDecisionKind.GAME_STATE);
 
