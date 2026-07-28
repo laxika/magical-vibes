@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.b.BorrowedHostility;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
+import com.github.laxika.magicalvibes.cards.g.Guile;
 import com.github.laxika.magicalvibes.cards.r.RootboundCrag;
 import com.github.laxika.magicalvibes.cards.s.SunpetalGrove;
 import com.github.laxika.magicalvibes.cards.y.YavimayaCoast;
@@ -766,6 +767,31 @@ class AiDecisionEngineTest {
 
         // The blocker declaration should have been accepted (no stuck state)
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Easy AI assigns the minimum three blockers to Guile")
+    void assignsMinimumThreeBlockersToGuile() {
+        setupBlockerPhase();
+        gd.playerLifeTotals.put(aiPlayer.getId(), 6);
+
+        Permanent guile = new Permanent(new Guile());
+        guile.setSummoningSick(false);
+        guile.setAttacking(true);
+        gd.playerBattlefields.get(human.getId()).add(guile);
+
+        for (int i = 0; i < 3; i++) {
+            Permanent blocker = new Permanent(new GrizzlyBears());
+            blocker.setSummoningSick(false);
+            gd.playerBattlefields.get(aiPlayer.getId()).add(blocker);
+        }
+
+        ai.handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .allMatch(Permanent::isBlocking)
+                .allMatch(blocker -> blocker.getBlockingTargets().contains(0));
     }
 
     // ===== Creature-targeting spell validation =====

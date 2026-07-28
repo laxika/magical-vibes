@@ -406,10 +406,9 @@ public class CombatSimulator {
      * Finds the best blocker assignments for the AI as defender.
      *
      * <p>Single attacker-centric pass: each attacker's required block count is computed up
-     * front from its combat flags (lure, mustBlockIfAble, menace) and atomically allocated
-     * from the remaining candidate pool. A menace attacker's count must be 0 or ≥ 2 — if
-     * fewer than 2 candidates exist, no blocker is "able to block" (CR 509.1a + 702.110b),
-     * so the attacker is skipped.
+     * front from its combat flags and restrictions, then atomically allocated from the
+     * remaining candidate pool. If fewer than the minimum number of candidates exist, the
+     * attacker is skipped.
      */
     public List<int[]> findBestBlockers(GameData gameData, UUID aiPlayerId,
                                         List<Integer> attackerIndices,
@@ -452,14 +451,16 @@ public class CombatSimulator {
         }
 
         // Priority: lure first (forces all able), then mustBlockIfAble, then regular by threat desc.
-        // Within lures, menace+lure sorts ahead so it claims a legal 2+ pool before a non-menace
-        // lure can drain candidates.
+        // Within lures, the largest minimum-blocker restriction sorts first so it can claim a
+        // legal pool before a less restricted lure drains candidates.
         List<CreatureInfo> sortedAttackers = new ArrayList<>(attackerInfos);
         sortedAttackers.sort((a, b) -> {
             int lureCmp = Boolean.compare(lureAttackerIds.contains(b.id), lureAttackerIds.contains(a.id));
             if (lureCmp != 0) return lureCmp;
-            int menaceCmp = Boolean.compare(b.menace, a.menace);
-            if (menaceCmp != 0) return menaceCmp;
+            int minimumCmp = Integer.compare(
+                    AiUtils.minimumBlockersRequiredToBlock(gameData, gameQueryService, b.perm),
+                    AiUtils.minimumBlockersRequiredToBlock(gameData, gameQueryService, a.perm));
+            if (minimumCmp != 0) return minimumCmp;
             int mbCmp = Boolean.compare(mustBlockAttackerIds.contains(b.id),
                                         mustBlockAttackerIds.contains(a.id));
             if (mbCmp != 0) return mbCmp;
@@ -484,8 +485,9 @@ public class CombatSimulator {
             }
             if (candidates.isEmpty()) continue;
 
-            // Menace: no creature is "able to block" alone, so with <2 candidates skip entirely.
-            if (attacker.menace && candidates.size() < 2) continue;
+            int minimumBlockers = AiUtils.minimumBlockersRequiredToBlock(
+                    gameData, gameQueryService, attacker.perm);
+            if (candidates.size() < minimumBlockers) continue;
 
             boolean lure = lureAttackerIds.contains(attacker.id);
             boolean mustBlock = mustBlockAttackerIds.contains(attacker.id);
@@ -496,19 +498,20 @@ public class CombatSimulator {
                 // Every creature able to block must block — assign all candidates.
                 chosen = new ArrayList<>(candidates);
             } else if (mustBlock) {
-                // At least 1 required; menace bumps to 2.
-                int needed = attacker.menace ? 2 : 1;
-                chosen = attacker.menace
+                chosen = minimumBlockers == 1
+                        ? List.of(pickBestSingleBlocker(attacker, candidates))
+                        : minimumBlockers == 2
                         ? pickMenaceBlockers(attacker, candidates, lethalIncoming)
-                        : List.of(pickBestSingleBlocker(attacker, candidates));
-                if (chosen.size() < needed) {
-                    // Menace lookup didn't find a favorable or chump pair — force the
-                    // cheapest pair so the mandatory block still happens.
-                    chosen = forceCheapestPair(candidates);
+                        : List.of();
+                if (chosen.size() < minimumBlockers) {
+                    chosen = forceCheapestBlockers(candidates, minimumBlockers);
                 }
-            } else if (attacker.menace) {
-                // Voluntary menace block: only worth it with a favorable pair, or chump-lethal.
-                chosen = pickMenaceBlockers(attacker, candidates, lethalIncoming);
+            } else if (minimumBlockers > 1) {
+                chosen = minimumBlockers == 2
+                        ? pickMenaceBlockers(attacker, candidates, lethalIncoming)
+                        : lethalIncoming
+                        ? forceCheapestBlockers(candidates, minimumBlockers)
+                        : List.of();
             } else {
                 // Voluntary single block: take the best single blocker if favorable or lethal.
                 CreatureInfo best = pickBestSingleBlocker(attacker, candidates);
@@ -579,12 +582,12 @@ public class CombatSimulator {
         return List.of();
     }
 
-    private List<CreatureInfo> forceCheapestPair(List<CreatureInfo> candidates) {
-        if (candidates.size() < 2) return List.of();
-        List<CreatureInfo> sorted = candidates.stream()
+    private List<CreatureInfo> forceCheapestBlockers(List<CreatureInfo> candidates, int count) {
+        if (candidates.size() < count) return List.of();
+        return candidates.stream()
                 .sorted(Comparator.comparingDouble(CreatureInfo::creatureScore))
+                .limit(count)
                 .toList();
-        return List.of(sorted.get(0), sorted.get(1));
     }
 
     private CreatureInfo pickBestSingleBlocker(CreatureInfo attacker, List<CreatureInfo> candidates) {
@@ -669,19 +672,17 @@ public class CombatSimulator {
         }
         boolean[] blockerUsed = new boolean[aiBattlefield.size()];
 
-        // Sort lure attackers so menace+lure comes first: a menace+lure attacker requires
-        // exactly its candidate pool size >= 2, and a non-menace lure that would drain the
-        // pool first could leave the menace one in an illegal 1-blocker state.
+        // Sort lure attackers by descending minimum blocker count so the most restricted
+        // attacker claims its legal pool first.
         List<Integer> lureAttackerOrder = new ArrayList<>();
         for (int ai = 0; ai < attackerInfos.size(); ai++) {
             if (hasLureEffect(gameData, attackerInfos.get(ai).perm)) lureAttackerOrder.add(ai);
         }
-        lureAttackerOrder.sort((a, b) -> Boolean.compare(attackerInfos.get(b).menace, attackerInfos.get(a).menace));
+        lureAttackerOrder.sort((a, b) -> Integer.compare(
+                AiUtils.minimumBlockersRequiredToBlock(gameData, gameQueryService, attackerInfos.get(b).perm),
+                AiUtils.minimumBlockersRequiredToBlock(gameData, gameQueryService, attackerInfos.get(a).perm)));
 
         // Phase 1: Lure — every blocker able to block a lure attacker must do so.
-        // Menace exception (CR 509.1a + 702.110b): a creature can't be "able to block"
-        // a menace attacker unless another can legally join, so with <2 candidates the
-        // attacker goes unblocked.
         for (int ai : lureAttackerOrder) {
             CreatureInfo lureAttacker = attackerInfos.get(ai);
             List<CreatureInfo> candidates = new ArrayList<>();
@@ -690,22 +691,24 @@ public class CombatSimulator {
                 if (!canBlock(blockContext, blocker, lureAttacker)) continue;
                 candidates.add(blocker);
             }
-            if (lureAttacker.menace && candidates.size() < 2) continue;
+            int minimumBlockers = AiUtils.minimumBlockersRequiredToBlock(
+                    gameData, gameQueryService, lureAttacker.perm);
+            if (candidates.size() < minimumBlockers) continue;
             for (CreatureInfo blocker : candidates) {
                 forcedAssignments.get(ai).add(blocker);
                 blockerUsed[blocker.index] = true;
             }
         }
 
-        // Phase 1b: Must-block-if-able — at least one blocker per such attacker, or two
-        // if the attacker has menace. If fewer than the required count is available, no
-        // creature is "able to block" so the attacker goes unblocked.
+        // Phase 1b: Must-block-if-able. If fewer than the required count is available,
+        // the attacker goes unblocked.
         for (int ai = 0; ai < attackerInfos.size(); ai++) {
             CreatureInfo mustBlockAttacker = attackerInfos.get(ai);
             if (!hasMustBeBlockedIfAbleEffect(gameData, mustBlockAttacker.perm)) continue;
             if (!forcedAssignments.get(ai).isEmpty()) continue;
 
-            int needed = mustBlockAttacker.menace ? 2 : 1;
+            int needed = AiUtils.minimumBlockersRequiredToBlock(
+                    gameData, gameQueryService, mustBlockAttacker.perm);
             List<CreatureInfo> scored = new ArrayList<>();
             for (CreatureInfo blocker : blockerInfos) {
                 if (blockerUsed[blocker.index]) continue;
@@ -777,10 +780,8 @@ public class CombatSimulator {
                 }
             }
 
-            // CSP validity: a menace attacker must have 0 or ≥2 blockers. Reject invalid
-            // candidate states rather than scoring them — this keeps the search from
-            // returning an illegal declaration the server will refuse.
-            if (isValidBlockerAssignment(attackerInfos, forcedAssignments)) {
+            // Reject invalid candidate states rather than scoring them.
+            if (isValidBlockerAssignment(gameData, attackerInfos, forcedAssignments)) {
                 double score = CombatMath.evaluateDefenderCombat(attackerInfos, forcedAssignments, aiLife, aiPoison);
 
                 // Apply pessimism for opponent's potential combat tricks: a block that
@@ -845,18 +846,15 @@ public class CombatSimulator {
         return result;
     }
 
-    /**
-     * CSP constraint check for the exhaustive search: every attacker's block count must
-     * satisfy its legality rules. Currently checks menace (count ∈ {0} ∪ [2, ∞]).
-     * Extend with CanBeBlockedByAtMostN / "can't be blocked by more than 1" if/when
-     * the simulator starts tracking those restrictions.
-     */
-    private static boolean isValidBlockerAssignment(List<CreatureInfo> attackerInfos,
-                                                    List<List<CreatureInfo>> assignments) {
+    private boolean isValidBlockerAssignment(GameData gameData,
+                                             List<CreatureInfo> attackerInfos,
+                                             List<List<CreatureInfo>> assignments) {
         for (int ai = 0; ai < attackerInfos.size(); ai++) {
             CreatureInfo attacker = attackerInfos.get(ai);
             int count = assignments.get(ai).size();
-            if (attacker.menace && count == 1) return false;
+            int minimumBlockers = AiUtils.minimumBlockersRequiredToBlock(
+                    gameData, gameQueryService, attacker.perm);
+            if (count > 0 && count < minimumBlockers) return false;
         }
         return true;
     }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GaeasProtector;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.Guile;
 import com.github.laxika.magicalvibes.cards.h.Hellrider;
 import com.github.laxika.magicalvibes.cards.h.HollowDogs;
 import com.github.laxika.magicalvibes.cards.o.OgreResister;
@@ -317,6 +318,30 @@ class CombatSimulatorTest {
         assertThat(blockers).hasSize(1);
         assertThat(blockers.get(0)[0]).isEqualTo(0); // blocker index
         assertThat(blockers.get(0)[1]).isEqualTo(0); // attacker index
+    }
+
+    @Test
+    @DisplayName("Blocker searches assign either zero or at least three blockers to Guile")
+    void blockerSearchesRespectGuilesMinimumBlockerCount() {
+        Permanent guile = new Permanent(new Guile());
+        guile.setSummoningSick(false);
+        guile.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(guile);
+        gd.playerLifeTotals.put(player1.getId(), 6);
+
+        for (int i = 0; i < 3; i++) {
+            Permanent blocker = new Permanent(new GrizzlyBears());
+            blocker.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(blocker);
+        }
+
+        List<int[]> greedy = simulator.findBestBlockers(
+                gd, player1.getId(), List.of(0), List.of(0, 1, 2));
+        List<int[]> exhaustive = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0, 1, 2));
+
+        assertThat(greedy).hasSize(3).allMatch(block -> block[1] == 0);
+        assertThat(exhaustive).hasSize(3).allMatch(block -> block[1] == 0);
     }
 
     @Test

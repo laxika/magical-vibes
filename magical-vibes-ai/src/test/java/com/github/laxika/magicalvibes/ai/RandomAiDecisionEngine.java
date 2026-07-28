@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -764,7 +763,8 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
         for (int attackerIdx : sortedAttackers) {
             Permanent attacker = opponentBattlefield.get(attackerIdx);
-            boolean menace = gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE);
+            int minimumBlockers = AiUtils.minimumBlockersRequiredToBlock(
+                    gameData, gameQueryService, attacker);
             boolean lure = lureAttackerIndices.contains(attackerIdx);
             boolean mustBlock = mustBeBlockedAttackerIndices.contains(attackerIdx);
             List<Integer> provoked = provokedBlockersByAttacker.getOrDefault(attackerIdx, List.of());
@@ -778,42 +778,39 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 }
             }
             if (candidates.isEmpty()) continue;
-            // Menace: no creature is "able to block" alone — with <2 candidates, skip.
-            if (menace && candidates.size() < 2) continue;
+            // A block is legal only when enough creatures can be assigned together.
+            if (candidates.size() < minimumBlockers) continue;
 
             List<Integer> chosen;
             if (lure) {
                 // Every able blocker must block this attacker.
                 chosen = new ArrayList<>(candidates);
             } else if (!provoked.isEmpty()) {
-                // Provoked blockers must block; add a menace partner if required.
+                // Provoked blockers must block; add enough partners to make the block legal.
                 List<Integer> provokedUnused = new ArrayList<>();
                 for (int p : provoked) {
                     if (!blockerUsed[p] && candidates.contains(p)) provokedUnused.add(p);
                 }
                 if (provokedUnused.isEmpty()) {
                     chosen = List.of();
-                } else if (menace && provokedUnused.size() == 1) {
-                    int partner = -1;
-                    for (int c : candidates) {
-                        if (c != provokedUnused.get(0)) { partner = c; break; }
-                    }
-                    chosen = partner != -1 ? List.of(provokedUnused.get(0), partner) : List.of();
                 } else {
                     chosen = new ArrayList<>(provokedUnused);
+                    for (int c : candidates) {
+                        if (chosen.size() >= minimumBlockers) break;
+                        if (!chosen.contains(c)) chosen.add(c);
+                    }
+                    if (chosen.size() < minimumBlockers) chosen = List.of();
                 }
             } else if (mustBlock) {
                 List<Integer> shuffled = new ArrayList<>(candidates);
                 Collections.shuffle(shuffled, rng);
-                int needed = menace ? 2 : 1;
-                chosen = shuffled.subList(0, Math.min(needed, shuffled.size()));
+                chosen = shuffled.subList(0, minimumBlockers);
             } else {
-                // Voluntary block: 50% to try, randomly pick 1 (or 2 with menace).
+                // Voluntary block: 50% to try, then assign the minimum legal number.
                 if (!rng.nextBoolean()) continue;
                 List<Integer> shuffled = new ArrayList<>(candidates);
                 Collections.shuffle(shuffled, rng);
-                int needed = menace ? 2 : 1;
-                chosen = shuffled.subList(0, Math.min(needed, shuffled.size()));
+                chosen = shuffled.subList(0, minimumBlockers);
             }
 
             if (chosen.isEmpty()) continue;
@@ -851,8 +848,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                               Map<Integer, List<Integer>> provokedByAttacker) {
         Permanent attacker = opponentBattlefield.get(attackerIdx);
         boolean lure = lureAttackers.contains(attackerIdx);
-        boolean menace = gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE);
-        if (lure && menace) return 5;
+        int minimumBlockers = AiUtils.minimumBlockersRequiredToBlock(
+                gameData, gameQueryService, attacker);
+        if (lure && minimumBlockers > 1) return 5;
         if (lure) return 4;
         if (mustBlockAttackers.contains(attackerIdx)) return 3;
         if (provokedByAttacker.containsKey(attackerIdx)) return 2;

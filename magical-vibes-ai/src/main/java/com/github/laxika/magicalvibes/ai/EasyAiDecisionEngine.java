@@ -545,10 +545,10 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             Permanent pb = opponentBattlefield.get(b[0]);
             int lureCmp = Boolean.compare(hasLureEffect(gameData, pb), hasLureEffect(gameData, pa));
             if (lureCmp != 0) return lureCmp;
-            int menaceCmp = Boolean.compare(
-                    gameQueryService.hasKeyword(gameData, pb, Keyword.MENACE),
-                    gameQueryService.hasKeyword(gameData, pa, Keyword.MENACE));
-            if (menaceCmp != 0) return menaceCmp;
+            int minimumCmp = Integer.compare(
+                    AiUtils.minimumBlockersRequiredToBlock(gameData, gameQueryService, pb),
+                    AiUtils.minimumBlockersRequiredToBlock(gameData, gameQueryService, pa));
+            if (minimumCmp != 0) return minimumCmp;
             int mbCmp = Boolean.compare(hasMustBeBlockedIfAble(gameData, pb),
                                         hasMustBeBlockedIfAble(gameData, pa));
             if (mbCmp != 0) return mbCmp;
@@ -566,27 +566,26 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             int attackerPower = attacker[1];
             int attackerToughness = attacker[2];
             Permanent attackingPerm = opponentBattlefield.get(attackerIdx);
-            boolean menace = gameQueryService.hasKeyword(gameData, attackingPerm, Keyword.MENACE);
+            int minimumBlockers = AiUtils.minimumBlockersRequiredToBlock(
+                    gameData, gameQueryService, attackingPerm);
             boolean lure = hasLureEffect(gameData, attackingPerm);
             boolean mustBlock = hasMustBeBlockedIfAble(gameData, attackingPerm);
             boolean lethalIncoming = totalIncomingDamage >= myLife;
 
             List<Integer> candidates = getAvailableBlockersForAttacker(gameData, battlefield, blockerUsed, attackingPerm);
             if (candidates.isEmpty()) continue;
-            // Menace: no creature is "able to block" alone — with <2 candidates, skip.
-            if (menace && candidates.size() < 2) continue;
+            if (candidates.size() < minimumBlockers) continue;
 
             List<Integer> chosen;
             if (lure) {
                 // Every able blocker must block this attacker.
                 chosen = new ArrayList<>(candidates);
-            } else if (menace) {
-                // Menace attacker: need a favorable pair, or chump pair if lethal, or force pair if mandatory.
+            } else if (minimumBlockers > 1) {
                 List<Integer> favorablePair = selectBestFavorablePair(gameData, battlefield, candidates, attackerPower, attackerToughness);
-                if (favorablePair != null) {
+                if (minimumBlockers == 2 && favorablePair != null) {
                     chosen = favorablePair;
                 } else if (lethalIncoming || mustBlock) {
-                    chosen = pickCheapestBlockers(battlefield, candidates, 2);
+                    chosen = pickCheapestBlockers(battlefield, candidates, minimumBlockers);
                 } else {
                     chosen = List.of();
                 }

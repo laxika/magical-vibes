@@ -1,12 +1,17 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByFewerThanNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.UUID;
 
@@ -35,6 +40,21 @@ public final class AiUtils {
         }
         return predicate instanceof PermanentAllOfPredicate allOf
                 && allOf.predicates().stream().anyMatch(AiUtils::containsManaValueEqualsXPredicate);
+    }
+
+    /**
+     * Minimum number of creatures that must be assigned together for the attacker to become
+     * blocked. Multiple restrictions combine by taking the largest minimum.
+     */
+    static int minimumBlockersRequiredToBlock(GameData gameData, GameQueryService gameQueryService,
+                                              Permanent attacker) {
+        int minimum = gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE) ? 2 : 1;
+        for (var effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction) {
+                minimum = Math.max(minimum, restriction.minBlockers());
+            }
+        }
+        return minimum;
     }
 
     static UUID getOpponentId(GameData gameData, UUID playerId) {
