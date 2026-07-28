@@ -853,7 +853,10 @@ public class LibraryChoiceHandlerService {
         // battlefield. Any blocked card stays in the library, which is then shuffled.
         boolean anyBlocked = false;
 
-        // Phase 1: Place all permanents on the battlefield simultaneously
+        // Phase 1: Place all permanents on the battlefield simultaneously. Carrying the batch keeps
+        // them from applying their own replacement/static abilities to each other (CR 614.12), the
+        // same way the enter-tapped snapshot above is frozen before any of them enters.
+        List<Permanent> batch = new ArrayList<>();
         for (Card card : cards) {
             if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY)) {
                 gameData.playerDecks.computeIfAbsent(ownerId, k -> new ArrayList<>()).add(card);
@@ -863,7 +866,8 @@ public class LibraryChoiceHandlerService {
                 continue;
             }
             Permanent perm = new Permanent(card);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm, enterTappedTypes);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm, enterTappedTypes, batch);
+            batch.add(perm);
             if (tapped) {
                 perm.tap();
             }

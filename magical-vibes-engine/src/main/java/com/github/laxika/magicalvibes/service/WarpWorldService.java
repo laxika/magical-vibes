@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -80,6 +81,10 @@ public class WarpWorldService {
 
     public void placePendingWarpWorldEnchantments(GameData gameData) {
         Set<CardType> enterTappedTypes = gameData.warpWorldOperation.enterTappedTypesSnapshot;
+        // Warp World's enchantment group is its own simultaneous event, separate from the earlier
+        // artifact/creature/land group: these enchantments do see that group, but not each other
+        // (CR 614.12).
+        List<Permanent> batch = new ArrayList<>();
         for (WarpWorldEnchantmentPlacement placement : gameData.warpWorldOperation.pendingEnchantmentPlacements) {
             UUID controllerId = placement.controllerId();
             Card card = placement.card();
@@ -87,7 +92,9 @@ public class WarpWorldService {
             if (placement.attachmentTargetId() != null) {
                 permanent.setAttachedTo(placement.attachmentTargetId());
             }
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
+            battlefieldEntryService.putPermanentOntoBattlefield(
+                    gameData, controllerId, permanent, enterTappedTypes, batch);
+            batch.add(permanent);
 
             if (placement.attachmentTargetId() != null) {
                 boolean hasControlEffect = card.getEffects(EffectSlot.STATIC).stream()

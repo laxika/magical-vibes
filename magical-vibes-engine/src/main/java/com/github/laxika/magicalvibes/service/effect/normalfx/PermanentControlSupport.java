@@ -79,6 +79,9 @@ public class PermanentControlSupport {
         int totalAmount = amount * tokenMultiplier;
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
+        // CR 614.12: all tokens from one effect are created simultaneously, so none of them may
+        // apply its own replacement/static abilities to the others as they enter.
+        List<Permanent> batch = new ArrayList<>();
         boolean isCreature = token.primaryType() == CardType.CREATURE;
         for (int i = 0; i < totalAmount; i++) {
             Card tokenCard = TokenCardFactory.create(token, power, toughness, sourceSetCode);
@@ -89,7 +92,9 @@ public class PermanentControlSupport {
                 tokenPermanent.setCounterCount(
                         CounterType.PLUS_ONE_PLUS_ONE, token.initialPlusOnePlusOneCounters());
             }
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+            battlefieldEntryService.putPermanentOntoBattlefield(
+                    gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot, batch);
+            batch.add(tokenPermanent);
             createdIds.add(tokenPermanent.getId());
 
             if (token.tappedAndAttacking()) {

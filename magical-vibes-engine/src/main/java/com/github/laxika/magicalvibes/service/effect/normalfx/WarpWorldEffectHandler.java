@@ -110,16 +110,21 @@ public class WarpWorldEffectHandler implements NormalEffectHandlerBean {
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
 
-        // First, put artifact/creature/land cards onto the battlefield.
+        // First, put artifact/creature/land cards onto the battlefield. Every player's cards in this
+        // group enter simultaneously (CR 614.12), so none of them applies its own replacement or
+        // static abilities to the others — the batch spans all players, not just one battlefield.
+        // The later enchantment group is a separate, subsequent event and does see this one.
+        List<Permanent> permanentGroupBatch = new ArrayList<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> revealed = revealedByPlayer.getOrDefault(playerId, List.of());
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
 
             for (Card card : revealed) {
                 CardType type = card.getType();
                 if (type == CardType.ARTIFACT || type == CardType.CREATURE || type == CardType.LAND) {
                     Permanent permanent = new Permanent(card);
-                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent, enterTappedTypesSnapshot);
+                    battlefieldEntryService.putPermanentOntoBattlefield(
+                            gameData, playerId, permanent, enterTappedTypesSnapshot, permanentGroupBatch);
+                    permanentGroupBatch.add(permanent);
                     putOntoBattlefieldByPlayer.get(playerId).add(card);
                 }
             }

@@ -72,6 +72,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -162,18 +163,23 @@ public class BattlefieldEntryService {
                                              Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
                                              int xValue, boolean kicked) {
         controllerId = resolveEnteringController(gameData, controllerId, permanent);
-        carrySpellTextReplacements(gameData, permanent);
-        carrySpellColorOverride(gameData, controllerId, permanent);
-        applyCreaturesEnterAsCopyReplacementEffect(gameData, controllerId, permanent);
-        applyEnterTappedEffects(permanent, enterTappedTypes);
-        applySelfEnterTapped(permanent);
-        applyConditionalEnterTapped(gameData, controllerId, permanent);
-        applyAllPermanentsEnterTapped(gameData, permanent);
-        applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
-        applyUnchosenParityEnterTapped(gameData, permanent);
-        applyEnterWithCounters(gameData, controllerId, permanent, xValue, kicked);
-        applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
-        applyControlledCreaturesEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
+        Map<UUID, List<Permanent>> hidden = hideSimultaneouslyEntered(gameData, simultaneouslyEntered);
+        try {
+            carrySpellTextReplacements(gameData, permanent);
+            carrySpellColorOverride(gameData, controllerId, permanent);
+            applyCreaturesEnterAsCopyReplacementEffect(gameData, controllerId, permanent);
+            applyEnterTappedEffects(permanent, enterTappedTypes);
+            applySelfEnterTapped(permanent);
+            applyConditionalEnterTapped(gameData, controllerId, permanent);
+            applyAllPermanentsEnterTapped(gameData, permanent);
+            applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
+            applyUnchosenParityEnterTapped(gameData, permanent);
+            applyEnterWithCounters(gameData, controllerId, permanent, xValue, kicked);
+            applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
+            applyControlledCreaturesEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
+        } finally {
+            restoreHiddenBattlefields(gameData, hidden);
+        }
         // CR 613.7b: a permanent receives its timestamp as it enters the battlefield.
         permanent.setTimestamp(gameData.nextTimestamp());
         gameData.playerBattlefields.get(controllerId).add(permanent);
@@ -191,6 +197,54 @@ public class BattlefieldEntryService {
         // "As this enters, you may reveal a [subtype] card from your hand; if you don't, it enters
         // tapped." Must run after the permanent is on the battlefield so we can reference/tap it.
         applyRevealSubtypeOrEntersTapped(gameData, controllerId, permanent);
+    }
+
+    /**
+     * CR 614.12: how a permanent enters is determined against "continuous effects that
+     * <em>already exist</em> and would apply to the permanent". Permanents entering in the same
+     * simultaneous batch are not yet on the battlefield when that determination happens, so their
+     * static and replacement abilities must not apply — a Bramblewood Paragon entering alongside a
+     * Warrior does not give that Warrior a +1/+1 counter.
+     *
+     * <p>The engine places a batch one permanent at a time, so by the time the second member enters
+     * the first is physically on the battlefield. This hides every batch-mate from all battlefields
+     * for the duration of the replacement-effect window, which makes them invisible to every
+     * source scan and every condition evaluated in that window at once, rather than requiring each
+     * applier to filter them individually. Batch-mates may sit on different players' battlefields
+     * (Warp World has every player entering permanents at the same time), so this searches all of
+     * them.
+     *
+     * <p>Returns per-player snapshots for {@link #restoreHiddenBattlefields}; empty when the batch
+     * is empty, which is the case for every single-permanent entry.
+     *
+     * @see #restoreHiddenBattlefields
+     */
+    private Map<UUID, List<Permanent>> hideSimultaneouslyEntered(GameData gameData, List<Permanent> simultaneouslyEntered) {
+        if (simultaneouslyEntered.isEmpty()) return Map.of();
+
+        Map<UUID, List<Permanent>> snapshots = new HashMap<>();
+        gameData.playerBattlefields.forEach((playerId, battlefield) -> {
+            List<Permanent> snapshot = List.copyOf(battlefield);
+            if (battlefield.removeAll(simultaneouslyEntered)) {
+                snapshots.put(playerId, snapshot);
+            }
+        });
+        return snapshots;
+    }
+
+    /**
+     * Puts the batch-mates hidden by {@link #hideSimultaneouslyEntered} back. Restores each
+     * affected battlefield from its snapshot rather than re-adding the removed permanents, because
+     * re-adding would append them at the end and reorder the battlefield; order is the CR 613.7
+     * equal-timestamp tiebreak, the order triggers reach the stack, and the index the wire protocol
+     * addresses permanents by.
+     */
+    private void restoreHiddenBattlefields(GameData gameData, Map<UUID, List<Permanent>> snapshots) {
+        snapshots.forEach((playerId, snapshot) -> {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            battlefield.clear();
+            battlefield.addAll(snapshot);
+        });
     }
 
     /**
@@ -540,6 +594,12 @@ public class BattlefieldEntryService {
      * counter callers therefore gather their matching effects first and resolve afterwards.
      * That splice is also why this lives here rather than on the read-only
      * {@link GameQueryService}.
+     *
+     * <p>Removing {@code simultaneouslyEntered} here is redundant when called from the entry
+     * funnel, which has already hidden the whole batch from every battlefield
+     * ({@link #hideSimultaneouslyEntered}). It is kept so the public
+     * {@link #permanentWouldHaveSubtype} is correct when called standalone, and it is a harmless
+     * no-op otherwise — both layers restore from their own snapshot, so they nest safely.
      *
      * <p>The restore replays a snapshot rather than inverting each mutation, because
      * {@code addAll} is not the inverse of {@code removeAll}: it would re-append the excluded

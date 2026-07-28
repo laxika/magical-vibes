@@ -73,9 +73,13 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
         // Hour of Eternity: create a token that's a copy of each exiled card, except it's a 4/4 black Zombie.
         if (e.copyExiledCards()) {
             List<CardSubtype> addedSubtypes = e.addedSubtype() != null ? List.of(e.addedSubtype()) : List.of();
+            // Hour of Eternity creates every token copy at once, so a copy carrying an
+            // enters-with-counters or enters-as-copy ability must not apply it to its batch-mates.
+            List<Permanent> copyBatch = new ArrayList<>();
             for (Card exiledCard : exiledCards) {
                 graveyardReturnSupport.createTokenCopyFromCard(gameData, entry, exiledCard, addedSubtypes,
-                        false, false, e.colorOverride(), e.powerOverride(), e.toughnessOverride());
+                        false, false, e.colorOverride(), e.powerOverride(), e.toughnessOverride(),
+                        false, false, copyBatch);
             }
             return;
         }
@@ -83,6 +87,9 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
         int tokensToCreate = exiledCards.size();
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
         int totalTokens = tokensToCreate * tokenMultiplier;
+        // All the Zombie tokens are created at once, so none of them applies its own replacement or
+        // static abilities to the others as they enter (CR 614.12).
+        List<Permanent> batch = new ArrayList<>();
         for (int i = 0; i < totalTokens; i++) {
             Card tokenCard = new Card();
             tokenCard.setName("Zombie");
@@ -95,7 +102,9 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
             tokenCard.setSubtypes(List.of(CardSubtype.ZOMBIE));
 
             Permanent tokenPermanent = new Permanent(tokenCard);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+            battlefieldEntryService.putPermanentOntoBattlefield(
+                    gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot, batch);
+            batch.add(tokenPermanent);
 
             String tokenLog = "A 2/2 Zombie creature token enters the battlefield.";
             gameLogService.append(gameData, GameLog.text(tokenLog));

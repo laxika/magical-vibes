@@ -100,10 +100,16 @@ public class ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffectHa
             return;
         }
 
-        // Step 4: Put all found creature cards onto the battlefield simultaneously (ruling 2010-08-15)
+        // Step 4: Put all found creature cards onto the battlefield simultaneously (ruling 2010-08-15).
+        // Snapshot enter-tapped types once and carry the batch, so no creature in the group applies
+        // its own replacement or static abilities to the others as they enter (CR 614.12).
+        Set<CardType> enterTappedTypesSnapshot = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+        List<Permanent> batch = new ArrayList<>();
         for (Card creatureCard : foundCreatures) {
             Permanent perm = new Permanent(creatureCard);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+            battlefieldEntryService.putPermanentOntoBattlefield(
+                    gameData, controllerId, perm, enterTappedTypesSnapshot, batch);
+            batch.add(perm);
 
             gameLogService.append(gameData, GameLog.entersBattlefieldUnder(creatureCard, controllerName));
 

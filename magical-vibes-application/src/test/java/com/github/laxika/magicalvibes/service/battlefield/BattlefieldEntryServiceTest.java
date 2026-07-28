@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -55,6 +56,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -619,6 +622,92 @@ class BattlefieldEntryServiceTest {
                     List.of(excludedA, excludedB), CardSubtype.HUMAN);
 
             assertThat(battlefield).containsExactly(first, excludedA, middle, excludedB, last);
+        }
+
+        /**
+         * CR 614.12 / official ruling: "If Bramblewood Paragon enters at the same time as another
+         * Warrior (due to Living End, for example), that creature doesn't get a +1/+1 counter."
+         * The source is physically on the battlefield by the time the batch's later members enter,
+         * so it must be hidden for the replacement-effect window.
+         */
+        @Test
+        @DisplayName("A counter source entering in the same batch does not grant the counter")
+        void simultaneousCounterSourceDoesNotApply() {
+            Permanent counterSource = counterSourcePermanent();
+            List<Permanent> battlefield = lookaheadGameData.playerBattlefields.get(playerId);
+            battlefield.add(counterSource);
+
+            Permanent entering = new Permanent(createCreatureCard("Warrior Recruit", List.of(CardSubtype.WARRIOR)));
+
+            lookaheadService.putPermanentOntoBattlefield(
+                    lookaheadGameData, playerId, entering, Set.of(), List.of(counterSource));
+
+            assertThat(entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        }
+
+        /** Control for {@link #simultaneousCounterSourceDoesNotApply} — the same source already on
+         *  the battlefield (not part of the batch) does grant the counter. */
+        @Test
+        @DisplayName("A counter source already on the battlefield still grants the counter")
+        void preexistingCounterSourceStillApplies() {
+            Permanent counterSource = counterSourcePermanent();
+            lookaheadGameData.playerBattlefields.get(playerId).add(counterSource);
+
+            Permanent entering = new Permanent(createCreatureCard("Warrior Recruit", List.of(CardSubtype.WARRIOR)));
+
+            lookaheadService.putPermanentOntoBattlefield(
+                    lookaheadGameData, playerId, entering, Set.of(), List.of());
+
+            assertThat(entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
+        }
+
+        @Test
+        @DisplayName("An enters-as-copy source entering in the same batch does not copy")
+        void simultaneousEnterAsCopySourceDoesNotApply() {
+            Card essenceCard = new Card();
+            essenceCard.setName("Essence Source");
+            essenceCard.setType(CardType.CREATURE);
+            essenceCard.addEffect(EffectSlot.STATIC, new CreaturesEnterAsCopyOfSourceEffect());
+            Permanent essence = new Permanent(essenceCard);
+            lookaheadGameData.playerBattlefields.get(playerId).add(essence);
+
+            Permanent entering = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
+
+            lookaheadService.putPermanentOntoBattlefield(
+                    lookaheadGameData, playerId, entering, Set.of(), List.of(essence));
+
+            verify(permanentCopierService, never()).applyCloneCopy(any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Hiding the batch restores every battlefield in its original order")
+        void hidingBatchRestoresBattlefieldOrder() {
+            Permanent first = new Permanent(createCreatureCard("First Bear", List.of(CardSubtype.BEAR)));
+            Permanent batchMate = counterSourcePermanent();
+            Permanent last = new Permanent(createCreatureCard("Last Bear", List.of(CardSubtype.BEAR)));
+
+            List<Permanent> battlefield = lookaheadGameData.playerBattlefields.get(playerId);
+            battlefield.addAll(List.of(first, batchMate, last));
+
+            Permanent opponentPermanent = new Permanent(createCreatureCard("Opposing Bear", List.of(CardSubtype.BEAR)));
+            lookaheadGameData.playerBattlefields.get(opponentId).add(opponentPermanent);
+
+            Permanent entering = new Permanent(createCreatureCard("Warrior Recruit", List.of(CardSubtype.WARRIOR)));
+
+            lookaheadService.putPermanentOntoBattlefield(
+                    lookaheadGameData, playerId, entering, Set.of(), List.of(batchMate));
+
+            assertThat(battlefield).containsExactly(first, batchMate, last, entering);
+            assertThat(lookaheadGameData.playerBattlefields.get(opponentId)).containsExactly(opponentPermanent);
+        }
+
+        private Permanent counterSourcePermanent() {
+            Card sourceCard = new Card();
+            sourceCard.setName("Counter Source");
+            sourceCard.setType(CardType.CREATURE);
+            sourceCard.addEffect(EffectSlot.STATIC,
+                    new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.WARRIOR, 1));
+            return new Permanent(sourceCard);
         }
 
         @Test

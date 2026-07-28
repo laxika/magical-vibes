@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -56,6 +57,12 @@ public class ReturnDamagedCreaturesThatDiedUnderControlEffectHandler implements 
             return;
         }
 
+        // The returned creatures enter simultaneously, so none of them applies its own replacement
+        // or static abilities to the others as they enter (CR 614.12); the enter-tapped snapshot is
+        // likewise taken once, before any of them is on the battlefield.
+        Set<CardType> enterTappedTypesSnapshot = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+        List<Permanent> batch = new ArrayList<>();
+
         // Snapshot — returning removes from the tracking set via leave-graveyard cleanup.
         for (UUID cardId : new ArrayList<>(cardIds)) {
             UUID ownerId = null;
@@ -86,7 +93,9 @@ public class ReturnDamagedCreaturesThatDiedUnderControlEffectHandler implements 
             permanentRemovalService.removeCardFromGraveyardById(gameData, cardToReturn.getId());
             Permanent permanent = new Permanent(cardToReturn);
             permanent.setEnteredFromGraveyardOwnerId(ownerId);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), permanent);
+            battlefieldEntryService.putPermanentOntoBattlefield(
+                    gameData, entry.getControllerId(), permanent, enterTappedTypesSnapshot, batch);
+            batch.add(permanent);
 
             if (!entry.getControllerId().equals(ownerId)) {
                 gameData.stolenCreatures.put(permanent.getId(), ownerId);

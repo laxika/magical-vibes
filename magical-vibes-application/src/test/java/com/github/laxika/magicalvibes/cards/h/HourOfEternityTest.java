@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.b.BramblewoodParagon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -37,6 +39,32 @@ class HourOfEternityTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
                 .containsExactlyInAnyOrder(bears1.getId(), bears2.getId());
         assertThat(gd.stack).isEmpty();
+    }
+
+    /**
+     * All the token copies are created as one simultaneous event, so a copy carrying an
+     * enters-with-counters replacement effect must not apply it to its batch-mates (CR 614.12) —
+     * the same ruling that stops a Bramblewood Paragon pumping a Warrior it enters alongside.
+     */
+    @Test
+    @DisplayName("Token copies created simultaneously do not apply their replacement effects to each other")
+    void simultaneousTokenCopiesDoNotPumpEachOther() {
+        Card paragon1 = new BramblewoodParagon();
+        Card paragon2 = new BramblewoodParagon();
+        harness.setGraveyard(player1, List.of(paragon1, paragon2));
+        harness.setHand(player1, List.of(new HourOfEternity()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+
+        harness.castSorcery(player1, 0, 2);
+        harness.handleMultipleCardsChosen(player1, List.of(paragon1.getId(), paragon2.getId()));
+        harness.passBothPriorities();
+
+        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken())
+                .toList();
+        assertThat(tokens).hasSize(2);
+        assertThat(tokens).allSatisfy(token ->
+                assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
     }
 
     @Test

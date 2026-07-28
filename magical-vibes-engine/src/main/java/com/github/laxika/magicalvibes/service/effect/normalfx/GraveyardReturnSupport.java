@@ -906,8 +906,27 @@ public class GraveyardReturnSupport {
                                          boolean exileAtEndStep, CardColor colorOverride,
                                          Integer powerOverride, Integer toughnessOverride,
                                          boolean replaceSubtypes, boolean grantHasteUntilEndOfTurn) {
+        createTokenCopyFromCard(gameData, entry, sourceCard, additionalSubtypes, grantHaste, exileAtEndStep,
+                colorOverride, powerOverride, toughnessOverride, replaceSubtypes, grantHasteUntilEndOfTurn,
+                new ArrayList<>());
+    }
+
+    /**
+     * Variant for effects that create several token copies as one simultaneous event (Hour of
+     * Eternity). {@code simultaneouslyEntered} accumulates every token this call places, and is
+     * passed to the entry funnel so batch-mates cannot apply their own replacement or static
+     * abilities to each other (CR 614.12). Callers creating a single token pass a fresh list; the
+     * token-multiplier copies made inside one call are batched against each other regardless.
+     */
+    public void createTokenCopyFromCard(GameData gameData, StackEntry entry, Card sourceCard,
+                                         List<CardSubtype> additionalSubtypes, boolean grantHaste,
+                                         boolean exileAtEndStep, CardColor colorOverride,
+                                         Integer powerOverride, Integer toughnessOverride,
+                                         boolean replaceSubtypes, boolean grantHasteUntilEndOfTurn,
+                                         List<Permanent> simultaneouslyEntered) {
         UUID controllerId = entry.getControllerId();
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
+        Set<CardType> enterTappedTypesSnapshot = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         for (int copy = 0; copy < tokenMultiplier; copy++) {
             Card tokenCard = new Card();
             tokenCard.setName(sourceCard.getName());
@@ -970,7 +989,9 @@ public class GraveyardReturnSupport {
             if (grantHasteUntilEndOfTurn) {
                 tokenPermanent.getGrantedKeywords().add(Keyword.HASTE);
             }
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent);
+            battlefieldEntryService.putPermanentOntoBattlefield(
+                    gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot, simultaneouslyEntered);
+            simultaneouslyEntered.add(tokenPermanent);
 
             if (exileAtEndStep) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));

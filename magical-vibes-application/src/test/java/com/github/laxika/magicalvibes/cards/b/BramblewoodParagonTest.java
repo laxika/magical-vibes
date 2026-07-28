@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MassPolymorph;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -106,6 +108,34 @@ class BramblewoodParagonTest extends BaseCardTest {
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
+    }
+
+    /**
+     * CR 614.12 / official ruling: "If Bramblewood Paragon enters at the same time as another
+     * Warrior (due to Living End, for example), that creature doesn't get a +1/+1 counter."
+     * Mass Polymorph puts both Paragons onto the battlefield simultaneously, so neither may apply
+     * its replacement effect to the other even though the engine places them one at a time.
+     */
+    @Test
+    @DisplayName("Paragons entering simultaneously via Mass Polymorph give each other no counter")
+    void simultaneousParagonsGiveNoCounters() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MassPolymorph()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        GameData gd = harness.getGameData();
+        gd.playerDecks.get(player1.getId()).clear();
+        gd.playerDecks.get(player1.getId()).add(new BramblewoodParagon());
+        gd.playerDecks.get(player1.getId()).add(new BramblewoodParagon());
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        List<Permanent> paragons = paragonsOnBattlefield(player1);
+        assertThat(paragons).hasSize(2);
+        assertThat(paragons).allSatisfy(paragon ->
+                assertThat(paragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
     }
 
     // ===== Helpers =====
