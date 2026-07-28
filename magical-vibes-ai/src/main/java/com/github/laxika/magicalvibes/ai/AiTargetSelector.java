@@ -347,6 +347,12 @@ class AiTargetSelector {
      * previously took the single-target path and always submitted just one target).
      * X-scaled targeting (target count decided with X elsewhere), divided-damage spells
      * (damage-assignment path), and stack-targeting spells keep their existing paths.
+     *
+     * <p>So does a spell that charges mana per extra target (Fireball's {@code
+     * additionalCostPerExtraTarget}): the AI's affordability check prices a cast by its mana cost
+     * and X alone, so every target past the first would be mana it never taps and the engine would
+     * reject the cast. Those spells take the single-target line — one target, no extra cost, and
+     * for an evenly divided burn spell the hardest hit available.
      */
     boolean needsMultiTargetSelection(Card card) {
         List<SpellTarget> groups = card.getSpellTargets();
@@ -355,6 +361,7 @@ class AiTargetSelector {
         }
         return groups.size() == 1
                 && card.getMaxTargets() > 1
+                && card.getAdditionalCostPerExtraTarget() <= 0
                 && !card.hasXScaledTargets()
                 && !EffectResolution.needsDamageDistribution(card)
                 && !EffectResolution.needsSpellTarget(card);
@@ -507,6 +514,20 @@ class AiTargetSelector {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Player-side counterpart of {@link #isValidPermanentTarget}: true when {@code card} could be
+     * cast targeting {@code playerTargetId}, judged by the very check the cast path runs
+     * ({@code TargetLegalityService.validateSpellTargeting}) — hexproof/shroud, protection, player
+     * predicates and the {@code @ValidatesTarget} validators.
+     *
+     * <p>An allowed-target set that merely <em>includes</em> players is not enough to offer one: a
+     * live multi-target scope declares the no-op {@code PLAYER_OR_PERMANENT} spec (Synchronized
+     * Strike's untap), so its permanent-only spell looks player-targetable until this check runs.
+     */
+    boolean isValidPlayerTarget(GameData gameData, Card card, UUID playerTargetId, UUID aiPlayerId) {
+        return targetLegalityService.checkSpellTargeting(gameData, card, playerTargetId, null, aiPlayerId).isEmpty();
     }
 
     /**

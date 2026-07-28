@@ -37,7 +37,6 @@ public class ShuffleSelfAndGraveyardIntoLibraryEffectHandler implements NormalEf
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
-        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
 
         // Move source permanent from battlefield to library (if still there)
@@ -51,13 +50,10 @@ public class ShuffleSelfAndGraveyardIntoLibraryEffectHandler implements NormalEf
             }
         }
 
-        // Move all graveyard cards into library
-        int graveyardCount = graveyard.size();
-        if (!graveyard.isEmpty()) {
-            deck.addAll(graveyard);
-            graveyard.clear();
-            graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
-        }
+        // Move all graveyard cards into library. Tokens cease to exist rather than travel (CR 111.7).
+        List<Card> moving = graveyardService.takeGraveyardCardsForZoneChange(gameData, controllerId);
+        int graveyardCount = moving.size();
+        deck.addAll(moving);
 
         // Shuffle the library
         LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);

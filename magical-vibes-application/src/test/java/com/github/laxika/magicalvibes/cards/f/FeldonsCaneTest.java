@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -78,7 +80,37 @@ class FeldonsCaneTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Giant Spider");
     }
 
+    @Test
+    @DisplayName("A dead token in the graveyard is left behind, not shuffled into the library")
+    void deadTokenIsNotShuffledIntoLibrary() {
+        addReadyCane(player1);
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        Permanent token = harness.addToBattlefieldAndReturn(player1, tokenCreature());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, token));
+        harness.clearPriorityPassed();
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        // Only the Grizzly Bears card travels; the token ceases to exist (CR 111.7).
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore + 1);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Zombie Token"));
+    }
+
     // ===== Helpers =====
+
+    private static Card tokenCreature() {
+        Card card = new Card();
+        card.setName("Zombie Token");
+        card.setType(CardType.CREATURE);
+        card.setPower(2);
+        card.setToughness(2);
+        card.setToken(true);
+        return card;
+    }
 
     private Permanent addReadyCane(Player player) {
         Permanent perm = new Permanent(new FeldonsCane());

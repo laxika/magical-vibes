@@ -22,11 +22,14 @@ public interface CostEffect extends CardEffect {
 
     /**
      * A predicate selecting which of the payer's battlefield permanents may be chosen to pay
-     * this cost (sacrifice a creature / artifact / filtered permanent), or {@code null} when
-     * this cost does not consume a payer-chosen battlefield permanent — because it pays a
-     * scalar resource (life, counters, cards), sacrifices the source itself
-     * (see {@link #consumesSourcePermanent()}), or is not permanent-based. Lets a consumer
-     * find an eligible sacrifice/return target uniformly via the engine's predicate evaluation.
+     * this cost (sacrifice a creature / artifact / filtered permanent, return a creature to
+     * hand, put a counter on a creature), or {@code null} when this cost does not consume a
+     * payer-chosen battlefield permanent — because it pays a scalar resource (life, counters,
+     * cards), sacrifices the source itself (see {@link #consumesSourcePermanent()}), or is not
+     * permanent-based. Lets a consumer find an eligible permanent uniformly via the engine's
+     * predicate evaluation. Every spell cost paid through
+     * {@code PlayCardRequest.sacrificePermanentId} must override this: an AI that finds no
+     * filter sends a null id and the engine rejects the cast.
      */
     default PermanentPredicate consumedPermanentFilter() {
         return null;

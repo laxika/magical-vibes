@@ -15,19 +15,18 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
@@ -356,7 +355,10 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             // Determine target if needed (skip for modal and damage distribution spells)
             UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
             List<UUID> multiTargetIds = modalPlan != null ? modalPlan.targetIds() : null;
-            boolean isMultiTarget = card.getSpellTargets().size() > 1;
+            // Shared classifier, same as every other engine: a single "up to N" group (Synchronized
+            // Strike) also belongs on the multi-target path — routing it to the single-target one
+            // submits one target and can offer a player the spell can't legally target.
+            boolean isMultiTarget = targetSelector.needsMultiTargetSelection(card);
             if (isMultiTarget && modalPlan == null) {
                 multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
                 if (multiTargetIds == null) {
@@ -553,28 +555,26 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
     // ===== Random Sacrifice Target Selection =====
 
     /**
-     * Selects a random valid permanent to sacrifice for the card's sacrifice cost.
-     * Returns null if the card has no sacrifice cost.
+     * Selects a random permanent to pay whichever additional cast cost consumes a payer-chosen
+     * permanent (sacrifice, return to hand, put a counter on a creature you control). Driven by
+     * {@link CostEffect#consumedPermanentFilter()} so a new cost record is covered as soon as it
+     * declares its filter — an unrecognized cost would send a null id and have the cast rejected.
+     * Returns null if the card has no such cost.
      */
     private UUID selectRandomSacrificeTarget(GameData gameData, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof SacrificeCreatureCost) {
-                List<Permanent> creatures = battlefield.stream()
-                        .filter(p -> gameQueryService.isCreature(gameData, p))
-                        .toList();
-                return creatures.isEmpty() ? null : creatures.get(rng.nextInt(creatures.size())).getId();
-            } else if (effect instanceof SacrificeArtifactCost) {
-                List<Permanent> artifacts = battlefield.stream()
-                        .filter(p -> gameQueryService.isArtifact(gameData, p))
-                        .toList();
-                return artifacts.isEmpty() ? null : artifacts.get(rng.nextInt(artifacts.size())).getId();
-            } else if (effect instanceof SacrificePermanentCost sacCost) {
-                List<Permanent> matching = battlefield.stream()
-                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacCost.filter()))
-                        .toList();
-                return matching.isEmpty() ? null : matching.get(rng.nextInt(matching.size())).getId();
+            if (!(effect instanceof CostEffect cost)) {
+                continue;
             }
+            PermanentPredicate filter = cost.consumedPermanentFilter();
+            if (filter == null) {
+                continue;
+            }
+            List<Permanent> matching = battlefield.stream()
+                    .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter))
+                    .toList();
+            return matching.isEmpty() ? null : matching.get(rng.nextInt(matching.size())).getId();
         }
         return null;
     }
@@ -588,7 +588,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         // Use base-mode targeting since AI never kicks spells
         Set<TargetType> allowed = targetSelector.computeBaseAllowedTargets(card);
 
-        // Add players as targets if allowed, respecting player relation predicates and hexproof/shroud
+        // Add players as targets if allowed, respecting player relation predicates and hexproof/shroud.
+        // The engine check is the last word: an allowed set that merely includes players (a no-op
+        // PLAYER_OR_PERMANENT spec on a live multi-target scope) does not make one legal.
         if (allowed.contains(TargetType.PLAYER)) {
             PlayerRelation relation = PlayerRelation.ANY;
             if (card.getTargetFilter() instanceof PlayerPredicateTargetFilter ptf
@@ -596,12 +598,14 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 relation = prp.relation();
             }
             if (relation != PlayerRelation.OPPONENT
-                    && !gameQueryService.playerHasShroud(gameData, aiPlayer.getId())) {
+                    && !gameQueryService.playerHasShroud(gameData, aiPlayer.getId())
+                    && targetSelector.isValidPlayerTarget(gameData, card, aiPlayer.getId(), aiPlayer.getId())) {
                 validTargets.add(aiPlayer.getId());
             }
             if (relation != PlayerRelation.SELF && opponentId != null
                     && !gameQueryService.playerHasShroud(gameData, opponentId)
-                    && !gameQueryService.playerHasHexproof(gameData, opponentId)) {
+                    && !gameQueryService.playerHasHexproof(gameData, opponentId)
+                    && targetSelector.isValidPlayerTarget(gameData, card, opponentId, aiPlayer.getId())) {
                 validTargets.add(opponentId);
             }
         }

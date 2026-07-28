@@ -33,20 +33,20 @@ public class ShuffleGraveyardIntoLibraryEffectHandler implements NormalEffectHan
         // Fall back to controller when no explicit target (e.g. saga chapters, triggered abilities)
         UUID targetPlayerId = entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
-        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
         String playerName = gameData.playerIdToName.get(targetPlayerId);
 
-        if (graveyard.isEmpty()) {
+        // Tokens in the graveyard cease to exist rather than travel (CR 111.7), so a graveyard
+        // holding nothing else moves no cards at all.
+        List<Card> moving = graveyardService.takeGraveyardCardsForZoneChange(gameData, targetPlayerId);
+        if (moving.isEmpty()) {
             String logEntry = playerName + "'s graveyard is empty. Library is shuffled.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             return;
         }
 
-        int count = graveyard.size();
-        deck.addAll(graveyard);
-        graveyard.clear();
-        graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
+        int count = moving.size();
+        deck.addAll(moving);
         LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
 
         String logEntry = playerName + " shuffles their graveyard (" + LibraryShuffleSupport.pluralCards(count) + ") into their library.";

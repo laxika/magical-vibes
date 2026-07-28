@@ -971,6 +971,80 @@ class AiManaManagerTest {
     @DisplayName("tapLandsForCost")
     class TapLandsForCost {
 
+        /**
+         * Naked Singularity / Reality Twist / Infernal Darkness replace the type of mana a land
+         * produces. The payment planner must plan against the replaced colors — planning from the
+         * printed ones taps lands that deliver a color the cost can't use, and the engine then
+         * rejects the cast with the lands already spent.
+         */
+        @Nested
+        @DisplayName("land mana type replacement")
+        class LandManaTypeReplacement {
+
+            @Test
+            @DisplayName("taps the land whose twisted color pays the cost, not the printed one")
+            void tapsTwistedColorSource() {
+                Permanent swamp = addUntappedLand("Swamp", ManaColor.BLACK);
+                Permanent mountain = addUntappedLand("Mountain", ManaColor.RED);
+                // Naked Singularity: Swamps produce {W}, Mountains produce {U}.
+                when(gameQueryService.twistedLandManaColors(gd, swamp)).thenReturn(Set.of(ManaColor.WHITE));
+                when(gameQueryService.twistedLandManaColors(gd, mountain)).thenReturn(Set.of(ManaColor.BLUE));
+
+                AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+                manager.tapLandsForCost(gd, player1Id, "{U}", 0, action);
+
+                verify(action).tap(1, null);
+                verify(action, never()).tap(eq(0), any());
+            }
+
+            @Test
+            @DisplayName("spends only the lands the twisted cost needs")
+            void doesNotOverTapUnderATwist() {
+                Permanent swamp = addUntappedLand("Swamp", ManaColor.BLACK);
+                Permanent firstMountain = addUntappedLand("Mountain", ManaColor.RED);
+                Permanent secondMountain = addUntappedLand("Mountain", ManaColor.RED);
+                when(gameQueryService.twistedLandManaColors(gd, swamp)).thenReturn(Set.of(ManaColor.WHITE));
+                lenient().when(gameQueryService.twistedLandManaColors(gd, firstMountain)).thenReturn(Set.of(ManaColor.BLUE));
+                lenient().when(gameQueryService.twistedLandManaColors(gd, secondMountain)).thenReturn(Set.of(ManaColor.BLUE));
+
+                // Tapping delivers the twisted colors, exactly as the engine would.
+                AiManaManager.ManaTapAction action = (permanentIndex, abilityIndex) ->
+                        gd.playerManaPools.get(player1Id).add(permanentIndex == 0 ? ManaColor.WHITE : ManaColor.BLUE, 1);
+                manager.tapLandsForCost(gd, player1Id, "{W}", 0, action);
+
+                assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.WHITE)).isEqualTo(1);
+                assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.BLUE)).isZero();
+            }
+
+            @Test
+            @DisplayName("a land under a fixed-color replacement pays only that color")
+            void fixedColorReplacementDrivesThePlan() {
+                Permanent forest = addUntappedLand("Forest", ManaColor.GREEN);
+                Permanent plains = addUntappedLand("Plains", ManaColor.WHITE);
+                // Infernal Darkness: every land produces {B} instead of any other type.
+                when(gameQueryService.fixedLandManaColor(gd, forest)).thenReturn(ManaColor.BLACK);
+                lenient().when(gameQueryService.fixedLandManaColor(gd, plains)).thenReturn(ManaColor.BLACK);
+
+                AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+                manager.tapLandsForCost(gd, player1Id, "{B}", 0, action);
+
+                verify(action).tap(0, null);
+                verify(action, never()).tap(eq(1), any());
+            }
+
+            @Test
+            @DisplayName("virtual pool and payment plan agree under a twist")
+            void virtualPoolMatchesPlan() {
+                Permanent swamp = addUntappedLand("Swamp", ManaColor.BLACK);
+                when(gameQueryService.twistedLandManaColors(gd, swamp)).thenReturn(Set.of(ManaColor.WHITE));
+
+                VirtualManaPool virtual = manager.buildVirtualManaPool(gd, player1Id);
+
+                assertThat(virtual.get(ManaColor.BLACK)).isZero();
+                assertThat(virtual.get(ManaColor.WHITE)).isEqualTo(1);
+            }
+        }
+
         @Test
         @DisplayName("does not tap if pool already covers cost")
         void alreadyHasEnoughMana() {

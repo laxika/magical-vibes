@@ -47,13 +47,16 @@ a code change. Branching on one of these interfaces is fine anywhere — it is t
 - `CostEffect` — additional costs (sacrifice, discard, exile, counter removal, tap creature). AI
   cost-valuation facets describe the resource paying gives up (default to neutral; override only the
   one that matches the record): `consumedPermanentFilter()` (`PermanentPredicate` selecting a
-  payer-chosen battlefield permanent to sacrifice/return — creature/artifact/filtered),
+  payer-chosen battlefield permanent to sacrifice/return/put a counter on — creature/artifact/filtered;
+  MANDATORY for every spell cost paid via `PlayCardRequest.sacrificePermanentId`, or the AI sends a
+  null id and the engine rejects the cast — guarded by `CostEffectClassificationTest`),
   `consumesSourcePermanent()` (sacrifice this permanent), `sacrificesChosenCreature()` (plain
   "sacrifice a creature"), `lifePaid(currentLife)`, `sourceCountersRemoved()`,
   `consumedGraveyardCardCount()` + `consumedGraveyardCardType()`. Read by `GameSimulator`
   (payment-planning: find a sacrifice target / graveyard cards to exile) and
   `HardAiDecisionEngine.evaluateAbilityCosts` (score the cost). Overridden by `SacrificeCreatureCost`,
-  `SacrificeArtifactCost`, `SacrificePermanentCost`, `SacrificeSelfCost`, `PayLifeCost`,
+  `SacrificeArtifactCost`, `SacrificePermanentCost`, `SacrificeCreatureOrPayManaCost`,
+  `ReturnCreatureToHandCost`, `PutCounterOnControlledCreatureCost`, `SacrificeSelfCost`, `PayLifeCost`,
   `RemoveChargeCountersFromSourceCost`, `ExileNCardsFromGraveyardCost`; all other cost records inherit
   the neutral defaults (the AI never reasoned about them). Payment EXECUTION stays concrete in
   `AbilityActivationService`.

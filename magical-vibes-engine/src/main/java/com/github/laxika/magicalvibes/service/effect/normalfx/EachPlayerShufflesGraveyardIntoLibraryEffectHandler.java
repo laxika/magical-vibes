@@ -32,20 +32,20 @@ public class EachPlayerShufflesGraveyardIntoLibraryEffectHandler implements Norm
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> deck = gameData.playerDecks.get(playerId);
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             String playerName = gameData.playerIdToName.get(playerId);
 
-            if (graveyard == null || graveyard.isEmpty()) {
+            // Tokens in the graveyard cease to exist rather than travel (CR 111.7), so a graveyard
+            // holding nothing else moves no cards at all.
+            List<Card> moving = graveyardService.takeGraveyardCardsForZoneChange(gameData, playerId);
+            if (moving.isEmpty()) {
                 gameLogService.append(gameData,
                         GameLog.text(playerName + "'s graveyard is empty. Library is shuffled."));
                 LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
                 continue;
             }
 
-            int count = graveyard.size();
-            deck.addAll(graveyard);
-            graveyard.clear();
-            graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+            int count = moving.size();
+            deck.addAll(moving);
             LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
 
             gameLogService.append(gameData, GameLog.text(

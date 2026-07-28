@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * Additional cost to cast a spell: put {@code count} counter(s) of the given type on a creature
@@ -13,4 +15,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * @param count number of counters to place
  */
 public record PutCounterOnControlledCreatureCost(CounterType counterType, int count) implements CostEffect {
+
+    private static final PermanentPredicate CREATURE_FILTER = new PermanentIsCreaturePredicate();
+
+    @Override
+    public PermanentPredicate consumedPermanentFilter() {
+        return CREATURE_FILTER;
+    }
 }

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -27,6 +28,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.networking.Connection;
@@ -338,6 +341,79 @@ class EasyAiDecisionEngineTest {
 
         PlayCardRequest request = captor.getValue();
         assertThat(request.sacrificePermanentId()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Easy AI passes sacrificePermanentId for a put-counter additional cast cost")
+    void passesSacrificePermanentIdForPutCounterCost() throws Exception {
+        Card counterSpell = new Card();
+        counterSpell.setName("Test Counter Cost Spell");
+        counterSpell.setType(CardType.SORCERY);
+        counterSpell.setManaCost("{R}");
+        counterSpell.addEffect(EffectSlot.SPELL,
+                new PutCounterOnControlledCreatureCost(CounterType.MINUS_ONE_MINUS_ONE, 1));
+        gd.playerHands.get(aiPlayer.getId()).add(counterSpell);
+
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.RED, 1);
+
+        Card creatureCard = new Card();
+        creatureCard.setName("Counter Bearer");
+        creatureCard.setType(CardType.CREATURE);
+        creatureCard.setPower(2);
+        creatureCard.setToughness(2);
+        Permanent creature = new Permanent(creatureCard);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(creature);
+
+        when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+
+        Mockito.doAnswer(inv -> {
+            gd.playerHands.get(aiPlayer.getId()).removeFirst();
+            return null;
+        }).when(messageHandler).handlePlayCard(any());
+
+        createEngine().handleEvent(AiDecisionKind.GAME_STATE);
+
+        ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
+        verify(messageHandler).handlePlayCard(captor.capture());
+
+        assertThat(captor.getValue().sacrificePermanentId()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Easy AI passes sacrificePermanentId for a return-to-hand additional cast cost")
+    void passesSacrificePermanentIdForReturnCreatureToHandCost() throws Exception {
+        Card bounceSpell = new Card();
+        bounceSpell.setName("Test Bounce Cost Spell");
+        bounceSpell.setType(CardType.SORCERY);
+        bounceSpell.setManaCost("{R}");
+        bounceSpell.addEffect(EffectSlot.SPELL, new ReturnCreatureToHandCost());
+        gd.playerHands.get(aiPlayer.getId()).add(bounceSpell);
+
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.RED, 1);
+
+        Card creatureCard = new Card();
+        creatureCard.setName("Bounce Fodder");
+        creatureCard.setType(CardType.CREATURE);
+        creatureCard.setPower(1);
+        creatureCard.setToughness(1);
+        Permanent creature = new Permanent(creatureCard);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(creature);
+
+        when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+
+        Mockito.doAnswer(inv -> {
+            gd.playerHands.get(aiPlayer.getId()).removeFirst();
+            return null;
+        }).when(messageHandler).handlePlayCard(any());
+
+        createEngine().handleEvent(AiDecisionKind.GAME_STATE);
+
+        ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
+        verify(messageHandler).handlePlayCard(captor.capture());
+
+        assertThat(captor.getValue().sacrificePermanentId()).isEqualTo(creature.getId());
     }
 
     @Test

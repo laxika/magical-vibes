@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.c.CompellingDeterrence;
 import com.github.laxika.magicalvibes.cards.c.ContagionClasp;
 import com.github.laxika.magicalvibes.cards.d.Diminish;
 import com.github.laxika.magicalvibes.cards.f.FeelingOfDread;
+import com.github.laxika.magicalvibes.cards.f.Fireball;
 import com.github.laxika.magicalvibes.cards.f.FitOfRage;
 import com.github.laxika.magicalvibes.cards.f.FulgentDistraction;
 import com.github.laxika.magicalvibes.cards.e.ElaborateFirecannon;
@@ -1282,7 +1283,33 @@ class AiTargetSelectorTest {
             assertThat(targetSelector.needsMultiTargetSelection(new FeelingOfDread())).isTrue();
             assertThat(targetSelector.needsMultiTargetSelection(new FulgentDistraction())).isTrue();
             assertThat(targetSelector.needsMultiTargetSelection(new AgonyWarp())).isTrue();
+            assertThat(targetSelector.needsMultiTargetSelection(new SynchronizedStrike())).isTrue();
             assertThat(targetSelector.needsMultiTargetSelection(new Stun())).isFalse();
+            // Fireball charges {1} per extra target — priced by neither the AI's affordability
+            // check nor its mana tapping, so it stays on the single-target line.
+            assertThat(targetSelector.needsMultiTargetSelection(new Fireball())).isFalse();
+        }
+
+        @Test
+        @DisplayName("A permanent-only spell whose untap scope allows players still rejects a player target")
+        void multiTargetUntapScopeDoesNotMakePlayersTargetable() {
+            harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+            SynchronizedStrike card = new SynchronizedStrike();
+
+            // The no-op PLAYER_OR_PERMANENT spec on the untap scope puts PLAYER in the allowed set…
+            assertThat(targetSelector.computeBaseAllowedTargets(card)).contains(TargetType.PLAYER);
+            // …but neither player is a target the engine would accept for this cast.
+            assertThat(targetSelector.isValidPlayerTarget(gd, card, aiPlayer.getId(), aiPlayer.getId())).isFalse();
+            assertThat(targetSelector.isValidPlayerTarget(gd, card, human.getId(), aiPlayer.getId())).isFalse();
+        }
+
+        @Test
+        @DisplayName("A genuine any-target spell still accepts both players")
+        void anyTargetSpellAcceptsPlayers() {
+            WizardsLightning card = new WizardsLightning();
+
+            assertThat(targetSelector.isValidPlayerTarget(gd, card, human.getId(), aiPlayer.getId())).isTrue();
+            assertThat(targetSelector.isValidPlayerTarget(gd, card, aiPlayer.getId(), aiPlayer.getId())).isTrue();
         }
 
         @Test

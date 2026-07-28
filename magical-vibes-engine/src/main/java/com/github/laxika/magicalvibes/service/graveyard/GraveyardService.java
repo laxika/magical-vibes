@@ -105,11 +105,10 @@ public class GraveyardService {
         for (Card card : cardsEnteredGraveyard) {
             for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_MILLED)) {
                 if (effect instanceof ShuffleGraveyardIntoLibraryEffect) {
-                    List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
-                    int graveyardCount = graveyard.size();
+                    List<Card> moving = takeGraveyardCardsForZoneChange(gameData, targetPlayerId);
+                    int graveyardCount = moving.size();
                     if (graveyardCount > 0) {
-                        deck.addAll(graveyard);
-                        clearGraveyard(gameData, targetPlayerId);
+                        deck.addAll(moving);
                         LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
                         gameLogService.append(gameData, GameLog.cardThen(card, " was milled — " + playerName
                                 + " shuffles their graveyard (" + graveyardCount
@@ -732,5 +731,26 @@ public class GraveyardService {
             allTracked.clear();
         }
         notifyCardsLeftGraveyard(gameData, ownerId);
+    }
+
+    /**
+     * Empties a player's graveyard for a bulk move into another zone (shuffle-graveyard-into-library
+     * effects) and returns the cards that actually make the trip, leaving the graveyard cleared and
+     * the leave-graveyard trigger fired exactly as {@link #clearGraveyard} does.
+     *
+     * <p>Token cards never make the trip: a token in a zone other than the battlefield ceases to
+     * exist (CR 111.7), so a graveyard shuffled into a library must leave its dead tokens behind
+     * rather than turn them into phantom cards their owner can draw. The engine keeps dead tokens
+     * sitting in the graveyard and filters them at read sites, so every bulk mover must come
+     * through here.
+     */
+    public List<Card> takeGraveyardCardsForZoneChange(GameData gameData, UUID ownerId) {
+        List<Card> graveyard = gameData.playerGraveyards.get(ownerId);
+        if (graveyard == null || graveyard.isEmpty()) {
+            return List.of();
+        }
+        List<Card> moving = graveyard.stream().filter(card -> !card.isToken()).toList();
+        clearGraveyard(gameData, ownerId);
+        return moving;
     }
 }

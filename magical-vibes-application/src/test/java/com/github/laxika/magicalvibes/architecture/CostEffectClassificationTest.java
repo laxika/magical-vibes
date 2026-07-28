@@ -41,6 +41,7 @@ class CostEffectClassificationTest {
             "DiscardRandomCardCost",
             "ExileSelfCost",
             "ExileSelfFromGraveyardCost",
+            "IncreaseActivationCostPerCounterEffect",
             "MillControllerCost",
             "PayManaCost",
             "PutCounterOnSourceCost",
@@ -57,10 +58,29 @@ class CostEffectClassificationTest {
             "SacrificeSourceEquipmentCost",
             "SacrificeXPermanentsCost",
             "TapCreatureCost",
+            "TapEnchantedPermanentCost",
             "TapTwoCreaturesSharingTypeCost",
             "TapMultiplePermanentsCost",
             "TapXPermanentsCost",
             "UntapMultiplePermanentsCost");
+
+    /**
+     * Spell-handled cost types that are paid without the caster choosing one of their battlefield
+     * permanents (life, cards, graveyard cards, escalate, or "sacrifice everything"). Every other
+     * spell-handled cost is paid via {@code PlayCardRequest.sacrificePermanentId} and must expose
+     * the permanent it consumes through {@code CostEffect.consumedPermanentFilter()}.
+     */
+    private static final Set<String> NON_PERMANENT_SPELL_COST_TYPES = Set.of(
+            "SacrificeAllCreaturesYouControlCost",
+            "PayXLifeCost",
+            "PayLifeCost",
+            "ExileCardFromGraveyardCost",
+            "ExileXCardsFromGraveyardCost",
+            "ExileNCardsFromGraveyardCost",
+            "DiscardCardTypeCost",
+            "DiscardCardOrPayManaCost",
+            "EscalateDiscardCost",
+            "EscalateManaCost");
 
     private static final String EFFECT_PKG_PATH =
             "magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect";
@@ -97,6 +117,42 @@ class CostEffectClassificationTest {
         assertThat(doublyClassified)
                 .withFailMessage(() -> "CostEffect type(s) listed both as spell-handled and ability-only: "
                         + doublyClassified)
+                .isEmpty();
+    }
+
+    @Test
+    @DisplayName("Every permanent-selecting spell cost declares consumedPermanentFilter")
+    void permanentSelectingSpellCostsDeclareTheirFilter() {
+        List<String> missingFilter = new ArrayList<>();
+        for (Class<?> type : AdditionalSpellCostService.HANDLED_SPELL_COST_TYPES) {
+            if (NON_PERMANENT_SPELL_COST_TYPES.contains(type.getSimpleName())) {
+                continue;
+            }
+            try {
+                type.getDeclaredMethod("consumedPermanentFilter");
+            } catch (NoSuchMethodException e) {
+                missingFilter.add(type.getSimpleName());
+            }
+        }
+
+        assertThat(missingFilter)
+                .withFailMessage(() -> "Spell cost type(s) paid with a chosen permanent but not overriding "
+                        + "CostEffect.consumedPermanentFilter(): " + missingFilter + ".\n"
+                        + "Without the filter every AI cast path (AiDecisionEngine.selectSacrificeTarget, "
+                        + "GameSimulator.computeSacrificeTarget, the fuzzer's random selector) sends a null "
+                        + "sacrificePermanentId, so the engine rejects the cast after advertising it as "
+                        + "playable. Declare the filter, or list the type in NON_PERMANENT_SPELL_COST_TYPES "
+                        + "if it is paid with a non-permanent resource.")
+                .isEmpty();
+
+        List<String> staleNonPermanent = NON_PERMANENT_SPELL_COST_TYPES.stream()
+                .filter(name -> AdditionalSpellCostService.HANDLED_SPELL_COST_TYPES.stream()
+                        .noneMatch(type -> type.getSimpleName().equals(name)))
+                .sorted()
+                .toList();
+        assertThat(staleNonPermanent)
+                .withFailMessage(() -> "NON_PERMANENT_SPELL_COST_TYPES lists type(s) that are no longer "
+                        + "spell-handled costs: " + staleNonPermanent)
                 .isEmpty();
     }
 

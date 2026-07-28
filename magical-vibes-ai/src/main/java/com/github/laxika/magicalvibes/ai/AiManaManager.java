@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -25,6 +26,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -326,9 +328,9 @@ public class AiManaManager {
             Permanent leftPermanent = findPermanent(battlefield, left.permanentId());
             Permanent rightPermanent = findPermanent(battlefield, right.permanentId());
             int leftScore = leftPermanent == null ? Integer.MIN_VALUE
-                    : scoreTapCandidate(leftPermanent.getCard(), cost, currentPool);
+                    : scoreTapCandidate(gameData, leftPermanent, cost, currentPool);
             int rightScore = rightPermanent == null ? Integer.MIN_VALUE
-                    : scoreTapCandidate(rightPermanent.getCard(), cost, currentPool);
+                    : scoreTapCandidate(gameData, rightPermanent, cost, currentPool);
             return Integer.compare(rightScore, leftScore);
         });
         return new ManaPaymentPlan(ordered);
@@ -407,11 +409,15 @@ public class AiManaManager {
                                                       Permanent permanent,
                                                       boolean skipChoiceSources) {
         Card card = permanent.getCard();
+        Set<ManaColor> replacementColors = landManaReplacementColors(gameData, permanent);
+        if (skipChoiceSources && replacementColors.size() > 1) {
+            return List.of(); // Tapping would prompt for which replacement color to add
+        }
         int triggerCost = attachedTapTriggerCost(gameData, permanent);
         int versatilityCost = Math.max(0, getProducedColors(card).size() - 1) * 5;
         if (hasOnTapManaEffects(card)) {
-            return manaOptionsForEffects(permanent.getId(), null,
-                    card.getEffects(EffectSlot.ON_TAP), triggerCost, versatilityCost, false);
+            return applyLandManaReplacement(replacementColors, manaOptionsForEffects(permanent.getId(), null,
+                    card.getEffects(EffectSlot.ON_TAP), triggerCost, versatilityCost, false));
         }
         if (skipChoiceSources && wouldManaAbilityTriggerChoice(card)) {
             return List.of();
@@ -430,7 +436,50 @@ public class AiManaManager {
             options.addAll(manaOptionsForEffects(permanent.getId(), i,
                     ability.getEffects(), triggerCost, versatilityCost, painful));
         }
-        return options;
+        return applyLandManaReplacement(replacementColors, options);
+    }
+
+    /**
+     * Colors a land actually produces once the engine's mana-type replacements are applied:
+     * Infernal Darkness / Ritual of Subdual's fixed color, or Reality Twist / Naked Singularity's
+     * per-basic-type remapping (several colors when several such effects are active — the
+     * controller then chooses). Empty when no replacement applies and the printed colors stand.
+     *
+     * <p>Mirrors {@code ActivatedAbilityExecutionService} and {@code AbilityActivationService}: a
+     * planner that reads only the printed mana effects would tap a Swamp expecting {B} under Naked
+     * Singularity, get {W}, and have the cast rejected after the lands are already tapped.
+     */
+    private Set<ManaColor> landManaReplacementColors(GameData gameData, Permanent permanent) {
+        if (!permanent.getCard().hasType(CardType.LAND)) {
+            return Set.of();
+        }
+        ManaColor fixedColor = gameQueryService.fixedLandManaColor(gameData, permanent);
+        if (fixedColor != null) {
+            return Set.of(fixedColor);
+        }
+        return gameQueryService.twistedLandManaColors(gameData, permanent);
+    }
+
+    /**
+     * Rewrites each planned mana option into the replacement colors: only the mana's type is
+     * replaced, never its amount, so every option keeps its total and its activation. One option
+     * per replacement color, because the controller picks one for all mana produced.
+     */
+    private List<ManaOption> applyLandManaReplacement(Set<ManaColor> replacementColors, List<ManaOption> options) {
+        if (replacementColors.isEmpty() || options.isEmpty()) {
+            return options;
+        }
+        Set<ManaOption> replaced = new LinkedHashSet<>();
+        for (ManaOption option : options) {
+            int total = option.output().values().stream().mapToInt(Integer::intValue).sum();
+            if (total <= 0) {
+                continue;
+            }
+            for (ManaColor color : replacementColors) {
+                replaced.add(new ManaOption(option.activation(), Map.of(color, total), option.cost()));
+            }
+        }
+        return replaced.isEmpty() ? List.of() : new ArrayList<>(replaced);
     }
 
     private List<ManaOption> manaOptionsForEffects(UUID permanentId, Integer abilityIndex,
@@ -557,7 +606,7 @@ public class AiManaManager {
                 }
             }
 
-            int score = scoreTapCandidate(card, cost, currentPool);
+            int score = scoreTapCandidate(gameData, perm, cost, currentPool);
             if (score > bestScore) {
                 bestScore = score;
                 bestIndex = i;
@@ -579,8 +628,10 @@ public class AiManaManager {
      * </ol>
      * Sources with side-effects (e.g. pain land damage) get a small penalty.
      */
-    private int scoreTapCandidate(Card card, ManaCost cost, ManaPool currentPool) {
-        Set<ManaColor> produced = getProducedColors(card);
+    private int scoreTapCandidate(GameData gameData, Permanent permanent, ManaCost cost, ManaPool currentPool) {
+        Card card = permanent.getCard();
+        Set<ManaColor> replacementColors = landManaReplacementColors(gameData, permanent);
+        Set<ManaColor> produced = replacementColors.isEmpty() ? getProducedColors(card) : replacementColors;
         Map<ManaColor, Integer> coloredCosts = cost.getColoredCosts();
 
         boolean helpsUnmet = false;
