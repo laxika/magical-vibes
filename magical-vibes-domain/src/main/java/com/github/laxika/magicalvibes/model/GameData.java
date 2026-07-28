@@ -848,11 +848,17 @@ public class GameData {
     /**
      * Creates a battlefield list that stamps any still-unstamped permanent (timestamp 0) with
      * this game's next CR 613.7 timestamp as it is inserted. The engine's entry funnel
-     * ({@code BattlefieldEntryService.putPermanentOntoBattlefield}) stamps before adding, so
-     * this is a no-op there; it makes direct insertions (test setups building battlefields by
-     * hand) carry real insertion-order timestamps instead of relying on the position fallback.
-     * Control-change moves re-insert already-stamped permanents and keep their stamp
-     * (CR 613.7c).
+     * ({@code BattlefieldEntryService.putPermanentOntoBattlefield}) stamps before its own add, so
+     * this is a no-op for the real entry; it makes direct insertions (test setups building
+     * battlefields by hand) carry real insertion-order timestamps instead of relying on the
+     * position fallback. Control-change moves re-insert already-stamped permanents and keep their
+     * stamp (CR 613.7c).
+     *
+     * <p>One exception to "no-op for the real entry": the CR 614.12 subtype lookahead splices the
+     * entering permanent in <em>before</em> the funnel assigns its timestamp, so that insert
+     * stamps it early. Harmless — the funnel overwrites the stamp unconditionally right after,
+     * and the only cost is one burned counter value — but it means an entering permanent may
+     * carry a provisional timestamp while the lookahead runs.
      */
     public List<Permanent> newBattlefieldList() {
         return Collections.synchronizedList(new TimestampingBattlefieldList());

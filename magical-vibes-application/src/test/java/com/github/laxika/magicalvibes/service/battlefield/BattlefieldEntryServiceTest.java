@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -401,6 +402,65 @@ class BattlefieldEntryServiceTest {
         }
 
         @Test
+        @DisplayName("Subtype lookahead does not mutate the battlefield iteration for additional counters")
+        void additionalCounterSubtypeLookaheadDoesNotMutateBattlefieldIteration() {
+            Card counterSourceCard = new Card();
+            counterSourceCard.setName("Counter Source");
+            counterSourceCard.setType(CardType.CREATURE);
+            counterSourceCard.addEffect(EffectSlot.STATIC,
+                    new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.WIZARD, 1));
+            Permanent counterSource = new Permanent(counterSourceCard);
+            lookaheadGameData.playerBattlefields.get(playerId).add(counterSource);
+
+            Card subtypeSourceCard = new Card();
+            subtypeSourceCard.setName("Subtype Source");
+            subtypeSourceCard.setType(CardType.ENCHANTMENT);
+            subtypeSourceCard.addEffect(EffectSlot.STATIC,
+                    new GrantSubtypeEffect(CardSubtype.WIZARD, GrantScope.OWN_CREATURES));
+            Permanent subtypeSource = new Permanent(subtypeSourceCard);
+            lookaheadGameData.playerBattlefields.get(playerId).add(subtypeSource);
+
+            Permanent entering = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
+
+            lookaheadService.putPermanentOntoBattlefield(lookaheadGameData, playerId, entering);
+
+            assertThat(entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
+            assertThat(lookaheadGameData.playerBattlefields.get(playerId)).containsExactly(
+                    counterSource, subtypeSource, entering);
+        }
+
+        @Test
+        @DisplayName("Multiple additional-counter sources matching a looked-ahead subtype all apply")
+        void multipleAdditionalCounterSourcesStack() {
+            Card firstSourceCard = new Card();
+            firstSourceCard.setName("First Counter Source");
+            firstSourceCard.setType(CardType.CREATURE);
+            firstSourceCard.addEffect(EffectSlot.STATIC,
+                    new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.WIZARD, 1));
+            lookaheadGameData.playerBattlefields.get(playerId).add(new Permanent(firstSourceCard));
+
+            Card secondSourceCard = new Card();
+            secondSourceCard.setName("Second Counter Source");
+            secondSourceCard.setType(CardType.CREATURE);
+            secondSourceCard.addEffect(EffectSlot.STATIC,
+                    new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.WIZARD, 2));
+            lookaheadGameData.playerBattlefields.get(playerId).add(new Permanent(secondSourceCard));
+
+            Card subtypeSourceCard = new Card();
+            subtypeSourceCard.setName("Subtype Source");
+            subtypeSourceCard.setType(CardType.ENCHANTMENT);
+            subtypeSourceCard.addEffect(EffectSlot.STATIC,
+                    new GrantSubtypeEffect(CardSubtype.WIZARD, GrantScope.OWN_CREATURES));
+            lookaheadGameData.playerBattlefields.get(playerId).add(new Permanent(subtypeSourceCard));
+
+            Permanent entering = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
+
+            lookaheadService.putPermanentOntoBattlefield(lookaheadGameData, playerId, entering);
+
+            assertThat(entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        }
+
+        @Test
         @DisplayName("Opponent's subtype-granting effect with OWN_CREATURES scope does not affect your creatures")
         void opponentOwnCreaturesScopeDoesNotAffect() {
             Card xenograftCard = new Card();
@@ -532,6 +592,64 @@ class BattlefieldEntryServiceTest {
             }
 
             assertThat(lookaheadGameData.playerBattlefields.get(playerId)).containsExactlyElementsOf(bfBefore);
+        }
+
+        /**
+         * The excluded permanents sit in the middle of the battlefield, not at the end. Restoring
+         * by re-appending them would leave the list reordered, and battlefield order is
+         * load-bearing (CR 613.7 equal-timestamp tiebreak, trigger stack order, and the index the
+         * wire protocol addresses permanents by). No production caller passes a non-empty
+         * simultaneous batch yet, so this guards the parameter for whoever first wires it up.
+         */
+        @Test
+        @DisplayName("Lookahead restores battlefield order when excluded permanents sit mid-list")
+        void lookaheadRestoresOrderWithExcludedPermanentsMidList() {
+            Permanent first = new Permanent(createCreatureCard("First Bear", List.of(CardSubtype.BEAR)));
+            Permanent excludedA = new Permanent(createCreatureCard("Excluded A", List.of(CardSubtype.BEAR)));
+            Permanent middle = new Permanent(createCreatureCard("Middle Bear", List.of(CardSubtype.BEAR)));
+            Permanent excludedB = new Permanent(createCreatureCard("Excluded B", List.of(CardSubtype.BEAR)));
+            Permanent last = new Permanent(createCreatureCard("Last Bear", List.of(CardSubtype.BEAR)));
+
+            List<Permanent> battlefield = lookaheadGameData.playerBattlefields.get(playerId);
+            battlefield.addAll(List.of(first, excludedA, middle, excludedB, last));
+
+            Permanent entering = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
+
+            lookaheadService.permanentWouldHaveSubtype(lookaheadGameData, entering, playerId,
+                    List.of(excludedA, excludedB), CardSubtype.HUMAN);
+
+            assertThat(battlefield).containsExactly(first, excludedA, middle, excludedB, last);
+        }
+
+        @Test
+        @DisplayName("Lookahead restores mid-list order even when static bonus computation fails")
+        void lookaheadRestoresOrderOnExceptionWithExcludedPermanents() {
+            realRegistry.register(GrantSubtypeEffect.class, (context, effect, accumulator) -> {
+                throw new RuntimeException("simulated failure");
+            });
+
+            Permanent first = new Permanent(createCreatureCard("First Bear", List.of(CardSubtype.BEAR)));
+            Permanent excluded = new Permanent(createCreatureCard("Excluded Bear", List.of(CardSubtype.BEAR)));
+
+            Card badCard = new Card();
+            badCard.setName("Bad Enchantment");
+            badCard.setType(CardType.ENCHANTMENT);
+            badCard.addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
+            Permanent thrower = new Permanent(badCard);
+
+            List<Permanent> battlefield = lookaheadGameData.playerBattlefields.get(playerId);
+            battlefield.addAll(List.of(first, excluded, thrower));
+
+            Permanent entering = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
+
+            try {
+                lookaheadService.permanentWouldHaveSubtype(lookaheadGameData, entering, playerId,
+                        List.of(excluded), CardSubtype.HUMAN);
+            } catch (RuntimeException ignored) {
+                // expected
+            }
+
+            assertThat(battlefield).containsExactly(first, excluded, thrower);
         }
     }
 }

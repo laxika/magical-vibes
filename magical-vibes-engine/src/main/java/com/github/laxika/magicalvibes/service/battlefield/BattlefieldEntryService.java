@@ -496,12 +496,10 @@ public class BattlefieldEntryService {
      * already placed on the battlefield as part of the same simultaneous batch and must be
      * <em>excluded</em> from the lookahead.
      *
-     * <p>Implementation: temporarily splices the entering permanent into the controller's live
-     * battlefield list (and removes any {@code simultaneouslyEntered} permanents), runs
-     * {@link GameQueryService#computeStaticBonus}, then restores the original state in a
-     * {@code finally} block. That splice is why this lives here rather than on the read-only
-     * {@link GameQueryService} — it is a real, if transient, battlefield mutation, so it must
-     * run on the game thread like every other entry-time step.
+     * <p>Convenience wrapper for a single-subtype question. The work happens in
+     * {@link #resolveEnteringSubtypes}, which answers for every subtype at once; a caller that
+     * tests several subtypes against the same entering permanent should resolve once and reuse
+     * the result rather than calling this in a loop.
      *
      * @param gameData               current game state
      * @param entering               the permanent about to enter the battlefield
@@ -513,29 +511,64 @@ public class BattlefieldEntryService {
      */
     public boolean permanentWouldHaveSubtype(GameData gameData, Permanent entering, UUID controllerId,
                                               List<Permanent> simultaneouslyEntered, CardSubtype subtype) {
-        // Quick path: check natural/transient/granted subtypes
-        if (entering.getCard().getSubtypes().contains(subtype)) return true;
-        if (entering.getTransientSubtypes().contains(subtype)) return true;
-        if (entering.getGrantedSubtypes().contains(subtype)) return true;
+        return hasSubtype(resolveEnteringSubtypes(gameData, entering, controllerId, simultaneouslyEntered), subtype);
+    }
 
-        // Quick path: Changeling means all creature subtypes
-        if (gameQueryService.isCreatureSubtype(subtype)
-                && entering.getCard().getKeywords().contains(Keyword.CHANGELING)) return true;
+    /**
+     * Every subtype an entering permanent would have once static effects are applied, as resolved
+     * by a single {@link #resolveEnteringSubtypes} pass. {@code changeling} stands for "every
+     * creature type" (CR 702.73a) instead of being expanded into {@code subtypes}, because that
+     * full set is not enumerable here; {@link #hasSubtype} applies it.
+     */
+    private record EnteringSubtypes(Set<CardSubtype> subtypes, boolean changeling) {}
 
-        // Full lookahead: temporarily add entering permanent and remove simultaneously-entered
-        // permanents, compute static bonus, then restore original state.
+    private boolean hasSubtype(EnteringSubtypes resolved, CardSubtype subtype) {
+        if (resolved.subtypes().contains(subtype)) return true;
+        return resolved.changeling() && gameQueryService.isCreatureSubtype(subtype);
+    }
+
+    /**
+     * Runs the CR 614.12 lookahead once, collecting the entering permanent's natural, transient and
+     * already-granted subtypes plus everything the battlefield's static effects would grant it.
+     *
+     * <p><strong>This mutates the controller's live battlefield list.</strong> It temporarily
+     * splices the entering permanent in (and removes any {@code simultaneouslyEntered} permanents),
+     * runs {@link GameQueryService#computeStaticBonus}, then restores the list from a snapshot in a
+     * {@code finally} block. Two consequences for callers: it must run on the game thread like
+     * every other entry-time step, and <em>no caller may be iterating a battlefield list when it
+     * calls this</em> — doing so throws {@link java.util.ConcurrentModificationException}. Both
+     * counter callers therefore gather their matching effects first and resolve afterwards.
+     * That splice is also why this lives here rather than on the read-only
+     * {@link GameQueryService}.
+     *
+     * <p>The restore replays a snapshot rather than inverting each mutation, because
+     * {@code addAll} is not the inverse of {@code removeAll}: it would re-append the excluded
+     * permanents at the end and permanently reorder the battlefield. Order is load-bearing —
+     * it is the CR 613.7 equal-timestamp tiebreak in {@code LayerSystemService}, the order
+     * triggers reach the stack, and the index the wire protocol addresses permanents by.
+     */
+    private EnteringSubtypes resolveEnteringSubtypes(GameData gameData, Permanent entering, UUID controllerId,
+                                                      List<Permanent> simultaneouslyEntered) {
+        Set<CardSubtype> subtypes = EnumSet.noneOf(CardSubtype.class);
+        subtypes.addAll(entering.getCard().getSubtypes());
+        subtypes.addAll(entering.getTransientSubtypes());
+        subtypes.addAll(entering.getGrantedSubtypes());
+        boolean changeling = entering.getCard().getKeywords().contains(Keyword.CHANGELING);
+
         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+        List<Permanent> snapshot = List.copyOf(bf);
         bf.add(entering);
         bf.removeAll(simultaneouslyEntered);
         try {
             GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, entering);
-            if (bonus.grantedSubtypes().contains(subtype)) return true;
+            subtypes.addAll(bonus.grantedSubtypes());
             // A static effect might grant Changeling
-            return gameQueryService.isCreatureSubtype(subtype) && bonus.keywords().contains(Keyword.CHANGELING);
+            changeling |= bonus.keywords().contains(Keyword.CHANGELING);
         } finally {
-            bf.remove(entering);
-            bf.addAll(simultaneouslyEntered);
+            bf.clear();
+            bf.addAll(snapshot);
         }
+        return new EnteringSubtypes(subtypes, changeling);
     }
 
     /**
@@ -555,17 +588,18 @@ public class BattlefieldEntryService {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         if (graveyard == null || graveyard.isEmpty()) return;
 
-        int additionalCounters = 0;
-        for (Card card : graveyard) {
-            for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof GraveyardEnterWithAdditionalCountersEffect graveyardEffect) {
-                    if (permanentWouldHaveSubtype(gameData, permanent, controllerId,
-                            simultaneouslyEntered, graveyardEffect.subtype())) {
-                        additionalCounters += graveyardEffect.count();
-                    }
-                }
-            }
-        }
+        List<GraveyardEnterWithAdditionalCountersEffect> effects = graveyard.stream()
+                .flatMap(card -> card.getEffects(EffectSlot.STATIC).stream())
+                .filter(GraveyardEnterWithAdditionalCountersEffect.class::isInstance)
+                .map(GraveyardEnterWithAdditionalCountersEffect.class::cast)
+                .toList();
+        if (effects.isEmpty()) return;
+
+        EnteringSubtypes resolved = resolveEnteringSubtypes(gameData, permanent, controllerId, simultaneouslyEntered);
+        int additionalCounters = effects.stream()
+                .filter(effect -> hasSubtype(resolved, effect.subtype()))
+                .mapToInt(GraveyardEnterWithAdditionalCountersEffect::count)
+                .sum();
 
         if (additionalCounters > 0) {
             permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + additionalCounters);
@@ -591,17 +625,18 @@ public class BattlefieldEntryService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null || battlefield.isEmpty()) return;
 
-        int additionalCounters = 0;
-        for (Permanent source : battlefield) {
-            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof ControlledCreaturesEnterWithAdditionalCountersEffect controlledEffect) {
-                    if (permanentWouldHaveSubtype(gameData, permanent, controllerId,
-                            simultaneouslyEntered, controlledEffect.subtype())) {
-                        additionalCounters += controlledEffect.count();
-                    }
-                }
-            }
-        }
+        List<ControlledCreaturesEnterWithAdditionalCountersEffect> effects = battlefield.stream()
+                .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream())
+                .filter(ControlledCreaturesEnterWithAdditionalCountersEffect.class::isInstance)
+                .map(ControlledCreaturesEnterWithAdditionalCountersEffect.class::cast)
+                .toList();
+        if (effects.isEmpty()) return;
+
+        EnteringSubtypes resolved = resolveEnteringSubtypes(gameData, permanent, controllerId, simultaneouslyEntered);
+        int additionalCounters = effects.stream()
+                .filter(effect -> hasSubtype(resolved, effect.subtype()))
+                .mapToInt(ControlledCreaturesEnterWithAdditionalCountersEffect::count)
+                .sum();
 
         if (additionalCounters > 0) {
             permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + additionalCounters);
