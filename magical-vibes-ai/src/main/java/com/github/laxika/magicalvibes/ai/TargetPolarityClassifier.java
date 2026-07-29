@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
@@ -103,6 +104,15 @@ public class TargetPolarityClassifier {
         }
         if (effect instanceof ConditionalReplacementEffect replacement) {
             return classify(gameData, replacement.baseEffect(), aiPlayerId);
+        }
+        if (effect instanceof FlipCoinWinEffect flip) {
+            TargetPolarity won = flip.wrapped() == null
+                    ? null
+                    : classify(gameData, flip.wrapped(), aiPlayerId);
+            TargetPolarity lost = flip.lost() == null
+                    ? null
+                    : classify(gameData, flip.lost(), aiPlayerId);
+            return higherPriority(won, lost);
         }
         if (effect instanceof SequenceEffect sequence) {
             TargetPolarity best = null;
@@ -245,6 +255,7 @@ public class TargetPolarityClassifier {
             entry("ExileTargetPermanentUntilSourceLeavesEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PutTargetOnBottomOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PutTargetOnTopOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ReturnTargetPermanentToHandOrLibraryTopByPredicateEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ReturnTargetPermanentToHandThenEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("SacrificeTargetCreatureThenCreateTokensEqualToPowerEffect", TargetPolarity.HARMFUL_REMOVAL),
@@ -252,6 +263,7 @@ public class TargetPolarityClassifier {
             // uses (Hazoret's Favor) are safe: their target filters restrict candidates anyway.
             entry("SacrificeTargetPermanentAtEndStepEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ShuffleTargetPermanentIntoLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("PhaseOutTargetPermanentEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("WintersChillEffect", TargetPolarity.HARMFUL_REMOVAL),
 
             // The target (or a permanent tied to it) takes damage.
@@ -283,6 +295,7 @@ public class TargetPolarityClassifier {
             entry("BecomeColorlessEffect", TargetPolarity.HARMFUL),
             entry("MarkTargetCreatureExileInsteadOfDieThisTurnEffect", TargetPolarity.HARMFUL),
             entry("MassFightTargetCreatureEffect", TargetPolarity.HARMFUL),
+            entry("MakeTargetAttackingCreatureBlockedEffect", TargetPolarity.HARMFUL),
             entry("MustBlockSourceEffect", TargetPolarity.HARMFUL),
             entry("MustBlockTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("PreventTargetCreatureRegenerationThisTurnEffect", TargetPolarity.HARMFUL),

@@ -3,9 +3,16 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardScanner;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
+import com.github.laxika.magicalvibes.model.effect.MakeTargetAttackingCreatureBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -32,13 +39,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TargetPolarityGuardTest {
 
     @Test
+    void classifiesRepresentativePermanentTargetingShapesByDirection() {
+        GameTestHarness harness = new GameTestHarness();
+        GameData gd = harness.getGameData();
+        UUID aiPlayerId = harness.getPlayer2().getId();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+
+        assertThat(classifier.classify(gd,
+                new FlipCoinWinEffect(new BoostTargetCreatureEffect(1, 1)), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classify(gd, new MakeTargetAttackingCreatureBlockedEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL);
+        assertThat(classifier.classify(gd, new PhaseOutTargetPermanentEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
+        assertThat(classifier.classify(gd,
+                new PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect(
+                        new PermanentColorInPredicate(Set.of(CardColor.RED))), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
+    }
+
+    @Test
     void everyPermanentTargetingSpellOrEtbEffectClassifies() {
         GameTestHarness harness = new GameTestHarness();
         GameData gd = harness.getGameData();
         UUID aiPlayerId = harness.getPlayer2().getId();
-        AmountEvaluationService amountEvaluationService = new AmountEvaluationService(
-                new PredicateEvaluationService(harness.getGameQueryService()), harness.getGameQueryService());
-        TargetPolarityClassifier classifier = new TargetPolarityClassifier(amountEvaluationService);
+        TargetPolarityClassifier classifier = createClassifier(harness);
 
         Map<String, List<String>> unclassified = new TreeMap<>();
         Set<Class<?>> seenCardClasses = new HashSet<>();
@@ -75,5 +100,11 @@ class TargetPolarityGuardTest {
                         keeps the fallback deliberately. Unclassified (effect -> example cards): %s"""
                         .formatted(unclassified))
                 .isEmpty();
+    }
+
+    private TargetPolarityClassifier createClassifier(GameTestHarness harness) {
+        AmountEvaluationService amountEvaluationService = new AmountEvaluationService(
+                new PredicateEvaluationService(harness.getGameQueryService()), harness.getGameQueryService());
+        return new TargetPolarityClassifier(amountEvaluationService);
     }
 }
