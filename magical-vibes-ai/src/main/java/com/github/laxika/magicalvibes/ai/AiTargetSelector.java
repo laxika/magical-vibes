@@ -11,8 +11,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
@@ -696,6 +698,16 @@ class AiTargetSelector {
                             .filter(c -> !(c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC))).toList();
                 }
             }
+
+            CardEffect effectToValidate = effect instanceof ConditionalEffect conditional
+                    ? conditional.wrapped()
+                    : effect;
+            candidates = candidates.stream()
+                    .filter(candidate -> targetValidationService.checkEffectTargets(
+                            List.of(effectToValidate),
+                            new TargetValidationContext(gameData, candidate.getId(), Zone.GRAVEYARD,
+                                    card, candidate.getManaValue())).isEmpty())
+                    .toList();
 
             if (!candidates.isEmpty()) {
                 return new ArrayList<>(candidates);

@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KarnsTemporalSundering;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.b.BloodcrazedNeonate;
+import com.github.laxika.magicalvibes.cards.m.MorbidBloom;
 import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.p.PathToExile;
 import com.github.laxika.magicalvibes.cards.p.Pounce;
@@ -778,6 +779,17 @@ class AiTargetSelectorTest {
         List<Card> results = targetSelector.findValidGraveyardTargets(gd, spellCard, aiPlayer.getId());
 
         assertThat(results).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Morbid Bloom only selects creature cards from graveyards")
+    void findValidGraveyardTargets_morbidBloomFiltersToCreatures() {
+        setupGraveyardWithAllTypes();
+
+        List<Card> results = targetSelector.findValidGraveyardTargets(
+                gd, new MorbidBloom(), aiPlayer.getId());
+
+        assertThat(results).extracting(Card::getName).containsExactly("GY Creature");
     }
 
     // =====================================================================
