@@ -31,6 +31,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
@@ -65,6 +66,10 @@ abstract class AbstractDamageHandlerTest {
         gd = game.gameData();
         amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
         lenient().when(gameQueryService.getEnchantedPlayerDamageMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
+        // Reflect Damage is a pass-through when no replacement shield is set up.
+        lenient().when(damagePreventionService.applyReflectDamageToSourceControllerShield(
+                        eq(gd), nullable(UUID.class), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(2));
         // Saving Grace redirect (CR 614) is a pass-through in these unit tests — no redirect shields are set up,
         // so it must return the damage unchanged. Called unconditionally by dealDamageToPlayer and (for
         // controlled creatures) by dealCreatureDamage; the second UUID is null on the player path, so match with any().

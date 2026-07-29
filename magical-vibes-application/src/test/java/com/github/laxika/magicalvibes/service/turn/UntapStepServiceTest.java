@@ -51,6 +51,8 @@ class UntapStepServiceTest {
 
     @Mock
     private GameLogService gameLogService;
+    @Mock
+    private PhasingService phasingService;
 
     // Real support so untapPermanent actually untaps; its trigger service is an inert mock.
     @Spy
