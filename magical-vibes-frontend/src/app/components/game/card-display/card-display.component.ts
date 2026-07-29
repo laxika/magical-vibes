@@ -1,4 +1,4 @@
-import { Component, Input, HostBinding, OnInit, OnChanges, OnDestroy, AfterViewInit, AfterViewChecked, SimpleChanges, ElementRef, ViewChild, inject, signal } from '@angular/core';
+import { Component, Input, HostBinding, OnInit, OnChanges, OnDestroy, AfterViewInit, AfterViewChecked, ElementRef, ViewChild, inject, signal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Card, Permanent } from '../../../services/websocket.service';
 import { CardPreviewService } from '../../../services/card-preview.service';
@@ -68,6 +68,8 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
    *  so it fits separately and may go smaller than the rules text ever does. */
   private static readonly PREPARE_FONT_RATIO = 0.94;
   private static readonly PREPARE_MIN_FONT_SIZE = 4.5;
+  /** Set:number:face the art window currently holds, so repeat input changes cost nothing. */
+  private lastArtKey: string | null = null;
   private lastTextFingerprint = '';
   private lastNameFingerprint = '';
   private destroyed = false;
@@ -93,7 +95,7 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
   private touchStartY = 0;
 
   ngOnInit(): void {
-    this.fetchCardArt();
+    this.syncCardArt();
     CardDisplayComponent.whenFontsReady().then(() => this.refitAfterFontSwap());
   }
 
@@ -259,19 +261,48 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
     }
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if ((changes['card'] && !changes['card'].firstChange) || (changes['artFace'] && !changes['artFace'].firstChange)) {
-      if (this.card.setCode && this.card.collectorNumber) {
-        const cached = this.scryfallImageService.getCachedArtCropUrl(this.card.setCode, this.card.collectorNumber, this.artFace);
-        if (cached) {
-          this.artUrl.set(cached);
-        } else {
-          this.artUrl.set(null);
-          this.fetchCardArt();
-        }
-      } else {
-        this.artUrl.set(null);
-      }
+  ngOnChanges(): void {
+    this.syncCardArt();
+  }
+
+  /**
+   * The face whose art belongs in the window. Both faces of a double-faced card share one
+   * printing, so the face is the only thing that tells their art apart — and a transformed
+   * permanent is showing its back face no matter what the caller asked for.
+   */
+  private get artFaceToShow(): 'front' | 'back' {
+    return this.permanent?.transformed ? 'back' : this.artFace;
+  }
+
+  /**
+   * Points the art window at the current card and face, and fetches it if it is not already in
+   * hand. Cheap to call on every input change: a board update replaces the permanent object on
+   * every message, and the identity guard keeps that from re-requesting art that has not moved.
+   */
+  private syncCardArt(): void {
+    const setCode = this.card.setCode;
+    const collectorNumber = this.card.collectorNumber;
+    if (!setCode || !collectorNumber) {
+      this.lastArtKey = null;
+      this.artUrl.set(null);
+      return;
+    }
+
+    const face = this.artFaceToShow;
+    const key = `${setCode}:${collectorNumber}:${face}`;
+    if (key === this.lastArtKey) {
+      return;
+    }
+    this.lastArtKey = key;
+
+    const cached = this.scryfallImageService.getCachedArtCropUrl(setCode, collectorNumber, face);
+    if (cached) {
+      this.artUrl.set(cached);
+    } else {
+      this.artUrl.set(null);
+      this.scryfallImageService.getArtCropUrl(setCode, collectorNumber, face)
+        .then(url => { if (this.lastArtKey === key) this.artUrl.set(url); })
+        .catch(() => { if (this.lastArtKey === key) this.artUrl.set(null); });
     }
   }
 
@@ -295,14 +326,6 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
     }
     const classes = watermarkSymbolClasses(this.card.watermark);
     return classes ? `watermark ${classes}` : null;
-  }
-
-  private fetchCardArt(): void {
-    if (this.card.setCode && this.card.collectorNumber) {
-      this.scryfallImageService.getArtCropUrl(this.card.setCode, this.card.collectorNumber, this.artFace)
-        .then(url => this.artUrl.set(url))
-        .catch(() => { this.artUrl.set(null); });
-    }
   }
 
   private static readonly COLOR_CSS_MAP: Record<string, string> = {

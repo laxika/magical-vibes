@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Card } from '../../../services/websocket.service';
+import { Card, Permanent } from '../../../services/websocket.service';
 import { CardPreviewService } from '../../../services/card-preview.service';
 import { ScryfallCardDataService } from '../../../services/scryfall-card-data.service';
 import { ScryfallImageService } from '../../../services/scryfall-image.service';
@@ -34,10 +34,20 @@ export class FakeScryfallCardDataService {
   }
 }
 
-/** Art is irrelevant to text fitting — the window is a fixed 96px whether it loads or not. */
+/**
+ * Art is irrelevant to text fitting — the window is a fixed 96px whether it loads or not. What it
+ * asks for is not irrelevant: both faces of a double-faced card share one printing, so the face is
+ * the only thing that tells their art apart, and it records the requests so a test can say so.
+ */
 export class FakeScryfallImageService {
+  readonly requests: { setCode: string; collectorNumber: string; face: 'front' | 'back' }[] = [];
+
   getCachedArtCropUrl(): string | null { return null; }
-  getArtCropUrl(): Promise<string> { return Promise.reject(new Error('no art in tests')); }
+
+  getArtCropUrl(setCode: string, collectorNumber: string, face: 'front' | 'back' = 'front'): Promise<string> {
+    this.requests.push({ setCode, collectorNumber, face });
+    return Promise.reject(new Error('no art in tests'));
+  }
 }
 
 export class FakeCardPreviewService {
@@ -49,6 +59,7 @@ export class FakeCardPreviewService {
 export interface MountedCard {
   fixture: ComponentFixture<CardDisplayComponent>;
   cardData: FakeScryfallCardDataService;
+  art: FakeScryfallImageService;
   /** The rules text box, the element whose overflow is the whole question. */
   textBox: HTMLElement;
   host: HTMLElement;
@@ -60,20 +71,24 @@ export interface MountedCard {
   settle(): Promise<void>;
 }
 
-export async function mountCard(card: Card): Promise<MountedCard> {
+export async function mountCard(card: Card, permanent: Permanent | null = null): Promise<MountedCard> {
   const cardData = new FakeScryfallCardDataService();
+  const art = new FakeScryfallImageService();
 
   TestBed.configureTestingModule({
     imports: [CardDisplayComponent],
     providers: [
       { provide: ScryfallCardDataService, useValue: cardData },
-      { provide: ScryfallImageService, useClass: FakeScryfallImageService },
+      { provide: ScryfallImageService, useValue: art },
       { provide: CardPreviewService, useClass: FakeCardPreviewService },
     ],
   });
 
   const fixture = TestBed.createComponent(CardDisplayComponent);
   fixture.componentRef.setInput('card', card);
+  if (permanent) {
+    fixture.componentRef.setInput('permanent', permanent);
+  }
   fixture.detectChanges();
 
   const host = fixture.nativeElement as HTMLElement;
@@ -112,6 +127,7 @@ export async function mountCard(card: Card): Promise<MountedCard> {
   return {
     fixture,
     cardData,
+    art,
     get textBox() { return host.querySelector('.text-box') as HTMLElement; },
     host,
     settle,
@@ -172,4 +188,35 @@ const BASE_CARD: Card = {
 
 export function card(overrides: Partial<Card>): Card {
   return { ...BASE_CARD, ...overrides };
+}
+
+/** An untouched permanent holding the given card — override only what the test is about. */
+export function permanentOf(held: Card, overrides: Partial<Permanent> = {}): Permanent {
+  return {
+    id: 'test-permanent',
+    card: held,
+    tapped: false,
+    attacking: false,
+    blocking: false,
+    blockingTargets: [],
+    summoningSick: false,
+    powerModifier: 0,
+    toughnessModifier: 0,
+    grantedKeywords: [],
+    removedKeywords: [],
+    effectivePower: held.power ?? 0,
+    effectiveToughness: held.toughness ?? 0,
+    chosenColor: null,
+    chosenName: null,
+    regenerationShield: 0,
+    attachedTo: null,
+    cantBeBlocked: false,
+    animatedCreature: false,
+    counters: {},
+    attackTargetId: null,
+    markedDamage: 0,
+    transformed: false,
+    prepared: false,
+    ...overrides,
+  };
 }

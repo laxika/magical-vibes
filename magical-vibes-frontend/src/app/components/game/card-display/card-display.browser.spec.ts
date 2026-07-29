@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Card } from '../../../services/websocket.service';
-import { card, fontSizeOf, mountCard, overflowOf } from './card-display.harness';
+import { card, fontSizeOf, mountCard, overflowOf, permanentOf } from './card-display.harness';
 
 /**
  * What the unit tests cannot reach: whether a card's text actually fits the frame once the
@@ -435,5 +435,47 @@ describe('CardDisplayComponent — rules text fitting in real Chromium', () => {
     expect(fontSizeOf(nameEl)).toBeLessThan(12);
     expect(nameEl.scrollWidth - nameEl.clientWidth,
         'name is still truncated after shrinking').toBeLessThanOrEqual(1);
+  });
+});
+
+/**
+ * Both faces of a double-faced card are one printing, so set code and collector number cannot say
+ * which face to draw — only the face parameter can. A transformed permanent that asks for the
+ * front gets its front art back; one whose card has no printing at all gets nothing, which is how
+ * Ulvenwald Primordials came to sit on the battlefield with an empty art window (July 2026).
+ */
+describe('CardDisplayComponent — which face the art window asks for', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  const MYSTICS = card({ name: 'Ulvenwald Mystics', type: 'CREATURE', setCode: 'ISD', collectorNumber: '208' });
+  const PRIMORDIALS = card({ name: 'Ulvenwald Primordials', type: 'CREATURE', setCode: 'ISD', collectorNumber: '208' });
+
+  it('asks for the back face of a transformed permanent', async () => {
+    const mounted = await mountCard(PRIMORDIALS, permanentOf(PRIMORDIALS, { transformed: true }));
+
+    expect(mounted.art.requests).toContainEqual({ setCode: 'ISD', collectorNumber: '208', face: 'back' });
+  });
+
+  it('asks for the front face while the same printing is untransformed', async () => {
+    const mounted = await mountCard(MYSTICS, permanentOf(MYSTICS));
+
+    expect(mounted.art.requests).toContainEqual({ setCode: 'ISD', collectorNumber: '208', face: 'front' });
+  });
+
+  it('re-asks for the back face when a permanent transforms in place', async () => {
+    const mounted = await mountCard(MYSTICS, permanentOf(MYSTICS));
+    mounted.fixture.componentRef.setInput('card', PRIMORDIALS);
+    mounted.fixture.componentRef.setInput('permanent', permanentOf(PRIMORDIALS, { transformed: true }));
+    await mounted.settle();
+
+    expect(mounted.art.requests.map(r => r.face)).toEqual(['front', 'back']);
+  });
+
+  it('asks once when the board updates without the card or face moving', async () => {
+    const mounted = await mountCard(MYSTICS, permanentOf(MYSTICS));
+    mounted.fixture.componentRef.setInput('permanent', permanentOf(MYSTICS, { tapped: true }));
+    await mounted.settle();
+
+    expect(mounted.art.requests).toHaveLength(1);
   });
 });

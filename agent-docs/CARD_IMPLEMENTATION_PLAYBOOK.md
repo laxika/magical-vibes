@@ -138,7 +138,7 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/t/TemporalMastery.java`
 
 - Aftermath split (front half from hand; back half from graveyard only, then exile):
-  - Front class: normal SPELL effects + `setBackFaceCard(back)` + `getBackFaceClassName()` (same DFC wiring as transform)
+  - Front class: normal SPELL effects + `setBackFaceCard(new Back())` + `getBackFaceClassName()` (same DFC wiring as transform)
   - Back class (no `@CardRegistration`): its own SPELL effects + `addCastingOption(new FlashbackCast("{cost}"))` using the back half's mana cost
   - Do **not** put `FlashbackCast` on the front — that would allow casting the front half from the graveyard
   - Engine uses `Card.effectiveFlashbackCast()` / `graveyardCastHalf()` so GY cast pays the back cost, resolves the back effects/type, and exiles the parent card
@@ -471,7 +471,7 @@ boolean sharesType = (aIsChangeling && (bIsChangeling || !typesB.isEmpty()))
 
 1. **Back face class** — Create `BackFaceName.java` in the appropriate `cards/{letter}/` package. No `@CardRegistration`. Add only engine logic (activated abilities, effects). Scryfall auto-loads metadata.
 2. **Front face class** — Create `FrontFaceName.java` with `@CardRegistration`. In constructor:
-   - Instantiate back face: `BackFaceName backFace = new BackFaceName(); backFace.setSetCode(getSetCode()); backFace.setCollectorNumber(getCollectorNumber()); setBackFaceCard(backFace);`
+   - Instantiate back face: `setBackFaceCard(new BackFaceName());` — do **not** copy `getSetCode()`/`getCollectorNumber()` onto it. The printing identity does not exist yet inside the constructor; `CardPrinting.createCard()` stamps both faces afterwards.
    - Add front face abilities/effects
    - Override `getBackFaceClassName()` returning `"BackFaceName"`
 3. **Transform trigger** — Choose the right pattern:
@@ -489,10 +489,7 @@ boolean sharesType = (aIsChangeling && (bIsChangeling || !typesB.isEmpty()))
 @CardRegistration(set = "SET", collectorNumber = "NUM")
 public class FrontFace extends Card {
     public FrontFace() {
-        BackFace backFace = new BackFace();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new BackFace());
 
         // Front face abilities here
     }
