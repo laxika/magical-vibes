@@ -15,9 +15,11 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -29,6 +31,9 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import org.junit.jupiter.api.BeforeEach;
@@ -1125,6 +1130,42 @@ class AiManaManagerTest {
 
             manager.tapLandsForCost(gd, player1Id, "{G}", 0, action);
             assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("does not plan with a dynamic mana source that currently produces zero")
+        void skipsDynamicManaSourceThatCurrentlyProducesZero() {
+            Card sourceCard = createCreature("Hand-counting mana creature", 2, 2, CardColor.GREEN);
+            sourceCard.addActivatedAbility(new ActivatedAbility(
+                    true,
+                    null,
+                    List.of(new AwardManaEffect(
+                            ManaColor.GREEN,
+                            new MatchingCardsInHand(CountScope.CONTROLLER, new CardAllOfPredicate(List.of(
+                                    new CardTypePredicate(CardType.CREATURE),
+                                    new CardPowerAtLeastPredicate(5)))))),
+                    "{T}: Add {G} for each qualifying card in your hand."));
+            Permanent emptySource = new Permanent(sourceCard);
+            emptySource.setSummoningSick(false);
+            gd.playerBattlefields.get(player1Id).add(emptySource);
+            when(gameQueryService.isCreature(gd, emptySource)).thenReturn(true);
+            when(gameQueryService.canActivateManaAbility(gd, emptySource)).thenReturn(true);
+            Permanent forest = addUntappedLand("Forest", ManaColor.GREEN);
+            List<Integer> tappedIndices = new ArrayList<>();
+
+            AiManaManager.ManaTapAction action = (permanentIndex, abilityIndex) -> {
+                tappedIndices.add(permanentIndex);
+                if (permanentIndex == gd.playerBattlefields.get(player1Id).indexOf(forest)) {
+                    gd.playerManaPools.get(player1Id).add(ManaColor.GREEN);
+                }
+            };
+
+            manager.tapLandsForCost(gd, player1Id, "{1}", 0, action);
+
+            assertThat(tappedIndices)
+                    .containsExactly(gd.playerBattlefields.get(player1Id).indexOf(forest))
+                    .doesNotContain(gd.playerBattlefields.get(player1Id).indexOf(emptySource));
+            assertThat(gd.playerManaPools.get(player1Id).getTotal()).isEqualTo(1);
         }
 
         @Test

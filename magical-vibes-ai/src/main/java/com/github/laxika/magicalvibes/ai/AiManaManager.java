@@ -436,7 +436,8 @@ public class AiManaManager {
         int versatilityCost = Math.max(0, getProducedColors(card).size() - 1) * 5;
         if (hasOnTapManaEffects(card)) {
             return applyLandManaReplacement(replacementColors, manaOptionsForEffects(permanent.getId(), null,
-                    card.getEffects(EffectSlot.ON_TAP), triggerCost, versatilityCost, false));
+                    card.getEffects(EffectSlot.ON_TAP), triggerCost, versatilityCost, false,
+                    permanent, gameData));
         }
         if (skipChoiceSources && wouldManaAbilityTriggerChoice(card)) {
             return List.of();
@@ -453,7 +454,7 @@ public class AiManaManager {
                     .anyMatch(e -> e instanceof DealDamageToPlayersEffect dmg
                             && dmg.recipient() == DamageRecipient.CONTROLLER);
             options.addAll(manaOptionsForEffects(permanent.getId(), i,
-                    ability.getEffects(), triggerCost, versatilityCost, painful));
+                    ability.getEffects(), triggerCost, versatilityCost, painful, permanent, gameData));
         }
         return applyLandManaReplacement(replacementColors, options);
     }
@@ -503,7 +504,8 @@ public class AiManaManager {
 
     private List<ManaOption> manaOptionsForEffects(UUID permanentId, Integer abilityIndex,
                                                     List<CardEffect> effects, int triggerCost,
-                                                    int versatilityCost, boolean painful) {
+                                                    int versatilityCost, boolean painful,
+                                                    Permanent permanent, GameData gameData) {
         Map<ManaColor, Integer> fixedOutput = new EnumMap<>(ManaColor.class);
         int anyColorAmount = 0;
         for (CardEffect effect : effects) {
@@ -511,9 +513,11 @@ public class AiManaManager {
                 continue;
             }
             if (mana.estimatedManaColor() != null) {
-                int amount = Math.max(1, potentialManaService.estimateManaAmount(
-                        mana.estimatedManaAmount(), null, null));
-                fixedOutput.merge(mana.estimatedManaColor(), amount, Integer::sum);
+                int amount = potentialManaService.estimateManaAmount(
+                        mana.estimatedManaAmount(), permanent, gameData);
+                if (amount > 0) {
+                    fixedOutput.merge(mana.estimatedManaColor(), amount, Integer::sum);
+                }
             } else if (mana.estimatedCountsAllColors()) {
                 anyColorAmount += Math.max(1, mana.estimatedWildcardMana());
             } else if (mana.estimatedWildcardMana() > 0) {
