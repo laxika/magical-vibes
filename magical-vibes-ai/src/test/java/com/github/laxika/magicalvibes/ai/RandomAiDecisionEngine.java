@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
@@ -834,6 +835,8 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        removeBlockersMissingGreaterPowerPartner(gameData, battlefield, opponentBattlefield, assignments);
+
         // CR 509.1b: if only one unique blocker and it can't block alone, remove it.
         Set<Integer> uniqueBlockerIndices = new HashSet<>();
         for (BlockerAssignment a : assignments) {
@@ -849,6 +852,58 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
         log.info("Random AI: Declaring {} blockers in game {}", assignments.size(), gameId);
         sendBlockerDeclaration(gameData, new DeclareBlockersRequest(assignments));
+    }
+
+    private void removeBlockersMissingGreaterPowerPartner(
+            GameData gameData,
+            List<Permanent> battlefield,
+            List<Permanent> opponentBattlefield,
+            List<BlockerAssignment> assignments) {
+        boolean changed;
+        do {
+            Set<Integer> selectedBlockers = new HashSet<>();
+            for (BlockerAssignment assignment : assignments) {
+                selectedBlockers.add(assignment.blockerIndex());
+            }
+
+            Set<Integer> invalidRestrictedBlockers = new HashSet<>();
+            for (int blockerIdx : selectedBlockers) {
+                Permanent blocker = battlefield.get(blockerIdx);
+                boolean needsGreaterPowerPartner = blocker.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect.class::isInstance);
+                if (!needsGreaterPowerPartner) {
+                    continue;
+                }
+
+                int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);
+                boolean hasGreaterPowerPartner = selectedBlockers.stream()
+                        .filter(otherIdx -> otherIdx != blockerIdx)
+                        .map(battlefield::get)
+                        .anyMatch(other -> gameQueryService.getEffectivePower(gameData, other) > blockerPower);
+                if (!hasGreaterPowerPartner) {
+                    invalidRestrictedBlockers.add(blockerIdx);
+                }
+            }
+
+            changed = assignments.removeIf(
+                    assignment -> invalidRestrictedBlockers.contains(assignment.blockerIndex()));
+
+            Map<Integer, Integer> blockersPerAttacker = new HashMap<>();
+            for (BlockerAssignment assignment : assignments) {
+                blockersPerAttacker.merge(assignment.attackerIndex(), 1, Integer::sum);
+            }
+            Set<Integer> undersizedBlocks = new HashSet<>();
+            for (var entry : blockersPerAttacker.entrySet()) {
+                Permanent attacker = opponentBattlefield.get(entry.getKey());
+                int minimumBlockers = AiUtils.minimumBlockersRequiredToBlock(
+                        gameData, gameQueryService, attacker);
+                if (entry.getValue() < minimumBlockers) {
+                    undersizedBlocks.add(entry.getKey());
+                }
+            }
+            changed |= assignments.removeIf(
+                    assignment -> undersizedBlocks.contains(assignment.attackerIndex()));
+        } while (changed);
     }
 
     /**
