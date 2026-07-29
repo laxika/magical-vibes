@@ -109,6 +109,17 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
+        if (context instanceof ChoiceContext.SpellCreatureTypeChoice) {
+            List<String> options = interaction.options();
+            if (options.isEmpty()) {
+                return;
+            }
+            String chosenSubtype = options.contains("HUMAN") ? "HUMAN" : options.getFirst();
+            log.info("AI: Choosing creature type {} for a spell in game {}", chosenSubtype, gameId);
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenSubtype));
+            return;
+        }
+
         if (context instanceof ChoiceContext.NumberChoice) {
             // Options are the numbers in range as strings; pick the middle option — a balanced pick
             // for Shapeshifter-style "power = N, toughness = max − N" cards (avoids a 0-toughness body).
