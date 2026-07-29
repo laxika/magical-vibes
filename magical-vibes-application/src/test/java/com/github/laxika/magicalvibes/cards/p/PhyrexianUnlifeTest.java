@@ -167,15 +167,7 @@ class PhyrexianUnlifeTest extends BaseCardTest {
         // Remove Phyrexian Unlife
         gd.playerBattlefields.get(player1.getId()).clear();
 
-        // Trigger a win check via damage
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
-
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.runStateBasedActions();
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }

@@ -51,7 +51,7 @@ class GrindDustTest extends BaseCardTest {
         Permanent alsoCountered = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent clean = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         withCounter.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        alsoCountered.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+        alsoCountered.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
 
         harness.setGraveyard(player1, List.of(new GrindDust()));
         harness.addMana(player1, ManaColor.WHITE, 1);

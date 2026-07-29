@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BlackKnight;
 import com.github.laxika.magicalvibes.cards.c.ChildOfNight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NantukoHusk;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -122,7 +123,7 @@ class DemonOfDeathsGateTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Alternate cost succeeds at exactly 6 life (leaving 0 per CR 119.4)")
+    @DisplayName("Alternate cost can be paid at exactly 6 life, then its controller loses at 0 life")
     void alternateCostSucceedsAtExactLife() {
         harness.addToBattlefield(player1, new ChildOfNight());
         harness.addToBattlefield(player1, new BlackKnight());
@@ -135,10 +136,10 @@ class DemonOfDeathsGateTest extends BaseCardTest {
         harness.setLife(player1, 6);
         harness.setHand(player1, List.of(new DemonOfDeathsGate()));
         harness.castCreatureWithAlternateCost(player1, 0, List.of(child, knight, husk));
-        harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Demon of Death's Gate");
         assertThat(gd.getLife(player1.getId())).isEqualTo(0);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        harness.assertNotOnBattlefield(player1, "Demon of Death's Gate");
     }
 
     @Test

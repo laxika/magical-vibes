@@ -369,6 +369,7 @@ class AutoPassServiceTest {
 
             sut.resolveAutoPass(gd, ignored -> {});
 
+            verify(stateBasedActionService, never()).performStateBasedActions(gd);
             verifyStateInvalidated();
         }
 

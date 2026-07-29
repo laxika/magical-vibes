@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LilianaVess;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -31,7 +32,8 @@ class CruelRealityTest extends BaseCardTest {
     @DisplayName("Enchanted player sacrifices their only planeswalker at upkeep")
     void sacrificesOnlyPlaneswalker() {
         placeCurseOnPlayer(player1, player2);
-        harness.addToBattlefield(player2, new LilianaVess());
+        Permanent liliana = harness.addToBattlefieldAndReturn(player2, new LilianaVess());
+        liliana.setCounterCount(CounterType.LOYALTY, 5);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         advanceToUpkeep(player2);

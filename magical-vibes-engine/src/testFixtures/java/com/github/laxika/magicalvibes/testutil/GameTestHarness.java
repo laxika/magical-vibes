@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -948,7 +949,7 @@ public class GameTestHarness {
 
     public void passBothPriorities() {
         // CR 603.5: If already awaiting input (e.g. may ability prompt), return immediately.
-        if (gameData.interaction.isAwaitingInput()) {
+        if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()) {
             return;
         }
 
@@ -973,7 +974,8 @@ public class GameTestHarness {
         // After auto-pass rework, the first pass may trigger an auto-pass cascade
         // that handles the second player too (advancing the step or resolving the stack).
         // Also stop if the game entered an awaiting-input state (e.g. may ability prompt).
-        if (gameData.currentStep != stepBefore || gameData.stack.size() != stackSizeBefore
+        if (gameData.status != GameStatus.RUNNING
+                || gameData.currentStep != stepBefore || gameData.stack.size() != stackSizeBefore
                 || gameData.interaction.isAwaitingInput()) {
             return;
         }

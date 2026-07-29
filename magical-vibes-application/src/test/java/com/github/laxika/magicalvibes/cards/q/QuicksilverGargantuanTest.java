@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Nightmare;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -192,6 +193,7 @@ class QuicksilverGargantuanTest extends BaseCardTest {
     @DisplayName("Quicksilver Gargantuan does not copy P/T characteristic-defining ability (CR 707.9d)")
     void doesNotCopyPTCharacteristicDefiningAbility() {
         // Nightmare has */* where * = number of Swamps you control
+        harness.addToBattlefield(player2, new Swamp());
         harness.addToBattlefield(player2, new Nightmare());
         harness.setHand(player1, List.of(new QuicksilverGargantuan()));
         harness.addMana(player1, ManaColor.BLUE, 7);

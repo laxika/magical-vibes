@@ -84,6 +84,10 @@ public class AutoPassService {
      */
     public void resolveAutoPass(GameData gameData, Consumer<GameData> advanceStep) {
         if (gameData.status != GameStatus.RUNNING) return;
+        if (gameData.interaction.isAwaitingInput()) {
+            invalidateForAllPlayers(gameData);
+            return;
+        }
 
         // CR 117.5: State-based actions happen before triggered abilities are put on the stack
         // and before the next player receives priority. Keeping the check at this common

@@ -46,11 +46,12 @@ class OverbeingOfMythTest extends BaseCardTest {
     void drawsExtraOnDrawStep() {
         addOverbeingReady(player1);
         gd.playerHands.get(player1.getId()).clear();
+        gd.playerHands.get(player1.getId()).add(new GrizzlyBears());
 
         advanceToDraw(player1); // turn-based draw: 1 card
         harness.passBothPriorities(); // resolve Overbeing trigger: +1 card
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
     }
 
     @Test
@@ -58,10 +59,11 @@ class OverbeingOfMythTest extends BaseCardTest {
     void doesNotDrawOnOpponentDrawStep() {
         addOverbeingReady(player1);
         gd.playerHands.get(player1.getId()).clear();
+        gd.playerHands.get(player1.getId()).add(new GrizzlyBears());
 
         advanceToDraw(player2);
 
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     private void advanceToDraw(Player activePlayer) {

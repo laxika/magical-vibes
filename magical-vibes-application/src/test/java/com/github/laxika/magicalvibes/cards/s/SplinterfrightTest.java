@@ -115,6 +115,8 @@ class SplinterfrightTest extends BaseCardTest {
     @DisplayName("Milled creature cards increase Splinterfright's P/T")
     void milledCreaturesIncreasePT() {
         Permanent perm = addSplinterfrightReady(player1);
+        gd.playerGraveyards.get(player1.getId()).clear();
+        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
 
         // Put creature cards on top of library so they get milled
         gd.playerDecks.get(player1.getId()).clear();
@@ -124,14 +126,14 @@ class SplinterfrightTest extends BaseCardTest {
         deck.add(new GrizzlyBears()); // extra card so library isn't empty
         gd.playerDecks.get(player1.getId()).addAll(deck);
 
-        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(1);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve mill trigger
 
         // 2 creature cards milled into graveyard
-        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(3);
     }
 
     // ===== Helpers =====

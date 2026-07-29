@@ -77,13 +77,13 @@ class TatyovaBenthicDruidTest extends BaseCardTest {
         // Two triggers (one per Tatyova)
         assertThat(gd.stack).hasSize(2);
 
-        // Resolve the first landfall trigger. The two legendary Tatyovas then break the legend rule
+        // Before priority is handed off, the two legendary Tatyovas break the legend rule
         // (CR 704.5j, a state-based action): the controller keeps one and the other is put into the
         // graveyard. Both landfall triggers still resolve — they triggered before one Tatyova left.
-        harness.passBothPriorities();
         UUID keptTatyova = findPermanent(player1, "Tatyova, Benthic Druid").getId();
         harness.handlePermanentChosen(player1, keptTatyova);
-        harness.passBothPriorities(); // Resolve the second trigger
+        harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.assertLife(player1, 22);
         // Hand: setHand(1) -> play land(0) -> draw 1 + draw 1 = 2

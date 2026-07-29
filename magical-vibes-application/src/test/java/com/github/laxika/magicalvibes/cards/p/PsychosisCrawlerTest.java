@@ -107,7 +107,7 @@ class PsychosisCrawlerTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         // Counsel of the Soratami draws 2 cards
-        harness.setHand(player1, List.of(new CounselOfTheSoratami()));
+        harness.setHand(player1, List.of(new CounselOfTheSoratami(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castSorcery(player1, 0, 0);

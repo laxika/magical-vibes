@@ -1112,7 +1112,8 @@ class SevenLayerTest extends BaseCardTest {
         @DisplayName("A one-shot pump (7c) applies on top of the CDA value (7a)")
         void cdaPlusOneShotPump() {
             Permanent maro = addReady(player1, new Maro());
-            castGiantGrowth(player1, maro);
+            harness.setHand(player1, cards(1));
+            castGiantGrowth(player2, maro);
             harness.setHand(player1, cards(3));
 
             assertThat(power(maro)).isEqualTo(6);
@@ -1123,7 +1124,8 @@ class SevenLayerTest extends BaseCardTest {
         @DisplayName("A 7b setter overrides the CDA regardless of the CDA changing afterwards")
         void basePTSetterOverridesCda() {
             Permanent maro = addReady(player1, new Maro());
-            castDiminish(player1, maro);
+            harness.setHand(player1, cards(1));
+            castDiminish(player2, maro);
             harness.setHand(player1, cards(5));
 
             // 7b applies after 7a in layer order: Maro is 1/1 no matter the hand size.

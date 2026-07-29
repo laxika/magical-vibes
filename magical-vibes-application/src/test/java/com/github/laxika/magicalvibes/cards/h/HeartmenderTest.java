@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,15 +29,15 @@ class HeartmenderTest extends BaseCardTest {
     @DisplayName("Upkeep removes one -1/-1 counter from each creature you control, clamping at zero")
     void upkeepRemovesOneMinusCounterFromEachControlledCreature() {
         harness.addToBattlefield(player1, new Heartmender());
-        Permanent bearsA = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent bearsB = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bearsA.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
-        bearsB.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        Permanent creatureA = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        Permanent creatureB = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creatureA.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+        creatureB.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
 
         advanceToUpkeepAndResolve(player1);
 
-        assertThat(bearsA.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(bearsB.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
+        assertThat(creatureA.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(creatureB.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
     }
 
     @Test
