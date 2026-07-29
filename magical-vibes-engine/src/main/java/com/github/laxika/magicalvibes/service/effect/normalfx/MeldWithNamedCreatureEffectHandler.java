@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.cards.CardScanner;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -104,10 +105,7 @@ public class MeldWithNamedCreatureEffectHandler implements NormalEffectHandlerBe
         gameData.removeFromExile(sourceCard.getId());
         gameData.removeFromExile(partnerCard.getId());
 
-        Card meldResult = instantiateMeldResult(meldResultTemplate);
-        if (sourceCard.getSetCode() != null) {
-            meldResult.setSetCode(sourceCard.getSetCode());
-        }
+        Card meldResult = instantiateMeldResult(meldResultTemplate, sourceCard.getSetCode());
         Permanent melded = new Permanent(meldResult);
         melded.getMeldComponentCards().add(sourceCard);
         melded.getMeldComponentCards().add(partnerCard);
@@ -125,12 +123,29 @@ public class MeldWithNamedCreatureEffectHandler implements NormalEffectHandlerBe
                 gameData.id, sourceName, partnerNameLogged, meldResult.getName());
     }
 
-    private static Card instantiateMeldResult(Card template) {
+    /**
+     * Builds the meld result and gives it the printing identity the client draws it from.
+     *
+     * <p>The melding halves' own printing is not it: a meld result is a separate card with its own
+     * collector number, so Gisela's INR 24 would fetch Gisela's art for Brisela. The set is the
+     * melding card's — a meld result is only ever printed alongside its halves — and the collector
+     * number comes from the meld result class's own registration in that set. A set that prints
+     * the halves without the result leaves the number unset, exactly as before.
+     */
+    private static Card instantiateMeldResult(Card template, String setCode) {
+        Class<? extends Card> meldResultClass = template.getClass();
+        Card meldResult;
         try {
-            return template.getClass().getDeclaredConstructor().newInstance();
+            meldResult = meldResultClass.getDeclaredConstructor().newInstance();
         } catch (ReflectiveOperationException ex) {
             throw new IllegalStateException(
-                    "Failed to instantiate meld result " + template.getClass().getSimpleName(), ex);
+                    "Failed to instantiate meld result " + meldResultClass.getSimpleName(), ex);
         }
+        if (setCode != null) {
+            meldResult.setSetCode(setCode);
+            CardScanner.collectorNumberOf(meldResultClass, setCode)
+                    .ifPresent(meldResult::setCollectorNumber);
+        }
+        return meldResult;
     }
 }

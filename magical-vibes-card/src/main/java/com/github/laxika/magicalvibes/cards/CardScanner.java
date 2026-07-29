@@ -12,6 +12,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public final class CardScanner {
@@ -72,6 +73,24 @@ public final class CardScanner {
             }
             result.get(cardSet).add(new CardPrinting(reg.set(), reg.collectorNumber(), factory));
         }
+    }
+
+    /**
+     * The collector number {@code cardClass} is registered under in {@code setCode}, empty if it
+     * has no printing there.
+     *
+     * <p>For the cards the engine builds outside the printing list. A meld result is its own
+     * printing — Brisela, Voice of Nightmares is INR 14b, not Gisela's INR 24 — and melding is the
+     * only way it reaches the battlefield, so nothing ever hands the engine its {@link
+     * CardPrinting} and it would otherwise carry no collector number at all.
+     */
+    public static Optional<String> collectorNumberOf(Class<? extends Card> cardClass, String setCode) {
+        for (CardRegistration reg : cardClass.getAnnotationsByType(CardRegistration.class)) {
+            if (reg.set().equals(setCode)) {
+                return Optional.of(reg.collectorNumber());
+            }
+        }
+        return Optional.empty();
     }
 
     /** Leading integer of a collector number ("14b" → 14, "24" → 24). */

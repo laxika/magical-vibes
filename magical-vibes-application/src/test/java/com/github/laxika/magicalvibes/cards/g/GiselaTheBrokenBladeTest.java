@@ -32,6 +32,23 @@ class GiselaTheBrokenBladeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Brisela enters under her own printing, not Gisela's")
+    void briselaEntersUnderHerOwnPrinting() {
+        Card gisela = new GiselaTheBrokenBlade();
+        gisela.setSetCode("INR");
+        gisela.setCollectorNumber("24");
+        harness.addToBattlefield(player1, gisela);
+        harness.addToBattlefield(player1, namedBruna());
+
+        advanceToControllerEndStep();
+        harness.passBothPriorities();
+
+        Card brisela = findPermanent(player1, "Brisela, Voice of Nightmares").getCard();
+        assertThat(brisela.getSetCode()).isEqualTo("INR");
+        assertThat(brisela.getCollectorNumber()).isEqualTo("14b");
+    }
+
+    @Test
     @DisplayName("End step does not trigger without Bruna")
     void doesNotTriggerWithoutBruna() {
         harness.addToBattlefield(player1, new GiselaTheBrokenBlade());
