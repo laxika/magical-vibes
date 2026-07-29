@@ -148,7 +148,7 @@ class StepTriggerServiceTest {
                 drawService,
                 gameQueryService,
                 predicateEvaluationService,
-                new ConditionEvaluationService(gameQueryService, predicateEvaluationService, new StaticEffectSupport(gameQueryService, predicateEvaluationService)),
+                new ConditionEvaluationService(gameQueryService, predicateEvaluationService, new StaticEffectSupport(gameQueryService)),
                 gameLogService,
                 playerInputService,
                 permanentRemovalService,

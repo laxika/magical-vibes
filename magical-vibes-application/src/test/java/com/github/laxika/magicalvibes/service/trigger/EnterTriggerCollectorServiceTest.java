@@ -76,7 +76,7 @@ class EnterTriggerCollectorServiceTest {
 
         service = new TriggerCollectionService(registry, gameOutcomeService, playerInputService,
                 triggeredAbilityQueueService, gameQueryService, predicateEvaluationService,
-                new ConditionEvaluationService(gameQueryService, predicateEvaluationService, new StaticEffectSupport(gameQueryService, predicateEvaluationService)),
+                new ConditionEvaluationService(gameQueryService, predicateEvaluationService, new StaticEffectSupport(gameQueryService)),
                 gameLogService, etbTokenTargetService);
 
         player1Id = UUID.randomUUID();

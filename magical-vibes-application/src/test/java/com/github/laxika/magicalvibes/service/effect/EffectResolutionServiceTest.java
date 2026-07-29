@@ -93,7 +93,7 @@ class EffectResolutionServiceTest {
     void setUp() {
         lenient().when(stateBasedActionServiceProvider.getObject()).thenReturn(stateBasedActionService);
         effectResolutionService = new EffectResolutionService(
-                new ConditionEvaluationService(gameQueryService, predicateEvaluationService, new StaticEffectSupport(gameQueryService, predicateEvaluationService)),
+                new ConditionEvaluationService(gameQueryService, predicateEvaluationService, new StaticEffectSupport(gameQueryService)),
                 registry, gameLogService, permanentRemovalService, damageSupport, gameOutcomeService,
                 stateBasedActionServiceProvider);
         player1Id = UUID.randomUUID();

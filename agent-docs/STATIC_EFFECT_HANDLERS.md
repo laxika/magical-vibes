@@ -91,13 +91,8 @@ generic handlers — do NOT add per-condition handlers:
 - `boolean matchesCreatureScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter)`
 - `boolean isEffectivelyCreature(Permanent permanent, boolean hasAnimateArtifacts)`
 - `boolean isEffectivelyCreature(GameData gameData, Permanent permanent, boolean hasAnimateArtifacts)`
-- `int countControlledPermanents(StaticEffectContext context, Predicate<Permanent> filter)`
 - `UUID findControllerId(GameData gameData, Permanent permanent)`
 - `boolean hasAnimateArtifactEffect(GameData gameData)`
-- `int countCardsInAllGraveyards(GameData gameData, CardPredicate filter)`
-- `boolean isControllerLifeAtOrBelow(StaticEffectContext context, int threshold)`
-- `boolean isTopCardOfLibraryColor(StaticEffectContext context, CardColor color)`
-- `boolean isEquipped(StaticEffectContext context)`
 - `void applySelfOnlyConditionalStaticEffect(StaticEffectContext context, CardEffect wrapped, StaticBonusAccumulator accumulator)`
 
 ## Adding a new static effect handler

@@ -27,7 +27,7 @@ abstract class AbstractStaticEffectHandlerTest {
 
     @BeforeEach
     void setUpStaticEffectHandlerBase() {
-        StaticEffectSupport support = new StaticEffectSupport(gameQueryService, predicateEvaluationService);
+        StaticEffectSupport support = new StaticEffectSupport(gameQueryService);
         registry = new StaticEffectHandlerRegistry();
         StaticEffectHandlerBean handler = instantiateHandlerUnderTest(support, gameQueryService);
         if (handler.selfOnly()) {

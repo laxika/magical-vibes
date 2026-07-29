@@ -73,7 +73,7 @@ public class BlockLegalityService {
         PredicateEvaluationService predicates = new PredicateEvaluationService(gameQueryService);
         return new BlockLegalityService(gameQueryService, predicates,
                 new ConditionEvaluationService(gameQueryService, predicates,
-                        new StaticEffectSupport(gameQueryService, predicates)),
+                        new StaticEffectSupport(gameQueryService)),
                 new BlockDenialMessageService());
     }
 

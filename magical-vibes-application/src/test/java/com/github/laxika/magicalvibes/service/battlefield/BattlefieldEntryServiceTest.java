@@ -80,7 +80,7 @@ class BattlefieldEntryServiceTest {
         PredicateEvaluationService predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         ConditionEvaluationService conditionEvaluationService = new ConditionEvaluationService(
                 gameQueryService, predicateEvaluationService,
-                new StaticEffectSupport(gameQueryService, predicateEvaluationService));
+                new StaticEffectSupport(gameQueryService));
         service = new BattlefieldEntryService(
                 gameQueryService, gameLogService, playerInputService,
                 permanentCopierService, triggerCollectionService,
@@ -314,7 +314,7 @@ class BattlefieldEntryServiceTest {
 
             ConditionEvaluationService lookaheadConditions = new ConditionEvaluationService(
                     lookaheadGqs, lookaheadEvaluator,
-                    new StaticEffectSupport(lookaheadGqs, lookaheadEvaluator));
+                    new StaticEffectSupport(lookaheadGqs));
             lookaheadService = new BattlefieldEntryService(
                     lookaheadGqs, gameLogService, playerInputService,
                     permanentCopierService, triggerCollectionService,

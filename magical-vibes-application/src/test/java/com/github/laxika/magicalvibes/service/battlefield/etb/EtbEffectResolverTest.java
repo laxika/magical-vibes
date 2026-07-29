@@ -92,7 +92,7 @@ class EtbEffectResolverTest {
     @BeforeEach
     void setUp() {
         resolver = new EtbEffectResolver(new ConditionEvaluationService(gameQueryService, predicateEvaluationService,
-                new StaticEffectSupport(gameQueryService, predicateEvaluationService)));
+                new StaticEffectSupport(gameQueryService)));
         controllerId = UUID.randomUUID();
         gameData = new GameData(UUID.randomUUID(), "test", controllerId, "Player1");
         card = new Card();

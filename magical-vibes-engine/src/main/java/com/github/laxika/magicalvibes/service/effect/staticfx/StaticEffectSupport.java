@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -21,7 +20,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -52,7 +50,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredi
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
@@ -63,7 +60,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Predicate;
 
 /**
  * Shared helpers used by every static effect handler. Per-effect {@link StaticEffectHandlerBean}
@@ -74,7 +70,6 @@ import java.util.function.Predicate;
 public class StaticEffectSupport {
 
     private final GameQueryService gameQueryService;
-    private final PredicateEvaluationService predicateEvaluationService;
 
     private static final PermanentIsCreaturePredicate CREATURE_PREDICATE = new PermanentIsCreaturePredicate();
 
@@ -236,50 +231,6 @@ public class StaticEffectSupport {
                 || scope == GrantScope.ALL_CREATURES
                 || scope == GrantScope.OWN_PERMANENTS;
         return selfCoveringScope && matchesStaticFilter(context.target(), filter);
-    }
-
-    public boolean isEquipped(StaticEffectContext context) {
-        for (UUID playerId : context.gameData().orderedPlayerIds) {
-            List<Permanent> bf = context.gameData().playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent permanent : bf) {
-                if (permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
-                        && permanent.isAttached()
-                        && permanent.getAttachedTo().equals(context.target().getId())) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public boolean isControllerLifeAtOrBelow(StaticEffectContext context, int threshold) {
-        UUID controllerId = context.sourceControllerId();
-        if (controllerId == null) return false;
-        int lifeTotal = context.gameData().playerLifeTotals.getOrDefault(controllerId, 20);
-        return lifeTotal <= threshold;
-    }
-
-    public boolean isTopCardOfLibraryColor(StaticEffectContext context, CardColor color) {
-        UUID controllerId = context.sourceControllerId();
-        if (controllerId == null) return false;
-        List<Card> deck = context.gameData().playerDecks.get(controllerId);
-        if (deck == null || deck.isEmpty()) return false;
-        return deck.getFirst().getColors().contains(color);
-    }
-
-    public int countControlledPermanents(StaticEffectContext context, Predicate<Permanent> filter) {
-        UUID controllerId = context.sourceControllerId();
-        if (controllerId == null) return 0;
-
-        List<Permanent> battlefield = context.gameData().playerBattlefields.get(controllerId);
-        if (battlefield == null) return 0;
-
-        int count = 0;
-        for (Permanent permanent : battlefield) {
-            if (filter.test(permanent)) count++;
-        }
-        return count;
     }
 
     public UUID findControllerId(GameData gameData, Permanent permanent) {
@@ -475,21 +426,6 @@ public class StaticEffectSupport {
 
     public static boolean isCreatureSubtype(CardSubtype subtype) {
         return !NON_CREATURE_SUBTYPES.contains(subtype);
-    }
-
-    public int countCardsInAllGraveyards(GameData gameData, CardPredicate filter) {
-        int count = 0;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard == null) continue;
-            for (Card card : graveyard) {
-                if (card.isToken()) continue;
-                if (predicateEvaluationService.matchesCardPredicate(card, filter, null)) {
-                    count++;
-                }
-            }
-        }
-        return count;
     }
 
     public boolean hasAnimateArtifactEffect(GameData gameData) {
