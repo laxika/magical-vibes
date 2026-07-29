@@ -2,6 +2,7 @@
 #   .\scripts\implement-cards.ps1 sos 1 5
 #   .\scripts\implement-cards.ps1 sos 1 5 -Runner claude
 #   .\scripts\implement-cards.ps1 sos 1 5 -Runner grok
+#   .\scripts\implement-cards.ps1 sos 1 5 -Runner codex
 #   .\scripts\implement-cards.ps1 sos 1 5 -Effort xhigh
 
 param(
@@ -17,19 +18,22 @@ param(
     [Parameter(Mandatory = $true, Position = 2)]
     [int] $To,
 
-    # Which CLI to run: "claude" (default) or "grok" (Cursor agent with Grok).
-    [ValidateSet("claude", "grok")]
+    # Which CLI to run: "claude" (default), "grok" (Cursor agent with Grok),
+    # or "codex".
+    [ValidateSet("claude", "grok", "codex")]
     [string] $Runner = "claude",
 
     # Model override. Defaults depend on -Runner:
     #   claude -> claude-opus-5
     #   grok   -> cursor-grok-4.5-high
+    #   codex  -> gpt-5.6-sol
     [string] $Model,
 
-    # Reasoning effort for the claude runner. Ignored by -Runner grok, which
-    # encodes effort in the model name instead.
+    # Reasoning effort for the claude and codex runners. Defaults to "medium"
+    # for codex and "low" for claude. Ignored by -Runner grok, which encodes
+    # effort in the model name instead.
     [ValidateSet("low", "medium", "high", "xhigh", "max")]
-    [string] $Effort = "low"
+    [string] $Effort
 )
 
 $ErrorActionPreference = "Stop"
@@ -40,14 +44,26 @@ if ($From -gt $To) {
 }
 
 if (-not $PSBoundParameters.ContainsKey("Model") -or [string]::IsNullOrWhiteSpace($Model)) {
-    $Model = if ($Runner -eq "grok") { "cursor-grok-4.5-high" } else { "claude-opus-5" }
+    $Model = switch ($Runner) {
+        "grok" { "cursor-grok-4.5-high" }
+        "codex" { "gpt-5.6-sol" }
+        default { "claude-opus-5" }
+    }
+}
+
+if (-not $PSBoundParameters.ContainsKey("Effort") -or [string]::IsNullOrWhiteSpace($Effort)) {
+    $Effort = if ($Runner -eq "codex") { "medium" } else { "low" }
 }
 
 if ($Runner -eq "grok" -and $PSBoundParameters.ContainsKey("Effort")) {
-    Write-Warning "-Effort is only supported by the claude runner; ignoring it for grok."
+    Write-Warning "-Effort is only supported by the claude and codex runners; ignoring it for grok."
 }
 
-$cliName = if ($Runner -eq "grok") { "agent" } else { "claude" }
+$cliName = switch ($Runner) {
+    "grok" { "agent" }
+    "codex" { "codex" }
+    default { "claude" }
+}
 if (-not (Get-Command $cliName -ErrorAction SilentlyContinue)) {
     Write-Error "The '$cliName' CLI was not found on PATH."
     exit 1
@@ -57,6 +73,7 @@ $systemPrompt = "Do not ask clarifying questions, wait for confirmation, or pres
 
 $total = $To - $From + 1
 $index = 0
+$repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 
 if ($Runner -eq "grok") {
     Write-Host "Runner: $Runner  Model: $Model"
@@ -84,6 +101,10 @@ for ($cardId = $From; $cardId -le $To; $cardId++) {
 
     if ($Runner -eq "grok") {
         & agent -p --force --trust --model $Model "$prompt`n`n$systemPrompt"
+    }
+    elseif ($Runner -eq "codex") {
+        $reasoningConfig = "model_reasoning_effort=`"$Effort`""
+        & codex --search --ask-for-approval never exec --model $Model --config $reasoningConfig --cd $repositoryRoot "$prompt`n`n$systemPrompt"
     }
     else {
         & claude --permission-mode auto --model $Model --effort $Effort -p $prompt --append-system-prompt $systemPrompt
