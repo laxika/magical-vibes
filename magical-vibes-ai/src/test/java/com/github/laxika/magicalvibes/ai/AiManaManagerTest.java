@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourc
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -79,6 +80,9 @@ class AiManaManagerTest {
     @Mock
     private GameQueryService gameQueryService;
 
+    @Mock
+    private CastingCostService castingCostService;
+
     private AiManaManager manager;
 
     private GameData gd;
@@ -86,7 +90,7 @@ class AiManaManagerTest {
 
     @BeforeEach
     void setUp() {
-        manager = new AiManaManager(gameQueryService);
+        manager = new AiManaManager(gameQueryService, castingCostService);
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
         gd.orderedPlayerIds.add(player1Id);
@@ -387,6 +391,33 @@ class AiManaManagerTest {
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("skips a source whose activated abilities are taxed")
+        void skipsTaxedManaSource() {
+            Permanent taxed = addUntappedDualLand("Taxed Land", ManaColor.RED, ManaColor.GREEN);
+            when(castingCostService.getActivatedAbilityActivationTax(gd, taxed)).thenReturn(3);
+
+            // The engine demands the tax before the ability produces anything, so counting this
+            // source would plan mana the AI can never actually produce.
+            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("includes an untaxed source alongside a taxed one")
+        void includesUntaxedManaSourceOnly() {
+            Permanent taxed = addUntappedDualLand("Taxed Land", ManaColor.RED, ManaColor.GREEN);
+            Permanent untaxed = addUntappedDualLand("Free Land", ManaColor.BLUE, ManaColor.WHITE);
+            when(castingCostService.getActivatedAbilityActivationTax(gd, taxed)).thenReturn(3);
+            when(castingCostService.getActivatedAbilityActivationTax(gd, untaxed)).thenReturn(0);
+
+            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.get(ManaColor.RED)).isZero();
+            assertThat(pool.get(ManaColor.GREEN)).isZero();
+            assertThat(pool.get(ManaColor.BLUE)).isEqualTo(1);
+            assertThat(pool.get(ManaColor.WHITE)).isEqualTo(1);
         }
 
         @Test

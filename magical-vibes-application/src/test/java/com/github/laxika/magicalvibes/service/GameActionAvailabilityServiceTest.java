@@ -84,7 +84,7 @@ class GameActionAvailabilityServiceTest {
                 gameQueryService, validTargetService, castingCostService,
                 castingPermissionService,
                 new com.github.laxika.magicalvibes.service.cast.PotentialManaService(
-                        gameQueryService));
+                        gameQueryService, castingCostService));
         projectionFactory = new GameViewProjectionFactory(
                 cardViewFactory, gameLogViewFactory, permanentViewFactory,
                 stackEntryViewFactory, gameQueryService, validTargetService,

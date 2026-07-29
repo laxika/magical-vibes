@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 
 import java.util.ArrayList;
@@ -46,9 +47,9 @@ public class AiManaManager {
     private final GameQueryService gameQueryService;
     private final PotentialManaService potentialManaService;
 
-    public AiManaManager(GameQueryService gameQueryService) {
+    public AiManaManager(GameQueryService gameQueryService, CastingCostService castingCostService) {
         this.gameQueryService = gameQueryService;
-        this.potentialManaService = new PotentialManaService(gameQueryService);
+        this.potentialManaService = new PotentialManaService(gameQueryService, castingCostService);
     }
 
     /**

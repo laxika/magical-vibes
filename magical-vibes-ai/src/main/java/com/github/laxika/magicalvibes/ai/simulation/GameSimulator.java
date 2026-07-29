@@ -143,7 +143,7 @@ public class GameSimulator {
         this.castingCostService = castingCostService;
         this.gameRegistry = gameRegistry;
         this.combatAttackService = combatAttackService;
-        this.manaManager = new AiManaManager(gameQueryService);
+        this.manaManager = new AiManaManager(gameQueryService, castingCostService);
         this.boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
         this.combatSimulator = new CombatSimulator(gameQueryService, blockLegalityService, boardEvaluator);

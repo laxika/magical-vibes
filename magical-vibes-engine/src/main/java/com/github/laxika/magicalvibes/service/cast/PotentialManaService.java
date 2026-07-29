@@ -45,9 +45,11 @@ import java.util.UUID;
 public class PotentialManaService {
 
     private final GameQueryService gameQueryService;
+    private final CastingCostService castingCostService;
 
-    public PotentialManaService(GameQueryService gameQueryService) {
+    public PotentialManaService(GameQueryService gameQueryService, CastingCostService castingCostService) {
         this.gameQueryService = gameQueryService;
+        this.castingCostService = castingCostService;
     }
 
     public VirtualManaPool buildVirtualManaPool(GameData gameData, UUID playerId) {
@@ -371,7 +373,25 @@ public class PotentialManaService {
         return isFreeTapManaAbility(ability)
                 && canPayChargeCounterCost(ability, permanent)
                 && meetsRequiredSourceCounters(ability, permanent)
+                && isUntaxedToActivate(gameData, permanent)
                 && canMeetTimingRestriction(ability, gameData, playerId, permanent);
+    }
+
+    /**
+     * Returns true if no static effect taxes the source's activated abilities (Gloom: activated
+     * abilities of white enchantments cost {3} more). A taxed mana ability is not free — the engine
+     * demands the tax before it produces anything — so it can never back mana a planner has already
+     * counted as available. Dropping the source is the conservative approximation: modelling one
+     * that consumes mana before producing it would have to be threaded through every planning path,
+     * and the tax normally costs more than the ability yields. What that gives up is a source worth
+     * tapping purely to fix a color at break-even.
+     * If permanent or gameData is null (hypothetical card evaluation), assumes no tax.
+     */
+    private boolean isUntaxedToActivate(GameData gameData, Permanent permanent) {
+        if (gameData == null || permanent == null) {
+            return true;
+        }
+        return castingCostService.getActivatedAbilityActivationTax(gameData, permanent) == 0;
     }
 
     /**
