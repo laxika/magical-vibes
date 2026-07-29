@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.springframework.stereotype.Component;
 
@@ -371,7 +372,7 @@ public class PotentialManaService {
     public boolean canTapForManaNow(ActivatedAbility ability, Permanent permanent,
                                     GameData gameData, UUID playerId) {
         return isFreeTapManaAbility(ability)
-                && canPayChargeCounterCost(ability, permanent)
+                && canPaySourceCounterCosts(ability, permanent)
                 && meetsRequiredSourceCounters(ability, permanent)
                 && isUntaxedToActivate(gameData, permanent)
                 && canMeetTimingRestriction(ability, gameData, playerId, permanent);
@@ -461,12 +462,25 @@ public class PotentialManaService {
     }
 
     /**
-     * Returns true if the permanent can pay any charge counter costs required by the ability.
+     * Returns true if the permanent can pay any source-counter costs required by the ability.
      * If permanent is null (hypothetical card evaluation), assumes costs can be paid.
      */
-    private static boolean canPayChargeCounterCost(ActivatedAbility ability, Permanent permanent) {
+    private static boolean canPaySourceCounterCosts(ActivatedAbility ability, Permanent permanent) {
         if (permanent == null) {
             return true;
+        }
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof RemoveCounterFromSourceCost cost) {
+                int available = switch (cost.counterType()) {
+                    case SILVER -> 0;
+                    case ANY -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)
+                            + permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
+                    default -> permanent.getCounterCount(cost.counterType());
+                };
+                if (available < cost.count()) {
+                    return false;
+                }
+            }
         }
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof RemoveChargeCountersFromSourceCost cost) {

@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -223,6 +224,24 @@ class AiManaManagerTest {
         perm.setCounterCount(CounterType.CHARGE, chargeCounters);
         gd.playerBattlefields.get(player1Id).add(perm);
         lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
+        lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
+        lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+        return perm;
+    }
+
+    private Permanent addUntappedMinusCounterManaCreature(String name, int minusCounters) {
+        Card card = createCreature(name, 3, 4, CardColor.GREEN);
+        card.addActivatedAbility(new ActivatedAbility(
+                true, null,
+                List.of(
+                        new RemoveCounterFromSourceCost(1, CounterType.MINUS_ONE_MINUS_ONE),
+                        new AwardAnyColorManaEffect()),
+                "{T}, Remove a -1/-1 counter: Add one mana of any color."));
+        Permanent perm = new Permanent(card);
+        perm.setSummoningSick(false);
+        perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, minusCounters);
+        gd.playerBattlefields.get(player1Id).add(perm);
+        lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
         lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
         lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
         return perm;
@@ -2001,6 +2020,38 @@ class AiManaManagerTest {
             // Sphere at index 0 skipped, Mountain at index 1 tapped
             verify(action, never()).tap(eq(0), any());
             verify(action).tap(1, null);
+        }
+
+        @Test
+        @DisplayName("does not count or tap a depleted non-charge counter mana source for an X spell")
+        void skipsDepletedNonChargeCounterSourceForXSpell() {
+            Permanent channeler = addUntappedMinusCounterManaCreature("Channeler Initiate", 1);
+            addUntappedLand("Swamp 1", ManaColor.BLACK);
+            addUntappedLand("Swamp 2", ManaColor.BLACK);
+
+            Card xSpell = new Card();
+            xSpell.setManaCost("{X}{B}{B}");
+
+            VirtualManaPool virtualPool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(virtualPool.getTotal()).isEqualTo(3);
+            assertThat(manager.calculateMaxAffordableX(xSpell, virtualPool, 0)).isEqualTo(1);
+
+            channeler.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
+            virtualPool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(virtualPool.getTotal()).isEqualTo(2);
+            assertThat(manager.calculateMaxAffordableX(xSpell, virtualPool, 0)).isZero();
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            lenient().doAnswer(invocation -> {
+                gd.playerManaPools.get(player1Id).add(ManaColor.BLACK, 1);
+                return null;
+            }).when(action).tap(any(int.class), eq(null));
+
+            manager.tapLandsForXSpell(gd, player1Id, xSpell, 1, 0, action);
+
+            verify(action, never()).tap(eq(0), any());
+            verify(action).tap(1, null);
+            verify(action).tap(2, null);
         }
 
         @Test
