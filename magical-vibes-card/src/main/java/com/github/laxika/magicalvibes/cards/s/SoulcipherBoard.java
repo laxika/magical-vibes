@@ -31,10 +31,7 @@ import java.util.List;
 public class SoulcipherBoard extends Card {
 
     public SoulcipherBoard() {
-        CipherboundSpirit backFace = new CipherboundSpirit();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new CipherboundSpirit());
 
         // This artifact enters with three omen counters on it.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

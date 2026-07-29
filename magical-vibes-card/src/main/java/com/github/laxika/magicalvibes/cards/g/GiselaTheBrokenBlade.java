@@ -22,9 +22,7 @@ public class GiselaTheBrokenBlade extends Card {
     private static final String BRUNA_NAME = "Bruna, the Fading Light";
 
     public GiselaTheBrokenBlade() {
-        BriselaVoiceOfNightmares meldResult = new BriselaVoiceOfNightmares();
-        meldResult.setSetCode(getSetCode());
-        setBackFaceCard(meldResult);
+        setBackFaceCard(new BriselaVoiceOfNightmares());
 
         // At the beginning of your end step, if you both own and control Gisela and a creature
         // named Bruna, the Fading Light, exile them, then meld them into Brisela, Voice of Nightmares.

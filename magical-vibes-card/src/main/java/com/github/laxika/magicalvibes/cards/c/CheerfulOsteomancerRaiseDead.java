@@ -17,10 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 public class CheerfulOsteomancerRaiseDead extends Card {
 
     public CheerfulOsteomancerRaiseDead() {
-        RaiseDead prepareSpell = new RaiseDead();
-        prepareSpell.setSetCode(getSetCode());
-        prepareSpell.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(prepareSpell);
+        setBackFaceCard(new RaiseDead());
 
         // This creature enters prepared.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomePreparedEffect());

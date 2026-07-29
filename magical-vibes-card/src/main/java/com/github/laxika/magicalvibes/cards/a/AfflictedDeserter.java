@@ -12,11 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class AfflictedDeserter extends Card {
 
     public AfflictedDeserter() {
-        // Set up back face
-        WerewolfRansacker backFace = new WerewolfRansacker();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new WerewolfRansacker());
 
         // At the beginning of each upkeep, if no spells were cast last turn,
         // transform Afflicted Deserter.

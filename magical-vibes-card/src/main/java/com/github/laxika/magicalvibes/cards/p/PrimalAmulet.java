@@ -30,11 +30,7 @@ public class PrimalAmulet extends Card {
     );
 
     public PrimalAmulet() {
-        // Set up back face
-        PrimalWellspring backFace = new PrimalWellspring();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new PrimalWellspring());
 
         // Instant and sorcery spells you cast cost {1} less to cast.
         addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(

@@ -14,10 +14,7 @@ import java.util.List;
 public class TownGossipmonger extends Card {
 
     public TownGossipmonger() {
-        IncitedRabble backFace = new IncitedRabble();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new IncitedRabble());
 
         // {T}, Tap an untapped creature you control: Transform this creature.
         addActivatedAbility(new ActivatedAbility(

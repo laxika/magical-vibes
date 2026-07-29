@@ -14,11 +14,7 @@ import java.util.List;
 public class ConquerorsGalleon extends Card {
 
     public ConquerorsGalleon() {
-        // Set up back face
-        ConquerorsFoothold backFace = new ConquerorsFoothold();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new ConquerorsFoothold());
 
         // When Conqueror's Galleon attacks, exile it at end of combat, then return it to the
         // battlefield transformed under your control.

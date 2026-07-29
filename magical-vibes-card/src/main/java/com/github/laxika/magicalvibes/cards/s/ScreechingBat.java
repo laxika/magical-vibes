@@ -10,11 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class ScreechingBat extends Card {
 
     public ScreechingBat() {
-        // Set up back face
-        StalkingVampire backFace = new StalkingVampire();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new StalkingVampire());
 
         // At the beginning of your upkeep, you may pay {2}{B}{B}. If you do, transform Screeching Bat.
         addEffect(EffectSlot.UPKEEP_TRIGGERED,

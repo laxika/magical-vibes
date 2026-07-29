@@ -20,10 +20,7 @@ import java.util.Set;
 public class ArlinnKord extends Card {
 
     public ArlinnKord() {
-        ArlinnEmbracedByTheMoon backFace = new ArlinnEmbracedByTheMoon();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new ArlinnEmbracedByTheMoon());
 
         // +1: Until end of turn, up to one target creature gets +2/+2 and gains vigilance and haste.
         addActivatedAbility(new ActivatedAbility(

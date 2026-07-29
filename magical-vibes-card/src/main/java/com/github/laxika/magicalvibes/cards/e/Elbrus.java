@@ -13,11 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class Elbrus extends Card {
 
     public Elbrus() {
-        // Set up back face
-        WithengarUnbound backFace = new WithengarUnbound();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new WithengarUnbound());
 
         // Equipped creature gets +1/+0.
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));

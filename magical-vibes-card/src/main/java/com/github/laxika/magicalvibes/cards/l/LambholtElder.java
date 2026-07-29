@@ -13,10 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class LambholtElder extends Card {
 
     public LambholtElder() {
-        SilverpeltWerewolf backFace = new SilverpeltWerewolf();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new SilverpeltWerewolf());
 
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect(1));
 

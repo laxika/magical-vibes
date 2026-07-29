@@ -15,10 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class ScornedVillager extends Card {
 
     public ScornedVillager() {
-        MoonscarredWerewolf backFace = new MoonscarredWerewolf();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new MoonscarredWerewolf());
 
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.GREEN));
 

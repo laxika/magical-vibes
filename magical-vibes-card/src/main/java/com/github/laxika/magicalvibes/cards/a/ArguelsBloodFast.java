@@ -18,11 +18,7 @@ import java.util.List;
 public class ArguelsBloodFast extends Card {
 
     public ArguelsBloodFast() {
-        // Set up back face
-        TempleOfAclazotz backFace = new TempleOfAclazotz();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new TempleOfAclazotz());
 
         // {1}{B}, Pay 2 life: Draw a card.
         addActivatedAbility(new ActivatedAbility(

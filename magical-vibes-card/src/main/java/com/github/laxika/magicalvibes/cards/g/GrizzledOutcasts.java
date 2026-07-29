@@ -12,11 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class GrizzledOutcasts extends Card {
 
     public GrizzledOutcasts() {
-        // Set up back face
-        KrallenhordeWantons backFace = new KrallenhordeWantons();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new KrallenhordeWantons());
 
         // At the beginning of each upkeep, if no spells were cast last turn, transform Grizzled Outcasts.
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,

@@ -16,10 +16,7 @@ import java.util.List;
 public class WolfbittenCaptive extends Card {
 
     public WolfbittenCaptive() {
-        KrallenhordeKiller backFace = new KrallenhordeKiller();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new KrallenhordeKiller());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

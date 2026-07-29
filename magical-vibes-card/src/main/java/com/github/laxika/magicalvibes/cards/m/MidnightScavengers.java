@@ -17,9 +17,7 @@ import java.util.List;
 public class MidnightScavengers extends Card {
 
     public MidnightScavengers() {
-        ChitteringHost meldResult = new ChitteringHost();
-        meldResult.setSetCode(getSetCode());
-        setBackFaceCard(meldResult);
+        setBackFaceCard(new ChitteringHost());
 
         // When this creature enters, you may return target creature card with mana value 3 or less
         // from your graveyard to your hand. (Optional = empty MultiGraveyardChoice; no MayEffect.)

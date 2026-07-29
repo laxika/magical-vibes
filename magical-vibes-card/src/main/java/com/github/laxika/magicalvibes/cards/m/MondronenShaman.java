@@ -12,10 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class MondronenShaman extends Card {
 
     public MondronenShaman() {
-        TovolarsMagehunter backFace = new TovolarsMagehunter();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new TovolarsMagehunter());
 
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
                 new ConditionalEffect(new NoSpellsCastLastTurn(), new TransformSelfEffect()));

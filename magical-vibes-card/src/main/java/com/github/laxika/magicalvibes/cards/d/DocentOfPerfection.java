@@ -23,10 +23,7 @@ import java.util.Set;
 public class DocentOfPerfection extends Card {
 
     public DocentOfPerfection() {
-        FinalIteration backFace = new FinalIteration();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new FinalIteration());
 
         // Whenever you cast an instant or sorcery spell, create a 1/1 blue Human Wizard
         // creature token. Then if you control three or more Wizards, transform this creature.

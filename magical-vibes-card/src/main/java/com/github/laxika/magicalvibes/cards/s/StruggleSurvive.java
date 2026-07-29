@@ -17,10 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class StruggleSurvive extends Card {
 
     public StruggleSurvive() {
-        Survive survive = new Survive();
-        survive.setSetCode(getSetCode());
-        survive.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(survive);
+        setBackFaceCard(new Survive());
 
         // Struggle deals damage to target creature equal to the number of lands you control.
         addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(

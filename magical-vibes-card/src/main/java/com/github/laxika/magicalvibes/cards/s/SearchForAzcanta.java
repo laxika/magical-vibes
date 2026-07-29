@@ -14,11 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class SearchForAzcanta extends Card {
 
     public SearchForAzcanta() {
-        // Set up back face
-        AzantaTheSunkenRuin backFace = new AzantaTheSunkenRuin();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new AzantaTheSunkenRuin());
 
         // At the beginning of your upkeep, surveil 1.
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new SurveilEffect(1));

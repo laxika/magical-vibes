@@ -8,10 +8,7 @@ import com.github.laxika.magicalvibes.model.DisturbCast;
 public class TwinbladeGeist extends Card {
 
     public TwinbladeGeist() {
-        TwinbladeInvocation backFace = new TwinbladeInvocation();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new TwinbladeInvocation());
 
         // Double strike is auto-loaded from Scryfall keywords.
 

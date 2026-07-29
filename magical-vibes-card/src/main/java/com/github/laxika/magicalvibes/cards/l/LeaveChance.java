@@ -17,10 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 public class LeaveChance extends Card {
 
     public LeaveChance() {
-        Chance chance = new Chance();
-        chance.setSetCode(getSetCode());
-        chance.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(chance);
+        setBackFaceCard(new Chance());
 
         // Return any number of target permanents you own to your hand.
         target(new OwnedPermanentPredicateTargetFilter(

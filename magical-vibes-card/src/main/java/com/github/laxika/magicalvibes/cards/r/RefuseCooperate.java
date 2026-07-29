@@ -17,10 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 public class RefuseCooperate extends Card {
 
     public RefuseCooperate() {
-        Cooperate cooperate = new Cooperate();
-        cooperate.setSetCode(getSetCode());
-        cooperate.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(cooperate);
+        setBackFaceCard(new Cooperate());
 
         // Refuse deals damage to target spell's controller equal to that spell's mana value.
         // SPELL_ON_STACK targetSpec on the effect auto-derives "any spell on the stack".

@@ -12,11 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class RecklessWaif extends Card {
 
     public RecklessWaif() {
-        // Set up back face
-        MercilessPredator backFace = new MercilessPredator();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new MercilessPredator());
 
         // At the beginning of each upkeep, if no spells were cast last turn, transform Reckless Waif.
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,

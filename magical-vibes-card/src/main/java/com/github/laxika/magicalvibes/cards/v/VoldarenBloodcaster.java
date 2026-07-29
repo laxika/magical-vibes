@@ -32,10 +32,7 @@ public class VoldarenBloodcaster extends Card {
             new TransformSelfEffect());
 
     public VoldarenBloodcaster() {
-        BloodbatSummoner backFace = new BloodbatSummoner();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new BloodbatSummoner());
 
         // Whenever this creature or another nontoken creature you control dies, create a Blood token.
         // Ally-death watchers are already off the battlefield when collected, so ON_ALLY alone is

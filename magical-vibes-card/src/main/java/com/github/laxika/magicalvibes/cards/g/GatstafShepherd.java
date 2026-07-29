@@ -11,11 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class GatstafShepherd extends Card {
 
     public GatstafShepherd() {
-        // Set up back face
-        GatstafHowler backFace = new GatstafHowler();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new GatstafHowler());
 
         // At the beginning of each upkeep, if no spells were cast last turn, transform Gatstaf Shepherd.
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,

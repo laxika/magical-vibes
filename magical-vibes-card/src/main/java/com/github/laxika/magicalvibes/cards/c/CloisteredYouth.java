@@ -11,11 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class CloisteredYouth extends Card {
 
     public CloisteredYouth() {
-        // Set up back face
-        UnholyFiend backFace = new UnholyFiend();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new UnholyFiend());
 
         // At the beginning of your upkeep, you may transform Cloistered Youth.
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(

@@ -12,11 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class TormentedPariah extends Card {
 
     public TormentedPariah() {
-        // Set up back face
-        RampagingWerewolf backFace = new RampagingWerewolf();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new RampagingWerewolf());
 
         // At the beginning of each upkeep, if no spells were cast last turn, transform Tormented Pariah.
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,

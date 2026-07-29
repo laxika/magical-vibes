@@ -15,11 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 public class InstigatorGang extends Card {
 
     public InstigatorGang() {
-        // Set up back face
-        WildbloodPack backFace = new WildbloodPack();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new WildbloodPack());
 
         // Attacking creatures you control get +1/+0.
         // OWN_CREATURES handles other creatures; SELF handles the source itself (no "other" in oracle text).

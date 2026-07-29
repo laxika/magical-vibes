@@ -8,10 +8,7 @@ import com.github.laxika.magicalvibes.model.DisturbCast;
 public class LanternBearer extends Card {
 
     public LanternBearer() {
-        LanternsLift backFace = new LanternsLift();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new LanternsLift());
 
         // Flying is auto-loaded from Scryfall keywords.
 

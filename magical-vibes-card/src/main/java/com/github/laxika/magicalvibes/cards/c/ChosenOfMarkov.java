@@ -15,11 +15,7 @@ import java.util.List;
 public class ChosenOfMarkov extends Card {
 
     public ChosenOfMarkov() {
-        // Set up back face
-        MarkovsServant backFace = new MarkovsServant();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new MarkovsServant());
 
         // {T}, Tap an untapped Vampire you control: Transform Chosen of Markov.
         addActivatedAbility(new ActivatedAbility(

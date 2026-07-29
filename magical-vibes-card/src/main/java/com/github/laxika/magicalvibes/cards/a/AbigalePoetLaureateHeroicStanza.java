@@ -22,10 +22,7 @@ import java.util.List;
 public class AbigalePoetLaureateHeroicStanza extends Card {
 
     public AbigalePoetLaureateHeroicStanza() {
-        HeroicStanza prepareSpell = new HeroicStanza();
-        prepareSpell.setSetCode(getSetCode());
-        prepareSpell.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(prepareSpell);
+        setBackFaceCard(new HeroicStanza());
 
         // Whenever you cast a creature spell, Abigale becomes prepared.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(

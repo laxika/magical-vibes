@@ -14,10 +14,7 @@ import java.util.List;
 public class ConduitOfStorms extends Card {
 
     public ConduitOfStorms() {
-        ConduitOfEmrakul backFace = new ConduitOfEmrakul();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new ConduitOfEmrakul());
 
         // Whenever this creature attacks, add {R} at the beginning of your next main phase this turn.
         addEffect(EffectSlot.ON_ATTACK,

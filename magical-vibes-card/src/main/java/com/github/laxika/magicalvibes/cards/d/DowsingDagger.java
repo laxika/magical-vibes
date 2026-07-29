@@ -25,11 +25,7 @@ import java.util.Set;
 public class DowsingDagger extends Card {
 
     public DowsingDagger() {
-        // Set up back face
-        LostVale backFace = new LostVale();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new LostVale());
 
         // When Dowsing Dagger enters the battlefield, target opponent creates
         // two 0/2 green Plant creature tokens with defender.

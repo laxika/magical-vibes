@@ -19,11 +19,7 @@ import java.util.Set;
 public class LegionsLanding extends Card {
 
     public LegionsLanding() {
-        // Set up back face
-        AdantoTheFirstFort backFace = new AdantoTheFirstFort();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new AdantoTheFirstFort());
 
         // When Legion's Landing enters, create a 1/1 white Vampire creature token with lifelink.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

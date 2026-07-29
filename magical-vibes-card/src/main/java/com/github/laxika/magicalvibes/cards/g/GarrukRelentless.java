@@ -21,11 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class GarrukRelentless extends Card {
 
     public GarrukRelentless() {
-        // Set up back face
-        GarrukTheVeilCursed backFace = new GarrukTheVeilCursed();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new GarrukTheVeilCursed());
 
         // When Garruk Relentless has two or fewer loyalty counters on him, transform him.
         // This is a state-triggered ability (MTG rule 603.8).

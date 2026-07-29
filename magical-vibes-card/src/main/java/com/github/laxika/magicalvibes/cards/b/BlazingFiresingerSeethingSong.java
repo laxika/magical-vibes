@@ -17,10 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 public class BlazingFiresingerSeethingSong extends Card {
 
     public BlazingFiresingerSeethingSong() {
-        SeethingSong prepareSpell = new SeethingSong();
-        prepareSpell.setSetCode(getSetCode());
-        prepareSpell.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(prepareSpell);
+        setBackFaceCard(new SeethingSong());
 
         // This creature enters prepared.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomePreparedEffect());

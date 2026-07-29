@@ -18,10 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class ConsignOblivion extends Card {
 
     public ConsignOblivion() {
-        Oblivion oblivion = new Oblivion();
-        oblivion.setSetCode(getSetCode());
-        oblivion.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(oblivion);
+        setBackFaceCard(new Oblivion());
 
         // Return target nonland permanent to its owner's hand.
         target(new PermanentPredicateTargetFilter(

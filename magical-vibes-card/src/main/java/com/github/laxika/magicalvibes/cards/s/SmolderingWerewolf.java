@@ -15,10 +15,7 @@ import java.util.List;
 public class SmolderingWerewolf extends Card {
 
     public SmolderingWerewolf() {
-        EruptingDreadwolf backFace = new EruptingDreadwolf();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new EruptingDreadwolf());
 
         // When this creature enters, it deals 1 damage to each of up to two target creatures.
         target(TargetFilters.creature(), 0, 2).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToTargetCreatureEffect(1));

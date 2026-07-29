@@ -19,10 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class GrindDust extends Card {
 
     public GrindDust() {
-        Dust dust = new Dust();
-        dust.setSetCode(getSetCode());
-        dust.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(dust);
+        setBackFaceCard(new Dust());
 
         // Put a -1/-1 counter on target creature. That creature can't block this turn.
         target(TargetFilters.creature())

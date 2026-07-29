@@ -12,11 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class VillageMessenger extends Card {
 
     public VillageMessenger() {
-        // Set up back face
-        MoonriseIntruder backFace = new MoonriseIntruder();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new MoonriseIntruder());
 
         // Haste is loaded from Scryfall.
 

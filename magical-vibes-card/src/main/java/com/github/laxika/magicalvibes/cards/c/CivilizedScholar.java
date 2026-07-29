@@ -12,11 +12,7 @@ import java.util.List;
 public class CivilizedScholar extends Card {
 
     public CivilizedScholar() {
-        // Set up back face
-        HomicidalBrute backFace = new HomicidalBrute();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new HomicidalBrute());
 
         // {T}: Draw a card, then discard a card. If a creature card is discarded this way,
         // untap Civilized Scholar, then transform it.

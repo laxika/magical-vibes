@@ -21,11 +21,7 @@ import java.util.List;
 public class DaybreakRanger extends Card {
 
     public DaybreakRanger() {
-        // Set up back face
-        NightfallPredator backFace = new NightfallPredator();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new NightfallPredator());
 
         // {T}: Daybreak Ranger deals 2 damage to target creature with flying.
         addActivatedAbility(new ActivatedAbility(

@@ -16,10 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class ArchangelAvacyn extends Card {
 
     public ArchangelAvacyn() {
-        AvacynThePurifier backFace = new AvacynThePurifier();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new AvacynThePurifier());
 
         // When Archangel Avacyn enters, creatures you control gain indestructible until end of turn.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

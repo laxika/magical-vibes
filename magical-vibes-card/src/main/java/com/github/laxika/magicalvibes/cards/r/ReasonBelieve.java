@@ -15,10 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 public class ReasonBelieve extends Card {
 
     public ReasonBelieve() {
-        Believe believe = new Believe();
-        believe.setSetCode(getSetCode());
-        believe.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(believe);
+        setBackFaceCard(new Believe());
 
         // Scry 3.
         addEffect(EffectSlot.SPELL, new ScryEffect(3));

@@ -12,11 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class VillageIronsmith extends Card {
 
     public VillageIronsmith() {
-        // Set up back face
-        Ironfang backFace = new Ironfang();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new Ironfang());
 
         // At the beginning of each upkeep, if no spells were cast last turn, transform Village Ironsmith.
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,

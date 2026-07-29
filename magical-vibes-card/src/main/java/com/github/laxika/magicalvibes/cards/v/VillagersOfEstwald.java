@@ -12,10 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class VillagersOfEstwald extends Card {
 
     public VillagersOfEstwald() {
-        HowlpackOfEstwald backFace = new HowlpackOfEstwald();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new HowlpackOfEstwald());
 
         // At the beginning of each upkeep, if no spells were cast last turn, transform this creature.
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,

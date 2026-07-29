@@ -13,10 +13,7 @@ import java.util.Set;
 public class AberrantResearcher extends Card {
 
     public AberrantResearcher() {
-        PerfectedForm backFace = new PerfectedForm();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new PerfectedForm());
 
         // At the beginning of your upkeep, mill a card. If an instant or sorcery card was
         // milled this way, transform this creature.

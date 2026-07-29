@@ -11,10 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 public class BiolumeEgg extends Card {
 
     public BiolumeEgg() {
-        BiolumeSerpent backFace = new BiolumeSerpent();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new BiolumeSerpent());
 
         // Defender is loaded from Scryfall.
 

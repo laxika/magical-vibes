@@ -12,10 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class InvasionOfInnistrad extends Card {
 
     public InvasionOfInnistrad() {
-        DelugeOfTheDead backFace = new DelugeOfTheDead();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new DelugeOfTheDead());
 
         // When this Siege enters, target creature an opponent controls gets -13/-13 until end of turn.
         // Flash / Siege defense / defeat→cast transformed are handled by oracle keywords + engine.

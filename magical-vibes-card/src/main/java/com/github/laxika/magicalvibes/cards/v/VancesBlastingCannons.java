@@ -22,11 +22,7 @@ import java.util.List;
 public class VancesBlastingCannons extends Card {
 
     public VancesBlastingCannons() {
-        // Set up back face
-        SpitfireBastion backFace = new SpitfireBastion();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new SpitfireBastion());
 
         // At the beginning of your upkeep, exile the top card of your library.
         // If it's a nonland card, you may cast that card this turn.

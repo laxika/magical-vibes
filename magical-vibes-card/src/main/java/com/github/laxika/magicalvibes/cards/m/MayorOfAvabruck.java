@@ -17,11 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class MayorOfAvabruck extends Card {
 
     public MayorOfAvabruck() {
-        // Set up back face
-        HowlpackAlpha backFace = new HowlpackAlpha();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new HowlpackAlpha());
 
         // Other Human creatures you control get +1/+1.
         addEffect(EffectSlot.STATIC,

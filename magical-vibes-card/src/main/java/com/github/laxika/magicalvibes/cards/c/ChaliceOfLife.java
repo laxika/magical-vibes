@@ -15,11 +15,7 @@ import java.util.List;
 public class ChaliceOfLife extends Card {
 
     public ChaliceOfLife() {
-        // Set up back face
-        ChaliceOfDeath backFace = new ChaliceOfDeath();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new ChaliceOfDeath());
 
         // {T}: You gain 1 life. Then if you have at least 10 life more than your
         // starting life total, transform this artifact.

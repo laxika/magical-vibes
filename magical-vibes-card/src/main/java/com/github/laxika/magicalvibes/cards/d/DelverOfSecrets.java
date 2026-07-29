@@ -14,11 +14,7 @@ import java.util.Set;
 public class DelverOfSecrets extends Card {
 
     public DelverOfSecrets() {
-        // Set up back face
-        InsectileAberration backFace = new InsectileAberration();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new InsectileAberration());
 
         // At the beginning of your upkeep, look at the top card of your library.
         // You may reveal that card. If an instant or sorcery card is revealed this way,

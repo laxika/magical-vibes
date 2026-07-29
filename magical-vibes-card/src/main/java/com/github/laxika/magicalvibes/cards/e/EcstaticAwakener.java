@@ -15,10 +15,7 @@ import java.util.List;
 public class EcstaticAwakener extends Card {
 
     public EcstaticAwakener() {
-        AwokenDemon backFace = new AwokenDemon();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new AwokenDemon());
 
         // {2}{B}, Sacrifice another creature: Draw a card, then transform this creature.
         // Activate only once each turn.

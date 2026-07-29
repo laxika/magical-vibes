@@ -22,10 +22,7 @@ import java.util.List;
 public class ClaimFame extends Card {
 
     public ClaimFame() {
-        Fame fame = new Fame();
-        fame.setSetCode(getSetCode());
-        fame.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(fame);
+        setBackFaceCard(new Fame());
 
         // Return target creature card with mana value 2 or less from your graveyard to the battlefield.
         addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()

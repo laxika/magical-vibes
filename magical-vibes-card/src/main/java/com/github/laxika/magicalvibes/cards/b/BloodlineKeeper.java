@@ -18,11 +18,7 @@ import java.util.Set;
 public class BloodlineKeeper extends Card {
 
     public BloodlineKeeper() {
-        // Set up back face
-        LordOfLineage backFace = new LordOfLineage();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new LordOfLineage());
 
         // {T}: Create a 2/2 black Vampire creature token with flying.
         addActivatedAbility(new ActivatedAbility(

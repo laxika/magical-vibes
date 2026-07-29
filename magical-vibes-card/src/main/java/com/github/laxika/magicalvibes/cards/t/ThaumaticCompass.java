@@ -18,11 +18,7 @@ import java.util.List;
 public class ThaumaticCompass extends Card {
 
     public ThaumaticCompass() {
-        // Set up back face
-        SpiresOfOrazca backFace = new SpiresOfOrazca();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new SpiresOfOrazca());
 
         // {3}, {T}: Search your library for a basic land card, reveal it, put it into your hand, then shuffle.
         addActivatedAbility(new ActivatedAbility(

@@ -10,10 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnSourceTr
 public class LoyalCatharUnhallowedCathar extends Card {
 
     public LoyalCatharUnhallowedCathar() {
-        UnhallowedCathar backFace = new UnhallowedCathar();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new UnhallowedCathar());
 
         addEffect(EffectSlot.ON_DEATH, new RegisterDelayedReturnSourceTransformedEffect());
     }

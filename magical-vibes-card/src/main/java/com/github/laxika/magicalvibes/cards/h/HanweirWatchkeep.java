@@ -13,11 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class HanweirWatchkeep extends Card {
 
     public HanweirWatchkeep() {
-        // Set up back face
-        BaneOfHanweir backFace = new BaneOfHanweir();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new BaneOfHanweir());
 
         // At the beginning of each upkeep, if no spells were cast last turn, transform Hanweir Watchkeep.
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,

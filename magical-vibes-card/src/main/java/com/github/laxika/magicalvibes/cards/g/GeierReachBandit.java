@@ -12,10 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class GeierReachBandit extends Card {
 
     public GeierReachBandit() {
-        VildinPackAlpha backFace = new VildinPackAlpha();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new VildinPackAlpha());
 
         // At the beginning of each upkeep, if no spells were cast last turn, transform this creature.
         // Haste is auto-loaded from Scryfall.

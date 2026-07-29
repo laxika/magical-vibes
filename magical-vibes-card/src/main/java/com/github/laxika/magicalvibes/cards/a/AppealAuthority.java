@@ -21,10 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class AppealAuthority extends Card {
 
     public AppealAuthority() {
-        Authority authority = new Authority();
-        authority.setSetCode(getSetCode());
-        authority.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(authority);
+        setBackFaceCard(new Authority());
 
         // Until end of turn, target creature gains trample and gets +X/+X,
         // where X is the number of creatures you control.

@@ -9,10 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class DesperateFarmer extends Card {
 
     public DesperateFarmer() {
-        DepravedHarvester backFace = new DepravedHarvester();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new DepravedHarvester());
 
         // When another creature you control dies, transform this creature.
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TransformSelfEffect());

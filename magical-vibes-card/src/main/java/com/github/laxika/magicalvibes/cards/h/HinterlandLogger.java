@@ -12,10 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class HinterlandLogger extends Card {
 
     public HinterlandLogger() {
-        TimberShredder backFace = new TimberShredder();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new TimberShredder());
 
         // At the beginning of each upkeep, if no spells were cast last turn, transform this creature.
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,

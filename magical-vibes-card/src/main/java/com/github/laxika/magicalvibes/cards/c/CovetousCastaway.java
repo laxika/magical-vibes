@@ -12,10 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 public class CovetousCastaway extends Card {
 
     public CovetousCastaway() {
-        GhostlyCastigator backFace = new GhostlyCastigator();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new GhostlyCastigator());
 
         // When this creature dies, mill three cards.
         addEffect(EffectSlot.ON_DEATH, new MillEffect(3, MillRecipient.CONTROLLER));

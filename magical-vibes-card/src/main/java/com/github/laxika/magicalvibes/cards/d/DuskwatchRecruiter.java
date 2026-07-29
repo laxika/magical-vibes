@@ -18,11 +18,7 @@ import java.util.List;
 public class DuskwatchRecruiter extends Card {
 
     public DuskwatchRecruiter() {
-        // Set up back face
-        KrallenhordeHowler backFace = new KrallenhordeHowler();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new KrallenhordeHowler());
 
         // {2}{G}: Look at the top three cards of your library. You may reveal a creature card from among them
         // and put it into your hand. Put the rest on the bottom of your library in any order.

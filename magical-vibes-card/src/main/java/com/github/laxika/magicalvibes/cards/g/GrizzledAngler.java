@@ -19,10 +19,7 @@ import java.util.List;
 public class GrizzledAngler extends Card {
 
     public GrizzledAngler() {
-        GrislyAnglerfish backFace = new GrislyAnglerfish();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new GrislyAnglerfish());
 
         var colorlessCreature = new CardAllOfPredicate(List.of(
                 new CardTypePredicate(CardType.CREATURE),

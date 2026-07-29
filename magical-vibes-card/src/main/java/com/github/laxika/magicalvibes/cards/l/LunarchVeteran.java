@@ -10,10 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 public class LunarchVeteran extends Card {
 
     public LunarchVeteran() {
-        LuminousPhantom backFace = new LuminousPhantom();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new LuminousPhantom());
 
         // Whenever another creature you control enters, you gain 1 life.
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new GainLifeEffect(1));

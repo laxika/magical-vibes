@@ -20,10 +20,7 @@ import java.util.List;
 public class RestlessBloodseeker extends Card {
 
     public RestlessBloodseeker() {
-        BloodsoakedReveler backFace = new BloodsoakedReveler();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new BloodsoakedReveler());
 
         // At the beginning of your end step, if you gained life this turn, create a Blood token.
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(

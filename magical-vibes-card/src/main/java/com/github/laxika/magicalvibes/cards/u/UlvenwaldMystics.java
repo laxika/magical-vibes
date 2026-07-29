@@ -11,11 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class UlvenwaldMystics extends Card {
 
     public UlvenwaldMystics() {
-        // Set up back face
-        UlvenwaldPrimordials backFace = new UlvenwaldPrimordials();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new UlvenwaldPrimordials());
 
         // At the beginning of each upkeep, if no spells were cast last turn, transform Ulvenwald Mystics.
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,

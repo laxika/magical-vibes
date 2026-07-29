@@ -21,10 +21,7 @@ import java.util.List;
 public class FarmMarket extends Card {
 
     public FarmMarket() {
-        Market market = new Market();
-        market.setSetCode(getSetCode());
-        market.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(market);
+        setBackFaceCard(new Market());
 
         // Destroy target attacking or blocking creature.
         target(new PermanentPredicateTargetFilter(

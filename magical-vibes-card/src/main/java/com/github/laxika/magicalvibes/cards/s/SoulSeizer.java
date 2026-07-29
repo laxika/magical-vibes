@@ -11,10 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfAndAttachToCreat
 public class SoulSeizer extends Card {
 
     public SoulSeizer() {
-        GhastlyHaunting backFace = new GhastlyHaunting();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new GhastlyHaunting());
 
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new MayEffect(

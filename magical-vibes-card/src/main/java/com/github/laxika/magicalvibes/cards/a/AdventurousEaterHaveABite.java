@@ -17,10 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 public class AdventurousEaterHaveABite extends Card {
 
     public AdventurousEaterHaveABite() {
-        HaveABite prepareSpell = new HaveABite();
-        prepareSpell.setSetCode(getSetCode());
-        prepareSpell.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(prepareSpell);
+        setBackFaceCard(new HaveABite());
 
         // This creature enters prepared.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomePreparedEffect());

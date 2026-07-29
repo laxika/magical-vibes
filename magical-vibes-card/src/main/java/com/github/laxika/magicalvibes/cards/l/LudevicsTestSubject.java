@@ -12,11 +12,7 @@ import java.util.List;
 public class LudevicsTestSubject extends Card {
 
     public LudevicsTestSubject() {
-        // Set up back face
-        LudevicsAbomination backFace = new LudevicsAbomination();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new LudevicsAbomination());
 
         // Defender is loaded from Scryfall.
 

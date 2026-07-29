@@ -10,11 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class ThrabenSentry extends Card {
 
     public ThrabenSentry() {
-        // Set up back face
-        ThrabenMilitia backFace = new ThrabenMilitia();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new ThrabenMilitia());
 
         // Whenever another creature you control dies, you may transform Thraben Sentry.
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new MayEffect(

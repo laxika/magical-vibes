@@ -18,10 +18,7 @@ import java.util.List;
 public class RavenousDemon extends Card {
 
     public RavenousDemon() {
-        ArchdemonOfGreed backFace = new ArchdemonOfGreed();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new ArchdemonOfGreed());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

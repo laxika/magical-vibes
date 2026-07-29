@@ -19,10 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class DrivenDespair extends Card {
 
     public DrivenDespair() {
-        Despair despair = new Despair();
-        despair.setSetCode(getSetCode());
-        despair.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(despair);
+        setBackFaceCard(new Despair());
 
         // Until end of turn, creatures you control gain trample and
         // "Whenever this creature deals combat damage to a player, draw a card."

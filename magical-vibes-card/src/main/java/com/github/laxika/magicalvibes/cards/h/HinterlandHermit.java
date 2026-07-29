@@ -11,10 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class HinterlandHermit extends Card {
 
     public HinterlandHermit() {
-        HinterlandScourge backFace = new HinterlandScourge();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new HinterlandScourge());
 
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
                 new ConditionalEffect(new NoSpellsCastLastTurn(), new TransformSelfEffect()));

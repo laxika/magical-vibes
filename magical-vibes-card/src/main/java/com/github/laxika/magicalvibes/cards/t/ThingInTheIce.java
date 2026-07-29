@@ -32,10 +32,7 @@ import java.util.List;
 public class ThingInTheIce extends Card {
 
     public ThingInTheIce() {
-        AwokenHorror backFace = new AwokenHorror();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new AwokenHorror());
 
         // This creature enters with four ice counters on it.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

@@ -22,9 +22,7 @@ public class GrafRats extends Card {
     private static final String PARTNER_NAME = "Midnight Scavengers";
 
     public GrafRats() {
-        ChitteringHost meldResult = new ChitteringHost();
-        meldResult.setSetCode(getSetCode());
-        setBackFaceCard(meldResult);
+        setBackFaceCard(new ChitteringHost());
 
         // At the beginning of combat on your turn, if you both own and control this creature and a
         // creature named Midnight Scavengers, exile them, then meld them into Chittering Host.

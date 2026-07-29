@@ -21,10 +21,7 @@ import java.util.List;
 public class AmbitiousFarmhand extends Card {
 
     public AmbitiousFarmhand() {
-        SeasonedCathar backFace = new SeasonedCathar();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new SeasonedCathar());
 
         // When this creature enters, you may search your library for a basic Plains card,
         // reveal it, put it into your hand, then shuffle.

@@ -31,10 +31,7 @@ import java.util.Set;
 public class WeddingAnnouncement extends Card {
 
     public WeddingAnnouncement() {
-        WeddingFestivity backFace = new WeddingFestivity();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new WeddingFestivity());
 
         // At the beginning of your end step, put an invitation counter on this enchantment.
         // If you attacked with two or more creatures this turn, draw a card. Otherwise, create

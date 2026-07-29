@@ -16,11 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class GrowingRitesOfItlimoc extends Card {
 
     public GrowingRitesOfItlimoc() {
-        // Set up back face
-        ItlimocCradleOfTheSun backFace = new ItlimocCradleOfTheSun();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new ItlimocCradleOfTheSun());
 
         // When Growing Rites of Itlimoc enters, look at the top four cards of your library.
         // You may reveal a creature card from among them and put it into your hand.

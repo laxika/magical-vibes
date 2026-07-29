@@ -14,10 +14,7 @@ import java.util.List;
 public class ShrillHowler extends Card {
 
     public ShrillHowler() {
-        HowlingChorus backFace = new HowlingChorus();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new HowlingChorus());
 
         // Creatures with power less than this creature's power can't block it.
         addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesWithLessPowerEffect());

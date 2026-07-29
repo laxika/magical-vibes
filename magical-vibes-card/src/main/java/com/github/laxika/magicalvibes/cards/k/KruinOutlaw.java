@@ -13,11 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class KruinOutlaw extends Card {
 
     public KruinOutlaw() {
-        // Set up back face
-        TerrorOfKruinPass backFace = new TerrorOfKruinPass();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new TerrorOfKruinPass());
 
         // First strike is loaded from Scryfall.
 

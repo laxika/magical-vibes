@@ -19,10 +19,7 @@ import java.util.Set;
 public class HuntmasterOfTheFells extends Card {
 
     public HuntmasterOfTheFells() {
-        RavagerOfTheFells backFace = new RavagerOfTheFells();
-        backFace.setSetCode(getSetCode());
-        backFace.setCollectorNumber(getCollectorNumber());
-        setBackFaceCard(backFace);
+        setBackFaceCard(new RavagerOfTheFells());
 
         addWolfAndLifeTrigger(EffectSlot.ON_ENTER_BATTLEFIELD);
         addWolfAndLifeTrigger(EffectSlot.ON_TRANSFORM_TO_FRONT_FACE);
