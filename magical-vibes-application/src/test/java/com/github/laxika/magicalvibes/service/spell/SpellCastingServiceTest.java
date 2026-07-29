@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -118,6 +119,9 @@ class SpellCastingServiceTest {
     @Mock
     private GameMutationCoordinator mutationCoordinator;
 
+    @Mock
+    private StateBasedActionService stateBasedActionService;
+
     private SpellCastingService svc;
 
     private GameData gd;
@@ -136,7 +140,7 @@ class SpellCastingServiceTest {
                 targetLegalityService, permanentRemovalService, triggerCollectionService,
                 graveyardService, amountEvaluationService, conditionEvaluationService,
                 new AdditionalSpellCostService(gameQueryService, predicateEvaluationService),
-                mutationCoordinator);
+                mutationCoordinator, stateBasedActionService);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         player1 = new Player(player1Id, "Player1");
@@ -997,6 +1001,7 @@ class SpellCastingServiceTest {
             verify(mutationCoordinator).invalidateAllPlayerViews(gd);
             verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(dummy), eq(player1Id), anyBoolean());
             verify(triggerCollectionService).checkBecomesTargetOfSpellTriggers(gd);
+            verify(stateBasedActionService).performStateBasedActions(gd);
             verify(turnProgressionService).resolveAutoPass(gd);
         }
 

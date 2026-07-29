@@ -597,8 +597,8 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
-        @DisplayName("Bounced token ceases to exist instead of going to hand (CR 704.5d)")
-        void bouncedTokenCeasesToExist() {
+        @DisplayName("Bounced token reaches its owner's hand until state-based actions")
+        void bouncedTokenReachesHandUntilStateBasedActions() {
             Card tokenCard = createCreature("Saproling");
             tokenCard.setToken(true);
             Permanent token = addPermanent(player1Id, tokenCard);
@@ -607,9 +607,7 @@ class PermanentRemovalServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(token);
-            assertThat(gd.playerHands.get(player1Id)).isEmpty();
-            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
-                    logEntry.plainText().contains("Saproling") && logEntry.plainText().contains("ceases to exist")));
+            assertThat(gd.playerHands.get(player1Id)).containsExactly(tokenCard);
         }
 
         @Test

@@ -101,6 +101,12 @@ class StateBasedActionServiceTest {
         return card;
     }
 
+    private static Card createCreatureToken(String name) {
+        Card card = createCreatureCard(name);
+        card.setToken(true);
+        return card;
+    }
+
     private static Card createPlaneswalkerCard(String name) {
         Card card = new Card();
         card.setName(name);
@@ -118,6 +124,37 @@ class StateBasedActionServiceTest {
         if (finalChapter >= 2) card.addEffect(EffectSlot.SAGA_CHAPTER_II, new DealDamageToAnyTargetEffect(1));
         if (finalChapter >= 3) card.addEffect(EffectSlot.SAGA_CHAPTER_III, new DealDamageToAnyTargetEffect(1));
         return card;
+    }
+
+    @Test
+    @DisplayName("Tokens cease to exist in every non-battlefield zone")
+    void tokensCeaseToExistOutsideBattlefield() {
+        Card libraryToken = createCreatureToken("Library Token");
+        Card handToken = createCreatureToken("Hand Token");
+        Card graveyardToken = createCreatureToken("Graveyard Token");
+        Card commandToken = createCreatureToken("Command Token");
+        Card exileToken = createCreatureToken("Exile Token");
+        Card battlefieldToken = createCreatureToken("Battlefield Token");
+        Card libraryCard = createCreatureCard("Library Card");
+
+        gd.playerDecks.put(player1Id, new ArrayList<>(List.of(libraryCard, libraryToken)));
+        gd.playerHands.put(player1Id, new ArrayList<>(List.of(handToken)));
+        gd.playerGraveyards.put(player1Id, new ArrayList<>(List.of(graveyardToken)));
+        gd.playerCommandZones.put(player1Id, new ArrayList<>(List.of(commandToken)));
+        gd.addToExile(player1Id, exileToken);
+        gd.playerBattlefields.get(player1Id).add(new Permanent(battlefieldToken));
+
+        sut.performStateBasedActions(gd);
+
+        assertThat(gd.playerDecks.get(player1Id)).containsExactly(libraryCard);
+        assertThat(gd.playerHands.get(player1Id)).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1Id)).isEmpty();
+        assertThat(gd.playerCommandZones.get(player1Id)).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1Id)).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1Id))
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactly("Battlefield Token");
+        verify(gameLogService, times(5)).append(eq(gd), any(GameLogEntry.class));
     }
 
     @Nested

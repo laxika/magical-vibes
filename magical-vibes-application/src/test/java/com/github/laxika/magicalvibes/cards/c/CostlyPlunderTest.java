@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -31,6 +33,27 @@ class CostlyPlunderTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");
         harness.assertInGraveyard(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("A token sacrificed as a casting cost ceases to exist before priority")
+    void tokenSacrificedAsCastingCostCeasesToExist() {
+        Card tokenCard = new Card();
+        tokenCard.setName("Vampire");
+        tokenCard.setType(CardType.CREATURE);
+        tokenCard.setPower(1);
+        tokenCard.setToughness(1);
+        tokenCard.setToken(true);
+        Permanent token = new Permanent(tokenCard);
+        gd.playerBattlefields.get(player1.getId()).add(token);
+
+        harness.setHand(player1, List.of(new CostlyPlunder()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castInstantWithSacrifice(player1, 0, null, token.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Vampire");
+        harness.assertNotInGraveyard(player1, "Vampire");
     }
 
     @Test

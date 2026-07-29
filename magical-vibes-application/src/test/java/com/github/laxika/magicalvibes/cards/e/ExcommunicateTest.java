@@ -84,6 +84,32 @@ class ExcommunicateTest extends BaseCardTest {
         assertThat(deck.getFirst().getName()).isEqualTo("Grizzly Bears");
     }
 
+    @Test
+    @DisplayName("Resolving on a token removes it from the library as a state-based action")
+    void resolvingOnTokenRemovesItFromLibrary() {
+        Card token = new Card();
+        token.setName("Vampire");
+        token.setType(com.github.laxika.magicalvibes.model.CardType.CREATURE);
+        token.setPower(1);
+        token.setToughness(1);
+        token.setToken(true);
+        harness.addToBattlefield(player2, token);
+        UUID targetId = harness.getPermanentId(player2, "Vampire");
+        int deckSizeBefore = harness.getGameData().playerDecks.get(player2.getId()).size();
+
+        harness.setHand(player1, List.of(new Excommunicate()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castSorcery(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        harness.assertNotOnBattlefield(player2, "Vampire");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
+        assertThat(gd.playerDecks.get(player2.getId())).noneMatch(Card::isToken);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("Vampire") && log.contains("ceases to exist"));
+    }
+
     // ===== Excommunicate goes to graveyard =====
 
     @Test

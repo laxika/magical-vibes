@@ -126,9 +126,8 @@ class BloodthroneVampireTest extends BaseCardTest {
         assertThat(vamp.getEffectivePower()).isEqualTo(5);
         assertThat(vamp.getEffectiveToughness()).isEqualTo(5);
 
-        // Both sacrificed creatures should be in the graveyard
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Saproling Token");
+        harness.assertNotInGraveyard(player1, "Saproling Token");
     }
 
     @Test

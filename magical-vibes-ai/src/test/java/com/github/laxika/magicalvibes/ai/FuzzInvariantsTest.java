@@ -241,10 +241,6 @@ class FuzzInvariantsTest {
         assertThat(invariants.check(gd)).contains("Lost Sword");
     }
 
-    // ------------------------------------------------------------------
-    // Tokens in hidden zones (CR 704.5d)
-    // ------------------------------------------------------------------
-
     @Test
     void tokenCardInHandIsReported() {
         Card token = creature("Saproling", 1, 1);
@@ -264,13 +260,21 @@ class FuzzInvariantsTest {
     }
 
     @Test
-    void tokenCardInGraveyardIsAllowed() {
-        // The engine deliberately keeps dead tokens in graveyard lists and filters them
-        // at read sites, so the invariant must not flag them there.
+    void tokenCardInGraveyardIsReported() {
         Card token = creature("Saproling", 1, 1);
         token.setToken(true);
         gd.playerGraveyards.get(player1.getId()).add(token);
-        assertThat(checkTwice()).isNull();
+        assertThat(invariants.check(gd)).isNull();
+        assertThat(invariants.check(gd)).contains("Saproling").contains("graveyard");
+    }
+
+    @Test
+    void tokenCardInExileIsReported() {
+        Card token = creature("Saproling", 1, 1);
+        token.setToken(true);
+        gd.addToExile(player1.getId(), token);
+        assertThat(invariants.check(gd)).isNull();
+        assertThat(invariants.check(gd)).contains("Saproling").contains("exile");
     }
 
     // ------------------------------------------------------------------

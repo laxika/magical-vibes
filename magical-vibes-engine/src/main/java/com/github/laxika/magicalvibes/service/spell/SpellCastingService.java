@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.ExileCast;
@@ -129,6 +130,7 @@ public class SpellCastingService {
     private final com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
     private final AdditionalSpellCostService additionalSpellCostService;
     private final GameMutationCoordinator mutationCoordinator;
+    private final StateBasedActionService stateBasedActionService;
 
     // --- Helper records ---
 
@@ -3684,6 +3686,7 @@ public class SpellCastingService {
             gameData.stack.addAll(gameData.pendingManaAbilityTriggers);
             gameData.pendingManaAbilityTriggers.clear();
         }
+        stateBasedActionService.performStateBasedActions(gameData);
         mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }

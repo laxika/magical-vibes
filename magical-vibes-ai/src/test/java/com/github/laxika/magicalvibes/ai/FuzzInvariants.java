@@ -245,20 +245,23 @@ final class FuzzInvariants {
                 + "' is parked mid-resolution but no interaction is active or queued";
     }
 
-    /**
-     * CR 704.5d — a token in a hand or library is a rules violation with gameplay impact
-     * (hand size, discard and search interactions). Graveyards are deliberately not checked:
-     * the engine keeps dead tokens in graveyard lists ("dies" triggers need the zone change)
-     * and filters them at read sites instead.
-     */
+    /** A token must not remain in any zone other than the battlefield after state-based actions (CR 111.7). */
     private String findTokenZoneViolation(GameData gd) {
         List<String> problems = new ArrayList<>();
         for (UUID pid : gd.orderedPlayerIds) {
             appendTokenProblems(gd.playerHands.get(pid), "hand", problems);
             appendTokenProblems(gd.playerDecks.get(pid), "library", problems);
+            appendTokenProblems(gd.playerGraveyards.get(pid), "graveyard", problems);
+            appendTokenProblems(gd.playerCommandZones.get(pid), "command zone", problems);
+        }
+        for (ExiledCardEntry entry : gd.exiledCards) {
+            if (entry.card().isToken()) {
+                problems.add("token card " + entry.card().getName() + " (" + entry.card().getId()
+                        + ") is in exile");
+            }
         }
         return problems.isEmpty() ? null
-                : "token in a hidden zone: " + String.join("; ", problems);
+                : "token outside the battlefield: " + String.join("; ", problems);
     }
 
     private void appendTokenProblems(List<Card> cards, String zoneName, List<String> problems) {

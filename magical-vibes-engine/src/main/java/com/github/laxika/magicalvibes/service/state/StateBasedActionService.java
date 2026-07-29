@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,6 +66,7 @@ public class StateBasedActionService {
         int passes = 0;
         do {
             anyPerformed = destroyLethalCreaturesAndPlaneswalkers(gameData, processedIds);
+            anyPerformed |= removeTokensOutsideBattlefield(gameData);
 
             // CR 704.5a — player with 0 or less life loses the game
             // CR 704.5c — player with ten or more poison counters loses the game
@@ -111,6 +113,74 @@ public class StateBasedActionService {
         stateTriggerService.checkStateTriggers(gameData);
 
         checkEmptyLibraryLoss(gameData);
+    }
+
+    /**
+     * Removes tokens from every zone other than the battlefield after their zone-change events
+     * and associated triggers have already been recorded (CR 111.7).
+     */
+    private boolean removeTokensOutsideBattlefield(GameData gameData) {
+        List<Card> removedTokens = new ArrayList<>();
+        Set<UUID> removedTokenIds = new HashSet<>();
+
+        gameData.playerDecks.values().forEach(zone -> removeTokensFromZone(zone, removedTokens, removedTokenIds));
+        gameData.playerHands.values().forEach(zone -> removeTokensFromZone(zone, removedTokens, removedTokenIds));
+        gameData.playerGraveyards.values().forEach(zone -> removeTokensFromZone(zone, removedTokens, removedTokenIds));
+        gameData.playerCommandZones.values().forEach(zone -> removeTokensFromZone(zone, removedTokens, removedTokenIds));
+        synchronized (gameData.exiledCards) {
+            gameData.exiledCards.removeIf(entry -> {
+                Card card = entry.card();
+                if (!card.isToken()) {
+                    return false;
+                }
+                if (removedTokenIds.add(card.getId())) {
+                    removedTokens.add(card);
+                }
+                return true;
+            });
+        }
+
+        if (removedTokens.isEmpty()) {
+            return false;
+        }
+
+        for (UUID cardId : removedTokenIds) {
+            gameData.exiledCardEggCounters.remove(cardId);
+            gameData.exiledCardsWithSilverCounters.remove(cardId);
+            gameData.exilePlayPermissions.remove(cardId);
+            gameData.exilePlayPermissionsExpireEndOfTurn.remove(cardId);
+            gameData.exilePlayPermissionsExpireAtTurnEnd.remove(cardId);
+            gameData.exilePlayAnyManaType.remove(cardId);
+            gameData.exilePlayWithoutPayingManaCost.remove(cardId);
+            gameData.exileInsteadOfGraveyard.remove(cardId);
+            gameData.graveyardPlayPermissions.remove(cardId);
+            gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(cardId);
+        }
+        gameData.imprintedCards.entrySet().removeIf(entry -> removedTokenIds.contains(entry.getValue().getId()));
+        gameData.clearDelayedActions(PendingExileReturn.class,
+                pending -> removedTokenIds.contains(pending.card().getId()));
+        gameData.exileReturnOnPermanentLeave.entrySet().removeIf(entry -> {
+            entry.getValue().removeIf(pending -> removedTokenIds.contains(pending.card().getId()));
+            return entry.getValue().isEmpty();
+        });
+
+        for (Card token : removedTokens) {
+            gameLogService.append(gameData, GameLog.cardThen(token, " ceases to exist."));
+            log.info("Game {} - token {} ceases to exist", gameData.id, token.getName());
+        }
+        return true;
+    }
+
+    private void removeTokensFromZone(List<Card> zone, List<Card> removedTokens, Set<UUID> removedTokenIds) {
+        zone.removeIf(card -> {
+            if (!card.isToken()) {
+                return false;
+            }
+            if (removedTokenIds.add(card.getId())) {
+                removedTokens.add(card);
+            }
+            return true;
+        });
     }
 
     private boolean destroyLethalCreaturesAndPlaneswalkers(GameData gameData, Set<UUID> processedIds) {

@@ -128,9 +128,8 @@ class NantukoHuskTest extends BaseCardTest {
         assertThat(husk.getEffectivePower()).isEqualTo(6);
         assertThat(husk.getEffectiveToughness()).isEqualTo(6);
 
-        // Both sacrificed creatures should be in the graveyard
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Saproling Token");
+        harness.assertNotInGraveyard(player1, "Saproling Token");
     }
 
     @Test
