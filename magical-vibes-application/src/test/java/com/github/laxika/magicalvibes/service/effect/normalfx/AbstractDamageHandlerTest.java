@@ -136,6 +136,8 @@ abstract class AbstractDamageHandlerTest {
         when(damagePreventionService.applyCreatureRedirectShields(eq(gd), any(), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
         when(damagePreventionService.applyTargetSourcePreventionShield(eq(gd), any(), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
         when(damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(eq(gd), any(), anyInt())).thenAnswer(inv -> inv.getArgument(2));
+        when(damagePreventionService.applyControllerCreaturesNextSourceDamageShield(
+                eq(gd), any(), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
     }
 
     protected void stubNoKeywordsOnSource(StackEntry entry) {

@@ -85,10 +85,16 @@ class CardEffectTargetingConsistencyTest {
             // Piggyback: rides on the counterspell's existing spell target (Dream Fracture) — reads
             // the targeted spell from entry.getTargetId(); never contributes a chosen player target.
             "TargetSpellControllerDrawsCardEffect",
+            // Piggyback: rides on Illumination's existing spell target and reads that spell's
+            // controller and mana value from the stack.
+            "TargetSpellControllerGainsLifeEqualToManaValueEffect",
             // Piggyback: rides on the ability's permanent target chosen for the sibling counter effect
             // (Gwafa Hazid, Profiteer) — reads the targeted permanent from entry.getTargetId(); never
             // contributes a chosen player target.
-            "TargetPermanentControllerDrawsCardEffect"
+            "TargetPermanentControllerDrawsCardEffect",
+            // Pre-resolved: EACH_UPKEEP_TRIGGERED carries Emberwilde Djinn's active player on the
+            // stack entry, so this effect never asks the shared pipeline to choose a player.
+            "TargetPlayerMayPayManaOrLifeEffect"
     );
 
     @Test

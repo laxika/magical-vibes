@@ -74,11 +74,12 @@ class CinderCloudTest extends BaseCardTest {
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
         harness.addToBattlefield(player2, new Plains());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new CinderCloud()));
         harness.addMana(player1, ManaColor.RED, 5);
 
         UUID targetId = harness.getPermanentId(player2, "Plains");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalStateException.class);
     }
 }

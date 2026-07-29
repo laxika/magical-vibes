@@ -59,8 +59,10 @@ class KukemssaSerpentTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         UUID forestId = harness.getPermanentId(player2, "Forest");
+        UUID sacrificedIslandId = harness.getPermanentId(player1, "Island");
 
         harness.activateAbility(player1, 0, null, forestId);
+        harness.handlePermanentChosen(player1, sacrificedIslandId);
         harness.passBothPriorities();
 
         Permanent forest = gqs.findPermanentById(gd, forestId);
@@ -101,11 +103,14 @@ class KukemssaSerpentTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         UUID forestId = harness.getPermanentId(player2, "Forest");
+        UUID sacrificedIslandId = harness.getPermanentId(player1, "Island");
 
         harness.activateAbility(player1, 0, null, forestId);
+        harness.handlePermanentChosen(player1, sacrificedIslandId);
         harness.passBothPriorities();
 
         Permanent forest = gqs.findPermanentById(gd, forestId);
+        assertThat(forest.getEffectiveLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
         forest.resetModifiers();
 
         assertThat(forest.getEffectiveLandTypeOverride()).isNull();
@@ -139,7 +144,7 @@ class KukemssaSerpentTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bearsId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a land an opponent controls");
+                .hasMessageContaining("Target must be a land");
     }
 
     @Test

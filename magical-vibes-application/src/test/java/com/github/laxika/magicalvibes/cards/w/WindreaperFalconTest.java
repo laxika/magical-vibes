@@ -99,6 +99,8 @@ class WindreaperFalconTest extends BaseCardTest {
         Permanent falcon = new Permanent(new WindreaperFalcon());
         falcon.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(falcon);
+        gd.playerBattlefields.get(player2.getId()).add(
+                new Permanent(createCreature("Grizzly Bears", 2, 2, CardColor.GREEN)));
 
         harness.setHand(player1, List.of(createTargetedInstant("Psionic Blast", CardColor.BLUE, "{U}")));
         harness.addMana(player1, ManaColor.BLUE, 1);
