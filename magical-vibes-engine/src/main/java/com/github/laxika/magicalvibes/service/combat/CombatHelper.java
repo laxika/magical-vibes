@@ -105,12 +105,4 @@ public final class CombatHelper {
         return battlefield.stream().filter(Permanent::isAttacking).count() == 1;
     }
 
-    static UUID getEffectiveRecipient(GameData gameData, UUID playerId) {
-        if (gameData.mindControlledPlayerId != null
-                && gameData.mindControlledPlayerId.equals(playerId)
-                && gameData.mindControllerPlayerId != null) {
-            return gameData.mindControllerPlayerId;
-        }
-        return playerId;
-    }
 }
