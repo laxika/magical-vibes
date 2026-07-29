@@ -253,7 +253,9 @@ public class CardChoiceHandlerService {
             // Continue "each player discards" queue (e.g. Serum Raker's death trigger)
             if (!followUp.remainingEachPlayerDiscards().isEmpty()) {
                 playerInteractionSupport.startNextEachPlayerDiscard(gameData, followUp);
-                return;
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
             }
 
             // Process any pending self-discard triggers (e.g. Guerrilla Tactics)

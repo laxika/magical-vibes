@@ -62,6 +62,24 @@ class CunningLethemancerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Finishes resolving when the remaining player has an empty hand")
+    void emptyRemainingPlayerHandFinishesResolution() {
+        harness.addToBattlefield(player1, new CunningLethemancer());
+        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, new ArrayList<>());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+    }
+
+    @Test
     @DisplayName("Does not trigger during an opponent's upkeep")
     void doesNotTriggerOnOpponentUpkeep() {
         harness.addToBattlefield(player1, new CunningLethemancer());
