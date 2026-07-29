@@ -224,7 +224,8 @@ public class StateBasedActionService {
 
         List<Permanent> toSacrifice = new ArrayList<>();
         for (UUID seraphId : new ArrayList<>(gameData.seraphReturnedCreatures.keySet())) {
-            if (gameQueryService.findPermanentById(gameData, seraphId) == null) {
+            Permanent seraph = gameQueryService.findPermanentById(gameData, seraphId);
+            if (seraph == null) {
                 // Seraph left the battlefield: no sacrifice ever; stop tracking.
                 gameData.seraphReturnedCreatures.remove(seraphId);
                 gameData.seraphControlWatch.remove(seraphId);
@@ -233,12 +234,12 @@ public class StateBasedActionService {
             java.util.Set<UUID> linked = gameData.seraphReturnedCreatures.get(seraphId);
             linked.removeIf(id -> gameQueryService.findPermanentById(gameData, id) == null);
 
-            UUID currentController = gameData.findControllerOf(seraphId);
+            UUID currentController = gameData.findControllerOf(seraph);
             UUID prevController = gameData.seraphControlWatch.get(seraphId);
             if (prevController != null && !prevController.equals(currentController)) {
                 for (UUID creatureId : new ArrayList<>(linked)) {
                     Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
-                    if (creature != null && prevController.equals(gameData.findControllerOf(creatureId))) {
+                    if (creature != null && prevController.equals(gameData.findControllerOf(creature))) {
                         toSacrifice.add(creature);
                         linked.remove(creatureId);
                     }

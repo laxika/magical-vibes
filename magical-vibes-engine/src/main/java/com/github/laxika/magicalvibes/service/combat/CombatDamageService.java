@@ -890,7 +890,7 @@ public class CombatDamageService {
             int damageDealt = entry.getValue();
             if (damageDealt <= 0) continue;
             if (!gameQueryService.hasKeyword(gameData, creature, Keyword.LIFELINK)) continue;
-            UUID controllerId = CombatHelper.findControllerOf(gameData, creature);
+            UUID controllerId = gameData.findControllerOf(creature);
             if (controllerId == null) continue;
             lifeSupport.applyGainLife(gameData, controllerId, damageDealt, "lifelink");
         }
@@ -919,7 +919,7 @@ public class CombatDamageService {
             Permanent creature = entry.getKey();
             int damageDealt = entry.getValue();
             if (damageDealt <= 0) continue;
-            UUID controllerId = CombatHelper.findControllerOf(gameData, creature);
+            UUID controllerId = gameData.findControllerOf(creature);
             if (controllerId == null) continue;
             // "Whenever a creature you control deals combat damage, you gain that much life."
             // Fires once per matching enchantment the creature's controller controls (Noble Purpose).
@@ -950,7 +950,7 @@ public class CombatDamageService {
             // Prefer the controller captured while the source was alive (it may have died dealing
             // damage to a blocker); fall back to a live lookup for still-present sources.
             UUID controllerId = state.combatDamageDealerControllers.get(source);
-            if (controllerId == null) controllerId = CombatHelper.findControllerOf(gameData, source);
+            if (controllerId == null) controllerId = gameData.findControllerOf(source);
             if (controllerId == null) continue;
             triggerCollectionService.queueSourceDealsDamageReflections(gameData, source.getCard(), controllerId, damageDealt);
         }
@@ -1499,7 +1499,7 @@ public class CombatDamageService {
                 if (target == null) continue;
                 List<CardEffect> effects = target.getCard().getEffects(EffectSlot.ON_DEALT_DAMAGE);
                 if (effects.isEmpty()) continue;
-                UUID controllerId = CombatHelper.findControllerOf(gameData, target);
+                UUID controllerId = gameData.findControllerOf(target);
                 if (controllerId == null) continue;
                 int damageAmount = damageAmounts.getOrDefault(targetId, 0);
                 triggers.add(new DealtDamageTriggerData(target.getCard(), target.getId(), controllerId, damageAmount, sourceControllerId));

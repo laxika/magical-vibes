@@ -407,7 +407,7 @@ public class CombatService {
             // Source must still be on the battlefield and controlled by the gaining player.
             Permanent source = gameQueryService.findPermanentById(gameData, action.sourcePermanentId());
             if (source == null
-                    || !action.newControllerId().equals(gameData.findControllerOf(action.sourcePermanentId()))) {
+                    || !action.newControllerId().equals(gameData.findControllerOf(source))) {
                 continue;
             }
             creatureControlService.applyControlEffect(gameData, action.newControllerId(), target,

@@ -86,7 +86,7 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
                 continue;
             }
 
-            UUID controllerId = gameData.findControllerOf(targetId);
+            UUID controllerId = gameData.findControllerOf(target);
             state.currentTargetId = targetId;
 
             List<String> options = availableOptions(gameData, controllerId);
@@ -112,7 +112,7 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
         if (target == null) {
             return;
         }
-        UUID controllerId = gameData.findControllerOf(targetId);
+        UUID controllerId = gameData.findControllerOf(target);
 
         if (ChoiceContext.WintersChillPaymentChoice.PAY_TWO.equals(mode)) {
             if (!pay(gameData, controllerId, "{2}")) {

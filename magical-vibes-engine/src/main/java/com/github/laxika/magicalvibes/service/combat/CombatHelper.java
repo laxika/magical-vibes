@@ -90,7 +90,7 @@ public final class CombatHelper {
         boolean hasEffect = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect.class::isInstance);
         if (!hasEffect) return false;
-        UUID controllerId = findControllerOf(gameData, attacker);
+        UUID controllerId = gameData.findControllerOf(attacker);
         return controllerId != null && gameQueryService.playerCastHistoricSpellThisTurn(gameData, controllerId);
     }
 
@@ -98,21 +98,11 @@ public final class CombatHelper {
         boolean hasEffect = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CantBeBlockedIfAttackingAloneEffect.class::isInstance);
         if (!hasEffect) return false;
-        UUID controllerId = findControllerOf(gameData, attacker);
+        UUID controllerId = gameData.findControllerOf(attacker);
         if (controllerId == null) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return false;
         return battlefield.stream().filter(Permanent::isAttacking).count() == 1;
-    }
-
-    public static UUID findControllerOf(GameData gameData, Permanent permanent) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf != null && bf.contains(permanent)) {
-                return playerId;
-            }
-        }
-        return null;
     }
 
     static UUID getEffectiveRecipient(GameData gameData, UUID playerId) {

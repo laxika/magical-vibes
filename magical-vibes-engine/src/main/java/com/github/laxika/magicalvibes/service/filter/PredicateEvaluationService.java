@@ -583,7 +583,7 @@ public class PredicateEvaluationService {
                 if (gameData == null) {
                     yield false;
                 }
-                UUID targetController = gameData.findControllerOf(permanent.getId());
+                UUID targetController = gameData.findControllerOf(permanent);
                 List<Permanent> targetBattlefield = targetController == null ? null
                         : gameData.playerBattlefields.get(targetController);
                 yield targetBattlefield != null && targetBattlefield.stream().anyMatch(p ->

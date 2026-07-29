@@ -255,7 +255,7 @@ public class AttackLegalityService {
 
     private boolean isCantAttackDueToGlobalRestriction(GameData gameData, Permanent creature) {
         boolean[] restricted = {false};
-        UUID creatureController = CombatHelper.findControllerOf(gameData, creature);
+        UUID creatureController = gameData.findControllerOf(creature);
         gameData.forEachPermanent((playerId, permanent) -> {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof CreaturesCantAttackUnlessPredicateEffect restriction) {
@@ -354,7 +354,7 @@ public class AttackLegalityService {
             count[0]++;
         }
 
-        UUID creatureControllerId = CombatHelper.findControllerOf(gameData, creature);
+        UUID creatureControllerId = gameData.findControllerOf(creature);
 
         // Taunt: every creature the affected player controls must attack the taunter if able.
         UUID taunter = gameData.tauntedThisTurn.get(creatureControllerId);

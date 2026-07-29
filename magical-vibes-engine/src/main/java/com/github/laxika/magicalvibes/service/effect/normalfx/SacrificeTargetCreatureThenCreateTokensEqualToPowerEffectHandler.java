@@ -48,7 +48,7 @@ public class SacrificeTargetCreatureThenCreateTokensEqualToPowerEffectHandler im
             return;
         }
 
-        UUID controllerId = gameData.findControllerOf(target.getId());
+        UUID controllerId = gameData.findControllerOf(target);
         int power = gameQueryService.getEffectivePower(gameData, target);
 
         permanentRemovalService.removePermanentToGraveyard(gameData, target);

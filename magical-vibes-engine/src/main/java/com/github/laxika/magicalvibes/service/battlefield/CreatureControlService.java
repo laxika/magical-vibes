@@ -92,7 +92,7 @@ public class CreatureControlService {
      * <p>No-ops if the permanent is not on any battlefield or control is unchanged.
      */
     public void recomputeControl(GameData gameData, Permanent permanent) {
-        UUID current = gameData.findControllerOf(permanent.getId());
+        UUID current = gameData.findControllerOf(permanent);
         if (current == null) {
             return;
         }
@@ -145,7 +145,7 @@ public class CreatureControlService {
 
         // "For as long as you control [source]" effects keyed to THIS permanent end when it
         // changes controllers away from their creator; cascade to the permanents they held.
-        expireSourceControllerDependentEffects(gameData, permanent.getId());
+        expireSourceControllerDependentEffects(gameData, permanent);
     }
 
     /**
@@ -201,7 +201,7 @@ public class CreatureControlService {
                     .anyMatch(fe -> fe.duration() == EffectDuration.WHILE_ATTACHED
                             && aura.getId().equals(fe.sourcePermanentId()));
             if (!present) {
-                UUID auraController = gameData.findControllerOf(aura.getId());
+                UUID auraController = gameData.findControllerOf(aura);
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), aura.getCard().getName(), aura.getId(), auraController,
                         new ControlEnchantedCreatureEffect(), enchanted.getId(), null, null,
@@ -247,8 +247,7 @@ public class CreatureControlService {
                 // Seasinger: control also ends the moment the source becomes untapped.
                 Permanent source = fe.sourcePermanentId() == null ? null
                         : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
-                UUID sourceController = fe.sourcePermanentId() == null ? null
-                        : gameData.findControllerOf(fe.sourcePermanentId());
+                UUID sourceController = source == null ? null : gameData.findControllerOf(source);
                 stale = source == null || !source.isTapped()
                         || sourceController == null || !sourceController.equals(fe.controllerId());
             }
@@ -267,13 +266,13 @@ public class CreatureControlService {
      * effects keyed to it as their SOURCE end if their creator lost it; the permanents they
      * were holding get recomputed.
      */
-    private void expireSourceControllerDependentEffects(GameData gameData, UUID sourcePermanentId) {
-        UUID sourceController = gameData.findControllerOf(sourcePermanentId);
+    private void expireSourceControllerDependentEffects(GameData gameData, Permanent source) {
+        UUID sourceController = gameData.findControllerOf(source);
         List<FloatingContinuousEffect> expired = new ArrayList<>();
         for (FloatingContinuousEffect fe : List.copyOf(gameData.floatingEffects)) {
             if (fe.isControlEffect()
                     && fe.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
-                    && sourcePermanentId.equals(fe.sourcePermanentId())
+                    && source.getId().equals(fe.sourcePermanentId())
                     && !fe.controllerId().equals(sourceController)) {
                 gameData.floatingEffects.remove(fe);
                 expired.add(fe);

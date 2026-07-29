@@ -55,7 +55,7 @@ public class CombatTriggerService {
      */
     public void checkAuraTriggersForCreature(GameData gameData, Permanent creature, EffectSlot slot,
                                               Permanent combatOpponent) {
-        UUID creatureControllerId = CombatHelper.findControllerOf(gameData, creature);
+        UUID creatureControllerId = gameData.findControllerOf(creature);
         if (creatureControllerId == null) return;
         final UUID finalCreatureControllerId = creatureControllerId;
 
@@ -162,7 +162,7 @@ public class CombatTriggerService {
     public void checkAttachedPerBlockerTriggers(GameData gameData, Permanent attacker,
                                                  List<BlockerAssignment> blockerAssignments,
                                                  List<Permanent> defenderBattlefield, int attackerIndex) {
-        UUID controllerId = CombatHelper.findControllerOf(gameData, attacker);
+        UUID controllerId = gameData.findControllerOf(attacker);
         if (controllerId == null) return;
         final UUID finalControllerId = controllerId;
 

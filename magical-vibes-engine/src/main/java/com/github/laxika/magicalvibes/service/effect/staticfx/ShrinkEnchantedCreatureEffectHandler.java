@@ -48,7 +48,7 @@ public class ShrinkEnchantedCreatureEffectHandler implements StaticEffectHandler
             return;
         }
         Permanent enchanted = context.target();
-        UUID enchantedControllerId = support.findControllerId(context.gameData(), enchanted);
+        UUID enchantedControllerId = context.gameData().findControllerOf(enchanted);
         AmountContext ctx = AmountContext.forStaticEffect(enchanted, enchantedControllerId);
         int x = Math.max(0, amountEvaluationService.evaluate(context.gameData(), shrink.amount(), ctx));
         int toughnessSoFar = enchanted.getEffectiveToughness() + accumulator.getToughness();

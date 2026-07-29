@@ -1130,6 +1130,16 @@ public class GameData {
     }
 
     /** The player whose battlefield currently holds the permanent, or {@code null}. */
+    public UUID findControllerOf(Permanent permanent) {
+        return findControllerOf(permanent.getId());
+    }
+
+    /**
+     * The player whose battlefield currently holds the permanent with the given ID, or {@code null}.
+     *
+     * @deprecated Use {@link #findControllerOf(Permanent)} so the lookup is scoped to a permanent.
+     */
+    @Deprecated(forRemoval = true)
     public UUID findControllerOf(UUID permanentId) {
         for (UUID playerId : orderedPlayerIds) {
             List<Permanent> battlefield = playerBattlefields.get(playerId);

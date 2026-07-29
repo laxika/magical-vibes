@@ -233,16 +233,6 @@ public class StaticEffectSupport {
         return selfCoveringScope && matchesStaticFilter(context.target(), filter);
     }
 
-    public UUID findControllerId(GameData gameData, Permanent permanent) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield != null && battlefield.contains(permanent)) {
-                return playerId;
-            }
-        }
-        return null;
-    }
-
     public boolean matchesStaticFilter(Permanent target, PermanentPredicate filter) {
         if (filter == null) return true;
         // CR 613.6: when this exact filter instance was already evaluated by the layer-4 pass
