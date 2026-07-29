@@ -35,7 +35,7 @@ class RolloutPolicyTest {
         player1 = harness.getPlayer1();
         gd = harness.getGameData();
         harness.skipMulligan();
-        GameSimulator simulator = GameSimulator.forQueryService(harness.getGameQueryService());
+        GameSimulator simulator = HeadlessSimulationContext.getSimulator();
         engine = new MCTSEngine(simulator);
         playerId = player1.getId();
     }

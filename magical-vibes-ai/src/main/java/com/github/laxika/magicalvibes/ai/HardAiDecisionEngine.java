@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
+import com.github.laxika.magicalvibes.ai.simulation.HeadlessSimulationContext;
 import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -116,7 +117,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         this.boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
         this.combatSimulator = new CombatSimulator(gameQueryService, blockLegalityService, boardEvaluator);
-        this.gameSimulator = GameSimulator.forQueryService(gameQueryService);
+        this.gameSimulator = HeadlessSimulationContext.getSimulator();
         this.mctsEngine = new MCTSEngine(gameSimulator);
         this.raceEvaluator = new RaceEvaluator(gameQueryService);
         this.amountEvaluationService = new AmountEvaluationService(

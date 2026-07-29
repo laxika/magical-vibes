@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
+import com.github.laxika.magicalvibes.ai.simulation.HeadlessSimulationContext;
 import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
 import com.github.laxika.magicalvibes.cards.e.Eviscerate;
@@ -69,7 +70,7 @@ class MCTSBenchmarkTest {
         player2 = harness.getPlayer2();
         gd = harness.getGameData();
         harness.skipMulligan();
-        simulator = GameSimulator.forQueryService(harness.getGameQueryService());
+        simulator = HeadlessSimulationContext.getSimulator();
         buildMidGameState();
     }
 

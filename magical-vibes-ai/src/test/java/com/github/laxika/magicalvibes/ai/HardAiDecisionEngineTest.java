@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
+import com.github.laxika.magicalvibes.ai.simulation.HeadlessSimulationContext;
 import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
@@ -130,7 +131,7 @@ class HardAiDecisionEngineTest {
         harness.forceActivePlayer(player1);
         gd.stack.clear();
 
-        GameSimulator simulator = GameSimulator.forQueryService(harness.getGameQueryService());
+        GameSimulator simulator = HeadlessSimulationContext.getSimulator();
         MCTSEngine engine = new MCTSEngine(simulator);
 
         long start = System.currentTimeMillis();
@@ -154,7 +155,7 @@ class HardAiDecisionEngineTest {
         harness.forceActivePlayer(player1);
         gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
 
-        GameSimulator simulator = GameSimulator.forQueryService(harness.getGameQueryService());
+        GameSimulator simulator = HeadlessSimulationContext.getSimulator();
         MCTSEngine engine = new MCTSEngine(simulator);
 
         long start = System.currentTimeMillis();
@@ -186,7 +187,7 @@ class HardAiDecisionEngineTest {
         harness.forceActivePlayer(player2);
         gd.interaction.beginInteraction(new PendingInteraction.BlockerDeclaration(player1.getId()));
 
-        GameSimulator simulator = GameSimulator.forQueryService(harness.getGameQueryService());
+        GameSimulator simulator = HeadlessSimulationContext.getSimulator();
         MCTSEngine engine = new MCTSEngine(simulator);
 
         long start = System.currentTimeMillis();
@@ -1019,7 +1020,7 @@ class HardAiDecisionEngineTest {
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
-        ai.setMctsEngine(new MCTSEngine(GameSimulator.forQueryService(harness.getGameQueryService()), 42L, 500));
+        ai.setMctsEngine(new MCTSEngine(HeadlessSimulationContext.getSimulator(), 42L, 500));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -1225,7 +1226,7 @@ class HardAiDecisionEngineTest {
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
-        ai.setMctsEngine(new MCTSEngine(GameSimulator.forQueryService(harness.getGameQueryService()), 42L, 500));
+        ai.setMctsEngine(new MCTSEngine(HeadlessSimulationContext.getSimulator(), 42L, 500));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -1264,7 +1265,7 @@ class HardAiDecisionEngineTest {
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
-        ai.setMctsEngine(new MCTSEngine(GameSimulator.forQueryService(harness.getGameQueryService()), 42L, 500));
+        ai.setMctsEngine(new MCTSEngine(HeadlessSimulationContext.getSimulator(), 42L, 500));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -1306,7 +1307,7 @@ class HardAiDecisionEngineTest {
                 gd.id, aiPlayer, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
-        ai.setMctsEngine(new MCTSEngine(GameSimulator.forQueryService(harness.getGameQueryService()), 42L, 500));
+        ai.setMctsEngine(new MCTSEngine(HeadlessSimulationContext.getSimulator(), 42L, 500));
         return ai;
     }
 
@@ -3496,7 +3497,7 @@ class HardAiDecisionEngineTest {
                     harness.getGameService(), harness.getGameQueryService(),
                     harness.getBlockLegalityService(), harness.getCombatAttackService(), harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
                     harness.getTargetValidationService(), harness.getTargetLegalityService());
-            ai.setMctsEngine(new MCTSEngine(GameSimulator.forQueryService(harness.getGameQueryService()), 42L, 500));
+            ai.setMctsEngine(new MCTSEngine(HeadlessSimulationContext.getSimulator(), 42L, 500));
 
             harness.forceActivePlayer(player1);
             harness.clearPriorityPassed();
@@ -3837,7 +3838,7 @@ class HardAiDecisionEngineTest {
                     harness.getGameService(), harness.getGameQueryService(),
                     harness.getBlockLegalityService(), harness.getCombatAttackService(), harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
                     harness.getTargetValidationService(), harness.getTargetLegalityService());
-            ai.setMctsEngine(new MCTSEngine(GameSimulator.forQueryService(harness.getGameQueryService()), 42L, 500));
+            ai.setMctsEngine(new MCTSEngine(HeadlessSimulationContext.getSimulator(), 42L, 500));
 
             harness.forceActivePlayer(player1);
             harness.clearPriorityPassed();

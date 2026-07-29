@@ -127,15 +127,6 @@ public class GameSimulator {
     private final SizeGatedRemovalPump sizeGatedRemovalPump;
     private final ValidTargetService validTargetService;
 
-    /**
-     * Returns the cached headless simulator. {@link GameQueryService} instances from the same
-     * {@link com.github.laxika.magicalvibes.service.GameEngineConfig} graph are behaviorally
-     * identical, so the live game's bean and the headless context bean are interchangeable for MCTS.
-     */
-    public static GameSimulator forQueryService(GameQueryService sharedQueryService) {
-        return HeadlessSimulationContext.getSimulator();
-    }
-
     GameSimulator(GameService gameService,
                   GameQueryService gameQueryService,
                   BlockLegalityService blockLegalityService,

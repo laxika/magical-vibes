@@ -21,6 +21,12 @@ public final class HeadlessSimulationContext {
     private HeadlessSimulationContext() {
     }
 
+    /**
+     * Returns the cached headless simulator, shared by every live game. {@link GameQueryService}
+     * instances from the same {@link com.github.laxika.magicalvibes.service.GameEngineConfig} graph
+     * are behaviorally identical, so the live game's bean and this context's bean are
+     * interchangeable for MCTS — a per-game simulator would buy nothing.
+     */
     public static GameSimulator getSimulator() {
         GameSimulator existing = simulator;
         if (existing != null) {

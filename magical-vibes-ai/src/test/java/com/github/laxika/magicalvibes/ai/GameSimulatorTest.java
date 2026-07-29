@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
+import com.github.laxika.magicalvibes.ai.simulation.HeadlessSimulationContext;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.ArmoredAscension;
@@ -54,7 +55,7 @@ class GameSimulatorTest {
         player2 = harness.getPlayer2();
         gd = harness.getGameData();
         harness.skipMulligan();
-        simulator = GameSimulator.forQueryService(harness.getGameQueryService());
+        simulator = HeadlessSimulationContext.getSimulator();
     }
 
     @Test
