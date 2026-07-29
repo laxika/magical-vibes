@@ -57,4 +57,31 @@ class ColorChoiceAiStrategyTest {
         verify(gameActions).answerInteraction(captor.capture());
         assertThat(captor.getValue()).isEqualTo(new InteractionAnswer.ListChoiceMade("ELF"));
     }
+
+    @Test
+    @DisplayName("Hullbreaker Horror mode choice answers with an offered mode")
+    void answersHullbreakerHorrorModeChoiceWithOfferedMode() throws Exception {
+        UUID opponentId = UUID.randomUUID();
+        gameData.orderedPlayerIds.add(aiPlayerId);
+        gameData.orderedPlayerIds.add(opponentId);
+        gameData.playerBattlefields.put(opponentId, List.of());
+
+        PendingInteraction.ColorChoice interaction = new PendingInteraction.ColorChoice(
+                aiPlayerId,
+                null,
+                null,
+                new ChoiceContext.HullbreakerHorrorModeChoice(null, aiPlayerId),
+                List.of(
+                        ChoiceContext.HullbreakerHorrorModeChoice.PERMANENT,
+                        ChoiceContext.HullbreakerHorrorModeChoice.NONE),
+                "Choose up to one.");
+
+        strategy.answer(interaction, new AiInteractionContext(
+                gameData, gameData.id, aiPlayerId, gameQueryService, gameActions));
+
+        ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
+        verify(gameActions).answerInteraction(captor.capture());
+        assertThat(captor.getValue()).isEqualTo(new InteractionAnswer.ListChoiceMade(
+                ChoiceContext.HullbreakerHorrorModeChoice.PERMANENT));
+    }
 }

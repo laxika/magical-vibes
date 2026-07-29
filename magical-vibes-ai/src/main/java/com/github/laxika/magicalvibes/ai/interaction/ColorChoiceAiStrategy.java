@@ -394,8 +394,13 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             }
         }
 
-        log.info("AI: Choosing color {} in game {}", bestColor.name(), gameId);
-        ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(bestColor.name()));
+        String bestColorName = bestColor.name();
+        String chosen = interaction.options().isEmpty() || interaction.options().contains(bestColorName)
+                ? bestColorName
+                : interaction.options().getFirst();
+
+        log.info("AI: Choosing list option {} in game {}", chosen, gameId);
+        ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosen));
     }
 
     /**
