@@ -391,6 +391,12 @@ public class AutoPassService {
                     continue;
                 }
 
+                // Skip attack/block-only abilities when the permanent is doing neither
+                if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_WHILE_ATTACKING_OR_BLOCKING
+                        && !perm.isAttacking() && !perm.isBlocking()) {
+                    continue;
+                }
+
                 // Skip combat-only abilities when not in the combat phase
                 if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_COMBAT
                         && !gameData.currentStep.isCombatPhase()) {

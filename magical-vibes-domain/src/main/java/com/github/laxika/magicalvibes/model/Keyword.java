@@ -47,6 +47,7 @@ public enum Keyword {
     INCREMENT,
     PARADIGM,
     HORSEMANSHIP,
+    FLANKING,
     CONSPIRE,
     RETRACE,
     BANDING,
@@ -63,7 +64,8 @@ public enum Keyword {
     DECAYED,
     SPLICE,
     DELIRIUM,
-    PREPARED;
+    PREPARED,
+    PHASING;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

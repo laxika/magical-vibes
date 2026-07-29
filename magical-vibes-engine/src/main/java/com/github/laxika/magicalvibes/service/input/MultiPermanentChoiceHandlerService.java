@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -111,9 +110,18 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
 
+        MultiPermanentChoiceContext context = multiPermanentChoice.context();
+        if (context instanceof MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource powerCtx
+                && !permanentIds.isEmpty()
+                && totalEffectivePower(gameData, permanentIds) < powerCtx.requiredPower()) {
+            // Not a partial cost: the set either reaches the threshold or is not a legal choice,
+            // so leave the prompt standing rather than sacrificing creatures for nothing.
+            throw new IllegalStateException("Selected creatures have total power below "
+                    + powerCtx.requiredPower());
+        }
+
         gameData.interaction.clearAwaitingInput();
 
-        MultiPermanentChoiceContext context = multiPermanentChoice.context();
         if (context instanceof MultiPermanentChoiceContext.ExileDamagedPlayerControls) {
             handleExileDamagedPlayerControlsPermanent(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.DestroyDamagedPlayerControls ctx) {
@@ -124,8 +132,8 @@ public class MultiPermanentChoiceHandlerService {
             handleSacrificeDamagedPlayerControlsPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeSelfToDestroy ctx) {
             handleSacrificeSelfToDestroy(gameData, playerId, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.GainControlOfLandAndAssignNoCombatDamage ctx) {
-            handleGainControlOfLandAndAssignNoCombatDamage(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.GainControlOfPermanentAndAssignNoCombatDamage ctx) {
+            handleGainControlOfPermanentAndAssignNoCombatDamage(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TransformAndAttach ctx) {
             handleTransformAndAttach(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeAttackingCreatures) {
@@ -160,6 +168,8 @@ public class MultiPermanentChoiceHandlerService {
             handleSacrificeLandsSearchLandsToBattlefieldTapped(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsDrawPerSacrificed) {
             handleSacrificePermanentsDrawPerSacrificed(gameData, playerId, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource ctx) {
+            handleSacrificeCreaturesWithTotalPowerOrSacrificeSource(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseFivePermanentsSearchSameNameToBattlefieldTapped) {
             handleChooseFivePermanentsSearchSameName(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.DevourSacrifice ctx) {
@@ -216,29 +226,34 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
-    private void handleGainControlOfLandAndAssignNoCombatDamage(GameData gameData, UUID playerId, List<UUID> permanentIds,
-                                                                MultiPermanentChoiceContext.GainControlOfLandAndAssignNoCombatDamage context) {
+    private void handleGainControlOfPermanentAndAssignNoCombatDamage(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                                                     MultiPermanentChoiceContext.GainControlOfPermanentAndAssignNoCombatDamage context) {
         UUID sourcePermId = context.sourcePermanentId();
+        ControlDuration duration = context.duration();
 
         if (permanentIds.isEmpty()) {
             gameLogService.append(gameData,
-                    GameLog.text(gameData.playerIdToName.get(playerId) + " chooses not to gain control of a land."));
+                    GameLog.text(gameData.playerIdToName.get(playerId) + " chooses not to gain control of a " + context.choiceNoun() + "."));
         } else {
             Permanent source = gameQueryService.findPermanentById(gameData, sourcePermId);
             UUID sourceController = source != null ? gameQueryService.findPermanentController(gameData, sourcePermId) : null;
-            Permanent land = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
+            Permanent stolen = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
 
-            // Per ruling: only take control if you still control the source when this resolves;
-            // the "assigns no combat damage" rider applies only when a land is actually taken.
-            if (source != null && land != null && playerId.equals(sourceController)) {
-                creatureControlService.applyControlEffect(gameData, playerId, land,
-                        new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD),
-                        EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, sourcePermId, source.getCard().getName());
-                gameData.creaturesPreventedFromDealingCombatDamage.add(sourcePermId);
-                gameLogService.append(gameData,
-                        GameLog.cardThen(source.getCard(), " assigns no combat damage this turn."));
+            // Per ruling: a source-linked duration only takes control if you still control the
+            // source; the "assigns no combat damage" rider applies only when one is actually taken.
+            boolean sourceOk = !duration.isSourceLinked() || (source != null && playerId.equals(sourceController));
+            if (stolen != null && sourceOk) {
+                creatureControlService.applyControlEffect(gameData, playerId, stolen,
+                        new GainControlOfTargetEffect(duration), duration.toEffectDuration(),
+                        duration.isSourceLinked() ? sourcePermId : null,
+                        source != null ? source.getCard().getName() : stolen.getCard().getName());
+                if (source != null) {
+                    gameData.creaturesPreventedFromDealingCombatDamage.add(sourcePermId);
+                    gameLogService.append(gameData,
+                            GameLog.cardThen(source.getCard(), " assigns no combat damage this turn."));
+                }
                 log.info("Game {} - {} gains control of {} and assigns no combat damage",
-                        gameData.id, gameData.playerIdToName.get(playerId), land.getCard().getName());
+                        gameData.id, gameData.playerIdToName.get(playerId), stolen.getCard().getName());
             } else {
                 gameLogService.append(gameData,
                         GameLog.text("The ability has no effect (source no longer controlled)."));
@@ -535,6 +550,43 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         // Standard completion: SBA → may abilities → resume effects
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private int totalEffectivePower(GameData gameData, List<UUID> permanentIds) {
+        int total = 0;
+        for (UUID permId : permanentIds) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+            if (perm != null) {
+                total += Math.max(0, gameQueryService.getEffectivePower(gameData, perm));
+            }
+        }
+        return total;
+    }
+
+    /**
+     * Phyrexian Dreadnought: an empty selection means the controller declined, so the source is
+     * sacrificed. Otherwise the chosen creatures are sacrificed (their total power was validated
+     * against the threshold before the interaction was cleared) and the source survives.
+     */
+    private void handleSacrificeCreaturesWithTotalPowerOrSacrificeSource(GameData gameData, UUID playerId,
+            List<UUID> permanentIds,
+            MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource context) {
+        if (permanentIds.isEmpty()) {
+            Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+            if (source != null) {
+                destructionSupport.sacrificeAndLog(gameData, source, playerId);
+            }
+        } else {
+            for (UUID permId : permanentIds) {
+                Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+                if (perm != null) {
+                    destructionSupport.sacrificeAndLog(gameData, perm, playerId);
+                }
+            }
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
+
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
@@ -1014,7 +1066,7 @@ public class MultiPermanentChoiceHandlerService {
         UUID sourceId = context.sourcePermanentId();
         Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
         String sourceName = source != null ? source.getCard().getName() : "Tetravus";
-        Set<UUID> created = gameData.tetravusCreatedTokens.get(sourceId);
+        Set<UUID> created = gameData.sourceCreatedTokens.get(sourceId);
 
         int exiled = 0;
         for (UUID permId : permanentIds) {

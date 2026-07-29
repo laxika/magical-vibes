@@ -8,7 +8,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>Resolves by prompting the source's controller for how many of its +1/+1 counters (0..the count
  * present) to remove via a {@link com.github.laxika.magicalvibes.model.ChoiceContext.TetravusCounterRemoval}
  * number choice; on the answer that many counters are removed and that many tokens are created from
- * {@code tokenTemplate}, each recorded in {@code GameData.tetravusCreatedTokens} as "created with"
+ * {@code tokenTemplate}, each recorded in {@code GameData.sourceCreatedTokens} as "created with"
  * the source so the paired {@link ExileTetraviteTokensToPutCountersOnSelfEffect} can shuttle them
  * back. Choosing 0 is the "you may … decline" case, so no {@code MayEffect} wrapper is needed.
  *

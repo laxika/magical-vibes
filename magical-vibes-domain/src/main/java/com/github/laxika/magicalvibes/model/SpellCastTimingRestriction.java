@@ -31,9 +31,33 @@ public enum SpellCastTimingRestriction {
     YOUR_COMBAT_BEFORE_BLOCKERS,
 
     /**
+     * "Cast this spell only during combat after blockers are declared." Aleatory. Legal during the
+     * declare-blockers, combat-damage and end-of-combat steps of any player's combat.
+     */
+    COMBAT_AFTER_BLOCKERS,
+
+    /**
+     * "Cast this spell only during the declare blockers step." Dazzling Beauty. Legal for any
+     * player during any player's declare-blockers step.
+     */
+    DECLARE_BLOCKERS,
+
+    /**
      * "Cast this spell only during an opponent's turn, before attackers are declared." Siren's Call.
      * Legal only when the caster is not the active player and the current step precedes the declare
      * attackers step (any step of the beginning, precombat main, or beginning-of-combat).
      */
-    OPPONENTS_TURN_BEFORE_ATTACKERS
+    OPPONENTS_TURN_BEFORE_ATTACKERS,
+
+    /**
+     * "Cast this spell only during an opponent's turn." Delirium. Legal in any step of a turn in
+     * which the caster is not the active player.
+     */
+    OPPONENTS_TURN,
+
+    /**
+     * "Cast this spell only after combat." Jabari's Influence. Legal for any player once the combat
+     * phase has ended, i.e. during the postcombat main phase or the ending phase of any turn.
+     */
+    AFTER_COMBAT
 }

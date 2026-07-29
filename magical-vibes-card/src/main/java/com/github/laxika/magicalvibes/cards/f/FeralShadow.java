@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "93")
 @CardRegistration(set = "6ED", collectorNumber = "131")
+@CardRegistration(set = "MIR", collectorNumber = "122")
 public class FeralShadow extends Card {
 }

@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.CastPermanentSpellsFromGravey
 import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardPermission;
 import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentControllerCantCastSpellTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsForControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsForEnchantedPlayerEffect;
@@ -32,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEf
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueAtMostEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellsAndLandsWithChosenNamesCantBePlayedEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.WardOfBonesEffect;
 import com.github.laxika.magicalvibes.model.condition.Condition;
@@ -344,10 +346,40 @@ public class CastingPermissionService {
                             forbidden.add(chosenName);
                         }
                     }
+                    if (effect instanceof SpellsAndLandsWithChosenNamesCantBePlayedEffect) {
+                        // Null Chamber: symmetric — both names are forbidden to every player.
+                        if (perm.getChosenName() != null) {
+                            forbidden.add(perm.getChosenName());
+                        }
+                        if (perm.getSecondChosenName() != null) {
+                            forbidden.add(perm.getSecondChosenName());
+                        }
+                    }
                 }
             }
         }
         return forbidden;
+    }
+
+    /**
+     * Null Chamber: "lands with the chosen names can't be played". Land plays deliberately bypass the
+     * spell-casting filters (they aren't spells), so the name check has its own entry point here.
+     */
+    public boolean isLandPlayForbiddenByChosenName(GameData gameData, Card card) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof SpellsAndLandsWithChosenNamesCantBePlayedEffect
+                            && (card.getName().equals(perm.getChosenName())
+                                || card.getName().equals(perm.getSecondChosenName()))) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     public boolean isSpellRestricted(Card card, Set<CardType> restrictedSpellTypes, Set<String> forbiddenCardNames) {
@@ -380,8 +412,31 @@ public class CastingPermissionService {
         boolean isInstantSpeed = card.hasType(CardType.INSTANT)
                 || card.getKeywords().contains(Keyword.FLASH)
                 || hasFlashGrantForCard(gameData, playerId, card)
+                || grantsItselfFlashTiming(card)
                 || hasAvailableFlashAlternateCast(gameData, playerId, card);
         return isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
+    }
+
+    /**
+     * True if the card itself says "you may cast this spell as though it had flash" — the Mirage
+     * flash clause. Unlike a battlefield flash grant this needs no permission source; the trade-off
+     * (sacrifice at the next cleanup step) is applied when the permanent enters.
+     */
+    private boolean grantsItselfFlashTiming(Card card) {
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(FlashCastWithCleanupSacrificeEffect.class::isInstance);
+    }
+
+    /**
+     * Whether the player could cast a sorcery right now — active player, a main phase, empty stack.
+     * Read at cast time by the Mirage flash clause to decide whether the resulting permanent must be
+     * sacrificed at the next cleanup step.
+     */
+    public boolean sorceryTimingAvailable(GameData gameData, UUID playerId) {
+        return playerId.equals(gameData.activePlayerId)
+                && (gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                        || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN)
+                && gameData.stack.isEmpty();
     }
 
     /**
@@ -419,9 +474,17 @@ public class CastingPermissionService {
                     playerId.equals(gameData.activePlayerId)
                             && gameData.currentStep.isCombatPhase()
                             && gameData.currentStep.ordinal() < TurnStep.DECLARE_BLOCKERS.ordinal();
+            case COMBAT_AFTER_BLOCKERS ->
+                    gameData.currentStep.isCombatPhase()
+                            && gameData.currentStep.ordinal() >= TurnStep.DECLARE_BLOCKERS.ordinal();
+            case DECLARE_BLOCKERS ->
+                    gameData.currentStep == TurnStep.DECLARE_BLOCKERS;
             case OPPONENTS_TURN_BEFORE_ATTACKERS ->
                     !playerId.equals(gameData.activePlayerId)
                             && gameData.currentStep.isBeforeAttackersDeclared();
+            case OPPONENTS_TURN -> !playerId.equals(gameData.activePlayerId);
+            case AFTER_COMBAT ->
+                    gameData.currentStep.ordinal() > TurnStep.END_OF_COMBAT.ordinal();
         };
     }
 

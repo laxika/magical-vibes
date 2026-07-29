@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "93")
 @CardRegistration(set = "9ED", collectorNumber = "87")
 @CardRegistration(set = "8ED", collectorNumber = "92")
+@CardRegistration(set = "MIR", collectorNumber = "77")
 public class MindBend extends Card {
 
     public MindBend() {

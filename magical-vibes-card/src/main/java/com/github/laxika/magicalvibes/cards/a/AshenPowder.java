@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardO
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "6ED", collectorNumber = "112")
+@CardRegistration(set = "MIR", collectorNumber = "104")
 public class AshenPowder extends Card {
 
     public AshenPowder() {

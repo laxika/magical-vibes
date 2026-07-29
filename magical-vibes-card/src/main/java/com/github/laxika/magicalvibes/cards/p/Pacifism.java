@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOr
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
+@CardRegistration(set = "MIR", collectorNumber = "32")
 @CardRegistration(set = "6ED", collectorNumber = "33")
 @CardRegistration(set = "7ED", collectorNumber = "29")
 @CardRegistration(set = "8ED", collectorNumber = "33")

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "MIR", collectorNumber = "181")
 @CardRegistration(set = "8ED", collectorNumber = "193")
 @CardRegistration(set = "6ED", collectorNumber = "188")
 public class HammerOfBogardan extends Card {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "322")
+@CardRegistration(set = "MIR", collectorNumber = "325")
 public class CrystalVein extends Card {
 
     public CrystalVein() {

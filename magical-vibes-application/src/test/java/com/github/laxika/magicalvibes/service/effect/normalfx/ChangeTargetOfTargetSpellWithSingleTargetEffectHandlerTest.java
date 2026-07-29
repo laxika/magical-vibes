@@ -304,6 +304,53 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
             }
 
             @Test
+            @DisplayName("creatureTargetsOnly: logs when the target spell's single target isn't a creature")
+            void creatureOnlyLogsWhenTargetIsNotACreature() {
+                Card redirectCard = createCard("Meddle");
+                Card targetSpellCard = createDamageSpellCard("Lightning Bolt", 3);
+                Permanent currentTarget = createCreature("Grizzly Bears");
+                gd.playerBattlefields.get(player2Id).add(currentTarget);
+
+                StackEntry targetSpell = spellEntry(targetSpellCard, player2Id, player1Id);
+                addToStack(targetSpell);
+
+                StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, targetSpellCard.getId());
+
+                changeTargetWithSingleTargetHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellWithSingleTargetEffect(true));
+
+                assertThat(captureLogMessage()).contains("doesn't target a creature");
+                verify(playerInputService, never()).beginPermanentChoice(any(), any(), any(), any());
+            }
+
+            @Test
+            @DisplayName("creatureTargetsOnly: offers only other creatures, never players")
+            void creatureOnlyOffersCreaturesOnly() {
+                Card redirectCard = createCard("Meddle");
+                Card targetSpellCard = createDamageSpellCard("Lightning Bolt", 3);
+                Permanent currentTarget = createCreature("Grizzly Bears");
+                Permanent otherCreature = createCreature("Serra Angel");
+                gd.playerBattlefields.get(player2Id).add(currentTarget);
+                gd.playerBattlefields.get(player1Id).add(otherCreature);
+
+                when(gameQueryService.findPermanentById(gd, currentTarget.getId())).thenReturn(currentTarget);
+                when(gameQueryService.findPermanentById(gd, otherCreature.getId())).thenReturn(otherCreature);
+                when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
+
+                StackEntry targetSpell = spellEntry(targetSpellCard, player2Id, currentTarget.getId());
+                addToStack(targetSpell);
+
+                StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, targetSpellCard.getId());
+
+                changeTargetWithSingleTargetHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellWithSingleTargetEffect(true));
+
+                @SuppressWarnings("unchecked")
+                ArgumentCaptor<List<UUID>> idsCaptor = ArgumentCaptor.forClass(List.class);
+                verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id), idsCaptor.capture(), anyString());
+
+                assertThat(idsCaptor.getValue()).containsExactly(otherCreature.getId());
+            }
+
+            @Test
             @DisplayName("Excludes invalid candidates on the stack via checkSpellTargetOnStack")
             void excludesInvalidStackCandidates() {
                 Card redirectCard = createCard("Deflection");

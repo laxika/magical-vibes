@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorCreatureSpellMan
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaWithInstantSorceryCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardFlashbackOnlyAnyColorManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -312,6 +313,9 @@ public class PotentialManaService {
                     }
                 } else if (effect instanceof AwardAnyColorManaEffect aace) {
                     abilityByColor.merge(ManaColor.COLORLESS, aace.amount(), Integer::sum);
+                } else if (effect instanceof AwardChosenColorManaEffect
+                        && permanent != null && permanent.getChosenColor() != null) {
+                    abilityByColor.merge(ManaColor.valueOf(permanent.getChosenColor().name()), 1, Integer::sum);
                 }
             }
 
@@ -413,9 +417,13 @@ public class PotentialManaService {
                     && gameData.currentStep == TurnStep.UPKEEP;
             case ONLY_DURING_ANY_UPKEEP -> gameData.currentStep == TurnStep.UPKEEP;
             case ONLY_WHILE_ATTACKING -> permanent != null && permanent.isAttacking();
+            case ONLY_WHILE_ATTACKING_OR_BLOCKING -> permanent != null
+                    && (permanent.isAttacking() || permanent.isBlocking());
             case ONLY_BEFORE_ATTACKERS_DECLARED -> playerId.equals(gameData.activePlayerId)
                     && gameData.currentStep.isBeforeAttackersDeclared();
             case BEFORE_ATTACKERS_DECLARED -> gameData.currentStep.isBeforeAttackersDeclared()
+                    && gameData.combatPhasesThisTurn <= 1;
+            case BEFORE_BLOCKERS_DECLARED -> gameData.currentStep.isBeforeBlockersDeclared()
                     && gameData.combatPhasesThisTurn <= 1;
             case ONLY_DURING_COMBAT -> gameData.currentStep.isCombatPhase();
             case ONLY_DURING_DECLARE_ATTACKERS_IF_ATTACKED -> gameData.currentStep == TurnStep.DECLARE_ATTACKERS

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -431,8 +432,21 @@ class PlayerInputServiceTest {
 
             assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context()).isInstanceOf(ChoiceContext.ProtectionColorChoice.class);
             ChoiceContext.ProtectionColorChoice ctx = (ChoiceContext.ProtectionColorChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
-            assertThat(ctx.targetId()).isEqualTo(targetId);
+            assertThat(ctx.targetIds()).containsExactly(targetId);
             assertThat(ctx.includeArtifacts()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Stores every target of a shared protection choice")
+        void storesAllTargets() {
+            UUID first = UUID.randomUUID();
+            UUID second = UUID.randomUUID();
+
+            svc.beginProtectionColorChoice(gd, PLAYER1_ID, List.of(first, second), false);
+
+            ChoiceContext.ProtectionColorChoice ctx = (ChoiceContext.ProtectionColorChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
+            assertThat(ctx.targetIds()).containsExactly(first, second);
+            assertThat(ctx.includeArtifacts()).isFalse();
         }
     }
 
@@ -566,6 +580,22 @@ class PlayerInputServiceTest {
             assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context()).isInstanceOf(ChoiceContext.BasicLandTypeChoice.class);
             ChoiceContext.BasicLandTypeChoice ctx = (ChoiceContext.BasicLandTypeChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
             assertThat(ctx.permanentId()).isEqualTo(permId);
+        }
+
+        @Test
+        @DisplayName("Offers only the allowed types when the choice is restricted")
+        void sendsOnlyAllowedTypes() {
+            UUID permId = UUID.randomUUID();
+
+            svc.beginBasicLandTypeChoice(gd, PLAYER1_ID, permId, false, false,
+                    List.of(CardSubtype.ISLAND, CardSubtype.SWAMP));
+
+            InteractionPromptMessage msg = projectedPrompt();
+            assertThat(msg.options()).containsExactly("ISLAND", "SWAMP");
+
+            ChoiceContext.BasicLandTypeChoice ctx =
+                    (ChoiceContext.BasicLandTypeChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
+            assertThat(ctx.allowedTypes()).containsExactly(CardSubtype.ISLAND, CardSubtype.SWAMP);
         }
     }
 

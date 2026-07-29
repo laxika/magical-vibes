@@ -28,14 +28,17 @@ public class BecomeChosenColorsIndefinitelyEffectHandler implements NormalEffect
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
-        Permanent self = gameQueryService.findPermanentById(gameData, selfId);
-        if (self == null) {
+        BecomeChosenColorsIndefinitelyEffect become = (BecomeChosenColorsIndefinitelyEffect) effect;
+        UUID affectedId = become.targeted() || entry.getSourcePermanentId() == null
+                ? entry.getTargetId()
+                : entry.getSourcePermanentId();
+        Permanent affected = gameQueryService.findPermanentById(gameData, affectedId);
+        if (affected == null) {
             return;
         }
 
         // Controller picks one or more colors; ChoiceHandlerService floats the L5 setter indefinitely.
         playerInputService.beginBecomeChosenColorsChoice(gameData, entry.getControllerId(),
-                self.getId(), entry.getCard().getName(), List.of(), EffectDuration.PERMANENT);
+                affected.getId(), entry.getCard().getName(), List.of(), EffectDuration.PERMANENT);
     }
 }

@@ -8,7 +8,10 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -183,7 +186,8 @@ public class AuraAttachmentService {
             return null;
         }
 
-        if (gameQueryService.hasProtectionFromSource(gameData, host, attachment)) {
+        if (!grantsSelfExemptProtection(attachment)
+                && gameQueryService.hasProtectionFromSource(gameData, host, attachment)) {
             return (isAura ? "enchanted" : "equipped") + " permanent has protection from it";
         }
 
@@ -206,5 +210,18 @@ public class AuraAttachmentService {
             }
         }
         return null;
+    }
+
+    /**
+     * Ward of Lights-style Auras: "Enchanted creature has protection from the chosen color. This
+     * effect doesn't remove this Aura." Choosing the Aura's own colour would otherwise make it
+     * illegally attached the moment it enters, so attachment legality skips the protection check for
+     * it. Coarse by design: it also ignores protection the host happens to have from another source,
+     * which no current card combination makes reachable.
+     */
+    private boolean grantsSelfExemptProtection(Permanent attachment) {
+        return attachment.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(effect -> effect instanceof ProtectionFromChosenColorEffect protection
+                        && protection.scope() == GrantScope.ENCHANTED_CREATURE);
     }
 }

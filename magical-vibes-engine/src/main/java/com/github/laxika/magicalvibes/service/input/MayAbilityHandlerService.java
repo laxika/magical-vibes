@@ -543,16 +543,45 @@ public class MayAbilityHandlerService {
             } else if (ability.manaCost() != null) {
                 ManaCost cost = new ManaCost(ability.manaCost());
                 ManaPool pool = gameData.playerManaPools.get(player.getId());
-                if (!cost.canPay(pool)) {
+                boolean paidWithLife = false;
+                if (!cost.canPay(pool) && ability.lifeCost() > 0) {
+                    // "Pay {M} or N life" — mana that would empty at end of step is the cheaper
+                    // resource, so life is only spent when the mana cost cannot be paid.
+                    boolean canPayLife = gameQueryService.canPlayerLifeChange(gameData, player.getId())
+                            && gameData.getLife(player.getId()) >= ability.lifeCost();
+                    if (canPayLife) {
+                        gameData.playerLifeTotals.put(player.getId(), gameData.getLife(player.getId()) - ability.lifeCost());
+                        gameLogService.append(gameData, GameLog.textCardText(
+                                player.getUsername() + " pays " + ability.lifeCost() + " life for ", ability.sourceCard(), "'s ability."));
+                        paidWithLife = true;
+                    }
+                }
+                // "Pay {M} and N life" (Purgatory) — both halves are part of one cost, so neither is
+                // paid unless both can be.
+                boolean canPayAdditionalLife = ability.additionalLifeCost() == 0
+                        || (gameQueryService.canPlayerLifeChange(gameData, player.getId())
+                                && gameData.getLife(player.getId()) >= ability.additionalLifeCost());
+                if (!paidWithLife && (!cost.canPay(pool) || !canPayAdditionalLife)) {
                     gameLogService.append(gameData, GameLog.textCardText(
-                            player.getUsername() + " cannot pay " + ability.manaCost() + " for ", ability.sourceCard(), "'s ability."));
+                            player.getUsername() + " cannot pay " + ability.manaCost()
+                                    + (ability.additionalLifeCost() > 0 ? " and " + ability.additionalLifeCost() + " life" : "")
+                                    + " for ", ability.sourceCard(), "'s ability."));
                     gameData.resolvedMayAccepted = false;
                     if (gameData.pendingEffectResolutionEntry != null) { effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex); }
                     if (gameData.interaction.isAwaitingInput()) { return; }
                     inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                     return;
                 }
-                cost.pay(pool);
+                if (!paidWithLife) {
+                    cost.pay(pool);
+                    if (ability.additionalLifeCost() > 0) {
+                        gameData.playerLifeTotals.put(player.getId(),
+                                gameData.getLife(player.getId()) - ability.additionalLifeCost());
+                        gameLogService.append(gameData, GameLog.textCardText(
+                                player.getUsername() + " pays " + ability.additionalLifeCost() + " life for ",
+                                ability.sourceCard(), "'s ability."));
+                    }
+                }
             }
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " accepts — resolving ", ability.sourceCard(), "'s ability."));

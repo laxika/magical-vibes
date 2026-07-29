@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerPowerDamage;
+import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDamagedByWatchedCreature;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
@@ -269,6 +270,7 @@ public class TurnProgressionService {
         gameData.lifeLostThisTurn.clear();
         gameData.combatDamageToPlayersThisTurn.clear();
         gameData.noncombatDamageToPlayersThisTurn.clear();
+        gameData.playersAttackedThisTurn.clear();
         gameData.clearDelayedActions(DelayedCombatDamageLoot.class);
         gameData.clearDelayedActions(DelayedCombatDamageReflection.class);
         // Conduit of Storms: "next main phase this turn" — drop any that never fired.
@@ -276,6 +278,7 @@ public class TurnProgressionService {
         gameData.clearDelayedActions(DelayedBlockerBoost.class);
         gameData.clearDelayedActions(DelayedControllerSpellCastTrigger.class);
         gameData.clearDelayedActions(DelayedUnblockedAttackerPowerDamage.class);
+        gameData.clearDelayedActions(DelayedDestroyCreatureDamagedByWatchedCreature.class);
         gameData.clearDelayedActions(DelayedSacrificeSourceWhenTargetLeaves.class);
         gameData.clearDelayedActions(DelayedSacrificeTargetWhenSourceLeaves.class);
         gameData.combatDamageSourceSubtypesThisTurn.clear();

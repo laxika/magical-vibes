@@ -113,9 +113,11 @@ public sealed interface TriggerContext {
      * Context for creature-death triggers that reference the dying creature's card and controller.
      * Shared by ON_ALLY_CREATURE_DIES, ON_ANY_CREATURE_DIES, ON_ALLY_NONTOKEN_CREATURE_DIES,
      * ON_ANY_NONTOKEN_CREATURE_DIES, and ON_OPPONENT_CREATURE_DIES. {@code dyingCreaturePower} is the
-     * dying creature's last-known effective power on the battlefield (Kresh the Bloodbraided).
+     * dying creature's last-known effective power on the battlefield (Kresh the Bloodbraided) and
+     * {@code dyingCreatureToughness} its last-known effective toughness (Grim Feast).
      */
-    record CreatureDeath(Card dyingCard, UUID dyingCreatureControllerId, int dyingCreaturePower) implements TriggerContext {}
+    record CreatureDeath(Card dyingCard, UUID dyingCreatureControllerId, int dyingCreaturePower,
+                         int dyingCreatureToughness) implements TriggerContext {}
 
     /**
      * Context for ON_EQUIPPED_CREATURE_DIES triggers.
@@ -207,4 +209,16 @@ public sealed interface TriggerContext {
      * event (already summed across every simultaneous target).
      */
     record SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage) implements TriggerContext {}
+
+    /**
+     * Context for ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT triggers (Mangara's Equity).
+     *
+     * @param damageSource     the creature that dealt the damage
+     * @param damagedPlayerId  the watcher's controller — the damaged player, or the damaged
+     *                         permanent's controller
+     * @param damagedPermanent the permanent that was damaged, or {@code null} when the player was
+     * @param damage           how much damage that creature dealt in this event
+     */
+    record CreatureDamageToYouOrYourPermanent(Permanent damageSource, UUID damagedPlayerId,
+                                              Permanent damagedPermanent, int damage) implements TriggerContext {}
 }

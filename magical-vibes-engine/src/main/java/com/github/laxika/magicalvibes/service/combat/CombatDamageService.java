@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.service.combat;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
+import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDamagedByWatchedCreature;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -53,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentDamagedPlay
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -280,6 +283,9 @@ public class CombatDamageService {
         int stackSizeBeforeDamageTriggers = gameData.stack.size();
         processCombatDamageToCreatureTriggers(gameData, state.combatDamageDealtToCreatures, state.combatDamageDealerControllers);
 
+        // Acidic Dagger's delayed "destroy the non-Wall creature that creature damaged" trigger.
+        processDelayedDestroyCreatureDamagedTriggers(gameData, state.combatDamageDealtToCreatures);
+
         // Process ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen)
         processAllyDealtDamageToCreatureReflectionTriggers(gameData, state);
 
@@ -318,6 +324,9 @@ public class CombatDamageService {
                 // Combat damage to the defender always comes from the active player's attackers, so the
                 // source's controller is the active player (an opponent of the defender).
                 triggerCollectionService.checkControllerDealtDamageTriggers(gameData, defenderId, activeId, dmgEntry.getValue());
+                // Mangara's Equity: "whenever a creature of the chosen color deals damage to you".
+                triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(
+                        gameData, defenderId, null, dmgEntry.getKey(), dmgEntry.getValue());
             }
         }
 
@@ -412,6 +421,7 @@ public class CombatDamageService {
         // target, but the entire combat damage must go to a single recipient (CR 510.1c — an
         // unblocked creature's combat damage isn't divided).
         boolean unblockedRedirect = livingBlockers.isEmpty()
+                && !atk.isBlockedWithoutBlockers()
                 && canRedirectUnblockedDamageToDefendingCreature(gameData, atk, defenderId, defBf);
 
         Set<UUID> validTargetIds = new HashSet<>();
@@ -648,7 +658,10 @@ public class CombatDamageService {
                             playerAssignment, activeId, defenderId, redirectTarget, snap.damagePreventable());
                 }
             } else if (blkIndices.isEmpty() || assignAsUnblocked) {
-                if (atkParticipates && !atkStats.preventedFromDealingCombatDamage()) {
+                // CR 510.1c: a creature that an effect made blocked without any creature blocking it
+                // (Dazzling Beauty) has nothing to assign its combat damage to, so it deals none.
+                if (atkParticipates && !atkStats.preventedFromDealingCombatDamage()
+                        && !atk.isBlockedWithoutBlockers()) {
                     int power = gameQueryService.applyCombatDamageMultiplier(gameData, atkStats.combatDamage(), atk, null);
                     accumulatePlayerDamage(gameData, atk, atkStats, power, defenderId, redirectTarget, state);
                 }
@@ -1442,6 +1455,47 @@ public class CombatDamageService {
     }
 
     /**
+     * Fires Acidic Dagger's delayed "whenever that creature deals combat damage to a non-Wall
+     * creature this turn, destroy that non-Wall creature" triggers. The registration is not drained:
+     * it lasts the rest of the turn and fires once per damaged non-Wall creature in every combat
+     * damage step, until turn cleanup clears it.
+     */
+    private void processDelayedDestroyCreatureDamagedTriggers(GameData gameData,
+                                                              Map<Permanent, List<UUID>> combatDamageDealtToCreatures) {
+        if (combatDamageDealtToCreatures.isEmpty()
+                || !gameData.hasDelayedAction(DelayedDestroyCreatureDamagedByWatchedCreature.class)) {
+            return;
+        }
+
+        for (DelayedDestroyCreatureDamagedByWatchedCreature delayed
+                : gameData.getDelayedActions(DelayedDestroyCreatureDamagedByWatchedCreature.class)) {
+            for (var entry : combatDamageDealtToCreatures.entrySet()) {
+                if (!delayed.watchedPermanentId().equals(entry.getKey().getId())) continue;
+
+                for (UUID damagedCreatureId : entry.getValue()) {
+                    Permanent damaged = gameQueryService.findPermanentById(gameData, damagedCreatureId);
+                    if (damaged == null || predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, damaged, new PermanentHasSubtypePredicate(CardSubtype.WALL))) {
+                        continue;
+                    }
+
+                    StackEntry trigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            delayed.sourceCard(),
+                            delayed.controllerId(),
+                            delayed.sourceCard().getName() + "'s delayed trigger",
+                            new ArrayList<>(List.of(new DestroyTargetPermanentEffect())),
+                            damagedCreatureId,
+                            (UUID) null);
+                    trigger.setNonTargeting(true);
+                    gameData.stack.add(trigger);
+                    gameLogService.append(gameData, GameLog.abilityTriggers(delayed.sourceCard()));
+                }
+            }
+        }
+    }
+
+    /**
      * Fires ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen) for
      * each source/target combat-damage pair. Each source creature that dealt damage to a creature
      * this step reflects that damage to the damaged creature's controller if a watcher listens.
@@ -1455,6 +1509,15 @@ public class CombatDamageService {
                 UUID damagedCreatureControllerId = state.combatDamageTargetControllers.get(amountEntry.getKey());
                 triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(
                         gameData, source, sourceControllerId, damagedCreatureControllerId, amountEntry.getValue());
+
+                // Mangara's Equity: "…or a white creature you control". The damaged creature may have
+                // died to the damage; only surviving permanents can be filtered, which is enough —
+                // a dead creature is no longer one "you control" when the trigger would be put on the stack.
+                Permanent damagedCreature = gameQueryService.findPermanentById(gameData, amountEntry.getKey());
+                if (damagedCreature != null) {
+                    triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(
+                            gameData, damagedCreatureControllerId, damagedCreature, source, amountEntry.getValue());
+                }
             }
         }
     }
@@ -1653,6 +1716,10 @@ public class CombatDamageService {
         if (state.damageToDefendingPlayer > 0) {
             state.damageToDefendingPlayer -= damageSupport.applyImmortalCoilPrevention(gameData, defenderId, state.damageToDefendingPlayer);
         }
+        // Soul Echo: each 1 combat damage removes an echo counter instead (replacement, not prevention).
+        if (state.damageToDefendingPlayer > 0) {
+            state.damageToDefendingPlayer -= damageSupport.applySoulEchoCounterRemoval(gameData, defenderId, state.damageToDefendingPlayer);
+        }
         // Phyrexian Unlife: convert normal combat damage to poison when at 0 or less life.
         // Uses pre-lifelink snapshot (CR 510.1: all combat damage is simultaneous).
         if (state.damageToDefendingPlayer > 0 && state.defenderDamageAsInfect) {
@@ -1689,6 +1756,10 @@ public class CombatDamageService {
         // Immortal Coil also prevents infect combat damage (still damage), exiling per point prevented.
         if (state.poisonDamageToDefendingPlayer > 0) {
             state.poisonDamageToDefendingPlayer -= damageSupport.applyImmortalCoilPrevention(gameData, defenderId, state.poisonDamageToDefendingPlayer);
+        }
+        // Soul Echo replaces infect combat damage too — it is still damage that would be dealt to you.
+        if (state.poisonDamageToDefendingPlayer > 0) {
+            state.poisonDamageToDefendingPlayer -= damageSupport.applySoulEchoCounterRemoval(gameData, defenderId, state.poisonDamageToDefendingPlayer);
         }
         if (state.poisonDamageToDefendingPlayer > 0 && gameQueryService.canPlayerGetPoisonCounters(gameData, defenderId)) {
             int currentPoison = gameData.playerPoisonCounters.getOrDefault(defenderId, 0);
@@ -1852,6 +1923,9 @@ public class CombatDamageService {
                 state.combatDamageDealt.merge(atk, 0, Integer::sum);
                 return;
             }
+            // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
+            damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, atk.getId(), damage);
+            processEyeForAnEyeReflections(gameData);
             // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
             damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage);
             // Djeru, With Eyes Open: prevent N combat damage per attacker to a planeswalker you control.
@@ -1891,6 +1965,9 @@ public class CombatDamageService {
             // Redirection is a replacement effect, not prevention, so it fires before prevention checks.
             damage = damagePreventionService.applySourceRedirectShields(gameData, defenderId, atk.getId(), damage);
             processSourceRedirectDamage(gameData);
+            // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
+            damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, atk.getId(), damage);
+            processEyeForAnEyeReflections(gameData);
             // Saving Grace: redirect all combat damage this turn to the defending player onto the enchanted creature.
             damage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, defenderId, null, damage);
             processSourceRedirectDamage(gameData);
@@ -1975,6 +2052,9 @@ public class CombatDamageService {
             damage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, targetControllerId, target.getId(), damage);
             processSourceRedirectDamage(gameData);
         }
+        // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
+        damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, source.getId(), damage);
+        processEyeForAnEyeReflections(gameData);
         // Apply creature-specific redirect shields (e.g. Oracle's Attendants) per-source for creature targets
         damage = damagePreventionService.applyCreatureRedirectShields(gameData, target.getId(), source.getId(), damage);
         processSourceRedirectDamage(gameData);
@@ -1982,6 +2062,9 @@ public class CombatDamageService {
         damage = damagePreventionService.applyTargetSourcePreventionShield(gameData, target.getId(), source.getId(), damage);
         // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
         damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, source.getId(), damage);
+        // Shadowbane: the chosen source's next combat damage to the protected player's creatures.
+        damage = damagePreventionService.applyControllerCreaturesNextSourceDamageShield(
+                gameData, targetControllerId, source.getId(), damage);
         // Swans of Bryn Argoll: prevent all combat damage to this creature; the source's controller draws that many cards.
         UUID swansSourceControllerId = gameQueryService.findPermanentController(gameData, source.getId());
         if (damagePreventionService.applySwansSourceControllerDraw(gameData, target, damage, swansSourceControllerId)) {
@@ -2166,6 +2249,8 @@ public class CombatDamageService {
         // A creature with 0 or negative power deals no combat damage (CR 510.1a),
         // so there is nothing for the player to distribute.
         if (gameQueryService.getEffectiveCombatDamage(gameData, atk) <= 0) return false;
+        // Blocked with no blockers (CR 510.1c): no damage is assigned, so nothing to divide.
+        if (livingBlockerIndices.isEmpty() && atk.isBlockedWithoutBlockers()) return false;
         if (livingBlockerIndices.isEmpty()) {
             // Unblocked attacker that may assign its combat damage to a defending creature
             // (e.g. Cunning Giant). Prompt only when there is a defending creature to choose.
@@ -2314,6 +2399,7 @@ public class CombatDamageService {
         // Unblocked attacker that may redirect its whole combat damage to one defending creature
         // (e.g. Cunning Giant): offer every defending creature plus the defending player.
         boolean unblockedRedirect = livingBlockers.isEmpty()
+                && !atk.isBlockedWithoutBlockers()
                 && canRedirectUnblockedDamageToDefendingCreature(gameData, atk, defenderId, defBf);
         if (unblockedRedirect) {
             for (Permanent def : defBf) {

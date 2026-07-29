@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "297")
+@CardRegistration(set = "MIR", collectorNumber = "308")
 public class ManaPrism extends Card {
 
     public ManaPrism() {

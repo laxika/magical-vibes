@@ -9,6 +9,12 @@ public enum GraveyardExileScope {
     /** A player exiles {@code count} cards from their OWN graveyard (choosing when they have more). */
     OWN,
 
+    /**
+     * Exiles ALL cards matching the filter from the controller's OWN graveyard (Zombie Mob).
+     * A {@code null} filter exiles the whole graveyard. {@code count} is unused.
+     */
+    OWN_ALL_MATCHING,
+
     /** Exiles one TARGET card from any player's graveyard (optionally type-restricted by the filter). */
     TARGET_CARDS_ANY_GRAVEYARD,
 

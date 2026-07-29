@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -8,6 +10,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
@@ -77,6 +80,8 @@ public class LibraryChoiceHandlerService {
     private final TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
     private final DrawService drawService;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.NaturalBalanceSupport naturalBalanceSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler returnCardExiledWithSourceToBattlefieldEffectHandler;
 
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -121,6 +126,8 @@ public class LibraryChoiceHandlerService {
         Integer manaValueBoundValue = librarySearch.manaValueBoundValue();
         boolean manaValueExact = librarySearch.manaValueExact();
         List<String> excludedCardNames = new ArrayList<>(librarySearch.excludedCardNames());
+        boolean grantHaste = librarySearch.grantHaste();
+        boolean exileAtEndStep = librarySearch.exileAtEndStep();
 
         UUID deckOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
         UUID handOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
@@ -181,7 +188,13 @@ public class LibraryChoiceHandlerService {
                     graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard);
                 } else if (toBattlefield) {
                     Permanent perm = new Permanent(chosenCard);
+                    if (grantHaste) {
+                        perm.getGrantedKeywords().add(Keyword.HASTE);
+                    }
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
+                    if (exileAtEndStep) {
+                        gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
+                    }
                     if (toBattlefieldTapped) {
                         perm.tap();
                     }
@@ -314,9 +327,14 @@ public class LibraryChoiceHandlerService {
             if (!canFailToFind) {
                 throw new IllegalStateException("Cannot fail to find with an unrestricted search");
             }
+            // A pile search stopped early still shuffles whatever was already exiled into it.
+            if (destination == LibrarySearchDestination.EXILE_FACE_DOWN_PILE) {
+                gameData.shuffleExilePile(librarySearch.sourcePermanentId());
+            }
             // CR 608.2f: Place any accumulated battlefield cards before finishing
             if (!accumulatedCards.isEmpty() && toBattlefield) {
-                placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, handOwnerId, toBattlefieldTapped);
+                placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, handOwnerId, toBattlefieldTapped,
+                        grantHaste, exileAtEndStep);
             }
             if (shuffleAfterSelection) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
@@ -339,6 +357,7 @@ public class LibraryChoiceHandlerService {
             if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
             if (librarySearchSupport.startNextColorToHandPick(gameData, playerId, followUp)) return;
+            if (naturalBalanceSupport.advance(gameData, followUp)) return;
             finishSearchAndResume(gameData);
             return;
         }
@@ -500,6 +519,39 @@ public class LibraryChoiceHandlerService {
             } else {
                 finishSearchAndResume(gameData);
             }
+            return;
+        }
+
+        if (destination == LibrarySearchDestination.EXILE_FACE_DOWN_PILE) {
+            // Mangara's Tome: exile each found card face down into a pile tracked with the source.
+            UUID pileSourceId = librarySearch.sourcePermanentId();
+            exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, pileSourceId);
+
+            // Repeat until the requested count is spent or the library runs out; only the final pick
+            // shuffles the pile ("shuffle that pile") and then the library ("then shuffle your library").
+            if (remainingCount > 1 && !deck.isEmpty()) {
+                int newRemaining = remainingCount - 1;
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                        LibrarySearchParams.builder(playerId, new ArrayList<>(deck))
+                                .remainingCount(newRemaining)
+                                .canFailToFind(true)
+                                .destination(LibrarySearchDestination.EXILE_FACE_DOWN_PILE)
+                                .sourcePermanentId(pileSourceId)
+                                .shuffleAfterSelection(shuffleAfterSelection)
+                                .build(),
+                        "Search your library for a card to exile in the face-down pile ("
+                                + newRemaining + " remaining).", true));
+                return;
+            }
+
+            gameData.shuffleExilePile(pileSourceId);
+            if (shuffleAfterSelection) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+            }
+            gameLogService.append(gameData, GameLog.text(player.getUsername()
+                    + " exiles a face-down pile and shuffles it. Library is shuffled."));
+            log.info("Game {} - {} finishes exiling a face-down pile", gameData.id, player.getUsername());
+            finishSearchAndResume(gameData);
             return;
         }
 
@@ -666,7 +718,8 @@ public class LibraryChoiceHandlerService {
                 // Final pick (or single pick) — place all accumulated + current simultaneously
                 List<Card> allCards = new ArrayList<>(accumulatedCards);
                 allCards.add(chosenCard);
-                placeCardsOnBattlefieldSimultaneously(gameData, allCards, handOwnerId, toBattlefieldTapped);
+                placeCardsOnBattlefieldSimultaneously(gameData, allCards, handOwnerId, toBattlefieldTapped,
+                        grantHaste, exileAtEndStep);
             }
         }
 
@@ -701,7 +754,8 @@ public class LibraryChoiceHandlerService {
             if (newSearchCards.isEmpty()) {
                 // CR 608.2f: Place any accumulated battlefield cards before finishing
                 if (!accumulatedCards.isEmpty() && toBattlefield) {
-                    placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, handOwnerId, toBattlefieldTapped);
+                    placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, handOwnerId, toBattlefieldTapped,
+                        grantHaste, exileAtEndStep);
                 }
                 // No more matching cards — shuffle and finish
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
@@ -716,6 +770,8 @@ public class LibraryChoiceHandlerService {
                 if (toBattlefield) {
                     stateBasedActionService.performStateBasedActions(gameData);
                 }
+                // The multi-pick ran dry, but any queued follow-up work still has to happen.
+                if (naturalBalanceSupport.advance(gameData, followUp)) return;
                 finishSearchAndResume(gameData);
                 return;
             }
@@ -746,6 +802,8 @@ public class LibraryChoiceHandlerService {
                     .requireDifferentNames(requireDifferentNames)
                     .manaValueBound(manaValueBoundValue, manaValueExact)
                     .excludedCardNames(excludedCardNames)
+                    .grantHaste(grantHaste)
+                    .exileAtEndStep(exileAtEndStep)
                     .build(),
                     prompt, toGraveyard || canFailToFind));
 
@@ -774,6 +832,7 @@ public class LibraryChoiceHandlerService {
                 case EXILE_IMPRINT -> "into exile (imprint)";
                 case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP -> "into exile";
                 case EXILE_WITH_SOURCE -> throw new IllegalStateException("EXILE_WITH_SOURCE should be handled earlier");
+                case EXILE_FACE_DOWN_PILE -> throw new IllegalStateException("EXILE_FACE_DOWN_PILE should be handled earlier");
                 case TOP_OF_LIBRARY -> "on top of their library";
                 case GRAVEYARD -> "into their graveyard";
                 case SPHINX_AMBASSADOR -> throw new IllegalStateException("SPHINX_AMBASSADOR should be handled earlier");
@@ -813,6 +872,7 @@ public class LibraryChoiceHandlerService {
         if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
         if (librarySearchSupport.startNextColorToHandPick(gameData, playerId, followUp)) return;
+        if (naturalBalanceSupport.advance(gameData, followUp)) return;
         finishSearchAndResume(gameData);
     }
 
@@ -841,7 +901,8 @@ public class LibraryChoiceHandlerService {
      * All permanents are added first, then ETB triggers are processed after all are on the battlefield.
      */
     private void placeCardsOnBattlefieldSimultaneously(GameData gameData, List<Card> cards,
-                                                        UUID ownerId, boolean tapped) {
+                                                        UUID ownerId, boolean tapped,
+                                                        boolean grantHaste, boolean exileAtEndStep) {
         List<Permanent> permanents = new ArrayList<>();
         List<Card> placedCards = new ArrayList<>();
         String ownerName = gameData.playerIdToName.get(ownerId);
@@ -866,10 +927,16 @@ public class LibraryChoiceHandlerService {
                 continue;
             }
             Permanent perm = new Permanent(card);
+            if (grantHaste) {
+                perm.getGrantedKeywords().add(Keyword.HASTE);
+            }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm, enterTappedTypes, batch);
             batch.add(perm);
             if (tapped) {
                 perm.tap();
+            }
+            if (exileAtEndStep) {
+                gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
             }
             permanents.add(perm);
             placedCards.add(card);
@@ -1379,7 +1446,23 @@ public class LibraryChoiceHandlerService {
 
     private void handleReturnExiledWithSourceCard(GameData gameData, List<Card> allRevealedCards,
                                                   List<UUID> selectedCardIds, UUID controllerId) {
+        PendingReturnExiledWithSourceCard pending =
+                gameData.peekPendingInteraction(PendingReturnExiledWithSourceCard.class);
         gameData.clearPendingInteractions(PendingReturnExiledWithSourceCard.class);
+
+        if (pending != null && pending.toBattlefield()) {
+            UUID returnControllerId = pending.controllerId() != null ? pending.controllerId() : controllerId;
+            Set<UUID> chosenIds = new HashSet<>(selectedCardIds);
+            for (Card card : allRevealedCards) {
+                if (chosenIds.contains(card.getId())) {
+                    returnCardExiledWithSourceToBattlefieldEffectHandler.returnToBattlefield(
+                            gameData, returnControllerId, card, "exile");
+                    break;
+                }
+            }
+            finishSearchAndResume(gameData);
+            return;
+        }
 
         String controllerName = gameData.playerIdToName.get(controllerId);
         Set<UUID> selectedIds = new HashSet<>(selectedCardIds);

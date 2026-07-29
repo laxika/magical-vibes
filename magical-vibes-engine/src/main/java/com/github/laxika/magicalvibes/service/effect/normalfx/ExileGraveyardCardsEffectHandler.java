@@ -49,6 +49,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         var e = (ExileGraveyardCardsEffect) effect;
         switch (e.scope()) {
             case OWN -> resolveOwn(gameData, entry, e);
+            case OWN_ALL_MATCHING -> resolveOwnAllMatching(gameData, entry, e);
             case TARGET_CARDS_ANY_GRAVEYARD -> resolveTargetSingleCard(gameData, entry, e);
             case TARGET_CARDS_OPPONENT_GRAVEYARD -> resolveTargetOpponentCards(gameData, entry);
             case TARGET_PLAYER_ENTIRE -> resolveTargetPlayerEntire(gameData, entry);
@@ -91,6 +92,41 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             // Player must choose which cards to exile
             graveyardReturnSupport.beginGraveyardExileChoice(gameData, affectedPlayerId, count);
         }
+    }
+
+    private void resolveOwnAllMatching(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect e) {
+        UUID playerId = e.affectedPlayerId() != null ? e.affectedPlayerId() : entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(playerId);
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+
+        if (graveyard == null || graveyard.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(playerName + " has no cards in graveyard to exile."));
+            return;
+        }
+
+        List<Card> toExile = new ArrayList<>();
+        for (Card card : graveyard) {
+            if (e.filter() == null || predicateEvaluationService.matchesCardPredicate(card, e.filter(), null)) {
+                toExile.add(card);
+            }
+        }
+
+        if (toExile.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(playerName + " has no cards in graveyard to exile."));
+            return;
+        }
+
+        graveyard.removeAll(toExile);
+        graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+        for (Card card : toExile) {
+            exileService.exileCard(gameData, playerId, card);
+        }
+
+        GameLog.Builder builder = GameLog.builder().text(playerName + " exiles ");
+        appendCardList(builder, toExile);
+        builder.text(" from their graveyard.");
+        gameLogService.append(gameData, builder.build());
+        log.info("Game {} - {} exiles {} matching cards from graveyard", gameData.id, playerName, toExile.size());
     }
 
     private void resolveEachOpponentKeep(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect e) {

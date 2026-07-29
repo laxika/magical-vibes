@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *       (Reverse Damage; plain: Pentagram of the Ages, the Circle of Protection cycle).</li>
  *   <li>{@link ChosenSourcePreventionScope#NEXT_DAMAGE_TO_ANY_TARGET} — one-shot, protects
  *       whatever the source would damage next (Sanctum Guardian).</li>
+ *   <li>{@link ChosenSourcePreventionScope#NEXT_DAMAGE_TO_CONTROLLER_AND_CREATURES} — one-shot,
+ *       protects the controller and the creatures they control; life gain applies only when the
+ *       chosen source is black (Shadowbane).</li>
  *   <li>{@link ChosenSourcePreventionScope#ALL_DAMAGE_THIS_TURN} — lasts the turn;
  *       {@code controllerOnly} shields just the controller (Auriok Replica) versus everything
  *       (Burrenton Forge-Tender).</li>
@@ -24,49 +27,80 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param sourceFilter   restricts which permanents are legal source choices; {@code null} = any
  * @param sourceLabel    human-readable label for the restriction, used in the choice prompt
  *                       ("red", "artifact"); {@code null} = unrestricted wording
+ * @param sourceChosenColor restrict the choice to sources of the colour chosen for the ability's
+ *                       source permanent (Prismatic Circle; pair with {@link ChooseColorOnEnterEffect}).
+ *                       Resolved at resolution time, so it overrides {@code sourceFilter}/{@code sourceLabel}.
+ * @param exileFromLibrary NEXT_DAMAGE_TO_CONTROLLER only: exile cards from the top of the
+ *                       controller's library equal to the damage prevented this way (Bone Mask)
  */
 public record PreventDamageFromChosenSourceEffect(
         ChosenSourcePreventionScope scope,
         boolean gainLife,
         boolean controllerOnly,
         PermanentPredicate sourceFilter,
-        String sourceLabel) implements CardEffect {
+        String sourceLabel,
+        boolean sourceChosenColor,
+        boolean exileFromLibrary) implements CardEffect {
 
     /** "The next time a source of your choice would deal damage to you this turn, prevent that damage." */
     public static PreventDamageFromChosenSourceEffect nextDamageToYou() {
         return new PreventDamageFromChosenSourceEffect(
-                ChosenSourcePreventionScope.NEXT_DAMAGE_TO_CONTROLLER, false, false, null, null);
+                ChosenSourcePreventionScope.NEXT_DAMAGE_TO_CONTROLLER, false, false, null, null, false, false);
     }
 
     /** Reverse Damage: as {@link #nextDamageToYou()}, plus "you gain life equal to the damage prevented". */
     public static PreventDamageFromChosenSourceEffect nextDamageToYouAndGainLife() {
         return new PreventDamageFromChosenSourceEffect(
-                ChosenSourcePreventionScope.NEXT_DAMAGE_TO_CONTROLLER, true, false, null, null);
+                ChosenSourcePreventionScope.NEXT_DAMAGE_TO_CONTROLLER, true, false, null, null, false, false);
+    }
+
+    /**
+     * Bone Mask: as {@link #nextDamageToYou()}, plus "exile cards from the top of your library equal
+     * to the damage prevented this way".
+     */
+    public static PreventDamageFromChosenSourceEffect nextDamageToYouAndExileFromLibrary() {
+        return new PreventDamageFromChosenSourceEffect(
+                ChosenSourcePreventionScope.NEXT_DAMAGE_TO_CONTROLLER, false, false, null, null, false, true);
     }
 
     /** Circle of Protection cycle: only sources matching {@code sourceFilter} may be chosen. */
     public static PreventDamageFromChosenSourceEffect nextDamageToYou(PermanentPredicate sourceFilter,
                                                                       String sourceLabel) {
         return new PreventDamageFromChosenSourceEffect(
-                ChosenSourcePreventionScope.NEXT_DAMAGE_TO_CONTROLLER, false, false, sourceFilter, sourceLabel);
+                ChosenSourcePreventionScope.NEXT_DAMAGE_TO_CONTROLLER, false, false, sourceFilter, sourceLabel, false, false);
+    }
+
+    /** Prismatic Circle: only sources of the colour chosen for this permanent may be chosen. */
+    public static PreventDamageFromChosenSourceEffect nextDamageToYouOfChosenColor() {
+        return new PreventDamageFromChosenSourceEffect(
+                ChosenSourcePreventionScope.NEXT_DAMAGE_TO_CONTROLLER, false, false, null, null, true, false);
     }
 
     /** Sanctum Guardian: the chosen source's next damage to any target is prevented. */
     public static PreventDamageFromChosenSourceEffect nextDamageToAnyTarget() {
         return new PreventDamageFromChosenSourceEffect(
-                ChosenSourcePreventionScope.NEXT_DAMAGE_TO_ANY_TARGET, false, false, null, null);
+                ChosenSourcePreventionScope.NEXT_DAMAGE_TO_ANY_TARGET, false, false, null, null, false, false);
+    }
+
+    /**
+     * Shadowbane: the chosen source's next damage to the controller and/or the creatures they
+     * control is prevented; if that source is black, the controller gains that much life.
+     */
+    public static PreventDamageFromChosenSourceEffect nextDamageToYouAndYourCreatures() {
+        return new PreventDamageFromChosenSourceEffect(
+                ChosenSourcePreventionScope.NEXT_DAMAGE_TO_CONTROLLER_AND_CREATURES, true, false, null, null, false, false);
     }
 
     /** Auriok Replica: prevent all damage the chosen source would deal to you this turn. */
     public static PreventDamageFromChosenSourceEffect allDamageToYou() {
         return new PreventDamageFromChosenSourceEffect(
-                ChosenSourcePreventionScope.ALL_DAMAGE_THIS_TURN, false, true, null, null);
+                ChosenSourcePreventionScope.ALL_DAMAGE_THIS_TURN, false, true, null, null, false, false);
     }
 
     /** Burrenton Forge-Tender: prevent all damage a matching chosen source would deal this turn. */
     public static PreventDamageFromChosenSourceEffect allDamage(PermanentPredicate sourceFilter,
                                                                 String sourceLabel) {
         return new PreventDamageFromChosenSourceEffect(
-                ChosenSourcePreventionScope.ALL_DAMAGE_THIS_TURN, false, false, sourceFilter, sourceLabel);
+                ChosenSourcePreventionScope.ALL_DAMAGE_THIS_TURN, false, false, sourceFilter, sourceLabel, false, false);
     }
 }

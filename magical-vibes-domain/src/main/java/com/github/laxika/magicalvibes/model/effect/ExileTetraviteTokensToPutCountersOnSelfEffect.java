@@ -7,7 +7,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>Resolves by prompting the source's controller (via a
  * {@link com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.ExileTetraviteTokensPutCountersOnSource}
  * multi-permanent choice) to pick any number of the tokens this permanent created and still on the
- * battlefield (tracked in {@code GameData.tetravusCreatedTokens}); the chosen tokens are exiled and
+ * battlefield (tracked in {@code GameData.sourceCreatedTokens}); the chosen tokens are exiled and
  * that many +1/+1 counters are put on the source. Selecting none is the "you may … decline" case.
  * Paired with {@link RemoveCountersToCreateTetraviteTokensEffect}.
  */

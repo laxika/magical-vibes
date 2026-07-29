@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromHandThenSacrificeUnlessPayReducedEffect;
 
 @CardRegistration(set = "6ED", collectorNumber = "67")
+@CardRegistration(set = "MIR", collectorNumber = "66")
 public class Flash extends Card {
 
     public Flash() {

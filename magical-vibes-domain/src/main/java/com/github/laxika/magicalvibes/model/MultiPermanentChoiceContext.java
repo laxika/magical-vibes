@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import java.util.UUID;
 
 /**
@@ -38,11 +39,14 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
-     * "Gain control of the chosen land the defending player controls for as long as you control
-     * [source]. If you do, [source] assigns no combat damage this turn." (Orcish Squatters.)
-     * {@code sourcePermanentId} is the attacking source creature.
+     * "Gain control of the chosen permanent the defending player controls[ for as long as you
+     * control [source]]. If you do, [source] assigns no combat damage this turn." (Orcish Squatters
+     * — lands; Kukemssa Pirates — artifacts.) {@code sourcePermanentId} is the attacking source
+     * creature, {@code duration} how long control is kept and {@code choiceNoun} the noun used in
+     * the game log.
      */
-    record GainControlOfLandAndAssignNoCombatDamage(UUID sourcePermanentId) implements MultiPermanentChoiceContext {
+    record GainControlOfPermanentAndAssignNoCombatDamage(UUID sourcePermanentId, ControlDuration duration,
+                                                         String choiceNoun) implements MultiPermanentChoiceContext {
     }
 
     /** Transform [source] and attach it to a creature the damaged player controls. */
@@ -155,6 +159,16 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
+     * "Sacrifice [source] unless you sacrifice any number of creatures with total power
+     * {@code requiredPower} or greater" (Phyrexian Dreadnought). The chosen creatures are
+     * sacrificed only when their total effective power reaches {@code requiredPower}; an empty
+     * selection sacrifices {@code sourcePermanentId} instead.
+     */
+    record SacrificeCreaturesWithTotalPowerOrSacrificeSource(UUID sourcePermanentId, int requiredPower)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /**
      * Clarion Ultimatum: the controller chose up to five different permanents they control. For
      * each chosen permanent, the controller may then search their library for a card with the same
      * name and put it onto the battlefield tapped; the same-name searches run one per chosen
@@ -188,7 +202,7 @@ public sealed interface MultiPermanentChoiceContext {
 
     /**
      * Tetravus second upkeep trigger: exile the chosen tokens (each of which must be a token
-     * {@code sourcePermanentId} created, tracked in {@code GameData.tetravusCreatedTokens}), then put
+     * {@code sourcePermanentId} created, tracked in {@code GameData.sourceCreatedTokens}), then put
      * that many +1/+1 counters on the source.
      */
     record ExileTetraviteTokensPutCountersOnSource(UUID sourcePermanentId)

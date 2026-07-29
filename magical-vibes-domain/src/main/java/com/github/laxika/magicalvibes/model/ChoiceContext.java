@@ -79,6 +79,15 @@ public sealed interface ChoiceContext {
 
     record CardNameChoice(Card card, UUID controllerId, List<CardType> excludedTypes) implements ChoiceContext {}
 
+    /**
+     * "You and an opponent each choose a card name other than a basic land card name" as the source
+     * enters (Null Chamber). {@code choosingPlayerId} is whoever is being asked right now:
+     * {@code firstChosenName} is {@code null} on the controller's pick and holds it on the
+     * opponent's follow-up pick, after which the permanent enters carrying both names.
+     */
+    record DualCardNameChoice(Card card, UUID controllerId, UUID choosingPlayerId,
+                              String firstChosenName) implements ChoiceContext {}
+
     record KeywordGrantChoice(UUID targetId, List<Keyword> options) implements ChoiceContext {}
 
     record ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes) implements ChoiceContext {}
@@ -92,7 +101,17 @@ public sealed interface ChoiceContext {
                                                 List<CardType> excludedTypes, int damagePerCard,
                                                 Card sourceCard) implements ChoiceContext {}
 
-    record ProtectionColorChoice(UUID targetId, boolean includeArtifacts) implements ChoiceContext {}
+    /**
+     * A single protection choice that applies to every permanent in {@code targetIds} — one pick
+     * covering all of a spell's targets ("X target creatures gain protection from the chosen
+     * color", Prismatic Boon), which for most cards is a one-element list.
+     */
+    record ProtectionColorChoice(List<UUID> targetIds, boolean includeArtifacts) implements ChoiceContext {
+
+        public ProtectionColorChoice(UUID targetId, boolean includeArtifacts) {
+            this(List.of(targetId), includeArtifacts);
+        }
+    }
 
     /**
      * The controller chooses a color at resolution; the target permanent then becomes that color
@@ -144,7 +163,7 @@ public sealed interface ChoiceContext {
      * Tetravus first upkeep trigger: the controller chooses how many of {@code permanentId}'s +1/+1
      * counters (0..the count present) to remove; on the answer that many are removed and that many
      * Tetravite tokens are created from {@code tokenTemplate}, each recorded as "created with" the
-     * source in {@code GameData.tetravusCreatedTokens} (read by the paired exile trigger).
+     * source in {@code GameData.sourceCreatedTokens} (read by the paired exile trigger).
      */
     record TetravusCounterRemoval(UUID permanentId,
                                   com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate)
@@ -157,12 +176,18 @@ public sealed interface ChoiceContext {
      * Choosing a basic land type "as ~ enters". When {@code chainSecondAfter} is true, answering
      * the first pick immediately begins a second pick ({@code isSecondChoice=true}) for cards that
      * choose two types (Illusionary Terrain). The second pick stores into
-     * {@code Permanent.secondChosenSubtype}.
+     * {@code Permanent.secondChosenSubtype}. {@code allowedTypes} narrows the offered types for
+     * cards that only allow some of them ("choose Island or Swamp" — Roots of Life); an empty list
+     * offers all five.
      */
-    record BasicLandTypeChoice(UUID permanentId, boolean isSecondChoice, boolean chainSecondAfter)
-            implements ChoiceContext {
+    record BasicLandTypeChoice(UUID permanentId, boolean isSecondChoice, boolean chainSecondAfter,
+                               List<CardSubtype> allowedTypes) implements ChoiceContext {
         public BasicLandTypeChoice(UUID permanentId) {
-            this(permanentId, false, false);
+            this(permanentId, false, false, List.of());
+        }
+
+        public BasicLandTypeChoice(UUID permanentId, boolean isSecondChoice, boolean chainSecondAfter) {
+            this(permanentId, isSecondChoice, chainSecondAfter, List.of());
         }
     }
 
@@ -292,6 +317,12 @@ public sealed interface ChoiceContext {
     record CreateTokensPerPermanentOfChosenColorChoice(UUID controllerId,
                                                        com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
                                                        String sourceSetCode) implements ChoiceContext {}
+
+    /**
+     * Hall of Gemstone: {@code playerId} (the player whose upkeep it is) chooses a color; until end
+     * of turn every land tapped for mana produces that color instead of any other color.
+     */
+    record AllLandsProduceChosenColorChoice(UUID playerId) implements ChoiceContext {}
 
     /**
      * Storage Matrix: during {@code playerId}'s untap step the active player chooses artifact,

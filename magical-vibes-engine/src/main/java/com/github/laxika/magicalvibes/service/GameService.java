@@ -437,6 +437,13 @@ public class GameService {
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId, Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices, boolean kicked, Integer discardHandCardIndex, List<Integer> discardHandCardIndices, List<UUID> imposedSacrificePermanentIds) {
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds,
+                fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds,
+                exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, discardHandCardIndex,
+                discardHandCardIndices, imposedSacrificePermanentIds, null);
+    }
+
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId, Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices, boolean kicked, Integer discardHandCardIndex, List<Integer> discardHandCardIndices, List<UUID> imposedSacrificePermanentIds, List<UUID> additionalCostSacrificePermanentIds) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playCard(gameData, actionPlayer, cardIndex, xValue, targetId, damageAssignments,
@@ -444,7 +451,7 @@ public class GameService {
                         phyrexianLifeCount, alternateCostSacrificePermanentIds,
                         exileGraveyardCardIndex, exileGraveyardCardIndices, kicked,
                         discardHandCardIndex, discardHandCardIndices,
-                        imposedSacrificePermanentIds))) return;
+                        imposedSacrificePermanentIds, additionalCostSacrificePermanentIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -452,7 +459,7 @@ public class GameService {
                     targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount,
                     alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices,
                     kicked, discardHandCardIndex, discardHandCardIndices, null,
-                    imposedSacrificePermanentIds);
+                    imposedSacrificePermanentIds, additionalCostSacrificePermanentIds);
         }
     }
 

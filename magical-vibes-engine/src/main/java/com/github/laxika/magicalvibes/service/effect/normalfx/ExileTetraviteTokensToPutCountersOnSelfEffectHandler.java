@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link ExileTetraviteTokensToPutCountersOnSelfEffect} (Tetravus): gathers the tokens the
- * source created (tracked in {@code GameData.tetravusCreatedTokens}) that are still on the
+ * source created (tracked in {@code GameData.sourceCreatedTokens}) that are still on the
  * battlefield and prompts the controller to choose any number of them to exile. The exile and the
  * follow-up "put that many +1/+1 counters on this creature" are completed in
  * {@code MultiPermanentChoiceHandlerService} once the choice is answered. Does nothing if the source
@@ -42,7 +42,7 @@ public class ExileTetraviteTokensToPutCountersOnSelfEffectHandler implements Nor
         if (source == null) {
             return;
         }
-        Set<UUID> created = gameData.tetravusCreatedTokens.get(sourceId);
+        Set<UUID> created = gameData.sourceCreatedTokens.get(sourceId);
         if (created == null || created.isEmpty()) {
             return;
         }

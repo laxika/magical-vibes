@@ -449,6 +449,7 @@ void deathTriggerAfterWrathTargetsPlayer() {
 | `castWithConspire` | `(Player, int, UUID targetId, List<UUID> conspireCreatureIds)` | Cast a spell paying its conspire cost (taps two color-sharing creatures; queues a "copy it" trigger) |
 | `castAndResolveInstant` | `(Player, int)` / `(..., UUID)` / `(..., List<UUID>)` | Cast + auto `passBothPriorities()` |
 | `castAndResolveSorcery` | `(Player, int, int)` / `(..., UUID)` / `(..., int, UUID)` / `(..., List<UUID>)` | Cast + auto `passBothPriorities()` |
+| `playLand` | `(Player, int)` | Play a land from hand (land play, not a cast — nothing goes on the stack) |
 | `playGraveyardLand` | `(Player, int)` | Play a land from graveyard (Crucible of Worlds) |
 
 ### Abilities

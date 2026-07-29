@@ -23,11 +23,13 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -128,6 +130,20 @@ public class StaticEffectSupport {
     }
 
     /**
+     * Returns true if the target matches a land-centric scope ({@link GrantScope#OWN_LANDS} /
+     * {@link GrantScope#ALL_LANDS}) and the optional filter. The land check goes through the
+     * recursion-safe static matcher rather than {@code GameQueryService}, which would re-enter
+     * static-bonus assembly from inside the static pass.
+     */
+    public boolean matchesLandScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter) {
+        if (scope == GrantScope.OWN_LANDS && !context.targetOnSameBattlefield()) {
+            return false;
+        }
+        return matchesStaticFilter(context.target(), new PermanentIsLandPredicate())
+                && matchesStaticFilter(context, filter);
+    }
+
+    /**
      * Context-aware static-filter check. Handles predicates that need game data (e.g.
      * {@link PermanentHasGreatestManaValueAmongAllCreaturesPredicate}) and delegates everything
      * else to the target-only {@link #matchesStaticFilter(Permanent, PermanentPredicate)}.
@@ -139,7 +155,32 @@ public class StaticEffectSupport {
         if (filter instanceof PermanentIsEnchantedPredicate) {
             return gameQueryService.isEnchanted(context.gameData(), context.target());
         }
+        if (filter instanceof PermanentControllerControlsPermanentPredicate p) {
+            return controllerControlsMatchingStatic(context.gameData(), context.target(), p);
+        }
+        if (filter instanceof PermanentHasSourceChosenSubtypePredicate) {
+            CardSubtype chosenSubtype = context.source().getChosenSubtype();
+            return chosenSubtype != null
+                    && matchesStaticFilter(context.target(), new PermanentHasSubtypePredicate(chosenSubtype));
+        }
         return matchesStaticFilter(context.target(), filter);
+    }
+
+    /**
+     * Recursion-safe "the target's own controller controls a matching permanent" for the static
+     * pass (Favorable Destiny's "as long as its controller controls another creature"). The inner
+     * filter is evaluated with the layer-safe {@link #matchesStaticFilter(Permanent, PermanentPredicate)}
+     * rather than the fully layered predicate evaluator, which would re-enter static assembly.
+     */
+    private boolean controllerControlsMatchingStatic(GameData gameData, Permanent target,
+                                                     PermanentControllerControlsPermanentPredicate predicate) {
+        if (gameData == null) return false;
+        UUID controllerId = gameData.findControllerOf(target.getId());
+        List<Permanent> battlefield = controllerId == null ? null : gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+        return battlefield.stream()
+                .filter(candidate -> !predicate.excludeSelf() || !candidate.getId().equals(target.getId()))
+                .anyMatch(candidate -> matchesStaticFilter(candidate, predicate.filter()));
     }
 
     /**

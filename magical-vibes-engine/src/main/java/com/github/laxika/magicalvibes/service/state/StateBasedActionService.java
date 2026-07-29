@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -74,6 +75,7 @@ public class StateBasedActionService {
             anyPerformed |= sacrificeCompletedSagas(gameData, processedIds);
             anyPerformed |= sacrificeCreaturesOnSeraphControlLoss(gameData);
             anyPerformed |= cancelCounters(gameData);
+            anyPerformed |= applyWorldRule(gameData);
 
             // CR 704.5n / 704.5q — illegally attached auras die, illegal equipment unattaches
             anyPerformed |= permanentRemovalService.enforceAttachmentLegality(gameData);
@@ -262,6 +264,38 @@ public class StateBasedActionService {
             permanentRemovalService.removeOrphanedAuras(gameData);
         }
         return !toSacrifice.isEmpty();
+    }
+
+    /**
+     * CR 704.5k — the world rule: if two or more permanents have the supertype world, all except the
+     * one that has had it for the shortest amount of time are put into their owners' graveyards; on a
+     * tie for the shortest, all of them are. {@link Permanent#getTimestamp()} (CR 613.7, stamped on
+     * entry) is the "how long" ordering, so the newest world permanent is the one with the highest
+     * timestamp and it survives only when it holds that timestamp alone.
+     */
+    private boolean applyWorldRule(GameData gameData) {
+        List<Permanent> worlds = new ArrayList<>();
+        gameData.forEachPermanent((playerId, p) -> {
+            if (p.getCard().getSupertypes().contains(CardSupertype.WORLD)) {
+                worlds.add(p);
+            }
+        });
+        if (worlds.size() < 2) return false;
+
+        long newest = worlds.stream().mapToLong(Permanent::getTimestamp).max().orElseThrow();
+        boolean uniqueNewest = worlds.stream().filter(p -> p.getTimestamp() == newest).count() == 1;
+
+        List<Permanent> toGraveyard = worlds.stream()
+                .filter(p -> !(uniqueNewest && p.getTimestamp() == newest))
+                .toList();
+
+        for (Permanent perm : toGraveyard) {
+            permanentRemovalService.removePermanentToGraveyard(gameData, perm);
+            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " is put into the graveyard (world rule)."));
+            log.info("Game {} - {} is put into the graveyard (world rule)", gameData.id, perm.getCard().getName());
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        return true;
     }
 
     // CR 704.5q — +1/+1 and -1/-1 counters cancel each other out

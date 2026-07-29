@@ -3,7 +3,10 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.CombatDamagePhase1State;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,6 +22,7 @@ import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityServic
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import org.junit.jupiter.api.BeforeEach;
@@ -83,6 +87,9 @@ class CombatServiceTest {
 
     @Mock
     private PermanentCounterSupport permanentCounterSupport;
+
+    @Mock
+    private PermanentControlSupport permanentControlSupport;
 
     @Mock
     private DamageSupport damageSupport;
@@ -469,6 +476,32 @@ class CombatServiceTest {
             combatService.processEndOfCombatSacrifices(gd);
 
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+        }
+
+        @Test
+        @DisplayName("Creates the token rider for the sacrificed permanent's controller (Basalt Golem)")
+        void createsTokenRiderForSacrificingPlayer() {
+            Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));
+            CreateTokenEffect wall = new CreateTokenEffect("Wall", 0, 2, null,
+                    List.of(CardSubtype.WALL), Set.of(Keyword.DEFENDER), Set.of(CardType.ARTIFACT));
+            gd.queueDelayedAction(new SacrificeAtEndOfCombat(creature.getId(), null, null, 0, wall));
+            when(gameQueryService.findPermanentController(gd, creature.getId())).thenReturn(player1Id);
+
+            combatService.processEndOfCombatSacrifices(gd);
+
+            verify(permanentControlSupport).applyCreateToken(eq(gd), eq(player1Id), eq(wall), any());
+        }
+
+        @Test
+        @DisplayName("Creates no token rider when the permanent already left the battlefield")
+        void createsNoTokenRiderWhenPermanentGone() {
+            CreateTokenEffect wall = new CreateTokenEffect("Wall", 0, 2, null,
+                    List.of(CardSubtype.WALL), Set.of(Keyword.DEFENDER), Set.of(CardType.ARTIFACT));
+            gd.queueDelayedAction(new SacrificeAtEndOfCombat(UUID.randomUUID(), null, null, 0, wall));
+
+            combatService.processEndOfCombatSacrifices(gd);
+
+            verify(permanentControlSupport, never()).applyCreateToken(any(), any(), any(), any());
         }
 
         @Test

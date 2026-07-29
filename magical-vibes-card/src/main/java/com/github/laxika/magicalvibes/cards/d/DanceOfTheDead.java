@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -38,6 +39,6 @@ public class DanceOfTheDead extends Card {
         // pay {1}{B}. If the player does, untap that creature."
         addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
                 new MayPayManaEffect("{1}{B}", new UntapEquippedCreatureEffect(),
-                        "pay {1}{B} to untap the creature", true));
+                        "pay {1}{B} to untap the creature", MayPayPayer.ENCHANTED_CONTROLLER));
     }
 }

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.Set;
 
 @CardRegistration(set = "POR", collectorNumber = "8")
+@CardRegistration(set = "MIR", collectorNumber = "5")
 public class BlindingLight extends Card {
 
     public BlindingLight() {

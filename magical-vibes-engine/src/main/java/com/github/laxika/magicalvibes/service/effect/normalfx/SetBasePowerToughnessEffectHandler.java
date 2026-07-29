@@ -46,16 +46,25 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
         // the latest timestamp wins in the layered pass. The legacy fields are still written
         // for direct Permanent readers (views, last-known-information); the floating instance
         // is what drives precedence.
-        target.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
-        target.setBasePowerOverride(e.power());
-        target.setBaseToughnessOverride(e.toughness());
+        // The legacy UEOT fields are an all-or-nothing pair, so a partial setter
+        // ("has base toughness 1") skips them entirely and rides on the floating 7b entry alone,
+        // which carries per-component nulls.
+        if (e.power() != null && e.toughness() != null) {
+            target.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
+            target.setBasePowerOverride(e.power());
+            target.setBaseToughnessOverride(e.toughness());
+        }
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 e, target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
 
-        String logEntry = target.getCard().getName() + " has base power and toughness " + e.power() + "/" + e.toughness() + " until end of turn.";
-        gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" has base power and toughness " + e.power() + "/" + e.toughness() + " until end of turn.").build());
+        String description = e.power() == null
+                ? " has base toughness " + e.toughness() + " until end of turn."
+                : e.toughness() == null
+                ? " has base power " + e.power() + " until end of turn."
+                : " has base power and toughness " + e.power() + "/" + e.toughness() + " until end of turn.";
+        gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(description).build());
 
-        log.info("Game {} - {} base P/T set to {}/{}", gameData.id, target.getCard().getName(), e.power(), e.toughness());
+        log.info("Game {} - {}{}", gameData.id, target.getCard().getName(), description);
     }
 }

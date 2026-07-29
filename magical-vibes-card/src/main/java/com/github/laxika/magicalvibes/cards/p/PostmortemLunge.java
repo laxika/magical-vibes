@@ -18,6 +18,7 @@ public class PostmortemLunge extends Card {
                 .targetGraveyard(true)
                 .grantHaste(true)
                 .exileAtEndStep(true)
+                .exileIfLeavesBattlefield(true)
                 .requiresManaValueEqualsX(true)
                 .build());
     }

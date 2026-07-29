@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -25,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 @Slf4j
@@ -137,9 +139,20 @@ public class PlayerInputService {
     }
 
     public void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetId) {
-        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        beginColorChoice(gameData, playerId, permanentId, etbTargetId,
+                List.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN));
+    }
+
+    /**
+     * As {@link #beginColorChoice(GameData, UUID, UUID, UUID)} but restricted to {@code allowedColors}
+     * — for cards that narrow the pick ("choose black or red", Mangara's Equity).
+     */
+    public void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetId,
+            List<CardColor> allowedColors) {
+        List<String> colors = allowedColors.stream().map(Enum::name).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                playerId, permanentId, etbTargetId, null, colors, "Choose a color."));
+                playerId, permanentId, etbTargetId, null, colors,
+                colors.size() < 5 ? "Choose " + String.join(" or ", colors).toLowerCase() + "." : "Choose a color."));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a color", gameData.id, playerName);
@@ -182,8 +195,32 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a color (Rith token-per-permanent)", gameData.id, playerName);
     }
 
+    /**
+     * Hall of Gemstone: {@code playerId} chooses the color every land produces for the rest of the
+     * turn.
+     */
+    public void beginAllLandsProduceChosenColorChoice(GameData gameData, UUID playerId) {
+        ChoiceContext.AllLandsProduceChosenColorChoice ctx =
+                new ChoiceContext.AllLandsProduceChosenColorChoice(playerId);
+
+        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, ctx, colors, "Choose a color."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a color (all lands produce that color)", gameData.id, playerName);
+    }
+
     public void beginProtectionColorChoice(GameData gameData, UUID playerId, UUID targetId, boolean includeArtifacts) {
-        ChoiceContext.ProtectionColorChoice ctx = new ChoiceContext.ProtectionColorChoice(targetId, includeArtifacts);
+        beginProtectionColorChoice(gameData, playerId, List.of(targetId), includeArtifacts);
+    }
+
+    /**
+     * One protection pick shared by several targets (Prismatic Boon's "X target creatures gain
+     * protection from the chosen color").
+     */
+    public void beginProtectionColorChoice(GameData gameData, UUID playerId, List<UUID> targetIds, boolean includeArtifacts) {
+        ChoiceContext.ProtectionColorChoice ctx = new ChoiceContext.ProtectionColorChoice(targetIds, includeArtifacts);
 
         List<String> options = new java.util.ArrayList<>(List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN"));
         if (includeArtifacts) {
@@ -462,10 +499,22 @@ public class PlayerInputService {
      */
     public void beginBasicLandTypeChoice(GameData gameData, UUID playerId, UUID permanentId,
                                          boolean isSecondChoice, boolean chainSecondAfter) {
-        ChoiceContext.BasicLandTypeChoice choiceContext =
-                new ChoiceContext.BasicLandTypeChoice(permanentId, isSecondChoice, chainSecondAfter);
+        beginBasicLandTypeChoice(gameData, playerId, permanentId, isSecondChoice, chainSecondAfter, List.of());
+    }
 
-        List<String> basicLandTypes = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
+    /**
+     * @param allowedTypes when non-empty, only these basic land types are offered
+     *                     ("choose Island or Swamp" — Roots of Life)
+     */
+    public void beginBasicLandTypeChoice(GameData gameData, UUID playerId, UUID permanentId,
+                                         boolean isSecondChoice, boolean chainSecondAfter,
+                                         List<CardSubtype> allowedTypes) {
+        ChoiceContext.BasicLandTypeChoice choiceContext =
+                new ChoiceContext.BasicLandTypeChoice(permanentId, isSecondChoice, chainSecondAfter, allowedTypes);
+
+        List<String> basicLandTypes = allowedTypes.isEmpty()
+                ? List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST")
+                : allowedTypes.stream().map(Enum::name).toList();
         String prompt = isSecondChoice
                 ? "Choose the second basic land type."
                 : "Choose a basic land type.";
@@ -571,6 +620,21 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a card name", gameData.id, playerName);
     }
 
+    /**
+     * Asks {@code ctx.choosingPlayerId()} for a card name other than a basic land card name
+     * (Null Chamber). Called twice per resolution: once for the controller, then once for their
+     * opponent with the first name carried in the context.
+     */
+    public void beginDualCardNameChoice(GameData gameData, ChoiceContext.DualCardNameChoice ctx) {
+        List<String> cardNames = collectNonBasicLandCardNamesInGame(gameData);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                ctx.choosingPlayerId(), null, null, ctx, cardNames,
+                "Choose a card name other than a basic land card name."));
+
+        String playerName = gameData.playerIdToName.get(ctx.choosingPlayerId());
+        log.info("Game {} - Awaiting {} to choose a card name for {}", gameData.id, playerName, ctx.card().getName());
+    }
+
     public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
                                          List<CardType> excludedTypes, CardType requiredType) {
         ChoiceContext.ExileByNameChoice choiceContext = new ChoiceContext.ExileByNameChoice(targetPlayerId, choosingPlayerId, excludedTypes);
@@ -624,26 +688,38 @@ public class PlayerInputService {
     }
 
     private List<String> collectCardNamesInGameExcluding(GameData gameData, List<CardType> excludedTypes, CardType requiredType) {
+        return collectCardNamesInGame(gameData, card -> isNameCandidate(card, excludedTypes, requiredType));
+    }
+
+    /** Names of every card in the game that isn't a basic land card (Null Chamber). */
+    private List<String> collectNonBasicLandCardNamesInGame(GameData gameData) {
+        return collectCardNamesInGame(gameData,
+                card -> !(card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC)));
+    }
+
+    /** Every distinct card name across all zones (battlefield, hand, graveyard, library, exile, stack)
+     *  whose card satisfies {@code candidate}, sorted alphabetically. */
+    private List<String> collectCardNamesInGame(GameData gameData, Predicate<Card> candidate) {
         Set<String> names = new TreeSet<>();
         for (UUID pid : gameData.playerIds) {
             gameData.playerBattlefields.getOrDefault(pid, List.of()).stream()
-                    .filter(p -> isNameCandidate(p.getCard(), excludedTypes, requiredType))
+                    .filter(p -> candidate.test(p.getCard()))
                     .forEach(p -> names.add(p.getCard().getName()));
             gameData.playerHands.getOrDefault(pid, List.of()).stream()
-                    .filter(c -> isNameCandidate(c, excludedTypes, requiredType))
+                    .filter(candidate)
                     .forEach(c -> names.add(c.getName()));
             gameData.playerGraveyards.getOrDefault(pid, List.of()).stream()
-                    .filter(c -> isNameCandidate(c, excludedTypes, requiredType))
+                    .filter(candidate)
                     .forEach(c -> names.add(c.getName()));
             gameData.playerDecks.getOrDefault(pid, List.of()).stream()
-                    .filter(c -> isNameCandidate(c, excludedTypes, requiredType))
+                    .filter(candidate)
                     .forEach(c -> names.add(c.getName()));
             gameData.getPlayerExiledCards(pid).stream()
-                    .filter(c -> isNameCandidate(c, excludedTypes, requiredType))
+                    .filter(candidate)
                     .forEach(c -> names.add(c.getName()));
         }
         gameData.stack.stream()
-                .filter(se -> isNameCandidate(se.getCard(), excludedTypes, requiredType))
+                .filter(se -> candidate.test(se.getCard()))
                 .forEach(se -> names.add(se.getCard().getName()));
         return new ArrayList<>(names);
     }

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
@@ -47,6 +49,7 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
     @Mock private SessionManager sessionManager;
     @Mock private CardViewFactory cardViewFactory;
     @Mock private CardRevealService cardRevealService;
+    @Mock private AmountEvaluationService amountEvaluationService;
 
     private LookAtTopCardsOfTargetLibraryEffectHandler handler;
     private GameData gd;
@@ -74,9 +77,12 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
+        lenient().when(amountEvaluationService.evaluate(any(), any(), any()))
+                .thenAnswer(invocation -> ((Fixed) invocation.getArgument(1)).value());
+
         handler = new LookAtTopCardsOfTargetLibraryEffectHandler(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService),
-                cardRevealService);
+                cardRevealService, amountEvaluationService);
     }
 
     private static Card createCard(String name) {
@@ -207,6 +213,41 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
                     gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
             assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.GRAVEYARD);
             assertThat(search.params().canFailToFind()).isFalse();
+        }
+    }
+
+    @Nested
+    class ExileOne {
+
+        @Test
+        @DisplayName("Enters a mandatory LIBRARY_SEARCH with exile destination (Sealed Fate)")
+        void entersMandatorySearch() {
+            stubCardViewFactory();
+            gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears"));
+            gd.playerDecks.get(player2Id).add(createCard("Llanowar Elves"));
+
+            LookAtTopCardsOfTargetLibraryEffect effect =
+                    new LookAtTopCardsOfTargetLibraryEffect(2, TargetLibraryAction.EXILE_ONE);
+            handler.resolve(gd, entryTargeting("Sealed Fate", effect), effect);
+
+            PendingInteraction.LibrarySearch search =
+                    gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+            assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.EXILE);
+            assertThat(search.params().canFailToFind()).isFalse();
+        }
+
+        @Test
+        @DisplayName("A zero look count does nothing at all")
+        void zeroCountDoesNothing() {
+            gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears"));
+
+            LookAtTopCardsOfTargetLibraryEffect effect =
+                    new LookAtTopCardsOfTargetLibraryEffect(0, TargetLibraryAction.EXILE_ONE);
+            handler.resolve(gd, entryTargeting("Sealed Fate", effect), effect);
+
+            assertThat(gd.interaction.activeInteraction()).isNull();
+            assertThat(gd.playerDecks.get(player2Id)).hasSize(1);
+            verifyNoInteractions(gameLogService);
         }
     }
 }

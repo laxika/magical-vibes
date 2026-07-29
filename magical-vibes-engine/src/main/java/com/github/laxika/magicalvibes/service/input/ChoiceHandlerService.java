@@ -111,6 +111,12 @@ public class ChoiceHandlerService {
             return;
         }
 
+        // Two-player card name choice (Null Chamber)
+        if (colorChoice.context() instanceof ChoiceContext.DualCardNameChoice ctx) {
+            handleDualCardNameChosen(gameData, player, colorName, ctx);
+            return;
+        }
+
         // Text-changing effects (Mind Bend, etc.) — two-step color/land-type choice
         if (colorChoice.context() instanceof ChoiceContext.TextChangeFromWord ctx) {
             handleTextChangeFromWordChosen(gameData, player, colorName, ctx);
@@ -159,6 +165,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.CreateTokensPerPermanentOfChosenColorChoice ctx) {
             handleCreateTokensPerPermanentOfChosenColorChoice(gameData, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.AllLandsProduceChosenColorChoice ctx) {
+            handleAllLandsProduceChosenColorChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.SubtypeChoice ctx) {
@@ -527,6 +537,41 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    /**
+     * Null Chamber: the controller names a card, then their opponent names one, and only then does
+     * the enchantment enter carrying both names (CR 614.1c). If the opponent has left the game there
+     * is nobody to make the second choice, so the permanent enters with the one name.
+     */
+    private void handleDualCardNameChosen(GameData gameData, Player player, String cardName,
+                                          ChoiceContext.DualCardNameChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        Card card = ctx.card();
+        gameLogService.append(gameData, GameLog.playerChoosesForCard(player.getUsername(), cardName, card));
+        log.info("Game {} - {} chooses card name \"{}\" for {}", gameData.id, player.getUsername(), cardName, card.getName());
+
+        UUID opponentId = gameQueryService.getOpponentId(gameData, ctx.controllerId());
+        if (ctx.firstChosenName() == null && opponentId != null) {
+            playerInputService.beginDualCardNameChoice(gameData,
+                    new ChoiceContext.DualCardNameChoice(card, ctx.controllerId(), opponentId, cardName));
+            return;
+        }
+
+        UUID controllerId = ctx.controllerId();
+        Permanent perm = new Permanent(card);
+        perm.setChosenName(ctx.firstChosenName() == null ? cardName : ctx.firstChosenName());
+        perm.setSecondChosenName(ctx.firstChosenName() == null ? null : cardName);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        gameLogService.append(gameData, GameLog.entersBattlefieldUnder(perm.getCard(), playerName));
+        log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, perm.getCard().getName(), playerName);
+
+        legendRuleService.checkLegendRule(gameData, controllerId);
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     private void handleKeywordGrantChoice(GameData gameData, Player player, String chosenKeywordName, ChoiceContext.KeywordGrantChoice ctx) {
         Keyword keyword;
         try {
@@ -849,8 +894,11 @@ public class ChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
 
-        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
-        if (target != null) {
+        for (UUID targetId : ctx.targetIds()) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                continue;
+            }
             if (chosenColor == null) {
                 target.getProtectionFromCardTypes().add(CardType.ARTIFACT);
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gains protection from artifacts until end of turn."));
@@ -1075,6 +1123,26 @@ public class ChoiceHandlerService {
             gameLogService.append(gameData, GameLog.text(controllerName + " creates " + count
                     + " Saproling token" + (count != 1 ? "s" : "") + "."));
         }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Hall of Gemstone: record the chosen color as the color every land produces for the rest of the
+     * turn. Cleared by {@code TurnCleanupService}.
+     */
+    private void handleAllLandsProduceChosenColorChoice(GameData gameData, String chosenValue,
+            ChoiceContext.AllLandsProduceChosenColorChoice ctx) {
+        ManaColor color = ManaColor.valueOf(chosenValue);
+
+        gameData.interaction.clearAwaitingInput();
+
+        gameData.allLandsFixedManaColorThisTurn = color;
+
+        String playerName = gameData.playerIdToName.get(ctx.playerId());
+        gameLogService.append(gameData, GameLog.text(playerName + " chooses "
+                + color.name().toLowerCase() + "; lands produce that color this turn."));
+        log.info("Game {} - Hall of Gemstone: lands produce {} this turn", gameData.id, color);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
@@ -1356,7 +1424,7 @@ public class ChoiceHandlerService {
 
             List<UUID> createdIds = permanentControlSupport.applyCreateToken(gameData, player.getId(),
                     ctx.tokenTemplate(), removed, source.getCard().getSetCode());
-            gameData.tetravusCreatedTokens
+            gameData.sourceCreatedTokens
                     .computeIfAbsent(ctx.permanentId(), k -> ConcurrentHashMap.<UUID>newKeySet())
                     .addAll(createdIds);
 
@@ -1421,7 +1489,8 @@ public class ChoiceHandlerService {
         }
 
         if (!ctx.isSecondChoice() && ctx.chainSecondAfter()) {
-            playerInputService.beginBasicLandTypeChoice(gameData, player.getId(), ctx.permanentId(), true, false);
+            playerInputService.beginBasicLandTypeChoice(
+                    gameData, player.getId(), ctx.permanentId(), true, false, ctx.allowedTypes());
             inputCompletionService.publishStateAfterInput(gameData);
             return;
         }

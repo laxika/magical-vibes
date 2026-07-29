@@ -404,7 +404,7 @@ class AutumnsVeilTest extends BaseCardTest {
             colors2.addAll(Set.of(CardColor.BLUE, CardColor.BLACK));
             gd.playerCreaturesCantBeTargetedByColorsThisTurn.put(player1.getId(), colors2);
 
-            TurnCleanupService svc = new TurnCleanupService(null);
+            TurnCleanupService svc = new TurnCleanupService(null, null);
             svc.resetEndOfTurnModifiers(gd);
 
             assertThat(gd.playerSpellsCantBeCounteredByColorsThisTurn).isEmpty();

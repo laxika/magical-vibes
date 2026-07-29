@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "6ED", collectorNumber = "296")
+@CardRegistration(set = "MIR", collectorNumber = "306")
 public class LeadGolem extends Card {
 
     public LeadGolem() {

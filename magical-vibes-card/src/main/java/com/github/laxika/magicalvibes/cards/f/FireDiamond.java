@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 
+@CardRegistration(set = "MIR", collectorNumber = "302")
 @CardRegistration(set = "7ED", collectorNumber = "296")
 @CardRegistration(set = "6ED", collectorNumber = "284")
 public class FireDiamond extends Card {

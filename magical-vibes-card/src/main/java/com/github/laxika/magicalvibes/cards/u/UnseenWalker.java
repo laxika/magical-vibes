@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "262")
+@CardRegistration(set = "MIR", collectorNumber = "249")
 public class UnseenWalker extends Card {
 
     public UnseenWalker() {

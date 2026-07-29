@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerMayPayManaOrLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -167,8 +168,29 @@ public class EffectResolutionService {
                     effectToResolve = mayPay.wrapped();
                     log.info("Game {} - Player accepted may-pay ability from {} — resolving inner effect",
                             gameData.id, entry.getCard().getName());
+                } else if (mayPay.elseEffect() != null) {
+                    // "If you don't, [effect]" — the decline half of a punisher choice.
+                    effectToResolve = mayPay.elseEffect();
+                    log.info("Game {} - Player declined may-pay ability from {} — resolving else effect",
+                            gameData.id, entry.getCard().getName());
                 } else {
                     log.info("Game {} - Player declined may-pay ability from {} — skipping",
+                            gameData.id, entry.getCard().getName());
+                    continue;
+                }
+            }
+
+            // CR 603.5 — resolution-time "that player may pay {M} or N life" re-entry
+            if (effectToResolve instanceof TargetPlayerMayPayManaOrLifeEffect mayPayManaOrLife
+                    && gameData.resolvedMayAccepted != null) {
+                boolean accepted = gameData.resolvedMayAccepted;
+                gameData.resolvedMayAccepted = null;
+                if (accepted) {
+                    effectToResolve = mayPayManaOrLife.wrapped();
+                    log.info("Game {} - Player accepted pay-mana-or-life ability from {} — resolving inner effect",
+                            gameData.id, entry.getCard().getName());
+                } else {
+                    log.info("Game {} - Player declined pay-mana-or-life ability from {} — skipping",
                             gameData.id, entry.getCard().getName());
                     continue;
                 }

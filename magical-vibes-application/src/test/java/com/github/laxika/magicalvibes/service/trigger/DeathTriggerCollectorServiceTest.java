@@ -385,7 +385,7 @@ class DeathTriggerCollectorServiceTest {
             Card watcher = createCreature("Pay Watcher", 1, 1);
             var mayPay = new MayPayManaEffect("{1}", new DrawCardEffect(1), "Pay?");
             Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 2, 2), PLAYER1_ID, 2);
+            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 2, 2), PLAYER1_ID, 2, 2);
 
             svc.handleAllyCreatureMayPay(match(perm, PLAYER1_ID, mayPay), mayPay, ctx);
 
@@ -404,7 +404,7 @@ class DeathTriggerCollectorServiceTest {
             Card watcher = createCreature("May Watcher", 1, 1);
             var may = new MayEffect(new DrawCardEffect(1), "Draw?");
             Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 2, 2), PLAYER1_ID, 2);
+            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 2, 2), PLAYER1_ID, 2, 2);
 
             svc.handleAllyCreatureMay(match(perm, PLAYER1_ID, may), may, ctx);
 
@@ -773,7 +773,7 @@ class DeathTriggerCollectorServiceTest {
             Card watcher = createCreature("Growing Watcher", 1, 1);
             var effect = new PutCountersOnSourceEffect(1, 1, 1);
             Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1);
+            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1, 1);
 
             svc.handleAnyCreatureDeathPutCounters(match(perm, PLAYER1_ID, effect), effect, ctx);
 
@@ -786,7 +786,7 @@ class DeathTriggerCollectorServiceTest {
             Card watcher = createCreature("Optional Watcher", 1, 1);
             var may = new MayEffect(new DrawCardEffect(1), "Draw?");
             Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1);
+            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1, 1);
 
             svc.handleAnyCreatureDeathMay(match(perm, PLAYER1_ID, may), may, ctx);
 
@@ -799,7 +799,7 @@ class DeathTriggerCollectorServiceTest {
             Card watcher = createCreature("Kresh the Bloodbraided", 3, 3);
             var effect = new PutCountersOnSourceEqualToDyingPowerEffect(1, 1, true);
             Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 4, 4), PLAYER1_ID, 4);
+            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 4, 4), PLAYER1_ID, 4, 4);
 
             svc.handleAnyCreatureDeathPutCountersEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
 
@@ -817,7 +817,7 @@ class DeathTriggerCollectorServiceTest {
             var may = new MayEffect(
                     new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER), "Deal damage?");
             Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1);
+            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1, 1);
 
             svc.handleAnyCreatureDeathMay(match(perm, PLAYER1_ID, may), may, ctx);
 
@@ -833,7 +833,7 @@ class DeathTriggerCollectorServiceTest {
             var copyEffect = new BecomeCopyOfDyingCreatureEffect();
             var rawMayPay = new MayPayManaEffect("{1}", copyEffect, "Pay {1}?");
             Permanent perm = new Permanent(puca);
-            var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2);
+            var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2, 2);
 
             assertThat(svc.handleAnyCreatureDeathBecomeCopy(match(perm, PLAYER1_ID, rawMayPay), copyEffect, ctx)).isTrue();
             assertThat(gd.pendingMayAbilities).hasSize(1);
@@ -849,7 +849,7 @@ class DeathTriggerCollectorServiceTest {
             var copyEffect = new BecomeCopyOfDyingCreatureEffect();
             var rawMayPay = new MayPayManaEffect("{1}", copyEffect, "Pay {1}?");
             Permanent perm = new Permanent(puca);
-            var ctx = new TriggerContext.CreatureDeath(null, PLAYER1_ID, 0);
+            var ctx = new TriggerContext.CreatureDeath(null, PLAYER1_ID, 0, 0);
 
             assertThat(svc.handleAnyCreatureDeathBecomeCopy(match(perm, PLAYER1_ID, rawMayPay), copyEffect, ctx)).isFalse();
             assertThat(gd.pendingMayAbilities).isEmpty();
@@ -861,7 +861,7 @@ class DeathTriggerCollectorServiceTest {
             Card watcher = createCreature("Death Counter", 1, 1);
             var effect = new DrawCardEffect(1);
             Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1);
+            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1, 1);
 
             svc.handleAnyCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
@@ -875,7 +875,7 @@ class DeathTriggerCollectorServiceTest {
             Card watcher = createCreature("Target Watcher", 1, 1);
             var effect = new PutCounterOnTargetPermanentEffect(CounterType.CHARGE);
             Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1);
+            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1, 1);
 
             svc.handleAnyCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
@@ -896,7 +896,7 @@ class DeathTriggerCollectorServiceTest {
             Card watcher = createCreature("May Ally", 1, 1);
             var may = new MayEffect(new DrawCardEffect(1), "Draw?");
             Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 2, 2), PLAYER1_ID, 2);
+            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 2, 2), PLAYER1_ID, 2, 2);
 
             svc.handleAllyNontokenMay(match(perm, PLAYER1_ID, may), may, ctx);
 
@@ -909,7 +909,7 @@ class DeathTriggerCollectorServiceTest {
             Card watcher = createCreature("Ally Tracker", 1, 1);
             var effect = new DrawCardEffect(1);
             Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 2, 2), PLAYER1_ID, 2);
+            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 2, 2), PLAYER1_ID, 2, 2);
 
             svc.handleAllyNontokenDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
@@ -932,7 +932,7 @@ class DeathTriggerCollectorServiceTest {
             var imprint = new ImprintDyingCreatureEffect();
             var rawMay = new MayEffect(imprint, "Exile and imprint?");
             Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 3);
+            var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 3, 3);
 
             svc.handleImprintDyingCreature(match(perm, PLAYER1_ID, rawMay), imprint, ctx);
 
@@ -950,7 +950,7 @@ class DeathTriggerCollectorServiceTest {
             var rawMayPay = new MayPayManaEffect("{4}", returnEffect, "Pay 4?");
             Permanent perm = new Permanent(deathmantle);
             gd.playerGraveyards.get(PLAYER1_ID).add(dying);
-            var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2);
+            var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2, 2);
 
             assertThat(svc.handleReturnDyingCreatureMayPay(match(perm, PLAYER1_ID, rawMayPay), returnEffect, ctx)).isTrue();
             assertThat(gd.pendingMayAbilities).hasSize(1);
@@ -965,7 +965,7 @@ class DeathTriggerCollectorServiceTest {
             var returnEffect = new ReturnDyingCreatureToBattlefieldAndAttachSourceEffect();
             var rawMayPay = new MayPayManaEffect("{4}", returnEffect, "Pay 4?");
             Permanent perm = new Permanent(deathmantle);
-            var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2);
+            var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2, 2);
 
             assertThat(svc.handleReturnDyingCreatureMayPay(match(perm, PLAYER1_ID, rawMayPay), returnEffect, ctx)).isFalse();
         }
@@ -979,7 +979,7 @@ class DeathTriggerCollectorServiceTest {
             var rawMayPay = new MayPayManaEffect("{4}", returnEffect, "Pay 4?");
             Permanent perm = new Permanent(deathmantle);
             gd.playerGraveyards.remove(PLAYER1_ID);
-            var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2);
+            var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2, 2);
 
             assertThat(svc.handleReturnDyingCreatureMayPay(match(perm, PLAYER1_ID, rawMayPay), returnEffect, ctx)).isFalse();
         }
@@ -997,7 +997,7 @@ class DeathTriggerCollectorServiceTest {
             Card watcher = createCreature("Optional Vulture", 1, 1);
             var may = new MayEffect(new DrawCardEffect(1), "Draw?");
             Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.CreatureDeath(null, PLAYER1_ID, 0);
+            var ctx = new TriggerContext.CreatureDeath(null, PLAYER1_ID, 0, 0);
 
             svc.handleOpponentCreatureDeathMay(match(perm, PLAYER2_ID, may), may, ctx);
 
@@ -1010,7 +1010,7 @@ class DeathTriggerCollectorServiceTest {
             Card watcher = createCreature("Vulture", 1, 1);
             var effect = new DrawCardEffect(1);
             Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.CreatureDeath(null, PLAYER1_ID, 0);
+            var ctx = new TriggerContext.CreatureDeath(null, PLAYER1_ID, 0, 0);
 
             svc.handleOpponentCreatureDeathDefault(match(perm, PLAYER2_ID, effect), effect, ctx);
 

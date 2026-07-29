@@ -13,6 +13,12 @@ public enum ActivationTimingRestriction {
      */
     BEFORE_ATTACKERS_DECLARED,
     ONLY_BEFORE_ATTACKERS_DECLARED,
+    /**
+     * Activate only before blockers are declared (any player's turn). Steps before
+     * {@code DECLARE_BLOCKERS}, and only before the first combat phase's declare-blockers step when
+     * a turn has multiple combats ({@code combatPhasesThisTurn <= 1}). Acidic Dagger.
+     */
+    BEFORE_BLOCKERS_DECLARED,
     ONLY_DURING_DECLARE_ATTACKERS_IF_ATTACKED,
     /** Activate only during the declare blockers step (any player). General Jarkeld. */
     ONLY_DURING_DECLARE_BLOCKERS,
@@ -28,6 +34,8 @@ public enum ActivationTimingRestriction {
     ONLY_DURING_YOUR_UPKEEP,
     ONLY_DURING_ANY_UPKEEP,
     ONLY_WHILE_ATTACKING,
+    /** Activate only if this creature is attacking or blocking. Sawback Manticore. */
+    ONLY_WHILE_ATTACKING_OR_BLOCKING,
     ONLY_WHILE_CREATURE,
     POWER_4_OR_GREATER,
     RAID,

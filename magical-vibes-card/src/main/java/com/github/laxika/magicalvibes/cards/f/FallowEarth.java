@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "6ED", collectorNumber = "227")
+@CardRegistration(set = "MIR", collectorNumber = "214")
 public class FallowEarth extends Card {
 
     public FallowEarth() {

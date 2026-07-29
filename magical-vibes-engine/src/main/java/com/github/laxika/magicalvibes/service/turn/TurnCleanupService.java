@@ -13,10 +13,12 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffe
 import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
-import lombok.RequiredArgsConstructor;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,21 +40,50 @@ import java.util.UUID;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class TurnCleanupService {
 
     private final CreatureControlService creatureControlService;
+    private final PermanentRemovalService permanentRemovalService;
+
+    public TurnCleanupService(CreatureControlService creatureControlService,
+                              @Lazy PermanentRemovalService permanentRemovalService) {
+        this.creatureControlService = creatureControlService;
+        this.permanentRemovalService = permanentRemovalService;
+    }
 
     /**
-     * Performs the full cleanup-step reset: clears all "until end of turn"
-     * modifiers on every permanent and recomputes control of temporarily stolen permanents.
+     * Performs the full cleanup-step reset: sacrifices permanents whose controller must sacrifice
+     * them at the beginning of this cleanup step, clears all "until end of turn" modifiers on every
+     * permanent and recomputes control of temporarily stolen permanents.
      *
      * @param gameData the current game state to modify
      */
     public void applyCleanupResets(GameData gameData) {
+        sacrificePermanentsFlaggedForCleanup(gameData);
         resetEndOfTurnModifiers(gameData);
         tapPermanentsReturningToOwner(gameData);
         creatureControlService.reconcileControl(gameData);
+    }
+
+    /**
+     * Sacrifices every permanent carrying the Mirage flash clause's "sacrifice it at the beginning
+     * of the next cleanup step" rider (Ward of Lights cast at instant speed).
+     */
+    private void sacrificePermanentsFlaggedForCleanup(GameData gameData) {
+        List<Permanent> doomed = new ArrayList<>();
+        gameData.forEachPermanent((playerId, p) -> {
+            if (p.isSacrificeAtNextCleanup()) {
+                doomed.add(p);
+            }
+        });
+        if (doomed.isEmpty()) {
+            return;
+        }
+        for (Permanent permanent : doomed) {
+            permanent.setSacrificeAtNextCleanup(false);
+            permanentRemovalService.removePermanentToGraveyard(gameData, permanent);
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     /**
@@ -140,6 +171,7 @@ public class TurnCleanupService {
         gameData.playerSourceNextDamageShields.clear();
         gameData.sourceNextDamageToAnyTargetShields.clear();
         gameData.eyeForAnEyeShields.clear();
+        gameData.reflectDamageToSourceControllerShields.clear();
         gameData.pendingEyeForAnEyeReflections.clear();
         gameData.pendingSourceDamageForReflection.clear();
         gameData.permanentsPreventedFromDealingDamage.clear();
@@ -151,8 +183,10 @@ public class TurnCleanupService {
         gameData.creaturesWithCombatDamagePrevented.clear();
         gameData.creaturesPreventedFromDealingCombatDamage.clear();
         gameData.damageCantBePreventedThisTurn = false;
+        gameData.combatDamageToCreaturesDoublingsThisTurn = 0;
         gameData.drawReplacementTargetToController.clear();
         gameData.pendingNextDrawLookAtTop.clear();
+        gameData.pendingNextDrawFromExiledPile.clear();
         gameData.colorSourceDamageBonusThisTurn.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
@@ -160,6 +194,7 @@ public class TurnCleanupService {
         gameData.playersSilencedThisTurn.clear();
         gameData.extraManaOnLandSubtypeTapThisTurn.clear();
         gameData.landSubtypeFixedManaColorThisTurn.clear();
+        gameData.allLandsFixedManaColorThisTurn = null;
         gameData.playersCantPlayLandsThisTurn.clear();
         gameData.playersCantCastCreatureSpellsThisTurn.clear();
         gameData.playersCantActivateAbilitiesThisTurn.clear();

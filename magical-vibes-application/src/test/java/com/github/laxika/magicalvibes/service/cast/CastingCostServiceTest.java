@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -16,6 +18,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
+import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
@@ -732,6 +735,49 @@ class CastingCostServiceTest {
             gd.playerBattlefields.get(player1Id).add(merfolkPermanent);
 
             assertThat(svc.getTargetingSubtypeTax(gd, player1Id, merfolkPermanent.getId(), null)).isZero();
+        }
+    }
+
+    @Nested
+    @DisplayName("getTargetingStackEntryTax")
+    class TargetingStackEntryTax {
+
+        @Test
+        @DisplayName("Applies the tax carried by a targeted spell on the stack")
+        void appliesTaxForTargetedSpell() {
+            Card torch = new Card();
+            torch.setName("Kaervek's Torch");
+            torch.setType(CardType.SORCERY);
+            torch.addEffect(EffectSlot.STATIC, new IncreaseCostOfSpellsTargetingThisSpellEffect(2));
+
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, torch, player1Id,
+                    torch.getName(), List.of(), 1, List.of());
+            when(gameQueryService.findStackEntryByCardId(gd, torch.getId())).thenReturn(entry);
+
+            assertThat(svc.getTargetingStackEntryTax(gd, torch.getId(), null)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("No tax when the targeted spell carries no such effect")
+        void noTaxWithoutEffect() {
+            Card bolt = new Card();
+            bolt.setName("Lightning Bolt");
+            bolt.setType(CardType.INSTANT);
+
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, bolt, player1Id,
+                    bolt.getName(), List.of(), 0, List.of());
+            when(gameQueryService.findStackEntryByCardId(gd, bolt.getId())).thenReturn(entry);
+
+            assertThat(svc.getTargetingStackEntryTax(gd, bolt.getId(), null)).isZero();
+        }
+
+        @Test
+        @DisplayName("No tax when the target is not a stack entry")
+        void noTaxWhenTargetNotOnStack() {
+            UUID someId = UUID.randomUUID();
+            when(gameQueryService.findStackEntryByCardId(gd, someId)).thenReturn(null);
+
+            assertThat(svc.getTargetingStackEntryTax(gd, someId, null)).isZero();
         }
     }
 

@@ -42,6 +42,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -102,6 +104,25 @@ public class GraveyardReturnSupport {
         }
     }
 
+    /**
+     * Whether {@code auraCard} could legally enchant {@code host} (CR 303.4a — an Aura's enchant
+     * ability restricts what it can be attached to). Auras without an explicit target filter
+     * default to "enchant creature".
+     */
+    private boolean canEnchant(GameData gameData, Card auraCard, UUID auraControllerId, Permanent host) {
+        if (!auraCard.isAura()) {
+            return false;
+        }
+        TargetFilter auraFilter = auraCard.getTargetFilter();
+        if (auraFilter == null) {
+            return gameQueryService.isCreature(gameData, host);
+        }
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(auraCard.getId())
+                .withSourceControllerId(auraControllerId);
+        return predicateEvaluationService.checkTargetFilter(auraFilter, host, filterContext).isEmpty();
+    }
+
     public void resolvePreTargeted(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
                                     UUID controllerId, UUID sourceCardId) {
         resolvePreTargetedById(gameData, entry, effect, controllerId, sourceCardId, entry.getTargetId());
@@ -115,6 +136,29 @@ public class GraveyardReturnSupport {
         if (targetCard == null || (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, effect.filter(), sourceCardId))) {
             String fizzleLog = entry.getDescription() + " fizzles (target " + filterLabel + " is no longer in a graveyard).";
             gameLogService.append(gameData, GameLog.text(fizzleLog));
+            return;
+        }
+
+        // Mandatory attach-to-source path (Hakim, Loreweaver): the Aura is put onto the battlefield
+        // attached to the source permanent itself, so there is no host to choose. The target is
+        // illegal — and the ability fizzles — when the Aura can't legally enchant the source.
+        if (effect.attachToSource() && effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
+            Permanent sourcePermanent = entry.getSourcePermanentId() == null ? null
+                    : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (sourcePermanent == null || !canEnchant(gameData, targetCard, controllerId, sourcePermanent)) {
+                gameLogService.append(gameData, GameLog.textCardText(entry.getDescription()
+                        + " fizzles (", targetCard, " can't be attached)."));
+                return;
+            }
+
+            permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+            Permanent auraPermanent = new Permanent(targetCard);
+            auraPermanent.setAttachedTo(sourcePermanent.getId());
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, auraPermanent);
+            gameLogService.append(gameData, GameLog.builder().card(targetCard)
+                    .text(" enters the battlefield attached to ").card(sourcePermanent.getCard()).text(".").build());
+            log.info("Game {} - {} enters the battlefield attached to {}", gameData.id,
+                    targetCard.getName(), sourcePermanent.getCard().getName());
             return;
         }
 
@@ -162,7 +206,7 @@ public class GraveyardReturnSupport {
         if ((effect.grantHaste() || effect.exileAtEndStep())
                 && effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
             putCardOntoBattlefieldWithHasteAndExile(gameData, controllerId, targetCard,
-                    effect.grantHaste(), effect.exileAtEndStep());
+                    effect.grantHaste(), effect.exileAtEndStep(), effect.exileIfLeavesBattlefield());
         } else {
             moveCardToDestination(gameData, destinationPlayerId, targetCard, effect.destination(),
                     effect.grantColor(), effect.grantSubtype(), effect.enterTapped());
@@ -314,7 +358,7 @@ public class GraveyardReturnSupport {
                         gameData.addCardToHand(targetPlayerId, card);
                     } else if (effect.grantHaste() || effect.exileAtEndStep()) {
                         putCardOntoBattlefieldWithHasteAndExile(gameData, targetPlayerId, card,
-                                effect.grantHaste(), effect.exileAtEndStep());
+                                effect.grantHaste(), effect.exileAtEndStep(), effect.exileIfLeavesBattlefield());
                     } else {
                         putCardOntoBattlefield(gameData, targetPlayerId, card, effect.grantColor(), effect.grantSubtype(),
                                 effect.enterTapped(), effect.enterAttacking());
@@ -410,6 +454,28 @@ public class GraveyardReturnSupport {
         gameLogService.append(gameData, builder.build());
         log.info("Game {} - {} returns {} at random from graveyard to {}",
                 gameData.id, playerName, returnedCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse(""), destText);
+    }
+
+    /**
+     * Returns the topmost matching card of the controller's ordered graveyard (the most recently put
+     * there), with no decision for the controller — Shallow Grave's "the top creature card of your
+     * graveyard". Nothing happens when the graveyard holds no matching card.
+     */
+    public void resolveTopmostFromControllersGraveyard(GameData gameData, StackEntry entry,
+                                                       ReturnCardFromGraveyardEffect effect,
+                                                       UUID controllerId, UUID sourceCardId) {
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        if (graveyard != null) {
+            for (int i = graveyard.size() - 1; i >= 0; i--) {
+                Card card = graveyard.get(i);
+                if (predicateEvaluationService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
+                    resolvePreTargetedById(gameData, entry, effect, controllerId, sourceCardId, card.getId());
+                    return;
+                }
+            }
+        }
+        gameLogService.append(gameData, GameLog.text(entry.getDescription() + " — no "
+                + CardPredicateUtils.describeFilter(effect.filter()) + "s in graveyard."));
     }
 
     public void resolveFromControllersGraveyard(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
@@ -717,7 +783,8 @@ public class GraveyardReturnSupport {
     }
 
     public void putCardOntoBattlefieldWithHasteAndExile(GameData gameData, UUID controllerId, Card card,
-                                                         boolean grantHaste, boolean exileAtEndStep) {
+                                                         boolean grantHaste, boolean exileAtEndStep,
+                                                         boolean exileIfLeavesBattlefield) {
         // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield.
         if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
             gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
@@ -735,10 +802,12 @@ public class GraveyardReturnSupport {
         }
         permanent.setEnteredFromGraveyardOwnerId(controllerId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
-        if (exileAtEndStep) {
-            // Unearth / Postmortem Lunge etc.: exile at next end step, and if it would leave
-            // the battlefield for any other reason, exile it instead (CR 702.100).
+        if (exileIfLeavesBattlefield) {
+            // Unearth's second clause (CR 702.100): if it would leave the battlefield for any other
+            // reason, exile it instead. Shallow Grave has only the delayed exile, not this.
             permanent.setExileIfLeavesBattlefield(true);
+        }
+        if (exileAtEndStep) {
             gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
         }
 

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.BasicLandsOfChosenTypesBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeColorlessUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
@@ -32,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
@@ -1120,6 +1122,21 @@ public class LayerSystemService {
                     }
                 }
             }
+            case ControlledLandsBecomeTypeEffect becomes -> {
+                manage(board, instance);
+                if (instance.source() == null) return;
+                UUID controllerId = instance.source().controllerId();
+                for (PermanentSlot target : slots) {
+                    if (isSource(instance, target)) continue;
+                    if (!controllerId.equals(target.controllerId())) continue;
+                    CharacteristicState state = states.get(target.permanent().getId());
+                    if (state.hasCardType(CardType.LAND)) {
+                        setLandType(state, target.permanent().getId(), becomes.subtype(), landTypeOverrides);
+                        record(board, instance, target, new L4Contribution(
+                                becomes.subtype(), true, true, null, null));
+                    }
+                }
+            }
             case BasicLandsOfChosenTypesBecomeTypeEffect ignored -> {
                 manage(board, instance);
                 if (instance.source() == null) return;
@@ -1519,6 +1536,17 @@ public class LayerSystemService {
                 if (becomes.colors().isEmpty()) return;
                 for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
                     states.get(target.permanent().getId()).overrideColors(Set.copyOf(becomes.colors()));
+                    board.l56Touched().add(target.permanent().getId());
+                }
+                return;
+            }
+            // "Becomes colorless" — until end of turn (Raging Spirit, Ersatz Gnomes' second ability)
+            // or indefinitely (Ersatz Gnomes' first ability, carried off a spell): an override with
+            // no colors.
+            if (instance.effect() instanceof BecomeColorlessUntilEndOfTurnEffect
+                    || (instance.effect() instanceof SetTargetColorEffect colorless && colorless.color() == null)) {
+                for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                    states.get(target.permanent().getId()).overrideColors(Set.of());
                     board.l56Touched().add(target.permanent().getId());
                 }
                 return;

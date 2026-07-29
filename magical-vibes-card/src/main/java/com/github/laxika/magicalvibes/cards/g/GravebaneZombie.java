@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyingEffect;
 
 @CardRegistration(set = "6ED", collectorNumber = "133")
+@CardRegistration(set = "MIR", collectorNumber = "127")
 public class GravebaneZombie extends Card {
 
     public GravebaneZombie() {

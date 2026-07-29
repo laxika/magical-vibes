@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 @CardRegistration(set = "7ED", collectorNumber = "220")
 @CardRegistration(set = "POR", collectorNumber = "150")
 @CardRegistration(set = "P02", collectorNumber = "116")
+@CardRegistration(set = "MIR", collectorNumber = "193")
 public class SpittingEarth extends Card {
 
     public SpittingEarth() {

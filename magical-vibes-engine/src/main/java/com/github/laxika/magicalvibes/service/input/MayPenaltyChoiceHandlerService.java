@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardUnlessReturnLandToHand
 import com.github.laxika.magicalvibes.model.effect.DrawCardUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealHandDiscardMatchingCardsUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DrawCardUnlessPaysEffectHandler;
@@ -37,6 +38,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessSacrificeOwnPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureUnlessControllerPaysLifeEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -85,6 +87,7 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerTakesDamageUnlessPaysEffectHandler eachPlayerTakesDamageUnlessPaysEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.RevealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler revealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageControllerUnlessDiscardThenTapSourceEffectHandler damageControllerUnlessDiscardThenTapSourceEffectHandler;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MustAttackUnlessControllerPaysManaValueEffectHandler mustAttackUnlessControllerPaysManaValueEffectHandler;
@@ -694,6 +697,30 @@ public class MayPenaltyChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    /**
+     * Sirocco: one pay-or-discard decision per matching revealed card. Accepting pays the life and
+     * keeps that card; declining (or no longer being able to pay) discards it. Either way, the next
+     * queued card is then offered.
+     */
+    public void handleRevealHandDiscardUnlessPaysLifeChoice(GameData gameData, Player player,
+            boolean accepted, PendingMayAbility ability,
+            RevealHandDiscardMatchingCardsUnlessPaysLifeEffect effect) {
+        UUID targetPlayerId = ability.controllerId();
+
+        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)
+                && gameData.getLife(targetPlayerId) >= effect.lifeCost();
+        boolean paid = accepted && canPay;
+        if (paid) {
+            gameData.playerLifeTotals.put(targetPlayerId, gameData.getLife(targetPlayerId) - effect.lifeCost());
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " pays " + effect.lifeCost() + " life. (", ability.sourceCard(), ")"));
+        }
+
+        revealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler.afterCardDecision(
+                gameData, ability, effect, targetPlayerId, paid);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleStealDyingPermanentUnlessPaysLifeChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         StealDyingOpponentPermanentUnlessPaysLifeEffect effect = ability.effects().stream()
                 .filter(e -> e instanceof StealDyingOpponentPermanentUnlessPaysLifeEffect)
@@ -988,6 +1015,70 @@ public class MayPenaltyChoiceHandlerService {
         } else {
             String logEntry = player.getUsername() + " declines to return a permanent.";
             gameLogService.append(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} is no longer on the battlefield, decline is a no-op", gameData.id, sourceCard.getName());
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Sacred Mesa: the controller may sacrifice a permanent matching the effect's filter instead of
+     * sacrificing the source. Declining — or having nothing left to sacrifice — sacrifices the source.
+     */
+    public void handleSacrificeUnlessSacrificeOwnPermanentChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        SacrificeUnlessSacrificeOwnPermanentEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof SacrificeUnlessSacrificeOwnPermanentEffect)
+                .map(e -> (SacrificeUnlessSacrificeOwnPermanentEffect) e)
+                .findFirst().orElseThrow();
+
+        Card sourceCard = ability.sourceCard();
+        UUID controllerId = ability.controllerId();
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+
+        Permanent sourcePermanent = null;
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (p.getCard().getId().equals(sourceCard.getId())) {
+                    sourcePermanent = p;
+                    break;
+                }
+            }
+        }
+
+        if (accepted) {
+            List<UUID> validIds = new ArrayList<>();
+            if (battlefield != null) {
+                for (Permanent p : battlefield) {
+                    if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, effect.filter())) {
+                        validIds.add(p.getId());
+                    }
+                }
+            }
+
+            if (!validIds.isEmpty()) {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.SacrificeOwnPermanentOrSacrificeSelf(controllerId, sourceCard.getId()));
+                playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
+                        "Choose " + effect.description() + " to sacrifice.");
+
+                gameLogService.append(gameData, GameLog.text(
+                        player.getUsername() + " chooses to sacrifice " + effect.description() + "."));
+                log.info("Game {} - {} accepts sacrifice-unless-sacrifice for {}", gameData.id, player.getUsername(), sourceCard.getName());
+                return;
+            }
+
+            // Battlefield changed since the trigger — nothing valid left, fall through to sacrifice
+        }
+
+        if (sourcePermanent != null) {
+            permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " declines to sacrifice " + effect.description() + ". ", sourceCard, " is sacrificed."));
+            log.info("Game {} - {} declines, {} sacrificed", gameData.id, player.getUsername(), sourceCard.getName());
+        } else {
+            gameLogService.append(gameData, GameLog.text(
+                    player.getUsername() + " declines to sacrifice " + effect.description() + "."));
             log.info("Game {} - {} is no longer on the battlefield, decline is a no-op", gameData.id, sourceCard.getName());
         }
 

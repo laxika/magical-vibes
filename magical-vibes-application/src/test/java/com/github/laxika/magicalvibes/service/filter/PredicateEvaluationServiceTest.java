@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTarget
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
@@ -39,6 +40,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControl
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -810,6 +812,32 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("PermanentHasSourceChosenSubtypePredicate matches a permanent with the source's chosen subtype")
+        void sourceChosenSubtypeMatches() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            Card sourceCard = createCreature("Shimmer Source", 1, 1, CardColor.BLUE);
+            Permanent source = addPermanent(player1Id, sourceCard);
+            source.setChosenSubtype(CardSubtype.BEAR);
+            FilterContext ctx = FilterContext.of(gd).withSourceCardId(sourceCard.getId());
+
+            assertThat(evaluator.matchesPermanentPredicate(perm, new PermanentHasSourceChosenSubtypePredicate(), ctx)).isTrue();
+        }
+
+        @Test
+        @DisplayName("PermanentHasSourceChosenSubtypePredicate rejects a different subtype and an unchosen source")
+        void sourceChosenSubtypeRejects() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            Card sourceCard = createCreature("Shimmer Source", 1, 1, CardColor.BLUE);
+            Permanent source = addPermanent(player1Id, sourceCard);
+            FilterContext ctx = FilterContext.of(gd).withSourceCardId(sourceCard.getId());
+
+            assertThat(evaluator.matchesPermanentPredicate(perm, new PermanentHasSourceChosenSubtypePredicate(), ctx)).isFalse();
+
+            source.setChosenSubtype(CardSubtype.GOBLIN);
+            assertThat(evaluator.matchesPermanentPredicate(perm, new PermanentHasSourceChosenSubtypePredicate(), ctx)).isFalse();
+        }
+
+        @Test
         @DisplayName("PermanentControlledBySourceControllerPredicate matches controlled permanent")
         void controlledBySourceControllerMatches() {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
@@ -1155,6 +1183,63 @@ class PredicateEvaluationServiceTest {
                     .withSourceControllerId(player2Id);
 
             assertThat(evaluator.matchesPermanentPredicate(attacker, new PermanentBlockedBySourcePredicate(), context))
+                    .isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("PermanentBlockingSourcePredicate")
+    class BlockingSource {
+
+        private Permanent attacker;
+        private Permanent blocker;
+
+        @BeforeEach
+        void setUpCombat() {
+            attacker = new Permanent(createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            gd.playerBattlefields.get(player1Id).add(attacker);
+            attacker.setAttacking(true);
+
+            blocker = new Permanent(createCreature("Wall", 0, 3, CardColor.GREEN));
+            gd.playerBattlefields.get(player2Id).add(blocker);
+            blocker.setBlocking(true);
+            blocker.getBlockingTargetIds().add(attacker.getId());
+        }
+
+        @Test
+        @DisplayName("Matches a creature blocking the source")
+        void matchesBlockerOfSource() {
+            FilterContext context = FilterContext.of(gd)
+                    .withSourceCardId(attacker.getOriginalCard().getId())
+                    .withSourceControllerId(player1Id);
+
+            assertThat(evaluator.matchesPermanentPredicate(blocker, new PermanentBlockingSourcePredicate(), context))
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("Does not match the creature the source is blocking (opposite direction)")
+        void doesNotMatchBlockedCreature() {
+            FilterContext context = FilterContext.of(gd)
+                    .withSourceCardId(blocker.getOriginalCard().getId())
+                    .withSourceControllerId(player2Id);
+
+            assertThat(evaluator.matchesPermanentPredicate(attacker, new PermanentBlockingSourcePredicate(), context))
+                    .isFalse();
+        }
+
+        @Test
+        @DisplayName("Does not match a creature blocking something else")
+        void doesNotMatchBlockerOfAnotherCreature() {
+            Permanent otherAttacker = new Permanent(createCreature("Hill Giant", 3, 3, CardColor.RED));
+            gd.playerBattlefields.get(player1Id).add(otherAttacker);
+            otherAttacker.setAttacking(true);
+
+            FilterContext context = FilterContext.of(gd)
+                    .withSourceCardId(otherAttacker.getOriginalCard().getId())
+                    .withSourceControllerId(player1Id);
+
+            assertThat(evaluator.matchesPermanentPredicate(blocker, new PermanentBlockingSourcePredicate(), context))
                     .isFalse();
         }
     }

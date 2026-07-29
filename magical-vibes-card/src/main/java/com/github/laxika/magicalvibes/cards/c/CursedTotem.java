@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingP
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "6ED", collectorNumber = "278")
+@CardRegistration(set = "MIR", collectorNumber = "299")
 public class CursedTotem extends Card {
 
     public CursedTotem() {

@@ -19,7 +19,10 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -36,7 +39,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,6 +49,9 @@ class StateTriggerServiceTest {
 
     @Mock
     private GameLogService gameLogService;
+
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
 
     @InjectMocks
     private StateTriggerService sut;
@@ -109,6 +117,44 @@ class StateTriggerServiceTest {
             assertThat(entry.getStateTriggerEffectIndex()).isZero();
             assertThat(gd.stateTriggerOnStack).contains(new StateTriggerKey(perm.getId(), 0));
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Test trigger triggers.")));
+        }
+
+        @Test
+        @DisplayName("Source predicate is evaluated through the layer-aware predicate evaluator")
+        void firesFromSourcePredicate() {
+            StateTriggerEffect trigger = new StateTriggerEffect(
+                    new PermanentHasKeywordPredicate(Keyword.FLYING),
+                    List.of(new GainLifeEffect(3)),
+                    "Source predicate trigger"
+            );
+            Card card = createCardWithStateTrigger("Source Predicate Card", trigger);
+            Permanent perm = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(perm);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(perm),
+                    eq(trigger.sourcePredicate()), any())).thenReturn(true);
+
+            sut.checkStateTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+
+        @Test
+        @DisplayName("Does not fire when the source predicate does not match")
+        void doesNotFireWhenSourcePredicateUnmatched() {
+            StateTriggerEffect trigger = new StateTriggerEffect(
+                    new PermanentHasKeywordPredicate(Keyword.FLYING),
+                    List.of(new GainLifeEffect(3)),
+                    "Source predicate trigger"
+            );
+            Permanent perm = new Permanent(createCardWithStateTrigger("Source Predicate Card", trigger));
+            gd.playerBattlefields.get(player1Id).add(perm);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(perm),
+                    eq(trigger.sourcePredicate()), any())).thenReturn(false);
+
+            sut.checkStateTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
         }
 
         @Test

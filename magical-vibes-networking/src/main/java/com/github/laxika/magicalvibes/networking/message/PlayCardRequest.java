@@ -11,5 +11,6 @@ public record PlayCardRequest(int cardIndex, Integer xValue, UUID targetId, Map<
                               Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices,
                               Boolean kicked, Boolean fromLibraryTop, String chosenGraveyardType,
                               Integer discardHandCardIndex, List<Integer> discardHandCardIndices,
-                              List<UUID> imposedSacrificePermanentIds) {
+                              List<UUID> imposedSacrificePermanentIds,
+                              List<UUID> additionalCostSacrificePermanentIds) {
 }

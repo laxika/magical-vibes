@@ -14,7 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrifi
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.ReflectDamageToChosenColorCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyDamageSourcePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -355,6 +357,50 @@ public class DamageTriggerCollectorService {
                         + gameData.playerIdToName.get(recipientId) + "."));
         log.info("Game {} - {} reflects {} damage to {}", gameData.id, watcher.getCard().getName(),
                 sd.totalDamage(), gameData.playerIdToName.get(recipientId));
+        return true;
+    }
+
+    // ── ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT (Mangara's Equity) ──
+
+    @CollectsTrigger(value = ReflectDamageToChosenColorCreatureEffect.class,
+            slot = EffectSlot.ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT)
+    private boolean handleChosenColorCreatureDamageReflection(TriggerMatchContext match,
+            ReflectDamageToChosenColorCreatureEffect trigger, TriggerContext ctx) {
+        TriggerContext.CreatureDamageToYouOrYourPermanent dc =
+                (TriggerContext.CreatureDamageToYouOrYourPermanent) ctx;
+        GameData gameData = match.gameData();
+        Permanent watcher = match.permanent();
+
+        CardColor chosenColor = watcher.getChosenColor();
+        if (chosenColor == null) return false;
+
+        Permanent damageSource = dc.damageSource();
+        if (!gameQueryService.isCreature(gameData, damageSource)) return false;
+        if (!gameQueryService.getEffectiveColors(gameData, damageSource).contains(chosenColor)) return false;
+
+        // "to you or a [filtered] permanent you control" — damage to the controller always counts;
+        // damage to one of their permanents only when it matches the filter.
+        if (dc.damagedPermanent() != null && trigger.damagedPermanentFilter() != null
+                && !predicateEvaluationService.matchesPermanentPredicate(gameData, dc.damagedPermanent(),
+                        trigger.damagedPermanentFilter())) {
+            return false;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                match.controllerId(),
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new DealDamageToTargetCreatureEffect(dc.damage()))),
+                damageSource.getId(),
+                watcher.getId());
+        entry.setNonTargeting(true);
+        gameData.stack.add(entry);
+
+        gameLogService.append(gameData, GameLog.cardTextCard(watcher.getCard(),
+                " triggers — it deals " + dc.damage() + " damage to ", damageSource.getCard(), "."));
+        log.info("Game {} - {} reflects {} damage to {}", gameData.id, watcher.getCard().getName(),
+                dc.damage(), damageSource.getCard().getName());
         return true;
     }
 

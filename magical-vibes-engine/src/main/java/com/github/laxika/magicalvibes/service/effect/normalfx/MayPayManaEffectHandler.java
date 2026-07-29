@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
 
-    private final PlayerInteractionSupport playerInteractionSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -27,8 +28,17 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
 
         // CR 603.5 — "you may pay" choice happens at resolution time.
         // For "that player may pay" triggers (Paralyze) the payer is the enchanted permanent's
-        // controller, carried on the stack entry's targetId, not the Aura's controller.
-        UUID payer = e.payerIsEnchantedController() ? entry.getTargetId() : entry.getControllerId();
+        // controller, carried on the stack entry's targetId, not the Aura's controller. For
+        // "defending player may pay" attack triggers (Mtenda Lion) it is the attacked player.
+        UUID payer = switch (e.payer()) {
+            case CONTROLLER -> entry.getControllerId();
+            case ENCHANTED_CONTROLLER -> entry.getTargetId();
+            case DEFENDING_PLAYER -> defendingPlayer(gameData, entry);
+        };
+        if (payer == null) {
+            return;
+        }
+
         gameData.resolvingMayEffectFromStack = true;
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),
@@ -37,8 +47,20 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
                 entry.getCard().getName() + " - " + e.prompt(),
                 entry.getTargetId(),
                 e.manaCost(),
-                entry.getSourcePermanentId()
+                entry.getSourcePermanentId(),
+                e.lifeCost()
         ));
-    
+
+    }
+
+    /** The attacked player, or the controller of the attacked planeswalker, of an ON_ATTACK trigger. */
+    private UUID defendingPlayer(GameData gameData, StackEntry entry) {
+        UUID attackedTargetId = entry.getAttackedTargetId();
+        if (attackedTargetId == null) {
+            return null;
+        }
+        return gameData.playerIds.contains(attackedTargetId)
+                ? attackedTargetId
+                : gameQueryService.findPermanentController(gameData, attackedTargetId);
     }
 }

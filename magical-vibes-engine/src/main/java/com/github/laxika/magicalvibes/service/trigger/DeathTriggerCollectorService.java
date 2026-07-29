@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersO
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyLinkedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTokensCreatedWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -34,6 +35,8 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLo
 import com.github.laxika.magicalvibes.model.effect.EnchantedControllerSacrificesCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingCreatureToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -443,12 +446,14 @@ public class DeathTriggerCollectorService {
     @CollectsTrigger(value = EnchantedCreatureControllerLosesLifeEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleEnchantedCreatureControllerLosesLife(TriggerMatchContext match,
             EnchantedCreatureControllerLosesLifeEffect effect, TriggerContext ctx) {
-        // Banewasp Affliction: the dying creature's controller loses life equal to its toughness.
-        // Snapshot the last-known toughness and controller at trigger time (the creature has already
-        // left the battlefield); life loss can't be negative.
+        // Banewasp Affliction: the dying creature's controller loses life equal to its toughness
+        // (amount 0 = "use the toughness"). Decomposition instead names a fixed amount, which is
+        // used as-is. Snapshot the last-known toughness and controller at trigger time (the creature
+        // has already left the battlefield); life loss can't be negative.
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
+        int amount = effect.amount() > 0 ? effect.amount() : Math.max(0, epd.dyingCreatureToughness());
         CardEffect baked = new EnchantedCreatureControllerLosesLifeEffect(
-                Math.max(0, epd.dyingCreatureToughness()), epd.dyingPermanentControllerId());
+                amount, epd.dyingPermanentControllerId());
         addEnchantedPermanentDeathEntry(match, baked);
         return true;
     }
@@ -966,6 +971,21 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    /**
+     * Purgatory: bind the exile-and-track effect to the specific dying creature card so resolution
+     * knows which graveyard card to exile with this enchantment.
+     */
+    @CollectsTrigger(value = ExileTriggeringCreatureAndTrackWithSourceEffect.class,
+            slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)
+    boolean handleAllyNontokenExileAndTrack(TriggerMatchContext match,
+            ExileTriggeringCreatureAndTrackWithSourceEffect exile, TriggerContext ctx) {
+        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
+        CardEffect bound = exile.dyingCardId() == null && cd.dyingCard() != null
+                ? new ExileTriggeringCreatureAndTrackWithSourceEffect(cd.dyingCard().getId())
+                : exile;
+        return handleAllyNontokenDefault(match, bound, ctx);
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)
     boolean handleAllyNontokenDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
@@ -1080,6 +1100,26 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = GainLifeEqualToDyingCreatureToughnessEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)
+    boolean handleOpponentCreatureDeathGainLifeEqualToToughness(TriggerMatchContext match,
+            GainLifeEqualToDyingCreatureToughnessEffect effect, TriggerContext ctx) {
+        // Grim Feast: "you gain life equal to its toughness." The dying creature's last-known
+        // effective toughness is snapshotted into the context; bake it into a concrete GainLifeEffect.
+        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
+        int toughness = Math.max(0, cd.dyingCreatureToughness());
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new GainLifeEffect(toughness))),
+                null,
+                match.permanent().getId()
+        ));
+        logOpponentCreatureDeath(match);
+        return true;
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)
     boolean handleOpponentCreatureDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
@@ -1160,6 +1200,24 @@ public class DeathTriggerCollectorService {
                 sl.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new DestroyLinkedPermanentEffect(effect.cannotBeRegenerated(), linkedId)))
+        ));
+        logSelfLeaves(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = DestroyTokensCreatedWithSourceEffect.class, slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handleDestroyTokensCreatedWithSourceOnLeave(TriggerMatchContext match,
+            DestroyTokensCreatedWithSourceEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        // The source has already left, so its id is baked into the effect — the stack entry cannot
+        // carry a sourcePermanentId that still resolves to a battlefield permanent.
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                sl.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new DestroyTokensCreatedWithSourceEffect(
+                        effect.cannotBeRegenerated(), match.permanent().getId())))
         ));
         logSelfLeaves(match);
         return true;

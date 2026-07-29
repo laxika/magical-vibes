@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -33,7 +34,10 @@ public class SetTargetColorEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (SetTargetColorEffect) effect;
         UUID targetId = entry.getTargetId();
-        String colorName = e.color().name().charAt(0) + e.color().name().substring(1).toLowerCase();
+        // A null color is "becomes colorless" (Ersatz Gnomes) — the empty replacement set of CR 105.3.
+        String colorName = e.color() == null
+                ? "colorless"
+                : e.color().name().charAt(0) + e.color().name().substring(1).toLowerCase();
 
         // Target may be a permanent or, like Glamerdye, a spell still on the stack.
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
@@ -43,7 +47,9 @@ public class SetTargetColorEffectHandler implements NormalEffectHandlerBean {
             // The legacy fields are seeded for direct getEffectiveColor callers; the layered pass replays
             // the floating effect at its real timestamp.
             target.getTransientColors().clear();
-            target.getTransientColors().add(e.color());
+            if (e.color() != null) {
+                target.getTransientColors().add(e.color());
+            }
             target.setColorOverridden(true);
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), null, entry.getControllerId(), e,
@@ -56,10 +62,11 @@ public class SetTargetColorEffectHandler implements NormalEffectHandlerBean {
         }
 
         // A spell target: record the color so it carries onto the permanent that spell resolves into
-        // (CR 613.7). For instants/sorceries it is a no-op.
+        // (CR 400.7a). For instants/sorceries it is a no-op. An empty set records "becomes colorless".
         StackEntry targetSpell = gameQueryService.findStackEntryByCardId(gameData, targetId);
         if (targetSpell != null) {
-            gameData.spellColorOverrides.put(targetId, e.color());
+            gameData.spellColorOverrides.put(targetId,
+                    e.color() == null ? Set.of() : Set.of(e.color()));
             String logEntry = targetSpell.getCard().getName() + " becomes " + colorName + ".";
             gameLogService.append(gameData, GameLog.builder().card(targetSpell.getCard()).text(" becomes " + colorName + ".").build());
             log.info("Game {} - spell {} becomes {}", gameData.id, targetSpell.getCard().getName(), colorName);

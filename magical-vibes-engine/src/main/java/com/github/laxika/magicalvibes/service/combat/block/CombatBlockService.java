@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.BlockCostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
@@ -53,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -479,15 +481,17 @@ public class CombatBlockService {
         for (int atkIdx : blockedAttackerIndices) {
             Permanent attacker = attackerBattlefield.get(atkIdx);
             List<EffectRegistration> becomesBlockedRegs = attacker.getCard().getEffectRegistrations(EffectSlot.ON_BECOMES_BLOCKED);
-            if (!becomesBlockedRegs.isEmpty()) {
+            List<CardEffect> grantedBecomesBlockedEffects = attacker.getTemporaryTriggeredEffects(EffectSlot.ON_BECOMES_BLOCKED);
+            if (!becomesBlockedRegs.isEmpty() || !grantedBecomesBlockedEffects.isEmpty()) {
                 List<CardEffect> blockerSpecificEffects = becomesBlockedRegs.stream()
                         .filter(r -> r.triggerMode() == TriggerMode.PER_BLOCKER)
                         .map(EffectRegistration::effect)
                         .toList();
-                List<CardEffect> regularEffects = becomesBlockedRegs.stream()
+                List<CardEffect> regularEffects = new ArrayList<>(becomesBlockedRegs.stream()
                         .filter(r -> r.triggerMode() != TriggerMode.PER_BLOCKER)
                         .map(EffectRegistration::effect)
-                        .toList();
+                        .toList());
+                regularEffects.addAll(grantedBecomesBlockedEffects);
 
                 if (!regularEffects.isEmpty()) {
                     StackEntry becomesBlockedTrigger = new StackEntry(
@@ -522,6 +526,12 @@ public class CombatBlockService {
                                 if (hasEquipmentAttached(gameData, blocker)) {
                                     filteredEffects.add(e);
                                 }
+                            } else if (e instanceof TriggeringPermanentConditionalEffect permConditional) {
+                                // "becomes blocked by a [filter] creature" — the blocker is the event subject
+                                // (e.g. Catacomb Dragon's nonartifact, non-Dragon blocker).
+                                if (predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, permConditional.predicate())) {
+                                    filteredEffects.add(permConditional.wrapped());
+                                }
                             } else {
                                 filteredEffects.add(e);
                             }
@@ -553,6 +563,35 @@ public class CombatBlockService {
 
             // Check for "whenever a creature you control becomes blocked" triggers (active player's / AP's).
             checkAllyBecomesBlockedTriggers(gameData, activeId, attacker);
+        }
+
+        // Engine-level flanking triggers (CR 702.25a): whenever a creature with flanking becomes
+        // blocked by a creature without flanking, that blocker gets -1/-1 until end of turn. Each
+        // instance of flanking triggers separately (CR 702.25b), but a card can only carry the
+        // Scryfall-loaded keyword once, so one trigger per blocker.
+        for (BlockerAssignment assignment : blockerAssignments) {
+            Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
+            if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.FLANKING)) {
+                continue;
+            }
+            Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
+            if (gameQueryService.hasKeyword(gameData, blocker, Keyword.FLANKING)) {
+                continue;
+            }
+            StackEntry flankingTrigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    attacker.getCard(),
+                    activeId,
+                    attacker.getCard().getName() + "'s flanking trigger",
+                    List.of(new BoostTargetCreatureEffect(-1, -1)),
+                    blocker.getId(),
+                    attacker.getId()
+            );
+            // Flanking references the blocking creature without targeting it.
+            flankingTrigger.setNonTargeting(true);
+            gameData.stack.add(flankingTrigger);
+            gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(), "'s flanking triggers."));
+            log.info("Game {} - {} flanking trigger pushed onto stack", gameData.id, attacker.getCard().getName());
         }
 
         // "Whenever this creature attacks and isn't blocked" triggers (ON_ATTACKS_UNBLOCKED,
@@ -1004,6 +1043,40 @@ public class CombatBlockService {
             }
         }
         return false;
+    }
+
+    /**
+     * Fires the "becomes blocked" triggers for an attacker that an effect made blocked without any
+     * creature blocking it (CR 509.1h, e.g. Dazzling Beauty). Only triggers that don't reference a
+     * blocker fire — PER_BLOCKER registrations and per-blocker attached triggers are skipped, since
+     * there is no blocker.
+     */
+    public void fireBecomesBlockedTriggersWithoutBlockers(GameData gameData, Permanent attacker) {
+        UUID controllerId = gameData.activePlayerId;
+        List<CardEffect> regularEffects = new ArrayList<>(attacker.getCard().getEffectRegistrations(EffectSlot.ON_BECOMES_BLOCKED)
+                .stream()
+                .filter(r -> r.triggerMode() != TriggerMode.PER_BLOCKER)
+                .map(EffectRegistration::effect)
+                .toList());
+        regularEffects.addAll(attacker.getTemporaryTriggeredEffects(EffectSlot.ON_BECOMES_BLOCKED));
+        if (!regularEffects.isEmpty()) {
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    attacker.getCard(),
+                    controllerId,
+                    attacker.getCard().getName() + "'s becomes-blocked trigger",
+                    new ArrayList<>(regularEffects),
+                    attacker.getId(),
+                    attacker.getId()
+            );
+            trigger.setAttackedTargetId(attacker.getAttackTarget());
+            gameData.stack.add(trigger);
+            gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
+                    "'s becomes-blocked ability triggers."));
+        }
+
+        combatTriggerService.checkAuraTriggersForCreature(gameData, attacker, EffectSlot.ON_BECOMES_BLOCKED);
+        checkAllyBecomesBlockedTriggers(gameData, controllerId, attacker);
     }
 
     /**

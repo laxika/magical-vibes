@@ -77,6 +77,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final DamageSupport damageSupport;
     private final DestructionSupport destructionSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.MaySacrificeForCounterSupport maySacrificeForCounterSupport;
     private final LifeSupport lifeSupport;
     private final LibrarySearchSupport librarySearchSupport;
     private final SoulbondSupport soulbondSupport;
@@ -378,6 +379,14 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleMaySacrificeForCounterOnSource(GameData gameData, UUID permanentId,
+                                                     PermanentChoiceContext.MaySacrificeForCounterOnSource context) {
+        maySacrificeForCounterSupport.sacrificeThenAddCounter(
+                gameData, context.controllerId(), permanentId, context.sourcePermanentId());
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleSacrificeCreatureControllerGainsLifeEqualToToughness(GameData gameData, UUID permanentId,
                                                                             PermanentChoiceContext.SacrificeCreatureControllerGainsLifeEqualToToughness context) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
@@ -443,6 +452,21 @@ public class PermanentChoiceBattlefieldHandlerService {
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
             log.info("Game {} - {} returned to owner's hand by bounce-or-sacrifice effect", gameData.id, target.getCard().getName());
         }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleSacrificeOwnPermanentOrSacrificeSelf(GameData gameData, UUID permanentId) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (target == null) {
+            throw new IllegalStateException("Target permanent no longer exists");
+        }
+
+        permanentRemovalService.removePermanentToGraveyard(gameData, target);
+        permanentRemovalService.removeOrphanedAuras(gameData);
+
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is sacrificed."));
+        log.info("Game {} - {} sacrificed by sacrifice-or-sacrifice effect", gameData.id, target.getCard().getName());
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
@@ -662,14 +686,41 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         UUID controllerId = ctx.controllerId();
         boolean gainLife = ctx.gainLife();
-        gameData.playerSourceNextDamageShields.add(new PlayerSourceNextDamageShield(controllerId, permanentId, gainLife));
+        gameData.playerSourceNextDamageShields.add(new PlayerSourceNextDamageShield(
+                controllerId, permanentId, gainLife, false, false, ctx.exileFromLibrary()));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String sourceName = chosenPermanent.getCard().getName();
+        String rider = gainLife
+                ? " and " + playerName + " gains that much life."
+                : ctx.exileFromLibrary()
+                        ? " and " + playerName + " exiles that many cards from the top of their library."
+                        : ".";
         String logEntry = "The next time " + sourceName + " would deal damage to " + playerName
-                + " this turn, it is prevented" + (gainLife ? " and " + playerName + " gains that much life." : ".");
+                + " this turn, it is prevented" + rider;
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} chose {} as next-damage prevention source", gameData.id, playerName, sourceName);
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handlePreventNextDamageFromSourceToYouAndYourCreaturesChoice(
+            GameData gameData, UUID permanentId,
+            PermanentChoiceContext.PreventNextDamageFromSourceToYouAndYourCreaturesChoice ctx) {
+        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosenPermanent == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        UUID controllerId = ctx.controllerId();
+        gameData.playerSourceNextDamageShields.add(
+                new PlayerSourceNextDamageShield(controllerId, permanentId, true, true, true, false));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String sourceName = chosenPermanent.getCard().getName();
+        gameLogService.append(gameData, GameLog.text("The next time " + sourceName + " would deal damage to "
+                + playerName + " and/or creatures they control this turn, it is prevented."));
+        log.info("Game {} - {} chose {} as Shadowbane next-damage prevention source", gameData.id, playerName, sourceName);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
@@ -691,6 +742,24 @@ public class PermanentChoiceBattlefieldHandlerService {
                 + " this turn, that much damage is also dealt to " + sourceName + "'s controller.";
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} chose {} as Eye for an Eye reflection source", gameData.id, playerName, sourceName);
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleReflectDamageToSourceControllerChoice(GameData gameData, UUID permanentId,
+                                                            PermanentChoiceContext.ReflectDamageToSourceControllerChoice ctx) {
+        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosenPermanent == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        gameData.reflectDamageToSourceControllerShields.add(permanentId);
+
+        String sourceName = chosenPermanent.getCard().getName();
+        gameLogService.append(gameData, GameLog.text("The next time " + sourceName + " would deal damage this turn, "
+                + "that damage is dealt to " + sourceName + "'s controller instead."));
+        log.info("Game {} - {} chose {} as Reflect Damage source", gameData.id,
+                gameData.playerIdToName.get(ctx.controllerId()), sourceName);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

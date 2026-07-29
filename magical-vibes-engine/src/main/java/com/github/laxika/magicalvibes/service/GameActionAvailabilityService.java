@@ -211,11 +211,19 @@ public class GameActionAvailabilityService {
             flagged.setWhiteSpendableAsRed(true);
             pool = flagged;
         }
+        // Celestial Dawn: same treatment for the "white as any color, everything else as colorless"
+        // permission — it changes affordability in both directions, so it must be reflected here.
+        if (gameQueryService.canSpendWhiteManaAsAnyColor(gameData, playerId) && !pool.isWhiteSpendableAsAnyColor()) {
+            ManaPool flagged = new ManaPool(pool);
+            flagged.setWhiteSpendableAsAnyColor(true);
+            pool = flagged;
+        }
         boolean landPlayable = card.hasType(CardType.LAND)
                 && ctx.isActivePlayer() && ctx.isMainPhase()
                 && ctx.landsPlayed() < gameData.getMaxLandsThisTurn(playerId) && ctx.stackEmpty()
                 && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
-                && !castingPermissionService.isLandPlayRestrictedByWardOfBones(gameData, playerId);
+                && !castingPermissionService.isLandPlayRestrictedByWardOfBones(gameData, playerId)
+                && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card);
         boolean spellPlayable = isPlayableAsSpell(gameData, playerId, card, pool, extraConvokeMana, additionalGenericCost, ctx);
 
         // The 601.2c/601.2b/714.1 filters below never apply to land plays
@@ -447,6 +455,7 @@ public class GameActionAvailabilityService {
         for (int i = 0; i < graveyard.size(); i++) {
             Card card = graveyard.get(i);
             if (card.hasType(CardType.LAND)
+                    && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)
                     && (canPlayAnyLandsFromGraveyard
                     || castingPermissionService.hasGraveyardPlayPermission(gameData, card.getId(), playerId))) {
                 playable.add(i);

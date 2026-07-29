@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param count            number of cards that must be discarded (default 1; Haunted Dead = 2)
  */
 public record DiscardCardTypeCost(CardPredicate predicate, String label, boolean manaValueEqualsX, int count)
-        implements CostEffect {
+        implements HandCardCost {
 
     public DiscardCardTypeCost {
         if (count < 1) {

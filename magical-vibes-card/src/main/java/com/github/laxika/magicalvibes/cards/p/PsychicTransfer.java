@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.PsychicTransferEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "6ED", collectorNumber = "90")
+@CardRegistration(set = "MIR", collectorNumber = "85")
 public class PsychicTransfer extends Card {
 
     public PsychicTransfer() {

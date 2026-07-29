@@ -17,12 +17,17 @@ package com.github.laxika.magicalvibes.model.effect;
  *       Handled by the staticfx {@code SetBasePowerToughnessStaticEffectHandler}.</li>
  * </ul>
  *
- * @param power     the base power to set
- * @param toughness the base toughness to set
+ * <p>A {@code null} component means "leave that base value alone" — "has base toughness 1"
+ * (Chariot of the Sun) sets only the 7b toughness component and keeps the creature's printed
+ * power. Only the one-shot ({@code TARGET}/{@code SELF}) pipeline supports a null component;
+ * continuous static scopes must pass both values.
+ *
+ * @param power     the base power to set, or {@code null} to leave base power unchanged
+ * @param toughness the base toughness to set, or {@code null} to leave base toughness unchanged
  * @param scope     which permanents are affected ({@code TARGET} for the one-shot until-EOT usage,
  *                  {@code ENCHANTED_CREATURE}/{@code EQUIPPED_CREATURE}/etc. for continuous static)
  */
-public record SetBasePowerToughnessEffect(int power, int toughness, GrantScope scope) implements CardEffect {
+public record SetBasePowerToughnessEffect(Integer power, Integer toughness, GrantScope scope) implements CardEffect {
 
     /**
      * Convenience constructor for the one-shot "target creature has base power and toughness X/Y
@@ -30,6 +35,13 @@ public record SetBasePowerToughnessEffect(int power, int toughness, GrantScope s
      */
     public SetBasePowerToughnessEffect(int power, int toughness) {
         this(power, toughness, GrantScope.TARGET);
+    }
+
+    /**
+     * One-shot "target creature has base toughness X until end of turn" — base power untouched.
+     */
+    public static SetBasePowerToughnessEffect toughnessOnly(int toughness) {
+        return new SetBasePowerToughnessEffect(null, toughness, GrantScope.TARGET);
     }
 
     @Override

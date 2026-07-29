@@ -954,6 +954,7 @@ public class TargetLegalityService {
         if (entry.getCard() == null) return false;
         var sourceColor = entry.getCard().getColor();
         if (sourceColor == null) return false;
+        if (gameQueryService.cantBeTargetedByColorSources(gameData, targetPerm, sourceColor)) return true;
         if (!gameQueryService.hasHexproofFromColor(gameData, targetPerm, sourceColor)) return false;
         UUID targetController = gameQueryService.findPermanentController(gameData, targetPerm.getId());
         return targetController != null && !targetController.equals(entry.getControllerId());
@@ -963,6 +964,11 @@ public class TargetLegalityService {
         if (sourceCard == null) return;
         var sourceColor = sourceCard.getColor();
         if (sourceColor == null) return;
+        if (gameQueryService.cantBeTargetedByColorSources(gameData, target, sourceColor)) {
+            throw new IllegalStateException(target.getCard().getName()
+                    + " can't be the target of " + sourceColor.name().toLowerCase()
+                    + " spells or abilities from " + sourceColor.name().toLowerCase() + " sources");
+        }
         if (gameQueryService.hasHexproofFromColor(gameData, target, sourceColor)) {
             UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
             if (targetController != null && !targetController.equals(sourcePlayerId)) {
@@ -976,6 +982,11 @@ public class TargetLegalityService {
         if (sourceCard == null) return null;
         var sourceColor = sourceCard.getColor();
         if (sourceColor == null) return null;
+        if (gameQueryService.cantBeTargetedByColorSources(gameData, target, sourceColor)) {
+            return target.getCard().getName() + " can't be the target of "
+                    + sourceColor.name().toLowerCase() + " spells or abilities from "
+                    + sourceColor.name().toLowerCase() + " sources";
+        }
         if (gameQueryService.hasHexproofFromColor(gameData, target, sourceColor)) {
             UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
             if (targetController != null && !targetController.equals(sourcePlayerId)) {

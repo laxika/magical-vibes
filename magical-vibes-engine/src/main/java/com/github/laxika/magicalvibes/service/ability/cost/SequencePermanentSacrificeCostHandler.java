@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSequenceCost;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
@@ -21,6 +22,10 @@ import java.util.UUID;
  * handler which slot is being paid — the slot index is simply {@code chosenSoFar.size()}. A slot is
  * only offered permanents whose selection still leaves a complete system of distinct representatives
  * for the remaining slots, so no pick can strand a later slot after the cost is partially paid.</p>
+ *
+ * <p>Slot filters are evaluated with the ability's source card in the {@link FilterContext}, so a
+ * slot may name the source itself ({@link com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate}
+ * for "…, and this creature") rather than merely a permanent with the same name.</p>
  */
 public class SequencePermanentSacrificeCostHandler implements PermanentChoiceCostHandler {
 
@@ -28,15 +33,25 @@ public class SequencePermanentSacrificeCostHandler implements PermanentChoiceCos
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentSacrificeAction sacrificeAction;
     private final List<UUID> chosenSoFar;
+    private final UUID sourcePermanentId;
 
     public SequencePermanentSacrificeCostHandler(SacrificePermanentsSequenceCost cost,
                                                  PredicateEvaluationService predicateEvaluationService,
                                                  PermanentSacrificeAction sacrificeAction,
                                                  List<UUID> chosenSoFar) {
+        this(cost, predicateEvaluationService, sacrificeAction, chosenSoFar, null);
+    }
+
+    public SequencePermanentSacrificeCostHandler(SacrificePermanentsSequenceCost cost,
+                                                 PredicateEvaluationService predicateEvaluationService,
+                                                 PermanentSacrificeAction sacrificeAction,
+                                                 List<UUID> chosenSoFar,
+                                                 UUID sourcePermanentId) {
         this.cost = cost;
         this.predicateEvaluationService = predicateEvaluationService;
         this.sacrificeAction = sacrificeAction;
         this.chosenSoFar = new ArrayList<>(chosenSoFar == null ? List.of() : chosenSoFar);
+        this.sourcePermanentId = sourcePermanentId;
     }
 
     @Override public CardEffect costEffect() { return cost; }
@@ -58,7 +73,7 @@ public class SequencePermanentSacrificeCostHandler implements PermanentChoiceCos
         PermanentPredicate currentFilter = cost.filters().get(slot);
         List<PermanentPredicate> laterSlots = cost.filters().subList(slot + 1, cost.filters().size());
         return available.stream()
-                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, currentFilter))
+                .filter(p -> matches(gameData, p, currentFilter))
                 // Picking p must not strand a later slot: the rest must still match without p.
                 .filter(p -> canMatch(gameData, laterSlots, withoutPermanent(available, p)))
                 .map(Permanent::getId)
@@ -96,6 +111,26 @@ public class SequencePermanentSacrificeCostHandler implements PermanentChoiceCos
         // once and then treats the whole cost as done, which is only correct when a single slot
         // with a single forced choice is left.
         return remaining <= 1 && getValidChoiceIds(gameData, playerId).size() <= 1;
+    }
+
+    /** Evaluates a slot filter with the ability's source card supplied, so source-relative slots work. */
+    private boolean matches(GameData gameData, Permanent permanent, PermanentPredicate filter) {
+        FilterContext context = FilterContext.of(gameData);
+        if (sourcePermanentId != null) {
+            Permanent source = findSourcePermanent(gameData);
+            if (source != null) {
+                context = context.withSourceCardId(source.getOriginalCard().getId());
+            }
+        }
+        return predicateEvaluationService.matchesPermanentPredicate(permanent, filter, context);
+    }
+
+    private Permanent findSourcePermanent(GameData gameData) {
+        return gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .filter(p -> p.getId().equals(sourcePermanentId))
+                .findFirst()
+                .orElse(null);
     }
 
     /** Battlefield permanents the payer controls that are still available (not already sacrificed). */
@@ -141,7 +176,7 @@ public class SequencePermanentSacrificeCostHandler implements PermanentChoiceCos
         PermanentPredicate filter = slots.get(slot);
         for (int p = 0; p < permanents.size(); p++) {
             if (visited[p]) continue;
-            if (!predicateEvaluationService.matchesPermanentPredicate(gameData, permanents.get(p), filter)) continue;
+            if (!matches(gameData, permanents.get(p), filter)) continue;
             visited[p] = true;
             if (permanentToSlot[p] == -1
                     || augment(gameData, permanentToSlot[p], slots, permanents, visited, permanentToSlot)) {

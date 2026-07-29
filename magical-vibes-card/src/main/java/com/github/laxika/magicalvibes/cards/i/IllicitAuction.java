@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.IllicitAuctionEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "6ED", collectorNumber = "190")
+@CardRegistration(set = "MIR", collectorNumber = "183")
 public class IllicitAuction extends Card {
 
     public IllicitAuction() {

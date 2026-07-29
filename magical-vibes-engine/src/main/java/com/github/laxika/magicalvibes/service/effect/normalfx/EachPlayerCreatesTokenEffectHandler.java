@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -46,9 +48,14 @@ public class EachPlayerCreatesTokenEffectHandler implements NormalEffectHandlerB
             if (amount <= 0) {
                 continue;
             }
-            entry.getCreatedPermanentIds().addAll(
-                    permanentControlSupport.applyCreateToken(gameData, playerId, e.token(), amount,
-                            entry.getCard().getSetCode()));
+            List<UUID> createdIds = permanentControlSupport.applyCreateToken(gameData, playerId, e.token(),
+                    amount, entry.getCard().getSetCode());
+            entry.getCreatedPermanentIds().addAll(createdIds);
+            if (e.recordAsCreatedWithSource() && entry.getSourcePermanentId() != null) {
+                gameData.sourceCreatedTokens
+                        .computeIfAbsent(entry.getSourcePermanentId(), key -> ConcurrentHashMap.newKeySet())
+                        .addAll(createdIds);
+            }
         }
     }
 }

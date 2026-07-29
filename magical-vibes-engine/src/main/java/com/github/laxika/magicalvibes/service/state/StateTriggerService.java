@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StateTriggerKey;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,22 @@ import java.util.UUID;
 public class StateTriggerService {
 
     private final GameLogService gameLogService;
+    private final PredicateEvaluationService predicateEvaluationService;
+
+    /**
+     * Evaluates a state trigger's condition: a {@code sourcePredicate} goes through the
+     * layer-aware predicate evaluator (so static keyword/color/type grants count), otherwise the
+     * free-form {@link com.github.laxika.magicalvibes.model.effect.StateTriggerPredicate} runs.
+     */
+    private boolean conditionMet(GameData gameData, StateTriggerEffect trigger, Permanent perm, UUID controllerId) {
+        if (trigger.sourcePredicate() != null) {
+            return predicateEvaluationService.matchesPermanentPredicate(perm, trigger.sourcePredicate(),
+                    FilterContext.of(gameData)
+                            .withSourceCardId(perm.getCard().getId())
+                            .withSourceControllerId(controllerId));
+        }
+        return trigger.predicate().test(gameData, perm, controllerId);
+    }
 
     /**
      * Checks all permanents for state-triggered abilities whose conditions are met.
@@ -57,7 +75,7 @@ public class StateTriggerService {
                     StateTriggerKey key = new StateTriggerKey(perm.getId(), i);
                     if (gameData.stateTriggerOnStack.contains(key)) continue;
 
-                    if (trigger.predicate().test(gameData, perm, playerId)) {
+                    if (conditionMet(gameData, trigger, perm, playerId)) {
                         gameData.stateTriggerOnStack.add(key);
 
                         StackEntry entry = new StackEntry(

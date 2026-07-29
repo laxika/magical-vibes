@@ -49,6 +49,7 @@ public class UntapStepService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final TapUntapSupport tapUntapSupport;
+    private final PhasingService phasingService;
 
     /**
      * Performs the untap step for the active player.
@@ -136,6 +137,10 @@ public class UntapStepService {
             log.info("Game {} - {} skips their untap step", gameData.id, activePlayerName);
             return;
         }
+
+        // CR 502.1: phasing is the untap step's first turn-based action, resolved before anything
+        // untaps (and skipped entirely along with the rest of the step above).
+        phasingService.applyPhasing(gameData, activePlayerId);
 
         // Clean up stale untap-prevention locks on ALL battlefields before untapping.
         // A lock is stale if the source permanent is no longer on the battlefield or is no longer tapped.
@@ -384,7 +389,14 @@ public class UntapStepService {
      * depletion lands).
      */
     private boolean counterLockPreventsUntap(Permanent permanent) {
-        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        return hasActiveCounterLock(permanent, permanent.getCard().getEffects(EffectSlot.STATIC))
+                // Granted, not printed: Mindbender Spores gives the creature it blocks
+                // "doesn't untap during your untap step if it has a fungus counter on it".
+                || hasActiveCounterLock(permanent, permanent.getPersistentTriggeredEffects(EffectSlot.STATIC));
+    }
+
+    private static boolean hasActiveCounterLock(Permanent permanent, List<CardEffect> effects) {
+        return effects.stream()
                 .anyMatch(e -> e instanceof DoesntUntapWithCounterEffect lock
                         && permanent.getCounterCount(lock.counterType()) > 0);
     }

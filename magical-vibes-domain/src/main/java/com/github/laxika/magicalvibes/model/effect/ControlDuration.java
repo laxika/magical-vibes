@@ -30,6 +30,15 @@ public enum ControlDuration {
     WHILE_SOURCE_REMAINS,
     WHILE_SOURCE_TAPPED;
 
+    /**
+     * Whether control is tied to the source permanent, so the source must still be on the
+     * battlefield (and, for all but {@code WHILE_SOURCE_REMAINS}, still be controlled by the
+     * effect's controller) for control to be taken at all.
+     */
+    public boolean isSourceLinked() {
+        return this == WHILE_SOURCE_ON_BATTLEFIELD || this == WHILE_SOURCE_REMAINS || this == WHILE_SOURCE_TAPPED;
+    }
+
     /** The {@link EffectDuration} of the floating control effect this duration creates. */
     public EffectDuration toEffectDuration() {
         return switch (this) {

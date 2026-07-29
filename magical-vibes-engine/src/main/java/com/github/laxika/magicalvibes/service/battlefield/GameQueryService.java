@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
+import com.github.laxika.magicalvibes.model.effect.SetSelfKeywordIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
@@ -61,7 +62,9 @@ import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromChosenNameEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenNameEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromInstantAndSorcerySpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceSpellDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivateCreatureAbilitiesAsThoughHasteEffect;
+import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsAnyColorEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsRedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantActivateAbilitiesOfGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
@@ -650,7 +653,9 @@ public class GameQueryService {
      *
      * <p>A turn-scoped, land-subtype-scoped replacement recorded in
      * {@code GameData.landSubtypeFixedManaColorThisTurn} (Chaos Moon's even branch) takes
-     * precedence, matched against the permanent's effective basic land types.
+     * precedence, matched against the permanent's effective basic land types, followed by the
+     * turn-scoped all-lands replacement in {@code GameData.allLandsFixedManaColorThisTurn} (Hall of
+     * Gemstone).
      */
     public ManaColor fixedLandManaColor(GameData gameData, Permanent permanent) {
         if (permanent != null && !gameData.landSubtypeFixedManaColorThisTurn.isEmpty()) {
@@ -660,6 +665,9 @@ public class GameQueryService {
                     return entry.getValue();
                 }
             }
+        }
+        if (gameData.allLandsFixedManaColorThisTurn != null) {
+            return gameData.allLandsFixedManaColorThisTurn;
         }
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -755,6 +763,16 @@ public class GameQueryService {
      */
     public boolean canSpendWhiteManaAsRed(GameData gameData, UUID playerId) {
         return playerBattlefieldHasStaticEffect(gameData, playerId, SpendWhiteManaAsRedEffect.class);
+    }
+
+    /**
+     * Returns {@code true} if the given player may spend white mana as though it were mana of any
+     * color and other mana only as though it were colorless (i.e. they control a permanent with
+     * {@link SpendWhiteManaAsAnyColorEffect}, e.g. Celestial Dawn). Set onto the player's
+     * {@code ManaPool} at the payment/affordability sites so {@code ManaCost} honors it.
+     */
+    public boolean canSpendWhiteManaAsAnyColor(GameData gameData, UUID playerId) {
+        return playerBattlefieldHasStaticEffect(gameData, playerId, SpendWhiteManaAsAnyColorEffect.class);
     }
 
     /**
@@ -1871,6 +1889,17 @@ public class GameQueryService {
                     accumulator.addToughness(buff.toughnessBoost());
                     accumulator.addKeywords(buff.keywords());
                 }
+                // Mist Dragon's {0} abilities: an indefinite layer-6 keyword gain or loss on this
+                // permanent. Only the most recent activation per keyword survives (the handler
+                // drops the previous one), so there is no timestamp ordering to resolve here.
+                if (floating.effect() instanceof SetSelfKeywordIndefinitelyEffect keywordChange
+                        && target.getId().equals(floating.affectedPermanentId())) {
+                    if (keywordChange.gained()) {
+                        accumulator.addKeywords(Set.of(keywordChange.keyword()));
+                    } else {
+                        accumulator.removeKeyword(keywordChange.keyword());
+                    }
+                }
             }
         }
         if (beforeIndefinite != null) {
@@ -2573,6 +2602,37 @@ public class GameQueryService {
     }
 
     private static boolean isHexproofFromColorRestriction(CardEffect effect, CardColor sourceColor) {
+        return isColorSourceRestriction(effect, sourceColor) && ((TargetingRestrictionEffect) effect).opponentOnly();
+    }
+
+    /**
+     * Returns {@code true} if the target permanent can't be the target of spells or abilities from
+     * sources of the given color, no matter who controls them (Suq'Ata Firewalker). Unlike
+     * {@link #hasHexproofFromColor}, the permanent's own controller is restricted too, so callers
+     * must not gate this on the source being opponent-controlled.
+     */
+    public boolean cantBeTargetedByColorSources(GameData gameData, Permanent target, CardColor sourceColor) {
+        if (sourceColor == null) {
+            return false;
+        }
+        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            if (isAnyControllerColorRestriction(effect, sourceColor)) {
+                return true;
+            }
+        }
+        for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
+            if (isAnyControllerColorRestriction(effect, sourceColor)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isAnyControllerColorRestriction(CardEffect effect, CardColor sourceColor) {
+        return isColorSourceRestriction(effect, sourceColor) && !((TargetingRestrictionEffect) effect).opponentOnly();
+    }
+
+    private static boolean isColorSourceRestriction(CardEffect effect, CardColor sourceColor) {
         return effect instanceof TargetingRestrictionEffect r
                 && r.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES
                 && r.mode() == TargetColorMode.BLOCKED_COLORS
@@ -2749,6 +2809,33 @@ public class GameQueryService {
             return false;
         }
         return anyBattlefieldHasStaticEffect(gameData, PreventDamageFromInstantAndSorcerySpellsEffect.class);
+    }
+
+    /**
+     * Benevolent Unicorn: total amount by which damage dealt by {@code entry} — a spell dealing
+     * damage as itself — is reduced by {@link ReduceSpellDamageEffect} permanents on any
+     * battlefield. Returns 0 for abilities and for combat damage. This is a replacement effect,
+     * so it is not gated on {@link #isDamagePreventable}.
+     */
+    public int getSpellDamageReduction(GameData gameData, StackEntry entry) {
+        if (entry == null) {
+            return 0;
+        }
+        StackEntryType type = entry.getEntryType();
+        if (type == StackEntryType.TRIGGERED_ABILITY || type == StackEntryType.ACTIVATED_ABILITY) {
+            return 0;
+        }
+        int[] total = {0};
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            for (Permanent p : battlefield) {
+                for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof ReduceSpellDamageEffect reduce) {
+                        total[0] += reduce.amount();
+                    }
+                }
+            }
+        });
+        return total[0];
     }
 
     /**
@@ -3262,6 +3349,9 @@ public class GameQueryService {
         result *= getEquippedCreatureCombatDamageMultiplier(gameData, source);
         if (target != null) {
             result *= getEquippedCreatureCombatDamageMultiplier(gameData, target);
+            for (int i = 0; i < gameData.combatDamageToCreaturesDoublingsThisTurn; i++) {
+                result *= 2;
+            }
         }
         return result;
     }

@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSym
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardActivatedAbilityCostReducingEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
@@ -151,6 +152,29 @@ public class CastingCostService {
                             }
                         }
                     }
+                }
+            }
+        }
+        return tax;
+    }
+
+    /**
+     * Extra generic mana imposed by {@link IncreaseCostOfSpellsTargetingThisSpellEffect} on the
+     * cards of the targeted stack entries (e.g. Kaervek's Torch taxes spells that target it {2}).
+     * Symmetric — applies to both players — and to spells only, never activated abilities.
+     */
+    public int getTargetingStackEntryTax(GameData gameData, UUID targetId, List<UUID> targetIds) {
+        Set<UUID> allTargetIds = new HashSet<>();
+        if (targetId != null) allTargetIds.add(targetId);
+        if (targetIds != null) allTargetIds.addAll(targetIds);
+
+        int tax = 0;
+        for (UUID tid : allTargetIds) {
+            StackEntry entry = gameQueryService.findStackEntryByCardId(gameData, tid);
+            if (entry == null || entry.getCard() == null) continue;
+            for (CardEffect effect : entry.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof IncreaseCostOfSpellsTargetingThisSpellEffect taxEffect) {
+                    tax += taxEffect.amount();
                 }
             }
         }

@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "6ED", collectorNumber = "34")
+@CardRegistration(set = "MIR", collectorNumber = "33")
 public class PearlDragon extends Card {
 
     public PearlDragon() {

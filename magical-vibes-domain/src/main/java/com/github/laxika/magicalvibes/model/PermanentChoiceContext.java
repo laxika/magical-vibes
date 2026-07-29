@@ -61,6 +61,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record SacrificeCreatureOpponentsLoseLife(UUID sacrificingPlayerId, String sourceCardName) implements PermanentChoiceContext {}
 
+    /**
+     * Ravenous Vampire: the controller accepted the upkeep "you may sacrifice a nonartifact creature"
+     * and is picking which one; the sacrifice puts a +1/+1 counter on {@code sourcePermanentId}.
+     */
+    record MaySacrificeForCounterOnSource(UUID controllerId, UUID sourcePermanentId, Card sourceCard)
+            implements PermanentChoiceContext {}
+
     record ForcedCostOrElse(UUID controllerId, UUID sourcePermanentId, Card sourceCard,
                             com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect effect) implements PermanentChoiceContext {}
 
@@ -114,17 +121,29 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** "The next time a source of your choice would deal damage to you this turn, prevent that damage."
      *  Any-color source. When {@code gainLife} is true the controller also gains life equal to the
-     *  damage prevented (Reverse Damage); when false there is no life gain (Pentagram of the Ages). */
-    record PreventNextDamageFromSourceChoice(UUID controllerId, boolean gainLife) implements PermanentChoiceContext {}
+     *  damage prevented (Reverse Damage); when false there is no life gain (Pentagram of the Ages).
+     *  When {@code exileFromLibrary} is true the controller instead exiles that many cards from the
+     *  top of their library (Bone Mask). */
+    record PreventNextDamageFromSourceChoice(UUID controllerId, boolean gainLife,
+                                             boolean exileFromLibrary) implements PermanentChoiceContext {}
 
     /** "The next time a source of your choice would deal damage to any target this turn, prevent that
      *  damage." (Sanctum Guardian). Protects any recipient, not just the controller. */
     record PreventNextDamageFromSourceToAnyTargetChoice(UUID controllerId) implements PermanentChoiceContext {}
 
+    /** "The next time a source of your choice would deal damage to you and/or creatures you control
+     *  this turn, prevent that damage. If damage from a black source is prevented this way, you gain
+     *  that much life." (Shadowbane). */
+    record PreventNextDamageFromSourceToYouAndYourCreaturesChoice(UUID controllerId) implements PermanentChoiceContext {}
+
     /** "The next time a source of your choice would deal damage to you this turn, instead that source
      *  deals that much damage to you and Eye for an Eye deals that much damage to that source's
      *  controller." (Eye for an Eye). */
     record EyeForAnEyeSourceChoice(UUID controllerId, Card eyeCard) implements PermanentChoiceContext {}
+
+    /** "The next time a source of your choice would deal damage this turn, that damage is dealt to
+     *  that source's controller instead." (Reflect Damage). */
+    record ReflectDamageToSourceControllerChoice(UUID controllerId) implements PermanentChoiceContext {}
 
     record AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
@@ -173,6 +192,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     }
 
     record BounceOwnPermanentOrSacrificeSelf(UUID controllerId, UUID sourceCardId) implements PermanentChoiceContext {}
+
+    /** "Sacrifice this permanent unless you sacrifice a [permanent]." The chosen permanent is sacrificed. (Sacred Mesa.) */
+    record SacrificeOwnPermanentOrSacrificeSelf(UUID controllerId, UUID sourceCardId) implements PermanentChoiceContext {}
 
     /** Champion a creature: exile the chosen creature until the source permanent leaves the battlefield. */
     record ChampionCreature(UUID sourcePermanentId, UUID controllerId) implements PermanentChoiceContext {}

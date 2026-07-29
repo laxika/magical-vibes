@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffec
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
+import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
@@ -1128,6 +1129,33 @@ class StepTriggerServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getTargetId()).isNull();
+        }
+
+        @Test
+        @DisplayName("END_STEP_TRIGGERED NotControllerTurn fires on an opponent's end step")
+        void endStepNotControllerTurnFiresOnOpponentTurn() {
+            Card card = createCardWithName("Opponent Turn Card");
+            card.addEffect(EffectSlot.END_STEP_TRIGGERED,
+                    new ConditionalEffect(new NotControllerTurn(), new GainLifeEffect(1)));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(card));
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getDescription()).contains("Opponent Turn Card");
+        }
+
+        @Test
+        @DisplayName("END_STEP_TRIGGERED NotControllerTurn is skipped on the controller's own end step")
+        void endStepNotControllerTurnSkippedOnOwnTurn() {
+            Card card = createCardWithName("Own Turn Card");
+            card.addEffect(EffectSlot.END_STEP_TRIGGERED,
+                    new ConditionalEffect(new NotControllerTurn(), new GainLifeEffect(1)));
+            gd.playerBattlefields.get(gd.activePlayerId).add(new Permanent(card));
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
         }
 
         @Test

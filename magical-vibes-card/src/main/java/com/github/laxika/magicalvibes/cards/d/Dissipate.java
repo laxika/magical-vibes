@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounteredSpellDestination;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ISD", collectorNumber = "53")
+@CardRegistration(set = "MIR", collectorNumber = "61")
 public class Dissipate extends Card {
 
     public Dissipate() {

@@ -24,6 +24,9 @@ import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayGainControlOfCreatureYouControlEffect;
+import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -36,6 +39,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -71,6 +75,7 @@ public class DestructionSupport {
     private final com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService predicateEvaluationService;
     private final LifeSupport lifeSupport;
     private final OpponentMayGainControlOfCreatureYouControlEffectHandler opponentMayGainControlHandler;
+    private final PhasingService phasingService;
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                            List<UUID> protectedIds, String sourceName) {
@@ -456,12 +461,22 @@ public class DestructionSupport {
                 }
             } else if (elseEffect instanceof SacrificeSelfEffect) {
                 sacrificeSource(gameData, entry);
+            } else if (elseEffect instanceof PhaseOutSelfEffect) {
+                // "unless you pay {cost}, this creature phases out" (Vaporous Djinn).
+                phaseOutSource(gameData, entry);
             } else if (elseEffect instanceof LoseLifeEffect loseLife
                     && loseLife.recipient() == LoseLifeRecipient.CONTROLLER
                     && loseLife.amount() instanceof Fixed lifeAmount) {
                 // "unless you pay {cost}, you lose N life" (Nafs Asp). Life loss, not damage
                 // (CR 118.2) — never routed through damage plumbing.
                 lifeSupport.applyLifeLoss(gameData, entry.getControllerId(), lifeAmount.value(), entry.getCard().getName());
+                gameOutcomeService.checkWinCondition(gameData);
+            } else if (elseEffect instanceof GivePoisonCountersEffect poison
+                    && poison.recipient() == PoisonRecipient.CONTROLLER) {
+                // "unless they pay {2}, they get another poison counter" (Sabertooth Cobra) — the
+                // entry controller is the player who owes the payment.
+                lifeSupport.applyPoisonCounters(gameData, entry.getControllerId(), poison.amount(),
+                        entry.getCard().getName());
                 gameOutcomeService.checkWinCondition(gameData);
             } else if (elseEffect instanceof DestroySourceAndDamageControllerIfDestroyedEffect destroyDamage) {
                 destroySourceAndDamageControllerIfDestroyed(gameData, entry, destroyDamage.damage());
@@ -478,6 +493,14 @@ public class DestructionSupport {
                         gameData.id, elseEffect.getClass().getSimpleName());
             }
         }
+    }
+
+    private void phaseOutSource(GameData gameData, StackEntry entry) {
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            return;
+        }
+        phasingService.phaseOut(gameData, List.of(source));
     }
 
     private void destroySource(GameData gameData, StackEntry entry, boolean cannotBeRegenerated) {

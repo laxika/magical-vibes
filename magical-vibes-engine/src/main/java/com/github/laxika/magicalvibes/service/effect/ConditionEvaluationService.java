@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.ActivationCount;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
@@ -51,6 +52,7 @@ import com.github.laxika.magicalvibes.model.condition.EnchantedCreatureDidntAtta
 import com.github.laxika.magicalvibes.model.condition.DidntGainLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Enchanted;
 import com.github.laxika.magicalvibes.model.condition.EndStepPlayerDidntCastCreatureSpell;
+import com.github.laxika.magicalvibes.model.condition.OpponentCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
@@ -81,6 +83,7 @@ import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageToOpponentThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SelfWasDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceDamagedCreatureDiedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
@@ -99,6 +102,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryColor;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.WonClash;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -228,6 +232,8 @@ public class ConditionEvaluationService {
                     countCardsInHand(gameData, ctx.controllerId()) >= c.threshold();
             case CardsInHandAtMost c ->
                     countCardsInHand(gameData, ctx.controllerId()) <= c.threshold();
+            case ActivePlayerHandAtLeast c ->
+                    countCardsInHand(gameData, gameData.activePlayerId) >= c.threshold();
             case ActivePlayerHandEmpty ignored ->
                     countCardsInHand(gameData, gameData.activePlayerId) == 0;
             case ControllerHandEmpty ignored ->
@@ -268,6 +274,9 @@ public class ConditionEvaluationService {
                     wasAnyOpponentDealtDamageThisTurn(gameData, ctx.controllerId(), c.minimumAmount());
             case SelfDealtDamageToOpponentThisTurn ignored ->
                     sourceDealtDamageToOpponentThisTurn(gameData, ctx);
+            case SelfWasDealtDamageThisTurn ignored ->
+                    ctx.sourcePermanentId() != null
+                            && gameData.permanentsDealtDamageThisTurn.contains(ctx.sourcePermanentId());
             case SourceDamagedCreatureDiedThisTurn ignored ->
                     ctx.sourcePermanentId() != null
                             && gameData.sourcesWhoseDamagedCreaturesDiedThisTurn.contains(ctx.sourcePermanentId());
@@ -286,6 +295,8 @@ public class ConditionEvaluationService {
             case ControllerCastAnotherSpellThisTurn c ->
                     ctx.controllerId() != null && gameQueryService.hasControllerCastAnotherSpellThisTurn(
                             gameData, ctx.controllerId(), ctx.sourceCard(), c.filter());
+            case OpponentCastSpellThisTurn c ->
+                    opponentCastMatchingSpellThisTurn(gameData, ctx, c.filter());
             case SpellManaSpentAtLeast c ->
                     ctx.xValue() >= c.minMana();
             case SpellXAtLeast c ->
@@ -582,6 +593,19 @@ public class ConditionEvaluationService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
             if (battlefield.stream().anyMatch(p -> matchesPermanent(gameData, p, filter, ctx))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean opponentCastMatchingSpellThisTurn(GameData gameData, ConditionContext ctx, CardPredicate filter) {
+        if (ctx.controllerId() == null) {
+            return false;
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(ctx.controllerId())) continue;
+            if (gameQueryService.hasControllerCastAnotherSpellThisTurn(gameData, playerId, null, filter)) {
                 return true;
             }
         }

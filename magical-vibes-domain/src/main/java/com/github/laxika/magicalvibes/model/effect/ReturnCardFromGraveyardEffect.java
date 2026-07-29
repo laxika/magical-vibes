@@ -69,15 +69,18 @@ import lombok.Builder;
  *                             controller chooses which permanent to attach to (e.g. Nomad Mythmaker)
  * @param gainLifeEqualToManaValue {@code true} if the controller gains life equal to the returned
  *                             card's mana value after it is returned (e.g. Razor Hippogriff)
- * @param attachToSource       {@code true} to offer the controller a second "you may" prompt to attach
- *                             the returned equipment to the source permanent that triggered this effect
- *                             (e.g. Auriok Survivors); the equipment enters the battlefield first, then
- *                             the controller may optionally attach it
+ * @param attachToSource       {@code true} to attach the returned card to the source permanent. On the
+ *                             search-and-choose path the controller gets a second "you may" prompt and the
+ *                             equipment enters the battlefield first (e.g. Auriok Survivors). On the
+ *                             pre-targeted battlefield path the attachment is mandatory and prompt-free —
+ *                             the Aura enters already attached to the source, and the ability fizzles when
+ *                             the source is gone or the Aura can't legally enchant it (Hakim, Loreweaver)
  * @param grantHaste           {@code true} to grant haste to the permanent when it enters the battlefield
  *                             (e.g. Postmortem Lunge)
  * @param exileAtEndStep       {@code true} to schedule the permanent for exile at the beginning of the
- *                             next end step, and to exile it instead if it would leave the battlefield
- *                             for any other reason (Unearth / Postmortem Lunge; CR 702.100)
+ *                             next end step (Unearth, Postmortem Lunge, Shallow Grave). Unearth's extra
+ *                             "exile it instead if it would leave the battlefield" clause is the separate
+ *                             {@link #exileIfLeavesBattlefield} flag — Shallow Grave has no such clause
  * @param requiresManaValueEqualsX {@code true} to restrict targeting to cards whose mana value equals
  *                             the spell's X value (e.g. Postmortem Lunge)
  * @param grantColor           when non-null, permanently grants this color to the returned creature
@@ -119,9 +122,14 @@ import lombok.Builder;
  *                             card(s) in the controller's graveyard with the greatest power; a single
  *                             greatest-power card is returned without a real decision, ties let the
  *                             controller pick one and cannot be declined (e.g. Desecrator Hag)
+ * @param topmost              {@code true} to return the topmost matching card of the controller's
+ *                             (ordered) graveyard with no choice at all (e.g. Shallow Grave — "Return
+ *                             the top creature card of your graveyard to the battlefield"); nothing
+ *                             happens when no card matches
  * @param exileIfLeavesBattlefield {@code true} to set the permanent's exile-if-leaves-battlefield
  *                             replacement (e.g. Dreams of the Dead — "If the creature would leave the
- *                             battlefield, exile it instead of putting it anywhere else")
+ *                             battlefield, exile it instead of putting it anywhere else"; also Unearth's
+ *                             CR 702.100 rider, where it pairs with {@link #exileAtEndStep})
  * @param grantCumulativeUpkeepCost when non-null, the returned permanent gains that cumulative upkeep
  *                             cost as a persistent {@code UPKEEP_TRIGGERED} ability (e.g. Dreams of the
  *                             Dead — "That creature gains Cumulative upkeep {2}.")
@@ -157,6 +165,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean enterWithMannequinCounter,
         CardSubtype grantSourceHasteIfSubtype,
         boolean greatestPower,
+        boolean topmost,
         boolean exileIfLeavesBattlefield,
         String grantCumulativeUpkeepCost
 ) implements CardEffect {

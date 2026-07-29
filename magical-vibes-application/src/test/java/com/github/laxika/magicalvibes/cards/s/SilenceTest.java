@@ -205,7 +205,7 @@ class SilenceTest extends BaseCardTest {
     void restrictionClearedAtEndOfTurn() {
         gd.playersSilencedThisTurn.add(player2.getId());
 
-        TurnCleanupService svc = new TurnCleanupService(null);
+        TurnCleanupService svc = new TurnCleanupService(null, null);
         svc.resetEndOfTurnModifiers(gd);
 
         assertThat(gd.playersSilencedThisTurn).isEmpty();

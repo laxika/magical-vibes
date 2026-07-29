@@ -30,12 +30,14 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditional
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfTopLibraryCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeColorlessUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
@@ -51,6 +53,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPerm
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledLandsBecomeTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledNonlandPermanentsAreColorEffect;
 import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.TrackedLandsBecomeForestEffect;
@@ -172,6 +176,7 @@ public final class LayerClassifier {
         // Layer 2 — control-changing effects (CR 613.2b).
         map.put(GainControlOfTargetEffect.class, fixed(Layer.L2_CONTROL));
         map.put(GainControlOfEnchantedTargetEffect.class, fixed(Layer.L2_CONTROL));
+        map.put(GainControlOfEnchantedPermanentEffect.class, fixed(Layer.L2_CONTROL));
         map.put(GainControlOfTargetAuraEffect.class, fixed(Layer.L2_CONTROL));
         map.put(ControlEnchantedCreatureEffect.class, fixed(Layer.L2_CONTROL));
         map.put(TargetPlayerGainsControlOfSourceCreatureEffect.class, fixed(Layer.L2_CONTROL));
@@ -201,6 +206,7 @@ public final class LayerClassifier {
                                 : new LayerClassification(Set.of(Layer.L4_TYPE, Layer.L5_COLOR), false, true)));
         map.put(NonbasicLandsBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(LandsOfSubtypeBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
+        map.put(ControlledLandsBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(BasicLandsOfChosenTypesBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
         // Gaea's Liege: lands it has recorded become Forests (CR 305.7 basic-land-type replacement).
         map.put(TrackedLandsBecomeForestEffect.class, fixed(Layer.L4_TYPE));
@@ -237,9 +243,15 @@ public final class LayerClassifier {
         // — additive, not replacing (CR 105.3 / 613.1e).
         map.put(AllPermanentsGainChosenColorEffect.class, new Entry(Set.of(Layer.L5_COLOR),
                 (effect, fromOwnStaticSlot) -> new LayerClassification(Set.of(Layer.L5_COLOR), false, false)));
+        // "Nonland permanents you control are white" (Celestial Dawn) replaces colors (CR 105.3).
+        map.put(ControlledNonlandPermanentsAreColorEffect.class, new Entry(Set.of(Layer.L5_COLOR),
+                (effect, fromOwnStaticSlot) -> new LayerClassification(Set.of(Layer.L5_COLOR), false, true)));
         // "Becomes the color or colors of your choice" (Prismwake Merrow) — setting (CR 105.3).
         map.put(BecomeChosenColorsUntilEndOfTurnEffect.class, new Entry(Set.of(Layer.L5_COLOR), (effect, fromOwnStaticSlot) ->
                 new LayerClassification(Set.of(Layer.L5_COLOR), false, true)));
+        // "This creature becomes colorless until end of turn" (Raging Spirit) — setting (CR 105.3).
+        map.put(BecomeColorlessUntilEndOfTurnEffect.class, new Entry(Set.of(Layer.L5_COLOR),
+                (effect, fromOwnStaticSlot) -> new LayerClassification(Set.of(Layer.L5_COLOR), false, true)));
 
         // Layer 6 — ability adding/removing. A changeling grant ("gains all creature types")
         // is ALSO a layer-4 contribution: the keyword defines the object's creature types

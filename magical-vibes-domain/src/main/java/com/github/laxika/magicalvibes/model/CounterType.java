@@ -11,9 +11,11 @@ public enum CounterType {
     CHARGE,
     CORPSE,
     DOOM,
+    ECHO,
     EYEBALL,
     FEATHER,
     FLOOD,
+    FUNGUS,
     GROWTH,
     HEALING,
     HATCHLING,
@@ -27,6 +29,7 @@ public enum CounterType {
     MANNEQUIN,
     MUSIC,
     MINUS_ONE_MINUS_ONE,
+    MINUS_ONE_MINUS_ZERO,
     MINUS_ZERO_MINUS_ONE,
     MINUS_ZERO_MINUS_TWO,
     OMEN,
@@ -48,5 +51,6 @@ public enum CounterType {
     PAGE,
     TOWER,
     TIME,
-    VITALITY
+    VITALITY,
+    VORTEX
 }

@@ -85,6 +85,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleBounceCreature(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.BounceOwnPermanentOrSacrificeSelf bounceOrSac) {
             battlefieldHandler.handleBounceOwnPermanentOrSacrificeSelf(gameData, permanentId);
+        } else if (context instanceof PermanentChoiceContext.SacrificeOwnPermanentOrSacrificeSelf sacOrSac) {
+            battlefieldHandler.handleSacrificeOwnPermanentOrSacrificeSelf(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.ChampionCreature championCreature) {
             battlefieldHandler.handleChampionCreature(gameData, permanentId, championCreature);
         } else if (context instanceof PermanentChoiceContext.PutControlledCreatureOnTopOfLibrary putOnTop) {
@@ -117,10 +119,16 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handlePreventNextDamageFromSourceChoice(gameData, permanentId, preventNextSource);
         } else if (context instanceof PermanentChoiceContext.PreventNextDamageFromSourceToAnyTargetChoice preventNextAnyTarget) {
             battlefieldHandler.handlePreventNextDamageFromSourceToAnyTargetChoice(gameData, permanentId, preventNextAnyTarget);
+        } else if (context instanceof PermanentChoiceContext.PreventNextDamageFromSourceToYouAndYourCreaturesChoice preventNextYouAndCreatures) {
+            battlefieldHandler.handlePreventNextDamageFromSourceToYouAndYourCreaturesChoice(gameData, permanentId, preventNextYouAndCreatures);
         } else if (context instanceof PermanentChoiceContext.EyeForAnEyeSourceChoice eyeForAnEye) {
             battlefieldHandler.handleEyeForAnEyeSourceChoice(gameData, permanentId, eyeForAnEye);
+        } else if (context instanceof PermanentChoiceContext.ReflectDamageToSourceControllerChoice reflectDamage) {
+            battlefieldHandler.handleReflectDamageToSourceControllerChoice(gameData, permanentId, reflectDamage);
         } else if (context instanceof PermanentChoiceContext.MayAbilityTriggerTarget mat) {
             triggerHandler.handleMayAbilityTrigger(gameData, permanentId, mat);
+        } else if (context instanceof PermanentChoiceContext.MaySacrificeForCounterOnSource msfc) {
+            battlefieldHandler.handleMaySacrificeForCounterOnSource(gameData, permanentId, msfc);
         } else if (context instanceof PermanentChoiceContext.SacrificePermanentThen spt) {
             battlefieldHandler.handleSacrificePermanentThen(gameData, permanentId, spt);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreatureCreateTokensEqualToToughness scct) {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
@@ -369,7 +370,7 @@ public abstract class AiDecisionEngine {
                 log.info("AI: Playing land {} in game {}", card.getName(), gameId);
                 final int idx = i;
                 send(() -> gameActions.handlePlayCard(
-                        new PlayCardRequest(idx, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
+                        new PlayCardRequest(idx, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
                 // Verify the land was actually played — handlePlayCard silently
                 // swallows errors, so we must confirm the state actually changed.
                 // Identity check: hand size alone is unreliable because landfall/ETB
@@ -706,10 +707,12 @@ public abstract class AiDecisionEngine {
     /**
      * Computes the targeting tax for a spell based on the chosen target(s).
      * Effects like Kopala, Warden of Waves increase the cost of spells that
-     * target permanents with certain subtypes.
+     * target permanents with certain subtypes; Kaervek's Torch taxes spells that
+     * target it while it is on the stack.
      */
     protected int computeTargetingTax(GameData gameData, UUID targetId, List<UUID> multiTargetIds) {
-        return castingCostService.getTargetingSubtypeTax(gameData, aiPlayer.getId(), targetId, multiTargetIds);
+        return castingCostService.getTargetingSubtypeTax(gameData, aiPlayer.getId(), targetId, multiTargetIds)
+                + castingCostService.getTargetingStackEntryTax(gameData, targetId, multiTargetIds);
     }
 
     /**
@@ -781,6 +784,29 @@ public abstract class AiDecisionEngine {
             }
         }
         return null;
+    }
+
+    /**
+     * Selects the permanents to sacrifice for a card's multi-permanent additional cast cost
+     * (Phyrexian Tribute's "sacrifice two creatures"), weakest first. Returns an empty list when
+     * the card has no such cost or too few matching permanents.
+     */
+    protected List<UUID> selectMultiSacrificeTargets(GameData gameData, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (!(effect instanceof SacrificeMultiplePermanentsCost cost)) {
+                continue;
+            }
+            List<UUID> chosen = battlefield.stream()
+                    .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                    .sorted(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)
+                            + gameQueryService.getEffectiveToughness(gameData, p)))
+                    .limit(cost.count())
+                    .map(Permanent::getId)
+                    .toList();
+            return chosen.size() == cost.count() ? chosen : List.of();
+        }
+        return List.of();
     }
 
     /**

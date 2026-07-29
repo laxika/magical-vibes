@@ -60,6 +60,13 @@ public class StackEntry {
      */
     @Setter private UUID ownerIdOverride;
     @Setter private boolean kicked;
+    /**
+     * Whether this spell was cast at a time a sorcery couldn't have been cast. Only stamped on hand
+     * casts, and only read by the Mirage flash clause
+     * ({@code FlashCastWithCleanupSacrificeEffect}), which flags the entering permanent for
+     * sacrifice at the next cleanup step when it is set.
+     */
+    @Setter private boolean castWhenSorceryCouldNotBeCast;
     /** Whether this spell was cast for its evoke (alternate) cost — carried to the entering permanent. */
     @Setter private boolean evoked;
     /** Whether this spell was cast for its prowl cost — carried to the entering permanent so its
@@ -85,6 +92,14 @@ public class StackEntry {
      * Duplicates are meaningful: a player who lost three lands appears three times.
      */
     @Setter private List<UUID> eventPlayerIds = List.of();
+    /**
+     * The per-permanent mana value payload behind this entry, positionally aligned with
+     * {@link #eventPlayerIds}. Stamped by {@code DestroyAllPermanentsEffectHandler} with the
+     * last-known mana value of every permanent actually destroyed (CR 608.2h), so
+     * "the controller of each of those permanents gains life equal to its mana value" riders can read
+     * a per-permanent value instead of the aggregate {@link #eventValue} count (Seeds of Innocence).
+     */
+    @Setter private List<Integer> eventManaValues = List.of();
     /**
      * Last-known snapshot of the source permanent, set at activation time. Used to evaluate
      * source-relative amounts (e.g. counters on the source) per CR 608.2h last-known
@@ -341,6 +356,7 @@ public class StackEntry {
         this.sourceZone = source.sourceZone;
         this.ownerIdOverride = source.ownerIdOverride;
         this.kicked = source.kicked;
+        this.castWhenSorceryCouldNotBeCast = source.castWhenSorceryCouldNotBeCast;
         this.evoked = source.evoked;
         this.prowl = source.prowl;
         this.damageSourceCard = source.damageSourceCard;
@@ -348,6 +364,7 @@ public class StackEntry {
         this.attackedTargetId = source.attackedTargetId;
         this.eventValue = source.eventValue;
         this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);
+        this.eventManaValues = source.eventManaValues.isEmpty() ? List.of() : new ArrayList<>(source.eventManaValues);
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
         this.chosenPermanentId = source.chosenPermanentId;
         this.triggeringCardId = source.triggeringCardId;

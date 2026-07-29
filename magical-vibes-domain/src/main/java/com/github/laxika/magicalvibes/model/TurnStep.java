@@ -43,4 +43,9 @@ public enum TurnStep {
     public boolean isBeforeAttackersDeclared() {
         return ordinal() < DECLARE_ATTACKERS.ordinal();
     }
+
+    /** True for steps that occur before the declare blockers step (used by "before blockers are declared" timing restrictions). */
+    public boolean isBeforeBlockersDeclared() {
+        return ordinal() < DECLARE_BLOCKERS.ordinal();
+    }
 }

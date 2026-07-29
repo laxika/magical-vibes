@@ -131,6 +131,16 @@ public class GameData {
      */
     public final Map<UUID, Map<ManaColor, Integer>> abilityActivationManaSpent = new ConcurrentHashMap<>();
     public final Map<UUID, List<Permanent>> playerBattlefields = new ConcurrentHashMap<>();
+    /**
+     * Phased-out permanents (CR 702.26b), keyed by the player who controlled them when they phased
+     * out. They are held here instead of on a battlefield precisely because a phased-out permanent
+     * "is treated as though it does not exist" — keeping them out of {@link #playerBattlefields} is
+     * what makes every battlefield query, continuous effect and state-based action ignore them
+     * without a special case. Phasing is not a zone change (CR 702.26d): the {@code Permanent}
+     * objects (with their counters, attachments and damage) are moved back verbatim when they phase
+     * in, and no leave/enter-the-battlefield trigger fires either way.
+     */
+    public final Map<UUID, List<Permanent>> phasedOutPermanents = new ConcurrentHashMap<>();
     public final Map<UUID, ManaPool> playerManaPools = new ConcurrentHashMap<>();
     public final Map<UUID, Set<TurnStep>> playerAutoStopSteps = new ConcurrentHashMap<>();
     /**
@@ -198,8 +208,8 @@ public class GameData {
     public final Map<UUID, Set<UUID>> seraphReturnedCreatures = new ConcurrentHashMap<>();
     /** Seraph: source Seraph permanent id → the player who last controlled it, watched for control-loss sacrifices. */
     public final Map<UUID, UUID> seraphControlWatch = new ConcurrentHashMap<>();
-    /** Tetravus: source Tetravus permanent id → ids of the Tetravite tokens it created ("tokens created with this creature"). */
-    public final Map<UUID, Set<UUID>> tetravusCreatedTokens = new ConcurrentHashMap<>();
+    /** Source permanent id → ids of the tokens created with it ("tokens created with this permanent"; Tetravus, Tombstone Stairwell). */
+    public final Map<UUID, Set<UUID>> sourceCreatedTokens = new ConcurrentHashMap<>();
     /** Unified exile zone: every exiled card with its owner and optional source permanent. */
     public final List<ExiledCardEntry> exiledCards = Collections.synchronizedList(new ArrayList<>());
     /** Maps exiled card UUID → egg counter count (for Darigaaz Reincarnated-style effects). */
@@ -240,6 +250,11 @@ public class GameData {
      * after the one currently deciding (APNAP remainder). Cleared when the queue drains.
      */
     public final List<UUID> eachPlayerDamageUnlessPaysRemaining = new ArrayList<>();
+    /**
+     * RevealHandDiscardMatchingCardsUnlessPaysLife: ids of the revealed cards still to be offered the
+     * pay-or-discard prompt after the one currently being decided. Cleared when the queue drains.
+     */
+    public final List<UUID> revealHandDiscardUnlessPaysRemaining = new ArrayList<>();
     public final GraveyardTargetOperationState graveyardTargetOperation = new GraveyardTargetOperationState();
     public final CloneOperationState cloneOperation = new CloneOperationState();
     public StackEntry pendingEffectResolutionEntry;
@@ -313,6 +328,12 @@ public class GameData {
      *  random order, then draw a card." Keyed by drawing player id, value = X. Consumed on the next
      *  draw in {@code DrawService.resolveDrawCard} and cleared at end-of-turn cleanup. */
     public final Map<UUID, Integer> pendingNextDrawLookAtTop = new ConcurrentHashMap<>();
+    /** Mangara's Tome — one-shot, turn-scoped delayed replacements of a player's next draws this
+     *  turn: "instead put the top card of the exiled pile into its owner's hand." Keyed by drawing
+     *  player id, value = a queue of source permanent ids (one entry per activation, since each
+     *  replacement applies to one draw). Consumed in {@code DrawService.resolveDrawCard} and
+     *  cleared at end-of-turn cleanup. */
+    public final Map<UUID, List<UUID>> pendingNextDrawFromExiledPile = new ConcurrentHashMap<>();
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisTurn = new ConcurrentHashMap<>();
     /** Per-permanent, per-ability-index count of activations for the whole game, backing "Activate
      *  only once" ({@code ActivatedAbility.maxActivationsPerGame}, e.g. Goblin Ski Patrol). Keyed by
@@ -375,6 +396,10 @@ public class GameData {
     /** One-shot reflection shields (Eye for an Eye): the next damage the chosen source deals to the
      *  protected player is also dealt back at that source's controller by Eye for an Eye. */
     public final List<EyeForAnEyeShield> eyeForAnEyeShields = Collections.synchronizedList(new ArrayList<>());
+    /** One-shot redirection shields (Reflect Damage): the next damage event the chosen source would
+     *  deal to any recipient this turn is dealt to that source's controller instead. Each entry is a
+     *  chosen source permanent ID, consumed on first use. */
+    public final List<UUID> reflectDamageToSourceControllerShields = Collections.synchronizedList(new ArrayList<>());
     /** Pending Eye for an Eye reflected damage to deal after a shield matches (populated by
      *  DamagePreventionService, consumed by the damage-dealing services). */
     public final List<EyeForAnEyeReflection> pendingEyeForAnEyeReflections = Collections.synchronizedList(new ArrayList<>());
@@ -409,6 +434,12 @@ public class GameData {
     public final Set<UUID> creaturesPreventedFromDealingCombatDamage = ConcurrentHashMap.newKeySet();
     /** When true, damage can't be prevented this turn (Impractical Joke). Cleared at turn cleanup. */
     public boolean damageCantBePreventedThisTurn = false;
+    /**
+     * Number of active "if a creature would deal combat damage to a creature this turn, it deals
+     * double that damage instead" replacement effects (Blind Fury). Each one doubles the damage, so
+     * the multiplier is {@code 2^count}. Cleared at turn cleanup.
+     */
+    public int combatDamageToCreaturesDoublingsThisTurn = 0;
     /** Damage redirect shields (e.g. Vengeful Archon): prevention shields that redirect prevented damage to a target player. */
     public final List<DamageRedirectShield> damageRedirectShields = Collections.synchronizedList(new ArrayList<>());
     /** Pending redirect damage to deal after damage prevention (populated by DamagePreventionService, consumed by callers). */
@@ -452,10 +483,11 @@ public class GameData {
      *  Keyed by the spell's card id; carried onto the permanent it resolves into (CR 613.7). */
     public final Map<UUID, List<TextReplacement>> spellTextReplacements = new ConcurrentHashMap<>();
 
-    /** Color override applied to a spell on the stack (e.g. Purelace targeting a spell — "becomes white").
-     *  Keyed by the spell's card id; carried onto the permanent it resolves into (CR 613.7), where it
-     *  replaces that permanent's colors indefinitely. */
-    public final Map<UUID, CardColor> spellColorOverrides = new ConcurrentHashMap<>();
+    /** Color override applied to a spell on the stack (e.g. Purelace targeting a spell — "becomes white",
+     *  or Ersatz Gnomes — "becomes colorless", recorded as an empty set). Keyed by the spell's card id;
+     *  carried onto the permanent it resolves into (CR 400.7a), where it replaces that permanent's colors
+     *  indefinitely. */
+    public final Map<UUID, Set<CardColor>> spellColorOverrides = new ConcurrentHashMap<>();
 
     /** Per-player: this player has protection from these colors until end of turn (e.g. Faith's Shield fateful hour). Cleared at end of turn. */
     public final Map<UUID, Set<CardColor>> playerProtectionFromColorsUntilEndOfTurn = new ConcurrentHashMap<>();
@@ -472,6 +504,11 @@ public class GameData {
      *  turn (Chaos Moon's even branch: "that Mountain produces colorless mana instead of any other
      *  type"). Amount is unchanged. Cleared at end of turn. */
     public final Map<CardSubtype, ManaColor> landSubtypeFixedManaColorThisTurn = new ConcurrentHashMap<>();
+
+    /** The mana color every land produces instead of any other color this turn (Hall of Gemstone,
+     *  chosen by the player whose upkeep it is). Amount is unchanged. Null when inactive; cleared at
+     *  end of turn. */
+    public volatile ManaColor allLandsFixedManaColorThisTurn;
 
     /** Players who can't play lands this turn (e.g. Moonhold). Cleared at end of turn. */
     public final Set<UUID> playersCantPlayLandsThisTurn = ConcurrentHashMap.newKeySet();
@@ -612,6 +649,22 @@ public class GameData {
      *  {@link #combatDamageToPlayersThisTurn}, gives every source that dealt any damage to a player
      *  (Giltspire Avenger). Cleared at turn cleanup. */
     public final Map<UUID, Set<UUID>> noncombatDamageToPlayersThisTurn = new ConcurrentHashMap<>();
+
+    /** Tracks which creatures attacked which players this turn ("target creature that attacked you
+     *  this turn", Jabari's Influence). Maps attacking permanent UUID → set of attacked player UUIDs;
+     *  creatures that attacked only a planeswalker never appear, since attacking a planeswalker its
+     *  controller owns is not attacking that player. Cleared at turn cleanup. */
+    public final Map<UUID, Set<UUID>> playersAttackedThisTurn = new ConcurrentHashMap<>();
+
+    /** Records that {@code attackerPermanentId} was declared as an attacker against {@code playerId}. */
+    public void recordAttackAgainstPlayer(UUID attackerPermanentId, UUID playerId) {
+        if (attackerPermanentId == null || playerId == null) {
+            return;
+        }
+        playersAttackedThisTurn
+                .computeIfAbsent(attackerPermanentId, k -> ConcurrentHashMap.newKeySet())
+                .add(playerId);
+    }
 
     /** Records that {@code sourcePermanentId} dealt noncombat damage to {@code playerId} this turn.
      *  No-op when the source permanent is unknown. */
@@ -988,6 +1041,15 @@ public class GameData {
      */
     public List<FloatingContinuousEffect> expireFloatingEffectsAtTurnStart(UUID playerId) {
         return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN
+                && playerId.equals(fe.controllerId()));
+    }
+
+    /**
+     * Removes and returns all {@code UNTIL_CONTROLLERS_NEXT_UPKEEP} floating effects controlled by
+     * the given player. Called at the beginning of that player's upkeep step (Cycle of Life).
+     */
+    public List<FloatingContinuousEffect> expireFloatingEffectsAtUpkeep(UUID playerId) {
+        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP
                 && playerId.equals(fe.controllerId()));
     }
 
@@ -1692,6 +1754,42 @@ public class GameData {
         }
     }
 
+    /**
+     * Shuffles, in place, the relative order of the exile entries tracked with the given source
+     * permanent, leaving every other exile entry where it is. Backs "shuffle that pile" for a
+     * face-down exile pile whose top card is its first entry (Mangara's Tome).
+     */
+    public void shuffleExilePile(UUID sourcePermanentId) {
+        if (sourcePermanentId == null) return;
+        synchronized (exiledCards) {
+            List<Integer> positions = new ArrayList<>();
+            List<ExiledCardEntry> pile = new ArrayList<>();
+            for (int i = 0; i < exiledCards.size(); i++) {
+                if (sourcePermanentId.equals(exiledCards.get(i).sourcePermanentId())) {
+                    positions.add(i);
+                    pile.add(exiledCards.get(i));
+                }
+            }
+            Collections.shuffle(pile);
+            for (int i = 0; i < positions.size(); i++) {
+                exiledCards.set(positions.get(i), pile.get(i));
+            }
+        }
+    }
+
+    /** The first (top) exile entry tracked with the given source permanent, or null if the pile is empty. */
+    public ExiledCardEntry topOfExilePile(UUID sourcePermanentId) {
+        if (sourcePermanentId == null) return null;
+        synchronized (exiledCards) {
+            for (ExiledCardEntry e : exiledCards) {
+                if (sourcePermanentId.equals(e.sourcePermanentId())) {
+                    return e;
+                }
+            }
+        }
+        return null;
+    }
+
     /** Removes all exile entries tracked with the given source permanent. */
     public void clearExiledByPermanent(UUID sourcePermanentId) {
         exiledCards.removeIf(e -> sourcePermanentId.equals(e.sourcePermanentId()));
@@ -1888,6 +1986,7 @@ public class GameData {
         copy.creaturesWithCombatDamagePrevented.addAll(this.creaturesWithCombatDamagePrevented);
         copy.creaturesPreventedFromDealingCombatDamage.addAll(this.creaturesPreventedFromDealingCombatDamage);
         copy.damageCantBePreventedThisTurn = this.damageCantBePreventedThisTurn;
+        copy.combatDamageToCreaturesDoublingsThisTurn = this.combatDamageToCreaturesDoublingsThisTurn;
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
         copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);
@@ -1896,6 +1995,7 @@ public class GameData {
         copy.playerSourceNextDamageShields.addAll(this.playerSourceNextDamageShields);
         copy.sourceNextDamageToAnyTargetShields.addAll(this.sourceNextDamageToAnyTargetShields);
         copy.eyeForAnEyeShields.addAll(this.eyeForAnEyeShields);
+        copy.reflectDamageToSourceControllerShields.addAll(this.reflectDamageToSourceControllerShields);
         copy.pendingEyeForAnEyeReflections.addAll(this.pendingEyeForAnEyeReflections);
         copy.pendingSourceDamageForReflection.putAll(this.pendingSourceDamageForReflection);
         copy.stateTriggerOnStack.addAll(this.stateTriggerOnStack);
@@ -1932,6 +2032,8 @@ public class GameData {
         copy.stolenCreatures.putAll(this.stolenCreatures);
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
         copy.pendingNextDrawLookAtTop.putAll(this.pendingNextDrawLookAtTop);
+        this.pendingNextDrawFromExiledPile.forEach((k, v) ->
+                copy.pendingNextDrawFromExiledPile.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         copy.cardsDrawnThisTurn.putAll(this.cardsDrawnThisTurn);
         this.cardsDrawnThisTurnIds.forEach((k, v) -> copy.cardsDrawnThisTurnIds.put(k, new ArrayList<>(v)));
         copy.cardsDiscardedThisTurn.putAll(this.cardsDiscardedThisTurn);
@@ -1940,6 +2042,8 @@ public class GameData {
                 copy.combatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
         this.noncombatDamageToPlayersThisTurn.forEach((k, v) ->
                 copy.noncombatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
+        this.playersAttackedThisTurn.forEach((k, v) ->
+                copy.playersAttackedThisTurn.put(k, new HashSet<>(v)));
         copy.playersDealtDamageThisTurn.addAll(this.playersDealtDamageThisTurn);
         copy.damageDealtToPlayersThisTurn.putAll(this.damageDealtToPlayersThisTurn);
         copy.untappedLandsAtTurnStart.putAll(this.untappedLandsAtTurnStart);
@@ -1978,6 +2082,9 @@ public class GameData {
             v.stream().map(Permanent::new).forEach(battlefieldCopy::add);
             copy.playerBattlefields.put(k, battlefieldCopy);
         });
+        this.phasedOutPermanents.forEach((k, v) -> copy.phasedOutPermanents.put(k,
+                Collections.synchronizedList(v.stream().map(Permanent::new)
+                        .collect(java.util.stream.Collectors.toCollection(ArrayList::new)))));
 
         // --- Map<UUID, ManaPool> (deep copy each ManaPool) ---
         this.playerManaPools.forEach((k, v) -> copy.playerManaPools.put(k, new ManaPool(v)));
@@ -2012,8 +2119,8 @@ public class GameData {
         this.seraphReturnedCreatures.forEach((k, v) ->
                 copy.seraphReturnedCreatures.put(k, new HashSet<>(v)));
         copy.seraphControlWatch.putAll(this.seraphControlWatch);
-        this.tetravusCreatedTokens.forEach((k, v) ->
-                copy.tetravusCreatedTokens.put(k, new HashSet<>(v)));
+        this.sourceCreatedTokens.forEach((k, v) ->
+                copy.sourceCreatedTokens.put(k, new HashSet<>(v)));
 
         // --- Map<UUID, Map<CardColor, Integer>> ---
         this.playerColorDamagePreventionCount.forEach((k, v) ->
@@ -2025,6 +2132,7 @@ public class GameData {
         copy.forcedCostOrElseRemainingPlayers.addAll(this.forcedCostOrElseRemainingPlayers);
         copy.forcedCostOrElseSourceControllerId = this.forcedCostOrElseSourceControllerId;
         copy.eachPlayerDamageUnlessPaysRemaining.addAll(this.eachPlayerDamageUnlessPaysRemaining);
+        copy.revealHandDiscardUnlessPaysRemaining.addAll(this.revealHandDiscardUnlessPaysRemaining);
 
         // --- Unified delayed-action queue (immutable records, shallow copy — shared Card refs, as the
         //     per-mechanic fields it replaced were copied) ---
@@ -2113,7 +2221,7 @@ public class GameData {
                 copy.playerCreaturesCantBeTargetedByColorsThisTurn.put(k, new HashSet<>(v)));
         copy.spellsMadeUncounterable.addAll(this.spellsMadeUncounterable);
         this.spellTextReplacements.forEach((k, v) -> copy.spellTextReplacements.put(k, new ArrayList<>(v)));
-        copy.spellColorOverrides.putAll(this.spellColorOverrides);
+        this.spellColorOverrides.forEach((k, v) -> copy.spellColorOverrides.put(k, new HashSet<>(v)));
         this.playerProtectionFromColorsUntilEndOfTurn.forEach((k, v) ->
                 copy.playerProtectionFromColorsUntilEndOfTurn.put(k, new HashSet<>(v)));
 
@@ -2121,6 +2229,7 @@ public class GameData {
         copy.playersSilencedThisTurn.addAll(this.playersSilencedThisTurn);
         copy.extraManaOnLandSubtypeTapThisTurn.putAll(this.extraManaOnLandSubtypeTapThisTurn);
         copy.landSubtypeFixedManaColorThisTurn.putAll(this.landSubtypeFixedManaColorThisTurn);
+        copy.allLandsFixedManaColorThisTurn = this.allLandsFixedManaColorThisTurn;
         copy.playersCantPlayLandsThisTurn.addAll(this.playersCantPlayLandsThisTurn);
         copy.playersCantCastCreatureSpellsThisTurn.addAll(this.playersCantCastCreatureSpellsThisTurn);
         copy.playersCantActivateAbilitiesThisTurn.addAll(this.playersCantActivateAbilitiesThisTurn);

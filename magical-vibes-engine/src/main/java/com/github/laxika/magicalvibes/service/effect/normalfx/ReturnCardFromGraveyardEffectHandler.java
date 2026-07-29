@@ -55,6 +55,13 @@ public class ReturnCardFromGraveyardEffectHandler implements NormalEffectHandler
             return;
         }
 
+        // Case 1c: Topmost matching card of the controller's ordered graveyard (Shallow Grave).
+        // No choice at all, so it resolves through the pre-targeted path with the card resolved here.
+        if (e.topmost()) {
+            graveyardReturnSupport.resolveTopmostFromControllersGraveyard(gameData, entry, e, controllerId, sourceCardId);
+            return;
+        }
+
         // Case 2: Return all matching cards (no choice)
         if (e.returnAll()) {
             graveyardReturnSupport.resolveReturnAll(gameData, entry, e, controllerId, sourceCardId);

@@ -12,6 +12,7 @@ import java.util.Set;
 @CardRegistration(set = "M10", collectorNumber = "67")
 @CardRegistration(set = "9ED", collectorNumber = "90")
 @CardRegistration(set = "6ED", collectorNumber = "86")
+@CardRegistration(set = "MIR", collectorNumber = "82")
 public class Polymorph extends Card {
 
     public Polymorph() {

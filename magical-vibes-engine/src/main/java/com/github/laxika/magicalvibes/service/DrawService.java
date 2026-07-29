@@ -92,6 +92,18 @@ public class DrawService {
             return;
         }
 
+        // Mangara's Tome — one-shot, turn-scoped delayed replacement of this player's next draw:
+        // instead put the top card of the exiled pile into its owner's hand.
+        List<UUID> pendingPileDraws = gameData.pendingNextDrawFromExiledPile.get(playerId);
+        if (pendingPileDraws != null && !pendingPileDraws.isEmpty()) {
+            UUID pileSourceId = pendingPileDraws.removeFirst();
+            if (pendingPileDraws.isEmpty()) {
+                gameData.pendingNextDrawFromExiledPile.remove(playerId);
+            }
+            resolveNextDrawFromExiledPile(gameData, playerId, pileSourceId);
+            return;
+        }
+
         // Forbidden Crypt — "If you would draw a card, return a card from your graveyard to your
         // hand instead. If you can't, you lose the game." Mandatory replacement for the drawer.
         if (findReturnFromGraveyardInsteadOfDrawSourceCard(gameData, playerId) != null) {
@@ -465,6 +477,28 @@ public class DrawService {
      * lets the player pick which card to keep; the bottoming-plus-final-draw completes in
      * {@code LibraryChoiceHandlerService} (the {@code DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM} destination).
      */
+    /**
+     * Mangara's Tome's replaced draw: the top card of the pile exiled with {@code pileSourceId} is
+     * put into its owner's hand instead of the draw. The draw is replaced either way — an empty pile
+     * simply means nothing is put into a hand (no card is drawn, no draw triggers fire).
+     */
+    private void resolveNextDrawFromExiledPile(GameData gameData, UUID playerId, UUID pileSourceId) {
+        var top = gameData.topOfExilePile(pileSourceId);
+        if (top == null) {
+            gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId)
+                    + "'s exiled pile is empty, so no card is put into a hand."));
+            log.info("Game {} - exiled pile empty; replaced draw does nothing", gameData.id);
+            return;
+        }
+        gameData.removeFromExile(top.card().getId());
+        gameData.addCardToHand(top.ownerId(), top.card());
+        String ownerName = gameData.playerIdToName.get(top.ownerId());
+        gameLogService.append(gameData, GameLog.textCardText(ownerName + " puts ", top.card(),
+                " from the exiled pile into their hand instead of drawing."));
+        log.info("Game {} - {} puts {} from the exiled pile into their hand instead of drawing",
+                gameData.id, ownerName, top.card().getName());
+    }
+
     private void resolveNextDrawLookAtTop(GameData gameData, UUID playerId, int x) {
         List<Card> deck = gameData.playerDecks.get(playerId);
         if (deck == null || deck.isEmpty()) {

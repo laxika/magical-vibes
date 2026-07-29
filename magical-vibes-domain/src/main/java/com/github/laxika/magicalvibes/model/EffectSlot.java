@@ -160,6 +160,21 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  untap call sites as {@code ON_SELF_BECOMES_UNTAPPED}. Used by Wake Thrasher
      *  ({@code BoostSelfEffect(1, 1)}). */
     ON_ALLY_PERMANENT_BECOMES_UNTAPPED,
+    /** Triggers whenever this permanent phases out — from the untap step's phasing turn-based action
+     *  (CR 702.26a) or from an effect that phases it out. Fires only on the permanent that phased
+     *  out, driven from {@code PhasingService} via
+     *  {@code TriggerCollectionService.checkPhasesOutTriggers}. The trigger is collected before the
+     *  permanent leaves the battlefield, because abilities that trigger on phasing out look back in
+     *  time (CR 603.10b) — the permanent is "treated as though it does not exist" once phased out
+     *  (CR 702.26b). Queued as a non-targeting triggered ability whose {@code sourcePermanentId} is
+     *  the phased-out permanent. Used by Teferi's Imp ({@code DiscardEffect}). */
+    ON_SELF_PHASES_OUT,
+    /** Triggers whenever this permanent phases in during its controller's untap step (CR 702.26a).
+     *  Fires only on the permanent that phased in, driven from {@code PhasingService} via
+     *  {@code TriggerCollectionService.checkPhasesInTriggers} after it is back on the battlefield.
+     *  Queued as a non-targeting triggered ability whose {@code sourcePermanentId} is the phased-in
+     *  permanent. Used by Teferi's Imp ({@code DrawCardEffect}). */
+    ON_SELF_PHASES_IN,
     /** Triggers whenever a permanent an <em>opponent</em> of the controller controls becomes tapped.
      *  Fires on every permanent with this slot controlled by a player other than the tapped
      *  permanent's controller. Wrap the effect in {@code TriggeringPermanentConditionalEffect} to
@@ -573,5 +588,17 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  damage to the defender always comes from the active player's attackers; {@code DamageSupport} —
      *  the damaging spell/ability's controller). Used by Retaliator Griffin
      *  ({@code MayEffect(PutCountersOnSelfEffect(PLUS_ONE_PLUS_ONE, new EventValue()))}). */
-    ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT
+    ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT,
+    /** Triggers whenever a creature deals damage (combat or non-combat) to this permanent's
+     *  controller, or to a permanent they control matching the effect's filter — "Whenever a
+     *  creature of the chosen color deals damage to you or a white creature you control, ...".
+     *  Fires on the watcher permanent, once per damaging creature per damage event; the watcher's
+     *  {@code chosenColor} gates which creatures qualify. The trigger context carries the damaging
+     *  creature, the damaged permanent (null when the controller was damaged) and the amount.
+     *  Fired from the four damage choke points ({@code CombatDamageService} for combat damage to
+     *  the defending player and to creatures, {@code DamageSupport} for the non-combat player and
+     *  creature paths) via
+     *  {@code TriggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers}.
+     *  Used by Mangara's Equity. */
+    ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT
 }

@@ -11,5 +11,7 @@ public enum EventStat {
     /** The destroyed permanent's mana value (Divine Offering, Hoard-Smelter Dragon). */
     MANA_VALUE,
     /** The destroyed creature's effective toughness (Death's Caress, Engulfing Slagwurm). */
-    TOUGHNESS
+    TOUGHNESS,
+    /** The destroyed creature's effective power, clamped to at least 0 (Cinder Cloud). */
+    POWER
 }

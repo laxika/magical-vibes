@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouContr
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -67,6 +68,7 @@ public class AdditionalSpellCostService {
             SacrificeCreatureOrPayManaCost.class,
             SacrificeArtifactCost.class,
             SacrificePermanentCost.class,
+            SacrificeMultiplePermanentsCost.class,
             ReturnCreatureToHandCost.class,
             PutCounterOnControlledCreatureCost.class,
             PayXLifeCost.class,
@@ -93,6 +95,7 @@ public class AdditionalSpellCostService {
             SacrificeCreatureOrPayManaCost sacrificeCreatureOrPayManaCost,
             boolean sacrificeArtifact,
             SacrificePermanentCost sacrificePermanentCost,
+            SacrificeMultiplePermanentsCost sacrificeMultiplePermanentsCost,
             boolean returnCreatureToHand,
             PutCounterOnControlledCreatureCost putCounterCost,
             boolean payXLife,
@@ -109,7 +112,8 @@ public class AdditionalSpellCostService {
         public boolean any() {
             return sacrificeAllCreatures || sacrificeCreature || sacrificeCreatureOrPayManaCost != null
                     || sacrificeArtifact
-                    || sacrificePermanentCost != null || returnCreatureToHand || putCounterCost != null
+                    || sacrificePermanentCost != null || sacrificeMultiplePermanentsCost != null
+                    || returnCreatureToHand || putCounterCost != null
                     || payXLife || payLifeCost != null
                     || exileGraveyardCost != null || exileXCardsCost != null || exileNCardsCost != null
                     || discardCost != null || discardCardOrPayManaCost != null
@@ -129,7 +133,9 @@ public class AdditionalSpellCostService {
      * <p>
      * {@code discardHandCardIndices} pays escalate (one discard per mode beyond the first);
      * {@code escalateModeCount} is the number of modes chosen for that escalate payment (0 when
-     * unused).
+     * unused). {@code sacrificePermanentIds} pays a multi-permanent sacrifice cost (Phyrexian
+     * Tribute's "sacrifice two creatures"); the single-permanent costs keep using
+     * {@code sacrificePermanentId}.
      */
     public record CostSelection(
             UUID sacrificePermanentId,
@@ -138,10 +144,11 @@ public class AdditionalSpellCostService {
             Integer discardHandCardIndex,
             List<Integer> discardHandCardIndices,
             int escalateModeCount,
-            int spellCardIndex
+            int spellCardIndex,
+            List<UUID> sacrificePermanentIds
     ) {
         public static CostSelection none() {
-            return new CostSelection(null, null, null, null, null, 0, -1);
+            return new CostSelection(null, null, null, null, null, 0, -1, List.of());
         }
 
         /** Convenience for the common single-discard / no-escalate case. */
@@ -149,7 +156,14 @@ public class AdditionalSpellCostService {
                              List<Integer> exileGraveyardCardIndices, Integer discardHandCardIndex,
                              int spellCardIndex) {
             this(sacrificePermanentId, exileGraveyardCardIndex, exileGraveyardCardIndices,
-                    discardHandCardIndex, null, 0, spellCardIndex);
+                    discardHandCardIndex, null, 0, spellCardIndex, List.of());
+        }
+
+        public CostSelection(UUID sacrificePermanentId, Integer exileGraveyardCardIndex,
+                             List<Integer> exileGraveyardCardIndices, Integer discardHandCardIndex,
+                             List<Integer> discardHandCardIndices, int escalateModeCount, int spellCardIndex) {
+            this(sacrificePermanentId, exileGraveyardCardIndex, exileGraveyardCardIndices,
+                    discardHandCardIndex, discardHandCardIndices, escalateModeCount, spellCardIndex, List.of());
         }
     }
 
@@ -164,6 +178,7 @@ public class AdditionalSpellCostService {
         SacrificeCreatureOrPayManaCost sacOrPay = removeFirst(effects, SacrificeCreatureOrPayManaCost.class);
         boolean sacArtifact = effects.removeIf(SacrificeArtifactCost.class::isInstance);
         SacrificePermanentCost permCost = removeFirst(effects, SacrificePermanentCost.class);
+        SacrificeMultiplePermanentsCost multiPermCost = removeFirst(effects, SacrificeMultiplePermanentsCost.class);
         boolean returnCreature = effects.removeIf(ReturnCreatureToHandCost.class::isInstance);
         PutCounterOnControlledCreatureCost putCounterCost = removeFirst(effects, PutCounterOnControlledCreatureCost.class);
         boolean payXLife = effects.removeIf(PayXLifeCost.class::isInstance);
@@ -175,7 +190,7 @@ public class AdditionalSpellCostService {
         DiscardCardOrPayManaCost discardOrPay = removeFirst(effects, DiscardCardOrPayManaCost.class);
         EscalateDiscardCost escalateDiscardCost = removeFirst(effects, EscalateDiscardCost.class);
         EscalateManaCost escalateManaCost = removeFirst(effects, EscalateManaCost.class);
-        return new ExtractedCosts(sacAllCreatures, sacCreature, sacOrPay, sacArtifact, permCost, returnCreature,
+        return new ExtractedCosts(sacAllCreatures, sacCreature, sacOrPay, sacArtifact, permCost, multiPermCost, returnCreature,
                 putCounterCost, payXLife, payLifeCost, exileGraveyardCost, exileXCardsCost, exileNCardsCost, discardCost, discardOrPay,
                 escalateDiscardCost, escalateManaCost);
     }
@@ -236,6 +251,12 @@ public class AdditionalSpellCostService {
                 case SacrificePermanentCost cost -> {
                     if (battlefield.stream().noneMatch(p ->
                             predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))) return false;
+                }
+                case SacrificeMultiplePermanentsCost cost -> {
+                    long matching = battlefield.stream()
+                            .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                            .count();
+                    if (matching < cost.count()) return false;
                 }
                 case ExileNCardsFromGraveyardCost cost -> {
                     long matchingCount = graveyard.stream()
@@ -353,6 +374,10 @@ public class AdditionalSpellCostService {
             validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
                     costs.sacrificePermanentCost().description(),
                     p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, costs.sacrificePermanentCost().filter()));
+        }
+        if (costs.sacrificeMultiplePermanentsCost() != null) {
+            validateMultipleSacrificeCost(gameData, player, card, costs.sacrificeMultiplePermanentsCost(),
+                    selection.sacrificePermanentIds());
         }
         // Sacrificing all creatures you control has no failure mode (zero creatures is legal).
         if (costs.returnCreatureToHand()) {
@@ -490,6 +515,31 @@ public class AdditionalSpellCostService {
             throw new IllegalStateException("Sacrifice target must be " + typeDescription);
         }
         return toSacrifice;
+    }
+
+    /**
+     * Validates a multi-permanent sacrifice additional cast cost (Phyrexian Tribute's "sacrifice
+     * two creatures") without mutating anything. Requires exactly {@code cost.count()} distinct
+     * permanents the caster controls, each matching the cost's filter. Returns them in selection
+     * order so payment cannot re-resolve a different set.
+     */
+    public List<Permanent> validateMultipleSacrificeCost(GameData gameData, Player player, Card card,
+                                                         SacrificeMultiplePermanentsCost cost,
+                                                         List<UUID> sacrificePermanentIds) {
+        List<UUID> ids = sacrificePermanentIds != null ? sacrificePermanentIds : List.of();
+        if (ids.size() != cost.count()) {
+            throw new IllegalStateException("Must sacrifice " + cost.count()
+                    + " permanents to cast " + card.getName());
+        }
+        if (ids.stream().distinct().count() != ids.size()) {
+            throw new IllegalStateException("Duplicate sacrifice targets for " + card.getName());
+        }
+        List<Permanent> chosen = new ArrayList<>();
+        for (UUID id : ids) {
+            chosen.add(validateSingleSacrificeCost(gameData, player, card, id, "a matching permanent",
+                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter())));
+        }
+        return chosen;
     }
 
     /**

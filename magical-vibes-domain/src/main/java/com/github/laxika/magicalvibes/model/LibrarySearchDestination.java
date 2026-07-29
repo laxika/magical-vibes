@@ -9,6 +9,10 @@ public enum LibrarySearchDestination {
     /** Exile the chosen card tracked "with" a source permanent (Endless Horizons). Carries the
      * {@code sourcePermanentId} and re-filters the library on each repeated pick. */
     EXILE_WITH_SOURCE,
+    /** Exile the chosen card face down into a pile tracked "with" a source permanent, shuffling the
+     * pile once the last of {@code remainingCount} picks is made (Mangara's Tome). Carries the
+     * {@code sourcePermanentId}. */
+    EXILE_FACE_DOWN_PILE,
     EXILE_PLAYABLE,
     /** Like {@link #EXILE_PLAYABLE}, but the play permission lasts only until the searcher's next
      *  upkeep; if the card is still exiled then, it is put into its owner's graveyard (Grinning Totem). */

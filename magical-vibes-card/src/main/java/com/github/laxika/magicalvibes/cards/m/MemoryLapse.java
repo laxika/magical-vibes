@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "5ED", collectorNumber = "103")
 @CardRegistration(set = "7ED", collectorNumber = "88")
 @CardRegistration(set = "6ED", collectorNumber = "81")
+@CardRegistration(set = "MIR", collectorNumber = "74")
 public class MemoryLapse extends Card {
 
     public MemoryLapse() {

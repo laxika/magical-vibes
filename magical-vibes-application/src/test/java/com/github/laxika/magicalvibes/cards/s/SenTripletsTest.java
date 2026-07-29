@@ -116,7 +116,7 @@ class SenTripletsTest extends BaseCardTest {
         gd.senControllerPlayerId = player1.getId();
         gd.senControlledPlayerId = player2.getId();
 
-        new TurnCleanupService(null).resetEndOfTurnModifiers(gd);
+        new TurnCleanupService(null, null).resetEndOfTurnModifiers(gd);
 
         assertThat(gd.playersSilencedThisTurn).isEmpty();
         assertThat(gd.playersCantActivateAbilitiesThisTurn).isEmpty();

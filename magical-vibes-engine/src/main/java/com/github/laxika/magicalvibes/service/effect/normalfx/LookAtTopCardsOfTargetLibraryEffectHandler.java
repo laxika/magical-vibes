@@ -10,10 +10,13 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTopCardOfTargetLibraryOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,10 +38,14 @@ import org.springframework.stereotype.Component;
  *       private library reveal message (Orcish Spy — no reordering permitted).</li>
  *   <li>{@code MAY_EXILE_ONE} — optional exile of one looked-at card, rest back on top
  *       (Psychic Surgery, Puresight Merrow).</li>
+ *   <li>{@code EXILE_ONE} — mandatory exile of one looked-at card, rest back on top in any order
+ *       (Sealed Fate).</li>
  *   <li>{@code MAY_SHUFFLE} — the looked-at names go into a may-ability prompt wrapping
  *       {@link ShuffleLibraryEffect} (Visions; the cards stay on top, no reordering).</li>
  *   <li>{@code PUT_ONE_INTO_GRAVEYARD} — mandatory pick of one card for that player's graveyard,
  *       rest back on top in any order (Cruel Fate, Wu Spy).</li>
+ *   <li>{@code MAY_PUT_TOP_ON_BOTTOM} — the single top card is shown in a may-ability prompt and,
+ *       if accepted, moved to the bottom of that player's library (Coral Fighters).</li>
  * </ul>
  */
 @Slf4j
@@ -49,6 +56,7 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final CardRevealService cardRevealService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -64,8 +72,13 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
         String controllerName = gameData.playerIdToName.get(controllerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
-        int actual = deck != null ? Math.min(e.count(), deck.size()) : 0;
+        int requested = amountEvaluationService.evaluate(gameData, e.count(),
+                AmountContext.forStackEntry(entry, entry.getSourcePermanentSnapshot()));
+        int actual = deck != null ? Math.min(requested, deck.size()) : 0;
         if (actual == 0) {
+            if (requested == 0) {
+                return;
+            }
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(": " + targetName + "'s library is empty.").build());
             if (e.action() == com.github.laxika.magicalvibes.model.effect.TargetLibraryAction.LOOK_ONLY) {
                 cardRevealService.revealToPlayer(
@@ -79,14 +92,18 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
         }
 
         switch (e.action()) {
-            case LOOK_ONLY -> resolveLookOnly(gameData, entry, e, controllerId, targetPlayerId, deck,
+            case LOOK_ONLY -> resolveLookOnly(gameData, entry, requested, controllerId, targetPlayerId, deck,
                     actual, controllerName, targetName);
-            case MAY_EXILE_ONE -> resolveMayExileOne(gameData, entry, controllerId, targetPlayerId,
-                    deck, actual, controllerName, targetName);
+            case MAY_EXILE_ONE -> resolveExileOne(gameData, entry, controllerId, targetPlayerId,
+                    deck, actual, controllerName, targetName, true);
+            case EXILE_ONE -> resolveExileOne(gameData, entry, controllerId, targetPlayerId,
+                    deck, actual, controllerName, targetName, false);
             case MAY_SHUFFLE -> resolveMayShuffle(gameData, entry, controllerId, targetPlayerId,
                     deck, actual, controllerName, targetName);
             case PUT_ONE_INTO_GRAVEYARD -> resolvePutOneIntoGraveyard(gameData, entry, controllerId,
                     targetPlayerId, deck, actual, controllerName, targetName);
+            case MAY_PUT_TOP_ON_BOTTOM -> resolveMayPutTopOnBottom(gameData, entry, controllerId,
+                    targetPlayerId, deck, controllerName, targetName);
         }
     }
 
@@ -97,10 +114,10 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
      * a pure informational look with no rearranging permitted — the library is left untouched and
      * the top cards are surfaced to the controller with a non-blocking private reveal.
      */
-    private void resolveLookOnly(GameData gameData, StackEntry entry, LookAtTopCardsOfTargetLibraryEffect e,
+    private void resolveLookOnly(GameData gameData, StackEntry entry, int requested,
             UUID controllerId, UUID targetPlayerId, List<Card> deck, int actual,
             String controllerName, String targetName) {
-        if (e.count() == 1) {
+        if (requested == 1) {
             gameLogService.append(gameData, GameLog.text(controllerName + " looks at the top card of " + targetName + "'s library."));
             List<Card> topCards = LibraryRevealSupport.takeTopCards(deck, 1);
             String prompt = "The top card of " + targetName + "'s library. It will remain on top.";
@@ -134,24 +151,32 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
                 gameData.id, controllerName, actual, targetName);
     }
 
-    private void resolveMayExileOne(GameData gameData, StackEntry entry, UUID controllerId,
-            UUID targetPlayerId, List<Card> deck, int actual, String controllerName, String targetName) {
+    /**
+     * Optional ({@code optional=true}, Psychic Surgery / Puresight Merrow) or mandatory
+     * ({@code optional=false}, Sealed Fate) exile of one looked-at card; the rest go back on top
+     * in any order.
+     */
+    private void resolveExileOne(GameData gameData, StackEntry entry, UUID controllerId,
+            UUID targetPlayerId, List<Card> deck, int actual, String controllerName, String targetName,
+            boolean optional) {
         List<Card> topCards = LibraryRevealSupport.takeTopCards(deck, actual);
         gameLogService.append(gameData, GameLog.text(
                 controllerName + " looks at the top " + LibraryRevealSupport.pluralCards(actual) + " of " + targetName + "'s library."));
         List<Card> sourceCards = new ArrayList<>(topCards);
+        String prompt = (optional ? "You may exile one of these cards." : "Exile one of these cards.")
+                + " The rest will be put on top of the library.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
                 LibrarySearchParams.builder(controllerId, topCards)
-                        .canFailToFind(true)
+                        .canFailToFind(optional)
                         .targetPlayerId(targetPlayerId)
                         .sourceCards(sourceCards)
                         .reorderRemainingToTop(true)
                         .shuffleAfterSelection(false)
-                        .prompt("You may exile one of these cards. The rest will be put on top of the library.")
+                        .prompt(prompt)
                         .destination(LibrarySearchDestination.EXILE)
                         .build(),
-                "You may exile one of these cards. The rest will be put on top of the library.",
-                true));
+                prompt,
+                optional));
         log.info("Game {} - {} looks at top {} of {}'s library ({})", gameData.id, controllerName, actual, targetName, entry.getCard().getName());
     }
 
@@ -170,6 +195,27 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
                 List.of(new ShuffleLibraryEffect(true)),
                 prompt,
                 targetPlayerId));
+    }
+
+    /**
+     * Coral Fighters: the controller sees the single top card in the prompt (that is the "look")
+     * and may send it to the bottom of that player's library; declining leaves it on top.
+     */
+    private void resolveMayPutTopOnBottom(GameData gameData, StackEntry entry, UUID controllerId,
+            UUID targetPlayerId, List<Card> deck, String controllerName, String targetName) {
+        String sourceName = entry.getCard().getName();
+        gameLogService.append(gameData, GameLog.text(
+                controllerName + " looks at the top card of " + targetName + "'s library."));
+        String prompt = sourceName + " — Top card of " + targetName + "'s library: " + deck.getFirst().getName()
+                + ". Put it on the bottom of that library?";
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                entry.getCard(),
+                controllerId,
+                List.of(new PutTopCardOfTargetLibraryOnBottomEffect()),
+                prompt,
+                targetPlayerId));
+        log.info("Game {} - {} looks at the top card of {}'s library ({})",
+                gameData.id, controllerName, targetName, sourceName);
     }
 
     private void resolvePutOneIntoGraveyard(GameData gameData, StackEntry entry, UUID controllerId,

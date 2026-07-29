@@ -19,6 +19,10 @@ public enum EffectDuration {
      *  affected permanent's controller, not the effect's controller. Survives end-of-turn cleanup;
      *  cleared at the start of that controller's next turn (the untap step is its first step). */
     UNTIL_CONTROLLERS_NEXT_UNTAP_STEP,
+    /** One-shot effect that lasts until the beginning of the effect controller's next upkeep
+     *  (e.g. Cycle of Life's "until your next upkeep"). Survives end-of-turn cleanup; cleared in
+     *  {@code StepTriggerService.handleUpkeepTriggers} when that controller is the active player. */
+    UNTIL_CONTROLLERS_NEXT_UPKEEP,
     /** One-shot effect with no wear-off (e.g. "becomes a creature permanently" — Tezzeret, Waker). */
     PERMANENT,
     /** One-shot effect that lasts for as long as the source permanent remains on the battlefield

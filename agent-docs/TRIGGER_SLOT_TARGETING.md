@@ -179,6 +179,10 @@ via the pending-may-ability flow, not a target-choice pipeline),
 the untapped permanent's controller's battlefield, including the source untapping itself; same
 `checkBecomesUntappedTriggers` call sites. Wrap in `TriggeringPermanentConditionalEffect` to filter by the
 untapped permanent),
+`ON_SELF_PHASES_OUT` / `ON_SELF_PHASES_IN` (Teferi's Imp; fired from `PhasingService` via
+`TriggerCollectionService.checkPhasesOutTriggers` / `checkPhasesInTriggers` — phase-out triggers are collected
+before the permanent leaves the battlefield, since they look back in time (CR 603.10b). Both are
+non-targeting and cover the untap-step turn-based action and effect-driven phase-outs),
 `ON_ENCHANTED_CREATURE_DEALT_DAMAGE`,
 `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD`, `ON_ALLY_LAND_ENTERS_BATTLEFIELD`,
 `ON_OPENING_HAND_REVEAL`, `ON_OPPONENT_LOSES_LIFE`, `ON_OPPONENT_SHUFFLES_LIBRARY`,

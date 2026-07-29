@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "73")
+@CardRegistration(set = "MIR", collectorNumber = "69")
 public class HarmattanEfreet extends Card {
 
     public HarmattanEfreet() {

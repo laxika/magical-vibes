@@ -14,8 +14,23 @@ import java.util.UUID;
  * @param playerId the protected player
  * @param sourceId the chosen source permanent
  * @param gainLife whether the protected player gains life equal to the prevented damage
+ * @param coversControlledCreatures also shield creatures the protected player controls, so the
+ *                 shield is consumed by the chosen source's next damage to the player <em>or</em>
+ *                 to one of their creatures (Shadowbane)
+ * @param gainLifeOnlyFromBlackSource restrict {@code gainLife} to a black chosen source
+ *                 (Shadowbane: "If damage from a black source is prevented this way …")
+ * @param exileFromLibrary exile that many cards from the top of the protected player's library
+ *                 once the shield prevents damage (Bone Mask)
  */
-public record PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife) {
+public record PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife,
+                                           boolean coversControlledCreatures,
+                                           boolean gainLifeOnlyFromBlackSource,
+                                           boolean exileFromLibrary) {
+
+    /** Convenience constructor for a player-only shield (Circle of Protection, Reverse Damage). */
+    public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife) {
+        this(playerId, sourceId, gainLife, false, false, false);
+    }
 
     /** Convenience constructor for a plain prevention shield with no life gain. */
     public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId) {

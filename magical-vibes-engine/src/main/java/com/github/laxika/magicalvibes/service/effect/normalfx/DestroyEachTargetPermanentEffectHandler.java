@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -36,15 +37,24 @@ public class DestroyEachTargetPermanentEffectHandler implements NormalEffectHand
         // targets don't count) and snapshot it onto the entry as its event value, so a later effect
         // on the same entry can reference "that many" via an EventValue amount (Volcanic Eruption).
         int destroyed = 0;
+        List<UUID> destroyedControllerIds = new ArrayList<>();
         for (UUID targetId : targets) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) {
                 continue;
             }
+            UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
             if (destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName(), destroy.cannotBeRegenerated())) {
                 destroyed++;
+                if (controllerId != null) {
+                    destroyedControllerIds.add(controllerId);
+                }
             }
         }
         entry.setEventValue(destroyed);
+        // Per-permanent controller tally for riders that need "the number of permanents THEY
+        // controlled that were put into a graveyard this way" (Builder's Bane), which the single
+        // event value can't express. Duplicates are meaningful: three artifacts lost = three entries.
+        entry.setEventPlayerIds(destroyedControllerIds);
     }
 }

@@ -44,6 +44,13 @@ public final class TargetFilters {
                 new PermanentIsAttackingPredicate(), "Target must be an attacking creature");
     }
 
+    /** "Target must be an unblocked attacking creature" */
+    public static PermanentPredicateTargetFilter unblockedAttackingCreature() {
+        return new PermanentPredicateTargetFilter(
+                new PermanentIsUnblockedAttackingPredicate(),
+                "Target must be an unblocked attacking creature");
+    }
+
     /** "Target must be a land" */
     public static PermanentPredicateTargetFilter land() {
         return new PermanentPredicateTargetFilter(
@@ -54,6 +61,15 @@ public final class TargetFilters {
     public static ControlledPermanentPredicateTargetFilter landYouControl() {
         return new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsLandPredicate(), "Target must be a land you control");
+    }
+
+    /** "Target must be a land an opponent controls" */
+    public static PermanentPredicateTargetFilter landAnOpponentControls() {
+        return new PermanentPredicateTargetFilter(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsLandPredicate(),
+                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
+                "Target must be a land an opponent controls");
     }
 
     /** "Target must be an artifact" */

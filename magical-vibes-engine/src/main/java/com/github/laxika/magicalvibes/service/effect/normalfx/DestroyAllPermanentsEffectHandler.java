@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +60,7 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
         // Controllers are captured before destruction — afterwards the permanents are gone and their
         // controller can no longer be looked up (needed by per-permanent-controller riders).
         Map<UUID, UUID> controllerByPermanentId = new HashMap<>();
+        Map<UUID, Integer> manaValueByPermanentId = new HashMap<>();
         if (e.scope() == EachPermanentScope.TARGET_PLAYER) {
             UUID targetPlayerId = entry.getTargetId();
             if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
@@ -75,6 +75,7 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
                         && predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
                     toDestroy.add(perm);
                     controllerByPermanentId.put(perm.getId(), targetPlayerId);
+                    manaValueByPermanentId.put(perm.getId(), perm.getCard().getManaValue());
                 }
             }
         } else {
@@ -84,6 +85,7 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
                             && predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
                         toDestroy.add(perm);
                         controllerByPermanentId.put(perm.getId(), playerId);
+                        manaValueByPermanentId.put(perm.getId(), perm.getCard().getManaValue());
                     }
                 }
             });
@@ -99,10 +101,19 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
         StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), entry.getControllerId(),
                 entry.getDescription(), List.of(e.thenEffect()), entry.getTargetId(), entry.getSourcePermanentId());
         thenEntry.setEventValue(destroyed.size());
-        thenEntry.setEventPlayerIds(destroyed.stream()
-                .map(perm -> controllerByPermanentId.get(perm.getId()))
-                .filter(Objects::nonNull)
-                .toList());
+        // Controllers and mana values stay positionally aligned so per-permanent riders can pair them.
+        List<UUID> destroyedControllerIds = new ArrayList<>();
+        List<Integer> destroyedManaValues = new ArrayList<>();
+        for (Permanent perm : destroyed) {
+            UUID controllerId = controllerByPermanentId.get(perm.getId());
+            if (controllerId == null) {
+                continue;
+            }
+            destroyedControllerIds.add(controllerId);
+            destroyedManaValues.add(manaValueByPermanentId.getOrDefault(perm.getId(), 0));
+        }
+        thenEntry.setEventPlayerIds(destroyedControllerIds);
+        thenEntry.setEventManaValues(destroyedManaValues);
         thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 
         EffectHandler handler = effectHandlerRegistry.getHandler(e.thenEffect());

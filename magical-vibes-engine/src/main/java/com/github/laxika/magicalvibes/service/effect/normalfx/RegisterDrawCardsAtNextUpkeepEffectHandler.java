@@ -24,10 +24,13 @@ public class RegisterDrawCardsAtNextUpkeepEffectHandler implements NormalEffectH
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RegisterDrawCardsAtNextUpkeepEffect) effect;
-        UUID controllerId = entry.getControllerId();
-        gameData.queueDelayedAction(new DrawCardsAtNextUpkeep(controllerId, e.count(), entry.getCard()));
+        UUID drawerId = e.targetPlayer() ? entry.getTargetId() : entry.getControllerId();
+        if (drawerId == null) {
+            return;
+        }
+        gameData.queueDelayedAction(new DrawCardsAtNextUpkeep(drawerId, e.count(), entry.getCard()));
 
-        String playerName = gameData.playerIdToName.get(controllerId);
+        String playerName = gameData.playerIdToName.get(drawerId);
         log.info("Game {} - {} registers delayed draw of {} at next upkeep", gameData.id, playerName, e.count());
     }
 }

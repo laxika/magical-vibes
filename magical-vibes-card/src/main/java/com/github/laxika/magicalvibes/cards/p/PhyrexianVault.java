@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "10E", collectorNumber = "337")
 @CardRegistration(set = "6ED", collectorNumber = "307")
+@CardRegistration(set = "MIR", collectorNumber = "316")
 public class PhyrexianVault extends Card {
 
     public PhyrexianVault() {

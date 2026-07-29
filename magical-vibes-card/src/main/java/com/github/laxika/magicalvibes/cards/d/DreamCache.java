@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect;
 
 @CardRegistration(set = "6ED", collectorNumber = "66")
+@CardRegistration(set = "MIR", collectorNumber = "62")
 public class DreamCache extends Card {
 
     public DreamCache() {

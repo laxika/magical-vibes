@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityServic
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -76,6 +77,7 @@ public class CombatService {
     private final GameQueryService gameQueryService;
     private final CreatureControlService creatureControlService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final PermanentControlSupport permanentControlSupport;
     private final DamageSupport damageSupport;
 
     /** Layer-2 control effect wrapping each end-of-combat control gain (drives layer classification). */
@@ -191,9 +193,16 @@ public class CombatService {
                 }
             }
             if (perm != null) {
+                UUID sacrificingPlayerId = gameQueryService.findPermanentController(gameData, action.permanentId());
                 permanentRemovalService.removePermanentToGraveyard(gameData, perm);
                 gameLogService.append(gameData, GameLog.isSacrificed(perm.getCard()));
                 log.info("Game {} - {} sacrificed at end of combat", gameData.id, perm.getCard().getName());
+                // "If the player does, they create a … token" (Basalt Golem) — only on an actual sacrifice.
+                if (action.tokenForSacrificingPlayer() != null && sacrificingPlayerId != null) {
+                    permanentControlSupport.applyCreateToken(gameData, sacrificingPlayerId,
+                            action.tokenForSacrificingPlayer(),
+                            action.sourceCard() != null ? action.sourceCard().getSetCode() : null);
+                }
             }
         }
         permanentRemovalService.removeOrphanedAuras(gameData);

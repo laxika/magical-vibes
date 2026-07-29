@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreature
 @CardRegistration(set = "POR", collectorNumber = "186")
 @CardRegistration(set = "PTK", collectorNumber = "149")
 @CardRegistration(set = "6ED", collectorNumber = "253")
+@CardRegistration(set = "MIR", collectorNumber = "243")
 public class StalkingTiger extends Card {
 
     public StalkingTiger() {

@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountA
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.MustAttackIfAnotherCreatureAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
@@ -210,6 +211,9 @@ public class CombatAttackService {
         // Validate attack requirements (CR 508.1d: satisfy as many as possible)
         validateMaximumAttackRequirements(gameData, playerId, attackable, uniqueIndices);
 
+        // Ekundu Cyclops: "if a creature you control attacks, this creature also attacks if able"
+        validateAttacksAlongsideOtherCreature(gameData, playerId, attackable, uniqueIndices);
+
         // Validate "must attack with at least one creature" (e.g. Trove of Temptation)
         if (attackerIndices.isEmpty() && !attackable.isEmpty() && isOpponentForcedToAttack(gameData, playerId)) {
             throw new IllegalStateException("Must attack with at least one creature");
@@ -325,7 +329,14 @@ public class CombatAttackService {
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             attacker.setAttacking(true);
-            attacker.setAttackTarget(resolvedTargets.get(idx));
+            UUID attackTarget = resolvedTargets.get(idx);
+            attacker.setAttackTarget(attackTarget);
+            // "Attacked you this turn" only counts attacks aimed at the player, not at a planeswalker
+            // they control, and has to outlive combat — so it is recorded on GameData, not on the
+            // permanent's transient attacking state.
+            if (attackTarget != null && gameData.playerIds.contains(attackTarget)) {
+                gameData.recordAttackAgainstPlayer(attacker.getId(), attackTarget);
+            }
             if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.VIGILANCE)) {
                 attacker.tap();
                 triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, attacker);
@@ -946,6 +957,35 @@ public class CombatAttackService {
             }
         }
         return false;
+    }
+
+    /**
+     * Ekundu Cyclops (CR 508.1d): a creature with a conditional "if a creature you control
+     * attacks, this creature also attacks if able" requirement must be declared whenever any
+     * other creature its controller controls is declared as an attacker. The requirement is
+     * waived when attacking would cost the player mana (CR 508.1d — optional attack costs are
+     * never mandatory), matching {@code validateMaximumAttackRequirements}.
+     */
+    private void validateAttacksAlongsideOtherCreature(GameData gameData, UUID playerId,
+                                                       List<Integer> attackableIndices,
+                                                       Set<Integer> declaredAttackerIndices) {
+        if (castingCostService.getAttackPaymentPerCreature(gameData, playerId) > 0
+                || !castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
+            return;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        for (int idx : attackableIndices) {
+            if (declaredAttackerIndices.contains(idx)) {
+                continue;
+            }
+            Permanent creature = battlefield.get(idx);
+            boolean conditional = creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(MustAttackIfAnotherCreatureAttacksEffect.class::isInstance);
+            if (conditional && declaredAttackerIndices.stream().anyMatch(other -> other != idx)) {
+                throw new IllegalStateException(creature.getCard().getName()
+                        + " must also attack when another creature you control attacks");
+            }
+        }
     }
 
     private void validateCantAttackAlone(List<Permanent> battlefield, List<Integer> attackerIndices) {

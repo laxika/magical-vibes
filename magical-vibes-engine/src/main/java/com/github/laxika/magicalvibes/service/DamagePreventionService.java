@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.EyeForAnEyeReflection;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
@@ -371,14 +373,76 @@ public class DamagePreventionService {
             var shield = it.next();
             if (shield.playerId().equals(playerId) && shield.sourceId().equals(sourcePermanentId)) {
                 it.remove();
-                // Reverse Damage: gain life equal to the damage prevented this way.
-                if (shield.gainLife()) {
-                    lifeSupport.applyGainLife(gameData, playerId, damage, "prevented damage");
-                }
+                applyNextSourceShieldRiders(gameData, shield, damage);
                 return 0;
             }
         }
         return damage;
+    }
+
+    /**
+     * Shadowbane's creature half: if a one-shot shield covering the creature's controller's
+     * permanents matches this (creature controller, source), the entire next damage event to that
+     * creature is prevented and the shield is consumed. Returns the remaining damage.
+     */
+    public int applyControllerCreaturesNextSourceDamageShield(GameData gameData, UUID creatureControllerId,
+                                                              UUID sourcePermanentId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return damage;
+        if (damage <= 0 || creatureControllerId == null || sourcePermanentId == null
+                || gameData.playerSourceNextDamageShields.isEmpty()) {
+            return damage;
+        }
+        var it = gameData.playerSourceNextDamageShields.iterator();
+        while (it.hasNext()) {
+            var shield = it.next();
+            if (shield.coversControlledCreatures()
+                    && shield.playerId().equals(creatureControllerId)
+                    && shield.sourceId().equals(sourcePermanentId)) {
+                it.remove();
+                applyNextSourceShieldRiders(gameData, shield, damage);
+                return 0;
+            }
+        }
+        return damage;
+    }
+
+    /** Applies whatever "… prevented this way" rider the consumed shield carries. */
+    private void applyNextSourceShieldRiders(GameData gameData, PlayerSourceNextDamageShield shield, int damage) {
+        gainLifeForNextSourceShield(gameData, shield, damage);
+        exileFromLibraryForNextSourceShield(gameData, shield, damage);
+    }
+
+    /**
+     * Bone Mask rider: exile cards from the top of the protected player's library equal to the
+     * damage just prevented. Stops early if the library runs out.
+     */
+    private void exileFromLibraryForNextSourceShield(GameData gameData, PlayerSourceNextDamageShield shield, int damage) {
+        if (!shield.exileFromLibrary()) return;
+        List<Card> deck = gameData.playerDecks.get(shield.playerId());
+        if (deck == null) return;
+        int exiled = 0;
+        while (exiled < damage && !deck.isEmpty()) {
+            gameData.addToExile(shield.playerId(), deck.removeFirst());
+            exiled++;
+        }
+        log.info("Game {} - {} exiles {} card(s) from library top for prevented damage",
+                gameData.id, gameData.playerIdToName.get(shield.playerId()), exiled);
+    }
+
+    /**
+     * Reverse Damage / Shadowbane rider: gain life equal to the damage just prevented. Shadowbane
+     * only gains when the chosen source is black, which is read from the source permanent's
+     * effective colours at prevention time.
+     */
+    private void gainLifeForNextSourceShield(GameData gameData, PlayerSourceNextDamageShield shield, int damage) {
+        if (!shield.gainLife()) return;
+        if (shield.gainLifeOnlyFromBlackSource()) {
+            Permanent source = gameQueryService.findPermanentById(gameData, shield.sourceId());
+            if (source == null || !gameQueryService.getEffectiveColors(gameData, source).contains(CardColor.BLACK)) {
+                return;
+            }
+        }
+        lifeSupport.applyGainLife(gameData, shield.playerId(), damage, "prevented damage");
     }
 
     /**
@@ -393,6 +457,30 @@ public class DamagePreventionService {
         }
         // List.remove(Object) removes the first matching entry — a single shield is consumed per event.
         return gameData.sourceNextDamageToAnyTargetShields.remove(sourcePermanentId) ? 0 : damage;
+    }
+
+    /**
+     * Applies one-shot Reflect Damage shields: if a shield matches this source, the entire next damage
+     * event it would deal (to any recipient) is instead dealt to that source's controller. The
+     * reflected event is scheduled in {@link GameData#pendingEyeForAnEyeReflections} and dealt by the
+     * source itself. This is a redirection (replacement) effect, not prevention, so it applies even
+     * when damage can't be prevented. Returns the remaining damage (0 when redirected).
+     */
+    public int applyReflectDamageToSourceControllerShield(GameData gameData, UUID sourcePermanentId, int damage) {
+        if (damage <= 0 || sourcePermanentId == null
+                || gameData.reflectDamageToSourceControllerShields.isEmpty()) {
+            return damage;
+        }
+        // List.remove(Object) removes the first matching entry — a single shield is consumed per event.
+        if (!gameData.reflectDamageToSourceControllerShields.remove(sourcePermanentId)) return damage;
+
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        UUID sourceControllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
+        if (source == null || sourceControllerId == null) return damage;
+
+        gameData.pendingEyeForAnEyeReflections.add(new EyeForAnEyeReflection(
+                sourceControllerId, damage, source.getCard(), sourceControllerId));
+        return 0;
     }
 
     /**

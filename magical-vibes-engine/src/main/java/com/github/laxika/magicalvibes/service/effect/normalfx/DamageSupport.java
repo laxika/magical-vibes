@@ -90,12 +90,22 @@ public class DamageSupport {
                     "'s damage is prevented."));
             return;
         }
+        // Benevolent Unicorn: a spell dealing damage as itself deals that much damage minus N.
+        if (damageSource == null) {
+            rawDamage = Math.max(0, rawDamage - gameQueryService.getSpellDamageReduction(gameData, entry));
+        }
         // Apply source-specific redirect shields (e.g. Harm's Way) before creature prevention
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         UUID sourcePermId = damageSource != null ? damageSource.getId() : entry.getSourcePermanentId();
         if (targetControllerId != null && sourcePermId != null) {
             rawDamage = damagePreventionService.applySourceRedirectShields(gameData, targetControllerId, sourcePermId, rawDamage);
             processSourceRedirectDamage(gameData);
+        }
+        // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
+        if (sourcePermId != null) {
+            rawDamage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, sourcePermId, rawDamage);
+            processEyeForAnEyeReflections(gameData);
+            if (rawDamage <= 0) return;
         }
         // Saving Grace: redirect all damage this turn to a permanent you control onto the enchanted creature.
         if (targetControllerId != null) {
@@ -113,6 +123,9 @@ public class DamageSupport {
             rawDamage = damagePreventionService.applyTargetSourcePreventionShield(gameData, target.getId(), sourcePermId, rawDamage);
             // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
             rawDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, sourcePermId, rawDamage);
+            // Shadowbane: the chosen source's next damage to the protected player's creatures.
+            rawDamage = damagePreventionService.applyControllerCreaturesNextSourceDamageShield(
+                    gameData, targetControllerId, sourcePermId, rawDamage);
         }
         // Swans of Bryn Argoll: prevent all damage to this creature; the source's controller draws that many cards.
         UUID swansSourceControllerId = damageSource != null
@@ -183,6 +196,10 @@ public class DamageSupport {
                     ? damageSource
                     : (sourcePermId != null ? gameQueryService.findPermanentById(gameData, sourcePermId) : null);
             triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource, sourceControllerId, damagedCreatureControllerId, damage);
+
+            // Mangara's Equity: "…or a white creature you control"
+            triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(
+                    gameData, damagedCreatureControllerId, target, reflectionSource, damage);
         }
 
         Card sourceCard = damageSource != null ? damageSource.getCard() : entry.getCard();
@@ -312,6 +329,10 @@ public class DamageSupport {
                     : null;
             UUID reflectionTargetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
             triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource, entry.getControllerId(), reflectionTargetControllerId, damage);
+
+            // Mangara's Equity: "…or a white creature you control"
+            triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(
+                    gameData, reflectionTargetControllerId, target, reflectionSource, damage);
         }
 
         Card sourceCard = entry.getCard();
@@ -493,6 +514,8 @@ public class DamageSupport {
                     "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
             return;
         }
+        // Benevolent Unicorn: a spell dealing damage to a player deals that much damage minus N.
+        rawDamage = Math.max(0, rawDamage - gameQueryService.getSpellDamageReduction(gameData, entry));
         if (damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, entry.getSourcePermanentId())
                 || damagePreventionService.isNoncombatDamageFromAttackerPreventedForPlayer(gameData, playerId, entry.getSourcePermanentId())
                 || isSourcePermanentPreventedFromDealingDamage(gameData, entry)) {
@@ -520,6 +543,10 @@ public class DamageSupport {
         // Apply source-specific redirect shields (e.g. Harm's Way) before general prevention
         rawDamage = damagePreventionService.applySourceRedirectShields(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
         processSourceRedirectDamage(gameData);
+        // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
+        rawDamage = damagePreventionService.applyReflectDamageToSourceControllerShield(
+                gameData, entry.getSourcePermanentId(), rawDamage);
+        processEyeForAnEyeReflections(gameData);
         // Saving Grace: redirect all damage this turn to the player onto the enchanted creature.
         rawDamage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, playerId, null, rawDamage);
         processSourceRedirectDamage(gameData);
@@ -595,6 +622,9 @@ public class DamageSupport {
                         "'s " + coilPrevented + " damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
             }
 
+            // Soul Echo: each 1 damage removes an echo counter instead (replacement, not prevention).
+            effectiveDamage -= applySoulEchoCounterRemoval(gameData, playerId, effectiveDamage);
+
             boolean sourceHasInfect = gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.INFECT);
             boolean treatAsInfect = sourceHasInfect || gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId);
 
@@ -641,6 +671,12 @@ public class DamageSupport {
                 // The stack entry's controller is the damage source's controller (caster/activator);
                 // used to gate the opponent-only ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT slot.
                 triggerCollectionService.checkControllerDealtDamageTriggers(gameData, playerId, entry.getControllerId(), effectiveDamage);
+                // Mangara's Equity: "whenever a creature of the chosen color deals damage to you"
+                triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(gameData, playerId, null,
+                        entry.getSourcePermanentId() != null
+                                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                                : null,
+                        effectiveDamage);
                 triggerCollectionService.checkNoncombatDamageToOpponentTriggers(gameData, playerId);
                 checkSpellLifelink(gameData, entry, effectiveDamage);
             }
@@ -896,6 +932,41 @@ public class DamageSupport {
 
         graveyardService.exileCardsFromGraveyard(gameData, playerId, damage);
         return damage;
+    }
+
+    /**
+     * Soul Echo: while the targeted opponent has chosen it, "for each 1 damage that would be dealt to
+     * you until your next upkeep, you remove an echo counter from this enchantment instead". Returns
+     * how much of {@code damage} was replaced this way — one echo counter per 1 damage, capped by the
+     * counters actually available across the player's armed Soul Echoes; any excess damage is dealt
+     * normally. This is a replacement, not prevention, so it is not gated on
+     * {@code isDamagePreventable}. Shared by the noncombat ({@link #dealDamageToPlayer}) and combat
+     * ({@code CombatDamageService.applyPlayerDamage}) paths.
+     */
+    public int applySoulEchoCounterRemoval(GameData gameData, UUID playerId, int damage) {
+        if (damage <= 0) return 0;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return 0;
+
+        int replaced = 0;
+        for (Permanent permanent : battlefield) {
+            if (replaced >= damage) break;
+            if (!permanent.isEchoDamageRedirectionActive()) continue;
+
+            int available = permanent.getCounterCount(CounterType.ECHO);
+            if (available <= 0) continue;
+
+            int removed = Math.min(available, damage - replaced);
+            permanent.setCounterCount(CounterType.ECHO, available - removed);
+            replaced += removed;
+
+            gameLogService.append(gameData, GameLog.textCardText(
+                    gameData.playerIdToName.get(playerId) + " removes " + removed + " echo counter"
+                            + (removed == 1 ? "" : "s") + " from ", permanent.getCard(),
+                    " instead of taking " + removed + " damage."));
+        }
+        return replaced;
     }
 
     /**

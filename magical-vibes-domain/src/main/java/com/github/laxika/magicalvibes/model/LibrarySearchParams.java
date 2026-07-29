@@ -34,7 +34,9 @@ public record LibrarySearchParams(
         boolean requireDifferentNames,
         Integer manaValueBoundValue,
         boolean manaValueExact,
-        List<String> excludedCardNames
+        List<String> excludedCardNames,
+        boolean grantHaste,
+        boolean exileAtEndStep
 ) {
     public LibrarySearchParams {
         if (followUp == null) {
@@ -58,7 +60,7 @@ public record LibrarySearchParams(
                 restToGraveyard, shuffleAfterSelection, prompt, destination, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
-                manaValueBoundValue, manaValueExact, excludedCardNames);
+                manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep);
     }
 
     public static class Builder {
@@ -87,6 +89,8 @@ public record LibrarySearchParams(
         private Integer manaValueBoundValue;
         private boolean manaValueExact;
         private List<String> excludedCardNames = List.of();
+        private boolean grantHaste;
+        private boolean exileAtEndStep;
 
         private Builder(UUID playerId, List<Card> cards) {
             this.playerId = playerId;
@@ -204,13 +208,23 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder grantHaste(boolean grantHaste) {
+            this.grantHaste = grantHaste;
+            return this;
+        }
+
+        public Builder exileAtEndStep(boolean exileAtEndStep) {
+            this.exileAtEndStep = exileAtEndStep;
+            return this;
+        }
+
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                     restToGraveyard, shuffleAfterSelection, prompt, destination, filterCardTypes,
                     accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                     filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
-                    manaValueBoundValue, manaValueExact, excludedCardNames);
+                    manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep);
         }
     }
 }

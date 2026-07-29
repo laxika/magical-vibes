@@ -77,6 +77,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Increment", Keyword.INCREMENT);
         KEYWORD_MAP.put("Paradigm", Keyword.PARADIGM);
         KEYWORD_MAP.put("Horsemanship", Keyword.HORSEMANSHIP);
+        KEYWORD_MAP.put("Flanking", Keyword.FLANKING);
         KEYWORD_MAP.put("Conspire", Keyword.CONSPIRE);
         KEYWORD_MAP.put("Retrace", Keyword.RETRACE);
         KEYWORD_MAP.put("Emerge", Keyword.EMERGE);
@@ -95,6 +96,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Splice", Keyword.SPLICE);
         KEYWORD_MAP.put("Delirium", Keyword.DELIRIUM);
         KEYWORD_MAP.put("Prepared", Keyword.PREPARED);
+        KEYWORD_MAP.put("Phasing", Keyword.PHASING);
     }
 
     /** {@link #KEYWORD_MAP} keyed by lowercase spelling — upstream casing differs between sources. */

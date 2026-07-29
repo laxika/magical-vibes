@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeep
 
 @CardRegistration(set = "5ED", collectorNumber = "230")
 @CardRegistration(set = "ICE", collectorNumber = "185")
+@CardRegistration(set = "MIR", collectorNumber = "176")
 public class Flare extends Card {
 
     public Flare() {

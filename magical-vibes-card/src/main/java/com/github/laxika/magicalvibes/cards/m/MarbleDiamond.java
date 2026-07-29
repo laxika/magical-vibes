@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 
+@CardRegistration(set = "MIR", collectorNumber = "310")
 @CardRegistration(set = "7ED", collectorNumber = "306")
 @CardRegistration(set = "6ED", collectorNumber = "298")
 public class MarbleDiamond extends Card {

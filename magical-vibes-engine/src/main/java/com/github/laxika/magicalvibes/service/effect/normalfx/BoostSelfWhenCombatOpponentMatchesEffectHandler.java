@@ -54,6 +54,7 @@ public class BoostSelfWhenCombatOpponentMatchesEffectHandler implements NormalEf
 
         self.setPowerModifier(self.getPowerModifier() + boost.powerBoost());
         self.setToughnessModifier(self.getToughnessModifier() + boost.toughnessBoost());
+        self.getGrantedKeywords().addAll(boost.grantedKeywords());
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(self.getCard())

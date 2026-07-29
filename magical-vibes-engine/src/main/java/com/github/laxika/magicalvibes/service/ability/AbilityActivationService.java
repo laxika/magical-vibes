@@ -70,6 +70,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FreeCyclingEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.HandCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.RevealTwoCardsSharingColorCost;
@@ -700,6 +701,7 @@ public class AbilityActivationService {
         ManaPool pool = gameData.playerManaPools.get(player.getId());
         if (pool != null) {
             pool.setWhiteSpendableAsRed(gameQueryService.canSpendWhiteManaAsRed(gameData, player.getId()));
+            pool.setWhiteSpendableAsAnyColor(gameQueryService.canSpendWhiteManaAsAnyColor(gameData, player.getId()));
         }
         Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();
         try {
@@ -791,9 +793,9 @@ public class AbilityActivationService {
         // Discard-card(s) activation cost (Eternalize—{cost}, Discard a card / Haunted Dead Discard two):
         // validate up front that enough legal cards exist before paying any cost, so an unpayable
         // discard makes activation illegal without side effects (CR 602.2a).
-        DiscardCardTypeCost discardCardTypeCost = ability.getEffects().stream()
-                .filter(DiscardCardTypeCost.class::isInstance)
-                .map(DiscardCardTypeCost.class::cast)
+        HandCardCost discardCardTypeCost = ability.getEffects().stream()
+                .filter(HandCardCost.class::isInstance)
+                .map(HandCardCost.class::cast)
                 .findFirst()
                 .orElse(null);
         if (discardCardTypeCost != null
@@ -844,9 +846,9 @@ public class AbilityActivationService {
                     playerId, card, ability, xValue, targetId, discardCardTypeCost.count());
             String labelText = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
             String prompt = discardCardTypeCost.count() > 1
-                    ? "Choose a " + labelText + "card to discard as an activation cost ("
+                    ? "Choose a " + labelText + "card to " + discardCardTypeCost.payVerb() + " as an activation cost ("
                     + discardCardTypeCost.count() + " remaining)."
-                    : "Choose a " + labelText + "card to discard as an activation cost.";
+                    : "Choose a " + labelText + "card to " + discardCardTypeCost.payVerb() + " as an activation cost.";
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.DiscardCostChoice(
                     playerId, validDiscardIndices, prompt));
             return;
@@ -1260,9 +1262,9 @@ public class AbilityActivationService {
         }
 
         ActivatedAbility ability = resolveAbility(gameData, source, pending.abilityIndex());
-        DiscardCardTypeCost discardCost = ability.getEffects().stream()
-                .filter(DiscardCardTypeCost.class::isInstance)
-                .map(DiscardCardTypeCost.class::cast)
+        HandCardCost discardCost = ability.getEffects().stream()
+                .filter(HandCardCost.class::isInstance)
+                .map(HandCardCost.class::cast)
                 .findFirst()
                 .orElseThrow();
 
@@ -1289,7 +1291,7 @@ public class AbilityActivationService {
             String labelText = pending.discardCostLabel() != null ? pending.discardCostLabel() + " " : "";
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.DiscardCostChoice(
                     player.getId(), validDiscardIndices,
-                    "Choose a " + labelText + "card to discard as an activation cost ("
+                    "Choose a " + labelText + "card to " + discardCost.payVerb() + " as an activation cost ("
                             + remaining + " remaining)."));
             return;
         }
@@ -1324,9 +1326,9 @@ public class AbilityActivationService {
         PendingGraveyardAbilityActivation pending = gameData.pendingGraveyardAbilityActivation;
         Card card = pending.card();
         ActivatedAbility ability = pending.ability();
-        DiscardCardTypeCost discardCost = ability.getEffects().stream()
-                .filter(DiscardCardTypeCost.class::isInstance)
-                .map(DiscardCardTypeCost.class::cast)
+        HandCardCost discardCost = ability.getEffects().stream()
+                .filter(HandCardCost.class::isInstance)
+                .map(HandCardCost.class::cast)
                 .findFirst()
                 .orElseThrow();
 
@@ -1352,7 +1354,7 @@ public class AbilityActivationService {
             String labelText = discardCost.label() != null ? discardCost.label() + " " : "";
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.DiscardCostChoice(
                     pending.playerId(), validDiscardIndices,
-                    "Choose a " + labelText + "card to discard as an activation cost ("
+                    "Choose a " + labelText + "card to " + discardCost.payVerb() + " as an activation cost ("
                             + remaining + " remaining)."));
             return;
         }
@@ -1411,6 +1413,7 @@ public class AbilityActivationService {
             // Refresh the "spend white as red" permission (Sunglasses of Urza) so this ability's cost
             // affordability check and payment honor it.
             pool.setWhiteSpendableAsRed(gameQueryService.canSpendWhiteManaAsRed(gameData, player.getId()));
+            pool.setWhiteSpendableAsAnyColor(gameQueryService.canSpendWhiteManaAsAnyColor(gameData, player.getId()));
         }
         Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();
         try {
@@ -1548,9 +1551,9 @@ public class AbilityActivationService {
             }
         }
 
-        DiscardCardTypeCost discardCardTypeCost = abilityEffects.stream()
-                .filter(DiscardCardTypeCost.class::isInstance)
-                .map(DiscardCardTypeCost.class::cast)
+        HandCardCost discardCardTypeCost = abilityEffects.stream()
+                .filter(HandCardCost.class::isInstance)
+                .map(HandCardCost.class::cast)
                 .findFirst()
                 .orElse(null);
         if (discardCardTypeCost != null) {
@@ -1559,10 +1562,12 @@ public class AbilityActivationService {
             if (discardCardIndex == null) {
                 if (validDiscardIndices.size() < discardCardTypeCost.count()) {
                     String costLabel = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
-                    throw new IllegalStateException("Must discard a " + costLabel + "card to activate ability");
+                    throw new IllegalStateException("Must " + discardCardTypeCost.payVerb() + " a " + costLabel
+                            + "card to activate ability");
                 }
                 beginDiscardCostChoice(gameData, playerId, permanent, effectiveIndex, effectiveXValue, targetId, targetZone,
-                        discardCardTypeCost.label(), validDiscardIndices, discardCardTypeCost.count());
+                        discardCardTypeCost.label(), validDiscardIndices, discardCardTypeCost.count(),
+                        discardCardTypeCost.payVerb());
                 return;
             }
         }
@@ -1705,6 +1710,10 @@ public class AbilityActivationService {
             if (c.powerModifier() > 0) {
                 permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placedCount);
                 placed = true;
+            } else if (c.powerModifier() == 0 && c.toughnessModifier() < 0) {
+                // -0/-1 counters (Wall of Roots) are a different kind from -1/-1, so -1/-1 replacement effects do not apply.
+                permanent.setCounterCount(CounterType.MINUS_ZERO_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE) + placedCount);
+                placed = true;
             } else if (!gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent)) {
                 // Vizier of Remedies reduces the -1/-1 counters put on as a cost (e.g. Devoted Druid).
                 placedCount = gameQueryService.reduceMinusOneMinusOneCounters(gameData, permanent, placedCount);
@@ -1714,7 +1723,9 @@ public class AbilityActivationService {
                 }
             }
             if (placed) {
-                String counterLabel = String.format("%+d/%+d", c.powerModifier(), c.toughnessModifier());
+                String counterLabel = c.powerModifier() == 0 && c.toughnessModifier() < 0
+                        ? "-0/" + c.toughnessModifier()
+                        : String.format("%+d/%+d", c.powerModifier(), c.toughnessModifier());
                 String counterWord = placedCount == 1 ? "a " + counterLabel + " counter" : placedCount + " " + counterLabel + " counters";
                 gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " puts " + counterWord + " on ", permanent.getCard(), "."));
             }
@@ -1818,7 +1829,7 @@ public class AbilityActivationService {
         if (effect instanceof SacrificeArtifactCost c) return new ArtifactSacrificeCostHandler(c, gameQueryService, sacAction);
         if (effect instanceof SacrificePermanentCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction, sourcePermanentId);
         if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction);
-        if (effect instanceof SacrificePermanentsSequenceCost c) return new SequencePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction, chosenSoFar);
+        if (effect instanceof SacrificePermanentsSequenceCost c) return new SequencePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction, chosenSoFar, sourcePermanentId);
         if (effect instanceof ReturnMultiplePermanentsToHandCost c) return new MultiplePermanentReturnToHandCostHandler(c, predicateEvaluationService, bounceAction);
         if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
@@ -2219,16 +2230,17 @@ public class AbilityActivationService {
 
         // Discard cost needs enough valid cards in hand (skipped when already paid interactively)
         if (!discardCostAlreadyPaid) {
-            DiscardCardTypeCost discardCardTypeCost = abilityEffects.stream()
-                    .filter(DiscardCardTypeCost.class::isInstance)
-                    .map(DiscardCardTypeCost.class::cast)
+            HandCardCost discardCardTypeCost = abilityEffects.stream()
+                    .filter(HandCardCost.class::isInstance)
+                    .map(HandCardCost.class::cast)
                     .findFirst()
                     .orElse(null);
             if (discardCardTypeCost != null
                     && collectDiscardIndices(gameData.playerHands.get(playerId), discardCardTypeCost, xValue).size()
                     < discardCardTypeCost.count()) {
                 String costLabel = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
-                throw new IllegalStateException("Must discard a " + costLabel + "card to activate ability");
+                throw new IllegalStateException("Must " + discardCardTypeCost.payVerb() + " a " + costLabel
+                        + "card to activate ability");
             }
         }
 
@@ -2409,6 +2421,11 @@ public class AbilityActivationService {
                     throw new IllegalStateException("Activate only if this creature is attacking");
                 }
             }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_WHILE_ATTACKING_OR_BLOCKING) {
+                if (!permanent.isAttacking() && !permanent.isBlocking()) {
+                    throw new IllegalStateException("Activate only if this creature is attacking or blocking");
+                }
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_BEFORE_ATTACKERS_DECLARED) {
                 if (!playerId.equals(gameData.activePlayerId)) {
                     throw new IllegalStateException("This ability can only be activated during your turn, before attackers are declared");
@@ -2421,6 +2438,12 @@ public class AbilityActivationService {
                 if (!gameData.currentStep.isBeforeAttackersDeclared()
                         || gameData.combatPhasesThisTurn > 1) {
                     throw new IllegalStateException("This ability can only be activated before attackers are declared");
+                }
+            }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.BEFORE_BLOCKERS_DECLARED) {
+                if (!gameData.currentStep.isBeforeBlockersDeclared()
+                        || gameData.combatPhasesThisTurn > 1) {
+                    throw new IllegalStateException("This ability can only be activated before blockers are declared");
                 }
             }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_COMBAT) {
@@ -2777,7 +2800,7 @@ public class AbilityActivationService {
         return null;
     }
 
-    private List<Integer> collectDiscardIndices(List<Card> hand, DiscardCardTypeCost cost, int xValue) {
+    private List<Integer> collectDiscardIndices(List<Card> hand, HandCardCost cost, int xValue) {
         List<Integer> validIndices = new ArrayList<>();
         if (hand == null) {
             return validIndices;
@@ -2796,7 +2819,7 @@ public class AbilityActivationService {
 
     private void beginDiscardCostChoice(GameData gameData, UUID playerId, Permanent permanent, int abilityIndex, int xValue,
                                         UUID targetId, Zone targetZone, String costLabel, List<Integer> validDiscardIndices,
-                                        int remainingDiscards) {
+                                        int remainingDiscards, String payVerb) {
         gameData.pendingAbilityActivation = new PendingAbilityActivation(
                 permanent.getId(),
                 abilityIndex,
@@ -2808,16 +2831,16 @@ public class AbilityActivationService {
         );
         String labelText = costLabel != null ? costLabel + " " : "";
         String prompt = remainingDiscards > 1
-                ? "Choose a " + labelText + "card to discard as an activation cost ("
+                ? "Choose a " + labelText + "card to " + payVerb + " as an activation cost ("
                 + remainingDiscards + " remaining)."
-                : "Choose a " + labelText + "card to discard as an activation cost.";
+                : "Choose a " + labelText + "card to " + payVerb + " as an activation cost.";
         interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.DiscardCostChoice(
                 playerId, validDiscardIndices, prompt));
     }
 
-    private void payDiscardCost(GameData gameData, Player player, DiscardCardTypeCost cost, Integer discardCardIndex, int xValue) {
+    private void payDiscardCost(GameData gameData, Player player, HandCardCost cost, Integer discardCardIndex, int xValue) {
         if (discardCardIndex == null) {
-            throw new IllegalStateException("Must choose a card to discard");
+            throw new IllegalStateException("Must choose a card to " + cost.payVerb());
         }
 
         List<Card> hand = gameData.playerHands.get(player.getId());
@@ -2825,17 +2848,24 @@ public class AbilityActivationService {
         Set<Integer> validSet = new HashSet<>(validDiscardIndices);
         if (!validSet.contains(discardCardIndex)) {
             String costLabel = cost.label() != null ? cost.label() + " " : "";
-            throw new IllegalStateException("Must discard a " + costLabel + "card");
+            throw new IllegalStateException("Must " + cost.payVerb() + " a " + costLabel + "card");
         }
 
-        Card discarded = hand.remove((int) discardCardIndex);
-        graveyardService.addCardToGraveyard(gameData, player.getId(), discarded);
-        gameData.discardCausedByOpponent = false;
-        triggerCollectionService.checkDiscardTriggers(gameData, player.getId(), discarded);
+        Card paid = hand.remove((int) discardCardIndex);
+        if (cost.exilesPaidCards()) {
+            exileService.exileCard(gameData, player.getId(), paid);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " exiles ", paid, " from their hand as an activation cost."));
+            log.info("Game {} - {} exiles {} from hand as activation cost", gameData.id, player.getUsername(), paid.getName());
+            return;
+        }
 
-        String logEntry = player.getUsername() + " discards " + discarded.getName() + " as an activation cost.";
-        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " discards " , discarded, " as an activation cost."));
-        log.info("Game {} - {} discards {} as activation cost", gameData.id, player.getUsername(), discarded.getName());
+        graveyardService.addCardToGraveyard(gameData, player.getId(), paid);
+        gameData.discardCausedByOpponent = false;
+        triggerCollectionService.checkDiscardTriggers(gameData, player.getId(), paid);
+
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " discards " , paid, " as an activation cost."));
+        log.info("Game {} - {} discards {} as activation cost", gameData.id, player.getUsername(), paid.getName());
     }
 
     private void payDiscardHandCost(GameData gameData, Player player) {

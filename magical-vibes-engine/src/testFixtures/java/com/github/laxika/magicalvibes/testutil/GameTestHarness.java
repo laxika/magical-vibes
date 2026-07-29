@@ -301,6 +301,12 @@ public class GameTestHarness {
         gameData.playerLifeTotals.put(player.getId(), life);
     }
 
+    /** Play a land from hand (a land play, not a cast — same entry point, no stack). */
+    public void playLand(Player player, int cardIndex) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null);
+    }
+
     public void castCreature(Player player, int cardIndex) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
@@ -526,6 +532,17 @@ public class GameTestHarness {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null,
                 null, null, null, false, null, null, imposedSacrificePermanentIds);
+    }
+
+    /**
+     * Cast a targeted sorcery paying a multi-permanent additional cast cost (Phyrexian Tribute's
+     * "sacrifice two creatures").
+     */
+    public void castSorceryWithSacrifices(Player player, int cardIndex, UUID targetId,
+                                          List<UUID> sacrificePermanentIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null,
+                null, null, null, false, null, null, null, sacrificePermanentIds);
     }
 
     public void castSorceryWithDiscard(Player player, int cardIndex, int discardHandCardIndex) {

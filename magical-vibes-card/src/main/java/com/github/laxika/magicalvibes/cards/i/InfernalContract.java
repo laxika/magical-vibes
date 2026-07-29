@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
+@CardRegistration(set = "MIR", collectorNumber = "129")
 @CardRegistration(set = "7ED", collectorNumber = "143")
 @CardRegistration(set = "6ED", collectorNumber = "139")
 public class InfernalContract extends Card {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "6ED", collectorNumber = "109")
+@CardRegistration(set = "MIR", collectorNumber = "103")
 public class AbyssalHunter extends Card {
 
     public AbyssalHunter() {

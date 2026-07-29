@@ -7,7 +7,10 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>Snapshots the number of permanents actually put into a graveyard this way onto the stack
  * entry as its event value, so a later effect on the same entry can reference "that many" via an
- * {@code EventValue} amount (Volcanic Eruption's mass damage).
+ * {@code EventValue} amount (Volcanic Eruption's mass damage). Also stamps the controller of every
+ * permanent actually destroyed onto {@code StackEntry.eventPlayerIds} (duplicates meaningful), for
+ * riders that need a per-player tally instead — see
+ * {@link DealDamageToEachDestroyedPermanentControllerEffect} (Builder's Bane).
  *
  * @param cannotBeRegenerated whether the destroyed permanents cannot be regenerated
  */

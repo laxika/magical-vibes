@@ -27,7 +27,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.YouAndOpponentChooseCardNamesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
@@ -36,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEff
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -238,6 +241,12 @@ public class StackResolutionService {
         perm.setCastFromZone(entry.getSourceZone());
         // Keywords the spell grants the permanent as it enters (Choreographed Sparks' hasty copy).
         perm.getGrantedKeywords().addAll(entry.getGrantedKeywordsOnEntry());
+        // Mirage flash clause: cast at a time a sorcery couldn't have been cast, so its controller
+        // sacrifices the permanent it becomes at the beginning of the next cleanup step.
+        if (entry.isCastWhenSorceryCouldNotBeCast() && card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(FlashCastWithCleanupSacrificeEffect.class::isInstance)) {
+            perm.setSacrificeAtNextCleanup(true);
+        }
         if ((entry.isCastWithDisturb() || entry.isCastTransformed()) && characteristics != card) {
             perm.setCard(characteristics);
             perm.setTransformed(true);
@@ -460,12 +469,15 @@ public class StackResolutionService {
                 maybeBeginBasicLandTypeChoice(gameData, controllerId, characteristics);
 
                 // Check if aura has "as enters, choose a color" (e.g. Prismatic Ward)
-                boolean needsAuraColorChoice = characteristics.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                        .anyMatch(e -> e instanceof ChooseColorEffect);
-                if (needsAuraColorChoice) {
+                ChooseColorEffect auraColorChoice = characteristics.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .filter(e -> e instanceof ChooseColorEffect)
+                        .map(e -> (ChooseColorEffect) e)
+                        .findFirst().orElse(null);
+                if (auraColorChoice != null) {
                     List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                     Permanent justEntered = bf.get(bf.size() - 1);
-                    playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), null);
+                    playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), null,
+                            auraColorChoice.allowedColors());
                 }
 
                 // Process aura ETB effects (e.g., Volition Reins)
@@ -488,6 +500,16 @@ public class StackResolutionService {
                 return;
             }
 
+            // "As this enters, you and an opponent each choose a card name" (Null Chamber) — both
+            // names are chosen before the permanent enters (CR 614.1c); the controller names first.
+            boolean dualNameChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .anyMatch(e -> e instanceof YouAndOpponentChooseCardNamesOnEnterEffect);
+            if (dualNameChoice) {
+                playerInputService.beginDualCardNameChoice(gameData,
+                        new ChoiceContext.DualCardNameChoice(card, controllerId, controllerId, null));
+                return;
+            }
+
             Permanent enchPerm = createEnteringPermanent(entry, card, characteristics);
             // Pass cast X / kicked so "enters with X counters" replacements and ETB triggers that
             // read XValue (e.g. The Meathook Massacre) see the paid X.
@@ -505,12 +527,15 @@ public class StackResolutionService {
             }
 
             // Check if enchantment has "as enters" color choice
-            boolean needsColorChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                    .anyMatch(e -> e instanceof ChooseColorEffect);
-            if (needsColorChoice) {
+            ChooseColorEffect enchantmentColorChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .filter(e -> e instanceof ChooseColorEffect)
+                    .map(e -> (ChooseColorEffect) e)
+                    .findFirst().orElse(null);
+            if (enchantmentColorChoice != null) {
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 Permanent justEntered = bf.get(bf.size() - 1);
-                playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), null);
+                playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), null,
+                        enchantmentColorChoice.allowedColors());
             }
 
             // Check if enchantment has "as enters" basic land type choice (e.g. Illusionary Terrain)
@@ -933,7 +958,8 @@ public class StackResolutionService {
         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
         Permanent justEntered = bf.get(bf.size() - 1);
         playerInputService.beginBasicLandTypeChoice(
-                gameData, controllerId, justEntered.getId(), false, choose.choicesRequired() > 1);
+                gameData, controllerId, justEntered.getId(), false, choose.choicesRequired() > 1,
+                choose.allowedTypes());
     }
 
     private void checkLegendRuleIfIdle(GameData gameData, UUID controllerId) {

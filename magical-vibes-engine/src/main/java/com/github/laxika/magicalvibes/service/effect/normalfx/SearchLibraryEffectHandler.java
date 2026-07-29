@@ -120,6 +120,8 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                         .filterPredicate(restricted ? filter : null)
                         .requireDifferentNames(effect.requireDifferentNames())
                         .manaValueBound(boundValue, bound != null && bound.exact())
+                        .grantHaste(effect.grantHaste())
+                        .exileAtEndStep(effect.exileAtEndStep())
                         .build(),
                 prompt, restricted);
 

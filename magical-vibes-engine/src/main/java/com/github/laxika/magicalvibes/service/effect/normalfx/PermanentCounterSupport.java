@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -40,6 +42,11 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class PermanentCounterSupport {
+
+    private static final DoesntUntapWithCounterEffect FUNGUS_UNTAP_LOCK =
+            new DoesntUntapWithCounterEffect(CounterType.FUNGUS);
+    private static final RemoveCounterFromSourceEffect REMOVE_FUNGUS_COUNTER =
+            new RemoveCounterFromSourceEffect(CounterType.FUNGUS, 1);
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -201,6 +208,11 @@ public class PermanentCounterSupport {
                 target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + count);
                 yield "-1/-1";
             }
+            case MINUS_ONE_MINUS_ZERO -> {
+                if (count <= 0) { yield null; }
+                target.setCounterCount(CounterType.MINUS_ONE_MINUS_ZERO, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ZERO) + count);
+                yield "-1/-0";
+            }
             case MINUS_ZERO_MINUS_ONE -> {
                 if (count <= 0) { yield null; }
                 target.setCounterCount(CounterType.MINUS_ZERO_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE) + count);
@@ -210,6 +222,11 @@ public class PermanentCounterSupport {
                 if (count <= 0) { yield null; }
                 target.setCounterCount(CounterType.MINUS_ZERO_MINUS_TWO, target.getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO) + count);
                 yield "-0/-2";
+            }
+            case PLUS_ZERO_PLUS_ONE -> {
+                if (count <= 0) { yield null; }
+                target.setCounterCount(CounterType.PLUS_ZERO_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE) + count);
+                yield "+0/+1";
             }
             case CARRION -> { target.setCounterCount(CounterType.CARRION, target.getCounterCount(CounterType.CARRION) + count); yield "carrion"; }
             case DOOM -> { target.setCounterCount(CounterType.DOOM, target.getCounterCount(CounterType.DOOM) + count); yield "doom"; }
@@ -240,9 +257,16 @@ public class PermanentCounterSupport {
             case HEALING -> { target.setCounterCount(CounterType.HEALING, target.getCounterCount(CounterType.HEALING) + count); yield "healing"; }
             case FEATHER -> { target.setCounterCount(CounterType.FEATHER, target.getCounterCount(CounterType.FEATHER) + count); yield "feather"; }
             case PARALYZATION -> { target.setCounterCount(CounterType.PARALYZATION, target.getCounterCount(CounterType.PARALYZATION) + count); yield "paralyzation"; }
+            case FUNGUS -> {
+                if (count <= 0) { yield null; }
+                target.setCounterCount(CounterType.FUNGUS, target.getCounterCount(CounterType.FUNGUS) + count);
+                grantFungusCounterAbilities(target);
+                yield "fungus";
+            }
             case ICE -> { target.setCounterCount(CounterType.ICE, target.getCounterCount(CounterType.ICE) + count); yield "ice"; }
             case MUSIC -> { target.setCounterCount(CounterType.MUSIC, target.getCounterCount(CounterType.MUSIC) + count); yield "music"; }
             case WIND -> { target.setCounterCount(CounterType.WIND, target.getCounterCount(CounterType.WIND) + count); yield "wind"; }
+            case VORTEX -> { target.setCounterCount(CounterType.VORTEX, target.getCounterCount(CounterType.VORTEX) + count); yield "vortex"; }
             default -> throw new IllegalStateException("Unsupported counter type: " + counterType);
         };
         if (counterName == null) return;
@@ -268,6 +292,27 @@ public class PermanentCounterSupport {
         }
     }
 
+    /**
+     * Mindbender Spores hands the blocked creature two abilities along with its fungus counters:
+     * "This creature doesn't untap during your untap step if it has a fungus counter on it" and
+     * "At the beginning of your upkeep, remove a fungus counter from this creature". Both are tied
+     * to the counter rather than to the source, so they are granted here (idempotently) wherever
+     * fungus counters land, and they outlive the creature that placed them.
+     */
+    private static void grantFungusCounterAbilities(Permanent target) {
+        if (!hasGrantedEffect(target, EffectSlot.STATIC, FUNGUS_UNTAP_LOCK)) {
+            target.addPersistentTriggeredEffect(EffectSlot.STATIC, FUNGUS_UNTAP_LOCK);
+        }
+        if (!hasGrantedEffect(target, EffectSlot.UPKEEP_TRIGGERED, REMOVE_FUNGUS_COUNTER)) {
+            target.addPersistentTriggeredEffect(EffectSlot.UPKEEP_TRIGGERED, REMOVE_FUNGUS_COUNTER);
+        }
+    }
+
+    private static boolean hasGrantedEffect(Permanent target, EffectSlot slot, CardEffect effect) {
+        return target.getCard().getEffects(slot).contains(effect)
+                || target.getPersistentTriggeredEffects(slot).contains(effect);
+    }
+
     public String counterTypeName(CounterType counterType) {
         return switch (counterType) {
             case CHARGE -> "charge";
@@ -277,6 +322,7 @@ public class PermanentCounterSupport {
             case PLUS_ONE_PLUS_ZERO -> "+1/+0";
             case PLUS_TWO_PLUS_TWO -> "+2/+2";
             case MINUS_ONE_MINUS_ONE -> "-1/-1";
+            case MINUS_ONE_MINUS_ZERO -> "-1/-0";
             case HATCHLING -> "hatchling";
             case STUDY -> "study";
             case WISH -> "wish";

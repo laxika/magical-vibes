@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "20")
+@CardRegistration(set = "MIR", collectorNumber = "15")
 public class EtherealChampion extends Card {
 
     public EtherealChampion() {

@@ -67,6 +67,13 @@ public class ManaPool {
      * from board state at the payment/affordability sites; honored by {@link ManaCost#canPay}/{@code pay}.
      */
     private boolean whiteSpendableAsRed;
+    /**
+     * Permission flag (not mana): while set, white mana in this pool may be spent as mana of any
+     * color, and every other mana may be spent only as though it were colorless (Celestial Dawn).
+     * Set from board state at the payment/affordability sites; honored by
+     * {@link ManaCost#canPay}/{@code pay}, which rewrite the pool accordingly before paying.
+     */
+    private boolean whiteSpendableAsAnyColor;
 
     public ManaPool() {
         for (ManaColor color : ManaColor.values()) {
@@ -111,6 +118,7 @@ public class ManaPool {
             exiledCardOnlyMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
         }
         this.whiteSpendableAsRed = source.whiteSpendableAsRed;
+        this.whiteSpendableAsAnyColor = source.whiteSpendableAsAnyColor;
     }
 
     /** See {@link #whiteSpendableAsRed}. */
@@ -121,6 +129,16 @@ public class ManaPool {
     /** See {@link #whiteSpendableAsRed}. */
     public void setWhiteSpendableAsRed(boolean whiteSpendableAsRed) {
         this.whiteSpendableAsRed = whiteSpendableAsRed;
+    }
+
+    /** See {@link #whiteSpendableAsAnyColor}. */
+    public boolean isWhiteSpendableAsAnyColor() {
+        return whiteSpendableAsAnyColor;
+    }
+
+    /** See {@link #whiteSpendableAsAnyColor}. */
+    public void setWhiteSpendableAsAnyColor(boolean whiteSpendableAsAnyColor) {
+        this.whiteSpendableAsAnyColor = whiteSpendableAsAnyColor;
     }
 
     public void add(ManaColor color) {

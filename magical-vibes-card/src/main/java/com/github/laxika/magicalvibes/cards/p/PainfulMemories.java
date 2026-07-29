@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "147")
+@CardRegistration(set = "MIR", collectorNumber = "133")
 public class PainfulMemories extends Card {
 
     public PainfulMemories() {

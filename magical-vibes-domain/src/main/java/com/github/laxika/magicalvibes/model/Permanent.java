@@ -81,6 +81,9 @@ public class Permanent {
     @Setter private UUID pairedWithId;
     @Setter private CardColor chosenColor;
     @Setter private String chosenName;
+    /** Second card name chosen "as this enters" when two players each name a card
+     *  (Null Chamber: the controller's pick → {@link #chosenName}, the opponent's → here). */
+    @Setter private String secondChosenName;
     @Setter private CardSubtype chosenSubtype;
     /** Second basic land type chosen "as this enters" when the card chooses two types
      *  (Illusionary Terrain: first type → {@link #chosenSubtype}, second → here). */
@@ -107,21 +110,48 @@ public class Permanent {
     @Setter private boolean mustBeBlockedThisTurn;
     /** When true, all creatures able to block this creature this turn do so (Lure-style, one-shot, e.g. Alluring Scent). Cleared at end of turn. */
     @Setter private boolean mustBeBlockedByAllThisTurn;
+    /** When true, this attacking creature is blocked even though no creature is blocking it
+     *  (Dazzling Beauty). CR 509.1h — it deals no combat damage, since a blocked creature with no
+     *  blockers to assign damage to assigns none. Cleared at end of turn. */
+    @Setter private boolean blockedWithoutBlockers;
     @Setter private boolean cantRegenerateThisTurn;
     /** When true, creatures this permanent dealt damage to this turn can't be regenerated this turn
      *  (Bone Shaman's activated ability). Cleared at end of turn. */
     @Setter private boolean damagedCreaturesCantRegenerateThisTurn;
     /** If true, this creature is exiled instead of dying this turn (e.g. Red Sun's Zenith). Cleared at end of turn. */
     @Setter private boolean exileInsteadOfDieThisTurn;
+    /** If true, this permanent's controller sacrifices it at the beginning of the next cleanup step —
+     *  the Mirage flash clause ({@code FlashCastWithCleanupSacrificeEffect}) when the spell was cast
+     *  any time a sorcery couldn't have been cast. The cleanup sweep sacrifices it before
+     *  {@link #resetModifiers()} runs, so the flag deliberately survives that reset. */
+    @Setter private boolean sacrificeAtNextCleanup;
     /** Secrets of Strixhaven "Prepared": true while this permanent is prepared (CR-style designation). While
      *  prepared, a copy of its prepare spell sits in exile (see {@link #preparedSpellCardId}) and the controller
      *  may cast it; casting it unprepares this permanent. */
     @Setter private boolean prepared;
+    /** Phasing (CR 702.26g): true while this permanent is phased out only because the permanent it is attached
+     *  to phased out ("indirectly"). Such an Aura/Equipment never phases in by itself — it phases in together
+     *  with its host, so the untap-step phasing pass skips it when picking permanents to phase in. Phased-out
+     *  permanents live in {@code GameData.phasedOutPermanents} rather than on a battlefield, and the flag
+     *  deliberately survives {@link #resetModifiers()} (phased-out status persists across turns). */
+    @Setter private boolean phasedOutIndirectly;
     /** The id of the exiled prepare-spell copy linked to this permanent while it is prepared (null otherwise). */
     @Setter private UUID preparedSpellCardId;
     /** If true, this creature has "Whenever this creature deals damage to an opponent, you may return target creature
      *  that player controls to its owner's hand" until end of turn (e.g. Arm with Aether). Cleared at end of turn. */
     @Setter private boolean hasDamageToOpponentCreatureBounce;
+    /** Soul Echo: set when the targeted opponent chose that, until this permanent's controller's next
+     *  upkeep, each 1 damage that would be dealt to that controller instead removes an echo counter
+     *  from this permanent. Survives {@link #resetModifiers()} — the duration ends at the next upkeep,
+     *  where {@code SoulEchoUpkeepEffectHandler} clears it before offering the choice again. */
+    @Setter private boolean echoDamageRedirectionActive;
+    /** Spatial Binding: the id of the player whose next upkeep ends this permanent's "can't phase out"
+     *  restriction, or null while it may phase out normally. Phasing is a turn-based action of the untap
+     *  step (CR 502.1), which precedes the upkeep, so the permanent is still protected during that
+     *  player's own untap step; {@code StepTriggerService.handleUpkeepTriggers} clears the field when
+     *  that player becomes the active player. Survives {@link #resetModifiers()} — the duration spans
+     *  turns. */
+    @Setter private UUID cantPhaseOutUntilUpkeepOf;
     /** Triggered effects temporarily granted by one-shot effects until end of turn
      *  (e.g. Verdant Rebirth granting ON_DEATH → ReturnSourceCardFromGraveyardToOwnerHandEffect).
      *  Keyed by EffectSlot so the trigger collection system can look up effects for the relevant slot.
@@ -408,6 +438,7 @@ public class Permanent {
         this.pairedWithId = source.pairedWithId;
         this.chosenColor = source.chosenColor;
         this.chosenName = source.chosenName;
+        this.secondChosenName = source.secondChosenName;
         this.chosenSubtype = source.chosenSubtype;
         this.secondChosenSubtype = source.secondChosenSubtype;
         this.chosenNumber = source.chosenNumber;
@@ -421,16 +452,19 @@ public class Permanent {
         this.mustAttackTargetId = source.mustAttackTargetId;
         this.mustBeBlockedThisTurn = source.mustBeBlockedThisTurn;
         this.mustBeBlockedByAllThisTurn = source.mustBeBlockedByAllThisTurn;
+        this.blockedWithoutBlockers = source.blockedWithoutBlockers;
         this.cantRegenerateThisTurn = source.cantRegenerateThisTurn;
         this.damagedCreaturesCantRegenerateThisTurn = source.damagedCreaturesCantRegenerateThisTurn;
         this.exileInsteadOfDieThisTurn = source.exileInsteadOfDieThisTurn;
         this.prepared = source.prepared;
+        this.phasedOutIndirectly = source.phasedOutIndirectly;
         this.preparedSpellCardId = source.preparedSpellCardId;
         this.hasDamageToOpponentCreatureBounce = source.hasDamageToOpponentCreatureBounce;
         source.temporaryTriggeredEffects.forEach((slot, effects) ->
                 this.temporaryTriggeredEffects.put(slot, new ArrayList<>(effects)));
         source.persistentTriggeredEffects.forEach((slot, effects) ->
                 this.persistentTriggeredEffects.put(slot, new ArrayList<>(effects)));
+        this.sacrificeAtNextCleanup = source.sacrificeAtNextCleanup;
         this.basePowerToughnessOverriddenUntilEndOfTurn = source.basePowerToughnessOverriddenUntilEndOfTurn;
         this.basePowerOverride = source.basePowerOverride;
         this.baseToughnessOverride = source.baseToughnessOverride;
@@ -664,6 +698,7 @@ public class Permanent {
     public int getPowerModifiers() {
         return powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
                 + getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)
+                - getCounterCount(CounterType.MINUS_ONE_MINUS_ZERO)
                 + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO);
     }
 
@@ -690,6 +725,7 @@ public class Permanent {
     public int getEffectivePower() {
         return getBasePower() + powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
                 + getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)
+                - getCounterCount(CounterType.MINUS_ONE_MINUS_ZERO)
                 + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO);
     }
 
@@ -855,6 +891,7 @@ public class Permanent {
         this.mustAttackTargetId = null;
         this.mustBeBlockedThisTurn = false;
         this.mustBeBlockedByAllThisTurn = false;
+        this.blockedWithoutBlockers = false;
         this.cantRegenerateThisTurn = false;
         this.damagedCreaturesCantRegenerateThisTurn = false;
         this.exileInsteadOfDieThisTurn = false;

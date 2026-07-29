@@ -211,7 +211,10 @@ public class TargetPolarityClassifier {
         // Wings of Velis Vel (4/4 flying) upgrades the AI's own weenie. A small stat line
         // is a shrink, a large one a pump.
         if (effect instanceof SetBasePowerToughnessEffect setStats) {
-            return setStats.power() + setStats.toughness() <= 4
+            // A partial setter leaves the other component alone, so score only what it writes.
+            int written = (setStats.power() == null ? 2 : setStats.power())
+                    + (setStats.toughness() == null ? 2 : setStats.toughness());
+            return written <= 4
                     ? TargetPolarity.HARMFUL
                     : TargetPolarity.BENEFICIAL;
         }
@@ -332,6 +335,7 @@ public class TargetPolarityClassifier {
             entry("RemoveCounterFromTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("SacrificeTargetThenRevealUntilTypeToBattlefieldEffect", TargetPolarity.NEUTRAL),
             entry("SetTargetColorEffect", TargetPolarity.NEUTRAL),
+            entry("BecomeColorlessUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("SwitchPowerToughnessEffect", TargetPolarity.NEUTRAL),
             entry("TargetCreatureBecomesSubtypeUntilEndOfTurnEffect", TargetPolarity.NEUTRAL)
     );

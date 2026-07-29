@@ -17,6 +17,8 @@ import java.util.Set;
  *   <li>{@link #fromSpellColors(Set)} — spells of the given colors can't target (Karplusan Strider).</li>
  *   <li>{@link #hexproofFromColors(Set)} — opponents' spells/abilities of the given colors can't target
  *       (Knight of Grace/Malice — hexproof from color, CR 702.11).</li>
+ *   <li>{@link #fromSourceColors(Set)} — spells/abilities of the given colors can't target, no matter
+ *       who controls them (Suq'Ata Firewalker).</li>
  * </ul>
  *
  * @param kind         which source kinds the restriction covers
@@ -66,5 +68,15 @@ public record TargetingRestrictionEffect(
     public static TargetingRestrictionEffect hexproofFromColors(Set<CardColor> colors) {
         return new TargetingRestrictionEffect(
                 TargetingSourceKind.SPELLS_AND_ABILITIES, true, colors, TargetColorMode.BLOCKED_COLORS);
+    }
+
+    /**
+     * Can't be the target of spells of the given colors or abilities from sources of those colors,
+     * regardless of who controls them — unlike {@link #hexproofFromColors(Set)}, the permanent's own
+     * controller is restricted too. Suq'Ata Firewalker.
+     */
+    public static TargetingRestrictionEffect fromSourceColors(Set<CardColor> colors) {
+        return new TargetingRestrictionEffect(
+                TargetingSourceKind.SPELLS_AND_ABILITIES, false, colors, TargetColorMode.BLOCKED_COLORS);
     }
 }

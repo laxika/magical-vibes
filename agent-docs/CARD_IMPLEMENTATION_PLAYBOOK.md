@@ -526,6 +526,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new NotKicked(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new Raid(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new SelfDealtDamageToOpponentThisTurn(), wrapped)` | - | yes | yes (end step) | source dealt (combat) damage to an opponent of its *current* controller this turn (Whirling Dervish) — reads `combatDamageToPlayersThisTurn` |
+| `ConditionalEffect(new SelfWasDealtDamageThisTurn(), wrapped)` | - | yes | yes (end step) | source *was* dealt damage this turn, combat or not (Wall of Resistance) — reads `permanentsDealtDamageThisTurn`, the same tracking as `PermanentDealtDamageThisTurnPredicate` |
 | `ConditionalEffect(new Equipped(), wrapped)` | yes | yes | - |
 | `ConditionalEffect(new Enchanted(), wrapped)` | yes | yes | - |
 | `ConditionalEffect(new ControlsAnotherPermanent(filter), wrapped)` | yes | yes | - |

@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellIfNameFoundElsewhereEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToManaSpentToCastToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
@@ -310,6 +311,23 @@ public class SpellCastTriggerCollectorService {
         entry.setTargetId(sc.castingPlayerId());
         entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
+        return true;
+    }
+
+    @CollectsTrigger(value = CounterSpellIfNameFoundElsewhereEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handleCounterIfNameFoundElsewhere(TriggerMatchContext match,
+            CounterSpellIfNameFoundElsewhereEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        // Bazaar of Wonders: the name check is part of the effect, so it happens on resolution.
+        // The cast spell is stamped as the trigger's target (auto-chosen, not player-selected).
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                sc.spellCard().getId(),
+                Zone.STACK));
         return true;
     }
 
@@ -891,8 +909,10 @@ public class SpellCastTriggerCollectorService {
         if (trigger.castSpellTargetCondition() != null) {
             StackEntry spellEntry = findStackEntryForCard(match.gameData(), spellCard.getId());
             if (spellEntry == null) return false;
+            // Evaluated from the trigger source's controller, so "you"/"you control" in the predicate
+            // means the ability's controller — not the caster (Reparations, an opponent-cast trigger).
             if (!targetLegalityService.matchesStackEntryPredicate(match.gameData(), spellEntry,
-                    trigger.castSpellTargetCondition(), castingPlayerId, match.permanent())) return false;
+                    trigger.castSpellTargetCondition(), match.controllerId(), match.permanent())) return false;
         }
 
         List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());

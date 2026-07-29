@@ -775,6 +775,9 @@ public class ValidTargetService {
         if (sourceColor == null) {
             return false;
         }
+        if (gameQueryService.cantBeTargetedByColorSources(gameData, perm, sourceColor)) {
+            return true;
+        }
         if (gameQueryService.hasHexproofFromColor(gameData, perm, sourceColor)) {
             UUID targetController = gameQueryService.findPermanentController(gameData, perm.getId());
             if (targetController != null && !targetController.equals(controllerId)) {

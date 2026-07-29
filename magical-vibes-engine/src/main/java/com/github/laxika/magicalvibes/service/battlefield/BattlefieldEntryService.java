@@ -280,18 +280,20 @@ public class BattlefieldEntryService {
     }
 
     /**
-     * CR 613.7: a color set on a permanent spell (e.g. Purelace targeting a creature spell "becomes
-     * white") carries onto the permanent that spell resolves into. The override was recorded keyed by
-     * the spell's card id; the entering permanent shares that card id, so seed its colors and float an
-     * indefinite layer-5 color setter (mirroring {@code SetTargetColorEffectHandler}'s permanent path).
+     * CR 400.7a: a color set on a permanent spell (e.g. Purelace targeting a creature spell "becomes
+     * white", or Ersatz Gnomes' "becomes colorless") carries onto the permanent that spell resolves
+     * into. The override was recorded keyed by the spell's card id — an empty set meaning colorless;
+     * the entering permanent shares that card id, so seed its colors and float an indefinite layer-5
+     * color setter (mirroring {@code SetTargetColorEffectHandler}'s permanent path).
      */
     private void carrySpellColorOverride(GameData gameData, UUID controllerId, Permanent permanent) {
-        CardColor color = gameData.spellColorOverrides.remove(permanent.getCard().getId());
-        if (color == null) {
+        Set<CardColor> colors = gameData.spellColorOverrides.remove(permanent.getCard().getId());
+        if (colors == null) {
             return;
         }
+        CardColor color = colors.stream().findFirst().orElse(null);
         permanent.getTransientColors().clear();
-        permanent.getTransientColors().add(color);
+        permanent.getTransientColors().addAll(colors);
         permanent.setColorOverridden(true);
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 permanent.getCard().getName(), null, controllerId, new SetTargetColorEffect(color),
@@ -746,12 +748,15 @@ public class BattlefieldEntryService {
             // No other creatures — bodyguard enters with no chosen creature
         }
 
-        boolean needsColorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof ChooseColorEffect);
-        if (needsColorChoice) {
+        ChooseColorEffect colorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(e -> e instanceof ChooseColorEffect)
+                .map(e -> (ChooseColorEffect) e)
+                .findFirst().orElse(null);
+        if (colorChoice != null) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
-            playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), targetId);
+            playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), targetId,
+                    colorChoice.allowedColors());
             return;
         }
 

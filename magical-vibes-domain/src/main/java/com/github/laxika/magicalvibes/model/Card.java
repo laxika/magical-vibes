@@ -125,6 +125,12 @@ public class Card {
     private boolean enchantPlayer;
     private int additionalCostPerExtraTarget;
     /**
+     * "This spell costs N life more to cast for each target" (Phyrexian Purge). Unlike
+     * {@link #additionalCostPerExtraTarget} this applies to every chosen target, including the
+     * first, and is paid in life rather than mana.
+     */
+    private int additionalLifeCostPerTarget;
+    /**
      * When true, the same permanent may be chosen for different target groups (CR 114.6c).
      * By default, targets across groups must be distinct — matching the common MTG pattern
      * where separate "target" instances imply "another". Set this for cards whose oracle text
@@ -238,6 +244,7 @@ public class Card {
         this.requiresCreatureMana = source.requiresCreatureMana;
         this.enchantPlayer = source.enchantPlayer;
         this.additionalCostPerExtraTarget = source.additionalCostPerExtraTarget;
+        this.additionalLifeCostPerTarget = source.additionalLifeCostPerTarget;
         this.allowSharedTargets = source.allowSharedTargets;
         this.multiTargetConstraint = source.multiTargetConstraint;
         this.spellTargets.addAll(source.spellTargets);
@@ -338,6 +345,7 @@ public class Card {
     public void setRequiresCreatureMana(boolean requiresCreatureMana) { assertMutable(); this.requiresCreatureMana = requiresCreatureMana; }
     public void setEnchantPlayer(boolean enchantPlayer) { assertMutable(); this.enchantPlayer = enchantPlayer; }
     public void setAdditionalCostPerExtraTarget(int additionalCostPerExtraTarget) { assertMutable(); this.additionalCostPerExtraTarget = additionalCostPerExtraTarget; }
+    public void setAdditionalLifeCostPerTarget(int additionalLifeCostPerTarget) { assertMutable(); this.additionalLifeCostPerTarget = additionalLifeCostPerTarget; }
     public void setAllowSharedTargets(boolean allowSharedTargets) { assertMutable(); this.allowSharedTargets = allowSharedTargets; }
     public void setMultiTargetConstraint(MultiTargetConstraint multiTargetConstraint) { assertMutable(); this.multiTargetConstraint = multiTargetConstraint; }
     public void setCastTimeTargetFilter(TargetFilter castTimeTargetFilter) { assertMutable(); this.castTimeTargetFilter = castTimeTargetFilter; }
@@ -702,6 +710,7 @@ public class Card {
                         .returnAll(true)
                         .grantHaste(true)
                         .exileAtEndStep(true)
+                        .exileIfLeavesBattlefield(true)
                         .build()),
                 "Unearth " + cost,
                 ActivationTimingRestriction.SORCERY_SPEED));

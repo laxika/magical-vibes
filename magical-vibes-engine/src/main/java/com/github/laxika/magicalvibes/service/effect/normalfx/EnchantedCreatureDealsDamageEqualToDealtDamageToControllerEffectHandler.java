@@ -34,7 +34,7 @@ public class EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffectHan
         UUID controllerId = entry.getTargetId();
         if (controllerId == null) return;
 
-        Card sourceCard = entry.getDamageSourceCard();
+        Card sourceCard = e.auraIsSource() ? entry.getCard() : entry.getDamageSourceCard();
         if (sourceCard == null) {
             Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
             if (aura == null || !aura.isAttached()) return;
@@ -50,13 +50,13 @@ public class EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffectHan
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, entry.getXValue(), entry);
         if (rawDamage <= 0) return;
 
-        String creatureName = sourceCard.getName();
+        String sourceName = sourceCard.getName();
 
         StackEntry creatureEntry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 controllerId,
-                creatureName + " deals damage to its controller",
+                sourceName + " deals damage to its controller",
                 List.of(),
                 controllerId,
                 entry.getSourcePermanentId()

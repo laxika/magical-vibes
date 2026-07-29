@@ -20,6 +20,9 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * graveyard). {@code requireDifferentNames} (Uncage the Menagerie) excludes cards whose names match
  * an already-chosen pick for the same search.
  *
+ * <p>{@code grantHaste} and {@code exileAtEndStep} apply to battlefield destinations only: the found
+ * permanent gains haste, and/or is exiled at the beginning of the next end step (Zirilan of the Claw).
+ *
  * <p>Replaced the {@code SearchLibraryFor*} family (to-hand tutors, by-name searches, to-top,
  * creature-to-battlefield with MV/colour/subtype constraints, and card-types-to-battlefield).
  */
@@ -29,27 +32,29 @@ public record SearchLibraryEffect(
         LibrarySearchDestination destination,
         ManaValueBound manaValueBound,
         int castFromGraveyardCount,
-        boolean requireDifferentNames
+        boolean requireDifferentNames,
+        boolean grantHaste,
+        boolean exileAtEndStep
 ) implements CardEffect {
 
     /** Unrestricted single-card tutor to hand (e.g. Diabolic Tutor). */
     public SearchLibraryEffect() {
-        this(new Fixed(1), null, LibrarySearchDestination.HAND, null, 1, false);
+        this(new Fixed(1), null, LibrarySearchDestination.HAND, null, 1, false, false, false);
     }
 
     /** Single card matching {@code filter} to hand (basic land, artifact, creature, …). */
     public SearchLibraryEffect(CardPredicate filter) {
-        this(new Fixed(1), filter, LibrarySearchDestination.HAND, null, 1, false);
+        this(new Fixed(1), filter, LibrarySearchDestination.HAND, null, 1, false, false, false);
     }
 
     /** Single card matching {@code filter} to the given destination. */
     public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination) {
-        this(new Fixed(1), filter, destination, null, 1, false);
+        this(new Fixed(1), filter, destination, null, 1, false, false, false);
     }
 
     /** Up to {@code count} cards matching {@code filter} to the given destination. */
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination) {
-        this(count, filter, destination, null, 1, false);
+        this(count, filter, destination, null, 1, false, false, false);
     }
 
     /**
@@ -57,12 +62,12 @@ public record SearchLibraryEffect(
      * graveyard (flashback). A {@code null} filter is an unrestricted tutor (e.g. Increasing Ambition).
      */
     public SearchLibraryEffect(CardPredicate filter, int count, int castFromGraveyardCount) {
-        this(new Fixed(count), filter, LibrarySearchDestination.HAND, null, castFromGraveyardCount, false);
+        this(new Fixed(count), filter, LibrarySearchDestination.HAND, null, castFromGraveyardCount, false, false, false);
     }
 
     /** Single card matching {@code filter} to the given destination with a dynamic mana-value bound. */
     public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination, ManaValueBound manaValueBound) {
-        this(new Fixed(1), filter, destination, manaValueBound, 1, false);
+        this(new Fixed(1), filter, destination, manaValueBound, 1, false, false, false);
     }
 
     /**
@@ -71,6 +76,15 @@ public record SearchLibraryEffect(
      */
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
                                ManaValueBound manaValueBound, boolean requireDifferentNames) {
-        this(count, filter, destination, manaValueBound, 1, requireDifferentNames);
+        this(count, filter, destination, manaValueBound, 1, requireDifferentNames, false, false);
+    }
+
+    /**
+     * Single card matching {@code filter} onto the battlefield, optionally with haste and/or exiled
+     * at the beginning of the next end step (Zirilan of the Claw).
+     */
+    public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination,
+                               boolean grantHaste, boolean exileAtEndStep) {
+        this(new Fixed(1), filter, destination, null, 1, false, grantHaste, exileAtEndStep);
     }
 }

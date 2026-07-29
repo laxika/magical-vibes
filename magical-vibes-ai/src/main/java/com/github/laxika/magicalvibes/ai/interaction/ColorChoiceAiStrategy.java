@@ -17,7 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Answers the COLOR_CHOICE family (mana color, card name, keyword, subtype, permanent type,
@@ -75,6 +77,22 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
                     .findFirst()
                     .orElse(opponentField.isEmpty() ? "Pithing Needle" : opponentField.getFirst().getCard().getName());
             log.info("AI: Choosing card name \"{}\" in game {}", chosenName, gameId);
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenName));
+            return;
+        }
+
+        if (context instanceof ChoiceContext.DualCardNameChoice) {
+            // Null Chamber: lock down something our own opponent is holding, falling back to any
+            // offered name (the option list already excludes basic land names).
+            UUID opponentId = getOpponentId(gameData, aiPlayerId);
+            Set<String> opponentNames = gameData.playerHands.getOrDefault(opponentId, List.of()).stream()
+                    .map(Card::getName)
+                    .collect(Collectors.toSet());
+            String chosenName = interaction.options().stream()
+                    .filter(opponentNames::contains)
+                    .findFirst()
+                    .orElse(interaction.options().getFirst());
+            log.info("AI: Choosing card name \"{}\" (two-player naming) in game {}", chosenName, gameId);
             ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenName));
             return;
         }
@@ -336,6 +354,22 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             }
             log.info("AI: Choosing \"{}\" for Winter's Chill in game {}", chosen, gameId);
             ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosen));
+            return;
+        }
+
+        if (context instanceof ChoiceContext.AllLandsProduceChosenColorChoice) {
+            // Hall of Gemstone locks our own lands too, so pick the color our hand needs most
+            // rather than the usual "hose the opponent" heuristic.
+            Map<CardColor, Long> handColors = gameData.playerHands.getOrDefault(aiPlayerId, List.of()).stream()
+                    .map(Card::getColor)
+                    .filter(java.util.Objects::nonNull)
+                    .collect(Collectors.groupingBy(c -> c, Collectors.counting()));
+            String chosenColor = handColors.entrySet().stream()
+                    .max(Map.Entry.comparingByValue())
+                    .map(e -> e.getKey().name())
+                    .orElse(CardColor.GREEN.name());
+            log.info("AI: Choosing color {} for the all-lands mana lock in game {}", chosenColor, gameId);
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenColor));
             return;
         }
 

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileOwnCardsInsteadOfGraveya
 import com.github.laxika.magicalvibes.model.effect.ReturnFromGraveyardInsteadOfDrawEffect;
 
 @CardRegistration(set = "6ED", collectorNumber = "132")
+@CardRegistration(set = "MIR", collectorNumber = "124")
 public class ForbiddenCrypt extends Card {
 
     public ForbiddenCrypt() {

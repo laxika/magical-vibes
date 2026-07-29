@@ -49,12 +49,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToSourceCont
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedDuringControllersLastTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedOrBlockedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedOrWasBlockedBySubtypeThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentCastBySourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuouslySinceBeginningOfTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttackedSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -64,9 +67,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmon
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -74,7 +79,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceCon
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
@@ -366,6 +373,14 @@ public class PredicateEvaluationService {
             }
             case PermanentIsEnchantedPredicate ignored ->
                     gameData != null && gameQueryService.isEnchanted(gameData, permanent);
+            case PermanentIsAuraAttachedToSourcePredicate ignored -> {
+                if (gameData == null || sourceCardId == null
+                        || !permanent.getCard().isAura() || !permanent.isAttached()) {
+                    yield false;
+                }
+                Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                yield sourcePermanent != null && permanent.getAttachedTo().equals(sourcePermanent.getId());
+            }
             case PermanentIsAuraAttachedToCreaturePredicate ignored -> {
                 if (gameData == null || !permanent.getCard().isAura() || !permanent.isAttached()) {
                     yield false;
@@ -402,6 +417,8 @@ public class PredicateEvaluationService {
                     permanent.isAttackedThisTurn() || permanent.isBlockedThisTurn();
             case PermanentIsBlockedPredicate ignored ->
                     gameData != null && permanent.isAttacking() && isBlocked(gameData, permanent);
+            case PermanentIsUnblockedAttackingPredicate ignored ->
+                    gameData != null && permanent.isAttacking() && !isBlocked(gameData, permanent);
             case PermanentBlockedOrWasBlockedBySubtypeThisTurnPredicate p -> {
                 if (gameData == null) {
                     yield false;
@@ -562,8 +579,25 @@ public class PredicateEvaluationService {
                 List<Permanent> activeBattlefield = gameData.playerBattlefields.get(gameData.activePlayerId);
                 yield activeBattlefield != null && activeBattlefield.contains(permanent);
             }
+            case PermanentControlledByDefendingPlayerPredicate ignored -> {
+                if (gameData == null) {
+                    yield false;
+                }
+                UUID controllerId = gameData.findControllerOf(permanent.getId());
+                yield controllerId != null && gameQueryService.isPlayerBeingAttacked(gameData, controllerId);
+            }
             case PermanentControlledContinuouslySinceBeginningOfTurnPredicate ignored ->
                     !permanent.isSummoningSick();
+            case PermanentCastBySourceControllerThisTurnPredicate ignored -> {
+                // "Target creature you cast this turn" — identity match against the spells the
+                // source's controller cast this turn, so tokens and non-cast arrivals never match.
+                if (gameData == null || sourceControllerId == null) {
+                    yield false;
+                }
+                UUID cardId = permanent.getCard().getId();
+                yield gameData.getSpellsCastThisTurn(sourceControllerId).stream()
+                        .anyMatch(cast -> cast.getId().equals(cardId));
+            }
             case PermanentOwnedBySourceControllerPredicate ignored -> {
                 if (sourceControllerId == null || gameData == null) {
                     yield false;
@@ -586,8 +620,9 @@ public class PredicateEvaluationService {
                 UUID targetController = gameData.findControllerOf(permanent);
                 List<Permanent> targetBattlefield = targetController == null ? null
                         : gameData.playerBattlefields.get(targetController);
-                yield targetBattlefield != null && targetBattlefield.stream().anyMatch(p ->
-                        matchesPermanentPredicate(p, controllerControlsPredicate.filter(), filterContext));
+                yield targetBattlefield != null && targetBattlefield.stream()
+                        .filter(p -> !controllerControlsPredicate.excludeSelf() || !p.getId().equals(permanent.getId()))
+                        .anyMatch(p -> matchesPermanentPredicate(p, controllerControlsPredicate.filter(), filterContext));
             }
             case PermanentAttachedToSourceControllerPredicate ignored ->
                     sourceControllerId != null && permanent.isAttached()
@@ -636,6 +671,22 @@ public class PredicateEvaluationService {
                         && sourcePermanent.isBlocking()
                         && sourcePermanent.getBlockingTargetIds().contains(permanent.getId());
             }
+            case PermanentBlockingSourcePredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                // CR 608.2b: once the source has left the battlefield (e.g. sacrificed to pay the
+                // ability's cost), its last known information answers "creature blocking it".
+                Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                if (sourcePermanent == null && filterContext != null) {
+                    sourcePermanent = filterContext.sourcePermanentSnapshot();
+                }
+                if (sourcePermanent == null) {
+                    yield false;
+                }
+                yield permanent.isBlocking()
+                        && permanent.getBlockingTargetIds().contains(sourcePermanent.getId());
+            }
             case PermanentInCombatWithSourcePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
                     yield false;
@@ -662,6 +713,15 @@ public class PredicateEvaluationService {
                     yield false;
                 }
                 yield permanent.getCard().getName().equals(sourcePermanent.getCard().getName());
+            }
+            case PermanentHasSourceChosenSubtypePredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Permanent sourcePermanent = findPermanentByCurrentCardId(gameData, sourceCardId);
+                CardSubtype chosenSubtype = sourcePermanent == null ? null : sourcePermanent.getChosenSubtype();
+                yield chosenSubtype != null
+                        && matchesPermanentPredicate(permanent, new PermanentHasSubtypePredicate(chosenSubtype), filterContext);
             }
             case PermanentNamedPredicate namedPredicate ->
                     permanent.getCard().getName().equals(namedPredicate.cardName());
@@ -708,6 +768,13 @@ public class PredicateEvaluationService {
                 Set<UUID> noncombatVictims = gameData.noncombatDamageToPlayersThisTurn.get(permanent.getId());
                 yield (combatVictims != null && combatVictims.contains(sourceControllerId))
                         || (noncombatVictims != null && noncombatVictims.contains(sourceControllerId));
+            }
+            case PermanentAttackedSourceControllerThisTurnPredicate ignored -> {
+                if (sourceControllerId == null || gameData == null) {
+                    yield false;
+                }
+                Set<UUID> attackedPlayers = gameData.playersAttackedThisTurn.get(permanent.getId());
+                yield attackedPlayers != null && attackedPlayers.contains(sourceControllerId);
             }
             case PermanentTruePredicate ignored ->
                     true;
@@ -793,6 +860,9 @@ public class PredicateEvaluationService {
 
     /** An attacking creature is blocked if any permanent references its id as a blocking target. */
     private boolean isBlocked(GameData gameData, Permanent attacker) {
+        if (attacker.isBlockedWithoutBlockers()) {
+            return true;
+        }
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent blocker : battlefield) {
                 if (blocker.isBlocking() && blocker.getBlockingTargetIds().contains(attacker.getId())) {

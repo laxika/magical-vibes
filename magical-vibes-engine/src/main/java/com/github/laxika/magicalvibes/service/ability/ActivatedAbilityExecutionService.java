@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsLandsCouldPr
 import com.github.laxika.magicalvibes.model.effect.AwardOneManaOfEachColorAmongControlledEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.ManaColorLandScope;
+import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaToChosenPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -59,6 +60,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -240,6 +242,13 @@ public class ActivatedAbilityExecutionService {
             permanentRemovalService.removePermanentToExile(gameData, permanent);
         }
 
+        // "Return this permanent to its owner's hand: …" (Cycle of Life). Paid before the ability
+        // goes on the stack; the ability resolves normally from the stack afterwards.
+        boolean shouldReturnSelfToHand = abilityEffects.stream().anyMatch(e -> e instanceof ReturnSelfToHandCost);
+        if (shouldReturnSelfToHand) {
+            permanentRemovalService.removePermanentToHand(gameData, permanent);
+        }
+
         Optional<SacrificeSelfCost> sacrificeSelfCost = abilityEffects.stream()
                 .filter(SacrificeSelfCost.class::isInstance)
                 .map(SacrificeSelfCost.class::cast)
@@ -381,6 +390,8 @@ public class ActivatedAbilityExecutionService {
                 snapshotEffects.add(new MustBlockSourceEffect(permanent.getId()));
             } else if (effect instanceof PreventNextColorDamageToControllerEffect && permanent.getChosenColor() != null) {
                 snapshotEffects.add(new PreventNextColorDamageToControllerEffect(permanent.getChosenColor()));
+            } else if (effect instanceof AwardChosenColorManaEffect && permanent.getChosenColor() != null) {
+                snapshotEffects.add(new AwardManaEffect(ManaColor.valueOf(permanent.getChosenColor().name())));
             } else if (effect instanceof GrantKeywordToChosenCreatureUntilEndOfTurnEffect gk) {
                 snapshotEffects.add(new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(gk.keyword(), permanent.getChosenPermanentId()));
             } else {
