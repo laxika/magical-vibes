@@ -839,13 +839,18 @@ public class GameQueryService {
      */
     public boolean isCreature(GameData gameData, Permanent permanent) {
         StaticBonus bonus = computeStaticBonus(gameData, permanent);
+        return isCreatureWithBonus(gameData, permanent, bonus);
+    }
+
+    private boolean isCreatureWithBonus(GameData gameData, Permanent permanent, StaticBonus bonus) {
         if (hasEffectiveCardType(permanent, bonus, CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
         if (permanent.isAnimatedUntilEndOfCombat()) return true;
         if (permanent.isAnimatedUntilNextTurn()) return true;
         if (permanent.isPermanentlyAnimated()) return true;
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
-        if (isArtifact(gameData, permanent) && hasAnimateArtifactEffect(gameData)) return true;
+        if (hasEffectiveCardType(permanent, bonus, CardType.ARTIFACT)
+                && hasAnimateArtifactEffect(gameData)) return true;
         if (hasEffectiveCardType(permanent, bonus, CardType.LAND) && matchesAnimateLand(gameData, permanent)) return true;
         if (hasAuraBecomeCreatureEffect(gameData, permanent)) return true;
         return hasSelfBecomeCreatureEffect(gameData, permanent);
@@ -1176,24 +1181,30 @@ public class GameQueryService {
      * either from its own static effects or from effects granted by other permanents.
      */
     public boolean cantHaveCounters(GameData gameData, Permanent permanent) {
+        return cantHaveCountersForController(gameData, permanent, null);
+    }
+
+    boolean cantHaveCountersForController(GameData gameData, Permanent permanent, UUID controllerId) {
         if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CantHaveCountersEffect.class::isInstance)) {
             return true;
         }
-        if (hasGrantedEffect(gameData, permanent, CantHaveCountersEffect.class)) {
+        StaticBonus bonus = computeStaticBonusForController(gameData, permanent, controllerId);
+        if (bonus.grantedEffects().stream().anyMatch(CantHaveCountersEffect.class::isInstance)) {
             return true;
         }
         // Solemnity: "Counters can't be put on artifacts, creatures, enchantments, or lands."
         // Planeswalkers (that aren't also one of those types) are unaffected and still get loyalty.
         return anyBattlefieldHasStaticEffect(gameData, CountersCantBePlacedEffect.class)
-                && isArtifactCreatureEnchantmentOrLand(gameData, permanent);
+                && isArtifactCreatureEnchantmentOrLand(gameData, permanent, bonus);
     }
 
-    private boolean isArtifactCreatureEnchantmentOrLand(GameData gameData, Permanent permanent) {
-        return isArtifact(gameData, permanent)
-                || isCreature(gameData, permanent)
-                || isEnchantment(gameData, permanent)
-                || hasCardType(permanent, CardType.LAND);
+    private boolean isArtifactCreatureEnchantmentOrLand(
+            GameData gameData, Permanent permanent, StaticBonus bonus) {
+        return hasEffectiveCardType(permanent, bonus, CardType.ARTIFACT)
+                || isCreatureWithBonus(gameData, permanent, bonus)
+                || hasEffectiveCardType(permanent, bonus, CardType.ENCHANTMENT)
+                || hasEffectiveCardType(permanent, bonus, CardType.LAND);
     }
 
     /**
@@ -1513,6 +1524,11 @@ public class GameQueryService {
     }
 
     public StaticBonus computeStaticBonus(GameData gameData, Permanent target) {
+        return computeStaticBonusForController(gameData, target, null);
+    }
+
+    private StaticBonus computeStaticBonusForController(
+            GameData gameData, Permanent target, UUID targetControllerId) {
         // One layered pass per external query: the layer-4 board state is computed once and
         // shared (via the thread-local pass) with every nested computeStaticBonus call made by
         // handlers while assembling bonuses, together with a per-pass bonus memo.
@@ -1522,19 +1538,25 @@ public class GameQueryService {
             // handlers WHILE the layer 5/6 passes are still applying see partial states and
             // must not cache their answers.
             if (!active.isBoardReady()) {
-                return assembleStaticBonus(gameData, active.board(), target);
+                return assembleStaticBonusForController(
+                        gameData, active.board(), target, targetControllerId);
             }
-            StaticBonus memoized = active.bonusMemo().get(target.getId());
-            if (memoized != null) {
-                return memoized;
+            if (targetControllerId == null) {
+                StaticBonus memoized = active.bonusMemo().get(target.getId());
+                if (memoized != null) {
+                    return memoized;
+                }
             }
-            StaticBonus bonus = assembleStaticBonus(gameData, active.board(), target);
-            active.bonusMemo().put(target.getId(), bonus);
+            StaticBonus bonus = assembleStaticBonusForController(
+                    gameData, active.board(), target, targetControllerId);
+            if (targetControllerId == null) {
+                active.bonusMemo().put(target.getId(), bonus);
+            }
             return bonus;
         }
         LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
         try {
-            return assembleStaticBonus(gameData, pass.board(), target);
+            return assembleStaticBonusForController(gameData, pass.board(), target, targetControllerId);
         } finally {
             layerSystemService.endPass(pass);
         }
@@ -1682,7 +1704,8 @@ public class GameQueryService {
     }
 
     /** A static-effect source with the CR 613.7 ordering key used by {@link #assembleStaticBonus}. */
-    private record StaticSource(Permanent permanent, boolean sameBattlefieldAsTarget, long timestamp, int position) {
+    private record StaticSource(Permanent permanent, UUID controllerId, boolean sameBattlefieldAsTarget,
+                                long timestamp, int position) {
     }
 
     /**
@@ -1694,7 +1717,13 @@ public class GameQueryService {
      * {@code LayerSystemService.applyLayer7b}) is merged over the 7a CDA / intrinsic base.
      */
     private StaticBonus assembleStaticBonus(GameData gameData, LayerSystemService.LayeredBoardState board, Permanent target) {
-        return assembleStaticBonus(gameData, board, target, null, null);
+        return assembleStaticBonusInternal(gameData, board, target, null, null, null);
+    }
+
+    private StaticBonus assembleStaticBonusForController(
+            GameData gameData, LayerSystemService.LayeredBoardState board,
+            Permanent target, UUID targetControllerId) {
+        return assembleStaticBonusInternal(gameData, board, target, targetControllerId, null, null);
     }
 
     /** With a non-null {@code explain} list, additionally records one attribution line per
@@ -1703,16 +1732,28 @@ public class GameQueryService {
     private StaticBonus assembleStaticBonus(GameData gameData, LayerSystemService.LayeredBoardState board,
                                             Permanent target, List<ModifierLine> explain,
                                             List<GrantedEffectAttribution> explainEffects) {
+        return assembleStaticBonusInternal(gameData, board, target, null, explain, explainEffects);
+    }
+
+    private StaticBonus assembleStaticBonusInternal(
+            GameData gameData, LayerSystemService.LayeredBoardState board,
+            Permanent target, UUID targetControllerId, List<ModifierLine> explain,
+            List<GrantedEffectAttribution> explainEffects) {
         boolean isNaturalCreature = hasCardType(target, CardType.CREATURE);
         StaticBonusAccumulator accumulator = new StaticBonusAccumulator();
         List<StaticSource> sources = new ArrayList<>();
+        UUID resolvedTargetControllerId = targetControllerId;
         int position = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
-            boolean targetOnSameBattlefield = bf.contains(target);
+            if (resolvedTargetControllerId == null && bf.contains(target)) {
+                resolvedTargetControllerId = playerId;
+            }
+            boolean targetOnSameBattlefield = playerId.equals(resolvedTargetControllerId);
             for (Permanent source : bf) {
-                sources.add(new StaticSource(source, targetOnSameBattlefield, source.getTimestamp(), position++));
+                sources.add(new StaticSource(
+                        source, playerId, targetOnSameBattlefield, source.getTimestamp(), position++));
             }
         }
         sources.sort(Comparator.comparingLong(StaticSource::timestamp).thenComparingInt(StaticSource::position));
@@ -1728,7 +1769,8 @@ public class GameQueryService {
             CharacteristicState sourceState = board.states().get(source.getId());
             boolean sourceAbilitiesGone = sourceState != null
                     && (sourceState.isLosesAllAbilities() || sourceState.isPrintedAbilitiesRemoved());
-            StaticEffectContext context = new StaticEffectContext(source, target, sourceSlot.sameBattlefieldAsTarget(), gameData);
+            StaticEffectContext context = new StaticEffectContext(
+                    source, target, sourceSlot.controllerId(), sourceSlot.sameBattlefieldAsTarget(), gameData);
             AccumulatorSnapshot beforeSource = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                 // Purely type-changing effects were applied by the layer-4 pass (with filters
@@ -1859,7 +1901,8 @@ public class GameQueryService {
                     accumulator.setLayeredOutputsSuppressed(true);
                 }
                 try {
-                    StaticEffectContext selfContext = new StaticEffectContext(target, target, true, gameData);
+                    StaticEffectContext selfContext = new StaticEffectContext(
+                            target, target, resolvedTargetControllerId, true, gameData);
                     selfHandler.apply(selfContext,
                             TextChangeTransformer.transform(effect, target.getTextReplacements()),
                             accumulator);

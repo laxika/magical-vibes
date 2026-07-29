@@ -7,17 +7,13 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfTopLibraryCardEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
 public class GainActivatedAbilitiesOfTopLibraryCardSelfEffectHandler implements StaticEffectHandlerBean {
-
-    private final StaticEffectSupport support;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,7 +28,7 @@ public class GainActivatedAbilitiesOfTopLibraryCardSelfEffectHandler implements 
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         GameData gameData = context.gameData();
-        UUID controllerId = support.findControllerId(gameData, context.source());
+        UUID controllerId = context.sourceControllerId();
         if (controllerId == null) return;
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (deck == null || deck.isEmpty()) return;

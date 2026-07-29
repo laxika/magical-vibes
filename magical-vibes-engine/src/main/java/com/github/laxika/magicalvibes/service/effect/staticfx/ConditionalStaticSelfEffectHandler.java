@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
-
 /**
  * Generic self-only (characteristic-defining) static handler for {@link ConditionalEffect}:
  * evaluates the condition via {@link ConditionEvaluationService} and, when met, applies the
@@ -37,9 +35,8 @@ public class ConditionalStaticSelfEffectHandler implements StaticEffectHandlerBe
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var conditional = (ConditionalEffect) effect;
-        UUID controllerId = support.findControllerId(context.gameData(), context.source());
         if (!conditionEvaluationService.isMet(context.gameData(), conditional.condition(),
-                ConditionContext.forStaticEffect(context.source(), controllerId))) {
+                ConditionContext.forStaticEffect(context.source(), context.sourceControllerId()))) {
             return;
         }
         support.applySelfOnlyConditionalStaticEffect(context, conditional.wrapped(), accumulator);

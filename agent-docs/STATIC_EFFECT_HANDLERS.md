@@ -20,6 +20,10 @@ Handlers own the per-effect scope/filter/amount logic; **ordering and precedence
 
 - `staticfx/StaticEffectHandlerBean.java` — interface (extends `StaticEffectHandler`).
 - `staticfx/StaticEffectSupport.java` — `@Component`, shared helpers (constructor-injects `GameQueryService`).
+- `StaticEffectContext.sourceControllerId()` — the source controller supplied by the layered
+  battlefield slot or by an entering-permanent query. Source-based handlers consume this value
+  directly instead of rediscovering control from battlefield membership, because an entering
+  permanent is evaluated before it is inserted into that battlefield.
 - `config/GameEngineConfig.java` — component-scans engine packages, exposes registry beans, and registers all `@Component` static handlers after singletons are created.
 - `testutil/GameTestDoublesConfig` + `GameTestEngineContext` — card tests load the same `GameEngineConfig` graph via a cached Spring test context.
 - `ai/simulation/HeadlessSimulationDoublesConfig` + `HeadlessSimulationContext` — MCTS loads the same engine graph headlessly (no WebSocket broadcasts).

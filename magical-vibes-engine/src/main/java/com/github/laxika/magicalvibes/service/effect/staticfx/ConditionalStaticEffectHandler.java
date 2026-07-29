@@ -11,8 +11,6 @@ import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
-
 /**
  * Generic static handler for {@link ConditionalEffect}: evaluates the condition via
  * {@link ConditionEvaluationService} and, when met, delegates to the wrapped effect's own
@@ -24,7 +22,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ConditionalStaticEffectHandler implements StaticEffectHandlerBean {
 
-    private final StaticEffectSupport support;
     private final ConditionEvaluationService conditionEvaluationService;
     private final StaticEffectHandlerRegistry registry;
 
@@ -36,9 +33,8 @@ public class ConditionalStaticEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var conditional = (ConditionalEffect) effect;
-        UUID controllerId = support.findControllerId(context.gameData(), context.source());
         if (!conditionEvaluationService.isMet(context.gameData(), conditional.condition(),
-                ConditionContext.forStaticEffect(context.source(), controllerId))) {
+                ConditionContext.forStaticEffect(context.source(), context.sourceControllerId()))) {
             return;
         }
         CardEffect wrapped = conditional.wrapped();

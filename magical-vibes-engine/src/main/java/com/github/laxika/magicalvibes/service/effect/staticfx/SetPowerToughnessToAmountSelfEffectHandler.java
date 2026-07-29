@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
-
 /**
  * Self-only (characteristic-defining) static handler for {@link SetPowerToughnessToAmountEffect}
  * in the {@code STATIC} slot: evaluates the power/toughness {@code DynamicAmount}s via
@@ -23,7 +21,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SetPowerToughnessToAmountSelfEffectHandler implements StaticEffectHandlerBean {
 
-    private final StaticEffectSupport support;
     private final AmountEvaluationService amountEvaluationService;
 
     @Override
@@ -39,8 +36,7 @@ public class SetPowerToughnessToAmountSelfEffectHandler implements StaticEffectH
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var cda = (SetPowerToughnessToAmountEffect) effect;
-        UUID controllerId = support.findControllerId(context.gameData(), context.source());
-        AmountContext ctx = AmountContext.forStaticEffect(context.source(), controllerId);
+        AmountContext ctx = AmountContext.forStaticEffect(context.source(), context.sourceControllerId());
         accumulator.setBasePTOverride(
                 amountEvaluationService.evaluate(context.gameData(), cda.power(), ctx),
                 amountEvaluationService.evaluate(context.gameData(), cda.toughness(), ctx));

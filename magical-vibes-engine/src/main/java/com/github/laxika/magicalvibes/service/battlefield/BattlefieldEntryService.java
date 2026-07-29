@@ -501,7 +501,7 @@ public class BattlefieldEntryService {
                                         int xValue, boolean kicked) {
         Card card = permanent.getCard();
         // Solemnity and Tatterkite/Melira's Keepers-style locks also replace "enters with N counters".
-        if (gameQueryService.cantHaveCounters(gameData, permanent)) return;
+        if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
 
         for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
             EnterWithCountersEffect enterWith;
@@ -643,7 +643,7 @@ public class BattlefieldEntryService {
                                                             Permanent permanent, List<Permanent> simultaneouslyEntered) {
         if (!permanent.getCard().hasType(CardType.CREATURE)) return;
 
-        if (gameQueryService.cantHaveCounters(gameData, permanent)) return;
+        if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
 
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         if (graveyard == null || graveyard.isEmpty()) return;
@@ -680,7 +680,7 @@ public class BattlefieldEntryService {
                                                                      Permanent permanent, List<Permanent> simultaneouslyEntered) {
         if (!permanent.getCard().hasType(CardType.CREATURE)) return;
 
-        if (gameQueryService.cantHaveCounters(gameData, permanent)) return;
+        if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null || battlefield.isEmpty()) return;

@@ -4,11 +4,15 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -68,6 +72,25 @@ class MatcaRiotersTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, rioters)).isEqualTo(1);
 
         harness.addToBattlefield(player1, new Island());
+        assertThat(gqs.getEffectivePower(gd, rioters)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, rioters)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Matca Rioters resolves from the stack and uses its controller's domain")
+    void resolvesFromStack() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Plains());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.setHand(player1, List.of(new MatcaRioters()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent rioters = findPermanent(player1, "Matca Rioters");
         assertThat(gqs.getEffectivePower(gd, rioters)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, rioters)).isEqualTo(2);
     }

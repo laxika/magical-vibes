@@ -1858,7 +1858,7 @@ public class LayerSystemService {
             for (PermanentSlot target : slots) {
                 if (target.permanent() == source.permanent()) continue;
                 StaticBonusAccumulator harvested = new StaticBonusAccumulator();
-                handler.apply(new StaticEffectContext(source.permanent(), target.permanent(),
+                handler.apply(new StaticEffectContext(source.permanent(), target.permanent(), source.controllerId(),
                         source.controllerId().equals(target.controllerId()), gameData),
                         instance.effect(), harvested);
                 harvest.accept(target, harvested);
@@ -1866,7 +1866,8 @@ public class LayerSystemService {
         }
         if (selfHandler != null) {
             StaticBonusAccumulator harvested = new StaticBonusAccumulator();
-            selfHandler.apply(new StaticEffectContext(source.permanent(), source.permanent(), true, gameData),
+            selfHandler.apply(new StaticEffectContext(
+                            source.permanent(), source.permanent(), source.controllerId(), true, gameData),
                     instance.effect(), harvested);
             harvest.accept(source, harvested);
         }

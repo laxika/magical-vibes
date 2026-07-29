@@ -175,7 +175,7 @@ public class CloneService {
     private void applyAdditionalPlusOnePlusOneCounters(GameData gameData, UUID controllerId, Permanent perm,
                                                        DynamicAmount amount, int xValue) {
         if (amount == null) return;
-        if (gameQueryService.cantHaveCounters(gameData, perm)) return;
+        if (gameQueryService.cantHaveCountersForController(gameData, perm, controllerId)) return;
         int count = amountEvaluationService.evaluate(gameData, amount,
                 new AmountContext(controllerId, perm, null, xValue, 0, false));
         if (count > 0) {

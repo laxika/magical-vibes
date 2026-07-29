@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
-
 /**
  * Attached-scope static handler for {@link AttachedBoostEffect}: when the target matches the
  * effect's {@link com.github.laxika.magicalvibes.model.effect.GrantScope} (typically the
@@ -42,8 +40,7 @@ public class AttachedBoostEffectHandler implements StaticEffectHandlerBean {
         if (!support.matchesCreatureScope(context, boost.scope(), null)) {
             return;
         }
-        UUID controllerId = support.findControllerId(context.gameData(), context.source());
-        AmountContext ctx = AmountContext.forStaticEffect(context.source(), controllerId);
+        AmountContext ctx = AmountContext.forStaticEffect(context.source(), context.sourceControllerId());
         accumulator.addPower(amountEvaluationService.evaluate(context.gameData(), boost.powerBoost(), ctx));
         accumulator.addToughness(amountEvaluationService.evaluate(context.gameData(), boost.toughnessBoost(), ctx));
     }

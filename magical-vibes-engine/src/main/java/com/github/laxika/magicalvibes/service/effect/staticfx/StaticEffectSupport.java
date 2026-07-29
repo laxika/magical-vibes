@@ -254,14 +254,14 @@ public class StaticEffectSupport {
     }
 
     public boolean isControllerLifeAtOrBelow(StaticEffectContext context, int threshold) {
-        UUID controllerId = findControllerId(context.gameData(), context.source());
+        UUID controllerId = context.sourceControllerId();
         if (controllerId == null) return false;
         int lifeTotal = context.gameData().playerLifeTotals.getOrDefault(controllerId, 20);
         return lifeTotal <= threshold;
     }
 
     public boolean isTopCardOfLibraryColor(StaticEffectContext context, CardColor color) {
-        UUID controllerId = findControllerId(context.gameData(), context.source());
+        UUID controllerId = context.sourceControllerId();
         if (controllerId == null) return false;
         List<Card> deck = context.gameData().playerDecks.get(controllerId);
         if (deck == null || deck.isEmpty()) return false;
@@ -269,7 +269,7 @@ public class StaticEffectSupport {
     }
 
     public int countControlledPermanents(StaticEffectContext context, Predicate<Permanent> filter) {
-        UUID controllerId = findControllerId(context.gameData(), context.source());
+        UUID controllerId = context.sourceControllerId();
         if (controllerId == null) return 0;
 
         List<Permanent> battlefield = context.gameData().playerBattlefields.get(controllerId);
