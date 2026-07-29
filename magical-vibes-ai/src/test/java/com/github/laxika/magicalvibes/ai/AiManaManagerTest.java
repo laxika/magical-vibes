@@ -1079,6 +1079,45 @@ class AiManaManagerTest {
                 assertThat(virtual.get(ManaColor.BLACK)).isZero();
                 assertThat(virtual.get(ManaColor.WHITE)).isEqualTo(1);
             }
+
+            @Test
+            @DisplayName("taps an unaffected land instead of an older land with a temporary basic type")
+            void temporaryBasicLandTypeDrivesThePlan() {
+                Permanent olderPlains = addUntappedLand("Plains", ManaColor.WHITE);
+                addUntappedLand("Plains", ManaColor.WHITE);
+                when(gameQueryService.getOverriddenLandManaColor(gd, olderPlains))
+                        .thenReturn(ManaColor.BLUE);
+
+                AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+                manager.tapLandsForCost(gd, player1Id, "{W}", 0, action);
+
+                verify(action).tap(1, null);
+                verify(action, never()).tap(eq(0), any());
+            }
+
+            @Test
+            @DisplayName("a temporary basic land type replaces a printed multi-mana ability")
+            void temporaryBasicLandTypeProducesOneManaThroughTheBasicLandTapPath() {
+                Card card = new Card();
+                card.setName("Two-Mana Land");
+                card.setType(CardType.LAND);
+                card.addActivatedAbility(new ActivatedAbility(
+                        true, null, List.of(new AwardManaEffect(ManaColor.WHITE, 2)), "Add {W}{W}"));
+                Permanent changedLand = new Permanent(card);
+                changedLand.setSummoningSick(false);
+                gd.playerBattlefields.get(player1Id).add(changedLand);
+                lenient().when(gameQueryService.isCreature(gd, changedLand)).thenReturn(false);
+                lenient().when(gameQueryService.canActivateManaAbility(gd, changedLand)).thenReturn(true);
+                when(gameQueryService.getOverriddenLandManaColor(gd, changedLand))
+                        .thenReturn(ManaColor.BLUE);
+                addUntappedLand("Island", ManaColor.BLUE);
+
+                AiManaManager.ManaTapAction action = (permanentIndex, abilityIndex) ->
+                        gd.playerManaPools.get(player1Id).add(ManaColor.BLUE);
+                manager.tapLandsForCost(gd, player1Id, "{U}{U}", 0, action);
+
+                assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.BLUE)).isEqualTo(2);
+            }
         }
 
         @Test
