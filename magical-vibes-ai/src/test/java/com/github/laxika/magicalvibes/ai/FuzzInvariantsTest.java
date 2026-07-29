@@ -291,6 +291,33 @@ class FuzzInvariantsTest {
     }
 
     @Test
+    void phasedOutPermanentIsCountedByConservation() {
+        Card tracked = creature("Crystal Golem", 3, 3);
+        Permanent permanent = new Permanent(tracked);
+        gd.phasedOutPermanents.put(player1.getId(), new ArrayList<>(List.of(permanent)));
+        invariants = new FuzzInvariants(harness.getGameQueryService(),
+                Map.of(tracked.getId(), tracked.getName()));
+
+        assertThat(checkTwice()).isNull();
+    }
+
+    @Test
+    void permanentOnTwoBattlefieldsIsReported() {
+        Permanent shared = harness.addToBattlefieldAndReturn(player1, creature("Cloned Bear", 2, 2));
+        gd.playerBattlefields.get(player2.getId()).add(shared);
+
+        assertThat(invariants.check(gd)).contains("Cloned Bear").contains("two zones at once");
+    }
+
+    @Test
+    void permanentBothOnTheBattlefieldAndPhasedOutIsReported() {
+        Permanent shared = harness.addToBattlefieldAndReturn(player1, creature("Half Phased", 2, 2));
+        gd.phasedOutPermanents.put(player1.getId(), new ArrayList<>(List.of(shared)));
+
+        assertThat(invariants.check(gd)).contains("Half Phased").contains("two zones at once");
+    }
+
+    @Test
     void zeroToughnessCreatureSurvivingSbaIsReported() {
         harness.addToBattlefield(player1, creature("Doomed", 0, 0));
         assertThat(invariants.check(gd)).isNull();

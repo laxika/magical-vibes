@@ -113,17 +113,47 @@ final class FuzzInvariants {
     // Immediate structural checks
     // ------------------------------------------------------------------
 
+    /**
+     * Both zones that hold {@link Permanent} objects — battlefields and phased-out permanents —
+     * must contain live, unique objects: every permanent has a card, and no permanent appears in
+     * two of those lists at once. A permanent in two places was copied rather than moved, and the
+     * duplicate goes on to untap, take damage and die on its own. Reported immediately rather than
+     * under the two-strike rule because the engine never publishes such a state transiently: both
+     * {@code PhasingService} directions remove from the old list before adding to the new one.
+     */
     private String findStructuralViolation(GameData gd) {
-        Set<UUID> seenPermanentIds = new HashSet<>();
+        Map<UUID, String> permanentZones = new HashMap<>();
         for (UUID pid : gd.orderedPlayerIds) {
-            for (Permanent p : gd.playerBattlefields.getOrDefault(pid, List.of())) {
-                if (p.getCard() == null) {
-                    return "invariant violated: permanent " + p.getId() + " has a null card";
-                }
-                if (!seenPermanentIds.add(p.getId())) {
-                    return "invariant violated: permanent " + p.getCard().getName()
-                            + " (" + p.getId() + ") appears on multiple battlefields";
-                }
+            String violation = findZoneStructuralViolation(
+                    gd.playerBattlefields.getOrDefault(pid, List.of()),
+                    "battlefield of player " + pid, permanentZones);
+            if (violation == null) {
+                violation = findZoneStructuralViolation(
+                        gd.phasedOutPermanents.getOrDefault(pid, List.of()),
+                        "phased out under player " + pid, permanentZones);
+            }
+            if (violation != null) {
+                return violation;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @param permanentZones permanent id to the zone it was first seen in, carried across every
+     *                       zone of every player so a duplicate is caught wherever it shows up
+     */
+    private String findZoneStructuralViolation(List<Permanent> permanents, String zone,
+                                               Map<UUID, String> permanentZones) {
+        for (Permanent p : permanents) {
+            if (p.getCard() == null) {
+                return "invariant violated: permanent " + p.getId() + " in the " + zone
+                        + " has a null card";
+            }
+            String firstZone = permanentZones.putIfAbsent(p.getId(), zone);
+            if (firstZone != null) {
+                return "invariant violated: permanent " + p.getCard().getName() + " (" + p.getId()
+                        + ") is in two zones at once: the " + firstZone + " and the " + zone;
             }
         }
         return null;
@@ -135,9 +165,10 @@ final class FuzzInvariants {
 
     /**
      * Every card the game started with must appear exactly once across all zones:
-     * libraries, hands, graveyards, battlefields, exile and spells on the stack.
+     * libraries, hands, graveyards, battlefields, phased-out permanents, exile and
+     * spells on the stack.
      * Token and copy cards created mid-game are ignored (they may legitimately
-     * cease to exist). Battlefields are counted via {@link Permanent#getOriginalCard()}
+     * cease to exist). Permanents are counted via {@link Permanent#getOriginalCard()}
      * because that is the object the engine moves between zones (transformed
      * permanents carry a different face on {@code getCard()}).
      */
@@ -148,9 +179,10 @@ final class FuzzInvariants {
             countCardIds(gd.playerHands.get(pid), counts);
             countCardIds(gd.playerGraveyards.get(pid), counts);
             for (Permanent p : gd.playerBattlefields.getOrDefault(pid, List.of())) {
-                if (p.getOriginalCard() != null) {
-                    counts.merge(p.getOriginalCard().getId(), 1, Integer::sum);
-                }
+                countPermanentCard(p, counts);
+            }
+            for (Permanent p : gd.phasedOutPermanents.getOrDefault(pid, List.of())) {
+                countPermanentCard(p, counts);
             }
         }
         for (ExiledCardEntry entry : gd.exiledCards) {
@@ -179,6 +211,12 @@ final class FuzzInvariants {
         }
         return problems.isEmpty() ? null
                 : "card conservation violated: " + String.join("; ", problems);
+    }
+
+    private void countPermanentCard(Permanent permanent, Map<UUID, Integer> counts) {
+        if (permanent.getOriginalCard() != null) {
+            counts.merge(permanent.getOriginalCard().getId(), 1, Integer::sum);
+        }
     }
 
     private void countCardIds(List<Card> cards, Map<UUID, Integer> counts) {
