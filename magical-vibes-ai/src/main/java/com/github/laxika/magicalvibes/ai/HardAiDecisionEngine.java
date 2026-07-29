@@ -1903,6 +1903,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     UUID spellTargetId = targetSelector.chooseSpellTarget(
                             gameData, ability.getTargetFilter(), aiPlayer.getId());
                     if (spellTargetId == null) continue;
+                    if (!canActivateAbility(
+                            gameData, permanent, ability, abilIdx, virtualPool,
+                            spellTargetId, null)) {
+                        continue;
+                    }
 
                     int abilityManaValue = ability.getManaCost() != null
                             ? new ManaCost(ability.getManaCost()).getManaValue() : 0;
@@ -1923,6 +1928,10 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     targetId = targetSelector.chooseAbilityTarget(
                             gameData, ability, aiPlayer.getId(), permanent);
                     if (targetId == null) continue;
+                }
+                if (!canActivateAbility(
+                        gameData, permanent, ability, abilIdx, virtualPool, targetId, null)) {
+                    continue;
                 }
 
                 // Timing-awareness: skip pump abilities outside useful combat/threat windows,
@@ -1948,9 +1957,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         AbilityCandidate best = candidates.getFirst();
 
         // Tap mana for the ability cost; a {T}-ability's own source must not be tapped for mana
-        if (best.ability().getManaCost() != null) {
-            manaManager.tapLandsForCost(gameData, aiPlayer.getId(),
-                    best.ability().getManaCost(), 0, manaTapAction(), false,
+        int additionalGenericCost =
+                gameActions.getActivatedAbilityAdditionalGenericCost(
+                        gameData, best.permanent(), best.abilityIndex(), best.targetId(), null);
+        if (best.ability().getManaCost() != null || additionalGenericCost > 0) {
+            manaManager.tapSourcesForAbilityCost(
+                    gameData, aiPlayer.getId(), best.ability().getManaCost(),
+                    additionalGenericCost, manaTapAction(),
                     best.ability().isRequiresTap() ? best.permanent().getId() : null);
             if (gameData.interaction.isAwaitingInput()) {
                 return true; // Mana ability triggered a pending choice
@@ -1961,7 +1974,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         // relative to the virtual-pool plan (e.g. the {T}-ability's own source was the
         // only untapped producer left), and a doomed request is rejected silently.
         if (!canActivateAbility(gameData, best.permanent(), best.ability(), best.abilityIndex(),
-                gameData.playerManaPools.get(aiPlayer.getId()))) {
+                gameData.playerManaPools.get(aiPlayer.getId()), best.targetId(), null)) {
             return false;
         }
 
@@ -2023,13 +2036,19 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
         ActivatedAbility ability = abilities.get(action.abilityIndex());
         ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
-        if (!canActivateAbility(gameData, permanent, ability, action.abilityIndex(), virtualPool)) {
+        if (!canActivateAbility(
+                gameData, permanent, ability, action.abilityIndex(), virtualPool,
+                action.targetId(), null)) {
             return false;
         }
 
-        if (ability.getManaCost() != null) {
-            manaManager.tapLandsForCost(gameData, aiPlayer.getId(),
-                    ability.getManaCost(), 0, manaTapAction(), false,
+        int additionalGenericCost =
+                gameActions.getActivatedAbilityAdditionalGenericCost(
+                        gameData, permanent, action.abilityIndex(), action.targetId(), null);
+        if (ability.getManaCost() != null || additionalGenericCost > 0) {
+            manaManager.tapSourcesForAbilityCost(
+                    gameData, aiPlayer.getId(), ability.getManaCost(), additionalGenericCost,
+                    manaTapAction(),
                     ability.isRequiresTap() ? permanent.getId() : null);
             if (gameData.interaction.isAwaitingInput()) {
                 return true;
@@ -2037,7 +2056,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         if (!canActivateAbility(gameData, permanent, ability, action.abilityIndex(),
-                gameData.playerManaPools.get(aiPlayer.getId()))) {
+                gameData.playerManaPools.get(aiPlayer.getId()), action.targetId(), null)) {
             return false;
         }
 

@@ -567,7 +567,11 @@ public class GameSimulator {
                 }
 
                 if (!ability.isNeedsTarget()) {
-                    actions.add(new SimulationAction.ActivateAbility(source.getId(), abilityIndex, null));
+                    if (gameService.canActivateAbility(
+                            gd, playerId, source, abilityIndex, virtualPool, null, null)) {
+                        actions.add(new SimulationAction.ActivateAbility(
+                                source.getId(), abilityIndex, null));
+                    }
                     continue;
                 }
 
@@ -577,11 +581,18 @@ public class GameSimulator {
                     continue;
                 }
                 if (validTargets.minTargets() == 0) {
-                    actions.add(new SimulationAction.ActivateAbility(source.getId(), abilityIndex, null));
+                    if (gameService.canActivateAbility(
+                            gd, playerId, source, abilityIndex, virtualPool, null, null)) {
+                        actions.add(new SimulationAction.ActivateAbility(
+                                source.getId(), abilityIndex, null));
+                    }
                 }
                 int selectedAbilityIndex = abilityIndex;
                 rankAbilityTargets(gd, playerId, source, ability, validTargets).stream()
                         .limit(MAX_TARGET_CANDIDATES)
+                        .filter(targetId -> gameService.canActivateAbility(
+                                gd, playerId, source, selectedAbilityIndex,
+                                virtualPool, targetId, null))
                         .map(targetId -> new SimulationAction.ActivateAbility(
                                 source.getId(), selectedAbilityIndex, targetId))
                         .forEach(actions::add);
@@ -668,8 +679,13 @@ public class GameSimulator {
             return;
         }
         ActivatedAbility ability = abilities.get(action.abilityIndex());
-        if (ability.getManaCost() != null) {
-            manaManager.tapSourcesForAbilityCost(gd, player.getId(), ability.getManaCost(),
+        int additionalGenericCost =
+                gameService.getActivatedAbilityAdditionalGenericCost(
+                        gd, player.getId(), source, action.abilityIndex(),
+                        action.targetId(), null);
+        if (ability.getManaCost() != null || additionalGenericCost > 0) {
+            manaManager.tapSourcesForAbilityCost(
+                    gd, player.getId(), ability.getManaCost(), additionalGenericCost,
                     (index, manaAbilityIndex) -> {
                         if (manaAbilityIndex == null) {
                             gameService.tapPermanent(gd, player, index);

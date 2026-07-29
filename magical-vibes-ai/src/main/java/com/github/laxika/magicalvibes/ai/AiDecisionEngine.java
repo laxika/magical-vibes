@@ -1078,6 +1078,20 @@ public abstract class AiDecisionEngine {
         if (!gameActions.canActivateAbility(gameData, permanent, abilityIndex, virtualPool)) {
             return false;
         }
+        return acceptsAbilityCosts(gameData, ability);
+    }
+
+    protected boolean canActivateAbility(
+            GameData gameData, Permanent permanent, ActivatedAbility ability, int abilityIndex,
+            ManaPool virtualPool, UUID targetId, List<UUID> targetIds) {
+        if (!gameActions.canActivateAbility(
+                gameData, permanent, abilityIndex, virtualPool, targetId, targetIds)) {
+            return false;
+        }
+        return acceptsAbilityCosts(gameData, ability);
+    }
+
+    private boolean acceptsAbilityCosts(GameData gameData, ActivatedAbility ability) {
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof PayLifeCost lifeCost
                     && gameData.getLife(aiPlayer.getId()) <= lifeCost.effectiveAmount(gameData.getLife(aiPlayer.getId()))) {

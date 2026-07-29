@@ -116,7 +116,25 @@ public class AiManaManager {
      */
     public void tapSourcesForAbilityCost(GameData gameData, UUID playerId, String manaCost,
                                          ManaTapAction action, UUID sourcePermanentId) {
-        tapLandsForCost(gameData, playerId, manaCost, 0, action, false, sourcePermanentId);
+        tapSourcesForAbilityCost(
+                gameData, playerId, manaCost, 0, action, sourcePermanentId);
+    }
+
+    public void tapSourcesForAbilityCost(
+            GameData gameData, UUID playerId, String manaCost, int additionalGenericCost,
+            ManaTapAction action, UUID sourcePermanentId) {
+        if (manaCost == null) {
+            if (additionalGenericCost <= 0) {
+                return;
+            }
+            tapLandsForCost(
+                    gameData, playerId, "{" + additionalGenericCost + "}", 0, action, false,
+                    sourcePermanentId);
+            return;
+        }
+        tapLandsForCost(
+                gameData, playerId, manaCost, additionalGenericCost, action, false,
+                sourcePermanentId);
     }
 
     void tapLandsForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, int costModifier, ManaTapAction action,

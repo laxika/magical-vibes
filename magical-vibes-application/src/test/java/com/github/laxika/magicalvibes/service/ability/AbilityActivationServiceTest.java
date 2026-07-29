@@ -1322,6 +1322,56 @@ class AbilityActivationServiceTest {
         }
 
         @Test
+        @DisplayName("Includes static activation taxes in mana affordability")
+        void includesStaticActivationTax() {
+            Card card = createArtifactWithManaAbility("{1}");
+            Permanent perm = addReadyPermanent(player1Id, card);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(
+                    eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.isArtifact(perm)).thenReturn(true);
+            when(castingCostService.getActivatedAbilityActivationTax(gameData, perm)).thenReturn(3);
+
+            ManaPool insufficientPool = new ManaPool();
+            insufficientPool.add(ManaColor.COLORLESS, 1);
+            ManaPool sufficientPool = new ManaPool();
+            sufficientPool.add(ManaColor.COLORLESS, 4);
+
+            assertThat(service.canActivateAbility(
+                    gameData, player1Id, perm, 0, insufficientPool)).isFalse();
+            assertThat(service.canActivateAbility(
+                    gameData, player1Id, perm, 0, sufficientPool)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Includes the proposed target's tax in mana affordability")
+        void includesTargetingTax() {
+            Card card = createArtifactWithManaAbility("{1}");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            UUID targetId = UUID.randomUUID();
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(
+                    eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.isArtifact(perm)).thenReturn(true);
+            when(castingCostService.getTargetingSubtypeTax(
+                    gameData, player1Id, targetId, null)).thenReturn(2);
+
+            ManaPool insufficientPool = new ManaPool();
+            insufficientPool.add(ManaColor.COLORLESS, 2);
+            ManaPool sufficientPool = new ManaPool();
+            sufficientPool.add(ManaColor.COLORLESS, 3);
+
+            assertThat(service.canActivateAbility(
+                    gameData, player1Id, perm, 0, insufficientPool, targetId, null)).isFalse();
+            assertThat(service.canActivateAbility(
+                    gameData, player1Id, perm, 0, sufficientPool, targetId, null)).isTrue();
+        }
+
+        @Test
         @DisplayName("Returns false for an invalid ability index")
         void falseForInvalidAbilityIndex() {
             Card card = createArtifactWithTapAbility("Lux Cannon");

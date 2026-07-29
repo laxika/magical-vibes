@@ -1097,6 +1097,20 @@ class AiManaManagerTest {
         }
 
         @Test
+        @DisplayName("taps for a tax on an ability with no printed mana cost")
+        void tapsForTaxOnAbilityWithoutManaCost() {
+            addUntappedLand("Forest", ManaColor.GREEN);
+            addUntappedLand("Plains", ManaColor.WHITE);
+
+            AiManaManager.ManaTapAction action = (permanentIndex, abilityIndex) ->
+                    gd.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
+
+            manager.tapSourcesForAbilityCost(gd, player1Id, null, 2, action, null);
+
+            assertThat(gd.playerManaPools.get(player1Id).getTotal()).isEqualTo(2);
+        }
+
+        @Test
         @DisplayName("never taps the excluded permanent (a {T}-ability's own source)")
         void excludedPermanentIsNeverTapped() {
             Permanent source = addUntappedLand("Conqueror's Foothold", ManaColor.COLORLESS);

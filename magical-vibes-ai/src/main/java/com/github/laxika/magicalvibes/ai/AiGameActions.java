@@ -139,6 +139,20 @@ public class AiGameActions {
         return gameService.canActivateAbility(gameData, aiPlayer.getId(), permanent, abilityIndex, manaPool);
     }
 
+    public boolean canActivateAbility(
+            GameData gameData, Permanent permanent, int abilityIndex, ManaPool manaPool,
+            UUID targetId, List<UUID> targetIds) {
+        return gameService.canActivateAbility(
+                gameData, aiPlayer.getId(), permanent, abilityIndex, manaPool, targetId, targetIds);
+    }
+
+    public int getActivatedAbilityAdditionalGenericCost(
+            GameData gameData, Permanent permanent, int abilityIndex,
+            UUID targetId, List<UUID> targetIds) {
+        return gameService.getActivatedAbilityAdditionalGenericCost(
+                gameData, aiPlayer.getId(), permanent, abilityIndex, targetId, targetIds);
+    }
+
     /** Returns the activated abilities available on a permanent, in engine {@code abilityIndex} order. */
     public List<ActivatedAbility> getEffectiveActivatedAbilities(GameData gameData, Permanent permanent) {
         return gameService.getEffectiveActivatedAbilities(gameData, permanent);

@@ -231,10 +231,20 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 }
             }
 
-            if (candidate.ability().getManaCost() != null) {
+            if (!canActivateAbility(
+                    gameData, permanent, candidate.ability(), candidate.abilityIndex(),
+                    virtualPool, targetId, null)) {
+                continue;
+            }
+
+            int additionalGenericCost =
+                    gameActions.getActivatedAbilityAdditionalGenericCost(
+                            gameData, permanent, candidate.abilityIndex(), targetId, null);
+            if (candidate.ability().getManaCost() != null || additionalGenericCost > 0) {
                 // A {T}-ability's own source must not be tapped for mana
-                manaManager.tapLandsForCost(gameData, aiPlayer.getId(),
-                        candidate.ability().getManaCost(), 0, manaTapAction(), false,
+                manaManager.tapSourcesForAbilityCost(
+                        gameData, aiPlayer.getId(), candidate.ability().getManaCost(),
+                        additionalGenericCost, manaTapAction(),
                         candidate.ability().isRequiresTap() ? candidate.permanent().getId() : null);
                 if (gameData.interaction.isAwaitingInput()) {
                     return true; // Mana ability triggered a pending choice; will resume after it resolves
@@ -253,7 +263,8 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             // relative to the virtual-pool plan (e.g. the {T}-ability's own source was the
             // only untapped producer left), and a doomed request is rejected silently.
             if (!canActivateAbility(gameData, permanent, candidate.ability(),
-                    candidate.abilityIndex(), gameData.playerManaPools.get(aiPlayer.getId()))) {
+                    candidate.abilityIndex(), gameData.playerManaPools.get(aiPlayer.getId()),
+                    targetId, null)) {
                 continue;
             }
 

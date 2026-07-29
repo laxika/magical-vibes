@@ -1448,32 +1448,8 @@ public class AbilityActivationService {
         List<CardEffect> abilityEffects = ability.getEffects();
         String abilityCost = ability.getManaCost();
 
-        // Compute targeting tax from effects like Kopala, Warden of Waves (feeds the mana affordability check)
-        int targetingTax = castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds);
-
-        // Add any static ability-activation tax on this source (e.g. Gloom: white enchantments' abilities cost {3} more)
-        targetingTax += castingCostService.getActivatedAbilityActivationTax(gameData, permanent);
-
-        // Apply per-counter generic cost reduction (e.g. Diary of Dreams: costs {1} less per page counter).
-        // Threaded through the additional-generic-cost path as a negative value, floored so the generic
-        // portion of the cost never drops below zero; feeds both the affordability check and payment.
-        if (abilityCost != null) {
-            for (CardEffect e : abilityEffects) {
-                if (e instanceof ReduceActivationCostPerCounterEffect reduce) {
-                    int genericCost = new ManaCost(abilityCost).getGenericCost();
-                    int reduction = Math.min(
-                            permanent.getCounterCount(reduce.counterType()) * reduce.reductionPerCounter(),
-                            genericCost);
-                    targetingTax -= reduction;
-                }
-                // Per-counter generic cost increase (Chromatic Armor: "{X}: ... X is the number of
-                // sleight counters on this Aura"). Counted at activation, before the ability's own
-                // counter is added.
-                if (e instanceof IncreaseActivationCostPerCounterEffect increase) {
-                    targetingTax += permanent.getCounterCount(increase.counterType()) * increase.increasePerCounter();
-                }
-            }
-        }
+        int additionalGenericCost = getActivatedAbilityAdditionalGenericCost(
+                gameData, playerId, permanent, ability, targetId, targetIds);
 
         // All state-based legality checks, shared with the AI's dry-run query. Nothing is mutated
         // until every check (including targeting below) has passed, so an illegal activation
@@ -1481,7 +1457,7 @@ public class AbilityActivationService {
         // discardCardIndex < 0 means the interactive path already paid all required discards — skip
         // the discard-hand check so the re-entry does not fail after the cards left the hand.
         validateActivationLegality(gameData, playerId, permanent, ability, effectiveIndex, effectiveXValue,
-                gameData.playerManaPools.get(playerId), targetingTax,
+                gameData.playerManaPools.get(playerId), additionalGenericCost,
                 discardCardIndex != null && discardCardIndex < 0);
 
         // Validate spell target for abilities that counter spells
@@ -1601,12 +1577,12 @@ public class AbilityActivationService {
             Set<CardSubtype> subtypeSpellOrAbilityContext = effectiveSubtypes(permanent);
             ManaPool payingPool = gameData.playerManaPools.get(playerId);
             EnumMap<ManaColor, Integer> manaBefore = payingPool.getAllManaTotals();
-            payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext, subtypeSpellOrAbilityContext, targetingTax);
+            payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext, subtypeSpellOrAbilityContext, additionalGenericCost);
             recordActivationManaSpent(gameData, permanent, manaBefore, payingPool.getAllManaTotals());
-        } else if (targetingTax > 0) {
+        } else if (additionalGenericCost > 0) {
             // No base mana cost but targeting tax applies — pay generic mana for the tax
             ManaPool pool = gameData.playerManaPools.get(playerId);
-            ManaCost taxCost = new ManaCost("{" + targetingTax + "}");
+            ManaCost taxCost = new ManaCost("{" + additionalGenericCost + "}");
             taxCost.pay(pool);
         }
 
@@ -2056,13 +2032,65 @@ public class AbilityActivationService {
      */
     public boolean canActivateAbility(GameData gameData, UUID playerId, Permanent permanent,
                                       int abilityIndex, ManaPool manaPool) {
+        return canActivateAbility(gameData, playerId, permanent, abilityIndex, manaPool, null, null);
+    }
+
+    /**
+     * Pure legality query that includes the generic cost imposed by the proposed targets.
+     */
+    public boolean canActivateAbility(GameData gameData, UUID playerId, Permanent permanent,
+                                      int abilityIndex, ManaPool manaPool, UUID targetId,
+                                      List<UUID> targetIds) {
         try {
             ActivatedAbility ability = resolveAbility(gameData, permanent, abilityIndex);
-            validateActivationLegality(gameData, playerId, permanent, ability, abilityIndex, 0, manaPool, 0);
+            int additionalGenericCost = getActivatedAbilityAdditionalGenericCost(
+                    gameData, playerId, permanent, ability, targetId, targetIds);
+            validateActivationLegality(
+                    gameData, playerId, permanent, ability, abilityIndex, 0, manaPool,
+                    additionalGenericCost);
             return true;
         } catch (IllegalStateException | IllegalArgumentException e) {
             return false;
         }
+    }
+
+    /**
+     * Returns the generic cost adjustment that applies to an activated ability in the proposed
+     * activation context. This is shared by dry-run legality checks, AI mana planning, and payment.
+     */
+    public int getActivatedAbilityAdditionalGenericCost(
+            GameData gameData, UUID playerId, Permanent permanent, int abilityIndex,
+            UUID targetId, List<UUID> targetIds) {
+        ActivatedAbility ability = resolveAbility(gameData, permanent, abilityIndex);
+        return getActivatedAbilityAdditionalGenericCost(
+                gameData, playerId, permanent, ability, targetId, targetIds);
+    }
+
+    private int getActivatedAbilityAdditionalGenericCost(
+            GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability,
+            UUID targetId, List<UUID> targetIds) {
+        int additionalGenericCost =
+                castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds)
+                        + castingCostService.getActivatedAbilityActivationTax(gameData, permanent);
+        String abilityCost = ability.getManaCost();
+        if (abilityCost == null) {
+            return additionalGenericCost;
+        }
+
+        int genericCost = new ManaCost(abilityCost).getGenericCost();
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof ReduceActivationCostPerCounterEffect reduce) {
+                int reduction = Math.min(
+                        permanent.getCounterCount(reduce.counterType()) * reduce.reductionPerCounter(),
+                        genericCost);
+                additionalGenericCost -= reduction;
+            }
+            if (effect instanceof IncreaseActivationCostPerCounterEffect increase) {
+                additionalGenericCost +=
+                        permanent.getCounterCount(increase.counterType()) * increase.increasePerCounter();
+            }
+        }
+        return additionalGenericCost;
     }
 
     /**

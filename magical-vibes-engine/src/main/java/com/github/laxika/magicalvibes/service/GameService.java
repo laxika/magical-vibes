@@ -765,6 +765,24 @@ public class GameService {
         }
     }
 
+    public boolean canActivateAbility(
+            GameData gameData, UUID playerId, Permanent permanent, int abilityIndex,
+            ManaPool manaPool, UUID targetId, List<UUID> targetIds) {
+        synchronized (gameData) {
+            return abilityActivationService.canActivateAbility(
+                    gameData, playerId, permanent, abilityIndex, manaPool, targetId, targetIds);
+        }
+    }
+
+    public int getActivatedAbilityAdditionalGenericCost(
+            GameData gameData, UUID playerId, Permanent permanent, int abilityIndex,
+            UUID targetId, List<UUID> targetIds) {
+        synchronized (gameData) {
+            return abilityActivationService.getActivatedAbilityAdditionalGenericCost(
+                    gameData, playerId, permanent, abilityIndex, targetId, targetIds);
+        }
+    }
+
     /**
      * Returns the activated abilities currently available on a permanent (own + static-granted +
      * temporary), in {@code abilityIndex} order. Read-only.
