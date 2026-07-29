@@ -1343,7 +1343,7 @@ public class SpellCastingService {
             List<UUID> costReductionTargetIds = !targetIds.isEmpty() ? targetIds
                     : (targetId != null ? List.of(targetId) : List.of());
             int perTargetLifeCost = card.getAdditionalLifeCostPerTarget() * costReductionTargetIds.size();
-            if (perTargetLifeCost > gameData.getLife(playerId)) {
+            if (perTargetLifeCost > 0 && perTargetLifeCost > gameData.getLife(playerId)) {
                 throw new IllegalStateException("Not enough life to pay the per-target life cost");
             }
             int targetSubtypeCostReduction = castingCostService.computeTargetBasedCostReduction(gameData, playerId, card, costReductionTargetIds);

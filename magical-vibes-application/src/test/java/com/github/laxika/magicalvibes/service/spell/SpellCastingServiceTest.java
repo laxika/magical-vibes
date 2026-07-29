@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
@@ -603,6 +604,82 @@ class SpellCastingServiceTest {
 
             assertThat(gd.stack.getLast().getEffectsToResolve()).hasSize(1);
             assertThat(gd.stack.getLast().getEffectsToResolve().get(0)).isInstanceOf(DealDamageToAnyTargetEffect.class);
+        }
+
+        @Test
+        @DisplayName("Zero per-target life cost is not gated on the life total")
+        void zeroPerTargetLifeCostIsNotGatedOnLifeTotal() {
+            Card instant = createInstant("Test Bolt", "{R}");
+            instant.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+            setHand(player1Id, List.of(instant));
+            addMana(player1Id, ManaColor.RED, 1);
+            // CR 119.4 gates only payments greater than 0 on the life total, so a card with no
+            // per-target life cost stays castable whatever the caster's life is. A negative total
+            // is the only setup that exposes an ungated `cost > life` check — at 0 life the
+            // comparison `0 > 0` is already false — and it is reachable in play, since
+            // Phyrexian Unlife and Platinum Angel both stop the CR 704.5a loss.
+            gd.playerLifeTotals.put(player1Id, -8);
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            svc.playCard(gd, player1, 0, null, player2Id, null, null, null, false, null);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.getLife(player1Id)).isEqualTo(-8);
+        }
+
+        @Test
+        @DisplayName("Per-target life cost above the life total makes the cast illegal")
+        void perTargetLifeCostAboveLifeTotalRejectsCast() {
+            Card instant = createInstant("Test Purge", "{R}");
+            instant.setAdditionalLifeCostPerTarget(3);
+            instant.target(0, 99);
+            instant.addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
+            setHand(player1Id, List.of(instant));
+            addMana(player1Id, ManaColor.RED, 1);
+            gd.playerLifeTotals.put(player1Id, 5);
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            Permanent first = new Permanent(createCreature("Bear", "{1}{G}"));
+            Permanent second = new Permanent(createCreature("Elk", "{1}{G}"));
+            gd.playerBattlefields.get(player2Id).add(first);
+            gd.playerBattlefields.get(player2Id).add(second);
+
+            assertThatThrownBy(() -> svc.playCard(gd, player1, 0, null, null, null,
+                    List.of(first.getId(), second.getId()), null, false, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Not enough life");
+
+            // CR 601.2h: the rejected cast leaves the game state untouched.
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.getLife(player1Id)).isEqualTo(5);
+            assertThat(gd.playerHands.get(player1Id)).hasSize(1);
+            assertThat(gd.playerManaPools.get(player1Id).getTotal()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Per-target life cost equal to the life total is payable")
+        void perTargetLifeCostEqualToLifeTotalIsPaid() {
+            Card instant = createInstant("Test Purge", "{R}");
+            instant.setAdditionalLifeCostPerTarget(3);
+            instant.target(0, 99);
+            instant.addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
+            setHand(player1Id, List.of(instant));
+            addMana(player1Id, ManaColor.RED, 1);
+            // CR 119.4 allows the payment when the life total is greater than or equal to it,
+            // so paying the last 6 life is legal; losing at 0 is a separate state-based action.
+            gd.playerLifeTotals.put(player1Id, 6);
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            Permanent first = new Permanent(createCreature("Bear", "{1}{G}"));
+            Permanent second = new Permanent(createCreature("Elk", "{1}{G}"));
+            gd.playerBattlefields.get(player2Id).add(first);
+            gd.playerBattlefields.get(player2Id).add(second);
+
+            svc.playCard(gd, player1, 0, null, null, null,
+                    List.of(first.getId(), second.getId()), null, false, null);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.getLife(player1Id)).isZero();
         }
     }
 
