@@ -567,11 +567,7 @@ public class GameSimulator {
                 }
 
                 if (!ability.isNeedsTarget()) {
-                    if (gameService.canActivateAbility(
-                            gd, playerId, source, abilityIndex, virtualPool, null, null)) {
-                        actions.add(new SimulationAction.ActivateAbility(
-                                source.getId(), abilityIndex, null));
-                    }
+                    actions.add(new SimulationAction.ActivateAbility(source.getId(), abilityIndex, null));
                     continue;
                 }
 
@@ -581,18 +577,14 @@ public class GameSimulator {
                     continue;
                 }
                 if (validTargets.minTargets() == 0) {
-                    if (gameService.canActivateAbility(
-                            gd, playerId, source, abilityIndex, virtualPool, null, null)) {
-                        actions.add(new SimulationAction.ActivateAbility(
-                                source.getId(), abilityIndex, null));
-                    }
+                    actions.add(new SimulationAction.ActivateAbility(source.getId(), abilityIndex, null));
                 }
                 int selectedAbilityIndex = abilityIndex;
                 rankAbilityTargets(gd, playerId, source, ability, validTargets).stream()
-                        .limit(MAX_TARGET_CANDIDATES)
                         .filter(targetId -> gameService.canActivateAbility(
                                 gd, playerId, source, selectedAbilityIndex,
                                 virtualPool, targetId, null))
+                        .limit(MAX_TARGET_CANDIDATES)
                         .map(targetId -> new SimulationAction.ActivateAbility(
                                 source.getId(), selectedAbilityIndex, targetId))
                         .forEach(actions::add);
