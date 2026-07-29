@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
@@ -42,6 +43,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -70,6 +72,9 @@ class AutoPassServiceTest {
 
     @Mock
     private GameMutationCoordinator mutationCoordinator;
+
+    @Mock
+    private StateBasedActionService stateBasedActionService;
 
     @InjectMocks
     private AutoPassService sut;
@@ -109,6 +114,34 @@ class AutoPassServiceTest {
             sut.resolveAutoPass(gd, ignored -> {});
 
             assertThat(gd.currentStep).isEqualTo(stepBefore);
+            verify(stateBasedActionService, never()).performStateBasedActions(gd);
+            verify(mutationCoordinator, never()).emit(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Runs state-based actions before handing off priority")
+        void runsStateBasedActionsBeforeHandingOffPriority() {
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            sut.resolveAutoPass(gd, ignored -> {});
+
+            verify(stateBasedActionService).performStateBasedActions(gd);
+            verifyStateInvalidated();
+        }
+
+        @Test
+        @DisplayName("Stops auto-pass when state-based actions finish the game")
+        void stopsWhenStateBasedActionsFinishGame() {
+            org.mockito.Mockito.doAnswer(invocation -> {
+                gd.status = GameStatus.FINISHED;
+                return null;
+            }).when(stateBasedActionService).performStateBasedActions(gd);
+
+            sut.resolveAutoPass(gd, ignored -> {});
+
+            verify(stateBasedActionService).performStateBasedActions(gd);
+            verifyNoInteractions(actionAvailabilityService);
             verify(mutationCoordinator, never()).emit(any(), any(), any());
         }
 

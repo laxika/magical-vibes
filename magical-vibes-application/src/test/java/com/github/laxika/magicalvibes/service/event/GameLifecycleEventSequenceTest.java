@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.KarnRestartGameEff
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
+import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.turn.AutoPassService;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
@@ -183,7 +184,8 @@ class GameLifecycleEventSequenceTest {
                 stepTriggers,
                 mock(CombatAttackService.class),
                 mock(PotentialManaService.class),
-                coordinator);
+                coordinator,
+                mock(StateBasedActionService.class));
         TurnProgressionService turns = new TurnProgressionService(
                 combat,
                 gameLogs,

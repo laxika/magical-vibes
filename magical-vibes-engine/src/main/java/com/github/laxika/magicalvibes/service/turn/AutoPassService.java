@@ -17,7 +17,9 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -45,6 +47,7 @@ public class AutoPassService {
     private final CombatAttackService combatAttackService;
     private final PotentialManaService potentialManaService;
     private final GameMutationCoordinator mutationCoordinator;
+    private final StateBasedActionService stateBasedActionService;
 
     public AutoPassService(
             GameQueryService gameQueryService,
@@ -54,7 +57,8 @@ public class AutoPassService {
             StepTriggerService stepTriggerService,
             CombatAttackService combatAttackService,
             PotentialManaService potentialManaService,
-            GameMutationCoordinator mutationCoordinator) {
+            GameMutationCoordinator mutationCoordinator,
+            @Lazy StateBasedActionService stateBasedActionService) {
         this.gameQueryService = gameQueryService;
         this.actionAvailabilityService = actionAvailabilityService;
         this.triggerCollectionService = triggerCollectionService;
@@ -63,6 +67,7 @@ public class AutoPassService {
         this.combatAttackService = combatAttackService;
         this.potentialManaService = potentialManaService;
         this.mutationCoordinator = mutationCoordinator;
+        this.stateBasedActionService = stateBasedActionService;
     }
 
     /**
@@ -78,6 +83,13 @@ public class AutoPassService {
      * @param advanceStep callback to advance to the next turn step
      */
     public void resolveAutoPass(GameData gameData, Consumer<GameData> advanceStep) {
+        if (gameData.status != GameStatus.RUNNING) return;
+
+        // CR 117.5: State-based actions happen before triggered abilities are put on the stack
+        // and before the next player receives priority. Keeping the check at this common
+        // priority handoff covers special actions such as playing a land as well as casts,
+        // activations, and explicit priority passes.
+        stateBasedActionService.performStateBasedActions(gameData);
         if (gameData.status != GameStatus.RUNNING) return;
 
         // CR 603.3 / 117.5: Flush any mana-ability triggers that are still pending.
