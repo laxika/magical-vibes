@@ -95,6 +95,23 @@ class AuraAttachmentServiceTest {
         }
 
         @Test
+        @DisplayName("Unattached Aura on the battlefield goes to the graveyard")
+        void unattachedAuraGoesToGraveyard() {
+            Permanent aura = createAura("Errantry");
+            gd.playerBattlefields.get(player1Id).add(aura);
+            when(graveyardService.addCardToGraveyard(
+                    gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD)).thenReturn(true);
+
+            var result = service.removeOrphanedAuras(gd);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(aura);
+            assertThat(result.removals()).containsExactly(
+                    new AuraAttachmentService.OrphanedAuraRemoval(aura.getCard(), player1Id));
+            verify(graveyardService).addCardToGraveyard(
+                    gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD);
+        }
+
+        @Test
         @DisplayName("Multiple auras on same creature all go to graveyard when creature dies")
         void multipleAurasRemovedWhenCreatureDies() {
             UUID deadCreatureId = UUID.randomUUID();
@@ -453,7 +470,7 @@ class AuraAttachmentServiceTest {
         }
 
         @Test
-        @DisplayName("removeOrphanedAuras reconciles the CR 613.2 control state afterwards")
+        @DisplayName("removeOrphanedAuras reconciles the CR 613.1b control state afterwards")
         void removeOrphanedAurasReconcilesControl() {
             service.removeOrphanedAuras(gd);
 

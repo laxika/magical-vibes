@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Handles aura and attachment lifecycle: removing orphaned auras when their target leaves the
- * battlefield and detaching equipment. After each cleanup the CR 613.2 control state is
+ * Handles aura and attachment lifecycle: removing orphaned or unattached auras and detaching
+ * equipment whose host leaves the battlefield. After each cleanup the CR 613.1b control state is
  * reconciled ({@link CreatureControlService#reconcileControl}) so permanents whose controlling
  * effect ended fall back to the next most recent still-active control effect (or their owner).
  */
@@ -54,11 +54,11 @@ public class AuraAttachmentService {
     public record OrphanedAuraRemoval(Card card, UUID controllerId) {}
 
     /**
-     * Removes auras whose enchanted permanent no longer exists and detaches equipment whose
-     * equipped creature has left the battlefield (CR 303.4c, CR 301.5c). Orphaned auras are
-     * put into their owner's graveyard; equipment simply becomes unattached. After cleanup,
-     * the layer-2 control state is reconciled so permanents whose controlling effect has
-     * ended change controllers accordingly.
+     * Removes auras that are unattached or whose enchanted permanent no longer exists, and
+     * detaches equipment whose equipped creature has left the battlefield (CR 704.5m,
+     * CR 301.5c). Orphaned auras are put into their owner's graveyard; equipment simply becomes
+     * unattached. After cleanup, the layer-2 control state is reconciled so permanents whose
+     * controlling effect has ended change controllers accordingly.
      *
      * <p>"No longer exists" includes a host that phased out: a phased-out permanent is treated
      * as though it does not exist (CR 702.26b), so an attachment that was kept from following it
@@ -78,9 +78,11 @@ public class AuraAttachmentService {
             Iterator<Permanent> it = battlefield.iterator();
             while (it.hasNext()) {
                 Permanent p = it.next();
-                if (p.isAttached()
+                boolean isAura = p.getCard().getSubtypes().contains(CardSubtype.AURA);
+                boolean attachmentIsMissing = p.isAttached()
                         && !gameData.playerIds.contains(p.getAttachedTo())
-                        && gameQueryService.findPermanentById(gameData, p.getAttachedTo()) == null) {
+                        && gameQueryService.findPermanentById(gameData, p.getAttachedTo()) == null;
+                if ((isAura && !p.isAttached()) || attachmentIsMissing) {
                     if (p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
                         // Equipment stays on the battlefield unattached when the equipped creature leaves
                         p.setAttachedTo(null);
@@ -93,7 +95,10 @@ public class AuraAttachmentService {
                         it.remove();
                         gameData.expireFloatingEffectsForDepartedSource(p.getId());
                         boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD);
-                        gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " is put into the graveyard (enchanted permanent left the battlefield)."));
+                        String reason = p.isAttached()
+                                ? "enchanted permanent left the battlefield"
+                                : "Aura is not attached";
+                        gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " is put into the graveyard (" + reason + ")."));
                         log.info("Game {} - {} removed (orphaned aura)", gameData.id, p.getCard().getName());
                         if (wentToGraveyard) {
                             removals.add(new OrphanedAuraRemoval(p.getCard(), playerId));
