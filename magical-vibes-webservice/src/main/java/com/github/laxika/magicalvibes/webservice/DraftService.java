@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.ai.AiDraftEngine;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
+import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
@@ -82,6 +83,7 @@ public class DraftService {
     private final GameResyncProjectionService gameResyncProjectionService;
     private final GameService gameService;
     private final GameQueryService gameQueryService;
+    private final BlockLegalityService blockLegalityService;
     private final CombatAttackService combatAttackService;
     private final CastingCostService castingCostService;
     private final CastingPermissionService castingPermissionService;
@@ -103,6 +105,7 @@ public class DraftService {
                         GameResyncProjectionService gameResyncProjectionService,
                         GameService gameService,
                         GameQueryService gameQueryService,
+                        BlockLegalityService blockLegalityService,
                         CombatAttackService combatAttackService,
                         CastingCostService castingCostService,
                         CastingPermissionService castingPermissionService,
@@ -120,6 +123,7 @@ public class DraftService {
         this.gameResyncProjectionService = gameResyncProjectionService;
         this.gameService = gameService;
         this.gameQueryService = gameQueryService;
+        this.blockLegalityService = blockLegalityService;
         this.combatAttackService = combatAttackService;
         this.castingCostService = castingCostService;
         this.castingPermissionService = castingPermissionService;
@@ -620,9 +624,9 @@ public class DraftService {
     private void registerAiForTournamentGame(GameData gameData, UUID aiPlayerId, String aiName, AiDifficulty aiDifficulty) {
         Player aiPlayer = new Player(aiPlayerId, aiName);
         AiDecisionEngine engine = switch (aiDifficulty) {
-            case HARD -> new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
-            case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
-            case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+            case HARD -> new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, blockLegalityService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+            case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, blockLegalityService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+            case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, blockLegalityService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
         };
         String schedulerId = "ai-draft-" + gameData.id + "-" + aiPlayerId;
         AiDecisionScheduler aiDecisionScheduler = new AiDecisionScheduler(

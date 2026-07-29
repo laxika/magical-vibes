@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
+import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -101,7 +102,7 @@ class AiDecisionEngineTest {
         FakeConnection aiConn = new FakeConnection("ai-test");
         harness.getSessionManager().registerPlayer(aiConn, aiPlayer.getId(), "Bob");
         ai = new EasyAiDecisionEngine(gd.id, aiPlayer, harness.getGameRegistry(),
-                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
     }
 
@@ -2050,6 +2051,7 @@ class AiDecisionEngineTest {
 
         @Mock private AiGameActions mockMessageHandler;
         @Mock private GameQueryService mockGameQueryService;
+        @Mock private BlockLegalityService mockBlockLegalityService;
         @Mock private CombatAttackService mockCombatAttackService;
         @Mock private Connection mockConnection;
         @Mock private GameActionAvailabilityService mockGameActionAvailabilityService;
@@ -2095,7 +2097,7 @@ class AiDecisionEngineTest {
         private EasyAiDecisionEngine createEngine() {
             EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
-                    mockGameQueryService, mockCombatAttackService, mockGameActionAvailabilityService,
+                    mockGameQueryService, mockBlockLegalityService, mockCombatAttackService, mockGameActionAvailabilityService,
                     mockCastingCostService, mockCastingPermissionService,
                     mockTargetValidationService, null);
             return engine;

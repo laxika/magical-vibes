@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
+import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -29,6 +30,7 @@ public class AiPlayerService {
     private final GameService gameService;
     private final GameSetupService gameSetupService;
     private final GameQueryService gameQueryService;
+    private final BlockLegalityService blockLegalityService;
     private final CombatAttackService combatAttackService;
     private final GameActionAvailabilityService actionAvailabilityService;
     private final CastingCostService castingCostService;
@@ -44,6 +46,7 @@ public class AiPlayerService {
                            GameService gameService,
                            GameSetupService gameSetupService,
                            GameQueryService gameQueryService,
+                           BlockLegalityService blockLegalityService,
                            CombatAttackService combatAttackService,
                            GameActionAvailabilityService actionAvailabilityService,
                            CastingCostService castingCostService,
@@ -58,6 +61,7 @@ public class AiPlayerService {
         this.gameService = gameService;
         this.gameSetupService = gameSetupService;
         this.gameQueryService = gameQueryService;
+        this.blockLegalityService = blockLegalityService;
         this.combatAttackService = combatAttackService;
         this.actionAvailabilityService = actionAvailabilityService;
         this.castingCostService = castingCostService;
@@ -84,7 +88,7 @@ public class AiPlayerService {
 
         AiDecisionEngine engine = switch (aiDifficulty) {
             case HARD -> {
-                HardAiDecisionEngine hard = new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+                HardAiDecisionEngine hard = new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, blockLegalityService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
                 hard.setMctsTimeBudgetMs(mctsTimeBudgetMs);
                 // 0 = auto-size from available cores; tests bypass this service and
                 // stay on the engine's single-threaded default
@@ -93,8 +97,8 @@ public class AiPlayerService {
                         : MCTSEngine.autoParallelism());
                 yield hard;
             }
-            case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
-            case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+            case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, blockLegalityService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+            case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, blockLegalityService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
         };
         String schedulerId = "ai-" + gameData.id + "-" + aiPlayerId;
         AiDecisionScheduler aiDecisionScheduler = new AiDecisionScheduler(

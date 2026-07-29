@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
+import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
@@ -88,6 +89,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
     public HardAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                                 GameService gameService, GameQueryService gameQueryService,
+                                BlockLegalityService blockLegalityService,
                                 CombatAttackService combatAttackService,
                                 GameActionAvailabilityService actionAvailabilityService,
                                 CastingCostService castingCostService,
@@ -96,23 +98,24 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                                 TargetLegalityService targetLegalityService) {
         this(gameId, aiPlayer, gameRegistry,
                 new AiGameActions(gameId, aiPlayer, gameService, gameRegistry),
-                gameQueryService, combatAttackService, actionAvailabilityService,
-                castingCostService, castingPermissionService,
+                gameQueryService, blockLegalityService, combatAttackService,
+                actionAvailabilityService, castingCostService, castingPermissionService,
                 targetValidationService, targetLegalityService);
     }
 
     public HardAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                                 AiGameActions gameActions, GameQueryService gameQueryService,
+                                BlockLegalityService blockLegalityService,
                                 CombatAttackService combatAttackService,
                                 GameActionAvailabilityService actionAvailabilityService,
                                 CastingCostService castingCostService,
                                 CastingPermissionService castingPermissionService,
                                 TargetValidationService targetValidationService,
                                 TargetLegalityService targetLegalityService) {
-        super(gameId, aiPlayer, gameRegistry, gameActions, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+        super(gameId, aiPlayer, gameRegistry, gameActions, gameQueryService, blockLegalityService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
         this.boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
-        this.combatSimulator = new CombatSimulator(gameQueryService, boardEvaluator);
+        this.combatSimulator = new CombatSimulator(gameQueryService, blockLegalityService, boardEvaluator);
         this.gameSimulator = GameSimulator.forQueryService(gameQueryService);
         this.mctsEngine = new MCTSEngine(gameSimulator);
         this.raceEvaluator = new RaceEvaluator(gameQueryService);

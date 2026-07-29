@@ -48,27 +48,16 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
     public EasyAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                                 GameService gameService, GameQueryService gameQueryService,
+                                BlockLegalityService blockLegalityService,
                                 CombatAttackService combatAttackService,
                                 GameActionAvailabilityService actionAvailabilityService,
                                 CastingCostService castingCostService,
                                 CastingPermissionService castingPermissionService,
                                 TargetValidationService targetValidationService,
                                 TargetLegalityService targetLegalityService) {
-        super(gameId, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+        super(gameId, aiPlayer, gameRegistry, gameService, gameQueryService, blockLegalityService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
     }
 
-    public EasyAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
-                                AiGameActions gameActions, GameQueryService gameQueryService,
-                                CombatAttackService combatAttackService,
-                                GameActionAvailabilityService actionAvailabilityService,
-                                CastingCostService castingCostService,
-                                CastingPermissionService castingPermissionService,
-                                TargetValidationService targetValidationService,
-                                TargetLegalityService targetLegalityService) {
-        super(gameId, aiPlayer, gameRegistry, gameActions, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
-    }
-
-    /** @see AiDecisionEngine#AiDecisionEngine(UUID, Player, GameRegistry, AiGameActions, GameQueryService, BlockLegalityService, CombatAttackService, GameActionAvailabilityService, CastingCostService, CastingPermissionService, TargetValidationService, TargetLegalityService) */
     public EasyAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                                 AiGameActions gameActions, GameQueryService gameQueryService,
                                 BlockLegalityService blockLegalityService,

@@ -84,8 +84,13 @@ public abstract class AiDecisionEngine {
     protected final AiTargetSelector targetSelector;
     protected final AiChoiceHandler choiceHandler;
 
+    /**
+     * Convenience variant for callers holding a {@link GameService} rather than a ready-made
+     * {@link AiGameActions}; it builds the latter and defers to the primary constructor.
+     */
     public AiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                             GameService gameService, GameQueryService gameQueryService,
+                            BlockLegalityService blockLegalityService,
                             CombatAttackService combatAttackService,
                             GameActionAvailabilityService actionAvailabilityService,
                             CastingCostService castingCostService,
@@ -94,30 +99,11 @@ public abstract class AiDecisionEngine {
                             TargetLegalityService targetLegalityService) {
         this(gameId, aiPlayer, gameRegistry,
                 new AiGameActions(gameId, aiPlayer, gameService, gameRegistry),
-                gameQueryService, combatAttackService, actionAvailabilityService,
-                castingCostService, castingPermissionService,
+                gameQueryService, blockLegalityService, combatAttackService,
+                actionAvailabilityService, castingCostService, castingPermissionService,
                 targetValidationService, targetLegalityService);
     }
 
-    public AiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
-                            AiGameActions gameActions, GameQueryService gameQueryService,
-                            CombatAttackService combatAttackService,
-                            GameActionAvailabilityService actionAvailabilityService,
-                            CastingCostService castingCostService,
-                            CastingPermissionService castingPermissionService,
-                            TargetValidationService targetValidationService,
-                            TargetLegalityService targetLegalityService) {
-        this(gameId, aiPlayer, gameRegistry, gameActions, gameQueryService,
-                BlockLegalityService.forQueryService(gameQueryService),
-                combatAttackService, actionAvailabilityService, castingCostService,
-                castingPermissionService, targetValidationService, targetLegalityService);
-    }
-
-    /**
-     * Variant taking an explicit {@link BlockLegalityService} instead of deriving one from
-     * {@code gameQueryService}, so callers that drive block legality themselves (tests with a
-     * mocked query service) can supply their own.
-     */
     public AiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                             AiGameActions gameActions, GameQueryService gameQueryService,
                             BlockLegalityService blockLegalityService,

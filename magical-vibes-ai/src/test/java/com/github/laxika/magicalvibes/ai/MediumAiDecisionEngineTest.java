@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
+import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -91,7 +92,7 @@ class MediumAiDecisionEngineTest {
         FakeConnection aiConn = new FakeConnection("ai-medium-test");
         harness.getSessionManager().registerPlayer(aiConn, aiPlayer.getId(), "Bob");
         ai = new MediumAiDecisionEngine(gd.id, aiPlayer, harness.getGameRegistry(),
-                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
     }
 
@@ -411,6 +412,7 @@ class MediumAiDecisionEngineTest {
 
         @Mock private AiGameActions mockMessageHandler;
         @Mock private GameQueryService mockGameQueryService;
+        @Mock private BlockLegalityService mockBlockLegalityService;
         @Mock private CombatAttackService mockCombatAttackService;
         @Mock private Connection mockConnection;
         @Mock private GameActionAvailabilityService mockGameActionAvailabilityService;
@@ -457,7 +459,7 @@ class MediumAiDecisionEngineTest {
             AiTestPlayabilityStub.install(mockGameActionAvailabilityService, mockCastingCostService);
             MediumAiDecisionEngine engine = new MediumAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
-                    mockGameQueryService, mockCombatAttackService, mockGameActionAvailabilityService,
+                    mockGameQueryService, mockBlockLegalityService, mockCombatAttackService, mockGameActionAvailabilityService,
                     mockCastingCostService, mockCastingPermissionService,
                     mockTargetValidationService,
                     new com.github.laxika.magicalvibes.service.target.TargetLegalityService(mockGameQueryService,

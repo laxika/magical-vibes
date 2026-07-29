@@ -25,7 +25,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext.GlobalAttackOrBlockRestriction;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -63,19 +62,6 @@ public class BlockLegalityService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final BlockDenialMessageService blockDenialMessageService;
-
-    /**
-     * Builds a standalone instance for callers that assemble their own service graph from a
-     * {@link GameQueryService} rather than receiving Spring-injected beans — the AI decision
-     * engines and the headless simulator. Mirrors {@code GameSimulator.forQueryService}.
-     */
-    public static BlockLegalityService forQueryService(GameQueryService gameQueryService) {
-        PredicateEvaluationService predicates = new PredicateEvaluationService(gameQueryService);
-        return new BlockLegalityService(gameQueryService, predicates,
-                new ConditionEvaluationService(gameQueryService, predicates,
-                        new StaticEffectSupport(gameQueryService)),
-                new BlockDenialMessageService());
-    }
 
     /**
      * Builds a {@link BlockLegalityContext} for one declare-blockers computation: collects the

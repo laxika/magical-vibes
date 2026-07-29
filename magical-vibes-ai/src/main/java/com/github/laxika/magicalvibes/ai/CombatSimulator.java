@@ -53,10 +53,12 @@ public class CombatSimulator {
     private final PredicateEvaluationService predicateEvaluationService;
     private final BoardEvaluator boardEvaluator;
 
-    public CombatSimulator(GameQueryService gameQueryService, BoardEvaluator boardEvaluator) {
+    public CombatSimulator(GameQueryService gameQueryService,
+                           BlockLegalityService blockLegalityService,
+                           BoardEvaluator boardEvaluator) {
         this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         this.gameQueryService = gameQueryService;
-        this.blockLegalityService = BlockLegalityService.forQueryService(gameQueryService);
+        this.blockLegalityService = blockLegalityService;
         this.boardEvaluator = boardEvaluator;
     }
 

@@ -59,7 +59,7 @@ class CombatSimulatorTest {
         harness.skipMulligan();
         gameQueryService = harness.getGameQueryService();
         boardEvaluator = new BoardEvaluator(gameQueryService);
-        simulator = new CombatSimulator(gameQueryService, boardEvaluator);
+        simulator = new CombatSimulator(gameQueryService, harness.getBlockLegalityService(), boardEvaluator);
 
         gd.playerBattlefields.get(player1.getId()).clear();
         gd.playerBattlefields.get(player2.getId()).clear();

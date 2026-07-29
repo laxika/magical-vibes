@@ -155,7 +155,7 @@ class EasyAiDecisionEngineTest {
             testHarness.getSessionManager().registerPlayer(aiConn, aiTestPlayer.getId(), "Bob");
             easyAi = new EasyAiDecisionEngine(testGd.id, aiTestPlayer, testHarness.getGameRegistry(),
                     testHarness.getGameService(), testHarness.getGameQueryService(),
-                    testHarness.getCombatAttackService(), testHarness.getGameActionAvailabilityService(),
+                    testHarness.getBlockLegalityService(), testHarness.getCombatAttackService(), testHarness.getGameActionAvailabilityService(),
                     testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
                     testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
         }
@@ -1190,7 +1190,7 @@ class EasyAiDecisionEngineTest {
             testHarness.getSessionManager().registerPlayer(aiConn, aiTestPlayer.getId(), "Bob");
             easyAi = new EasyAiDecisionEngine(testGd.id, aiTestPlayer, testHarness.getGameRegistry(),
                     testHarness.getGameService(), testHarness.getGameQueryService(),
-                    testHarness.getCombatAttackService(), testHarness.getGameActionAvailabilityService(), testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
+                    testHarness.getBlockLegalityService(), testHarness.getCombatAttackService(), testHarness.getGameActionAvailabilityService(), testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
                     testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
         }
 
@@ -1521,7 +1521,7 @@ class EasyAiDecisionEngineTest {
             testHarness.getSessionManager().registerPlayer(aiConn, aiTestPlayer.getId(), "Bob");
             easyAi = new EasyAiDecisionEngine(testGd.id, aiTestPlayer, testHarness.getGameRegistry(),
                     testHarness.getGameService(), testHarness.getGameQueryService(),
-                    testHarness.getCombatAttackService(), testHarness.getGameActionAvailabilityService(), testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
+                    testHarness.getBlockLegalityService(), testHarness.getCombatAttackService(), testHarness.getGameActionAvailabilityService(), testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
                     testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
         }
 
@@ -1637,7 +1637,7 @@ class EasyAiDecisionEngineTest {
             testHarness.getSessionManager().registerPlayer(aiConn, aiTestPlayer.getId(), "Bob");
             easyAi = new EasyAiDecisionEngine(testGd.id, aiTestPlayer, testHarness.getGameRegistry(),
                     testHarness.getGameService(), testHarness.getGameQueryService(),
-                    testHarness.getCombatAttackService(), testHarness.getGameActionAvailabilityService(), testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
+                    testHarness.getBlockLegalityService(), testHarness.getCombatAttackService(), testHarness.getGameActionAvailabilityService(), testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
                     testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
         }
 

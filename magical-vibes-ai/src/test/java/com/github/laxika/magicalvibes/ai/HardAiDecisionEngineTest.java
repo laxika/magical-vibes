@@ -72,6 +72,7 @@ import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
+import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -202,7 +203,7 @@ class HardAiDecisionEngineTest {
     void hardEngineConstructorWorks() {
         HardAiDecisionEngine engine = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         assertThat(engine).isNotNull();
     }
@@ -214,7 +215,7 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(),
                 harness.getCastingPermissionService(), harness.getTargetValidationService(),
                 harness.getTargetLegalityService());
@@ -260,7 +261,7 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
 
         harness.forceActivePlayer(player1);
@@ -291,7 +292,7 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
 
         harness.forceActivePlayer(player1);
@@ -335,7 +336,7 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
 
         harness.forceActivePlayer(player1);
@@ -367,7 +368,7 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
 
         harness.forceActivePlayer(player1);
@@ -405,7 +406,7 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
 
         harness.forceActivePlayer(player1);
@@ -443,7 +444,7 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
 
         harness.forceActivePlayer(player1);
@@ -485,7 +486,7 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
 
         harness.forceActivePlayer(player1);
@@ -516,7 +517,7 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player2.getId(), "Bob");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player2, harness.getGameRegistry(),
-                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
 
         harness.forceActivePlayer(player1);
@@ -551,6 +552,7 @@ class HardAiDecisionEngineTest {
 
         @Mock private AiGameActions mockMessageHandler;
         @Mock private GameQueryService mockGameQueryService;
+        @Mock private BlockLegalityService mockBlockLegalityService;
         @Mock private CombatAttackService mockCombatAttackService;
         @Mock private Connection mockConnection;
         @Mock private GameActionAvailabilityService mockGameActionAvailabilityService;
@@ -597,7 +599,7 @@ class HardAiDecisionEngineTest {
             AiTestPlayabilityStub.install(mockGameActionAvailabilityService, mockCastingCostService);
             HardAiDecisionEngine engine = new HardAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
-                    mockGameQueryService, mockCombatAttackService, mockGameActionAvailabilityService,
+                    mockGameQueryService, mockBlockLegalityService, mockCombatAttackService, mockGameActionAvailabilityService,
                     mockCastingCostService, mockCastingPermissionService,
                     mockTargetValidationService,
                     new com.github.laxika.magicalvibes.service.target.TargetLegalityService(mockGameQueryService,
@@ -835,6 +837,7 @@ class HardAiDecisionEngineTest {
 
         @Mock private AiGameActions mockMessageHandler;
         @Mock private GameQueryService mockGameQueryService;
+        @Mock private BlockLegalityService mockBlockLegalityService;
         @Mock private CombatAttackService mockCombatAttackService;
         @Mock private Connection mockConnection;
         @Mock private GameActionAvailabilityService mockGameActionAvailabilityService;
@@ -881,7 +884,7 @@ class HardAiDecisionEngineTest {
             AiTestPlayabilityStub.install(mockGameActionAvailabilityService, mockCastingCostService);
             HardAiDecisionEngine engine = new HardAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
-                    mockGameQueryService, mockCombatAttackService, mockGameActionAvailabilityService,
+                    mockGameQueryService, mockBlockLegalityService, mockCombatAttackService, mockGameActionAvailabilityService,
                     mockCastingCostService, mockCastingPermissionService,
                     mockTargetValidationService,
                     new com.github.laxika.magicalvibes.service.target.TargetLegalityService(mockGameQueryService,
@@ -986,7 +989,7 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
 
         harness.forceActivePlayer(player1);
@@ -1014,7 +1017,7 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setMctsEngine(new MCTSEngine(GameSimulator.forQueryService(harness.getGameQueryService()), 42L, 500));
 
@@ -1054,7 +1057,7 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
 
         // Set up as opponent's turn, end step A?€�t good timing for REMOVAL instants
@@ -1096,7 +1099,7 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         // This test guards the deterministic board-wipe evaluation (SpellEvaluator), not the
         // search: wiping a single bear is a thin cast-vs-pass margin for MCTS, whose search
@@ -1178,7 +1181,7 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
 
         // Player 2 (human/opponent) controls Baird (tax {1} per attacker)
@@ -1220,7 +1223,7 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setMctsEngine(new MCTSEngine(GameSimulator.forQueryService(harness.getGameQueryService()), 42L, 500));
 
@@ -1259,7 +1262,7 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setMctsEngine(new MCTSEngine(GameSimulator.forQueryService(harness.getGameQueryService()), 42L, 500));
 
@@ -1301,7 +1304,7 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, aiPlayer.getId(), aiPlayer.getUsername());
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, aiPlayer, harness.getGameRegistry(),
-                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setMctsEngine(new MCTSEngine(GameSimulator.forQueryService(harness.getGameQueryService()), 42L, 500));
         return ai;
@@ -2199,7 +2202,7 @@ class HardAiDecisionEngineTest {
             TestableMulliganEngine(Player player) {
                 super(gd.id, player, harness.getGameRegistry(),
                         harness.getGameService(), harness.getGameQueryService(),
-                        harness.getCombatAttackService(), harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
+                        harness.getBlockLegalityService(), harness.getCombatAttackService(), harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
                         harness.getTargetValidationService(), harness.getTargetLegalityService());
             }
 
@@ -3491,7 +3494,7 @@ class HardAiDecisionEngineTest {
             ai = new HardAiDecisionEngine(
                     gd.id, player1, harness.getGameRegistry(),
                     harness.getGameService(), harness.getGameQueryService(),
-                    harness.getCombatAttackService(), harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
+                    harness.getBlockLegalityService(), harness.getCombatAttackService(), harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
                     harness.getTargetValidationService(), harness.getTargetLegalityService());
             ai.setMctsEngine(new MCTSEngine(GameSimulator.forQueryService(harness.getGameQueryService()), 42L, 500));
 
@@ -3832,7 +3835,7 @@ class HardAiDecisionEngineTest {
             ai = new HardAiDecisionEngine(
                     gd.id, player1, harness.getGameRegistry(),
                     harness.getGameService(), harness.getGameQueryService(),
-                    harness.getCombatAttackService(), harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
+                    harness.getBlockLegalityService(), harness.getCombatAttackService(), harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
                     harness.getTargetValidationService(), harness.getTargetLegalityService());
             ai.setMctsEngine(new MCTSEngine(GameSimulator.forQueryService(harness.getGameQueryService()), 42L, 500));
 

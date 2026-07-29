@@ -138,6 +138,7 @@ public class GameSimulator {
 
     GameSimulator(GameService gameService,
                   GameQueryService gameQueryService,
+                  BlockLegalityService blockLegalityService,
                   GameActionAvailabilityService actionAvailabilityService,
                   com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService,
                   GameRegistry gameRegistry,
@@ -145,7 +146,7 @@ public class GameSimulator {
                   ValidTargetService validTargetService) {
         this.gameService = gameService;
         this.gameQueryService = gameQueryService;
-        this.blockLegalityService = BlockLegalityService.forQueryService(gameQueryService);
+        this.blockLegalityService = blockLegalityService;
         this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         this.actionAvailabilityService = actionAvailabilityService;
         this.castingCostService = castingCostService;
@@ -154,7 +155,7 @@ public class GameSimulator {
         this.manaManager = new AiManaManager(gameQueryService);
         this.boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
-        this.combatSimulator = new CombatSimulator(gameQueryService, boardEvaluator);
+        this.combatSimulator = new CombatSimulator(gameQueryService, blockLegalityService, boardEvaluator);
         this.amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
         this.polarityClassifier = new TargetPolarityClassifier(amountEvaluationService);
         this.sizeGatedRemovalPump = new SizeGatedRemovalPump(gameQueryService, amountEvaluationService);

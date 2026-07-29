@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
+import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import org.slf4j.Logger;
@@ -75,13 +76,14 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
     RandomAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                            GameService gameService, GameQueryService gameQueryService,
+                           BlockLegalityService blockLegalityService,
                            CombatAttackService combatAttackService,
                            GameActionAvailabilityService actionAvailabilityService,
                            com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService,
                            com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService,
                            TargetValidationService targetValidationService,
                            TargetLegalityService targetLegalityService, Random rng, FuzzTelemetry telemetry) {
-        super(gameId, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+        super(gameId, aiPlayer, gameRegistry, gameService, gameQueryService, blockLegalityService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
         this.rng = rng;
         this.telemetry = telemetry;
     }

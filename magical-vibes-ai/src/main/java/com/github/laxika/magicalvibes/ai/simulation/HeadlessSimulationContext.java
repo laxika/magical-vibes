@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
+import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
@@ -34,6 +35,7 @@ public final class HeadlessSimulationContext {
             existing = new GameSimulator(
                     ctx.getBean(GameService.class),
                     ctx.getBean(GameQueryService.class),
+                    ctx.getBean(BlockLegalityService.class),
                     ctx.getBean(GameActionAvailabilityService.class),
                     ctx.getBean(com.github.laxika.magicalvibes.service.cast.CastingCostService.class),
                     ctx.getBean(GameRegistry.class),
