@@ -491,6 +491,36 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
                 return true; // Mana ability triggered a pending choice; will resume after it resolves
             }
+            if (targetId != null
+                    && modalPlan == null
+                    && !isMultiTarget
+                    && !EffectResolution.needsDamageDistribution(card)
+                    && !castCost.hasX()) {
+                List<UUID> currentTargets = findRandomTargets(gameData, card);
+                while (!currentTargets.contains(targetId)) {
+                    if (currentTargets.isEmpty()) {
+                        telemetry.recordSkip("spell: no valid target after mana payment", card.getName());
+                        targetId = null;
+                        break;
+                    }
+                    targetId = currentTargets.get(rng.nextInt(currentTargets.size()));
+                    int refreshedTargetingTax = computeTargetingTax(gameData, targetId, null);
+                    ManaPool refreshedVirtualPool = manaManager.buildVirtualManaPool(
+                            gameData, aiPlayer.getId());
+                    if (!canAffordSpell(gameData, card, refreshedVirtualPool, refreshedTargetingTax)) {
+                        telemetry.recordSkip("spell: refreshed targeting tax unaffordable", card.getName());
+                        targetId = null;
+                        break;
+                    }
+                    if (tapManaForSpell(gameData, card, xValue, refreshedTargetingTax)) {
+                        return true;
+                    }
+                    currentTargets = findRandomTargets(gameData, card);
+                }
+                if (targetId == null) {
+                    continue;
+                }
+            }
             final UUID finalTargetId = targetId;
             final Integer finalXValue = xValue;
             final Integer finalExileGraveyardCardIndex = exileGraveyardCardIndex;
@@ -595,6 +625,14 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
     // ===== Random Target Selection =====
 
     private UUID pickRandomTarget(GameData gameData, Card card) {
+        List<UUID> validTargets = findRandomTargets(gameData, card);
+        if (validTargets.isEmpty()) {
+            return null;
+        }
+        return validTargets.get(rng.nextInt(validTargets.size()));
+    }
+
+    private List<UUID> findRandomTargets(GameData gameData, Card card) {
         List<UUID> validTargets = new ArrayList<>();
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
 
@@ -641,11 +679,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 validTargets.add(c.getId());
             }
         }
-
-        if (validTargets.isEmpty()) {
-            return null;
-        }
-        return validTargets.get(rng.nextInt(validTargets.size()));
+        return validTargets;
     }
 
     // ===== Combat: Random Attackers =====
