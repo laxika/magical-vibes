@@ -25,7 +25,7 @@ class ChaosphereTest extends BaseCardTest {
 
         prepareDeclareBlockers();
 
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Creatures with flying can block only creatures with flying");
     }
@@ -38,7 +38,7 @@ class ChaosphereTest extends BaseCardTest {
         addCreatureReady(player2, new AirElemental());
 
         prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declares 1 blocker"));
     }
@@ -51,7 +51,7 @@ class ChaosphereTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declares 1 blocker"));
     }

@@ -209,12 +209,18 @@ class CombatDamageServiceTest {
         when(damagePreventionService.applySourceRedirectShields(
                 eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyReflectDamageToSourceControllerShield(
+                eq(gameData), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(2));
         // Saving Grace redirect (CR 614) is a pass-through here — no redirect shields are set up.
         // damagedPermanentId is null on the player path, so match it with any() rather than any(UUID.class).
         lenient().when(damagePreventionService.applyTurnDamageRedirectToCreature(
                 eq(gameData), any(UUID.class), any(), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         lenient().when(damagePreventionService.applyCreatureRedirectShields(
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyControllerCreaturesNextSourceDamageShield(
                 eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         lenient().when(damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(
