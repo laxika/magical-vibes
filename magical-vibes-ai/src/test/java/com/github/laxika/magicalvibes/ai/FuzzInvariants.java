@@ -325,7 +325,7 @@ final class FuzzInvariants {
     }
 
     /**
-     * CR 704.5m/n/q — with an empty stack and no pending input, every aura must be attached
+     * CR 704.5m/n — with an empty stack and no pending input, every aura must be attached
      * to an existing permanent or player, and attached equipment's host must exist.
      * Attachment <em>legality</em> (enchant restrictions, protection) is deliberately not
      * re-checked here — that would duplicate {@code AuraAttachmentService} and drift; this

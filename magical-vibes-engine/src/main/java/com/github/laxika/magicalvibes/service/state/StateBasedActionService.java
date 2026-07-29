@@ -77,7 +77,13 @@ public class StateBasedActionService {
             anyPerformed |= cancelCounters(gameData);
             anyPerformed |= applyWorldRule(gameData);
 
-            // CR 704.5n / 704.5q — illegally attached auras die, illegal equipment unattaches
+            // CR 704.5m / 704.5n — illegally attached auras die, illegal equipment unattaches.
+            // The departed-host half runs unconditionally: enforceAttachmentLegality deliberately
+            // skips a host that no longer exists, and every other removeOrphanedAuras call site
+            // hangs off something dying, so a host that leaves without a death — phasing out
+            // during the untap step (CR 702.26b) — would otherwise strand its attachments until
+            // an unrelated sweep happened to run.
+            anyPerformed |= permanentRemovalService.removeOrphanedAuras(gameData);
             anyPerformed |= permanentRemovalService.enforceAttachmentLegality(gameData);
         } while (anyPerformed && ++passes < MAX_SBA_PASSES);
 

@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.m.MerfolkRaiders;
 import com.github.laxika.magicalvibes.cards.r.RealityRipple;
+import com.github.laxika.magicalvibes.cards.t.TeferisCurse;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -70,6 +72,27 @@ class SpatialBindingTest extends BaseCardTest {
         advanceTurn(); // player1's upkeep clears the restriction
         advanceTurn(); // player2's untap step — now it phases out
         harness.assertNotOnBattlefield(player2, "Merfolk Raiders");
+    }
+
+    @Test
+    @DisplayName("A protected Aura is put into the graveyard when its host phases out without it")
+    void protectedAuraIsOrphanedWhenItsHostPhasesOut() {
+        harness.addToBattlefield(player1, new SpatialBinding());
+        harness.addToBattlefield(player2, new MerfolkRaiders());
+        Permanent raiders = findPermanent(player2, "Merfolk Raiders");
+        Permanent curse = new Permanent(new TeferisCurse());
+        curse.setAttachedTo(raiders.getId());
+        gd.playerBattlefields.get(player2.getId()).add(curse);
+
+        activateBinding(curse.getId());
+
+        advanceTurn(); // player2's untap step — the Raiders phase out, the Curse can't follow
+
+        assertThat(gd.phasedOutPermanents.getOrDefault(player2.getId(), List.of())).contains(raiders);
+        assertThat(gd.phasedOutPermanents.getOrDefault(player2.getId(), List.of())).doesNotContain(curse);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(curse);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Teferi's Curse"));
     }
 
     private void activateBinding(UUID targetId) {

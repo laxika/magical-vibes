@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -53,6 +54,8 @@ class UntapStepServiceTest {
     private GameLogService gameLogService;
     @Mock
     private PhasingService phasingService;
+    @Mock
+    private PermanentRemovalService permanentRemovalService;
 
     // Real support so untapPermanent actually untaps; its trigger service is an inert mock.
     @Spy

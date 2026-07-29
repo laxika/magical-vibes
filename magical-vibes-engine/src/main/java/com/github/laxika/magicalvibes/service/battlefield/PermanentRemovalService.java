@@ -417,12 +417,14 @@ public class PermanentRemovalService {
      * Removes all auras whose enchanted permanent is no longer on the battlefield.
      *
      * @param gameData the current game state
+     * @return {@code true} if any attachment changed (the SBA loop must re-check)
      */
-    public void removeOrphanedAuras(GameData gameData) {
-        var removals = auraAttachmentService.removeOrphanedAuras(gameData);
-        for (var removal : removals) {
+    public boolean removeOrphanedAuras(GameData gameData) {
+        var result = auraAttachmentService.removeOrphanedAuras(gameData);
+        for (var removal : result.removals()) {
             triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, removal.card(), removal.controllerId());
         }
+        return result.anyChange();
     }
 
     /**

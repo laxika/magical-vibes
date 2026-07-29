@@ -44,6 +44,10 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class PermanentRemovalServiceTest {
 
+    /** A sweep that found nothing to clean up. */
+    private static final AuraAttachmentService.AttachmentSweepResult NO_ATTACHMENT_CHANGE =
+            new AuraAttachmentService.AttachmentSweepResult(List.of(), false);
+
     @Mock
     private GraveyardService graveyardService;
 
@@ -77,6 +81,7 @@ class PermanentRemovalServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(auraAttachmentService.removeOrphanedAuras(any())).thenReturn(NO_ATTACHMENT_CHANGE);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -292,7 +297,6 @@ class PermanentRemovalServiceTest {
         void exileReplacementExileIfLeaves() {
             Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
             bears.setExileIfLeavesBattlefield(true);
-            when(auraAttachmentService.removeOrphanedAuras(any())).thenReturn(List.of());
 
             boolean result = prs.removePermanentToGraveyard(gd, bears);
 
@@ -308,7 +312,6 @@ class PermanentRemovalServiceTest {
         void exileReplacementExileInsteadOfDie() {
             Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
             bears.setExileInsteadOfDieThisTurn(true);
-            when(auraAttachmentService.removeOrphanedAuras(any())).thenReturn(List.of());
 
             boolean result = prs.removePermanentToGraveyard(gd, bears);
 
@@ -484,7 +487,6 @@ class PermanentRemovalServiceTest {
             Permanent equipment = addPermanent(player1Id, createEquipmentWithSacrificeOnUnattach("Grafted Exoskeleton"));
             equipment.setAttachedTo(creature.getId());
 
-            when(auraAttachmentService.removeOrphanedAuras(any())).thenReturn(List.of());
             when(gameQueryService.isCreature(gd, equipment)).thenReturn(false);
             when(gameQueryService.isArtifact(equipment)).thenReturn(true);
             when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
@@ -537,7 +539,6 @@ class PermanentRemovalServiceTest {
         void exileReplacementExileIfLeaves() {
             Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
             bears.setExileIfLeavesBattlefield(true);
-            when(auraAttachmentService.removeOrphanedAuras(any())).thenReturn(List.of());
 
             boolean result = prs.removePermanentToHand(gd, bears);
 
@@ -675,7 +676,6 @@ class PermanentRemovalServiceTest {
             Permanent equipment = addPermanent(player1Id, createEquipmentWithSacrificeOnUnattach("Grafted Exoskeleton"));
             equipment.setAttachedTo(creature.getId());
 
-            when(auraAttachmentService.removeOrphanedAuras(any())).thenReturn(List.of());
             when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
             when(gameQueryService.isCreature(gd, equipment)).thenReturn(false);
             when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
@@ -719,7 +719,6 @@ class PermanentRemovalServiceTest {
         @DisplayName("Destroys a normal permanent and sends it to graveyard")
         void destroysNormalPermanent() {
             Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
-            when(auraAttachmentService.removeOrphanedAuras(any())).thenReturn(List.of());
             when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
             when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
             stubGraveyardForCreature(bears, player1Id);
@@ -774,7 +773,6 @@ class PermanentRemovalServiceTest {
         @DisplayName("cannotBeRegenerated flag bypasses regeneration")
         void cannotBeRegeneratedBypassesRegeneration() {
             Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
-            when(auraAttachmentService.removeOrphanedAuras(any())).thenReturn(List.of());
             when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
             stubGraveyardForCreature(bears, player1Id);
 
@@ -895,7 +893,6 @@ class PermanentRemovalServiceTest {
         @DisplayName("Enchanted creature is destroyed when redirected damage meets toughness")
         void enchantedCreatureDestroyedByLethalDamage() {
             Permanent creature = addPermanent(player1Id, createCreature("Serra Angel"));
-            when(auraAttachmentService.removeOrphanedAuras(any())).thenReturn(List.of());
             when(gameQueryService.findEnchantedCreatureByAuraEffect(eq(gd), eq(player1Id), eq(RedirectPlayerDamageToEnchantedCreatureEffect.class)))
                     .thenReturn(creature);
             when(damagePreventionService.applyCreaturePreventionShield(gd, creature, 4, false)).thenReturn(4);

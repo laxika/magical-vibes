@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlD
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +51,7 @@ public class UntapStepService {
     private final GameLogService gameLogService;
     private final TapUntapSupport tapUntapSupport;
     private final PhasingService phasingService;
+    private final PermanentRemovalService permanentRemovalService;
 
     /**
      * Performs the untap step for the active player.
@@ -141,6 +143,14 @@ public class UntapStepService {
         // CR 502.1: phasing is the untap step's first turn-based action, resolved before anything
         // untaps (and skipped entirely along with the rest of the step above).
         phasingService.applyPhasing(gameData, activePlayerId);
+
+        // A permanent that phased out is treated as though it does not exist (CR 702.26b), so an
+        // attachment that was kept from following it out (Spatial Binding) is now attached to
+        // nothing and belongs in its owner's graveyard (CR 303.4c) — the official Spatial Binding
+        // ruling says immediately. This is a state-based action, but nothing runs the SBA loop
+        // between the untap step and the next stack resolution, so the sweep is run here; every
+        // other way a host leaves the battlefield already sweeps at its own call site.
+        permanentRemovalService.removeOrphanedAuras(gameData);
 
         // Clean up stale untap-prevention locks on ALL battlefields before untapping.
         // A lock is stale if the source permanent is no longer on the battlefield or is no longer tapped.

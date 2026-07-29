@@ -60,10 +60,18 @@ public class AuraAttachmentService {
      * the layer-2 control state is reconciled so permanents whose controlling effect has
      * ended change controllers accordingly.
      *
+     * <p>"No longer exists" includes a host that phased out: a phased-out permanent is treated
+     * as though it does not exist (CR 702.26b), so an attachment that was kept from following it
+     * out — Spatial Binding's "target permanent can't phase out" — is orphaned here rather than
+     * waiting for the host to phase back in. That is the official Spatial Binding ruling: the
+     * Aura stays on the battlefield and is then immediately put into the graveyard.</p>
+     *
      * @param gameData the current game state
+     * @return what the sweep changed, so the SBA loop knows whether to run another pass
      */
-    public List<OrphanedAuraRemoval> removeOrphanedAuras(GameData gameData) {
+    public AttachmentSweepResult removeOrphanedAuras(GameData gameData) {
         List<OrphanedAuraRemoval> removals = new ArrayList<>();
+        boolean anyUnattached = false;
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
@@ -77,6 +85,7 @@ public class AuraAttachmentService {
                         // Equipment stays on the battlefield unattached when the equipped creature leaves
                         p.setAttachedTo(null);
                         gameData.expireFloatingEffectsForUnattachedSource(p.getId());
+                        anyUnattached = true;
                         String logEntry = p.getCard().getName() + " becomes unattached (equipped creature left the battlefield).";
                         gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes unattached (equipped creature left the battlefield)."));
                         log.info("Game {} - {} unattached (equipped creature left)", gameData.id, p.getCard().getName());
@@ -94,14 +103,15 @@ public class AuraAttachmentService {
             }
         }
         creatureControlService.reconcileControl(gameData);
-        return removals;
+        return new AttachmentSweepResult(removals, anyUnattached);
     }
 
     /**
-     * Outcome of one {@link #enforceAttachmentLegality} sweep: auras put into the graveyard
-     * (for the caller to fire graveyard triggers) and whether any equipment became unattached.
+     * Outcome of one attachment sweep — {@link #removeOrphanedAuras} or
+     * {@link #enforceAttachmentLegality}: auras put into the graveyard (for the caller to fire
+     * graveyard triggers) and whether any equipment became unattached.
      */
-    public record AttachmentLegalityResult(List<OrphanedAuraRemoval> removals, boolean anyUnattached) {
+    public record AttachmentSweepResult(List<OrphanedAuraRemoval> removals, boolean anyUnattached) {
         public boolean anyChange() {
             return anyUnattached || !removals.isEmpty();
         }
@@ -112,10 +122,10 @@ public class AuraAttachmentService {
      * still on the battlefield (the departed-object case is {@link #removeOrphanedAuras}):
      * an aura attached to an object it can't legally enchant — the object has protection from
      * it, or no longer satisfies the card's enchant restriction (its declared target filter) —
-     * is put into its owner's graveyard (CR 704.5n); equipment attached to a permanent that is
-     * not a creature or has protection from it becomes unattached (CR 704.5q).
+     * is put into its owner's graveyard (CR 704.5m); equipment attached to a permanent that is
+     * not a creature or has protection from it becomes unattached (CR 704.5n).
      */
-    public AttachmentLegalityResult enforceAttachmentLegality(GameData gameData) {
+    public AttachmentSweepResult enforceAttachmentLegality(GameData gameData) {
         List<OrphanedAuraRemoval> removals = new ArrayList<>();
         boolean anyUnattached = false;
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -133,7 +143,7 @@ public class AuraAttachmentService {
                 if (reason == null) continue;
 
                 if (isEquipment) {
-                    // CR 704.5q — illegally attached equipment becomes unattached but stays
+                    // CR 704.5n — illegally attached equipment becomes unattached but stays
                     p.setAttachedTo(null);
                     gameData.expireFloatingEffectsForUnattachedSource(p.getId());
                     anyUnattached = true;
@@ -141,7 +151,7 @@ public class AuraAttachmentService {
                     gameLogService.append(gameData, GameLog.builder().card(p.getCard()).text(" becomes unattached (" + reason + ").").build());
                     log.info("Game {} - {} unattached ({})", gameData.id, p.getCard().getName(), reason);
                 } else {
-                    // CR 704.5n — an illegally attached aura is put into its owner's graveyard
+                    // CR 704.5m — an illegally attached aura is put into its owner's graveyard
                     it.remove();
                     gameData.expireFloatingEffectsForDepartedSource(p.getId());
                     boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD);
@@ -157,7 +167,7 @@ public class AuraAttachmentService {
         if (anyUnattached || !removals.isEmpty()) {
             creatureControlService.reconcileControl(gameData);
         }
-        return new AttachmentLegalityResult(removals, anyUnattached);
+        return new AttachmentSweepResult(removals, anyUnattached);
     }
 
     /**

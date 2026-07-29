@@ -42,6 +42,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -422,7 +423,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).removeOrphanedAuras(gd);
+            verify(permanentRemovalService, atLeastOnce()).removeOrphanedAuras(gd);
         }
 
         @Test
@@ -438,16 +439,18 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).removeOrphanedAuras(gd);
+            verify(permanentRemovalService, atLeastOnce()).removeOrphanedAuras(gd);
         }
 
         @Test
-        @DisplayName("Orphaned auras are not removed when nothing died")
-        void orphanedAurasNotRemovedWhenNothingDied() {
-            // empty battlefield
+        @DisplayName("Orphaned auras are swept even when nothing died")
+        void orphanedAurasSweptWhenNothingDied() {
+            // A host can leave the battlefield without anything dying — it phases out — so the
+            // sweep can't hang off a death or those attachments are stranded until an
+            // unrelated sweep happens to run.
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService, never()).removeOrphanedAuras(gd);
+            verify(permanentRemovalService, atLeastOnce()).removeOrphanedAuras(gd);
         }
     }
 
