@@ -4,6 +4,9 @@ command_pattern = "^./gradlew :magical-vibes-application:test --tests .*"
 decision = "always-allow"
 reason = "Allow targeted application tests to manage Gradle wrapper locks and artifacts."
 
+[features]
+codex_git_commit = true
+
 [sandbox]
 # Ensures the sandbox doesn't block Gradle from writing to its own build/cache dirs
 mode = "relaxed"
