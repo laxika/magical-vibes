@@ -200,53 +200,155 @@ layer-6 grant, so layer 7 could be resolved for a permanent before the layer-6 d
 Closing it means making per-permanent layer-7 numbers computable ahead of L6 — a restructure that
 belongs with C1, not a leaf change.
 
-- [ ] Carried to Stage C: P/T-filtered layer-4/5/6 grants (`Tetsuko Umezawa, Fugitive`). Write
-      the two regression tests to the correct answer when C1 lands — an anthem lifting a 1/1 to
-      2/2 removes the ability, an opponent's `Cumber Stone` dropping a 2/2 to 1/2 grants it.
+- [x] Carried to Stage C, **closed 2026-07-31 — but not the way this section predicted.** See
+      "The blocker was a modeling bug, not a layer-system gap" under C1 below. The two regression
+      tests exist and pass: `TetsukoUmezawaFugitiveTest.anthemRemovesEvasion` and
+      `.opponentDebuffConfersEvasion`. No pass restructure was needed, and none is warranted.
 
 Not throwaway work despite Stage C deleting the method: making layered P/T readable mid-pass is
 a capability Stage C requires.
 
 ## Stage C — conditional wrappers into the pass, then delete the guard
 
-Large, multi-session. **Gated on the fingerprint decision below — do not start code first.**
+Large, multi-session. C0 and C1 landed 2026-07-31; C2 is the remaining bulk.
 
-### C0 — the fingerprint decision (design only, no code)
+### C0 — the fingerprint decision
 
-Conditional wrappers are deliberately excluded from `collectInstances`
-(~`LayerSystemService.java:756,775`, via `isConditionalWrapper` ~`:798`) because their conditions
-read state that `computeBoardFingerprint` (~`:413-452`) does not hash. The fingerprint covers
-permanents, graveyards, hand sizes, library top, floating effects and exiles — but **not life
-totals, active player, or poison**. Caching a board containing such a conditional goes stale.
+Conditional wrappers were excluded from `collectInstances` (`LayerSystemService.java:772`, skips
+at `:784`/`:803`, via `isConditionalWrapper` `:826`) because their conditions read state that
+`computeBoardFingerprint` (`:441`) does not hash. The fingerprint covers permanents, graveyards,
+hand sizes, library top, floating effects and exiles — but **not life totals, active player, or
+poison**. Caching a board containing such a conditional goes stale.
 
-Options:
+Options were: (1) extend the fingerprint to the volatile inputs; (2) mark a board non-cacheable
+when it contains such a conditional; (3) hybrid — classify conditions as stable vs. volatile and
+admit only the stable ones.
 
-1. Extend the fingerprint to the volatile inputs that in-board conditions actually read.
-   Correct, but widens a hot-path hash and risks over-invalidation.
-2. Mark a board non-cacheable when it contains such a conditional. Simpler and always correct,
-   but loses board caching for any game containing one.
-3. Hybrid: classify conditions as stable vs. volatile; admit only stable ones to the board.
+**Decided 2026-07-31: option 3, hybrid, default-deny.** `ConditionBoardStability` (engine
+`service/effect/`) answers whether a condition reads only fingerprinted state; an unlisted
+condition keeps the pre-existing legacy-additive behavior, so introducing a condition can never
+silently make the board cache unsound — the cost of forgetting one is a missed optimization, not
+a wrong answer.
 
-Decision owner: the user. This is a correctness-vs-performance tradeoff on a hot path.
+Rationale: the survey below found that the condition motivating C1 (`Metalcraft`) reads only
+battlefield permanents, which are already hashed, so that case lands with zero fingerprint change
+and zero cache loss. Option 1 would have widened a hot-path hash for every game and required
+rewriting `LayeredBoardCacheTest.conditionalStaticGrantsToggleWithoutInvalidatingTheBoard`
+(`:108`), which pins the opposite. Option 2 would have cost a whole game its board memoization
+(~26-45× on layered-query throughput, `LAYER_SYSTEM.md` step 13) for one Rusted Relic.
 
-- [ ] C0 decided and recorded here.
+- [x] C0 decided and recorded here.
+
+#### Survey: conditions in STATIC slots (2026-07-31)
+
+149 card classes construct a conditional wrapper in an `EffectSlot.STATIC` slot, using **20 of
+the 102** `Condition` variants. Of those 20, only these read state the fingerprint does **not**
+cover — everything else is admissible as far as staleness goes:
+
+| Uncovered read | Conditions | Cards |
+|---|---|---|
+| `playerLifeTotals` | `ControllerLifeAtLeast`, `ControllerLifeAtMost` | 6 |
+| `activePlayerId` | `ControllerTurn`, `NotControllerTurn` | 5 |
+| `Permanent.isAttacking()` | `SourceIsAttacking` | 3 |
+| `hasGainedLifeThisTurn` | `GainedLifeThisTurn` | 3 |
+| `creatureDeathCountThisTurn` | `Morbid` | 1 |
+| `playerPoisonCounters` | `OpponentPoisoned` | 1 |
+| `playerDecks` **size** | `AnyLibraryAtMost` | 1 |
+| `isBlocking()` / `getBlockingTargetIds()` | `BlockedByMinCreatures` | 1 |
+| `playersWhoseCardsLeftGraveyardThisTurn` | `CardsLeftGraveyardThisTurn` | 1 |
+
+`ConditionBoardStability` currently lists only `Metalcraft` plus the four combinators
+(`NotCondition`, `AllConditions`, `AllOf`, `AnyOf`, which recurse into their operands). The rest
+of the stable set above is verified but unlisted, because admission is gated on layer 4 and
+nothing else can reach it yet — list them when C2 widens admission past layer 4.
 
 ### C1 — admit layer-4-producing conditionals to the pass
 
-- [ ] Classify `ConditionalEffect` by its wrapped effect's layer, so
-      `ConditionalEffect(Metalcraft, AnimatePermanentsEffect)` is collected as an L4 instance
-      with a timestamp.
-- [ ] Evaluate its condition against the in-flight `CharacteristicState`.
-- [ ] Let the existing `orderByDependency` (~`:876-936`) handle Armor → Relic. **No new ordering
-      logic is needed** — that machinery already implements CR 613.8 with trial-application
-      fingerprinting, Kahn topological sort, and a dependency-loop fallback to timestamp order.
-- [ ] Delete the stale comment at ~`LayerSystemService.java:1421-1423`, which currently
-      describes this bug as if it were a constraint.
+**Done 2026-07-31** — step 17 in `LAYER_SYSTEM.md`.
+
+- [x] Classify `ConditionalEffect` by its wrapped effect's layer. `LayerClassifier` already
+      delegated wrappers to `wrapped()`; the real blocker was that **`AnimatePermanentsEffect` had
+      no classification at all**, so `ConditionalEffect(Metalcraft, AnimatePermanentsEffect)` was
+      excluded twice over — once as a wrapper, once as an unclassified effect. Now registered as
+      L4 only; base P/T, colour and keywords stay with the legacy self-handler in the accumulator
+      pass (the `AllLandsAreCreaturesEffect` / `EnchantedPermanentBecomesCreatureEffect` split).
+- [x] Evaluate its condition against the in-flight `CharacteristicState`. `applyL4Instance` was
+      split into a guard plus `applyL4Effect(instance, effect, …)`, so an admitted wrapper hands
+      its wrapped effect straight back in, keeping the instance's source, timestamp and CR 613.6
+      bookkeeping. Metalcraft's static branch already read the in-flight state through
+      `StaticEffectSupport.isArtifactForStaticFilter` (Stage A).
+- [x] Let the existing `orderByDependency` (`:904`) handle Armor → Relic. **No new ordering logic
+      was needed** — the trial-application fingerprints pick it up, because the animation's
+      recorded operations appear only in the world where the Armor applied first.
+- [x] Delete the stale comment. There were two, not one: `LayerSystemService.java:1250-1251`
+      ("wrappers never wrap layer-4 effects today") and the `isCreatureForL4` javadoc, plus the
+      now-inaccurate notes on `classifyOrNull` and `computeBoardFingerprint`.
+
+**Scope actually admitted:** `admitsConditionalWrapper` requires layer 4 **and** a stable
+condition, so of the 149 STATIC-slot conditional cards exactly **one** enters the pass —
+`Rusted Relic`. `Warden of the Wall` is the only other conditional self-animation, but its
+`NotControllerTurn` reads `activePlayerId`, so it stays legacy-only with today's behavior.
+
+**What changed observably:** the animated relic's CREATURE type and GOLEM subtype now sit in its
+`CharacteristicState`, so the recursion-safe static-filter leaves see them. `Wing Splicer`'s
+"Golem creatures you control have flying" reaches it; previously the subtype existed only in the
+accumulator, which no filter reads. The P/T path is unchanged — Stage A already fixed that.
+
+**Residual approximation:** the pass evaluates the condition mid-layer-4 while the assembly
+re-evaluates it against the finished states. They agree because type changes are layer-4-only and
+dependency ordering puts the conditional after whatever it reads — except inside a CR 613.8c
+dependency loop, where timestamp order applies and the two evaluations can disagree. No current
+card pair forms such a loop.
+
+### The blocker was a modeling bug, not a layer-system gap (2026-07-31)
+
+Stage B's closing section diagnosed `Tetsuko Umezawa, Fugitive` as "layer-6 filters still cannot
+see layer 7" and prescribed making per-permanent layer-7 numbers computable ahead of L6 — a pass
+restructure. **That diagnosis was wrong, and the restructure would have been the wrong fix.**
+
+Verified against the CR effective June 19, 2026 via the `rules` MCP:
+
+| Rule | Content |
+|---|---|
+| 613.11 | Continuous effects that affect the rules of the game rather than objects are applied **after all other continuous effects** |
+| 509.1b | Blocking restrictions are checked at declare blockers; an evasion ability is "a static ability **an attacking creature has**" |
+
+Tetsuko reads "Creatures you control with power or toughness 1 or less **can't be blocked**" — it
+states a blocking restriction and grants the creatures no ability (contrast "…gain 'this creature
+can't be blocked'"). That makes it a CR 613.11 rules-modifying effect, applied *after* the layer
+system, so its matching set is decided from fully layered P/T by rule. There is no
+layer-6-reads-layer-7 circularity to engineer around; the effect simply did not belong in layer 6.
+The official Gatherer ruling agrees on the dynamics ("once a creature you control has been
+blocked, changing its power to 1 or less won't cause it to become unblocked" — i.e. before blockers
+are declared, changing power *does* change qualification).
+
+The engine already models every other blocking/attacking/untap restriction this way: ~50 such
+effect types carry **no** `LayerClassifier` entry and no static handler, and are read straight off
+`EffectSlot.STATIC` by `BlockLegalityService` / `AttackLegalityService` / `UntapStepService` using
+the fully layered `matchesPermanentPredicate`. A survey of the pool found **17 P/T-filtered
+STATIC-slot effects across 16 cards, of which Tetsuko was the only layer-classified one** — it
+reached layer 6 solely because it was written as `GrantEffectEffect(CantBeBlockedEffect, …)`.
+
+**Fix:** new `ControlledCreaturesMatchingCantBeBlockedEffect(PermanentPredicate filter)`
+(magical-vibes-domain `model/effect/`), consumed by a new branch in
+`GameQueryService.hasCantBeBlocked`, mirroring `ControlledCreaturesCantAttackUnlessPredicateEffect`
+/ `AttackLegalityService`. Tetsuko now uses it. Both regression tests were confirmed to fail under
+the old `GrantEffectEffect` modeling and pass under the new one.
+
+**Consequence for the plan:** there is **no remaining card** with a genuine P/T-filtered layer-4/5/6
+*ability* grant, so the "make layer 7 readable ahead of L6" capability has zero cards behind it and
+is not scheduled. Should such a card ever appear, note that the CR does not clearly sanction a
+layer-6 grant reading layer-7 P/T either — the invariant "layer N never reads layer >N"
+(`LAYER_SYSTEM.md` §5.4) would be correct there, and the card would need a rules verdict first.
+
+**Known cosmetic regression:** qualifying creatures no longer list "Can't be blocked" among their
+granted abilities in the client (`GrantedAbilityViewFactory`), because it is no longer a granted
+ability. This matches how the other 16 P/T-filtered restriction cards already behave.
 
 ### C2 — strangler-fig the leaves
 
-`matchesStaticFilter` handles **22 of 65** `PermanentPredicate` implementations and throws on the
-rest; **17 handlers** call it, plus both evaluation services. Migrate **one predicate family per
+`matchesStaticFilter` handles **22 of 67** `PermanentPredicate` implementations and throws on the
+rest; **14 handlers** call it, plus both evaluation services. Migrate **one predicate family per
 slice**, keeping the method as the funnel until it is empty, then delete it. Suite green at every
 step.
 
@@ -288,7 +390,7 @@ Build these in addition, before Stage A, and keep them green throughout:
 
 - [x] The `Rusted Relic` + `Silverskin Armor` reproduction as a permanent test.
       `RustedRelicTest.grantedArtifactTypeCountsTowardMetalcraft` (2026-07-30).
-- [ ] Characterization tests for the 17 handlers calling `matchesStaticFilter`. Pin behavior
+- [ ] Characterization tests for the 14 handlers calling `matchesStaticFilter`. Pin behavior
       derived from the CR, **not** from current output — some current output is wrong (anthems
       invisible to static filters is a bug, not a baseline). Where current behavior is knowingly
       wrong, write the test to the correct answer and let it fail until the stage that fixes it.

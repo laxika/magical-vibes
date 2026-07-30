@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.CumberStone;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianDigester;
 import com.github.laxika.magicalvibes.cards.w.WallOfAir;
@@ -82,6 +84,40 @@ class TetsukoUmezawaFugitiveTest extends BaseCardTest {
         Permanent opponentWizard = findPermanent(player2, "Fugitive Wizard");
 
         assertThat(gqs.hasCantBeBlocked(gd, opponentWizard)).isFalse();
+    }
+
+    // ===== Layered power and toughness decide the set (CR 613.11) =====
+
+    @Test
+    @DisplayName("An anthem lifting a 1/1 to 2/2 takes the evasion away")
+    void anthemRemovesEvasion() {
+        harness.addToBattlefield(player1, new TetsukoUmezawaFugitive());
+        harness.addToBattlefield(player1, new FugitiveWizard());
+
+        Permanent wizard = findPermanent(player1, "Fugitive Wizard");
+        assertThat(gqs.hasCantBeBlocked(gd, wizard)).isTrue();
+
+        // CR 613.11: the restriction is applied after every other continuous effect, so the
+        // matching set reads the layer-7c boost. The 1/1 is a 2/2 and no longer qualifies.
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        assertThat(gqs.getEffectivePower(gd, wizard)).isEqualTo(2);
+        assertThat(gqs.hasCantBeBlocked(gd, wizard)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's Cumber Stone dropping a 2/2 to 1/2 confers the evasion")
+    void opponentDebuffConfersEvasion() {
+        harness.addToBattlefield(player1, new TetsukoUmezawaFugitive());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isFalse();
+
+        // The same reading in the other direction: -1/-0 from an opponent's permanent makes the
+        // 2/2 a 1/2, which qualifies on power.
+        harness.addToBattlefield(player2, new CumberStone());
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
     }
 
     // ===== Effect removed when Tetsuko leaves =====

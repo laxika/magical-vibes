@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.SetSelfKeywordIndefinitelyEff
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesMatchingCantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantTransformEffect;
@@ -1383,7 +1384,42 @@ public class GameQueryService {
         if (creature.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof BlockabilityRestrictionEffect r && r.cantBeBlocked())) return true;
         if (hasAuraWithEffect(gameData, creature, CantBeBlockedEffect.class)) return true;
-        return hasGrantedEffect(gameData, creature, CantBeBlockedEffect.class);
+        if (hasGrantedEffect(gameData, creature, CantBeBlockedEffect.class)) return true;
+        return controllerMakesMatchingCreaturesUnblockable(gameData, creature);
+    }
+
+    /**
+     * Third-party evasion: another permanent the creature's controller controls says "creatures you
+     * control matching ~ can't be blocked" (Tetsuko Umezawa, Fugitive).
+     *
+     * <p>CR 613.11 — this modifies the rules of blocking rather than any object's characteristics,
+     * so it is applied <em>after</em> every other continuous effect and the matching set is decided
+     * from FULLY LAYERED characteristics: the predicate goes through the {@code GameData}-taking
+     * {@code matchesPermanentPredicate}, which reads power and toughness through layer 7. A
+     * Glorious Anthem lifting a 1/1 to 2/2 therefore takes the evasion away, and an opponent's
+     * Cumber Stone dropping a 2/2 to 1/2 confers it (CR 509.1b checks restrictions at declare
+     * blockers; the official ruling that a creature already blocked stays blocked is the
+     * declaration-time snapshot, not a frozen set).
+     *
+     * <p>Deliberately NOT modeled as a layer-6 ability grant: the wording adds no ability to the
+     * creatures, and a grant's scope filter is evaluated inside the layered pass, against numbers
+     * layer 7 has not produced yet.
+     */
+    private boolean controllerMakesMatchingCreaturesUnblockable(GameData gameData, Permanent creature) {
+        UUID controllerId = findPermanentController(gameData, creature.getId());
+        if (controllerId == null) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+        for (Permanent source : battlefield) {
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof ControlledCreaturesMatchingCantBeBlockedEffect restriction
+                        && predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, creature, restriction.filter())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
