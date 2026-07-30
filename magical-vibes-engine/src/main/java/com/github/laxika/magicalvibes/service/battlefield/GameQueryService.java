@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
@@ -3556,7 +3557,7 @@ public class GameQueryService {
     /**
      * Returns {@code true} if the permanent's mana abilities can currently be activated,
      * i.e. no static lock (Stony Silence, Pithing Needle with blocksManaAbilities, Phyrexian Revoker)
-     * or aura-based lock (Arrest, Ice Cage) prevents it.
+     * or aura-based lock (Arrest, Ice Cage, Serra Bestiary) prevents it.
      */
     public boolean canActivateManaAbility(GameData gameData, Permanent permanent) {
         String cardName = permanent.getCard().getName();
@@ -3581,6 +3582,9 @@ public class GameQueryService {
 
         // Check aura-based locks (Arrest, Ice Cage)
         if (hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
+            return false;
+        }
+        if (hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateTapAbilitiesEffect.class)) {
             return false;
         }
 

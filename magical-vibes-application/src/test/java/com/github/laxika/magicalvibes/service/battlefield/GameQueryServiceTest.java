@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEf
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
@@ -2271,6 +2272,20 @@ class GameQueryServiceTest {
                 }
             });
             Permanent aura = addPermanent(player1Id, auraCard);
+            aura.setAttachedTo(myr.getId());
+
+            assertThat(gqs.canActivateManaAbility(gd, myr)).isFalse();
+        }
+
+        @Test
+        @DisplayName("returns false when an Aura prevents activating tap abilities")
+        void returnsFalse_whenAuraLocksTapAbilities() {
+            Card myrCard = createArtifactCreature("Plague Myr", 1, 1, List.of(CardSubtype.MYR));
+            Permanent myr = addPermanent(player1Id, myrCard);
+
+            Card auraCard = createAura("Serra Bestiary",
+                    new EnchantedCreatureCantActivateTapAbilitiesEffect());
+            Permanent aura = addPermanent(player2Id, auraCard);
             aura.setAttachedTo(myr.getId());
 
             assertThat(gqs.canActivateManaAbility(gd, myr)).isFalse();
