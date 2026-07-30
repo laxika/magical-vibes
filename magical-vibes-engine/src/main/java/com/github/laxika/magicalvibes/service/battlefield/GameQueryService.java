@@ -995,13 +995,27 @@ public class GameQueryService {
      * {@link AnimatePermanentsEffect} and its condition is currently met.
      */
     public boolean hasSelfBecomeCreatureEffect(GameData gameData, Permanent permanent) {
+        return hasSelfBecomeCreatureEffect(gameData, permanent, false);
+    }
+
+    /**
+     * {@link #hasSelfBecomeCreatureEffect(GameData, Permanent)} with an explicit evaluation mode.
+     * Callers inside static-bonus assembly must pass {@code staticEvaluation = true}: the
+     * animation condition would otherwise be checked with the fully layered queries (Rusted
+     * Relic's metalcraft counting artifacts via the layered {@code isArtifact}), which re-enter
+     * static assembly and recurse forever. The static mode uses the recursion-safe matchers.
+     */
+    public boolean hasSelfBecomeCreatureEffect(GameData gameData, Permanent permanent, boolean staticEvaluation) {
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof ConditionalEffect conditional
                     && conditional.wrapped() instanceof AnimatePermanentsEffect animate
                     && animate.scope() == GrantScope.SELF) {
                 UUID controllerId = findPermanentController(gameData, permanent.getId());
-                if (controllerId != null && conditionEvaluationService.isMet(gameData,
-                        conditional.condition(), ConditionContext.forPermanent(permanent, controllerId))) {
+                if (controllerId == null) continue;
+                ConditionContext context = staticEvaluation
+                        ? ConditionContext.forStaticEffect(permanent, controllerId)
+                        : ConditionContext.forPermanent(permanent, controllerId);
+                if (conditionEvaluationService.isMet(gameData, conditional.condition(), context)) {
                     return true;
                 }
             }

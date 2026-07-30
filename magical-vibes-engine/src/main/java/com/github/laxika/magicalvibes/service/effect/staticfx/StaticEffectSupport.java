@@ -228,7 +228,7 @@ public class StaticEffectSupport {
         if (hasAnimateArtifacts && gameQueryService.isArtifact(permanent)) return true;
         if (gameData != null && permanent.getCard().hasType(CardType.LAND)
                 && matchesAnimateLand(gameData, permanent)) return true;
-        if (gameData != null) return gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent);
+        if (gameData != null) return gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent, true);
         return false;
     }
 

@@ -14,7 +14,9 @@ characteristics via `GameQueryService` with a `GameData` (never `Permanent` fiel
 one-shot until-EOT effects create a floating effect (most also dual-write a legacy `Permanent`
 field for intrinsic readers — the floating effect is what drives ordering). The regression spec
 is `SevenLayerTest` (100/100, never weaken) plus `LayerDependencyTest`; resolved/open debt is
-tracked in §9.
+tracked in §9. The forward-looking plan for retiring the `staticEvaluation` recursion guards
+(the remaining printed-only matchers named in the §9 cleanup-debt paragraph) is
+`STATIC_EVALUATION_MIGRATION.md` — that document is the checklist; this one stays the step log.
 
 Canonical reference for the migration of continuous-effect handling from the single-pass
 accumulator (`GameQueryService.computeStaticBonus` + `StaticBonusAccumulator`) to the official

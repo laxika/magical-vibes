@@ -1781,7 +1781,7 @@ public class LayerSystemService {
                         if (isSource(instance, target)) continue;
                         Permanent permanent = target.permanent();
                         if (board.marchAnimatedIds().contains(permanent.getId())
-                                && !gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent)) {
+                                && !gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent, true)) {
                             int manaValue = permanent.getCard().getManaValue();
                             entries.add(new BasePtEntry(permanent.getId(), manaValue, manaValue,
                                     instance.timestamp(), instance.position(),

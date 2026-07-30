@@ -35,7 +35,7 @@ public class AllLandsAreCreaturesEffectHandler implements StaticEffectHandlerBea
         if (context.target().getCard().hasType(CardType.LAND)
                 && (e.requiredSubtype() == null
                         || context.target().getCard().getSubtypes().contains(e.requiredSubtype()))
-                && !gameQueryService.hasSelfBecomeCreatureEffect(context.gameData(), context.target())) {
+                && !gameQueryService.hasSelfBecomeCreatureEffect(context.gameData(), context.target(), true)) {
             accumulator.setAnimatedCreature(true);
             accumulator.setBasePTOverride(e.power(), e.toughness());
             accumulator.addGrantedCardType(CardType.CREATURE);

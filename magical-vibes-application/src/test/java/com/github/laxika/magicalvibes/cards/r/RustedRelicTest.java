@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -108,5 +109,32 @@ class RustedRelicTest extends BaseCardTest {
 
         Permanent relic = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(gqs.isCreature(gd, relic)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Anthem boosts the animated relic without recursing through metalcraft")
+    void anthemBoostsAnimatedRelic() {
+        harness.addToBattlefield(player1, new RustedRelic());
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new LeoninScimitar());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+
+        Permanent relic = findPermanent(player1, "Rusted Relic");
+        assertThat(gqs.isCreature(gd, relic)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, relic)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, relic)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Anthem leaves the relic alone while metalcraft is off")
+    void anthemDoesNotBoostRelicWithoutMetalcraft() {
+        harness.addToBattlefield(player1, new RustedRelic());
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+
+        Permanent relic = findPermanent(player1, "Rusted Relic");
+        assertThat(gqs.isCreature(gd, relic)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, relic)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, relic)).isEqualTo(0);
     }
 }
