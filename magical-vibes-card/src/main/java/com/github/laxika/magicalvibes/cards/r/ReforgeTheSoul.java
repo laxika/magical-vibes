@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "167")
+@CardRegistration(set = "AVR", collectorNumber = "151")
 public class ReforgeTheSoul extends Card {
 
     public ReforgeTheSoul() {

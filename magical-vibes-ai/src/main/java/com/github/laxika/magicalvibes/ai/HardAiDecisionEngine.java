@@ -1101,7 +1101,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         final List<Integer> fExileIndices = plan.exileGraveyardCardIndices;
         final List<UUID> fMultiTargets = plan.multiTargetIds;
         final Integer fDiscardHandCardIndex = chooseDiscardCostIndex(gameData, plan.card);
-        final List<UUID> fMultiSacrificeIds = selectMultiSacrificeTargets(gameData, plan.card);
+        final List<UUID> fMultiSacrificeIds = selectMultiPermanentCostIds(gameData, plan.card);
         send(() -> gameActions.handlePlayCard(
                 new PlayCardRequest(idx, fXValue, fTargetId, fDamage,
                         fMultiTargets, null, null, fSacrifice,

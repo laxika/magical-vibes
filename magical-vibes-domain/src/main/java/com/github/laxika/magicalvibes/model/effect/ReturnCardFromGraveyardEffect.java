@@ -130,6 +130,11 @@ import lombok.Builder;
  *                             replacement (e.g. Dreams of the Dead — "If the creature would leave the
  *                             battlefield, exile it instead of putting it anywhere else"; also Unearth's
  *                             CR 702.100 rider, where it pairs with {@link #exileAtEndStep})
+ * @param plusOneCountersIfSubtype when non-null, {@link #plusOneCounterCount} +1/+1 counters are put on
+ *                             the returned permanent if the returned card has this subtype (e.g. Defy
+ *                             Death — "If it's an Angel, put two +1/+1 counters on it"); only meaningful
+ *                             for {@code BATTLEFIELD}
+ * @param plusOneCounterCount  number of +1/+1 counters placed by {@link #plusOneCountersIfSubtype}
  * @param grantCumulativeUpkeepCost when non-null, the returned permanent gains that cumulative upkeep
  *                             cost as a persistent {@code UPKEEP_TRIGGERED} ability (e.g. Dreams of the
  *                             Dead — "That creature gains Cumulative upkeep {2}.")
@@ -167,7 +172,9 @@ public record ReturnCardFromGraveyardEffect(
         boolean greatestPower,
         boolean topmost,
         boolean exileIfLeavesBattlefield,
-        String grantCumulativeUpkeepCost
+        String grantCumulativeUpkeepCost,
+        CardSubtype plusOneCountersIfSubtype,
+        int plusOneCounterCount
 ) implements CardEffect {
 
     /**

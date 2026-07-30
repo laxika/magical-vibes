@@ -25,9 +25,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEffectHandlerBean {
 
-    private static final GainControlOfTargetEffect CONTROL_EFFECT =
-            new GainControlOfTargetEffect(ControlDuration.PERMANENT);
-
     private final CreatureControlService creatureControlService;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -51,9 +48,11 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
             }
         });
 
+        ControlDuration duration = e.duration();
+        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(duration);
         for (Permanent permanent : toSeize) {
             creatureControlService.applyControlEffect(gameData, controllerId, permanent,
-                    CONTROL_EFFECT, ControlDuration.PERMANENT.toEffectDuration(), null,
+                    controlEffect, duration.toEffectDuration(), null,
                     entry.getCard().getName());
         }
     }

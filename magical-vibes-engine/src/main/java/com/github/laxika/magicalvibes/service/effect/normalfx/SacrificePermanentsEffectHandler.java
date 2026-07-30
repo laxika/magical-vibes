@@ -107,6 +107,10 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
 
     private void resolveSinglePlayer(GameData gameData, StackEntry entry, SacrificePermanentsEffect e,
             UUID playerId, boolean creatureSingleSac) {
+        if (isSacrificeProtected(gameData, entry, playerId)) {
+            return;
+        }
+
         if (creatureSingleSac) {
             destructionSupport.performSacrificeCreatureForPlayer(gameData, playerId);
             return;
@@ -159,6 +163,9 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                 if (opponentsOnly && playerId.equals(controllerId)) {
                     continue;
                 }
+                if (isSacrificeProtected(gameData, entry, playerId)) {
+                    continue;
+                }
                 destructionSupport.performSacrificeCreatureForPlayer(gameData, playerId);
             }
             return;
@@ -175,6 +182,9 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (opponentsOnly && playerId.equals(controllerId)) {
+                continue;
+            }
+            if (isSacrificeProtected(gameData, entry, playerId)) {
                 continue;
             }
 
@@ -212,6 +222,15 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             // Some players need to choose — begin the first prompt
             destructionSupport.beginNextForcedSacrificeFromQueue(gameData, choosers, autoSacrificeIds);
         }
+    }
+
+    /**
+     * Returns {@code true} when this effect belongs to an opponent of {@code playerId} and that
+     * player can't be caused to sacrifice permanents by opponents' spells and abilities (Sigarda,
+     * Host of Herons). Such a player is simply skipped — no prompt, no log entry.
+     */
+    private boolean isSacrificeProtected(GameData gameData, StackEntry entry, UUID playerId) {
+        return !gameQueryService.canEffectCauseSacrifice(gameData, playerId, entry.getControllerId());
     }
 
     private int evaluateCount(GameData gameData, StackEntry entry, SacrificePermanentsEffect e) {

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.ai.interaction;
 import com.github.laxika.magicalvibes.ai.AiGameActions;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.HandToLibraryPlacement;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.networking.Connection;
@@ -70,7 +71,8 @@ class PutCardsFromHandOnLibraryAiStrategyTest {
         private PendingInteraction.PutCardsFromHandOnLibraryCardChoice choice(
                 UUID playerId, List<Card> cards, int maxCount) {
             return new PendingInteraction.PutCardsFromHandOnLibraryCardChoice(
-                    playerId, cards.stream().map(Card::getId).toList(), cards, maxCount, false);
+                    playerId, cards.stream().map(Card::getId).toList(), cards, maxCount,
+                    HandToLibraryPlacement.PLAYER_CHOICE);
         }
 
         @Test
@@ -109,7 +111,7 @@ class PutCardsFromHandOnLibraryAiStrategyTest {
             Card valid = spell("Valid", "{1}");
             Card invalid = spell("Invalid But Expensive", "{6}");
             var interaction = new PendingInteraction.PutCardsFromHandOnLibraryCardChoice(
-                    aiPlayerId, List.of(valid.getId()), List.of(valid, invalid), 2, false);
+                    aiPlayerId, List.of(valid.getId()), List.of(valid, invalid), 2, HandToLibraryPlacement.PLAYER_CHOICE);
 
             strategy.answer(interaction, context());
 

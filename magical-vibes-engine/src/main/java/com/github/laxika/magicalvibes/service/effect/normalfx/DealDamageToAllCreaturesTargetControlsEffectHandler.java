@@ -49,7 +49,13 @@ public class DealDamageToAllCreaturesTargetControlsEffectHandler implements Norm
                     gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", creature.getCard(), " is prevented."));
                     continue;
                 }
+                int markedBefore = creature.getMarkedDamage();
                 damageSupport.dealCreatureDamage(gameData, entry, creature, rawDamage);
+                // "Each creature dealt damage this way …" (Aggravate): a creature whose damage was
+                // fully prevented or redirected away never took damage, so it isn't affected.
+                if (e.damagedCreaturesMustAttackThisTurn() && creature.getMarkedDamage() > markedBefore) {
+                    creature.setMustAttackThisTurn(true);
+                }
             }
         }
 

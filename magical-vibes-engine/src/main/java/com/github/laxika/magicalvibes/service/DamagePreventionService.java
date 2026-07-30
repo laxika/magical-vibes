@@ -28,8 +28,10 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageToControllerPerC
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventFixedDamagePerSourceToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToControllerAndGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventHalfDamageToControllerAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToCreaturesYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfAndSourceControllerDrawsEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToSelfAndExileFromLibraryEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.PreventSpellDamageToOpponentAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceToAttachedCreatureEffect;
@@ -79,6 +81,32 @@ public class DamagePreventionService {
             for (int i = 0; i < damage; i++) {
                 drawService.resolveDrawCard(gameData, sourceControllerId);
             }
+        }
+        return true;
+    }
+
+    /**
+     * Gloom Surgeon: "If combat damage would be dealt to this creature, prevent that damage and exile
+     * that many cards from the top of your library." Returns {@code true} when the damage is fully
+     * prevented (the caller must then deal no damage to {@code target}). Only call this from the combat
+     * damage path — noncombat damage is unaffected. Exiling stops early on an empty library.
+     */
+    public boolean applyPreventCombatDamageToSelfAndExile(GameData gameData, Permanent target, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return false;
+        if (damage <= 0) return false;
+        boolean hasEffect = target.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof PreventCombatDamageToSelfAndExileFromLibraryEffect);
+        if (!hasEffect) return false;
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        List<Card> deck = controllerId == null ? null : gameData.playerDecks.get(controllerId);
+        if (deck != null) {
+            int exiled = 0;
+            while (exiled < damage && !deck.isEmpty()) {
+                gameData.addToExile(controllerId, deck.removeFirst());
+                exiled++;
+            }
+            log.info("Game {} - {} exiles {} card(s) from library top for combat damage prevented to {}",
+                    gameData.id, gameData.playerIdToName.get(controllerId), exiled, target.getCard().getName());
         }
         return true;
     }
@@ -178,6 +206,11 @@ public class DamagePreventionService {
             if (isCombatDamage && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(PreventDamageToSelfFromCreaturesEffect.class::isInstance)) return 0;
             if (!isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllNoncombatDamageToAttachedCreatureEffect.class)) return 0;
+            // Gisela, Blade of Goldnight: prevent half the damage dealt to a permanent her controller
+            // controls, rounded up.
+            damage = applyHalfDamagePrevention(gameData,
+                    gameQueryService.findPermanentController(gameData, permanent.getId()), damage);
+            if (damage <= 0) return 0;
             // Shield of the Realm: "If a source would deal damage to equipped creature, prevent N of that damage."
             damage = applyAttachedPerSourceDamageReduction(gameData, permanent, damage);
             if (damage <= 0) return 0;
@@ -211,12 +244,44 @@ public class DamagePreventionService {
                 damage -= boonPrevented;
                 if (damage <= 0) return 0;
             }
+            // Divine Deflection: a redirect shield covering the controller's permanents as well as
+            // the controller. Prevented damage is queued for the shield's source to deal on.
+            UUID permanentControllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+            if (permanentControllerId != null) {
+                damage = applyRedirectShields(gameData, permanentControllerId, damage, true);
+                if (damage <= 0) return 0;
+            }
             damage = applyGlobalPreventionShield(gameData, damage);
             int shield = permanent.getDamagePreventionShield();
             if (shield <= 0 || damage <= 0) return damage;
             int prevented = Math.min(shield, damage);
             permanent.setDamagePreventionShield(shield - prevented);
             return damage - prevented;
+        }
+        return damage;
+    }
+
+    /**
+     * Gisela, Blade of Goldnight: "If a source would deal damage to you or a permanent you control,
+     * prevent half that damage, rounded up." Preventing half rounded up leaves half rounded down, so
+     * each {@link PreventHalfDamageToControllerAndTheirPermanentsEffect} the recipient controls halves
+     * the remaining damage. Callers must already have checked {@code isDamagePreventable}.
+     *
+     * @param recipientId the player being dealt damage, or the controller of the permanent being dealt
+     *                    damage; {@code null} leaves the damage untouched
+     * @return the damage remaining after prevention
+     */
+    private int applyHalfDamagePrevention(GameData gameData, UUID recipientId, int damage) {
+        if (recipientId == null || damage <= 0) return damage;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(recipientId);
+        if (battlefield == null) return damage;
+        for (Permanent p : battlefield) {
+            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof PreventHalfDamageToControllerAndTheirPermanentsEffect) {
+                    damage /= 2;
+                    if (damage == 0) return 0;
+                }
+            }
         }
         return damage;
     }
@@ -304,6 +369,9 @@ public class DamagePreventionService {
     public int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage) {
         if (!gameQueryService.isDamagePreventable(gameData)) return damage;
         if (gameData.playersWithAllDamagePrevented.contains(playerId)) return 0;
+        // Gisela, Blade of Goldnight: prevent half the damage dealt to her controller, rounded up.
+        damage = applyHalfDamagePrevention(gameData, playerId, damage);
+        if (damage <= 0) return 0;
         // Process redirect shields first (e.g. Vengeful Archon)
         damage = applyRedirectShields(gameData, playerId, damage);
         damage = applyGlobalPreventionShield(gameData, damage);
@@ -320,6 +388,15 @@ public class DamagePreventionService {
      * Returns the remaining damage after redirect shield prevention.
      */
     private int applyRedirectShields(GameData gameData, UUID playerId, int damage) {
+        return applyRedirectShields(gameData, playerId, damage, false);
+    }
+
+    /**
+     * @param forControlledPermanent when {@code true} the damage is being dealt to a permanent the
+     *                               player controls, so only shields that cover their permanents
+     *                               (Divine Deflection) apply
+     */
+    private int applyRedirectShields(GameData gameData, UUID playerId, int damage, boolean forControlledPermanent) {
         if (damage <= 0 || gameData.damageRedirectShields.isEmpty()) return damage;
 
         int remaining = damage;
@@ -329,6 +406,7 @@ public class DamagePreventionService {
         while (it.hasNext() && remaining > 0) {
             DamageRedirectShield shield = it.next();
             if (!shield.protectedPlayerId().equals(playerId)) continue;
+            if (forControlledPermanent && !shield.coversControlledPermanents()) continue;
 
             int prevented = Math.min(shield.remainingAmount(), remaining);
             remaining -= prevented;
@@ -341,7 +419,8 @@ public class DamagePreventionService {
 
             if (prevented > 0) {
                 gameData.pendingRedirectDamage.add(new DamageRedirectShield(
-                        playerId, prevented, shield.sourcePermanentId(), shield.sourceCard(), shield.redirectTargetPlayerId()));
+                        playerId, prevented, shield.sourcePermanentId(), shield.sourceCard(),
+                        shield.redirectTargetId(), shield.coversControlledPermanents()));
             }
         }
 

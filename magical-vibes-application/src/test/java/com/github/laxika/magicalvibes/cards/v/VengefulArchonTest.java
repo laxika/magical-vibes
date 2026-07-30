@@ -72,7 +72,7 @@ class VengefulArchonTest extends BaseCardTest {
         assertThat(gd.damageRedirectShields).hasSize(1);
         assertThat(gd.damageRedirectShields.getFirst().protectedPlayerId()).isEqualTo(player1.getId());
         assertThat(gd.damageRedirectShields.getFirst().remainingAmount()).isEqualTo(3);
-        assertThat(gd.damageRedirectShields.getFirst().redirectTargetPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.damageRedirectShields.getFirst().redirectTargetId()).isEqualTo(player2.getId());
     }
 
     @Test

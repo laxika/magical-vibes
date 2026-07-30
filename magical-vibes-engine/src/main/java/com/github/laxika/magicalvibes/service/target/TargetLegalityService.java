@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsNthSpellCastThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
@@ -55,6 +56,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatureYouControlPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsAnyPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
@@ -1305,6 +1307,9 @@ public class TargetLegalityService {
             // even if the targeted spell/ability has no targets; resolution handles that case.
             return true;
         }
+        if (predicate instanceof StackEntryIsNthSpellCastThisTurnPredicate nthSpell) {
+            return gameData.getSpellCastOrdinalThisTurn(stackEntry.getCard().getId()) == nthSpell.spellNumber();
+        }
         if (predicate instanceof StackEntryManaValuePredicate manaValuePredicate) {
             return stackEntry.getCard().getManaValue() == manaValuePredicate.manaValue();
         }
@@ -1338,6 +1343,9 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryTargetsYouPredicate) {
             return targetsPlayer(stackEntry, controllerId);
+        }
+        if (predicate instanceof StackEntryTargetsAnyPlayerPredicate) {
+            return targetsAnyPlayer(gameData, stackEntry);
         }
         if (predicate instanceof StackEntryTargetsSourcePredicate) {
             return source != null && targetsPermanent(stackEntry, source.getId());
@@ -1446,6 +1454,21 @@ public class TargetLegalityService {
         if (stackEntry.getTargetIds() != null) {
             for (UUID targetId : stackEntry.getTargetIds()) {
                 if (controllerId.equals(targetId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean targetsAnyPlayer(GameData gameData, StackEntry stackEntry) {
+        if (stackEntry.getTargetId() != null
+                && gameData.orderedPlayerIds.contains(stackEntry.getTargetId())) {
+            return true;
+        }
+        if (stackEntry.getTargetIds() != null) {
+            for (UUID targetId : stackEntry.getTargetIds()) {
+                if (gameData.orderedPlayerIds.contains(targetId)) {
                     return true;
                 }
             }

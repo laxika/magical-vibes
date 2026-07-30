@@ -48,6 +48,7 @@ public sealed interface DynamicAmount permits
         GreatestPowerAmongControlled,
         HalvedRoundedUp,
         HalfControllerLifeRoundedUp,
+        HighestOpponentLifeTotal,
         IfSourceAttacking,
         ImprintedCreaturePower,
         ImprintedCreatureToughness,

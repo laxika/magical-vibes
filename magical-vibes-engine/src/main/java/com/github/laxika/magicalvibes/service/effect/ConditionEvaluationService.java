@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCoun
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
+import com.github.laxika.magicalvibes.model.condition.ControlsCreatureWithGreatestPower;
 import com.github.laxika.magicalvibes.model.condition.Coven;
 import com.github.laxika.magicalvibes.model.condition.CreatureAttackingController;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
@@ -67,6 +68,7 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
+import com.github.laxika.magicalvibes.model.condition.AttachedPermanentControllerControlsNoOther;
 import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
 import com.github.laxika.magicalvibes.model.condition.NoPlayerHasCardsInHand;
 import com.github.laxika.magicalvibes.model.condition.TotalPermanentCountEven;
@@ -215,8 +217,12 @@ public class ConditionEvaluationService {
                     countOtherControlledMatchingPermanents(gameData, ctx, c.filter()) >= c.minCount();
             case ControlledCreaturesTotalPowerAtLeast c ->
                     controlledCreaturesTotalPower(gameData, ctx) >= c.threshold();
+            case ControlsCreatureWithGreatestPower ignored ->
+                    controlsCreatureWithGreatestPower(gameData, ctx);
             case NoOtherPermanent c ->
                     noOtherMatchingPermanent(gameData, ctx, c.filter());
+            case AttachedPermanentControllerControlsNoOther c ->
+                    attachedPermanentControllerControlsNoOther(gameData, ctx, c.filter());
             case ControllerHasMoreLifeThanAnOpponent ignored ->
                     controllerHasMoreLifeThanAnOpponent(gameData, ctx.controllerId());
             case AnOpponentHasMoreLifeThanController ignored ->
@@ -455,6 +461,30 @@ public class ConditionEvaluationService {
             }
         }
         return totalPower;
+    }
+
+    /**
+     * Whether the controller controls a creature tied for (or holding) the greatest effective power
+     * among all creatures on the battlefield. False when they control no creature at all.
+     */
+    private boolean controlsCreatureWithGreatestPower(GameData gameData, ConditionContext ctx) {
+        UUID controllerId = ctx.controllerId();
+        if (controllerId == null) return false;
+        Integer bestControlled = null;
+        Integer bestOverall = null;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (!isCreatureForCondition(gameData, permanent, ctx)) continue;
+                int power = gameQueryService.getEffectivePower(gameData, permanent);
+                if (bestOverall == null || power > bestOverall) bestOverall = power;
+                if (playerId.equals(controllerId) && (bestControlled == null || power > bestControlled)) {
+                    bestControlled = power;
+                }
+            }
+        }
+        return bestControlled != null && bestControlled.equals(bestOverall);
     }
 
     private int countCreaturesControlled(GameData gameData, UUID playerId, ConditionContext ctx) {
@@ -701,6 +731,25 @@ public class ConditionEvaluationService {
         if (battlefield == null) return true;
         return battlefield.stream()
                 .noneMatch(p -> !isSource(p, ctx) && matchesPermanent(gameData, p, filter, ctx));
+    }
+
+    /**
+     * True when the controller of the permanent the source is attached to controls no other
+     * matching permanent (Predator's Gambit). Not met while the source isn't attached.
+     */
+    private boolean attachedPermanentControllerControlsNoOther(GameData gameData, ConditionContext ctx,
+                                                               PermanentPredicate filter) {
+        Permanent source = sourcePermanent(gameData, ctx);
+        if (source == null || !source.isAttached()) return false;
+        UUID attachedToId = source.getAttachedTo();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            if (battlefield.stream().noneMatch(p -> p.getId().equals(attachedToId))) continue;
+            return battlefield.stream()
+                    .noneMatch(p -> !p.getId().equals(attachedToId) && matchesPermanent(gameData, p, filter, ctx));
+        }
+        return false;
     }
 
     private int countMatchingGraveyardCards(GameData gameData, ConditionContext ctx, GraveyardCardThreshold c) {

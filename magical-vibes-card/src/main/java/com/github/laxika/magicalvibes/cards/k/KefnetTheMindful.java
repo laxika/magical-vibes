@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnLandControlledByPlayerToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
 
@@ -32,7 +33,7 @@ public class KefnetTheMindful extends Card {
                 List.of(
                         new DrawCardEffect(1),
                         new MayEffect(
-                                new ReturnLandControlledByPlayerToHandEffect(),
+                                new ReturnPermanentControlledByPlayerToHandEffect(new PermanentIsLandPredicate(), "land"),
                                 "You may return a land you control to its owner's hand."
                         )
                 ),

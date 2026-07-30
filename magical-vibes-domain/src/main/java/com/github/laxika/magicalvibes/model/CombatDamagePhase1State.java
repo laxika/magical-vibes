@@ -24,6 +24,10 @@ public class CombatDamagePhase1State {
     public final boolean anyFirstStrike;
     public final Set<Integer> deathtouchDamagedAttackerIndices;
     public final Set<Integer> deathtouchDamagedDefenderIndices;
+    /** The part of the accumulated damage dealt by sources whose damage can't be prevented (Malignus). */
+    public final int unpreventableDamageToDefendingPlayer;
+    public final Map<Integer, Integer> unpreventableAtkDamageTaken;
+    public final Map<Integer, Integer> unpreventableDefDamageTaken;
 
     public CombatDamagePhase1State(
             Set<Integer> deadAttackerIndices,
@@ -42,7 +46,13 @@ public class CombatDamagePhase1State {
             Map<Integer, List<Integer>> blockerMap,
             boolean anyFirstStrike,
             Set<Integer> deathtouchDamagedAttackerIndices,
-            Set<Integer> deathtouchDamagedDefenderIndices) {
+            Set<Integer> deathtouchDamagedDefenderIndices,
+            int unpreventableDamageToDefendingPlayer,
+            Map<Integer, Integer> unpreventableAtkDamageTaken,
+            Map<Integer, Integer> unpreventableDefDamageTaken) {
+        this.unpreventableDamageToDefendingPlayer = unpreventableDamageToDefendingPlayer;
+        this.unpreventableAtkDamageTaken = unpreventableAtkDamageTaken;
+        this.unpreventableDefDamageTaken = unpreventableDefDamageTaken;
         this.deadAttackerIndices = deadAttackerIndices;
         this.deadDefenderIndices = deadDefenderIndices;
         this.atkDamageTaken = atkDamageTaken;

@@ -2592,15 +2592,13 @@ public class StepTriggerService {
                             log.info("Game {} - {} controller end-step raid trigger pushed onto stack", gameData.id, perm.getCard().getName());
                         }
                     } else if (effect instanceof MayEffect may) {
-                        if (perm.getCard().getTargetFilter() == null
-                                && (may.targetSpec().category().includesPermanents()
-                                    || may.targetSpec().category().includesPlayers())) {
-                            // "You may" end-step trigger whose targeting is declared by the wrapped
-                            // effect's targetSpec rather than a card-level TargetFilter (e.g. Goblin
-                            // Razerunners' "you may have this creature deal damage ... to target player or
-                            // planeswalker"). Queue for target selection first; the "you may" is honoured at
-                            // resolution. Card-level-filter targeting (e.g. Wall of Reverence) instead falls
-                            // through to queueMayAbility, which resolves its target after the may prompt.
+                        if (may.targetSpec().category().includesPermanents()
+                                || may.targetSpec().category().includesPlayers()) {
+                            // Targeted "you may" end-step trigger (Goblin Razerunners, Wall of Reverence,
+                            // Conjurer's Closet). Targets are chosen as the trigger is put onto the stack and
+                            // the trigger is skipped entirely when no legal target exists (CR 603.3d); the
+                            // "you may" is honoured later, at resolution. Candidates come from the card-level
+                            // TargetFilter when present, otherwise from the wrapped effect's targetSpec.
                             gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
                                     perm.getCard(), activePlayerId, new ArrayList<>(List.of(may)), perm.getId()));
                             String logEntry = perm.getCard().getName() + "'s end step ability triggers.";

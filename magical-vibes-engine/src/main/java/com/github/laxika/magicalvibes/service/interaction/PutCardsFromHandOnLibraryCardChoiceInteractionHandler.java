@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.interaction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.HandToLibraryPlacement;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -66,18 +67,21 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
             return;
         }
 
-        if (interaction.topOnly()) {
-            putOnTopOfLibrary(gameData, player, validated);
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        if (interaction.placement() == HandToLibraryPlacement.PLAYER_CHOICE) {
+            interactionHandlerRegistry.begin(gameData,
+                    new PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice(player.getId(), validated));
             return;
         }
 
-        interactionHandlerRegistry.begin(gameData,
-                new PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice(player.getId(), validated));
+        putOnLibrary(gameData, player, validated, interaction.placement() == HandToLibraryPlacement.TOP);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    /** Moves the chosen hand cards onto the top of the library, first chosen ending nearest the top. */
-    private void putOnTopOfLibrary(GameData gameData, Player player, List<UUID> chosenCardIds) {
+    /**
+     * Moves the chosen hand cards onto the given end of the library. When placed on top the first
+     * chosen card ends up nearest the top.
+     */
+    private void putOnLibrary(GameData gameData, Player player, List<UUID> chosenCardIds, boolean onTop) {
         UUID playerId = player.getId();
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Card> deck = gameData.playerDecks.get(playerId);
@@ -90,12 +94,18 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
                 moving.add(found);
             }
         }
-        for (int i = moving.size() - 1; i >= 0; i--) {
-            deck.add(0, moving.get(i));
+        if (onTop) {
+            for (int i = moving.size() - 1; i >= 0; i--) {
+                deck.add(0, moving.get(i));
+            }
+        } else {
+            deck.addAll(moving);
         }
 
+        String end = onTop ? "top" : "bottom";
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " puts "
-                + moving.size() + " card(s) on top of their library."));
-        log.info("Game {} - {} put {} card(s) on top of library", gameData.id, player.getUsername(), moving.size());
+                + moving.size() + " card(s) on " + end + " of their library."));
+        log.info("Game {} - {} put {} card(s) on {} of library",
+                gameData.id, player.getUsername(), moving.size(), end);
     }
 }

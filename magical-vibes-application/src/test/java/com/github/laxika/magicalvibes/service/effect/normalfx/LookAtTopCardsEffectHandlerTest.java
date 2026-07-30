@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -170,6 +171,63 @@ class LookAtTopCardsEffectHandlerTest {
             assertThat(gd.interaction.activeInteraction()).isNull();
             assertThat(gd.playerHands.get(player1Id)).isEmpty();
             assertThat(gd.playerDecks.get(player1Id)).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("All matching cards auto-move to hand and the rest go to the bottom (Lair Delve)")
+        void allMatchingAutoMoveToHandRestOnBottom() {
+            Card land = createCard("Forest");
+            Card spell = createCard("Lightning Bolt");
+            gd.playerDecks.get(player1Id).add(land);
+            gd.playerDecks.get(player1Id).add(spell);
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                    .thenAnswer(inv -> ((Card) inv.getArgument(0)).getName().equals("Forest"));
+
+            LookAtTopCardsEffect effect = new LookAtTopCardsEffect(new Fixed(2), new Fixed(2),
+                    new CardTypePredicate(CardType.LAND), LookDestination.BOTTOM_OF_LIBRARY, true);
+            handler.resolve(gd, entryFor("Lair Delve", effect), effect);
+
+            assertThat(gd.playerHands.get(player1Id)).containsExactly(land);
+            assertThat(gd.playerDecks.get(player1Id)).containsExactly(spell);
+            assertThat(gd.interaction.activeInteraction()).isNull();
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("reveals") && logEntry.plainText().contains("Lair Delve")));
+        }
+
+        @Test
+        @DisplayName("Non-matching cards never reach hand when a predicate is set")
+        void noEligibleCardsAllGoToBottom() {
+            Card spell1 = createCard("Lightning Bolt");
+            Card spell2 = createCard("Shock");
+            gd.playerDecks.get(player1Id).add(spell1);
+            gd.playerDecks.get(player1Id).add(spell2);
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenReturn(false);
+
+            LookAtTopCardsEffect effect = new LookAtTopCardsEffect(new Fixed(2), new Fixed(2),
+                    new CardTypePredicate(CardType.LAND), LookDestination.BOTTOM_OF_LIBRARY, true);
+            handler.resolve(gd, entryFor("Lair Delve", effect), effect);
+
+            assertThat(gd.playerHands.get(player1Id)).isEmpty();
+            assertThat(gd.interaction.activeInteraction())
+                    .isInstanceOf(PendingInteraction.LibraryReorder.class);
+        }
+
+        @Test
+        @DisplayName("More eligible cards than chooseCount prompts a bottom-rest reveal choice")
+        void moreEligibleThanChooseCountPrompts() {
+            stubCardViewFactory();
+            gd.playerDecks.get(player1Id).add(createCard("Forest"));
+            gd.playerDecks.get(player1Id).add(createCard("Mountain"));
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenReturn(true);
+
+            LookAtTopCardsEffect effect = new LookAtTopCardsEffect(new Fixed(2), new Fixed(1),
+                    new CardTypePredicate(CardType.LAND), LookDestination.BOTTOM_OF_LIBRARY, false);
+            handler.resolve(gd, entryFor("Lair Delve", effect), effect);
+
+            PendingInteraction.LibraryRevealChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+            assertThat(choice.reorderRemainingToBottom()).isTrue();
+            assertThat(choice.maxCount()).isEqualTo(1);
         }
     }
 

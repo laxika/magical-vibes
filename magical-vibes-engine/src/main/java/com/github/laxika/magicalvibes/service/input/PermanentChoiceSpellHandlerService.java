@@ -304,7 +304,7 @@ public class PermanentChoiceSpellHandlerService {
                     hct.controllerId(),
                     hct.cardToCast().getName(),
                     new ArrayList<>(hct.spellEffects()),
-                    0,
+                    hct.xValue(),
                     permanentId,
                     null
             );
@@ -316,8 +316,7 @@ public class PermanentChoiceSpellHandlerService {
             String targetName = isPlayerTarget
                     ? gameData.playerIdToName.get(permanentId)
                     : target.getCard().getName();
-            String logEntry = hct.cardToCast().getName() + " targets " + targetName + " (Wild Evocation).";
-            gameLogService.append(gameData, GameLog.builder().card(hct.cardToCast()).text(" targets " + targetName + " (Wild Evocation).").build());
+            gameLogService.append(gameData, GameLog.builder().card(hct.cardToCast()).text(" targets " + targetName + ".").build());
             log.info("Game {} - {} cast-from-hand targets {}", gameData.id, hct.cardToCast().getName(), targetName);
 
             triggerCollectionService.checkSpellCastTriggers(gameData, hct.cardToCast(), hct.controllerId(), false);

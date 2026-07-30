@@ -283,7 +283,19 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    record HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) implements PermanentChoiceContext {}
+    /**
+     * A spell cast from hand that still needs its target chosen. {@code xValue} is the X announced
+     * while casting (CR 601.2b) and must ride onto the stack entry built after the target choice —
+     * a targeted alternative-cost X spell such as Bonfire of the Damned would otherwise resolve
+     * with X=0.
+     */
+    record HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                               StackEntryType spellType, int xValue) implements PermanentChoiceContext {
+
+        public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) {
+            this(cardToCast, controllerId, spellEffects, spellType, 0);
+        }
+    }
 
     record ChooseCreatureAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
                                  boolean wasCastFromHand, int etbMode, boolean kicked) implements PermanentChoiceContext {}

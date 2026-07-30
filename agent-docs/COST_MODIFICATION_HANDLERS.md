@@ -84,6 +84,11 @@ not through the handler registry.
   `IncreaseOwnCastCostUnlessRevealSubtypeEffect(int amount, CardSubtype)`; returns `+amount` unless the
   caster holds a card of the subtype (other than the spell itself) to reveal from hand (Lorwyn
   "reveal a creature-type card or pay {N}" cycle, e.g. Goldmeadow Stalwart).
+- `cast/costmod/ReduceCastCostForMatchingSpellsEffectHandler.java` — battlefield handler for
+  `ReduceCastCostForMatchingSpellsEffect(CardPredicate, DynamicAmount, CostModificationScope)`; scopes by
+  `SELF`/`OPPONENT`/`ALL` (`ALL` = symmetric, every player's matching spells — Arcane Melee), matches the spell against the predicate, and evaluates the amount with the **source
+  permanent** in the `AmountContext` so `CountersOnSource` works ("costs {1} less for each +1/+1 counter
+  on this creature" — Herald of War).
 - `cast/costmod/IncreaseOwnCastCostEffectHandler.java` — battlefield handler for
   `IncreaseOwnCastCostEffect(CardPredicate, int)`; returns `+amount` only when the source is
   controlled by the caster and the spell matches the predicate (self-scoped colour/type tax, e.g.

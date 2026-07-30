@@ -546,6 +546,16 @@ public class GameTestHarness {
                 null, null, null, false, null, null, null, sacrificePermanentIds);
     }
 
+    /**
+     * Cast a targeted sorcery paying a "tap any number of permanents you control" additional cast
+     * cost (Burn at the Stake). The tapped ids ride on the same wire field as a multi-permanent
+     * sacrifice cost.
+     */
+    public void castSorceryTappingPermanents(Player player, int cardIndex, UUID targetId,
+                                             List<UUID> tapPermanentIds) {
+        castSorceryWithSacrifices(player, cardIndex, targetId, tapPermanentIds);
+    }
+
     public void castSorceryWithDiscard(Player player, int cardIndex, int discardHandCardIndex) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, List.of(), null, List.of(), false, discardHandCardIndex);

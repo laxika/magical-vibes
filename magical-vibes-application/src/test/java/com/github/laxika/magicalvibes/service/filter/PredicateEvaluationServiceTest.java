@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
@@ -683,6 +684,19 @@ class PredicateEvaluationServiceTest {
             FilterContext ctx = FilterContext.of(gd).withSourceCardId(source.getId());
 
             assertThat(evaluator.matchesPermanentPredicate(target, new PermanentPowerAtMostSourcePowerPredicate(), ctx)).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentPowerLessThanSourcePowerPredicate matches only strictly below source power")
+        void powerLessThanSourcePower() {
+            Card source = createCreatureWithSubtypes("Hill Giant", 3, 3, CardColor.RED, List.of(CardSubtype.GIANT)); // power 3
+            addPermanent(player1Id, source);
+            Permanent weaker = addPermanent(player2Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR))); // power 2
+            Permanent equal = addPermanent(player2Id, createCreatureWithSubtypes("Hill Giant", 3, 3, CardColor.RED, List.of(CardSubtype.GIANT))); // power 3
+            FilterContext ctx = FilterContext.of(gd).withSourceCardId(source.getId());
+
+            assertThat(evaluator.matchesPermanentPredicate(weaker, new PermanentPowerLessThanSourcePowerPredicate(), ctx)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(equal, new PermanentPowerLessThanSourcePowerPredicate(), ctx)).isFalse();
         }
 
         @Test

@@ -534,6 +534,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `EnchantedPermanentConditionalEffect` | yes | - | - |
 | `ConditionalEffect(new ControlsPermanentCount(minCount, filter), wrapped)` | - | yes | yes (upkeep, end step) |
 | `ConditionalEffect(new NoOtherPermanent(filter), wrapped)` | - | yes | yes (upkeep) |
+| `ConditionalEffect(new AttachedPermanentControllerControlsNoOther(filter), wrapped)` | yes | yes | - | same as above but relative to the controller of the permanent the source Aura/Equipment is attached to, excluding that permanent (Predator's Gambit "as long as its controller controls no other creatures"); never met while the source is unattached |
 | `ConditionalEffect(new NoSpellsCastLastTurn(), wrapped)` | - | yes | yes (each upkeep) |
 | `ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), wrapped)` | - | yes | yes (each upkeep) |
 | `ConditionalEffect(new ActivationCount(threshold, abilityIndex), wrapped)` | - | yes | - |

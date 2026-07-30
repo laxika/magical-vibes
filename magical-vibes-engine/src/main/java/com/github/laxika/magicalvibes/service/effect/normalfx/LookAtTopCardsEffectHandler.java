@@ -88,9 +88,9 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         } else if (e.restDestination() == LookDestination.EXILE) {
             resolveRestToExile(gameData, entry, lookCount, chooseCount);
         } else if (e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM) {
-            resolveRestToBottom(gameData, entry, lookCount, chooseCount, true);
+            resolveRestToBottom(gameData, entry, e, lookCount, chooseCount, true);
         } else {
-            resolveRestToBottom(gameData, entry, lookCount, chooseCount, false);
+            resolveRestToBottom(gameData, entry, e, lookCount, chooseCount, false);
         }
     }
 
@@ -277,8 +277,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
     // ===== rest on the bottom of the library (Stress Dream / Shrine / Jar of Eyeballs;
     //       Memory Deluge when randomRemaining) =====
 
-    private void resolveRestToBottom(GameData gameData, StackEntry entry, int lookCount, int chooseCount,
-            boolean randomRemaining) {
+    private void resolveRestToBottom(GameData gameData, StackEntry entry, LookAtTopCardsEffect e,
+            int lookCount, int chooseCount, boolean randomRemaining) {
         LibraryRevealSupport.TopCardsResult result =
                 libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
         if (result == null) return;
@@ -286,6 +286,19 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         UUID controllerId = result.controllerId();
         List<Card> topCards = result.topCards();
         String playerName = result.playerName();
+
+        if (e.reveal()) {
+            GameLog.Builder revealBuilder = GameLog.builder().text(playerName + " reveals ");
+            appendCardList(revealBuilder, topCards);
+            revealBuilder.text(" from the top of their library with ").card(entry.getCard()).text(".");
+            gameLogService.append(gameData, revealBuilder.build());
+        }
+
+        if (e.choosePredicate() != null) {
+            resolveRestToBottomFiltered(gameData, controllerId, topCards, playerName, e,
+                    chooseCount, randomRemaining);
+            return;
+        }
 
         // Not enough cards to choose from: they simply go to hand, nothing on bottom.
         if (topCards.size() <= chooseCount) {
@@ -311,6 +324,47 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 false, true, !randomRemaining, randomRemaining, false, 0, null, chooseCount,
                 "Look at the top " + topCards.size() + " cards of your library. Put " + handWord
                         + " into your hand and " + restPhrase));
+    }
+
+    /**
+     * Bottom-of-library variant restricted by {@code choosePredicate}: only matching cards are
+     * eligible for hand, everything else goes to the bottom. With {@code chooseCount} at least the
+     * number of eligible cards this is choice-free — every matching card auto-moves to hand
+     * (Lair Delve).
+     */
+    private void resolveRestToBottomFiltered(GameData gameData, UUID controllerId, List<Card> topCards,
+            String playerName, LookAtTopCardsEffect e, int chooseCount, boolean randomRemaining) {
+        List<Card> eligibleCards = filterEligibleCards(topCards, e.choosePredicate(), gameData, controllerId);
+
+        if (eligibleCards.size() > chooseCount) {
+            List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();
+            String handWord = chooseCount == 1 ? "one" : String.valueOf(chooseCount);
+            String restPhrase = randomRemaining
+                    ? "the rest on the bottom of your library in a random order."
+                    : "the rest on the bottom of your library.";
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
+                    controllerId, topCards, cardIds,
+                    false, true, !randomRemaining, randomRemaining, false, 0, null, chooseCount,
+                    "Put " + handWord + " " + CardPredicateUtils.describeFilter(e.choosePredicate())
+                            + " into your hand and " + restPhrase));
+            return;
+        }
+
+        for (Card card : eligibleCards) {
+            gameData.addCardToHand(controllerId, card);
+        }
+        if (!eligibleCards.isEmpty()) {
+            GameLog.Builder handBuilder = GameLog.builder().text(playerName + " puts ");
+            appendCardList(handBuilder, eligibleCards);
+            handBuilder.text(" into their hand.");
+            gameLogService.append(gameData, handBuilder.build());
+        }
+
+        List<Card> remainingCards = new ArrayList<>(topCards);
+        remainingCards.removeAll(eligibleCards);
+        if (!remainingCards.isEmpty()) {
+            libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, remainingCards);
+        }
     }
 
     // ===== rest into the graveyard (Forbidden Alchemy / Dark Bargain / Tower Geist / Tracker's) =====

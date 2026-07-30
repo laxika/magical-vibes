@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "104")
+@CardRegistration(set = "AVR", collectorNumber = "95")
 public class DemonicTaskmaster extends Card {
 
     public DemonicTaskmaster() {

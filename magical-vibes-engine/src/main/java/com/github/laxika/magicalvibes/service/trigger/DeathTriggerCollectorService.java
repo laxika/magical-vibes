@@ -50,7 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnL
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureUnderYourControlEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToBattlefieldUnderOwnersControlOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToBattlefieldOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToSharedTypeCreatureOnDeathEffect;
@@ -432,12 +432,13 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnEnchantedCreatureToBattlefieldUnderOwnersControlOnDeathEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    @CollectsTrigger(value = ReturnEnchantedCreatureToBattlefieldOnDeathEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleReturnEnchantedCreatureToBattlefield(TriggerMatchContext match,
-            ReturnEnchantedCreatureToBattlefieldUnderOwnersControlOnDeathEffect effect, TriggerContext ctx) {
+            ReturnEnchantedCreatureToBattlefieldOnDeathEffect effect, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
         CardEffect effectForStack = epd.dyingCreatureCardId() != null
-                ? new ReturnEnchantedCreatureToBattlefieldUnderOwnersControlOnDeathEffect(epd.dyingCreatureCardId())
+                ? new ReturnEnchantedCreatureToBattlefieldOnDeathEffect(epd.dyingCreatureCardId(),
+                        effect.underAuraControllersControl())
                 : effect;
         addEnchantedPermanentDeathEntry(match, effectForStack);
         return true;

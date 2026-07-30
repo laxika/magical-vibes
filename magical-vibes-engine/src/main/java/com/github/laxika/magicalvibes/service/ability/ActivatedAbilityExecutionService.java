@@ -545,10 +545,12 @@ public class ActivatedAbilityExecutionService {
                         pool.add(color);
                     }
                 }
-            } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
+            } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect chosenSubtypeMana) {
                 CardSubtype chosenSubtype = permanent.getChosenSubtype();
                 if (chosenSubtype != null) {
-                    ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, false, manaMultiplier, chosenSubtype);
+                    ChoiceContext.ManaColorChoice choiceContext = chosenSubtypeMana.makesSpellUncounterable()
+                            ? ChoiceContext.ManaColorChoice.chosenSubtypeCreatureUncounterable(playerId, manaMultiplier, chosenSubtype)
+                            : new ChoiceContext.ManaColorChoice(playerId, false, manaMultiplier, chosenSubtype);
                     List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                     interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                             playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));

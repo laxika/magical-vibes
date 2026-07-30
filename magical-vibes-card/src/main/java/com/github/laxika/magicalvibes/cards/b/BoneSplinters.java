@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ALA", collectorNumber = "67")
+@CardRegistration(set = "AVR", collectorNumber = "88")
 public class BoneSplinters extends Card {
 
     public BoneSplinters() {

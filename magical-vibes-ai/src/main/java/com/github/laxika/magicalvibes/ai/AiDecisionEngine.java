@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
@@ -214,6 +215,26 @@ public abstract class AiDecisionEngine {
     }
 
     /**
+     * Answers the X announcement of a cast for an alternative cost containing {X} (miracle).
+     * The whole cost — coloured part included — is charged from the floating pool, so every
+     * available source is tapped first (CR 605.3a) and the strategy then announces the X the
+     * pool can cover.
+     */
+    protected void handleAlternateCastXValueChoice(GameData gameData) {
+        PendingInteraction.AlternateCastXValueChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.AlternateCastXValueChoice.class);
+        if (choice != null && aiPlayer.getId().equals(choice.playerId())) {
+            ManaCost cost = new ManaCost(choice.manaCost());
+            int maxX = cost.calculateMaxX(gameData.playerManaPools.get(aiPlayer.getId()));
+            if (maxX < choice.maxValue()) {
+                manaManager.tapLandsForCost(gameData, aiPlayer.getId(), choice.manaCost(),
+                        choice.maxValue(), manaTapAction(), true);
+            }
+        }
+        choiceHandler.handleActiveInteraction(gameData);
+    }
+
+    /**
      * Floats mana for the active may-pay prompt when the choice is this AI's and carries a
      * mana cost — the engine pays may-costs from the actual pool, so the mana must be
      * floating before answering yes (CR 605.3a opens the tap window during the prompt).
@@ -308,6 +329,8 @@ public abstract class AiDecisionEngine {
             case PendingInteraction.ColorChoice ignored -> handleListChoice(gameData);
             case PendingInteraction.MayAbilityChoice ignored -> handleMayAbilityChoice(gameData);
             case PendingInteraction.XValueChoice ignored -> handleXValueChoice(gameData);
+            case PendingInteraction.AlternateCastXValueChoice ignored ->
+                    handleAlternateCastXValueChoice(gameData);
             case PendingInteraction.Scry ignored -> handleScry(gameData);
             case null -> { }
             default -> choiceHandler.handleActiveInteraction(gameData);
@@ -789,24 +812,33 @@ public abstract class AiDecisionEngine {
     }
 
     /**
-     * Selects the permanents to sacrifice for a card's multi-permanent additional cast cost
-     * (Phyrexian Tribute's "sacrifice two creatures"), weakest first. Returns an empty list when
-     * the card has no such cost or too few matching permanents.
+     * Selects the permanents paying a card's multi-permanent additional cast cost — the ids all
+     * ride on {@code PlayCardRequest.additionalCostSacrificePermanentIds}. A multi-permanent
+     * sacrifice (Phyrexian Tribute's "sacrifice two creatures") gives up the weakest matching
+     * permanents; a "tap any number of permanents you control" cost (Burn at the Stake) taps every
+     * untapped matching permanent, since the count it feeds is the payoff. Returns an empty list
+     * when the card has no such cost or too few matching permanents.
      */
-    protected List<UUID> selectMultiSacrificeTargets(GameData gameData, Card card) {
+    protected List<UUID> selectMultiPermanentCostIds(GameData gameData, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (!(effect instanceof SacrificeMultiplePermanentsCost cost)) {
-                continue;
+            if (effect instanceof SacrificeMultiplePermanentsCost cost) {
+                List<UUID> chosen = battlefield.stream()
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                        .sorted(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)
+                                + gameQueryService.getEffectiveToughness(gameData, p)))
+                        .limit(cost.count())
+                        .map(Permanent::getId)
+                        .toList();
+                return chosen.size() == cost.count() ? chosen : List.of();
             }
-            List<UUID> chosen = battlefield.stream()
-                    .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
-                    .sorted(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)
-                            + gameQueryService.getEffectiveToughness(gameData, p)))
-                    .limit(cost.count())
-                    .map(Permanent::getId)
-                    .toList();
-            return chosen.size() == cost.count() ? chosen : List.of();
+            if (effect instanceof TapAnyNumberOfPermanentsCost cost) {
+                return battlefield.stream()
+                        .filter(p -> !p.isTapped())
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                        .map(Permanent::getId)
+                        .toList();
+            }
         }
         return List.of();
     }

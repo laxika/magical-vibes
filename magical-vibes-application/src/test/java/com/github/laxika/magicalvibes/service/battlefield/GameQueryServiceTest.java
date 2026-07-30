@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChos
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -1602,6 +1603,57 @@ class GameQueryServiceTest {
         @DisplayName("applyDamageMultiplier with no effect returns same value")
         void applyMultiplierNoEffect() {
             assertThat(gqs.applyDamageMultiplier(gd, 3)).isEqualTo(3);
+        }
+    }
+
+    @Nested
+    @DisplayName("getDamageToRecipientMultiplier")
+    class DamageToRecipientMultiplier {
+
+        @Test
+        @DisplayName("returns 1 by default")
+        void returnsOneByDefault() {
+            assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("returns 2 for the opponent of a Gisela controller")
+        void returnsTwoForOpponentOfGiselaController() {
+            addGisela(player1Id);
+
+            assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("returns 1 for Gisela's own controller")
+        void returnsOneForOwnController() {
+            addGisela(player1Id);
+
+            assertThat(gqs.getDamageToRecipientMultiplier(gd, player1Id)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("two Giselas on opposing sides quadruple nothing — each only affects its opponents")
+        void opposingGiselasEachAffectTheirOpponents() {
+            addGisela(player1Id);
+            addGisela(player2Id);
+
+            assertThat(gqs.getDamageToRecipientMultiplier(gd, player1Id)).isEqualTo(2);
+            assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("two Giselas under the same controller stack multiplicatively")
+        void sameControllerGiselasStack() {
+            addGisela(player1Id);
+            addGisela(player1Id);
+
+            assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id)).isEqualTo(4);
+        }
+
+        private void addGisela(UUID controllerId) {
+            addPermanent(controllerId, createEnchantmentWithStaticEffect(
+                    "Gisela, Blade of Goldnight", new DoubleDamageToOpponentsAndTheirPermanentsEffect()));
         }
     }
 

@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndExileFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.PendingSourceDamage;
@@ -81,6 +83,23 @@ public class DamageSupport {
      * and keywords are checked directly on it. When null, falls back to entry-based lookup.
      */
     public void dealCreatureDamage(GameData gameData, StackEntry entry, Permanent target, int rawDamage, Permanent damageSource) {
+        // Malignus: "Damage that would be dealt by this creature can't be prevented." Suppress every
+        // prevention path (all gated on isDamagePreventable) for this one event, then restore — the
+        // same shape DealDamageToAnyTargetEffectHandler uses for Banefire.
+        if (damageSource != null && gameQueryService.damageCantBePreventedFromSource(gameData, damageSource)) {
+            boolean previous = gameData.damageCantBePreventedThisTurn;
+            gameData.damageCantBePreventedThisTurn = true;
+            try {
+                dealCreatureDamageFromSource(gameData, entry, target, rawDamage, damageSource);
+            } finally {
+                gameData.damageCantBePreventedThisTurn = previous;
+            }
+            return;
+        }
+        dealCreatureDamageFromSource(gameData, entry, target, rawDamage, damageSource);
+    }
+
+    private void dealCreatureDamageFromSource(GameData gameData, StackEntry entry, Permanent target, int rawDamage, Permanent damageSource) {
         // Defense in depth: a creature can never deal negative damage. Guards against any upstream
         // computation (e.g. future power-based effects) that might produce a negative value.
         rawDamage = Math.max(0, rawDamage);
@@ -97,6 +116,9 @@ public class DamageSupport {
         }
         // Apply source-specific redirect shields (e.g. Harm's Way) before creature prevention
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        // Gisela, Blade of Goldnight: double the damage dealt to a permanent an opponent controls. The
+        // combat counterpart lives in GameQueryService.applyCombatDamageMultiplier.
+        rawDamage *= gameQueryService.getDamageToRecipientMultiplier(gameData, targetControllerId);
         UUID sourcePermId = damageSource != null ? damageSource.getId() : entry.getSourcePermanentId();
         if (targetControllerId != null && sourcePermId != null) {
             rawDamage = damagePreventionService.applySourceRedirectShields(gameData, targetControllerId, sourcePermId, rawDamage);
@@ -158,6 +180,9 @@ public class DamageSupport {
             return;
         }
         int damage = damagePreventionService.applyCreaturePreventionShield(gameData, target, rawDamage);
+        // Divine Deflection: a shield covering this permanent's controller may have prevented some of
+        // that damage and queued it to be dealt on to the shield's own target.
+        processPendingRedirectDamage(gameData);
         // Djeru, With Eyes Open: "If a source would deal damage to a planeswalker you control, prevent
         // N of that damage." Applied before recording/triggers so reflection and damage-counting see the
         // reduced amount; the loyalty branch below then removes the reduced amount.
@@ -417,8 +442,14 @@ public class DamageSupport {
     }
 
     public boolean isSourcePermanentPreventedFromDealingDamage(GameData gameData, StackEntry entry) {
-        return entry.getSourcePermanentId() != null
-                && gameData.isPreventedFromDealingDamage(entry.getSourcePermanentId());
+        if (entry.getSourcePermanentId() == null) return false;
+        if (gameData.isPreventedFromDealingDamage(entry.getSourcePermanentId())) return true;
+        // Defang / Heart of Light: an aura can blank all damage dealt by the enchanted permanent,
+        // including damage from its own activated and triggered abilities.
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        return source != null
+                && (gameQueryService.hasAuraWithEffect(gameData, source, PreventAllDamageDealtByEnchantedCreatureEffect.class)
+                    || gameQueryService.hasAuraWithEffect(gameData, source, PreventAllDamageToAndByEnchantedCreatureEffect.class));
     }
 
     public void resolveAnyTargetDamage(GameData gameData, StackEntry entry, UUID targetId, int rawDamage, boolean cantRegenerate) {
@@ -523,6 +554,8 @@ public class DamageSupport {
         String cardName = source.getName();
         // Curse of Bloodletting and similar: double damage dealt to the enchanted player (replacement effect)
         rawDamage *= gameQueryService.getEnchantedPlayerDamageMultiplier(gameData, playerId);
+        // Gisela, Blade of Goldnight: double the damage dealt to an opponent of her controller.
+        rawDamage *= gameQueryService.getDamageToRecipientMultiplier(gameData, playerId);
         // Energy Storm: prevent all damage dealt by instant and sorcery spells.
         if (gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)) {
             gameLogService.append(gameData, GameLog.cardThen(source,
@@ -724,8 +757,9 @@ public class DamageSupport {
 
     /**
      * Processes pending redirect damage entries populated by {@link DamagePreventionService}
-     * when damage redirect shields (e.g. Vengeful Archon) prevent damage. The source permanent
-     * deals the prevented amount to the redirect target player.
+     * when damage redirect shields (e.g. Vengeful Archon) prevent damage. The shield's source
+     * deals the prevented amount to the redirect target, which is a player for Vengeful Archon
+     * and any target for Divine Deflection.
      */
     public void processPendingRedirectDamage(GameData gameData) {
         if (gameData.pendingRedirectDamage.isEmpty()) return;
@@ -734,8 +768,12 @@ public class DamageSupport {
         gameData.pendingRedirectDamage.clear();
 
         for (DamageRedirectShield redirect : toProcess) {
-            UUID targetId = redirect.redirectTargetPlayerId();
+            UUID targetId = redirect.redirectTargetId();
             int damage = redirect.remainingAmount();
+            if (!gameData.playerIds.contains(targetId)) {
+                dealRedirectDamageToPermanent(gameData, redirect, targetId, damage);
+                continue;
+            }
             String targetName = gameData.playerIdToName.get(targetId);
             String protectedName = gameData.playerIdToName.get(redirect.protectedPlayerId());
 
@@ -757,6 +795,33 @@ public class DamageSupport {
                 gameData.recordDamageToPlayer(targetId, redirectEffective);
             }
         }
+    }
+
+    /**
+     * Deals a redirect shield's prevented damage to a permanent target (Divine Deflection's "any
+     * target" can be a creature or planeswalker). Routed through the normal creature damage path so
+     * prevention, protection and damage triggers all apply. Nothing happens when the target has
+     * left the battlefield.
+     */
+    private void dealRedirectDamageToPermanent(GameData gameData, DamageRedirectShield redirect,
+                                               UUID targetId, int damage) {
+        Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
+        if (targetPermanent == null) return;
+
+        String protectedName = gameData.playerIdToName.get(redirect.protectedPlayerId());
+        gameLogService.append(gameData, GameLog.cardThen(redirect.sourceCard(),
+                " prevents " + damage + " damage to " + protectedName + "."));
+
+        StackEntry tempEntry = new StackEntry(
+                StackEntryType.INSTANT_SPELL,
+                redirect.sourceCard(),
+                redirect.protectedPlayerId(),
+                redirect.sourceCard().getName(),
+                List.of(),
+                targetId,
+                redirect.sourcePermanentId());
+        dealCreatureDamage(gameData, tempEntry, targetPermanent, damage);
+        processPendingRedirectDamage(gameData);
     }
 
     /**

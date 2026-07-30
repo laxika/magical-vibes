@@ -344,6 +344,10 @@ public class BattlefieldEntryService {
      * If the entering permanent is a creature and the controller has a permanent with
      * {@link CreaturesEnterAsCopyOfSourceEffect}, the entering creature becomes a copy
      * of that source permanent. This is mandatory (not a "may" ability).
+     *
+     * <p>With {@code copyEnchantedCreature} the copied permanent is the creature the source Aura is
+     * attached to instead (Infinite Reflection); an unattached source does nothing. {@code nontokenOnly}
+     * skips entering tokens.
      */
     private void applyCreaturesEnterAsCopyReplacementEffect(GameData gameData, UUID controllerId, Permanent entering) {
         if (!entering.getCard().hasType(CardType.CREATURE)) {
@@ -353,10 +357,23 @@ public class BattlefieldEntryService {
         if (battlefield == null) return;
 
         for (Permanent source : battlefield) {
-            boolean hasEffect = source.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(e -> e instanceof CreaturesEnterAsCopyOfSourceEffect);
-            if (hasEffect) {
-                permanentCopierService.applyCloneCopy(entering, source, null, null);
+            CreaturesEnterAsCopyOfSourceEffect effect = source.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .filter(e -> e instanceof CreaturesEnterAsCopyOfSourceEffect)
+                    .map(e -> (CreaturesEnterAsCopyOfSourceEffect) e)
+                    .findFirst().orElse(null);
+            if (effect != null) {
+                if (effect.nontokenOnly() && entering.getCard().isToken()) {
+                    continue;
+                }
+                Permanent copied = source;
+                if (effect.copyEnchantedCreature()) {
+                    copied = source.getAttachedTo() == null ? null
+                            : gameQueryService.findPermanentById(gameData, source.getAttachedTo());
+                    if (copied == null || copied.getId().equals(entering.getId())) {
+                        continue;
+                    }
+                }
+                permanentCopierService.applyCloneCopy(entering, copied, null, null);
                 // Reset any counters that were pre-set by the original card's "enters with"
                 // replacement effects — the creature now enters as Essence, which has no such
                 // effects, so those counters should not apply.
@@ -787,6 +804,17 @@ public class BattlefieldEntryService {
             return;
         }
 
+        // "As this creature enters, choose a creature type" — a choice made during entry
+        // (CR 614.1c), before ETB triggers; the choice handler resumes them once made.
+        boolean needsSubtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof ChooseSubtypeOnEnterEffect);
+        if (needsSubtypeChoice) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = bf.get(bf.size() - 1);
+            playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId());
+            return;
+        }
+
         // Devour (CR 702.82): "As this creature enters, you may sacrifice any number of creatures.
         // It enters with N times that many +1/+1 counters on it." As-enters replacement, resolved
         // before ETB triggers. Prompt the controller to sacrifice any of their other creatures.
@@ -940,6 +968,7 @@ public class BattlefieldEntryService {
         triggerCollectionService.checkEnchantedPlayerCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkEntersFromGraveyardTriggers(gameData, controllerId, card);
         triggerCollectionService.checkPermanentEntersFromGraveyardTriggers(gameData, controllerId, card);
+        triggerCollectionService.checkSelfEntersFromGraveyardTriggers(gameData, controllerId, card);
         if (card.hasType(CardType.LAND)) {
             triggerCollectionService.checkOpponentLandEntersTriggers(gameData, controllerId, card);
             triggerCollectionService.checkAllyLandEntersTriggers(gameData, controllerId, card);

@@ -67,6 +67,8 @@ class MayCastHandlerServiceTest {
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private ExileService exileService;
+    @Mock private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    @Mock private com.github.laxika.magicalvibes.service.cast.PotentialManaService potentialManaService;
 
     @InjectMocks
     private MayCastHandlerService svc;
@@ -772,6 +774,81 @@ class MayCastHandlerServiceTest {
             List<UUID> capturedTargets = (List<UUID>) targetsCaptor.getValue();
             assertThat(capturedTargets).containsExactlyInAnyOrder(PLAYER1_ID, PLAYER2_ID);
             assertThat(capturedTargets).doesNotContain(creature.getId());
+        }
+    }
+
+    @Nested
+    @DisplayName("Miracle cast for a cost containing {X}")
+    class MiracleXCost {
+
+        private Card entreat() {
+            Card card = createSorcery("Entreat the Angels");
+            card.setManaCost("XXWWW");
+            gd.playerHands.get(PLAYER1_ID).add(card);
+            return card;
+        }
+
+        private com.github.laxika.magicalvibes.model.VirtualManaPool poolWith(int white, int colorless) {
+            var pool = new com.github.laxika.magicalvibes.model.VirtualManaPool();
+            pool.add(com.github.laxika.magicalvibes.model.ManaColor.WHITE, white);
+            pool.add(com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, colorless);
+            return pool;
+        }
+
+        @Test
+        @DisplayName("Accepting the cast prompts for X instead of paying immediately")
+        void acceptingPromptsForX() {
+            Card card = entreat();
+            gd.playerManaPools.put(PLAYER1_ID, poolWith(2, 2));
+            when(potentialManaService.buildVirtualManaPool(gd, PLAYER1_ID)).thenReturn(poolWith(2, 2));
+
+            svc.handleMayCastForMiracleCost(gd, player1, true,
+                    new PendingMayAbility(card, PLAYER1_ID, List.of(), "miracle", null, "{X}{W}{W}"));
+
+            var captor = org.mockito.ArgumentCaptor.forClass(
+                    com.github.laxika.magicalvibes.model.PendingInteraction.AlternateCastXValueChoice.class);
+            verify(interactionHandlerRegistry).begin(eq(gd), captor.capture());
+            assertThat(captor.getValue().maxValue()).isEqualTo(2);
+            assertThat(captor.getValue().cardId()).isEqualTo(card.getId());
+            // Nothing paid yet — X is announced first (CR 601.2b).
+            assertThat(gd.playerManaPools.get(PLAYER1_ID).getTotal()).isEqualTo(4);
+            assertThat(gd.playerHands.get(PLAYER1_ID)).contains(card);
+        }
+
+        @Test
+        @DisplayName("Announcing X charges the cost and puts the spell on the stack carrying X")
+        void announcingXCastsWithThatX() {
+            Card card = entreat();
+            gd.playerManaPools.put(PLAYER1_ID, poolWith(2, 2));
+
+            svc.completeAlternateCastXChoice(gd, player1,
+                    new com.github.laxika.magicalvibes.model.PendingInteraction.AlternateCastXValueChoice(
+                            PLAYER1_ID, card.getId(), "{X}{W}{W}", 2, "prompt", card.getName(), "miracle"),
+                    2);
+
+            assertThat(gd.playerHands.get(PLAYER1_ID)).doesNotContain(card);
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
+            assertThat(gd.playerManaPools.get(PLAYER1_ID).getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("An unpayable announcement with no untapped sources abandons the cast")
+        void unpayableAnnouncementAbandonsTheCast() {
+            Card card = entreat();
+            gd.playerManaPools.put(PLAYER1_ID, poolWith(2, 0));
+            when(potentialManaService.buildVirtualManaPool(gd, PLAYER1_ID)).thenReturn(poolWith(2, 0));
+
+            svc.completeAlternateCastXChoice(gd, player1,
+                    new com.github.laxika.magicalvibes.model.PendingInteraction.AlternateCastXValueChoice(
+                            PLAYER1_ID, card.getId(), "{X}{W}{W}", 2, "prompt", card.getName(), "miracle"),
+                    2);
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.playerHands.get(PLAYER1_ID)).contains(card);
+            assertThat(gd.playerManaPools.get(PLAYER1_ID).getTotal()).isEqualTo(2);
+            verify(interactionHandlerRegistry, never()).begin(any(), any());
+            verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
         }
     }
 }

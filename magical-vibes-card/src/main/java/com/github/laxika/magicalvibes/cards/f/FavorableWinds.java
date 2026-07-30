@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "XLN", collectorNumber = "56")
+@CardRegistration(set = "AVR", collectorNumber = "51")
 public class FavorableWinds extends Card {
 
     public FavorableWinds() {

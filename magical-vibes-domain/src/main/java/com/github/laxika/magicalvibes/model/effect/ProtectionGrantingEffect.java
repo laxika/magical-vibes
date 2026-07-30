@@ -54,6 +54,16 @@ public interface ProtectionGrantingEffect extends CardEffect {
     }
 
     /**
+     * Whether {@link #protectionFromSubtypes()} applies only when the source is also a creature —
+     * "protection from [subtype] creatures" (Riders of Gavony) as opposed to the printed
+     * "protection from [subtype]" shape (Baneslayer Angel), which covers every source carrying the
+     * subtype including a noncreature Tribal spell.
+     */
+    default boolean subtypeProtectionRequiresCreatureSource() {
+        return false;
+    }
+
+    /**
      * The inclusive lower bound of protected source mana values, when this effect grants
      * "protection from mana value N or greater" (e.g. Mistmeadow Skulk); empty otherwise.
      */

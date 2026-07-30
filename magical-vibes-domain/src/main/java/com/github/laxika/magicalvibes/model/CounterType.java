@@ -12,6 +12,7 @@ public enum CounterType {
     CHARGE,
     CORPSE,
     CURRENCY,
+    DESPAIR,
     DOOM,
     ECHO,
     EYEBALL,

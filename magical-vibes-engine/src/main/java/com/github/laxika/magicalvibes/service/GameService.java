@@ -138,6 +138,8 @@ public class GameService {
                     mc.playerId().equals(player.getId()) && mc.manaCost() != null;
             case PendingInteraction.XValueChoice xc ->
                     xc.playerId().equals(player.getId()) && xc.manaPayment();
+            case PendingInteraction.AlternateCastXValueChoice ax ->
+                    ax.playerId().equals(player.getId());
             case null, default -> false;
         };
     }

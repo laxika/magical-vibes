@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.HandToLibraryPlacement;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -47,7 +48,7 @@ public class TargetPlayerPutsCardsFromHandOnTopOfLibraryEffectHandler implements
         List<UUID> validCardIds = handSnapshot.stream().map(Card::getId).toList();
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.PutCardsFromHandOnLibraryCardChoice(
-                targetPlayerId, validCardIds, handSnapshot, maxCount, true));
+                targetPlayerId, validCardIds, handSnapshot, maxCount, HandToLibraryPlacement.TOP));
 
         log.info("Game {} - {} choosing {} card(s) from hand to put on top of library",
                 gameData.id, gameData.playerIdToName.get(targetPlayerId), maxCount);

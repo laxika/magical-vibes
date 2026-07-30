@@ -13,6 +13,12 @@ class CombatDamageState {
     // Player damage accumulation
     int damageToDefendingPlayer;
     int poisonDamageToDefendingPlayer;
+    /**
+     * The part of {@link #damageToDefendingPlayer} dealt by sources whose damage can't be prevented
+     * (Malignus). The aggregate prevention chain in {@code applyPlayerDamage} may never reduce the
+     * player's damage below this floor.
+     */
+    int unpreventableDamageToDefendingPlayer;
     int damageRedirectedToGuard;
     int infectDamageRedirectedToGuard;
     boolean deathtouchDamageRedirectedToGuard;
@@ -24,6 +30,11 @@ class CombatDamageState {
     // Cumulative damage on each creature (index -> damage)
     final Map<Integer, Integer> atkDamageTaken = new HashMap<>();
     final Map<Integer, Integer> defDamageTaken = new HashMap<>();
+
+    // The part of the above dealt by sources whose damage can't be prevented (Malignus): a per-index
+    // floor the creature prevention shields may never reduce that step's damage below.
+    final Map<Integer, Integer> unpreventableAtkDamageTaken = new HashMap<>();
+    final Map<Integer, Integer> unpreventableDefDamageTaken = new HashMap<>();
 
     // Deathtouch tracking
     final Set<Integer> deathtouchDamagedAttackerIndices = new HashSet<>();

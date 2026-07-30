@@ -201,6 +201,7 @@ public class TurnCleanupService {
         gameData.senControllerPlayerId = null;
         gameData.senControlledPlayerId = null;
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
+        gameData.playersWithFlashUntilEndOfTurn.clear();
         gameData.mayTapLandsForSpellsUntilEndOfTurn.clear();
         gameData.mayPayLifeForColorlessManaUntilEndOfTurn.clear();
         gameData.graveyardCreatureCastPermissionsUntilEndOfTurn.clear();

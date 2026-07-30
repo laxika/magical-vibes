@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SHM", collectorNumber = "117")
+@CardRegistration(set = "AVR", collectorNumber = "180")
 public class Gloomwidow extends Card {
 
     public Gloomwidow() {

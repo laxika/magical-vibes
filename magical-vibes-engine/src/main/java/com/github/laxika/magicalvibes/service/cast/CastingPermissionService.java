@@ -503,6 +503,7 @@ public class CastingPermissionService {
     }
 
     private boolean hasFlashGrantForCard(GameData gameData, UUID playerId, Card card) {
+        if (gameData.playersWithFlashUntilEndOfTurn.contains(playerId)) return true;
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {

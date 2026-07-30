@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,9 @@ import org.springframework.stereotype.Component;
  *
  * <p>{@code AT_STEP} scopes delegate to {@link ExileSupport#exileAndScheduleReturn} (a delayed trigger
  * that survives the source leaving the battlefield). {@code IMMEDIATE} exiles and re-creates the
- * permanent inline, optionally with returned +1/+1 counters or a subtype-conditional bonus effect.
+ * permanent inline, optionally with returned +1/+1 counters or a subtype-conditional bonus effect. An
+ * immediate TARGET flicker bound to a multi-target group (Ghostly Flicker's two targets) exiles every
+ * chosen permanent before returning any of them.
  * When {@link FlickerEffect#returnUnderController()} is true, the permanent returns under the effect
  * controller and is tracked as stolen if the owner differs (Restoration Angel).
  */
@@ -113,14 +116,49 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void resolveImmediate(GameData gameData, StackEntry entry, FlickerEffect e) {
-        UUID permanentId = e.scope() == com.github.laxika.magicalvibes.model.effect.FlickerScope.SELF
-                ? entry.getSourcePermanentId()
-                : entry.getTargetId();
-        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
-        if (target == null) {
+        List<UUID> permanentIds = immediateFlickerTargets(entry, e);
+
+        // Every chosen permanent leaves before any of them comes back, so a multi-target flicker
+        // (Ghostly Flicker) returns them simultaneously and their ETB triggers see each other.
+        List<FlickeredPermanent> exiled = new ArrayList<>();
+        for (UUID permanentId : permanentIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+            if (target != null) {
+                exiled.add(exileForImmediateReturn(gameData, entry, e, target));
+            }
+        }
+        if (exiled.isEmpty()) {
             return;
         }
+        permanentRemovalService.removeOrphanedAuras(gameData);
 
+        for (FlickeredPermanent flickered : exiled) {
+            returnAfterImmediateExile(gameData, entry, e, flickered);
+        }
+    }
+
+    /**
+     * The permanents an immediate flicker touches: the source for SELF, otherwise the chosen target
+     * group — which is a single {@code targetId} for the usual one-target flicker and a real list for
+     * a card that binds the effect to a multi-target group.
+     */
+    private List<UUID> immediateFlickerTargets(StackEntry entry, FlickerEffect e) {
+        if (e.scope() == com.github.laxika.magicalvibes.model.effect.FlickerScope.SELF) {
+            return List.of(entry.getSourcePermanentId());
+        }
+        List<UUID> group = entry.targetsForEffect(e);
+        if (!group.isEmpty()) {
+            return group;
+        }
+        return entry.getTargetId() != null ? List.of(entry.getTargetId()) : List.of();
+    }
+
+    /** A permanent that has already been exiled by an immediate flicker, with the state its return needs. */
+    private record FlickeredPermanent(Card card, UUID ownerId, UUID returnControllerId, boolean hadBonusSubtype) {
+    }
+
+    private FlickeredPermanent exileForImmediateReturn(
+            GameData gameData, StackEntry entry, FlickerEffect e, Permanent target) {
         UUID previousControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), previousControllerId);
         UUID returnControllerId = e.returnUnderController() ? entry.getControllerId() : ownerId;
@@ -129,9 +167,16 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         boolean hadBonusSubtype = e.bonusSubtype() != null
                 && card.getSubtypes().contains(e.bonusSubtype());
 
-        // Exile the permanent
         permanentRemovalService.removePermanentToExile(gameData, target);
-        permanentRemovalService.removeOrphanedAuras(gameData);
+        return new FlickeredPermanent(card, ownerId, returnControllerId, hadBonusSubtype);
+    }
+
+    private void returnAfterImmediateExile(
+            GameData gameData, StackEntry entry, FlickerEffect e, FlickeredPermanent flickered) {
+        Card card = flickered.card();
+        UUID ownerId = flickered.ownerId();
+        UUID returnControllerId = flickered.returnControllerId();
+        boolean hadBonusSubtype = flickered.hadBonusSubtype();
 
         // Immediately return from exile as a new permanent
         gameData.removeFromExile(card.getId());

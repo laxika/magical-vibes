@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "INR", collectorNumber = "183")
+@CardRegistration(set = "AVR", collectorNumber = "166")
 public class ZealousConscripts extends Card {
 
     public ZealousConscripts() {

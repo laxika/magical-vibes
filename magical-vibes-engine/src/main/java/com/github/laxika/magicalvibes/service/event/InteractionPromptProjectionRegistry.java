@@ -49,6 +49,7 @@ public class InteractionPromptProjectionRegistry {
         this.cardViewFactory = cardViewFactory;
 
         register(PendingInteraction.XValueChoice.class, this::projectXValueChoice);
+        register(PendingInteraction.AlternateCastXValueChoice.class, this::projectAlternateCastXValueChoice);
         register(PendingInteraction.Scry.class, this::projectScry);
         register(PendingInteraction.HandTopBottomChoice.class, this::projectHandTopBottomChoice);
         register(PendingInteraction.LibraryReorder.class, this::projectLibraryReorder);
@@ -70,6 +71,9 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.PermanentAuctionChoice.class, this::projectPermanentAuctionChoice);
         register(PendingInteraction.IllicitAuctionBidChoice.class, this::projectIllicitAuctionBidChoice);
         register(PendingInteraction.MultiZoneExileChoice.class, this::projectMultiZoneExileChoice);
+        register(PendingInteraction.ExilePermanentsOrHandCardsChoice.class,
+                this::projectExilePermanentsOrHandCardsChoice);
+        register(PendingInteraction.AttachAurasChoice.class, this::projectAttachAurasChoice);
         register(PendingInteraction.MultiPermanentChoice.class, this::projectMultiPermanentChoice);
         register(PendingInteraction.MultiGraveyardChoice.class, this::projectMultiGraveyardChoice);
         register(PendingInteraction.ColorChoice.class, this::projectColorChoice);
@@ -100,6 +104,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
         register(PendingInteraction.PermanentChoice.class, this::projectPermanentChoice);
         register(PendingInteraction.AdNauseamRepeatChoice.class, this::projectAdNauseamRepeatChoice);
+        register(PendingInteraction.ExiledPermanentPutOntoBattlefieldChoice.class,
+                this::projectExiledPermanentPutOntoBattlefieldChoice);
         register(PendingInteraction.AttackerDeclaration.class, this::projectAttackerDeclaration);
         register(PendingInteraction.BlockerDeclaration.class, this::projectBlockerDeclaration);
         register(PendingInteraction.CombatDamageAssignment.class,
@@ -128,6 +134,12 @@ public class InteractionPromptProjectionRegistry {
 
     private InteractionPromptMessage projectXValueChoice(
             GameData gameData, PendingInteraction.XValueChoice interaction) {
+        return InteractionPromptMessage.numberPick(
+                interaction.prompt(), interaction.maxValue(), interaction.cardName());
+    }
+
+    private InteractionPromptMessage projectAlternateCastXValueChoice(
+            GameData gameData, PendingInteraction.AlternateCastXValueChoice interaction) {
         return InteractionPromptMessage.numberPick(
                 interaction.prompt(), interaction.maxValue(), interaction.cardName());
     }
@@ -323,6 +335,43 @@ public class InteractionPromptProjectionRegistry {
                 "Choose any number of cards named \"" + interaction.cardName() + "\" to exile.");
     }
 
+    private InteractionPromptMessage projectExilePermanentsOrHandCardsChoice(
+            GameData gameData, PendingInteraction.ExilePermanentsOrHandCardsChoice interaction) {
+        UUID playerId = interaction.playerId();
+        List<CardView> cardViews = new ArrayList<>();
+        addMatchingCardViews(
+                cardViews,
+                gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                        .map(Permanent::getCard)
+                        .toList(),
+                interaction.validCardIds());
+        addMatchingCardViews(
+                cardViews,
+                gameData.playerHands.getOrDefault(playerId, List.of()),
+                interaction.validCardIds());
+        int required = Math.min(interaction.count(), interaction.validCardIds().size());
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, required,
+                interaction.sourceName() + " — exile " + required + " permanent"
+                        + (required == 1 ? "" : "s") + " you control and/or cards from your hand.");
+    }
+
+    private InteractionPromptMessage projectAttachAurasChoice(
+            GameData gameData, PendingInteraction.AttachAurasChoice interaction) {
+        UUID playerId = interaction.playerId();
+        List<CardView> cardViews = new ArrayList<>();
+        List<Card> battlefieldCards = new ArrayList<>();
+        gameData.forEachPermanent((owner, permanent) -> battlefieldCards.add(permanent.getCard()));
+        addMatchingCardViews(cardViews, battlefieldCards, interaction.validCardIds());
+        addMatchingCardViews(cardViews,
+                gameData.playerGraveyards.getOrDefault(playerId, List.of()), interaction.validCardIds());
+        addMatchingCardViews(cardViews,
+                gameData.playerHands.getOrDefault(playerId, List.of()), interaction.validCardIds());
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, interaction.validCardIds().size(),
+                "Choose any number of Auras to attach to " + interaction.sourceName() + ".");
+    }
+
     private InteractionPromptMessage projectMultiPermanentChoice(
             GameData gameData, PendingInteraction.MultiPermanentChoice interaction) {
         return InteractionPromptMessage.multiPermanentPick(
@@ -401,7 +450,11 @@ public class InteractionPromptProjectionRegistry {
     private InteractionPromptMessage projectPutCardsFromHandOnLibraryCardChoice(
             GameData gameData,
             PendingInteraction.PutCardsFromHandOnLibraryCardChoice interaction) {
-        String destination = interaction.topOnly() ? "top of" : "top or bottom of";
+        String destination = switch (interaction.placement()) {
+            case TOP -> "top of";
+            case BOTTOM -> "the bottom of";
+            case PLAYER_CHOICE -> "top or bottom of";
+        };
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
                 cardViews(interaction.cards()),
@@ -476,6 +529,15 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.AdNauseamRepeatChoice interaction) {
         return InteractionPromptMessage.acceptDecline(
                 "Reveal the next card and lose life equal to its mana value? ("
+                        + interaction.sourceName() + ")",
+                true,
+                null);
+    }
+
+    private InteractionPromptMessage projectExiledPermanentPutOntoBattlefieldChoice(
+            GameData gameData, PendingInteraction.ExiledPermanentPutOntoBattlefieldChoice interaction) {
+        return InteractionPromptMessage.acceptDecline(
+                "Put " + interaction.cardName() + " onto the battlefield? ("
                         + interaction.sourceName() + ")",
                 true,
                 null);

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerThenTap
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySourceAndDamageControllerIfDestroyedEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySourcePermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -76,6 +77,7 @@ public class DestructionSupport {
     private final LifeSupport lifeSupport;
     private final OpponentMayGainControlOfCreatureYouControlEffectHandler opponentMayGainControlHandler;
     private final PhasingService phasingService;
+    private final ExileSelfEffectHandler exileSelfEffectHandler;
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                            List<UUID> protectedIds, String sourceName) {
@@ -461,6 +463,9 @@ public class DestructionSupport {
                 }
             } else if (elseEffect instanceof SacrificeSelfEffect) {
                 sacrificeSource(gameData, entry);
+            } else if (elseEffect instanceof ExileSelfEffect exileSelf) {
+                // "exile this creature unless you sacrifice another creature" (Demonlord of Ashmouth).
+                exileSelfEffectHandler.resolve(gameData, entry, exileSelf);
             } else if (elseEffect instanceof PhaseOutSelfEffect) {
                 // "unless you pay {cost}, this creature phases out" (Vaporous Djinn).
                 phaseOutSource(gameData, entry);

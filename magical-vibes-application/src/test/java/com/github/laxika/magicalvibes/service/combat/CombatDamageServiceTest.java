@@ -106,6 +106,7 @@ class CombatDamageServiceTest {
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService.class),
                 gameLogService, gameOutcomeService, damagePreventionService, graveyardService,
                 permanentRemovalService, playerInputService, registry, triggerCollectionService,
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class),
                 lifeSupport, combatAttackService, combatTriggerService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport.class),
                 stateBasedActionService,
@@ -181,6 +182,8 @@ class CombatDamageServiceTest {
         when(gameQueryService.applyCombatDamageMultiplier(eq(gameData), anyInt(), any(), any()))
                 .thenAnswer(inv -> (int) inv.getArgument(1));
         lenient().when(gameQueryService.getEnchantedPlayerDamageMultiplier(eq(gameData), any(UUID.class)))
+                .thenReturn(1);
+        lenient().when(gameQueryService.getDamageToRecipientMultiplier(eq(gameData), any(UUID.class)))
                 .thenReturn(1);
         // Lenient: only consulted for creatures that actually took damage this step.
         lenient().when(damagePreventionService.applyCreaturePreventionShield(
@@ -348,7 +351,8 @@ class CombatDamageServiceTest {
                 Map.of(), Map.of(), Map.of(), Map.of(), Map.of(),
                 0, 0, false, Map.of(),
                 blockerMap, false,
-                Set.of(), Set.of()
+                Set.of(), Set.of(),
+                0, Map.of(), Map.of()
         );
     }
 

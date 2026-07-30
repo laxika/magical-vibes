@@ -46,7 +46,7 @@ public final class CostModificationTestRegistry {
         registry.register(new IncreaseOwnCastCostUnlessRevealSubtypeEffectHandler(gameQueryService));
         registry.register(new ReduceOwnCastCostForSharedCardTypeWithImprintEffectHandler(support, amountEvaluationService));
         registry.register(new ReduceOwnCastCostForCardTypeEffectHandler(amountEvaluationService));
-        registry.register(new ReduceCastCostForMatchingSpellsEffectHandler(predicateEvaluationService));
+        registry.register(new ReduceCastCostForMatchingSpellsEffectHandler(predicateEvaluationService, amountEvaluationService));
         registry.register(new ReduceOwnCastCostEffectHandler(amountEvaluationService));
         registry.register(new ConditionalCostModificationHandler(conditionEvaluationService, registry));
         return registry;

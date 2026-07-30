@@ -37,7 +37,7 @@ public final class BlockLegalityContext {
     final List<Permanent> defenderBattlefield;
 
     /** Board-wide "X can't block Y" statics (e.g. Boldwyr Intimidator), collected once. */
-    final List<MatchingCreaturesCantBlockMatchingCreaturesEffect> globalBlockRestrictions;
+    final List<GlobalBlockRestriction> globalBlockRestrictions;
 
     /** Board-wide "creatures matching X can't attack or block" statics, collected once. */
     final List<GlobalAttackOrBlockRestriction> globalAttackOrBlockRestrictions;
@@ -70,7 +70,7 @@ public final class BlockLegalityContext {
 
     BlockLegalityContext(GameData gameData,
                          List<Permanent> defenderBattlefield,
-                         List<MatchingCreaturesCantBlockMatchingCreaturesEffect> globalBlockRestrictions,
+                         List<GlobalBlockRestriction> globalBlockRestrictions,
                          List<GlobalAttackOrBlockRestriction> globalAttackOrBlockRestrictions,
                          Map<UUID, List<Permanent>> attachedByHostId,
                          Set<CardSubtype> defenderCardSubtypes,
@@ -87,6 +87,16 @@ public final class BlockLegalityContext {
     /** The attached permanents on {@code host}, or an empty list when it has none. */
     List<Permanent> attachedTo(Permanent host) {
         return attachedByHostId.getOrDefault(host.getId(), List.of());
+    }
+
+    /**
+     * One board-wide "creatures matching X can't block creatures matching Y" static, paired with the
+     * {@link FilterContext} of the permanent that imposes it — either side's predicate may be
+     * controller-relative (Bower Passage: "creatures you control"), so both are evaluated against the
+     * source's controller rather than bare game data.
+     */
+    record GlobalBlockRestriction(MatchingCreaturesCantBlockMatchingCreaturesEffect effect,
+                                  FilterContext filterContext) {
     }
 
     /**

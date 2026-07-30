@@ -7,11 +7,9 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachAllAurasToAnotherPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -32,7 +30,7 @@ import java.util.UUID;
 public class AttachAllAurasToAnotherPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final PredicateEvaluationService predicateEvaluationService;
+    private final AuraAttachmentService auraAttachmentService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
@@ -90,14 +88,7 @@ public class AttachAllAurasToAnotherPermanentEffectHandler implements NormalEffe
     }
 
     private boolean canEnchant(GameData gameData, Permanent aura, Permanent candidate) {
-        TargetFilter auraFilter = aura.getCard().getTargetFilter();
-        if (auraFilter == null) {
-            return gameQueryService.isCreature(gameData, candidate);
-        }
         UUID auraControllerId = gameQueryService.findPermanentController(gameData, aura.getId());
-        FilterContext filterContext = FilterContext.of(gameData)
-                .withSourceCardId(aura.getCard().getId())
-                .withSourceControllerId(auraControllerId);
-        return predicateEvaluationService.checkTargetFilter(auraFilter, candidate, filterContext).isEmpty();
+        return auraAttachmentService.canEnchant(gameData, aura.getCard(), auraControllerId, candidate);
     }
 }

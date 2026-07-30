@@ -42,6 +42,17 @@ public class ManaPool {
     /** Per-subtype, per-color mana that can only be spent to cast creature spells with a matching subtype (e.g. Pillar of Origins). */
     private final Map<CardSubtype, EnumMap<ManaColor, Integer>> subtypeCreatureMana = new HashMap<>();
     /**
+     * The subset of {@link #subtypeCreatureMana} that also makes the spell it pays for uncounterable
+     * (Cavern of Souls). Never counted towards any total — every entry here is already counted in
+     * {@link #subtypeCreatureMana}; this map only records which of that mana carries the rider.
+     */
+    private final Map<CardSubtype, EnumMap<ManaColor, Integer>> uncounterableSubtypeCreatureMana = new HashMap<>();
+    /**
+     * Set when {@link #removeSubtypeCreatureMana} consumed uncounterable-granting mana, so the caster
+     * can mark the spell being paid for uncounterable. Consumed (and reset) per payment.
+     */
+    private boolean spentUncounterableGrantingMana;
+    /**
      * Per-subtype, per-color mana that can only be spent to cast spells with a matching subtype OR to
      * activate abilities of permanents with that subtype (e.g. Smokebraider). Distinct from
      * {@link #subtypeCreatureMana}, which is spell-only.
@@ -110,6 +121,10 @@ public class ManaPool {
         for (Map.Entry<CardSubtype, EnumMap<ManaColor, Integer>> entry : source.subtypeCreatureMana.entrySet()) {
             subtypeCreatureMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
         }
+        for (Map.Entry<CardSubtype, EnumMap<ManaColor, Integer>> entry : source.uncounterableSubtypeCreatureMana.entrySet()) {
+            uncounterableSubtypeCreatureMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
+        }
+        this.spentUncounterableGrantingMana = source.spentUncounterableGrantingMana;
         for (Map.Entry<CardSubtype, EnumMap<ManaColor, Integer>> entry : source.subtypeSpellOrAbilityMana.entrySet()) {
             subtypeSpellOrAbilityMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
         }
@@ -170,6 +185,8 @@ public class ManaPool {
             creatureSpellOnlyMana.put(color, 0);
         }
         subtypeCreatureMana.clear();
+        uncounterableSubtypeCreatureMana.clear();
+        spentUncounterableGrantingMana = false;
         subtypeSpellOrAbilityMana.clear();
         exiledCardOnlyMana.clear();
     }
@@ -553,11 +570,27 @@ public class ManaPool {
     }
 
     public void addSubtypeCreatureMana(CardSubtype subtype, ManaColor color, int amount) {
-        subtypeCreatureMana.computeIfAbsent(subtype, k -> {
+        addSubtypeCreatureMana(subtype, color, amount, false);
+    }
+
+    /**
+     * Adds subtype-restricted creature-spell mana. When {@code grantsUncounterable} is set, the mana
+     * is also recorded in the uncounterable-granting subset (Cavern of Souls), so spending it marks
+     * the spell it paid for as uncounterable.
+     */
+    public void addSubtypeCreatureMana(CardSubtype subtype, ManaColor color, int amount, boolean grantsUncounterable) {
+        bucketFor(subtypeCreatureMana, subtype).merge(color, amount, Integer::sum);
+        if (grantsUncounterable) {
+            bucketFor(uncounterableSubtypeCreatureMana, subtype).merge(color, amount, Integer::sum);
+        }
+    }
+
+    private EnumMap<ManaColor, Integer> bucketFor(Map<CardSubtype, EnumMap<ManaColor, Integer>> buckets, CardSubtype subtype) {
+        return buckets.computeIfAbsent(subtype, k -> {
             EnumMap<ManaColor, Integer> m = new EnumMap<>(ManaColor.class);
             for (ManaColor c : ManaColor.values()) m.put(c, 0);
             return m;
-        }).merge(color, amount, Integer::sum);
+        });
     }
 
     /**
@@ -604,8 +637,39 @@ public class ManaPool {
                 int toRemove = Math.min(remaining, available);
                 colorMap.put(color, available - toRemove);
                 remaining -= toRemove;
+                consumeUncounterableGranting(subtype, color, toRemove);
             }
         }
+    }
+
+    /**
+     * Deducts up to {@code spent} from the uncounterable-granting subset of the given subtype/color
+     * bucket, flagging the payment when any of it was uncounterable-granting mana. Deducting the
+     * rider-carrying mana first stands in for the caster's spend choice, which always favours it.
+     */
+    private void consumeUncounterableGranting(CardSubtype subtype, ManaColor color, int spent) {
+        if (spent <= 0) {
+            return;
+        }
+        EnumMap<ManaColor, Integer> riderMap = uncounterableSubtypeCreatureMana.get(subtype);
+        if (riderMap == null) {
+            return;
+        }
+        int available = riderMap.getOrDefault(color, 0);
+        int consumed = Math.min(spent, available);
+        if (consumed > 0) {
+            riderMap.put(color, available - consumed);
+            spentUncounterableGrantingMana = true;
+        }
+    }
+
+    /**
+     * Returns whether uncounterable-granting mana was spent since the last call, resetting the flag.
+     */
+    public boolean consumeSpentUncounterableGrantingMana() {
+        boolean spent = spentUncounterableGrantingMana;
+        spentUncounterableGrantingMana = false;
+        return spent;
     }
 
     public void addSubtypeSpellOrAbilityMana(CardSubtype subtype, ManaColor color, int amount) {
@@ -727,6 +791,8 @@ public class ManaPool {
             creatureSpellOnlyMana.put(color, 0);
         }
         subtypeCreatureMana.clear();
+        uncounterableSubtypeCreatureMana.clear();
+        spentUncounterableGrantingMana = false;
         subtypeSpellOrAbilityMana.clear();
         exiledCardOnlyMana.clear();
     }

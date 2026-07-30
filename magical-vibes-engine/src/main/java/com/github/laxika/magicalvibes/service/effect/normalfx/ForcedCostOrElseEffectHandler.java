@@ -44,11 +44,17 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             // A dynamic reduction (Draco's Domain) is resolved now so the prompt and the accept
             // handler both use the already-reduced cost carried on the PendingMayAbility.
             String effectiveCost = payCost.manaCost();
-            if (payCost.genericReduction() != null) {
+            if (payCost.genericReduction() != null || payCost.genericIncrease() != null) {
                 Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-                int reduction = amountEvaluationService.evaluate(gameData, payCost.genericReduction(),
-                        com.github.laxika.magicalvibes.service.effect.AmountContext.forStackEntry(entry, source));
-                effectiveCost = reduceGenericManaCost(payCost.manaCost(), reduction);
+                var context = com.github.laxika.magicalvibes.service.effect.AmountContext.forStackEntry(entry, source);
+                int delta = payCost.genericReduction() == null ? 0
+                        : amountEvaluationService.evaluate(gameData, payCost.genericReduction(), context);
+                if (payCost.genericIncrease() != null) {
+                    // "pay {1} for each other creature you control" (Fettergeist) — a negative
+                    // reduction, so the same generic-portion adjustment covers both directions.
+                    delta -= amountEvaluationService.evaluate(gameData, payCost.genericIncrease(), context);
+                }
+                effectiveCost = reduceGenericManaCost(payCost.manaCost(), delta);
             }
             // A blank mana cost means the payment is life-only (Glacial Chasm's "Pay 2 life"
             // cumulative upkeep), so the prompt drops the "{cost} and " part entirely.
@@ -143,7 +149,8 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
 
     /**
      * Subtracts {@code reduction} from the generic portion of a mana cost string (floored at 0),
-     * preserving any colored symbols — "this cost is reduced by {N}" (Draco).
+     * preserving any colored symbols — "this cost is reduced by {N}" (Draco). A negative
+     * {@code reduction} raises the generic portion instead ("pay {1} for each …", Fettergeist).
      */
     private String reduceGenericManaCost(String costString, int reduction) {
         com.github.laxika.magicalvibes.model.ManaCost cost =

@@ -98,6 +98,7 @@ public class CombatDamageService {
     private final PlayerInputService playerInputService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final TriggerCollectionService triggerCollectionService;
+    private final com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final LifeSupport lifeSupport;
     private final CombatAttackService combatAttackService;
     private final CombatTriggerService combatTriggerService;
@@ -664,7 +665,8 @@ public class CombatDamageService {
             if (playerAssignment != null) {
                 if (atkParticipates && !atkStats.preventedFromDealingCombatDamage()) {
                     applyPlayerAssignedDamage(gameData, state, atk, atkStats, blkIndices, defBf,
-                            playerAssignment, activeId, defenderId, redirectTarget, snap.damagePreventable());
+                            playerAssignment, activeId, defenderId, redirectTarget,
+                            damagePreventableFrom(gameData, snap.damagePreventable(), atk));
                 }
             } else if (blkIndices.isEmpty() || assignAsUnblocked) {
                 // CR 510.1c: a creature that an effect made blocked without any creature blocking it
@@ -688,7 +690,8 @@ public class CombatDamageService {
                     CombatantStats blkStats = snap.defenderStats().get(blkIdx);
                     boolean blkParticipates = blkStats.participatesInDamagePhase(isFirstStrikePhase);
                     if (blkParticipates && !blkStats.preventedFromDealingCombatDamage()
-                            && !(snap.damagePreventable() && snap.isAttackerProtectedFromBlocker(atkIdx, blkIdx))) {
+                            && !(damagePreventableFrom(gameData, snap.damagePreventable(), blk)
+                                    && snap.isAttackerProtectedFromBlocker(atkIdx, blkIdx))) {
                         int blkTargetCount = blk.getBlockingTargets().size();
                         Map<UUID, Integer> blockerAssignment = gameData.combatDamageBlockerAssignments.get(blkIdx);
                         int assignedDmg;
@@ -716,7 +719,7 @@ public class CombatDamageService {
                             blockerRemainingDamage.put(blkIdx, blkRemaining - assignedDmg);
                         }
                         int actualDmg = gameQueryService.applyCombatDamageMultiplier(gameData, assignedDmg, blk, atk);
-                        applyCombatCreatureDamage(gameData, blk, blkStats, atk, atkIdx, actualDmg, state.atkDamageTaken, state.deathtouchDamagedAttackerIndices);
+                        applyCombatCreatureDamage(gameData, blk, blkStats, atk, atkIdx, actualDmg, state.atkDamageTaken, state.unpreventableAtkDamageTaken, state.deathtouchDamagedAttackerIndices);
                         state.combatDamageDealt.merge(blk, actualDmg, Integer::sum);
                         recordCombatDamageToCreature(gameData, state, blk, defenderId, atk, actualDmg);
                     }
@@ -824,9 +827,10 @@ public class CombatDamageService {
                     ? Math.max(0, 1 - blockerDamageSoFar)
                     : snap.defenderStats().get(blkIdx).toughness() - blockerDamageSoFar;
             int dmg = Math.min(remaining, Math.max(0, lethalNeeded));
-            if (!(snap.damagePreventable() && snap.isBlockerProtectedFromAttacker(atkIdx, blkIdx))) {
+            if (!(damagePreventableFrom(gameData, snap.damagePreventable(), atk)
+                    && snap.isBlockerProtectedFromAttacker(atkIdx, blkIdx))) {
                 int actualDmg = gameQueryService.applyCombatDamageMultiplier(gameData, dmg, atk, blk);
-                applyCombatCreatureDamage(gameData, atk, atkStats, blk, blkIdx, actualDmg, state.defDamageTaken, state.deathtouchDamagedDefenderIndices);
+                applyCombatCreatureDamage(gameData, atk, atkStats, blk, blkIdx, actualDmg, state.defDamageTaken, state.unpreventableDefDamageTaken, state.deathtouchDamagedDefenderIndices);
                 state.combatDamageDealt.merge(atk, actualDmg, Integer::sum);
                 recordCombatDamageToCreature(gameData, state, atk, activeId, blk, actualDmg);
             }
@@ -868,7 +872,7 @@ public class CombatDamageService {
                     Permanent blk = defBf.get(targetIdx);
                     if (!(damagePreventable && gameQueryService.hasProtectionFromDamageSource(gameData, blk, atk))) {
                         int actualDmg = gameQueryService.applyCombatDamageMultiplier(gameData, dmg, atk, blk);
-                        applyCombatCreatureDamage(gameData, atk, atkStats, blk, targetIdx, actualDmg, state.defDamageTaken, state.deathtouchDamagedDefenderIndices);
+                        applyCombatCreatureDamage(gameData, atk, atkStats, blk, targetIdx, actualDmg, state.defDamageTaken, state.unpreventableDefDamageTaken, state.deathtouchDamagedDefenderIndices);
                         state.combatDamageDealt.merge(atk, actualDmg, Integer::sum);
                         recordCombatDamageToCreature(gameData, state, atk, activeId, blk, actualDmg);
                     }
@@ -1017,14 +1021,25 @@ public class CombatDamageService {
             // Combat-damage-to-player triggers granted until end of turn by one-shot effects
             // (e.g. Open into Wonder grants "deals combat damage to a player, draw a card").
             allDamageEffects.addAll(creature.getTemporaryTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
+            // Combat-damage-to-player triggers granted continuously by a static ability
+            // (e.g. Tandem Lookout's soulbond grant), recomputed by the layer system.
+            allDamageEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, creature, EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
+            allDamageEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, creature, EffectSlot.ON_DAMAGE_TO_PLAYER));
             for (CardEffect effect : allDamageEffects) {
+                // CR 603.4 — a triggered ability with an intervening "if" clause only triggers when
+                // the condition is met at trigger time (it is re-checked on resolution by
+                // EffectResolutionService). Applies to every condition, not just metalcraft.
+                if (effect instanceof ConditionalEffect conditional
+                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forPermanent(creature, attackerId))) {
+                    log.info("Game {} - {}'s {} combat damage trigger does not fire", gameData.id,
+                            creature.getCard().getName(), conditional.conditionName());
+                    continue;
+                }
+
                 if (effect instanceof ConditionalEffect metalcraft && metalcraft.condition() instanceof Metalcraft) {
-                    if (!conditionEvaluationService.isMet(gameData, metalcraft.condition(),
-                            ConditionContext.forPermanent(creature, attackerId))) {
-                        log.info("Game {} - {}'s metalcraft combat damage trigger does not fire",
-                                gameData.id, creature.getCard().getName());
-                        continue;
-                    }
                     StackEntry se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
                             creature.getCard().getName() + "'s triggered ability",
                             List.of(metalcraft), defenderId, creature.getId());
@@ -1699,8 +1714,10 @@ public class CombatDamageService {
      */
     private void updateMarkedDamageFromCombat(GameData gameData, List<Permanent> atkBf, List<Permanent> defBf,
                                                CombatDamageState state) {
-        applyStepDamageToPermanents(gameData, atkBf, state.atkDamageTaken, state.deathtouchDamagedAttackerIndices);
-        applyStepDamageToPermanents(gameData, defBf, state.defDamageTaken, state.deathtouchDamagedDefenderIndices);
+        applyStepDamageToPermanents(gameData, atkBf, state.atkDamageTaken,
+                state.unpreventableAtkDamageTaken, state.deathtouchDamagedAttackerIndices);
+        applyStepDamageToPermanents(gameData, defBf, state.defDamageTaken,
+                state.unpreventableDefDamageTaken, state.deathtouchDamagedDefenderIndices);
     }
 
     /**
@@ -1709,12 +1726,21 @@ public class CombatDamageService {
      * total per creature as a single event (all damage in the step is simultaneous, CR 510.4).
      */
     private void applyStepDamageToPermanents(GameData gameData, List<Permanent> battlefield,
-                                              Map<Integer, Integer> damageTaken, Set<Integer> deathtouchIndices) {
+                                              Map<Integer, Integer> damageTaken,
+                                              Map<Integer, Integer> unpreventableDamageTaken,
+                                              Set<Integer> deathtouchIndices) {
         for (var entry : damageTaken.entrySet()) {
             int idx = entry.getKey();
             if (idx >= battlefield.size()) continue;
             Permanent perm = battlefield.get(idx);
-            int dmg = damagePreventionService.applyCreaturePreventionShield(gameData, perm, entry.getValue(), true);
+            // Malignus: prevention may not reduce the step's damage below the part of it dealt by
+            // sources whose damage can't be prevented.
+            int unpreventable = Math.min(entry.getValue(), unpreventableDamageTaken.getOrDefault(idx, 0));
+            int dmg = Math.max(unpreventable,
+                    damagePreventionService.applyCreaturePreventionShield(gameData, perm, entry.getValue(), true));
+            // Divine Deflection: a shield covering this permanent's controller may have prevented
+            // some of that damage and queued it to be dealt on to the shield's own target.
+            processPendingRedirectDamage(gameData);
             if (dmg > 0) {
                 perm.setMarkedDamage(perm.getMarkedDamage() + dmg);
                 gameData.permanentsDealtDamageThisTurn.add(perm.getId());
@@ -1746,25 +1772,36 @@ public class CombatDamageService {
 
     private void applyPlayerDamage(GameData gameData, CombatDamageState state, UUID defenderId) {
         // Curse of Bloodletting and similar: double combat damage dealt to the enchanted player (replacement effect)
-        int playerMultiplier = gameQueryService.getEnchantedPlayerDamageMultiplier(gameData, defenderId);
+        // Gisela, Blade of Goldnight likewise doubles combat damage dealt to an opponent of her controller.
+        int playerMultiplier = gameQueryService.getEnchantedPlayerDamageMultiplier(gameData, defenderId)
+                * gameQueryService.getDamageToRecipientMultiplier(gameData, defenderId);
         state.damageToDefendingPlayer *= playerMultiplier;
         state.poisonDamageToDefendingPlayer *= playerMultiplier;
+        // Malignus: the part of the damage dealt by sources whose damage can't be prevented is a floor
+        // no prevention step below may go under. Redirection and replacement steps still see (and may
+        // move) the whole amount, so the floor is re-clamped after each of them.
+        int unpreventable = Math.min(state.damageToDefendingPlayer,
+                state.unpreventableDamageToDefendingPlayer * playerMultiplier);
         // Deep Wood: prevent all damage attacking creatures would deal to the defending player this turn.
         if (damagePreventionService.isCombatDamageFromAttackersPreventedForPlayer(gameData, defenderId)) {
-            state.damageToDefendingPlayer = 0;
+            state.damageToDefendingPlayer = unpreventable;
             state.poisonDamageToDefendingPlayer = 0;
         }
-        state.damageToDefendingPlayer = damagePreventionService.applyPlayerPreventionShield(gameData, defenderId, state.damageToDefendingPlayer);
+        state.damageToDefendingPlayer = Math.max(unpreventable,
+                damagePreventionService.applyPlayerPreventionShield(gameData, defenderId, state.damageToDefendingPlayer));
         processPendingRedirectDamage(gameData);
         state.damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, state.damageToDefendingPlayer, "combat", true);
+        unpreventable = Math.min(unpreventable, state.damageToDefendingPlayer);
         // Immortal Coil: prevent all combat damage to its controller and exile a card from their
         // graveyard for each 1 damage prevented (before any infect conversion, so it never becomes poison).
         // Glacial Chasm: prevent all combat damage that would be dealt to its controller.
-        if (state.damageToDefendingPlayer > 0) {
-            state.damageToDefendingPlayer -= damageSupport.applyControllerAllDamagePrevention(gameData, defenderId, state.damageToDefendingPlayer);
+        if (state.damageToDefendingPlayer > unpreventable) {
+            state.damageToDefendingPlayer = Math.max(unpreventable, state.damageToDefendingPlayer
+                    - damageSupport.applyControllerAllDamagePrevention(gameData, defenderId, state.damageToDefendingPlayer));
         }
-        if (state.damageToDefendingPlayer > 0) {
-            state.damageToDefendingPlayer -= damageSupport.applyImmortalCoilPrevention(gameData, defenderId, state.damageToDefendingPlayer);
+        if (state.damageToDefendingPlayer > unpreventable) {
+            state.damageToDefendingPlayer = Math.max(unpreventable, state.damageToDefendingPlayer
+                    - damageSupport.applyImmortalCoilPrevention(gameData, defenderId, state.damageToDefendingPlayer));
         }
         // Soul Echo: each 1 combat damage removes an echo counter instead (replacement, not prevention).
         if (state.damageToDefendingPlayer > 0) {
@@ -1827,34 +1864,12 @@ public class CombatDamageService {
 
     /**
      * Processes pending redirect damage entries populated by {@link DamagePreventionService}
-     * when damage redirect shields (e.g. Vengeful Archon) prevent damage.
+     * when damage redirect shields (e.g. Vengeful Archon, Divine Deflection) prevent damage.
+     * Delegates to the single implementation in {@code DamageSupport} so player and permanent
+     * redirect targets behave identically inside and outside combat.
      */
     private void processPendingRedirectDamage(GameData gameData) {
-        if (gameData.pendingRedirectDamage.isEmpty()) return;
-
-        List<DamageRedirectShield> toProcess = new ArrayList<>(gameData.pendingRedirectDamage);
-        gameData.pendingRedirectDamage.clear();
-
-        for (DamageRedirectShield redirect : toProcess) {
-            UUID targetId = redirect.redirectTargetPlayerId();
-            int damage = redirect.remainingAmount();
-            String targetName = gameData.playerIdToName.get(targetId);
-            String protectedName = gameData.playerIdToName.get(redirect.protectedPlayerId());
-
-            gameLogService.append(gameData, GameLog.cardThen(redirect.sourceCard(), " prevents " + damage + " damage to " + protectedName + "."));
-            gameLogService.append(gameData, GameLog.cardThen(redirect.sourceCard(), " deals " + damage + " damage to " + targetName + "."));
-
-            int redirectEffective = damagePreventionService.applyPlayerPreventionShield(gameData, targetId, damage);
-            processPendingRedirectDamage(gameData);
-
-            if (redirectEffective > 0) {
-                if (gameQueryService.canPlayerLifeChange(gameData, targetId)) {
-                    int currentLife = gameData.getLife(targetId);
-                    gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
-                }
-                gameData.recordDamageToPlayer(targetId, redirectEffective);
-            }
-        }
+        damageSupport.processPendingRedirectDamage(gameData);
     }
 
     private void applyPlaneswalkerDamage(GameData gameData, CombatDamageState state) {
@@ -1959,6 +1974,13 @@ public class CombatDamageService {
     private void accumulatePlayerDamage(GameData gameData, Permanent atk, CombatantStats atkStats,
                                          int damage, UUID defenderId, Permanent redirectTarget,
                                          CombatDamageState state) {
+        withSourceUnpreventableDamage(gameData, atk, () -> accumulatePlayerDamageInternal(
+                gameData, atk, atkStats, damage, defenderId, redirectTarget, state));
+    }
+
+    private void accumulatePlayerDamageInternal(GameData gameData, Permanent atk, CombatantStats atkStats,
+                                                int damage, UUID defenderId, Permanent redirectTarget,
+                                                CombatDamageState state) {
         // Check if the attacker is attacking a planeswalker instead of a player
         UUID attackTarget = atk.getAttackTarget();
         if (attackTarget != null && !gameData.playerIds.contains(attackTarget)) {
@@ -2060,6 +2082,9 @@ public class CombatDamageService {
                     state.poisonDamageToDefendingPlayer += damage;
                 } else {
                     state.damageToDefendingPlayer += damage;
+                    if (gameQueryService.damageCantBePreventedFromSource(gameData, atk)) {
+                        state.unpreventableDamageToDefendingPlayer += damage;
+                    }
                 }
             }
         }
@@ -2089,10 +2114,50 @@ public class CombatDamageService {
         return blockerDamage;
     }
 
+    /**
+     * Whether prevention still applies to combat damage dealt by {@code source}: the snapshotted
+     * global answer narrowed by the source's own "damage dealt by this creature can't be prevented"
+     * (Malignus).
+     */
+    private boolean damagePreventableFrom(GameData gameData, boolean snapshotPreventable, Permanent source) {
+        return snapshotPreventable && !gameQueryService.damageCantBePreventedFromSource(gameData, source);
+    }
+
+    /**
+     * Runs a damage-dealing action with every prevention path suppressed when the source permanent's
+     * damage can't be prevented (Malignus). Reuses the global preventability gate for the duration of
+     * the event — the same shape {@code DealDamageToAnyTargetEffectHandler} uses for Banefire — so no
+     * prevention site needs to learn about the source.
+     */
+    private void withSourceUnpreventableDamage(GameData gameData, Permanent source, Runnable action) {
+        if (!gameQueryService.damageCantBePreventedFromSource(gameData, source)) {
+            action.run();
+            return;
+        }
+        boolean previous = gameData.damageCantBePreventedThisTurn;
+        gameData.damageCantBePreventedThisTurn = true;
+        try {
+            action.run();
+        } finally {
+            gameData.damageCantBePreventedThisTurn = previous;
+        }
+    }
+
     private void applyCombatCreatureDamage(GameData gameData, Permanent source, CombatantStats sourceStats,
                                            Permanent target, int targetIdx, int damage,
                                            Map<Integer, Integer> damageTakenMap,
+                                           Map<Integer, Integer> unpreventableDamageTakenMap,
                                            Set<Integer> deathtouchDamagedSet) {
+        withSourceUnpreventableDamage(gameData, source, () -> applyCombatCreatureDamageInternal(
+                gameData, source, sourceStats, target, targetIdx, damage, damageTakenMap,
+                unpreventableDamageTakenMap, deathtouchDamagedSet));
+    }
+
+    private void applyCombatCreatureDamageInternal(GameData gameData, Permanent source, CombatantStats sourceStats,
+                                                   Permanent target, int targetIdx, int damage,
+                                                   Map<Integer, Integer> damageTakenMap,
+                                                   Map<Integer, Integer> unpreventableDamageTakenMap,
+                                                   Set<Integer> deathtouchDamagedSet) {
         // Apply source-specific redirect shields (e.g. Harm's Way) per-source for creature targets
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         if (targetControllerId != null) {
@@ -2118,6 +2183,11 @@ public class CombatDamageService {
         // Swans of Bryn Argoll: prevent all combat damage to this creature; the source's controller draws that many cards.
         UUID swansSourceControllerId = gameQueryService.findPermanentController(gameData, source.getId());
         if (damagePreventionService.applySwansSourceControllerDraw(gameData, target, damage, swansSourceControllerId)) {
+            gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
+            return;
+        }
+        // Gloom Surgeon: prevent all combat damage to this creature; its controller exiles that many cards from library top.
+        if (damagePreventionService.applyPreventCombatDamageToSelfAndExile(gameData, target, damage)) {
             gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }
@@ -2151,6 +2221,9 @@ public class CombatDamageService {
             }
         } else {
             damageTakenMap.merge(targetIdx, damage, Integer::sum);
+            if (gameQueryService.damageCantBePreventedFromSource(gameData, source)) {
+                unpreventableDamageTakenMap.merge(targetIdx, damage, Integer::sum);
+            }
             if (damage > 0 && sourceStats.deathtouch()) {
                 deathtouchDamagedSet.add(targetIdx);
             }
@@ -2355,6 +2428,9 @@ public class CombatDamageService {
         state.atkDamageTaken.putAll(p1.atkDamageTaken);
         state.defDamageTaken.putAll(p1.defDamageTaken);
         state.damageToDefendingPlayer = p1.damageToDefendingPlayer;
+        state.unpreventableDamageToDefendingPlayer = p1.unpreventableDamageToDefendingPlayer;
+        state.unpreventableAtkDamageTaken.putAll(p1.unpreventableAtkDamageTaken);
+        state.unpreventableDefDamageTaken.putAll(p1.unpreventableDefDamageTaken);
         state.damageRedirectedToGuard = p1.damageRedirectedToGuard;
         state.deathtouchDamageRedirectedToGuard = p1.deathtouchDamageRedirectedToGuard;
         if (p1.damageToPlaneswalkers != null) {
@@ -2416,7 +2492,9 @@ public class CombatDamageService {
                 state.deathtouchDamageRedirectedToGuard,
                 new HashMap<>(state.damageToPlaneswalkers),
                 new LinkedHashMap<>(blockerMap), anyFirstStrike,
-                new HashSet<>(state.deathtouchDamagedAttackerIndices), new HashSet<>(state.deathtouchDamagedDefenderIndices));
+                new HashSet<>(state.deathtouchDamagedAttackerIndices), new HashSet<>(state.deathtouchDamagedDefenderIndices),
+                state.unpreventableDamageToDefendingPlayer,
+                new HashMap<>(state.unpreventableAtkDamageTaken), new HashMap<>(state.unpreventableDefDamageTaken));
     }
 
     private void sendNextCombatDamageAssignment(GameData gameData, List<Permanent> atkBf,

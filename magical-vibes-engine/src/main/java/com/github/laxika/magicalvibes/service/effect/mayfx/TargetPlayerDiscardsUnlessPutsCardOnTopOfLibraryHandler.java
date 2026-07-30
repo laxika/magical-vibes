@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.mayfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.HandToLibraryPlacement;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
@@ -43,7 +44,8 @@ public class TargetPlayerDiscardsUnlessPutsCardOnTopOfLibraryHandler implements 
         if (accepted) {
             List<Card> handSnapshot = List.copyOf(hand);
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.PutCardsFromHandOnLibraryCardChoice(
-                    playerId, handSnapshot.stream().map(Card::getId).toList(), handSnapshot, 1, true));
+                    playerId, handSnapshot.stream().map(Card::getId).toList(), handSnapshot, 1,
+                    HandToLibraryPlacement.TOP));
             return;
         }
 

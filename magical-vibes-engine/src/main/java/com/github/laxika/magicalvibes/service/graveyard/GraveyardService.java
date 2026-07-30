@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MadnessCast;
@@ -21,6 +22,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.MadnessMayCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RegeneratesIfWouldBeDestroyedEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardPutIntoGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealAndPutOnBottomOfLibraryInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileWithEggCountersInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyingEffect;
@@ -274,6 +277,7 @@ public class GraveyardService {
         updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone);
         updateFromAnywhereThisTurnTracking(gameData, ownerId, card);
         collectPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+        collectEmblemPutIntoGraveyardTriggers(gameData, ownerId, card);
         if (sourceZone == Zone.BATTLEFIELD) {
             collectPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, card);
         }
@@ -330,6 +334,43 @@ public class GraveyardService {
             ));
             gameLogService.append(gameData, GameLog.abilityTriggers(card));
             log.info("Game {} - {} triggers (put into graveyard from anywhere)", gameData.id, card.getName());
+        }
+    }
+
+    /**
+     * Fires emblem-borne "whenever a card is put into your graveyard from anywhere, you may return it
+     * to your hand" triggers (Tamiyo, the Moon Sage's emblem). The trigger goes on the stack under the
+     * graveyard owner's control with the newly-arrived card as its source, so the resolution-time
+     * {@code MayEffect} prompt and {@code ReturnSourceCardFromGraveyardToOwnerHandEffect} both act on
+     * that exact card. Tokens are skipped: they cease to exist and can never be returned.
+     */
+    private void collectEmblemPutIntoGraveyardTriggers(GameData gameData, UUID ownerId, Card card) {
+        if (card.isToken()) {
+            return;
+        }
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
+            if (!emblem.controllerId().equals(ownerId)) {
+                continue;
+            }
+            for (CardEffect emblemEffect : emblem.staticEffects()) {
+                if (!(emblemEffect instanceof ReturnCardPutIntoGraveyardToHandEffect)) {
+                    continue;
+                }
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        ownerId,
+                        emblem.sourceCard().getName() + "'s emblem",
+                        new ArrayList<>(List.of(new MayEffect(
+                                new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
+                                "Return " + card.getName() + " to your hand?"))),
+                        null,
+                        (UUID) null
+                ));
+                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(ownerId)
+                        + "'s emblem triggers."));
+                log.info("Game {} - emblem graveyard-return trigger for {}", gameData.id, card.getName());
+            }
         }
     }
 

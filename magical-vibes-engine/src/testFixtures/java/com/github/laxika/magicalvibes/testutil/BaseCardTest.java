@@ -169,7 +169,12 @@ public abstract class BaseCardTest {
      * {@code gs.declareBlockers(...)} directly.
      */
     protected void prepareDeclareBlockers() {
-        harness.forceActivePlayer(player1);
+        prepareDeclareBlockers(player1);
+    }
+
+    /** As {@link #prepareDeclareBlockers()}, for combats where {@code activePlayer} is the attacker. */
+    protected void prepareDeclareBlockers(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.beginBlockerDeclarationInput();

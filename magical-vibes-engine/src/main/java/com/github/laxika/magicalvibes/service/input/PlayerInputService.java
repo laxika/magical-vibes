@@ -752,6 +752,23 @@ public class PlayerInputService {
                 choosingPlayerId, validCardIds, matchingCards.size(), targetPlayerId, choosingPlayerId, cardName));
     }
 
+    /**
+     * Begin a mixed battlefield + hand exile selection (Descent into Madness). The interaction
+     * carries its own APNAP queue state, so the effect handler builds it and passes it whole.
+     */
+    public void beginExilePermanentsOrHandCardsChoice(GameData gameData,
+            PendingInteraction.ExilePermanentsOrHandCardsChoice interaction) {
+        interactionHandlerRegistry.begin(gameData, interaction);
+    }
+
+    /**
+     * Begin the mixed battlefield + graveyard + hand Aura selection of Bruna, Light of Alabaster.
+     * The candidate list is built by the effect handler, so the interaction arrives whole.
+     */
+    public void beginAttachAurasChoice(GameData gameData, PendingInteraction.AttachAurasChoice interaction) {
+        interactionHandlerRegistry.begin(gameData, interaction);
+    }
+
     public void beginImprintFromHandChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID sourcePermanentId) {
         beginImprintFromHandChoice(gameData, playerId, validIndices, prompt, sourcePermanentId, false);
     }

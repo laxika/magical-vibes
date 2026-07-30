@@ -43,5 +43,9 @@ public enum PreventionScope {
     /** "Prevent all damage that sources of the chosen colors would deal this turn" (Luminesce). */
     ALL_FROM_COLORS,
     /** "Prevent all combat damage this turn except that dealt by [exempt] creatures" (Moonmist). */
-    ALL_COMBAT_EXCEPT
+    ALL_COMBAT_EXCEPT,
+    /** "Prevent all combat damage that would be dealt by creatures other than target creature this turn"
+     *  (Terrifying Presence). The target-chosen counterpart of {@link #ALL_COMBAT_EXCEPT}: the exemption
+     *  predicate is built at resolution from the chosen target. */
+    ALL_COMBAT_EXCEPT_TARGET
 }

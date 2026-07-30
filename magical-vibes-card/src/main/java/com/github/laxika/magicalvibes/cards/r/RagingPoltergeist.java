@@ -1,0 +1,8 @@
+package com.github.laxika.magicalvibes.cards.r;
+
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+
+@CardRegistration(set = "AVR", collectorNumber = "150")
+public class RagingPoltergeist extends Card {
+}

@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCos
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -69,6 +70,7 @@ public class AdditionalSpellCostService {
             SacrificeArtifactCost.class,
             SacrificePermanentCost.class,
             SacrificeMultiplePermanentsCost.class,
+            TapAnyNumberOfPermanentsCost.class,
             ReturnCreatureToHandCost.class,
             PutCounterOnControlledCreatureCost.class,
             PayXLifeCost.class,
@@ -96,6 +98,7 @@ public class AdditionalSpellCostService {
             boolean sacrificeArtifact,
             SacrificePermanentCost sacrificePermanentCost,
             SacrificeMultiplePermanentsCost sacrificeMultiplePermanentsCost,
+            TapAnyNumberOfPermanentsCost tapAnyNumberCost,
             boolean returnCreatureToHand,
             PutCounterOnControlledCreatureCost putCounterCost,
             boolean payXLife,
@@ -113,6 +116,7 @@ public class AdditionalSpellCostService {
             return sacrificeAllCreatures || sacrificeCreature || sacrificeCreatureOrPayManaCost != null
                     || sacrificeArtifact
                     || sacrificePermanentCost != null || sacrificeMultiplePermanentsCost != null
+                    || tapAnyNumberCost != null
                     || returnCreatureToHand || putCounterCost != null
                     || payXLife || payLifeCost != null
                     || exileGraveyardCost != null || exileXCardsCost != null || exileNCardsCost != null
@@ -133,9 +137,10 @@ public class AdditionalSpellCostService {
      * <p>
      * {@code discardHandCardIndices} pays escalate (one discard per mode beyond the first);
      * {@code escalateModeCount} is the number of modes chosen for that escalate payment (0 when
-     * unused). {@code sacrificePermanentIds} pays a multi-permanent sacrifice cost (Phyrexian
-     * Tribute's "sacrifice two creatures"); the single-permanent costs keep using
-     * {@code sacrificePermanentId}.
+     * unused). {@code sacrificePermanentIds} pays any multi-permanent cost — a multi-permanent
+     * sacrifice (Phyrexian Tribute's "sacrifice two creatures") or a "tap any number of permanents
+     * you control" cost (Burn at the Stake); no spell carries both. The single-permanent costs keep
+     * using {@code sacrificePermanentId}.
      */
     public record CostSelection(
             UUID sacrificePermanentId,
@@ -179,6 +184,7 @@ public class AdditionalSpellCostService {
         boolean sacArtifact = effects.removeIf(SacrificeArtifactCost.class::isInstance);
         SacrificePermanentCost permCost = removeFirst(effects, SacrificePermanentCost.class);
         SacrificeMultiplePermanentsCost multiPermCost = removeFirst(effects, SacrificeMultiplePermanentsCost.class);
+        TapAnyNumberOfPermanentsCost tapAnyNumberCost = removeFirst(effects, TapAnyNumberOfPermanentsCost.class);
         boolean returnCreature = effects.removeIf(ReturnCreatureToHandCost.class::isInstance);
         PutCounterOnControlledCreatureCost putCounterCost = removeFirst(effects, PutCounterOnControlledCreatureCost.class);
         boolean payXLife = effects.removeIf(PayXLifeCost.class::isInstance);
@@ -190,7 +196,7 @@ public class AdditionalSpellCostService {
         DiscardCardOrPayManaCost discardOrPay = removeFirst(effects, DiscardCardOrPayManaCost.class);
         EscalateDiscardCost escalateDiscardCost = removeFirst(effects, EscalateDiscardCost.class);
         EscalateManaCost escalateManaCost = removeFirst(effects, EscalateManaCost.class);
-        return new ExtractedCosts(sacAllCreatures, sacCreature, sacOrPay, sacArtifact, permCost, multiPermCost, returnCreature,
+        return new ExtractedCosts(sacAllCreatures, sacCreature, sacOrPay, sacArtifact, permCost, multiPermCost, tapAnyNumberCost, returnCreature,
                 putCounterCost, payXLife, payLifeCost, exileGraveyardCost, exileXCardsCost, exileNCardsCost, discardCost, discardOrPay,
                 escalateDiscardCost, escalateManaCost);
     }
@@ -221,13 +227,17 @@ public class AdditionalSpellCostService {
     public boolean satisfiable(GameData gameData, UUID playerId, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
+        // Angel of Jubilation: life payments and creature sacrifices are unavailable as cast costs.
+        boolean lifeAndSacAllowed = gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             switch (effect) {
                 case SacrificeCreatureCost ignored -> {
+                    if (!lifeAndSacAllowed) return false;
                     if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
                 }
                 case SacrificeCreatureOrPayManaCost cost -> {
-                    boolean hasCreature = battlefield.stream().anyMatch(p -> gameQueryService.isCreature(gameData, p));
+                    boolean hasCreature = lifeAndSacAllowed
+                            && battlefield.stream().anyMatch(p -> gameQueryService.isCreature(gameData, p));
                     if (!hasCreature && !canAffordSacrificeOrPayManaOption(gameData, playerId, card, cost)) {
                         return false;
                     }
@@ -279,6 +289,7 @@ public class AdditionalSpellCostService {
                 case PayXLifeCost ignored -> { }
                 // A fixed life payment is only legal while the life total covers it (CR 119.4).
                 case PayLifeCost cost -> {
+                    if (!lifeAndSacAllowed) return false;
                     int life = gameData.getLife(playerId);
                     if (life < cost.effectiveAmount(life)) return false;
                 }
@@ -288,6 +299,8 @@ public class AdditionalSpellCostService {
                 case EscalateManaCost ignored -> { }
                 // Sacrificing all creatures you control is legal with zero creatures.
                 case SacrificeAllCreaturesYouControlCost ignored -> { }
+                // Tapping "any number of" permanents is payable with zero, so it never blocks a cast.
+                case TapAnyNumberOfPermanentsCost ignored -> { }
                 default -> { }
             }
         }
@@ -341,11 +354,13 @@ public class AdditionalSpellCostService {
             validatePayLifeCost(gameData, player, card, costs.payLifeCost());
         }
         if (costs.sacrificeCreature()) {
+            validateCanSacrificeCreatureForCost(gameData, card);
             validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
                     "a creature", p -> gameQueryService.isCreature(gameData, p));
         }
         if (costs.sacrificeCreatureOrPayManaCost() != null) {
             if (selection.sacrificePermanentId() != null) {
+                validateCanSacrificeCreatureForCost(gameData, card);
                 validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
                         "a creature", p -> gameQueryService.isCreature(gameData, p));
             } else if (!canAffordSacrificeOrPayManaOption(gameData, player.getId(), card,
@@ -377,6 +392,10 @@ public class AdditionalSpellCostService {
         }
         if (costs.sacrificeMultiplePermanentsCost() != null) {
             validateMultipleSacrificeCost(gameData, player, card, costs.sacrificeMultiplePermanentsCost(),
+                    selection.sacrificePermanentIds());
+        }
+        if (costs.tapAnyNumberCost() != null) {
+            validateTapAnyNumberOfPermanentsCost(gameData, player, card, costs.tapAnyNumberCost(),
                     selection.sacrificePermanentIds());
         }
         // Sacrificing all creatures you control has no failure mode (zero creatures is legal).
@@ -417,10 +436,29 @@ public class AdditionalSpellCostService {
      * while their life total is at least the amount paid (CR 119.4).
      */
     public void validatePayLifeCost(GameData gameData, Player player, Card card, PayLifeCost cost) {
+        validateCanPayLifeForCost(gameData, card);
         int life = gameData.getLife(player.getId());
         int amount = cost.effectiveAmount(life);
         if (life < amount) {
             throw new IllegalStateException("Not enough life to pay " + amount + " life for " + card.getName());
+        }
+    }
+
+    /**
+     * Angel of Jubilation: a life payment can't be used as a cost of casting a spell.
+     */
+    private void validateCanPayLifeForCost(GameData gameData, Card card) {
+        if (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)) {
+            throw new IllegalStateException("Players can't pay life to cast " + card.getName());
+        }
+    }
+
+    /**
+     * Angel of Jubilation: a creature sacrifice can't be used as a cost of casting a spell.
+     */
+    private void validateCanSacrificeCreatureForCost(GameData gameData, Card card) {
+        if (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)) {
+            throw new IllegalStateException("Players can't sacrifice creatures to cast " + card.getName());
         }
     }
 
@@ -430,6 +468,9 @@ public class AdditionalSpellCostService {
      * Kept out of {@link #validateAll} because only the cast path knows the announced X.
      */
     public void validatePayXLifeCost(GameData gameData, Player player, Card card, int announcedX) {
+        if (announcedX > 0) {
+            validateCanPayLifeForCost(gameData, card);
+        }
         if (announcedX < 0) {
             throw new IllegalStateException("X cannot be negative for " + card.getName());
         }
@@ -538,6 +579,39 @@ public class AdditionalSpellCostService {
         for (UUID id : ids) {
             chosen.add(validateSingleSacrificeCost(gameData, player, card, id, "a matching permanent",
                     p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter())));
+        }
+        return chosen;
+    }
+
+    /**
+     * Validates the "tap any number of untapped permanents you control" additional cast cost (Burn
+     * at the Stake) without mutating anything. Any count is legal, including zero, but every chosen
+     * permanent must be distinct, controlled by the caster, untapped, and match the cost's filter.
+     * Returns them in selection order so payment cannot re-resolve a different set.
+     */
+    public List<Permanent> validateTapAnyNumberOfPermanentsCost(GameData gameData, Player player, Card card,
+                                                                TapAnyNumberOfPermanentsCost cost,
+                                                                List<UUID> tapPermanentIds) {
+        List<UUID> ids = tapPermanentIds != null ? tapPermanentIds : List.of();
+        if (ids.stream().distinct().count() != ids.size()) {
+            throw new IllegalStateException("Duplicate permanents chosen to tap for " + card.getName());
+        }
+        List<Permanent> chosen = new ArrayList<>();
+        for (UUID id : ids) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+            if (permanent == null) {
+                throw new IllegalStateException("Permanent to tap not found on battlefield");
+            }
+            if (!player.getId().equals(gameQueryService.findPermanentController(gameData, id))) {
+                throw new IllegalStateException("Can only tap permanents you control to cast " + card.getName());
+            }
+            if (permanent.isTapped()) {
+                throw new IllegalStateException("Cannot tap an already tapped permanent to cast " + card.getName());
+            }
+            if (!predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, cost.filter())) {
+                throw new IllegalStateException("Permanent does not match the tap cost of " + card.getName());
+            }
+            chosen.add(permanent);
         }
         return chosen;
     }

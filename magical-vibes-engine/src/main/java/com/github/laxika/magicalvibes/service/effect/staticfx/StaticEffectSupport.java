@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -106,6 +107,11 @@ public class StaticEffectSupport {
             boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
             return isEffectivelyCreature(context.gameData(), context.target(), hasAnimateArtifacts)
                     && matchesStaticFilter(context, filter);
+        }
+        if (scope == GrantScope.SELF_AND_PAIRED) {
+            UUID pairedId = context.source().getPairedWithId();
+            return context.target().getId().equals(context.source().getId())
+                    || (pairedId != null && context.target().getId().equals(pairedId));
         }
         if (scope == GrantScope.OWN_TAPPED_CREATURES) {
             return context.targetOnSameBattlefield() && context.target().isTapped();
@@ -244,10 +250,16 @@ public class StaticEffectSupport {
                     || grant.scope() == GrantScope.OWN_PERMANENTS) {
                 accumulator.addActivatedAbility(grant.ability().withGrantSource(context.source().getId()));
             }
+        } else if (wrapped instanceof GrantTriggeredAbilityEffect grant) {
+            if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
+                    || selfInScope(context, grant.scope(), grant.filter())) {
+                accumulator.addGrantedEffect(grant);
+            }
         } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
             accumulator.addProtectionColors(protection.colors());
         } else if (wrapped instanceof GrantEffectEffect grant) {
-            if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
+            if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
+                    || matchesStaticFilter(context.target(), grant.filter())) {
                 accumulator.addGrantedEffect(grant.effect());
             }
         } else if (wrapped instanceof AnimatePermanentsEffect animate && animate.scope() == GrantScope.SELF) {
@@ -269,7 +281,7 @@ public class StaticEffectSupport {
      * attachment scopes (equipped/enchanted) never cover the source.
      */
     private boolean selfInScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter) {
-        if (scope == GrantScope.SELF) return true;
+        if (scope == GrantScope.SELF || scope == GrantScope.SELF_AND_PAIRED) return true;
         boolean selfCoveringScope = scope == GrantScope.ALL_OWN_CREATURES
                 || scope == GrantScope.ALL_CREATURES
                 || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF

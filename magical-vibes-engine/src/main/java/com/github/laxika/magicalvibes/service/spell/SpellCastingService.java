@@ -85,6 +85,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantConspireToSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSourceActivatedAbilitiesUntilEndOfTurnEffect;
@@ -1858,6 +1859,10 @@ public class SpellCastingService {
         resolvedXValue = payAllSacrificeCosts(gameData, player, card, selection.sacrificePermanentId(), costs, resolvedXValue);
         payMultipleSacrificeCost(gameData, player, card, costs.sacrificeMultiplePermanentsCost(),
                 selection.sacrificePermanentIds());
+        if (costs.tapAnyNumberCost() != null) {
+            resolvedXValue = payTapAnyNumberOfPermanentsCost(gameData, player, card, costs.tapAnyNumberCost(),
+                    selection.sacrificePermanentIds());
+        }
         paySacrificeCreatureOrPayManaCost(gameData, player, card, costs.sacrificeCreatureOrPayManaCost(),
                 selection.sacrificePermanentId(), preManaPaymentPool);
         if (costs.returnCreatureToHand()) {
@@ -2005,6 +2010,31 @@ public class SpellCastingService {
             paySingleSacrificeCost(gameData, player, card, id, "a matching permanent",
                     p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
         }
+    }
+
+    /**
+     * Pays the "tap any number of untapped permanents you control" additional cast cost (Burn at
+     * the Stake) and returns the number tapped, which becomes the spell's X value so a companion
+     * effect can scale with it. Legality is checked by
+     * {@code AdditionalSpellCostService.validateTapAnyNumberOfPermanentsCost} before any cost is
+     * consumed.
+     */
+    private int payTapAnyNumberOfPermanentsCost(GameData gameData, Player player, Card card,
+                                                TapAnyNumberOfPermanentsCost cost, List<UUID> tapPermanentIds) {
+        List<Permanent> toTap = additionalSpellCostService.validateTapAnyNumberOfPermanentsCost(
+                gameData, player, card, cost, tapPermanentIds);
+        for (Permanent permanent : toTap) {
+            permanent.tap();
+            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(player.getUsername() + " taps ")
+                    .card(permanent.getCard())
+                    .text(" to cast ")
+                    .card(card)
+                    .text(".")
+                    .build());
+        }
+        return toTap.size();
     }
 
     private record SacrificedCreatureStats(int manaValue, int power, int toughness) {}
@@ -3080,6 +3110,12 @@ public class SpellCastingService {
         gameData.addSpellCastManaSpent(card.getId(),
                 computeSpellManaPayment(gameData, playerId, card, effectiveXValue, convokeContributions,
                         phyrexianLifeCount, kicked, extraCostReduction, targetingTax, escalateManaSuffix));
+        // Cavern of Souls: mana that carries an uncounterable rider makes the spell it paid for
+        // uncounterable for as long as it stays on the stack.
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        if (pool != null && pool.consumeSpentUncounterableGrantingMana()) {
+            gameData.spellsMadeUncounterable.add(card.getId());
+        }
     }
 
     private int computeSpellManaPayment(GameData gameData, UUID playerId, Card card, int effectiveXValue,

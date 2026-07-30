@@ -46,7 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnLandControlledByPlayerToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenSubtypeSpellCastTriggerEffect;
@@ -276,9 +276,9 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnLandControlledByPlayerToHandEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsTrigger(value = ReturnPermanentControlledByPlayerToHandEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleReturnLandOnSpellCast(TriggerMatchContext match,
-            ReturnLandControlledByPlayerToHandEffect trigger, TriggerContext ctx) {
+            ReturnPermanentControlledByPlayerToHandEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         // "that player returns a land they control" — carry the casting player on targetId so the
         // resolution handler prompts them (not the enchantment's controller).

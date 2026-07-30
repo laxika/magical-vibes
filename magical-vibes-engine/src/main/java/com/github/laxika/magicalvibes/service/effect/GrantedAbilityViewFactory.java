@@ -165,7 +165,10 @@ public class GrantedAbilityViewFactory {
             return "Protection from " + enumPhrase(protection.protectionFromCardTypes());
         }
         if (!protection.protectionFromSubtypes().isEmpty()) {
-            return "Protection from " + enumPhrase(protection.protectionFromSubtypes());
+            String subtypes = enumPhrase(protection.protectionFromSubtypes());
+            return protection.subtypeProtectionRequiresCreatureSource()
+                    ? "Protection from " + subtypes + " creatures"
+                    : "Protection from " + subtypes;
         }
         if (protection.protectionFromManaValueAtLeast().isPresent()) {
             return "Protection from mana value "

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "M10", collectorNumber = "169")
+@CardRegistration(set = "AVR", collectorNumber = "169")
 public class BorderlandRanger extends Card {
 
     public BorderlandRanger() {

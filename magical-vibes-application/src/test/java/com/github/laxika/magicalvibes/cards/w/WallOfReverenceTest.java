@@ -13,13 +13,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WallOfReverenceTest extends BaseCardTest {
 
-    /** Advance to the controller's end step; the MayEffect resolves and awaits the "may" choice. */
-    private void advanceToEndStepMayPrompt() {
+    /**
+     * Advance to the controller's end step. The trigger targets as it is put onto the stack
+     * (CR 603.3d), so the target prompt comes first; the "may" prompt follows at resolution.
+     */
+    private void advanceToEndStepTargetPrompt() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to END_STEP, trigger fires onto the stack
-        harness.passBothPriorities(); // resolve the MayEffect → may prompt
+        harness.passBothPriorities(); // advance to END_STEP, trigger targets and goes on the stack
     }
 
     @Test
@@ -29,9 +31,10 @@ class WallOfReverenceTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setLife(player1, 20);
 
-        advanceToEndStepMayPrompt();
-        harness.handleMayAbilityChosen(player1, true);
+        advanceToEndStepTargetPrompt();
         harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities(); // resolve the MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
     }
@@ -44,9 +47,10 @@ class WallOfReverenceTest extends BaseCardTest {
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
         harness.setLife(player1, 20);
 
-        advanceToEndStepMayPrompt();
-        harness.handleMayAbilityChosen(player1, true);
+        advanceToEndStepTargetPrompt();
         harness.handlePermanentChosen(player1, giant.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
     }
@@ -55,10 +59,12 @@ class WallOfReverenceTest extends BaseCardTest {
     @DisplayName("Declining gains no life")
     void declineGainsNoLife() {
         harness.addToBattlefield(player1, new WallOfReverence());
-        harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setLife(player1, 20);
 
-        advanceToEndStepMayPrompt();
+        advanceToEndStepTargetPrompt();
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -71,8 +77,7 @@ class WallOfReverenceTest extends BaseCardTest {
         Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setLife(player1, 20);
 
-        advanceToEndStepMayPrompt();
-        harness.handleMayAbilityChosen(player1, true);
+        advanceToEndStepTargetPrompt();
 
         // Only creatures player1 controls are offered — the opponent's creature is excluded.
         PendingInteraction.PermanentChoice choice =

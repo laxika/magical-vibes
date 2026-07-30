@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -90,6 +91,7 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                 gameLogService.append(gameData, GameLog.text(
                         "Combat damage from creatures that don't match the exemption will be prevented this turn."));
             }
+            case ALL_COMBAT_EXCEPT_TARGET -> allCombatExceptTarget(gameData, entry);
         }
     }
 
@@ -175,6 +177,19 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - Prevention shield {} added to player {}", gameData.id, amount, playerName);
         }
+    }
+
+    private void allCombatExceptTarget(GameData gameData, StackEntry entry) {
+        UUID targetId = entry.getTargetId();
+        if (targetId == null) return;
+
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target == null) return;
+
+        gameData.combatDamageExemptPredicate = new PermanentIsSpecificPermanentPredicate(targetId);
+        gameLogService.append(gameData, GameLog.textCardText(
+                "All combat damage that would be dealt by creatures other than ", target.getCard(),
+                " this turn is prevented."));
     }
 
     private void allToTargetCreatures(GameData gameData, StackEntry entry, PreventDamageEffect e) {

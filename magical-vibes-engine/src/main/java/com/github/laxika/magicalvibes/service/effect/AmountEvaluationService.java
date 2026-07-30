@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.amount.FixedIfControlsAllNamed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetMatches;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
+import com.github.laxika.magicalvibes.model.amount.HighestOpponentLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.IfSourceAttacking;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreaturePower;
 import com.github.laxika.magicalvibes.model.amount.TotalPowerOfCardsExiledWithSource;
@@ -167,6 +168,8 @@ public class AmountEvaluationService {
                     // battlefield (e.g. a CDA evaluated from an entry-time query); playerLifeTotals
                     // is a ConcurrentHashMap, which rejects null keys.
                     ctx.controllerId() == null ? 0 : gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 0);
+            case HighestOpponentLifeTotal ignored ->
+                    highestOpponentLifeTotal(gameData, ctx);
             case TargetPlayerLifeTotal ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.playerLifeTotals.getOrDefault(ctx.targetPermanentId(), 0);
@@ -672,6 +675,21 @@ public class AmountEvaluationService {
             total += gameData.lifeLostThisTurn.getOrDefault(playerId, 0);
         }
         return total;
+    }
+
+    /**
+     * Highest life total among the controller's opponents (Malignus). Returns 0 while the controller
+     * is unknown — that happens transiently for a CDA evaluated while the source is still entering
+     * the battlefield.
+     */
+    private int highestOpponentLifeTotal(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int highest = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(ctx.controllerId())) continue;
+            highest = Math.max(highest, gameData.playerLifeTotals.getOrDefault(playerId, 0));
+        }
+        return highest;
     }
 
     private int countOpponentPoisonCounters(GameData gameData, AmountContext ctx) {

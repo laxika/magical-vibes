@@ -176,6 +176,25 @@ public class AuraAttachmentService {
     }
 
     /**
+     * Whether {@code auraCard} could enchant {@code host} (CR 701.3a — an Aura can't be attached to
+     * an object it couldn't enchant). The card's declared target filter is its enchant restriction;
+     * an Aura without one enchants creatures. Used by effects that move or put Auras onto a chosen
+     * permanent, where the restriction has to be checked before the Aura is offered as a choice.
+     *
+     * @param auraControllerId the controller of the Aura, for controller-relative enchant filters
+     */
+    public boolean canEnchant(GameData gameData, Card auraCard, UUID auraControllerId, Permanent host) {
+        TargetFilter filter = auraCard.getTargetFilter();
+        if (filter == null) {
+            return gameQueryService.isCreature(gameData, host);
+        }
+        FilterContext context = FilterContext.of(gameData)
+                .withSourceCardId(auraCard.getId())
+                .withSourceControllerId(auraControllerId);
+        return predicateEvaluationService.checkTargetFilter(filter, host, context).isEmpty();
+    }
+
+    /**
      * Why the attachment is illegal on its current host, or {@code null} while it is legal.
      * Hexproof and shroud are deliberately not checked — they restrict targeting, not staying
      * attached. Equipment ignores the equip ability's "creature you control" restriction:

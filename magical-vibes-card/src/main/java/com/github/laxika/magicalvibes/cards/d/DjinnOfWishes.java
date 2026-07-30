@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeOrExileEffect;
+import com.github.laxika.magicalvibes.model.effect.LookDestination;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeEffect;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ public class DjinnOfWishes extends Card {
                 "{2}{U}{U}",
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.WISH),
-                        new RevealTopCardMayPlayFreeOrExileEffect(true)
+                        new RevealTopCardMayPlayFreeEffect(LookDestination.EXILE)
                 ),
                 "Reveal the top card of your library. You may play that card without paying its mana cost. If you don't, exile it."
         ));

@@ -17,6 +17,7 @@ public final class AiInteractionStrategies {
 
     static {
         register(new XValueChoiceAiStrategy());
+        register(new AlternateCastXValueChoiceAiStrategy());
         register(new ScryAiStrategy());
         register(new HandTopBottomChoiceAiStrategy());
         register(new PutCardsFromHandOnLibraryCardChoiceAiStrategy());
@@ -35,6 +36,8 @@ public final class AiInteractionStrategies {
         register(new PermanentAuctionChoiceAiStrategy());
         register(new IllicitAuctionBidChoiceAiStrategy());
         register(new MultiZoneExileChoiceAiStrategy());
+        register(new ExilePermanentsOrHandCardsChoiceAiStrategy());
+        register(new AttachAurasChoiceAiStrategy());
         register(new MultiPermanentChoiceAiStrategy());
         register(new MultiGraveyardChoiceAiStrategy());
         register(new ColorChoiceAiStrategy());
@@ -47,6 +50,7 @@ public final class AiInteractionStrategies {
         register(new PermanentChoiceAiStrategy());
         register(new SylvanLibraryChoiceAiStrategy());
         register(new AdNauseamRepeatChoiceAiStrategy());
+        register(new ExiledPermanentPutOntoBattlefieldChoiceAiStrategy());
         register(new CombatDamageAssignmentAiStrategy());
     }
 

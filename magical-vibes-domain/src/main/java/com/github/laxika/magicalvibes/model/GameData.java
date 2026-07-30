@@ -73,6 +73,13 @@ public class GameData {
     /** All spells cast by each player this turn. Access via {@link #recordSpellCast}, {@link #getSpellsCastThisTurnCount}, etc. */
     private final Map<UUID, List<Card>> spellsCastThisTurn = new ConcurrentHashMap<>();
     /**
+     * Card IDs of every spell cast this turn by any player, in cast order. Unlike
+     * {@link #spellsCastThisTurn} this preserves the global ordering across players, which is what
+     * "the second spell cast this turn" (Second Guess) needs. Read via
+     * {@link #getSpellCastOrdinalThisTurn}.
+     */
+    private final List<UUID> spellCastOrderThisTurn = Collections.synchronizedList(new ArrayList<>());
+    /**
      * Per-player count of spells cast this game, keyed by spell name. Unlike {@link #spellsCastThisTurn}
      * this persists for the whole game. Populated by {@link #recordSpellCast}; read via
      * {@link #getSpellsCastThisGameByNameCount} (Approach of the Second Sun's "cast another spell named ... this game").
@@ -535,6 +542,10 @@ public class GameData {
     /** Card IDs that have been granted flashback until end of turn (e.g. Past in Flames).
      *  The flashback cost for these cards equals their mana cost. Cleared at end of turn. */
     public final Set<UUID> cardsGrantedFlashbackUntilEndOfTurn = ConcurrentHashMap.newKeySet();
+
+    /** Player IDs that may cast spells as though they had flash until end of turn (Alchemist's
+     *  Refuge, Vedalken Orrery-style one-shot grants). Cleared at end of turn. */
+    public final Set<UUID> playersWithFlashUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
     /** Player IDs that may tap lands they don't control for mana until end of turn (Piracy). The
      *  mana produced this way may only be spent to cast spells. Cleared at end of turn. */
@@ -1465,6 +1476,7 @@ public class GameData {
      */
     public void recordSpellCast(UUID playerId, Card card) {
         spellsCastThisTurn.computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>())).add(card);
+        spellCastOrderThisTurn.add(card.getId());
         spellNameCastCountsThisGame.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>())
                 .merge(card.getName(), 1, Integer::sum);
     }
@@ -1577,12 +1589,21 @@ public class GameData {
     }
 
     /**
+     * Returns the 1-based position of the given spell card in this turn's global cast order, or 0 if
+     * that card was not cast this turn. "The second spell cast this turn" is ordinal 2.
+     */
+    public int getSpellCastOrdinalThisTurn(UUID cardId) {
+        return spellCastOrderThisTurn.indexOf(cardId) + 1;
+    }
+
+    /**
      * Snapshots per-player spell counts into the given target map, then clears spell tracking for the new turn.
      */
     public void snapshotSpellCountsAndClear(Map<UUID, Integer> target) {
         target.clear();
         spellsCastThisTurn.forEach((id, spells) -> target.put(id, spells.size()));
         spellsCastThisTurn.clear();
+        spellCastOrderThisTurn.clear();
     }
 
     public static final int STARTING_LIFE_TOTAL = 20;
@@ -2040,6 +2061,7 @@ public class GameData {
                 copy.permanentsEnteredBattlefieldThisTurn.put(k, new ArrayList<>(v)));
         this.spellsCastThisTurn.forEach((k, v) ->
                 copy.spellsCastThisTurn.put(k, new ArrayList<>(v)));
+        copy.spellCastOrderThisTurn.addAll(this.spellCastOrderThisTurn);
         this.spellNameCastCountsThisGame.forEach((k, v) ->
                 copy.spellNameCastCountsThisGame.put(k, new ConcurrentHashMap<>(v)));
         copy.spellsCastLastTurn.putAll(this.spellsCastLastTurn);
@@ -2329,6 +2351,7 @@ public class GameData {
 
         // --- Until-end-of-turn casting permissions ---
         copy.cardsGrantedFlashbackUntilEndOfTurn.addAll(this.cardsGrantedFlashbackUntilEndOfTurn);
+        copy.playersWithFlashUntilEndOfTurn.addAll(this.playersWithFlashUntilEndOfTurn);
         copy.mayTapLandsForSpellsUntilEndOfTurn.addAll(this.mayTapLandsForSpellsUntilEndOfTurn);
         copy.mayPayLifeForColorlessManaUntilEndOfTurn.addAll(this.mayPayLifeForColorlessManaUntilEndOfTurn);
         copy.graveyardCreatureCastPermissionsUntilEndOfTurn.putAll(this.graveyardCreatureCastPermissionsUntilEndOfTurn);

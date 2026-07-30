@@ -373,7 +373,7 @@ public class ChoiceHandlerService {
                 return;
             }
         } else if (ctx.restrictedToCreatureSubtype() != null) {
-            manaPool.addSubtypeCreatureMana(ctx.restrictedToCreatureSubtype(), manaColor, amount);
+            manaPool.addSubtypeCreatureMana(ctx.restrictedToCreatureSubtype(), manaColor, amount, ctx.grantsUncounterable());
         } else if (ctx.creatureSpellOnly()) {
             manaPool.addCreatureSpellOnlyMana(manaColor, amount);
 

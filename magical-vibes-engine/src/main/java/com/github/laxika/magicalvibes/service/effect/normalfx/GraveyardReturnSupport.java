@@ -77,6 +77,7 @@ public class GraveyardReturnSupport {
     private final CardViewFactory cardViewFactory;
     private final GraveyardService graveyardService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     /**
      * Resolves a {@link ReturnCardFromGraveyardEffect} by returning one or more cards from a graveyard
@@ -223,12 +224,18 @@ public class GraveyardReturnSupport {
 
     /**
      * Applies optional battlefield-entry riders from a {@link ReturnCardFromGraveyardEffect}
-     * (mannequin counter, exile-if-leaves replacement, granted cumulative upkeep).
+     * (mannequin counter, exile-if-leaves replacement, granted cumulative upkeep, subtype-conditional
+     * +1/+1 counters).
      */
     private void applyBattlefieldReturnRiders(GameData gameData, UUID controllerId, Card card,
                                               ReturnCardFromGraveyardEffect effect) {
+        boolean subtypeCounters = effect.plusOneCountersIfSubtype() != null
+                && effect.plusOneCounterCount() > 0
+                && card.getSubtypes() != null
+                && card.getSubtypes().contains(effect.plusOneCountersIfSubtype());
         if (!effect.enterWithMannequinCounter()
                 && !effect.exileIfLeavesBattlefield()
+                && !subtypeCounters
                 && (effect.grantCumulativeUpkeepCost() == null || effect.grantCumulativeUpkeepCost().isBlank())) {
             return;
         }
@@ -245,6 +252,9 @@ public class GraveyardReturnSupport {
             }
             if (effect.exileIfLeavesBattlefield()) {
                 p.setExileIfLeavesBattlefield(true);
+            }
+            if (subtypeCounters) {
+                permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, p, effect.plusOneCounterCount());
             }
             if (effect.grantCumulativeUpkeepCost() != null && !effect.grantCumulativeUpkeepCost().isBlank()) {
                 p.addPersistentTriggeredEffect(EffectSlot.UPKEEP_TRIGGERED,
@@ -573,8 +583,14 @@ public class GraveyardReturnSupport {
 
         List<Integer> indices = IntStream.range(0, cardPool.size()).boxed().toList();
 
-        String destText = effect.destination() == GraveyardChoiceDestination.HAND ? "your hand" : "the battlefield under your control";
-        String prompt = "Choose a " + filterLabel + " from a graveyard to put onto " + destText + ".";
+        String prompt = switch (effect.destination()) {
+            case HAND -> "Choose a " + filterLabel + " from a graveyard to put into your hand.";
+            case TOP_OF_OWNERS_LIBRARY ->
+                    "Choose a " + filterLabel + " from a graveyard to put on top of its owner's library.";
+            case BOTTOM_OF_OWNERS_LIBRARY ->
+                    "Choose a " + filterLabel + " from a graveyard to put on the bottom of its owner's library.";
+            default -> "Choose a " + filterLabel + " from a graveyard to put onto the battlefield under your control.";
+        };
 
         PendingInteraction.GraveyardChoice.Builder choice = PendingInteraction.GraveyardChoice
                 .builder(controllerId, indices, effect.destination(), prompt)

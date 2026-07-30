@@ -13,5 +13,11 @@ public enum CostModificationScope {
     /**
      * Affects spells cast by opponents of the permanent's controller.
      */
-    OPPONENT
+    OPPONENT,
+
+    /**
+     * Affects spells cast by every player, regardless of who controls the permanent
+     * (e.g. Arcane Melee: "Instant and sorcery spells cost {2} less to cast.").
+     */
+    ALL
 }

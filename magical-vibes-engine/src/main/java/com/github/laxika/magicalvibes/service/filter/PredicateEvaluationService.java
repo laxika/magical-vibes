@@ -90,6 +90,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
@@ -103,6 +104,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledCreatureCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -121,6 +123,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsNthSpellCastThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
@@ -133,6 +136,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWit
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatureYouControlPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsAnyPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
@@ -566,6 +570,8 @@ public class PredicateEvaluationService {
                     !matchesPermanentPredicate(permanent, notPredicate.predicate(), filterContext);
             case PermanentIsSourceCardPredicate ignored ->
                     sourceCardId != null && permanent.getOriginalCard().getId().equals(sourceCardId);
+            case PermanentIsSpecificPermanentPredicate specific ->
+                    specific.permanentId() != null && specific.permanentId().equals(permanent.getId());
             case PermanentControlledBySourceControllerPredicate ignored -> {
                 if (sourceControllerId == null || gameData == null) {
                     yield false;
@@ -657,6 +663,18 @@ public class PredicateEvaluationService {
                 }
                 int targetPower = gameQueryService.getEffectivePower(gameData, permanent);
                 yield targetPower <= sourcePower;
+            }
+            case PermanentPowerLessThanSourcePowerPredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                if (sourcePermanent == null) {
+                    yield false;
+                }
+                int sourcePower = gameQueryService.getEffectivePower(gameData, sourcePermanent);
+                int targetPower = gameQueryService.getEffectivePower(gameData, permanent);
+                yield targetPower < sourcePower;
             }
             case PermanentBlockedBySourcePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
@@ -992,6 +1010,7 @@ public class PredicateEvaluationService {
             // Targeting-only predicates: evaluated by TargetLegalityService, never in this context.
             case StackEntryIsSingleTargetPredicate ignored -> false;
             case StackEntryHasTargetPredicate ignored -> false;
+            case StackEntryIsNthSpellCastThisTurnPredicate ignored -> false;
             case StackEntryManaValuePredicate ignored -> false;
             case StackEntryManaValueEqualsXPredicate ignored -> false;
             case StackEntryManaValueEqualsSourceCountersPredicate ignored -> false;
@@ -1001,6 +1020,7 @@ public class PredicateEvaluationService {
             case StackEntryTargetsSourcePredicate ignored -> false;
             case StackEntryTargetsYouOrCreatureYouControlPredicate ignored -> false;
             case StackEntryTargetsYouPredicate ignored -> false;
+            case StackEntryTargetsAnyPlayerPredicate ignored -> false;
             case StackEntryTargetsPermanentPredicate ignored -> false;
             case StackEntrySharesChosenNameWithSourcePredicate ignored -> false;
         };

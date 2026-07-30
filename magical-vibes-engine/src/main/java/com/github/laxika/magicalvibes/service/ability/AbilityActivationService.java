@@ -2177,6 +2177,18 @@ public class AbilityActivationService {
             }
         }
 
+        // Angel of Jubilation: life payments and creature sacrifices can't be used as ability costs
+        if (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)) {
+            for (CardEffect effect : abilityEffects) {
+                if (effect instanceof PayLifeCost) {
+                    throw new IllegalStateException("Players can't pay life to activate abilities");
+                }
+                if (effect instanceof SacrificeCreatureCost) {
+                    throw new IllegalStateException("Players can't sacrifice creatures to activate abilities");
+                }
+            }
+        }
+
         // Permanent-choice costs (sacrifice, tap others, crew, ...) need enough valid choices
         UUID sourceId = permanent.getId();
         for (CardEffect effect : abilityEffects) {

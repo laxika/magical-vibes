@@ -292,13 +292,17 @@ class GameDataDeepCopyTest {
         UUID cardId = UUID.randomUUID();
         gd.cardsGrantedFlashbackUntilEndOfTurn.add(cardId);
         gd.mayTapLandsForSpellsUntilEndOfTurn.add(player1.getId());
+        gd.playersWithFlashUntilEndOfTurn.add(player1.getId());
 
         GameData copy = gd.simulationCopy();
 
         assertThat(copy.cardsGrantedFlashbackUntilEndOfTurn).contains(cardId);
         assertThat(copy.mayTapLandsForSpellsUntilEndOfTurn).contains(player1.getId());
+        assertThat(copy.playersWithFlashUntilEndOfTurn).contains(player1.getId());
 
         copy.cardsGrantedFlashbackUntilEndOfTurn.clear();
+        copy.playersWithFlashUntilEndOfTurn.clear();
         assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(cardId);
+        assertThat(gd.playersWithFlashUntilEndOfTurn).contains(player1.getId());
     }
 }

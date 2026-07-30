@@ -183,6 +183,12 @@ public record CreateTokenEffect(
                 List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of(), false, false, Map.of(), List.of(), false, false, false, 0, Set.of());
     }
 
+    /** 1/1 blue Spirit creature token with flying */
+    public static CreateTokenEffect blueSpirit(int amount) {
+        return new CreateTokenEffect(CardType.CREATURE, amount, "Spirit", 1, 1, CardColor.BLUE, null,
+                List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of(), false, false, Map.of(), List.of(), false, false, false, 0, Set.of());
+    }
+
     /** 2/2 black Zombie creature token */
     public static CreateTokenEffect blackZombie(int amount) {
         return new CreateTokenEffect(CardType.CREATURE, amount, "Zombie", 2, 2, CardColor.BLACK, null,

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffec
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "59")
+@CardRegistration(set = "AVR", collectorNumber = "47")
 public class DeadeyeNavigator extends Card {
 
     public DeadeyeNavigator() {

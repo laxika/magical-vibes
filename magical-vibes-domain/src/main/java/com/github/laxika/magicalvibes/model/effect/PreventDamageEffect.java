@@ -161,10 +161,19 @@ public record PreventDamageEffect(
         return new PreventDamageEffect(PreventionScope.ALL_COMBAT_EXCEPT, null, false, null, exemptPredicate, null);
     }
 
+    /**
+     * "Prevent all combat damage that would be dealt by creatures other than target creature this
+     * turn" (Terrifying Presence). The exemption is the chosen target, resolved on resolution.
+     */
+    public static PreventDamageEffect allCombatExceptTargetCreature() {
+        return new PreventDamageEffect(PreventionScope.ALL_COMBAT_EXCEPT_TARGET, null, false, null, null, null);
+    }
+
     @Override
     public TargetSpec targetSpec() {
         return switch (scope) {
             case NEXT_TO_TARGET -> TargetSpec.benign(TargetCategory.ANY_TARGET);
+            case ALL_COMBAT_EXCEPT_TARGET -> TargetSpec.benign(TargetCategory.CREATURE);
             case ALL_TO_TARGET_CREATURES, ALL_BY_TARGET_CREATURES -> TargetSpec.benign(TargetCategory.CREATURE);
             case ALL_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN -> TargetSpec.benign(TargetCategory.PERMANENT);
             default -> TargetSpec.NONE;

@@ -1071,14 +1071,16 @@ public class TriggerCollectionService {
             UUID controllerId = gameQueryService.findPermanentController(gameData, targetPermanent.getId());
             if (controllerId == null) continue;
 
-            collectBecomesTargetTriggers(gameData, targetPermanent, controllerId, targetPermanent, spellEntry);
-            collectBecomesTargetOfOpponentSpellTriggers(gameData, targetPermanent, controllerId, spellEntry);
             collectAllyCreatureBecomesTargetOfOpponentTriggers(gameData, targetPermanent, controllerId, spellEntry.getControllerId());
             collectAnyCreatureBecomesTargetTriggers(gameData, targetPermanent);
+            collectAllyCreatureBecomesTargetOfInstantOrSorceryTriggers(gameData, targetPermanent, controllerId, spellEntry);
             // Check the targeted permanent itself for "when this becomes the target" triggers.
             // Attached permanents (auras/equipment) use the loop below instead — their triggers
-            // monitor the enchanted/equipped creature, not themselves.
+            // monitor the enchanted/equipped creature, not themselves (Spectral Prison is not
+            // sacrificed when a spell targets the Aura rather than the enchanted creature).
             if (!targetPermanent.isAttached()) {
+                collectBecomesTargetTriggers(gameData, targetPermanent, controllerId, targetPermanent, spellEntry);
+                collectBecomesTargetOfOpponentSpellTriggers(gameData, targetPermanent, controllerId, spellEntry);
                 collectBecomesTargetOfSpellOrAbilityTriggers(gameData, targetPermanent, controllerId, spellEntry);
                 collectBecomesTargetOfOpponentSpellOrAbilityNonCounterTriggers(
                         gameData, targetPermanent, controllerId, spellEntry.getControllerId());
@@ -1090,10 +1092,11 @@ public class TriggerCollectionService {
                 for (Permanent attached : battlefield) {
                     if (attached.isAttached()
                             && attached.getAttachedTo().equals(targetPermanent.getId())) {
-                        collectBecomesTargetTriggers(gameData, attached, controllerId, targetPermanent, spellEntry);
-                        collectBecomesTargetOfOpponentSpellTriggers(gameData, attached, controllerId, spellEntry);
-                        // CR 603.3b: triggered ability is controlled by the controller of the
-                        // permanent that has it (the aura/equipment), not the enchanted creature.
+                        // CR 603.3a: the triggered ability is controlled by the controller of the
+                        // permanent that has it (the aura/equipment), not the enchanted creature —
+                        // the two differ when an Aura like Spectral Prison enchants an opponent's creature.
+                        collectBecomesTargetTriggers(gameData, attached, playerId, targetPermanent, spellEntry);
+                        collectBecomesTargetOfOpponentSpellTriggers(gameData, attached, playerId, spellEntry);
                         collectBecomesTargetOfSpellOrAbilityTriggers(gameData, attached, playerId, spellEntry);
                     }
                 }
@@ -1395,6 +1398,45 @@ public class TriggerCollectionService {
 
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
             log.info("Game {} - {} ally-creature-becomes-target-of-opponent trigger queued",
+                    gameData.id, source.getCard().getName());
+        }
+    }
+
+    /**
+     * Checks ALL permanents on the targeted creature's controller's battlefield for
+     * {@link EffectSlot#ON_ALLY_CREATURE_BECOMES_TARGET_OF_INSTANT_OR_SORCERY}. Only fires when the
+     * targeted permanent is a creature and the targeting spell is an instant or a sorcery; there is
+     * no controller restriction, so the creature's controller's own spells trigger it too. The
+     * targeted creature is stored as the non-targeting {@code targetId} so the resolved effect can
+     * act on it. Used by Wild Defiance.
+     */
+    private void collectAllyCreatureBecomesTargetOfInstantOrSorceryTriggers(
+            GameData gameData, Permanent targetPermanent, UUID creatureControllerId, StackEntry spellEntry) {
+        if (!targetPermanent.getCard().hasType(CardType.CREATURE)) return;
+        if (!spellEntry.getCard().hasType(CardType.INSTANT) && !spellEntry.getCard().hasType(CardType.SORCERY)) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(creatureControllerId);
+        if (battlefield == null) return;
+
+        for (Permanent source : battlefield) {
+            List<CardEffect> effects = source.getCard().getEffects(
+                    EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_INSTANT_OR_SORCERY);
+            if (effects.isEmpty()) continue;
+
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(),
+                    creatureControllerId,
+                    source.getCard().getName() + "'s triggered ability",
+                    new ArrayList<>(effects),
+                    targetPermanent.getId(),
+                    source.getId()
+            );
+            entry.setNonTargeting(true);
+            gameData.stack.add(entry);
+
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
+            log.info("Game {} - {} ally-creature-becomes-target-of-instant-or-sorcery trigger queued",
                     gameData.id, source.getCard().getName());
         }
     }
@@ -3543,6 +3585,60 @@ public class TriggerCollectionService {
                         gameData.id, perm.getCard().getName(), enteringPermanentCard.getName());
             }
         });
+    }
+
+    /**
+     * "When this creature enters from a graveyard" (ON_SELF_ENTERS_FROM_GRAVEYARD). Unlike the two
+     * methods above this fires only for the entering permanent's own ability. A targeting effect
+     * picks its target as the ability goes on the stack (CR 603.3b) — the permanent was never cast,
+     * so no target was chosen at cast time — reusing the ETB token-target pipeline with the card's
+     * {@code target(...)} filter. Used by Treacherous Pit-Dweller.
+     */
+    public void checkSelfEntersFromGraveyardTriggers(GameData gameData, UUID enteringControllerId, Card enteringCard) {
+        List<CardEffect> effects = enteringCard.getEffects(EffectSlot.ON_SELF_ENTERS_FROM_GRAVEYARD);
+        if (effects == null || effects.isEmpty()) return;
+
+        Permanent enteringPermanent = null;
+        List<Permanent> controllerBf = gameData.playerBattlefields.get(enteringControllerId);
+        if (controllerBf != null) {
+            for (Permanent p : controllerBf) {
+                if (p.getCard() == enteringCard) {
+                    enteringPermanent = p;
+                    break;
+                }
+            }
+        }
+        if (enteringPermanent == null || enteringPermanent.getEnteredFromGraveyardOwnerId() == null) {
+            return;
+        }
+
+        for (CardEffect effect : effects) {
+            boolean targets = effect.targetSpec().category().includesPlayers()
+                    || effect.targetSpec().category().includesPermanents();
+            if (targets) {
+                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
+                        enteringCard, enteringControllerId, new ArrayList<>(List.of(effect)),
+                        enteringPermanent.getId(), enteringCard.getTargetFilter()));
+            } else {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        enteringCard,
+                        enteringControllerId,
+                        enteringCard.getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        enteringPermanent.getId()
+                ));
+            }
+            gameLogService.append(gameData, GameLog.cardThen(enteringCard,
+                    "'s ability triggers (it entered from a graveyard)."));
+            log.info("Game {} - {} triggers (it entered from a graveyard)", gameData.id, enteringCard.getName());
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)
+                && !gameData.interaction.isAwaitingInput()) {
+            etbTokenTargetService.processNextETBTokenTargetTrigger(gameData);
+        }
     }
 
     private void dispatchEnter(GameData gameData, Permanent perm, UUID controllerId, EffectSlot slot,

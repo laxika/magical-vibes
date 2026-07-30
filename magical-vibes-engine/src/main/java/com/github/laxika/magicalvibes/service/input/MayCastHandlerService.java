@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -16,7 +17,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeOrExileEffect;
+import com.github.laxika.magicalvibes.model.effect.LookDestination;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastForMadnessCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastForMiracleCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
@@ -57,6 +59,8 @@ public class MayCastHandlerService {
     private final BattlefieldEntryService battlefieldEntryService;
     private final ExileService exileService;
     private final ExileFreeCastSupport exileFreeCastSupport;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    private final com.github.laxika.magicalvibes.service.cast.PotentialManaService potentialManaService;
 
     public void handleCastFromLibraryChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         Card cardToCast = ability.sourceCard();
@@ -124,27 +128,29 @@ public class MayCastHandlerService {
     }
 
     /**
-     * Handles the "may play from library or exile" choice (e.g. Djinn of Wishes).
+     * Handles the "may play the revealed top card of your library" choice (e.g. Djinn of Wishes).
      * If accepted: play the card (land → battlefield, spell → stack without paying mana cost).
-     * If declined: exile the card.
+     * If declined: the card goes to the effect's not-played destination (exile, bottom of library,
+     * or stays on top).
      */
     public void handlePlayFromLibraryOrExileChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         Card cardToPlay = ability.sourceCard();
         String playerName = player.getUsername();
         List<Card> deck = gameData.playerDecks.get(player.getId());
-        boolean exileIfNotPlayed = ability.effects().stream()
-                .filter(e -> e instanceof RevealTopCardMayPlayFreeOrExileEffect)
-                .map(e -> ((RevealTopCardMayPlayFreeOrExileEffect) e).exileIfNotPlayed())
-                .findFirst().orElse(true);
+        LookDestination notPlayedDestination = ability.effects().stream()
+                .filter(e -> e instanceof RevealTopCardMayPlayFreeEffect)
+                .map(e -> ((RevealTopCardMayPlayFreeEffect) e).notPlayedDestination())
+                .findFirst().orElse(LookDestination.EXILE);
 
         if (!accepted) {
-            if (exileIfNotPlayed) {
-                // Declined — exile the card from library
-                exileTopCardFromLibrary(gameData, player.getId(), deck, cardToPlay, playerName);
-            } else {
-                // Declined — the card stays on top of the library
-                gameLogService.append(gameData, GameLog.textCardText(playerName + " declines to play ", cardToPlay, "."));
-                log.info("Game {} - {} declines to play {}, stays on top", gameData.id, playerName, cardToPlay.getName());
+            switch (notPlayedDestination) {
+                case EXILE -> exileTopCardFromLibrary(gameData, player.getId(), deck, cardToPlay, playerName);
+                case BOTTOM_OF_LIBRARY -> bottomTopCardOfLibrary(gameData, deck, cardToPlay, playerName);
+                default -> {
+                    // Declined — the card stays on top of the library
+                    gameLogService.append(gameData, GameLog.textCardText(playerName + " declines to play ", cardToPlay, "."));
+                    log.info("Game {} - {} declines to play {}, stays on top", gameData.id, playerName, cardToPlay.getName());
+                }
             }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
@@ -200,16 +206,25 @@ public class MayCastHandlerService {
                 List<UUID> validTargets = buildValidSpellTargets(gameData, cardToPlay, spellEffects);
 
                 if (validTargets.isEmpty()) {
-                    if (exileIfNotPlayed) {
-                        // No valid targets — exile the card instead
-                        exileService.exileCard(gameData, player.getId(), cardToPlay);
-                        gameLogService.append(gameData, GameLog.cardThen(cardToPlay, " has no valid targets and is exiled."));
-                        log.info("Game {} - {} play-from-library has no valid targets, exiled", gameData.id, cardToPlay.getName());
-                    } else {
-                        // No valid targets — return the card to the top of the library
-                        deck.addFirst(cardToPlay);
-                        gameLogService.append(gameData, GameLog.cardThen(cardToPlay, " has no valid targets and stays on top of the library."));
-                        log.info("Game {} - {} play-from-library has no valid targets, stays on top", gameData.id, cardToPlay.getName());
+                    switch (notPlayedDestination) {
+                        case EXILE -> {
+                            // No valid targets — exile the card instead
+                            exileService.exileCard(gameData, player.getId(), cardToPlay);
+                            gameLogService.append(gameData, GameLog.cardThen(cardToPlay, " has no valid targets and is exiled."));
+                            log.info("Game {} - {} play-from-library has no valid targets, exiled", gameData.id, cardToPlay.getName());
+                        }
+                        case BOTTOM_OF_LIBRARY -> {
+                            // No valid targets — the card goes to the bottom of the library
+                            deck.add(cardToPlay);
+                            gameLogService.append(gameData, GameLog.cardThen(cardToPlay, " has no valid targets and is put on the bottom of the library."));
+                            log.info("Game {} - {} play-from-library has no valid targets, bottomed", gameData.id, cardToPlay.getName());
+                        }
+                        default -> {
+                            // No valid targets — return the card to the top of the library
+                            deck.addFirst(cardToPlay);
+                            gameLogService.append(gameData, GameLog.cardThen(cardToPlay, " has no valid targets and stays on top of the library."));
+                            log.info("Game {} - {} play-from-library has no valid targets, stays on top", gameData.id, cardToPlay.getName());
+                        }
                     }
                 } else {
                     gameData.interaction.setPermanentChoiceContext(
@@ -270,6 +285,15 @@ public class MayCastHandlerService {
             validTargets.addAll(gameData.orderedPlayerIds);
         }
         return validTargets;
+    }
+
+    private void bottomTopCardOfLibrary(GameData gameData, List<Card> deck, Card card, String playerName) {
+        if (deck != null && !deck.isEmpty() && deck.getFirst().getId().equals(card.getId())) {
+            deck.removeFirst();
+            deck.add(card);
+        }
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " puts ", card, " on the bottom of their library."));
+        log.info("Game {} - {} puts {} on the bottom of their library", gameData.id, playerName, card.getName());
     }
 
     private void exileTopCardFromLibrary(GameData gameData, UUID playerId, List<Card> deck, Card card, String playerName) {
@@ -582,6 +606,14 @@ public class MayCastHandlerService {
 
         ManaCost cost = new ManaCost(costStr);
         ManaPool pool = gameData.playerManaPools.get(player.getId());
+
+        // An {X} in the alternative cost still has to be announced (CR 601.2b), so the actual
+        // payment waits for the X prompt. Entreat the Angels' miracle cost {X}{W}{W}.
+        if (cost.hasX()) {
+            beginAlternateCastXChoice(gameData, player, cardToCast, costStr, "miracle");
+            return;
+        }
+
         if (!cost.canPay(pool)) {
             gameLogService.append(gameData, GameLog.textCardText(
                     playerName + " cannot pay " + costStr + " to cast ", cardToCast, " for its miracle cost."));
@@ -592,7 +624,93 @@ public class MayCastHandlerService {
         cost.pay(pool);
 
         hand.remove(cardIndex);
-        castCardFromHandPayingAlternateCost(gameData, player, cardToCast, costStr, "miracle");
+        castCardFromHandPayingAlternateCost(gameData, player, cardToCast, costStr, "miracle", 0);
+    }
+
+    /**
+     * Opens the "choose a value for X" prompt for a cast for an alternative cost containing {X}.
+     * The cap is computed from potential mana so an untapped board still opens the prompt
+     * (CR 605.3a — mana abilities may be activated while the payment is being made); the real
+     * pool is re-checked in {@link #completeAlternateCastXChoice}.
+     */
+    private void beginAlternateCastXChoice(GameData gameData, Player player, Card cardToCast,
+                                           String costStr, String costLabel) {
+        ManaCost cost = new ManaCost(costStr);
+        int maxX = cost.calculateMaxX(potentialManaService.buildVirtualManaPool(gameData, player.getId()));
+
+        if (maxX <= 0 && !cost.canPay(gameData.playerManaPools.get(player.getId()), 0)) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " cannot pay " + costStr + " to cast ", cardToCast,
+                    " for its " + costLabel + " cost."));
+            log.info("Game {} - {} can't pay {} cost {} for {}",
+                    gameData.id, player.getUsername(), costLabel, costStr, cardToCast.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        String prompt = "Choose a value for X to cast " + cardToCast.getName()
+                + " for its " + costLabel + " cost (" + costStr + ").";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.AlternateCastXValueChoice(
+                player.getId(), cardToCast.getId(), costStr, maxX, prompt, cardToCast.getName(), costLabel));
+    }
+
+    /**
+     * Applies the announced X for an alternative-cost cast: charges the cost with that X and
+     * puts the spell on the stack carrying X as the entry's numeric context. Re-prompts when the
+     * pool still can't cover the chosen X (the cap was based on untapped sources).
+     */
+    public void completeAlternateCastXChoice(GameData gameData, Player player,
+                                             PendingInteraction.AlternateCastXValueChoice interaction,
+                                             int chosenX) {
+        String playerName = player.getUsername();
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        int cardIndex = -1;
+        if (hand != null) {
+            for (int i = 0; i < hand.size(); i++) {
+                if (hand.get(i).getId().equals(interaction.cardId())) {
+                    cardIndex = i;
+                    break;
+                }
+            }
+        }
+
+        if (cardIndex == -1) {
+            gameLogService.append(gameData, GameLog.text(interaction.cardName() + " is no longer in hand."));
+            log.info("Game {} - {} no longer in hand for {} cast", gameData.id, interaction.cardName(), interaction.costLabel());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        Card cardToCast = hand.get(cardIndex);
+        ManaCost cost = new ManaCost(interaction.manaCost());
+        ManaPool pool = gameData.playerManaPools.get(player.getId());
+
+        if (!cost.canPay(pool, chosenX)) {
+            // Only worth re-prompting while untapped sources could still cover the choice —
+            // otherwise the cast is simply abandoned instead of looping on the prompt.
+            ManaPool potential = potentialManaService.buildVirtualManaPool(gameData, player.getId());
+            if (!cost.canPay(potential, chosenX)) {
+                gameLogService.append(gameData, GameLog.textCardText(
+                        playerName + " cannot pay " + interaction.manaCost() + " to cast ",
+                        cardToCast, " for its " + interaction.costLabel() + " cost."));
+                log.info("Game {} - {} can't pay {} cost {} for {}", gameData.id, playerName,
+                        interaction.costLabel(), interaction.manaCost(), cardToCast.getName());
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            gameLogService.append(gameData, GameLog.textCardText(
+                    playerName + " can't pay " + interaction.manaCost() + " with X=" + chosenX + " for ",
+                    cardToCast, " yet (tap mana sources, then choose X again)."));
+            log.info("Game {} - {} cannot yet pay {} with X={} for {} — re-prompting",
+                    gameData.id, playerName, interaction.manaCost(), chosenX, cardToCast.getName());
+            beginAlternateCastXChoice(gameData, player, cardToCast, interaction.manaCost(), interaction.costLabel());
+            return;
+        }
+        cost.pay(pool, chosenX);
+
+        hand.remove(cardIndex);
+        castCardFromHandPayingAlternateCost(gameData, player, cardToCast, interaction.manaCost(),
+                interaction.costLabel(), chosenX);
     }
 
     /**
@@ -690,16 +808,23 @@ public class MayCastHandlerService {
     }
 
     private void castCardFromHandWithoutPaying(GameData gameData, Player player, Card card) {
-        castCardFromHandPayingAlternateCost(gameData, player, card, null, null);
+        castCardFromHandPayingAlternateCost(gameData, player, card, null, null, 0);
+    }
+
+    private void castCardFromHandPayingAlternateCost(GameData gameData, Player player, Card card,
+                                                     String paidCostDescription, String costLabel) {
+        castCardFromHandPayingAlternateCost(gameData, player, card, paidCostDescription, costLabel, 0);
     }
 
     /**
      * Puts a card onto the stack as a cast spell, ignoring type-based timing.
      * {@code paidCostDescription} null means free ("without paying its mana cost"); otherwise
      * logs that the alternate cost was paid. {@code costLabel} is "miracle" / "madness" (or null for free).
+     * {@code xValue} is the X announced for an alternative cost containing {X} (0 otherwise).
      */
     private void castCardFromHandPayingAlternateCost(GameData gameData, Player player, Card card,
-                                                     String paidCostDescription, String costLabel) {
+                                                     String paidCostDescription, String costLabel,
+                                                     int xValue) {
         UUID playerId = player.getId();
         String playerName = player.getUsername();
         String costPhrase;
@@ -743,7 +868,7 @@ public class MayCastHandlerService {
             }
 
             gameData.interaction.setPermanentChoiceContext(
-                    new PermanentChoiceContext.HandCastSpellTarget(card, playerId, spellEffects, spellType));
+                    new PermanentChoiceContext.HandCastSpellTarget(card, playerId, spellEffects, spellType, xValue));
             playerInputService.beginPermanentChoice(gameData, playerId, validTargets,
                     "Choose a target for " + card.getName() + ".");
 
@@ -756,7 +881,7 @@ public class MayCastHandlerService {
         // Non-targeted spell — put directly on stack
         gameData.stack.add(new StackEntry(
                 spellType, card, playerId, card.getName(),
-                spellEffects, 0, (UUID) null, null
+                spellEffects, xValue, (UUID) null, null
         ));
 
         gameData.recordSpellCast(playerId, card);

@@ -233,6 +233,15 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code enteredFromGraveyardOwnerId} flag. Queues the resolved effects as a non-targeting stack
      *  entry for the source's controller. Used by River Kelpie. */
     ON_PERMANENT_ENTERS_FROM_GRAVEYARD,
+    /** "When this creature enters from a graveyard" — fires only for the entering permanent itself
+     *  (not for other permanents), checked via the {@code enteredFromGraveyardOwnerId} flag in
+     *  {@code TriggerCollectionService.checkSelfEntersFromGraveyardTriggers}. A targeting effect
+     *  chooses its target as the trigger goes on the stack (CR 603.3b) through the shared
+     *  {@code ETBTokenTargetTrigger} pipeline, using the card's {@code target(...)} filter; a
+     *  non-targeting effect is queued directly. Deliberately separate from
+     *  {@code ON_ENTER_BATTLEFIELD} so a normal cast never asks for a target.
+     *  Used by Treacherous Pit-Dweller. */
+    ON_SELF_ENTERS_FROM_GRAVEYARD,
     ON_CONTROLLER_GAINS_LIFE,
     ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE,
     ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
@@ -446,6 +455,14 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers} and
      *  {@code checkBecomesTargetOfAbilityTriggers}. Used by Cowardice. */
     ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
+    /** Triggers whenever a creature controlled by the same player becomes the target of an instant
+     *  or sorcery spell — regardless of who controls that spell. Fires on ALL permanents with this
+     *  slot on the creature's controller's battlefield (not just the targeted creature). The
+     *  targeted creature's permanent ID is set as the non-targeting {@code targetId} on the stack
+     *  entry so the resolved effect can act on it. Spell path only (abilities never trigger it).
+     *  Checked in {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers}.
+     *  Used by Wild Defiance. */
+    ON_ALLY_CREATURE_BECOMES_TARGET_OF_INSTANT_OR_SORCERY,
     /** Triggers when this permanent transforms from its front face to its back face.
      *  Checked in {@code AnimationResolutionService.resolveTransformSelf} after the
      *  permanent's card reference is switched to the back face. */

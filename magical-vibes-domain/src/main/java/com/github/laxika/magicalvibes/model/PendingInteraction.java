@@ -19,7 +19,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingKarnScionRevealChoice, PendingKarnScionExileReturn,
         PendingReturnExiledWithSourceCard,
         PendingKarnRestart, PendingKnowledgePoolCast, PendingPileSeparation,
-        PendingInteraction.XValueChoice, PendingInteraction.Scry,
+        PendingInteraction.XValueChoice, PendingInteraction.AlternateCastXValueChoice,
+        PendingInteraction.Scry,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.LibraryReorder,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.ImprovisationCapstoneCastChoice,
@@ -32,6 +33,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.PermanentAuctionChoice,
         PendingInteraction.IllicitAuctionBidChoice,
         PendingInteraction.MultiZoneExileChoice,
+        PendingInteraction.ExilePermanentsOrHandCardsChoice,
+        PendingInteraction.AttachAurasChoice,
         PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice,
         PendingInteraction.ColorChoice, PendingInteraction.RevealedHandChoice,
         PendingInteraction.RevealCardsDiscardChoice,
@@ -46,6 +49,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.LibrarySearch,
         PendingInteraction.PermanentChoice,
         PendingInteraction.AdNauseamRepeatChoice,
+        PendingInteraction.ExiledPermanentPutOntoBattlefieldChoice,
         PendingInteraction.CombatDamageAssignment,
         PendingInteraction.AttackerDeclaration,
         PendingInteraction.BlockerDeclaration {
@@ -90,6 +94,29 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public XValueChoice(UUID playerId, int maxValue, String prompt, String cardName) {
             this(playerId, maxValue, prompt, cardName, false);
         }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.NumberPick(0, maxValue);
+        }
+    }
+
+    /**
+     * "Choose a value for X" while casting a card for an alternative mana cost that contains
+     * {X} (Entreat the Angels' miracle cost {X}{W}{W}). Announcing X is part of casting
+     * (CR 601.2b), and the miracle/madness cast flows run outside the normal cast path, so the
+     * announcement is its own interaction. {@code cardId} identifies the hand card to cast and
+     * {@code manaCost} is the alternative cost string charged once X is known. Always a mana
+     * payment, so the CR 605.3a tap window is open while the prompt is up.
+     */
+    record AlternateCastXValueChoice(UUID playerId, UUID cardId, String manaCost, int maxValue,
+                                     String prompt, String cardName, String costLabel)
+            implements PendingInteraction {
 
         @Override
         public UUID decidingPlayerId() {
@@ -495,6 +522,60 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
+        }
+    }
+
+    /**
+     * "Exile N permanents you control and/or cards from your hand" (Descent into Madness) — the
+     * only mixed battlefield + hand selection. {@code validCardIds} are <em>card</em> ids in
+     * begin-time order (battlefield first, then hand), so a permanent is identified by
+     * {@code permanent.getCard().getId()}; the answer handler re-scans both zones to map an id
+     * back to the object to exile.
+     *
+     * <p>{@code remainingPlayerIds} is the rest of the APNAP queue and
+     * {@code accumulatedCardIds} the picks made by the players before this one — the exiles are
+     * applied together once the queue drains, so the queue state has to ride along with the
+     * interaction.
+     */
+    record ExilePermanentsOrHandCardsChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                            int count, java.util.List<UUID> remainingPlayerIds,
+                                            java.util.List<UUID> accumulatedCardIds,
+                                            String sourceName)
+            implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            // Mandatory: exactly count, or everything when the player has fewer objects.
+            int required = Math.min(count, validCardIds.size());
+            return new InteractionOptions.MultiCardPick(validCardIds, required, required);
+        }
+    }
+
+    /**
+     * "Attach to this creature any number of Auras on the battlefield and put onto the battlefield
+     * attached to it any number of Aura cards from your graveyard and/or hand" (Bruna, Light of
+     * Alabaster). {@code validCardIds} are <em>card</em> ids in begin-time order (battlefield
+     * Auras, then graveyard, then hand), so an Aura already on the battlefield is identified by
+     * {@code permanent.getCard().getId()} and the answer handler re-scans all three zones to map
+     * an id back to the object to move. Every offered Aura could already legally enchant
+     * {@code hostPermanentId} at begin time; the selection is entirely optional.
+     */
+    record AttachAurasChoice(UUID playerId, java.util.List<UUID> validCardIds, UUID hostPermanentId,
+                             String sourceName) implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, validCardIds.size());
         }
     }
 
@@ -943,14 +1024,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
-     * Choose up to {@code maxCount} cards from your own hand to put on the top or bottom of your
-     * library. {@code validCardIds}/{@code cards} are the current hand snapshot; when {@code topOnly}
-     * is {@code false} the top/bottom destination is picked in the follow-up
-     * {@link PutCardsFromHandOnLibraryDestinationChoice} (Dream Cache); when {@code topOnly} is
-     * {@code true} the chosen cards are placed on top immediately (Brainstorm).
+     * Choose up to {@code maxCount} cards from your own hand to put back on your library.
+     * {@code validCardIds}/{@code cards} are the current hand snapshot; with
+     * {@link HandToLibraryPlacement#PLAYER_CHOICE} the top/bottom destination is picked in the
+     * follow-up {@link PutCardsFromHandOnLibraryDestinationChoice} (Dream Cache), while
+     * {@code TOP} (Brainstorm) and {@code BOTTOM} (Amass the Components) place the chosen cards
+     * immediately.
      */
     record PutCardsFromHandOnLibraryCardChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                               java.util.List<Card> cards, int maxCount, boolean topOnly)
+                                               java.util.List<Card> cards, int maxCount,
+                                               HandToLibraryPlacement placement)
             implements PendingInteraction {
 
         public PutCardsFromHandOnLibraryCardChoice {
@@ -1211,6 +1294,27 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * the resolution. Answered via the shared may-ability accept/decline wire payload.
      */
     record AdNauseamRepeatChoice(UUID playerId, String sourceName) implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.ACCEPT_DECLINE;
+        }
+    }
+
+    /**
+     * Primal Surge: {@code cardId} (name {@code cardName}) has just been exiled from the top of
+     * {@code playerId}'s library and is a permanent card, so they may put it onto the battlefield.
+     * Accepting puts it onto the battlefield and exiles the next card; declining ends the process
+     * and leaves the card in exile. {@code sourceName} is the spell's name (log text). Answered via
+     * the shared may-ability accept/decline wire payload.
+     */
+    record ExiledPermanentPutOntoBattlefieldChoice(UUID playerId, String sourceName, UUID cardId,
+                                                   String cardName) implements PendingInteraction {
 
         @Override
         public UUID decidingPlayerId() {
