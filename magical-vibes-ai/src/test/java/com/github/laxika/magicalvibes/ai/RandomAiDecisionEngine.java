@@ -18,11 +18,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.effect.BlockCostEffect;
+import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
@@ -856,7 +860,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             handleBlockersInternal(gameData);
         } catch (Exception e) {
             log.error("Random AI: Error in handleBlockers in game {}, sending empty blockers", gameId, e);
-            sendBlockerDeclaration(gameData, new DeclareBlockersRequest(List.of()));
+            sendBlockerDeclaration(new DeclareBlockersRequest(List.of()));
         }
     }
 
@@ -866,7 +870,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         List<Permanent> opponentBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
 
         if (battlefield == null || opponentBattlefield == null) {
-            sendBlockerDeclaration(gameData, new DeclareBlockersRequest(List.of()));
+            sendBlockerDeclaration(new DeclareBlockersRequest(List.of()));
             return;
         }
 
@@ -878,7 +882,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             }
         }
         if (attackerIndices.isEmpty()) {
-            sendBlockerDeclaration(gameData, new DeclareBlockersRequest(List.of()));
+            sendBlockerDeclaration(new DeclareBlockersRequest(List.of()));
             return;
         }
 
@@ -922,11 +926,19 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
         List<BlockerAssignment> assignments = new ArrayList<>();
         boolean[] blockerUsed = new boolean[battlefield.size()];
+        // Block taxes (Hipparion) are paid out of whatever is already floating — the AI never taps
+        // lands to block, and CR 509.1c never requires paying — so every declared block has to fit
+        // in the remaining pool.
+        int blockTaxBudget = gameData.playerManaPools.get(aiPlayer.getId()).getTotal();
+        int teamMaxBlockers = teamMaxBlockersPerAttacker(opponentBattlefield);
 
         for (int attackerIdx : sortedAttackers) {
             Permanent attacker = opponentBattlefield.get(attackerIdx);
             int minimumBlockers = AiUtils.minimumBlockersRequiredToBlock(
                     gameData, gameQueryService, attacker);
+            int maximumBlockers = Math.min(teamMaxBlockers, maxBlockersForAttacker(attacker));
+            // e.g. menace plus "can't be blocked by more than one creature" — no legal block exists.
+            if (minimumBlockers > maximumBlockers) continue;
             boolean lure = lureAttackerIndices.contains(attackerIdx);
             boolean mustBlock = mustBeBlockedAttackerIndices.contains(attackerIdx);
             List<Integer> provoked = provokedBlockersByAttacker.getOrDefault(attackerIdx, List.of());
@@ -935,9 +947,10 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             for (int blockerIdx : availableBlockerIndices) {
                 if (blockerUsed[blockerIdx]) continue;
                 Permanent blocker = battlefield.get(blockerIdx);
-                if (canBlock(gameData, blocker, attacker)) {
-                    candidates.add(blockerIdx);
-                }
+                if (!canBlock(gameData, blocker, attacker)) continue;
+                // CR 509.1b: an unpaid block cost is a disobeyed restriction, not a free choice.
+                if (blockTaxFor(gameData, blocker, attacker) > blockTaxBudget) continue;
+                candidates.add(blockerIdx);
             }
             if (candidates.isEmpty()) continue;
             // A block is legal only when enough creatures can be assigned together.
@@ -976,6 +989,15 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             }
 
             if (chosen.isEmpty()) continue;
+            if (chosen.size() > maximumBlockers) {
+                chosen = chosen.subList(0, maximumBlockers);
+            }
+            int chosenTax = 0;
+            for (int blockerIdx : chosen) {
+                chosenTax += blockTaxFor(gameData, battlefield.get(blockerIdx), attacker);
+            }
+            if (chosenTax > blockTaxBudget) continue;
+            blockTaxBudget -= chosenTax;
 
             for (int blockerIdx : chosen) {
                 assignments.add(new BlockerAssignment(blockerIdx, attackerIdx));
@@ -983,7 +1005,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
-        removeBlockersMissingGreaterPowerPartner(gameData, battlefield, opponentBattlefield, assignments);
+        removeBlockersWithUnmetPartnerRequirement(gameData, battlefield, opponentBattlefield, assignments);
 
         // CR 509.1b: if only one unique blocker and it can't block alone, remove it.
         Set<Integer> uniqueBlockerIndices = new HashSet<>();
@@ -999,10 +1021,15 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         }
 
         log.info("Random AI: Declaring {} blockers in game {}", assignments.size(), gameId);
-        sendBlockerDeclaration(gameData, new DeclareBlockersRequest(assignments));
+        sendBlockerDeclaration(new DeclareBlockersRequest(assignments));
     }
 
-    private void removeBlockersMissingGreaterPowerPartner(
+    /**
+     * Drops declared blockers whose "can't block unless …" partner requirement the rest of the
+     * declaration fails to satisfy, then drops any block left with too few blockers to be legal.
+     * Repeats until stable, since removing a blocker can invalidate the ones that remain.
+     */
+    private void removeBlockersWithUnmetPartnerRequirement(
             GameData gameData,
             List<Permanent> battlefield,
             List<Permanent> opponentBattlefield,
@@ -1016,19 +1043,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
             Set<Integer> invalidRestrictedBlockers = new HashSet<>();
             for (int blockerIdx : selectedBlockers) {
-                Permanent blocker = battlefield.get(blockerIdx);
-                boolean needsGreaterPowerPartner = blocker.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect.class::isInstance);
-                if (!needsGreaterPowerPartner) {
-                    continue;
-                }
-
-                int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);
-                boolean hasGreaterPowerPartner = selectedBlockers.stream()
-                        .filter(otherIdx -> otherIdx != blockerIdx)
-                        .map(battlefield::get)
-                        .anyMatch(other -> gameQueryService.getEffectivePower(gameData, other) > blockerPower);
-                if (!hasGreaterPowerPartner) {
+                if (hasUnmetBlockPartnerRequirement(gameData, battlefield, selectedBlockers, blockerIdx)) {
                     invalidRestrictedBlockers.add(blockerIdx);
                 }
             }
@@ -1052,6 +1067,80 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             changed |= assignments.removeIf(
                     assignment -> undersizedBlocks.contains(assignment.attackerIndex()));
         } while (changed);
+    }
+
+    /**
+     * CR 509.1b: whether a declared blocker's own "can't block unless …" partner restriction is
+     * disobeyed by the rest of the declaration — Okk needs a co-blocker with strictly greater
+     * power, Orcish Conscripts needs a minimum number of other creatures blocking. Both are
+     * checked only at declaration time, against the blockers declared alongside it.
+     */
+    private boolean hasUnmetBlockPartnerRequirement(GameData gameData, List<Permanent> battlefield,
+                                                    Set<Integer> selectedBlockers, int blockerIdx) {
+        Permanent blocker = battlefield.get(blockerIdx);
+        for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect) {
+                int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);
+                boolean hasGreaterPowerPartner = selectedBlockers.stream()
+                        .filter(otherIdx -> otherIdx != blockerIdx)
+                        .map(battlefield::get)
+                        .anyMatch(other -> gameQueryService.getEffectivePower(gameData, other) > blockerPower);
+                if (!hasGreaterPowerPartner) {
+                    return true;
+                }
+            }
+            if (effect instanceof CantAttackOrBlockUnlessCountAlsoDoesEffect restriction
+                    && selectedBlockers.size() - 1 < restriction.otherCount()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * The most creatures that may be assigned to the given attacker under its own
+     * "can't be blocked by more than N creatures" restriction (Charging Rhino), or
+     * {@link Integer#MAX_VALUE} when it carries none.
+     */
+    private int maxBlockersForAttacker(Permanent attacker) {
+        int maximum = Integer.MAX_VALUE;
+        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CanBeBlockedByAtMostNCreaturesEffect restriction) {
+                maximum = Math.min(maximum, restriction.maxBlockers());
+            }
+        }
+        return maximum;
+    }
+
+    /**
+     * The attacking player's team-wide cap on blockers per creature (Familiar Ground, Yuan Shao,
+     * the Indecisive), or {@link Integer#MAX_VALUE} when nothing on their battlefield imposes one.
+     */
+    private int teamMaxBlockersPerAttacker(List<Permanent> opponentBattlefield) {
+        int maximum = Integer.MAX_VALUE;
+        for (Permanent permanent : opponentBattlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect restriction) {
+                    maximum = Math.min(maximum, restriction.maxBlockers());
+                }
+            }
+        }
+        return maximum;
+    }
+
+    /**
+     * Generic mana the AI would owe to declare this blocker against this attacker (Hipparion —
+     * {1} to block power 3 or greater), summed over every {@link BlockCostEffect} it carries.
+     */
+    private int blockTaxFor(GameData gameData, Permanent blocker, Permanent attacker) {
+        int attackerPower = gameQueryService.getEffectivePower(gameData, attacker);
+        int tax = 0;
+        for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof BlockCostEffect blockCost) {
+                tax += blockCost.blockCost(attackerPower);
+            }
+        }
+        return tax;
     }
 
     /**

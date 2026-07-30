@@ -187,13 +187,21 @@ public class AiGameActions {
         }
     }
 
-    public void handleDeclareBlockers(DeclareBlockersRequest request) {
+    /**
+     * Declares blockers, returning the engine's rejection reason or {@code null} when the
+     * declaration was accepted. A rejection is an AI/engine legality disagreement rather than a
+     * recoverable game event, so the caller both falls back to a legal declaration and surfaces
+     * the reason.
+     */
+    public String handleDeclareBlockers(DeclareBlockersRequest request) {
         GameData gameData = game();
-        if (gameData == null) return;
+        if (gameData == null) return null;
         try {
             gameService.declareBlockers(gameData, aiPlayer, request.blockerAssignments());
+            return null;
         } catch (IllegalArgumentException | IllegalStateException e) {
             log.info("AI: engine rejected declareBlockers in game {}: {}", gameId, e.getMessage());
+            return e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
         }
     }
 

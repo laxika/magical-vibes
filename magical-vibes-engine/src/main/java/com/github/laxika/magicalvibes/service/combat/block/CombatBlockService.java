@@ -1396,7 +1396,7 @@ public class CombatBlockService {
     }
 
     /**
-     * Okk (CR 509.1a): a creature with "can't block unless a creature with greater power also
+     * Okk (CR 509.1b): a creature with "can't block unless a creature with greater power also
      * blocks" may only be declared as a blocker if another declared blocker has strictly greater
      * power. The comparison is checked only at declaration time.
      */

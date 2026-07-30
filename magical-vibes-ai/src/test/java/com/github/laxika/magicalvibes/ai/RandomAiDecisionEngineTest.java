@@ -4,15 +4,19 @@ import com.github.laxika.magicalvibes.cards.b.BackFromTheBrink;
 import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.h.Hipparion;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.o.Okk;
+import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianTribute;
 import com.github.laxika.magicalvibes.cards.s.StormCauldron;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -32,51 +36,59 @@ class RandomAiDecisionEngineTest {
     void doesNotDeclareOkkWithoutGreaterPowerBlocker() {
         GameTestHarness harness = new GameTestHarness();
         GameData gameData = harness.getGameData();
-        Player attackerPlayer = harness.getPlayer1();
-        Player aiPlayer = harness.getPlayer2();
+        Permanent okk = blockScenario(harness, new GrizzlyBears(), new Okk());
 
-        Permanent attacker = harness.addToBattlefieldAndReturn(attackerPlayer, new GrizzlyBears());
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        Permanent okk = harness.addToBattlefieldAndReturn(aiPlayer, new Okk());
-        okk.setSummoningSick(false);
+        declareBlockersAsRandomAi(harness);
 
-        harness.forceActivePlayer(attackerPlayer);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        assertThat(gameData.interaction.isAwaitingInput()).isFalse();
+        assertThat(okk.isBlocking()).isFalse();
+    }
 
-        RandomAiDecisionEngine engine = new RandomAiDecisionEngine(
-                gameData.id,
-                aiPlayer,
-                harness.getGameRegistry(),
-                harness.getGameService(),
-                harness.getGameQueryService(),
-                harness.getBlockLegalityService(),
-                harness.getCombatAttackService(),
-                harness.getGameActionAvailabilityService(),
-                harness.getCastingCostService(),
-                harness.getCastingPermissionService(),
-                harness.getTargetValidationService(),
-                harness.getTargetLegalityService(),
-                new Random() {
-                    @Override
-                    public boolean nextBoolean() {
-                        return true;
-                    }
-                },
-                new FuzzTelemetry());
+    @Test
+    void doesNotDeclareOrcishConscriptsWithoutTwoOtherBlockers() {
+        GameTestHarness harness = new GameTestHarness();
+        GameData gameData = harness.getGameData();
+        Permanent conscripts = blockScenario(harness, new HillGiant(), new OrcishConscripts());
 
-        FuzzLogWatcher watcher = FuzzLogWatcher.install();
-        try {
-            engine.handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
+        declareBlockersAsRandomAi(harness);
 
-            assertThat(watcher.drainFailures()).isEmpty();
-            assertThat(gameData.interaction.isAwaitingInput()).isFalse();
-            assertThat(okk.isBlocking()).isFalse();
-        } finally {
-            watcher.uninstall();
-        }
+        assertThat(gameData.interaction.isAwaitingInput()).isFalse();
+        assertThat(conscripts.isBlocking()).isFalse();
+    }
+
+    @Test
+    void doesNotBlockHighPowerAttackerWithHipparionItCannotPayFor() {
+        GameTestHarness harness = new GameTestHarness();
+        GameData gameData = harness.getGameData();
+        Permanent hipparion = blockScenario(harness, new HillGiant(), new Hipparion());
+
+        declareBlockersAsRandomAi(harness);
+
+        assertThat(gameData.interaction.isAwaitingInput()).isFalse();
+        assertThat(hipparion.isBlocking()).isFalse();
+    }
+
+    @Test
+    void blocksHighPowerAttackerWithHipparionWhenTheBlockCostIsPaid() {
+        GameTestHarness harness = new GameTestHarness();
+        GameData gameData = harness.getGameData();
+        Permanent hipparion = blockScenario(harness, new HillGiant(), new Hipparion());
+        harness.addMana(harness.getPlayer2(), ManaColor.WHITE, 1);
+
+        declareBlockersAsRandomAi(harness);
+
+        assertThat(hipparion.isBlocking()).isTrue();
+        assertThat(gameData.playerManaPools.get(harness.getPlayer2().getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void blocksWithHipparionForFreeBelowItsPowerThreshold() {
+        GameTestHarness harness = new GameTestHarness();
+        Permanent hipparion = blockScenario(harness, new GrizzlyBears(), new Hipparion());
+
+        declareBlockersAsRandomAi(harness);
+
+        assertThat(hipparion.isBlocking()).isTrue();
     }
 
     @Test
@@ -220,6 +232,43 @@ class RandomAiDecisionEngineTest {
             assertThat(gameData.playerGraveyards.get(aiPlayer.getId()))
                     .extracting(Card::getName)
                     .containsExactly("Grizzly Bears", "Grizzly Bears");
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    /**
+     * Sets up a one-attacker combat: {@code attackerCard} attacking for {@link GameTestHarness#getPlayer1()},
+     * {@code blockerCard} untapped for the AI seat. Returns the blocker so the test can assert on it.
+     */
+    private Permanent blockScenario(GameTestHarness harness, Card attackerCard, Card blockerCard) {
+        Permanent attacker = harness.addToBattlefieldAndReturn(harness.getPlayer1(), attackerCard);
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(harness.getPlayer2(), blockerCard);
+        blocker.setSummoningSick(false);
+        return blocker;
+    }
+
+    /**
+     * Opens blocker declaration and lets the Random AI declare, asserting the engine took the
+     * declaration as sent. The AI answers "yes" to every optional decision, so it declares every
+     * block it believes legal; the engine rejecting one is only logged before the AI falls back to
+     * no blockers, so declining to block and being refused a block are indistinguishable on the
+     * board and the log is the only place they differ.
+     */
+    private void declareBlockersAsRandomAi(GameTestHarness harness) {
+        harness.forceActivePlayer(harness.getPlayer1());
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, harness.getPlayer2());
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
         } finally {
             watcher.uninstall();
         }

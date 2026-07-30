@@ -605,7 +605,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         }
 
         log.info("AI: Declaring {} blockers in game {}", assignments.size(), gameId);
-        sendBlockerDeclaration(gameData, new DeclareBlockersRequest(assignments));
+        sendBlockerDeclaration(new DeclareBlockersRequest(assignments));
     }
 
     private int findCheapestKillingBlocker(GameData gameData, List<Permanent> battlefield,

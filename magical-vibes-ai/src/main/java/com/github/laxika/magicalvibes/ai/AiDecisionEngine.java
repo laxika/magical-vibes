@@ -627,29 +627,31 @@ public abstract class AiDecisionEngine {
      * Sends a blocker declaration with automatic fallback to empty blockers
      * if the original declaration fails server-side validation.
      */
-    protected void sendBlockerDeclaration(GameData gameData, DeclareBlockersRequest request) {
+    protected void sendBlockerDeclaration(DeclareBlockersRequest request) {
+        String rejection;
         try {
-            gameActions.handleDeclareBlockers(request);
+            rejection = gameActions.handleDeclareBlockers(request);
         } catch (Exception e) {
             log.warn("AI: Blocker declaration threw in game {}: {}. Falling back to no blockers.", gameId, e.getMessage(), e);
             sendEmptyBlockerFallback();
             return;
         }
 
-        // GameMessageHandler.handleDeclareBlockers swallows IllegalStateException
-        // internally (it sends an error to the connection rather than re-throwing).
-        // If the game is still awaiting blockers after the call, the declaration
-        // was rejected — fall back to empty blockers so the game doesn't get stuck.
-        if (!request.blockerAssignments().isEmpty()
-                && gameData.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class) != null) {
-            log.warn("AI: Blocker declaration rejected in game {} (still awaiting blockers); falling back to no blockers.", gameId);
+        // The engine validates the whole declaration and rejects it as a unit, so a rejection
+        // leaves the game still awaiting blockers — fall back to empty so it doesn't get stuck.
+        if (rejection != null && !request.blockerAssignments().isEmpty()) {
+            log.warn("AI: Blocker declaration rejected in game {}: {}; falling back to no blockers.",
+                    gameId, rejection);
             sendEmptyBlockerFallback();
         }
     }
 
     private void sendEmptyBlockerFallback() {
         try {
-            gameActions.handleDeclareBlockers(new DeclareBlockersRequest(List.of()));
+            String rejection = gameActions.handleDeclareBlockers(new DeclareBlockersRequest(List.of()));
+            if (rejection != null) {
+                log.error("AI: Empty blocker declaration rejected in game {}: {}", gameId, rejection);
+            }
         } catch (Exception e) {
             log.error("AI: Empty blocker declaration also failed in game {}", gameId, e);
         }

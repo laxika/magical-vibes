@@ -470,7 +470,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                 .toList();
 
         log.info("AI (Medium): Declaring {} blockers in game {}", blockerAssignments.size(), gameId);
-        sendBlockerDeclaration(gameData, new DeclareBlockersRequest(blockerAssignments));
+        sendBlockerDeclaration(new DeclareBlockersRequest(blockerAssignments));
     }
 
     @Override

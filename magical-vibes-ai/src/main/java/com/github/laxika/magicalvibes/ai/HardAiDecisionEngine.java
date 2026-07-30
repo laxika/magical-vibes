@@ -2421,7 +2421,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                         .map(a -> new BlockerAssignment(a[0], a[1]))
                         .toList();
                 log.info("AI (Hard): Declaring {} mandatory-only blockers in game {}", blockerAssignments.size(), gameId);
-                sendBlockerDeclaration(gameData, new DeclareBlockersRequest(blockerAssignments));
+                sendBlockerDeclaration(new DeclareBlockersRequest(blockerAssignments));
                 return;
             }
         }
@@ -2449,7 +2449,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                         .map(a -> new BlockerAssignment(a[0], a[1]))
                         .toList();
                 log.info("AI (Hard/MCTS): Declaring {} blockers in game {}", blockerAssignments.size(), gameId);
-                sendBlockerDeclaration(gameData, new DeclareBlockersRequest(blockerAssignments));
+                sendBlockerDeclaration(new DeclareBlockersRequest(blockerAssignments));
                 return;
             }
         } catch (Exception e) {
@@ -2487,7 +2487,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 .toList();
 
         log.info("AI (Hard): Declaring {} blockers (exhaustive search) in game {}", blockerAssignments.size(), gameId);
-        sendBlockerDeclaration(gameData, new DeclareBlockersRequest(blockerAssignments));
+        sendBlockerDeclaration(new DeclareBlockersRequest(blockerAssignments));
     }
 
     /**
