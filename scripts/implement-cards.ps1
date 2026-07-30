@@ -46,13 +46,13 @@ if ($From -gt $To) {
 if (-not $PSBoundParameters.ContainsKey("Model") -or [string]::IsNullOrWhiteSpace($Model)) {
     $Model = switch ($Runner) {
         "grok" { "cursor-grok-4.5-high" }
-        "codex" { "gpt-5.6-sol" }
+        "codex" { "gpt-5.6-luna" }
         default { "claude-opus-5" }
     }
 }
 
 if (-not $PSBoundParameters.ContainsKey("Effort") -or [string]::IsNullOrWhiteSpace($Effort)) {
-    $Effort = if ($Runner -eq "codex") { "medium" } else { "low" }
+    $Effort = if ($Runner -eq "codex") { "low" } else { "low" }
 }
 
 if ($Runner -eq "grok" -and $PSBoundParameters.ContainsKey("Effort")) {
