@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEnchantedCreature
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RelicBindTapEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenDestroyEnchantedAtZeroEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnSpellLifeGainEffect;
@@ -207,6 +208,27 @@ public class MiscTriggerCollectorService {
         ));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers to destroy enchanted permanent",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = RemoveCounterFromSourceThenDestroyEnchantedAtZeroEffect.class,
+            slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    private boolean handleEnchantedPermanentTapRemoveCounter(TriggerMatchContext match,
+            RemoveCounterFromSourceThenDestroyEnchantedAtZeroEffect e, TriggerContext ctx) {
+        // The effect re-derives the enchanted permanent from the source Aura at resolution, so the
+        // trigger only needs to carry the Aura as its source permanent (like the destroy variant).
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s triggered ability",
+                new ArrayList<>(List.of(e)),
+                null,
+                match.permanent().getId()
+        ));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers to remove a counter from itself",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }

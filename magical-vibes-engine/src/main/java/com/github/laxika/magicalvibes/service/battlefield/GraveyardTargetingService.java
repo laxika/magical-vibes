@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFro
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
@@ -185,6 +186,60 @@ public class GraveyardTargetingService {
                     "Choose up to " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "")
                             + promptSuffix);
         }
+    }
+
+    /**
+     * Unblocked-attack-trigger targeting for "Whenever this creature attacks and isn't blocked, you
+     * may exile up to N target [type] cards from defending player's graveyard" (Rysorian Badger).
+     * The cards are chosen from the defending player's graveyard as the trigger goes on the stack
+     * (CR 603.3d); "up to N" allows choosing zero, which covers the "you may". The attacker rides
+     * along as {@code sourcePermanentId} so the "if you do" rider (assigns no combat damage) knows
+     * which creature it applies to. With no matching cards the trigger is still put onto the stack
+     * with no targets and resolves as a no-op.
+     */
+    public void handleUnblockedAttackGraveyardChoiceTargeting(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, UUID sourcePermanentId, UUID defendingPlayerId,
+            GraveyardCardChoosingEffect choosingEffect) {
+        CardPredicate filter = choosingEffect.graveyardChoiceFilter();
+
+        List<Card> matchingCards = new ArrayList<>();
+        List<Card> graveyard = gameData.playerGraveyards.get(defendingPlayerId);
+        if (graveyard != null) {
+            for (Card graveyardCard : graveyard) {
+                if (filter == null
+                        || predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
+                    matchingCards.add(graveyardCard);
+                }
+            }
+        }
+
+        if (matchingCards.isEmpty()) {
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    controllerId,
+                    card.getName() + "'s unblocked-attack trigger",
+                    new ArrayList<>(effects),
+                    defendingPlayerId,
+                    sourcePermanentId);
+            trigger.setNonTargeting(true);
+            gameData.stack.add(trigger);
+            gameLogService.append(gameData, GameLog.cardThen(card,
+                    "'s unblocked-attack ability triggers with no graveyard targets."));
+            log.info("Game {} - {} unblocked-attack graveyard trigger pushed with 0 targets", gameData.id, card.getName());
+            return;
+        }
+
+        int maxTargets = Math.min(choosingEffect.graveyardChoiceMaxTargets(), matchingCards.size());
+        gameData.graveyardTargetOperation.card = card;
+        gameData.graveyardTargetOperation.controllerId = controllerId;
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
+        gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
+                card.getName() + "'s ability — Choose up to " + maxTargets + " target card"
+                        + (maxTargets != 1 ? "s" : "") + " from defending player's graveyard to exile.");
+        gameLogService.append(gameData, GameLog.cardThen(card,
+                "'s unblocked-attack trigger — choose graveyard targets."));
     }
 
     /**

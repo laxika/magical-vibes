@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "5ED", collectorNumber = "97")
+@CardRegistration(set = "HML", collectorNumber = "30a")
+@CardRegistration(set = "HML", collectorNumber = "30b")
 public class LabyrinthMinotaur extends Card {
 
     public LabyrinthMinotaur() {

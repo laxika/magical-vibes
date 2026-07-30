@@ -9,6 +9,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "5ED", collectorNumber = "1")
+@CardRegistration(set = "HML", collectorNumber = "1")
 public class AbbeyGargoyles extends Card {
 
     public AbbeyGargoyles() {

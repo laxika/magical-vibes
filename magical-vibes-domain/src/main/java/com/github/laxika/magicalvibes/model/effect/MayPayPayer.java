@@ -21,5 +21,12 @@ public enum MayPayPayer {
      * controller of the attacked planeswalker, read from the {@code ON_ATTACK} trigger's
      * {@code attackedTargetId} ("defending player may pay {X}", Mtenda Lion).
      */
-    DEFENDING_PLAYER
+    DEFENDING_PLAYER,
+
+    /**
+     * The controller of the permanent the spell or ability targets — read from the stack entry's
+     * {@code targetId} ("that creature's controller may pay {X}", Chain Stasis). Unlike
+     * {@link #ENCHANTED_CONTROLLER}, the {@code targetId} is a permanent, not a player.
+     */
+    TARGET_PERMANENT_CONTROLLER
 }

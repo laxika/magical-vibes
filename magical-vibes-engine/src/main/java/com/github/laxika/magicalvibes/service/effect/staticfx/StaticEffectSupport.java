@@ -116,8 +116,10 @@ public class StaticEffectSupport {
             return isEffectivelyCreature(context.gameData(), context.target(), hasAnimateArtifacts);
         }
         if (scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_OWN_CREATURES
-                || scope == GrantScope.OPPONENT_CREATURES || scope == GrantScope.ALL_CREATURES) {
+                || scope == GrantScope.OPPONENT_CREATURES || scope == GrantScope.ALL_CREATURES
+                || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
             boolean ownCheck = scope == GrantScope.ALL_CREATURES
+                    || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF
                     || (scope == GrantScope.OWN_CREATURES && context.targetOnSameBattlefield())
                     || (scope == GrantScope.ALL_OWN_CREATURES && context.targetOnSameBattlefield())
                     || (scope == GrantScope.OPPONENT_CREATURES && !context.targetOnSameBattlefield());
@@ -270,6 +272,7 @@ public class StaticEffectSupport {
         if (scope == GrantScope.SELF) return true;
         boolean selfCoveringScope = scope == GrantScope.ALL_OWN_CREATURES
                 || scope == GrantScope.ALL_CREATURES
+                || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF
                 || scope == GrantScope.OWN_PERMANENTS;
         return selfCoveringScope && matchesStaticFilter(context.target(), filter);
     }

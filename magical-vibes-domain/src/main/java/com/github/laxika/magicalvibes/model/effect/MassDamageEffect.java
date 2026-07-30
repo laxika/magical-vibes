@@ -5,12 +5,27 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
+/**
+ * Damage to every creature (optionally planeswalkers and players too).
+ *
+ * <p>When {@code perCreatureAmount} is set, {@code amount} is evaluated once per damaged creature
+ * with that creature as the amount's source permanent, so source-relative amounts describe the
+ * creature being damaged — e.g. Baki's Curse ("2 damage to each creature for each Aura attached to
+ * that creature"). Players are never damaged in that mode, since the amount is creature-relative.
+ */
 public record MassDamageEffect(
         DynamicAmount amount,
         boolean damagesPlayers,
         boolean damagesPlaneswalkers,
-        PermanentPredicate filter
+        PermanentPredicate filter,
+        boolean perCreatureAmount
 ) implements BoardWipeEffect {
+
+    /** Canonical single-amount form (the amount is evaluated once, source-relative). */
+    public MassDamageEffect(DynamicAmount amount, boolean damagesPlayers,
+                            boolean damagesPlaneswalkers, PermanentPredicate filter) {
+        this(amount, damagesPlayers, damagesPlaneswalkers, filter, false);
+    }
 
     /** Fixed damage to all creatures only (e.g. Pyroclasm) */
     public MassDamageEffect(int damage) {

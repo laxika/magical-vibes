@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5ED", collectorNumber = "244")
+@CardRegistration(set = "HML", collectorNumber = "76")
 public class IronclawCurse extends Card {
 
     public IronclawCurse() {

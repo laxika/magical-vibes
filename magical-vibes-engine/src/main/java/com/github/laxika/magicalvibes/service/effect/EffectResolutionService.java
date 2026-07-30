@@ -199,13 +199,18 @@ public class EffectResolutionService {
             if (effectToResolve instanceof MayPayTapPermanentsEffect mayPayTap && gameData.resolvedMayAccepted != null) {
                 boolean accepted = gameData.resolvedMayAccepted;
                 gameData.resolvedMayAccepted = null;
-                if (accepted) {
+                if (accepted && mayPayTap.wrapped() != null) {
                     effectToResolve = mayPayTap.wrapped();
                     log.info("Game {} - Player accepted may-tap ability from {} — resolving inner effect",
                             gameData.id, entry.getCard().getName());
-                } else {
-                    log.info("Game {} - Player declined may-tap ability from {} — skipping",
+                } else if (!accepted && mayPayTap.elseEffect() != null) {
+                    // "If you don't, [effect]" — the decline half of a punisher choice.
+                    effectToResolve = mayPayTap.elseEffect();
+                    log.info("Game {} - Player declined may-tap ability from {} — resolving else effect",
                             gameData.id, entry.getCard().getName());
+                } else {
+                    log.info("Game {} - Player {} may-tap ability from {} — nothing to resolve",
+                            gameData.id, accepted ? "accepted" : "declined", entry.getCard().getName());
                     continue;
                 }
             }

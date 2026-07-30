@@ -48,4 +48,9 @@ public enum TurnStep {
     public boolean isBeforeBlockersDeclared() {
         return ordinal() < DECLARE_BLOCKERS.ordinal();
     }
+
+    /** True for steps that occur before the end of combat step (used by "activate only before the end of combat step" timing restrictions). */
+    public boolean isBeforeEndOfCombat() {
+        return ordinal() < END_OF_COMBAT.ordinal();
+    }
 }

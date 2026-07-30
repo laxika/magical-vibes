@@ -58,6 +58,7 @@ public class PermanentRemovalService {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final ExileService exileService;
+    private final UntapLockReleaseService untapLockReleaseService;
 
     public PermanentRemovalService(GraveyardService graveyardService,
                                    BattlefieldEntryService battlefieldEntryService,
@@ -66,7 +67,8 @@ public class PermanentRemovalService {
                                    AuraAttachmentService auraAttachmentService,
                                    GameQueryService gameQueryService,
                                    GameLogService gameLogService,
-                                   ExileService exileService) {
+                                   ExileService exileService,
+                                   UntapLockReleaseService untapLockReleaseService) {
         this.graveyardService = graveyardService;
         this.battlefieldEntryService = battlefieldEntryService;
         this.triggerCollectionService = triggerCollectionService;
@@ -75,6 +77,7 @@ public class PermanentRemovalService {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.exileService = exileService;
+        this.untapLockReleaseService = untapLockReleaseService;
     }
 
     public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
@@ -620,6 +623,7 @@ public class PermanentRemovalService {
         gameData.stolenCreatures.remove(target.getId());
         gameData.expireFloatingEffectsForDepartedSource(target.getId());
         gameData.expireControlEffectsForDepartedPermanent(target.getId());
+        untapLockReleaseService.releaseUntapLocks(gameData, target);
         handleSourceLinkedAnimationCleanup(gameData, target);
         handlePreparedSpellCleanup(gameData, target);
         clearSoulbondPairing(gameData, target);

@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerTakesDamageUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentUnlessPaysManaOrLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
@@ -88,6 +89,7 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerTakesDamageUnlessPaysEffectHandler eachPlayerTakesDamageUnlessPaysEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RevealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler revealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHandler destroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageControllerUnlessDiscardThenTapSourceEffectHandler damageControllerUnlessDiscardThenTapSourceEffectHandler;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MustAttackUnlessControllerPaysManaValueEffectHandler mustAttackUnlessControllerPaysManaValueEffectHandler;
@@ -718,6 +720,31 @@ public class MayPenaltyChoiceHandlerService {
 
         revealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler.afterCardDecision(
                 gameData, ability, effect, targetPlayerId, paid);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Giant Albatross: the damaging creature's controller either pays the life or that creature is
+     * destroyed and can't be regenerated; either way the next queued damaging creature is offered.
+     */
+    public void handleDestroyCreaturesThatDamagedSourceUnlessPaysLifeChoice(GameData gameData, Player player,
+            boolean accepted, PendingMayAbility ability,
+            DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffect effect) {
+        UUID payingPlayerId = ability.controllerId(); // the damaging creature's controller — decision maker
+
+        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, payingPlayerId)
+                && gameData.getLife(payingPlayerId) >= effect.lifeCost();
+        boolean paid = accepted && canPay;
+        if (paid) {
+            gameData.playerLifeTotals.put(payingPlayerId, gameData.getLife(payingPlayerId) - effect.lifeCost());
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " pays " + effect.lifeCost() + " life. (", ability.sourceCard(), ")"));
+            log.info("Game {} - {} pays {} life to save their creature ({})", gameData.id,
+                    player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
+        }
+
+        destroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHandler.afterCreatureDecision(
+                gameData, ability, effect, paid);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfAtEndStepEffect;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "80")
+@CardRegistration(set = "HML", collectorNumber = "25a")
+@CardRegistration(set = "HML", collectorNumber = "25b")
 public class DarkMaze extends Card {
 
     public DarkMaze() {

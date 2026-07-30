@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "5ED", collectorNumber = "277")
+@CardRegistration(set = "HML", collectorNumber = "81")
 public class AnHavvaConstable extends Card {
 
     public AnHavvaConstable() {

@@ -60,6 +60,7 @@ public sealed interface PermanentPredicate permits
         PermanentMaxManaValuePredicate,
         PermanentMinManaValuePredicate,
         PermanentNamedPredicate,
+        PermanentNameInPredicate,
         PermanentNotPredicate,
         PermanentOwnedBySourceControllerPredicate,
         PermanentPowerAtLeastPredicate,

@@ -17,6 +17,7 @@ All paths relative to `cards/`.
 | Pump target + filter | `h/HateWeaver.java` | With PermanentPredicateTargetFilter |
 | Tap to tap target | `i/IcyManipulator.java` | TapPermanentsEffect(TapUntapScope.TARGET) + PermanentPredicateTargetFilter |
 | Tap to lock artifact | `r/RustTick.java` | MayNotUntapDuringUntapStepEffect (STATIC) + TapPermanentsEffect(TapUntapScope.TARGET) + DoesntUntapEffect.targetWhileSourceTapped() + PermanentIsArtifactPredicate |
+| Tap to lock a tapped creature + drain it with -1/-1 counters | `g/GiantOyster.java` | MayNotUntapDuringUntapStepEffect (STATIC) + `{T}` ability TapPermanentsEffect(TapUntapScope.TARGET) + DoesntUntapEffect.targetWhileSourceTapped() with a tapped-creature filter, plus DRAW_TRIGGERED PutCountersOnUntapLockedPermanentsEffect(MINUS_ONE_MINUS_ONE, 1) and STATIC RemoveCountersWhenUntapLockEndsEffect(MINUS_ONE_MINUS_ONE) |
 | Tap to draw | `a/ArcanisTheOmnipotent.java` | `(true, null, DrawCardEffect, false)` |
 | Draw + discard | `m/MerfolkLooter.java` | DrawCardEffect + DiscardEffect(1, CONTROLLER) |
 | Grant keyword to target | `m/MightWeaver.java` | GrantKeywordEffect with color filter |

@@ -28,11 +28,18 @@ public enum ActivationTimingRestriction {
      */
     ONLY_DURING_DECLARE_BLOCKERS_IF_BLOCKED,
     ONLY_DURING_COMBAT,
+    /**
+     * Activate only during a step that precedes the end of combat step (any player's turn).
+     * Dwarven Sea Clan's "Activate only before the end of combat step."
+     */
+    ONLY_BEFORE_END_OF_COMBAT,
     OPPONENT_CONTROLS_FLYING_CREATURE,
     OPPONENT_CONTROLS_MORE_LANDS,
     ONLY_DURING_YOUR_TURN,
     ONLY_DURING_YOUR_UPKEEP,
     ONLY_DURING_ANY_UPKEEP,
+    /** Activate only during an upkeep step of a turn whose active player is not you. Trade Caravan. */
+    ONLY_DURING_OPPONENTS_UPKEEP,
     ONLY_WHILE_ATTACKING,
     /** Activate only if this creature is attacking or blocking. Sawback Manticore. */
     ONLY_WHILE_ATTACKING_OR_BLOCKING,

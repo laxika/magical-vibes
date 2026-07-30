@@ -67,6 +67,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleSacrificeCreatureControllerGainsLifeEqualToToughness(gameData, permanentId, sacrificeGainLife);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreatureThenSearchLibrary sacrificeSearch) {
             battlefieldHandler.handleSacrificeCreatureThenSearchLibrary(gameData, permanentId, sacrificeSearch);
+        } else if (context instanceof PermanentChoiceContext.SacrificeOneOfTwoThenCounterOnOther sacrificeOneOfTwo) {
+            battlefieldHandler.handleSacrificeOneOfTwoThenCounterOnOther(gameData, permanentId, sacrificeOneOfTwo);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreature sacrificeCreature) {
             battlefieldHandler.handleSacrificeCreature(gameData, permanentId, sacrificeCreature);
         } else if (context instanceof PermanentChoiceContext.TormentSacrifice tormentSacrifice) {

@@ -24,9 +24,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -137,6 +140,53 @@ class ExileCardsFromGraveyardEffectHandlerTest {
 
                 verify(exileService).exileCard(gd, player1Id, creature);
                 verify(lifeSupport).applyGainLife(gd, player1Id, 3);
+            }
+
+            @Test
+            @DisplayName("Per-card life gain scales with the number of cards actually exiled, and the "
+                    + "source assigns no combat damage")
+            void gainsLifePerExiledCardAndPreventsCombatDamage() {
+                Card creature = createCard("Grizzly Bears");
+                Card other = createCard("Hill Giant");
+                UUID goneCardId = UUID.randomUUID();
+                gd.playerGraveyards.get(player2Id).add(creature);
+                gd.playerGraveyards.get(player2Id).add(other);
+                UUID attackerId = UUID.randomUUID();
+
+                ExileCardsFromGraveyardEffect effect =
+                        new ExileCardsFromGraveyardEffect(2, 1, true, null, true);
+                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Rysorian Badger"),
+                        player1Id, "Rysorian Badger", List.of(effect), 0, null, attackerId, Map.of(), null,
+                        List.of(creature.getId(), other.getId(), goneCardId), List.of());
+
+                when(gameQueryService.findCardInGraveyardById(gd, creature.getId())).thenReturn(creature);
+                when(gameQueryService.findCardInGraveyardById(gd, other.getId())).thenReturn(other);
+                when(gameQueryService.findCardInGraveyardById(gd, goneCardId)).thenReturn(null);
+
+                exileCardsFromGraveyardHandler.resolve(gd, entry, effect);
+
+                verify(lifeSupport).applyGainLife(gd, player1Id, 2);
+                assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attackerId);
+            }
+
+            @Test
+            @DisplayName("Nothing exiled means no life gain and combat damage is still dealt")
+            void noExileMeansNoLifeGainAndNoCombatDamagePrevention() {
+                UUID goneCardId = UUID.randomUUID();
+                UUID attackerId = UUID.randomUUID();
+
+                ExileCardsFromGraveyardEffect effect =
+                        new ExileCardsFromGraveyardEffect(2, 1, true, null, true);
+                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Rysorian Badger"),
+                        player1Id, "Rysorian Badger", List.of(effect), 0, null, attackerId, Map.of(), null,
+                        List.of(goneCardId), List.of());
+
+                when(gameQueryService.findCardInGraveyardById(gd, goneCardId)).thenReturn(null);
+
+                exileCardsFromGraveyardHandler.resolve(gd, entry, effect);
+
+                verify(lifeSupport, never()).applyGainLife(any(), any(), anyInt());
+                assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
             }
 
             @Test

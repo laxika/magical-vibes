@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "HML", collectorNumber = "56")
 @CardRegistration(set = "6ED", collectorNumber = "155")
 @CardRegistration(set = "5ED", collectorNumber = "193")
 public class SengirAutocrat extends Card {

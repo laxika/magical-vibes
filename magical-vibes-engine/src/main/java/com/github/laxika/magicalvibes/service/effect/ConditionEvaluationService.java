@@ -94,6 +94,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.SourceCanSoulbond;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
+import com.github.laxika.magicalvibes.model.condition.SourceBlockedOrWasBlockedByColorThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
@@ -358,6 +359,11 @@ public class ConditionEvaluationService {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && !source.isTapped();
             }
+            case SourceBlockedOrWasBlockedByColorThisTurn c ->
+                    ctx.sourcePermanentId() != null
+                            && gameData.combatBlockOpponentColorsThisTurn
+                                    .getOrDefault(ctx.sourcePermanentId(), java.util.Set.of())
+                                    .contains(c.color());
             case SourceIsAttacking ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.isAttacking();

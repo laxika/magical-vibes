@@ -80,7 +80,8 @@ generic handlers — do NOT add per-condition handlers:
 - `ConditionalStaticSelfEffectHandler` — `handledEffect()=ConditionalEffect.class`, `selfOnly()=true`.
   Evaluates the condition via `ConditionEvaluationService`, then applies the wrapped effect to the
   source itself via `StaticEffectSupport.applySelfOnlyConditionalStaticEffect` (scope-aware:
-  `SELF`/`ALL_OWN_CREATURES` cover the source, `OWN_CREATURES` means "other creatures").
+  `SELF`/`ALL_OWN_CREATURES`/`ALL_CREATURES_INCLUDING_SELF` cover the source, `OWN_CREATURES` and
+  `ALL_CREATURES` mean "other creatures").
 - `ConditionalStaticEffectHandler` — `handledEffect()=ConditionalEffect.class`, `selfOnly()=false`.
   Evaluates the condition, then delegates to the wrapped effect's own registered handler.
 

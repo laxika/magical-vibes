@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "61")
+@CardRegistration(set = "HML", collectorNumber = "17")
 public class SerraPaladin extends Card {
 
     public SerraPaladin() {

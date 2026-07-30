@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "5ED", collectorNumber = "208")
+@CardRegistration(set = "HML", collectorNumber = "63a")
+@CardRegistration(set = "HML", collectorNumber = "63b")
 public class AmbushParty extends Card {
 
     public AmbushParty() {

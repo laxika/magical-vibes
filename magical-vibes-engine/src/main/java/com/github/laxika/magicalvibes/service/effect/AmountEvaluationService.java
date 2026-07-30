@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerT
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedOrCycledThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardByTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPlayerThisTurn;
+import com.github.laxika.magicalvibes.model.amount.TargetPlayerPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.DuringControllerTurn;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -192,6 +193,9 @@ public class AmountEvaluationService {
                     countCreatureDeathsThisTurn(gameData, c, ctx);
             case LifeLostThisTurn c ->
                     countLifeLostThisTurn(gameData, c, ctx);
+            case TargetPlayerPoisonCounters ignored ->
+                    ctx.targetPermanentId() == null ? 0
+                            : gameData.playerPoisonCounters.getOrDefault(ctx.targetPermanentId(), 0);
             case DamageDealtToTargetPlayerThisTurn ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.damageDealtToPlayersThisTurn.getOrDefault(ctx.targetPermanentId(), 0);

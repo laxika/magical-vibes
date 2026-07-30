@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -43,6 +44,22 @@ class MayPayManaEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
         MayPayManaEffect mayPayEffect = new MayPayManaEffect("{4}", wrapped, "Pay {4}?", MayPayPayer.ENCHANTED_CONTROLLER);
         // controller = aura owner (player1), targetId = enchanted creature's controller (player2)
         StackEntry entry = createEntryWithTarget(card, player1Id, List.of(mayPayEffect), player2Id);
+
+        resolveEffect(gd, entry, mayPayEffect);
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player2Id);
+    }
+
+    @Test
+    @DisplayName("TARGET_PERMANENT_CONTROLLER payer prompts the controller of the targeted permanent")
+    void targetPermanentControllerPayerPromptsThatPermanentsController() {
+        Card card = createCard("Chain Stasis");
+        DrawCardEffect wrapped = new DrawCardEffect(1);
+        MayPayManaEffect mayPayEffect = new MayPayManaEffect("{2}{U}", wrapped, "Pay {2}{U}?", MayPayPayer.TARGET_PERMANENT_CONTROLLER);
+        UUID targetPermanentId = UUID.randomUUID();
+        StackEntry entry = createEntryWithTarget(card, player1Id, List.of(mayPayEffect), targetPermanentId);
+        when(gameQueryService.findPermanentController(gd, targetPermanentId)).thenReturn(player2Id);
 
         resolveEffect(gd, entry, mayPayEffect);
 

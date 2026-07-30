@@ -1605,14 +1605,15 @@ public class AbilityActivationService {
                     exileGraveyardCost.requiredSubtype(), exileGraveyardCardIndex);
         }
 
-        // Pay exile-N-cards-from-graveyard cost by exiling the front N cards (Immortal Coil).
+        // Pay exile-N-cards-from-graveyard cost by exiling the front N matching cards (Immortal Coil,
+        // Drudge Spell's "Exile two creature cards from your graveyard").
         ExileNCardsFromGraveyardCost exileNGraveyardCostToPay = abilityEffects.stream()
                 .filter(ExileNCardsFromGraveyardCost.class::isInstance)
                 .map(ExileNCardsFromGraveyardCost.class::cast)
                 .findFirst()
                 .orElse(null);
         if (exileNGraveyardCostToPay != null) {
-            graveyardService.exileCardsFromGraveyard(gameData, playerId, exileNGraveyardCostToPay.count());
+            payGraveyardExileNCost(gameData, player, exileNGraveyardCostToPay, null);
         }
 
         // Pay remove-counter cost: remove counters respecting counter type
@@ -2253,8 +2254,10 @@ public class AbilityActivationService {
                 .orElse(null);
         if (exileNGraveyardCost != null) {
             List<Card> gy = gameData.playerGraveyards.get(playerId);
-            if (gy == null || gy.size() < exileNGraveyardCost.count()) {
-                throw new IllegalStateException("Not enough cards in graveyard to exile (need "
+            if (matchingGraveyardExileCandidates(gy, exileNGraveyardCost.requiredType(), null).size()
+                    < exileNGraveyardCost.count()) {
+                String typeName = graveyardExileFilterLabel(exileNGraveyardCost.requiredType(), null);
+                throw new IllegalStateException("Not enough " + typeName + "cards in graveyard to exile (need "
                         + exileNGraveyardCost.count() + ")");
             }
         }
@@ -2482,6 +2485,11 @@ public class AbilityActivationService {
                     throw new IllegalStateException("This ability can only be activated during combat");
                 }
             }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_BEFORE_END_OF_COMBAT) {
+                if (!gameData.currentStep.isBeforeEndOfCombat()) {
+                    throw new IllegalStateException("This ability can only be activated before the end of combat step");
+                }
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_DECLARE_ATTACKERS_IF_ATTACKED) {
                 if (gameData.currentStep != TurnStep.DECLARE_ATTACKERS) {
                     throw new IllegalStateException("This ability can only be activated during the declare attackers step");
@@ -2524,6 +2532,11 @@ public class AbilityActivationService {
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_ANY_UPKEEP) {
                 if (gameData.currentStep != TurnStep.UPKEEP) {
                     throw new IllegalStateException("This ability can only be activated during an upkeep step");
+                }
+            }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_OPPONENTS_UPKEEP) {
+                if (gameData.currentStep != TurnStep.UPKEEP || playerId.equals(gameData.activePlayerId)) {
+                    throw new IllegalStateException("This ability can only be activated during an opponent's upkeep");
                 }
             }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.POWER_4_OR_GREATER) {
@@ -2656,6 +2669,11 @@ public class AbilityActivationService {
         if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_ANY_UPKEEP) {
             if (gameData.currentStep != TurnStep.UPKEEP) {
                 throw new IllegalStateException("This ability can only be activated during an upkeep step");
+            }
+        }
+        if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_OPPONENTS_UPKEEP) {
+            if (gameData.currentStep != TurnStep.UPKEEP || playerId.equals(gameData.activePlayerId)) {
+                throw new IllegalStateException("This ability can only be activated during an opponent's upkeep");
             }
         }
         // Graveyard activation gates that need the source card (e.g. Ashen Ghoul's

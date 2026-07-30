@@ -20,6 +20,8 @@ package com.github.laxika.magicalvibes.model.action;
 public sealed interface DelayedAction permits
         DelayedPermanentAction,
         SacrificeAtEndOfCombat,
+        TapAndSkipUntapAtEndOfCombat,
+        DealDamageToPermanentAtEndOfCombat,
         DestroyCombatOpponentsAtEndOfCombat,
         DestroyEquipmentAtEndOfCombat,
         PutMinusOneCounterAtEndOfCombat,

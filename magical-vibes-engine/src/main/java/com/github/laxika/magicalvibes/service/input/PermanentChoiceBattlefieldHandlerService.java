@@ -85,6 +85,35 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler sacrificeCreatureCreateTokensIfSubtypeHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.JuxtaposeSupport juxtaposeSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
+
+    /**
+     * Retribution: the creatures' controller has picked which of the two targets to sacrifice; the
+     * other target gets a -1/-1 counter. The counter is placed even if the sacrifice triggered
+     * something, mirroring the single resolution step the card describes.
+     */
+    public void handleSacrificeOneOfTwoThenCounterOnOther(GameData gameData, UUID permanentId,
+                                                          PermanentChoiceContext.SacrificeOneOfTwoThenCounterOnOther context) {
+        Permanent chosen = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosen == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+
+        UUID otherId = permanentId.equals(context.firstPermanentId())
+                ? context.secondPermanentId()
+                : context.firstPermanentId();
+
+        destructionSupport.sacrificeAndLog(gameData, chosen, context.sacrificingPlayerId());
+
+        Permanent other = gameQueryService.findPermanentById(gameData, otherId);
+        if (other != null) {
+            permanentCounterSupport.placeCounterOnPermanent(gameData,
+                    new StackEntry(context.sourceCard(), context.controllerId()), other,
+                    com.github.laxika.magicalvibes.model.CounterType.MINUS_ONE_MINUS_ONE, 1);
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
 
     /**
      * Valleymaker's mana ability: the activating player has chosen {@code chosenPlayerId} as the

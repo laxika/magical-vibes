@@ -19,7 +19,8 @@ import java.util.Set;
  * the keyword grant. Use {@link #toTargetIf(Keyword, PermanentPredicate)} to build one.
  */
 public record GrantKeywordEffect(Set<Keyword> keywords, GrantScope scope, PermanentPredicate filter,
-                                 GrantDuration duration, PermanentPredicate grantCondition) implements KeywordGrantingEffect {
+                                 GrantDuration duration, PermanentPredicate grantCondition)
+        implements KeywordGrantingEffect, CombatOpponentReferencingEffect {
 
     public GrantKeywordEffect(Keyword keyword, GrantScope scope) {
         this(Set.of(keyword), scope, null, GrantDuration.END_OF_TURN, null);
@@ -52,6 +53,11 @@ public record GrantKeywordEffect(Set<Keyword> keywords, GrantScope scope, Perman
      */
     public static GrantKeywordEffect toTargetIf(Keyword keyword, PermanentPredicate grantCondition) {
         return new GrantKeywordEffect(Set.of(keyword), GrantScope.TARGET, null, GrantDuration.END_OF_TURN, grantCondition);
+    }
+
+    @Override
+    public boolean referencesCombatOpponent() {
+        return scope == GrantScope.TARGET;
     }
 
     @Override

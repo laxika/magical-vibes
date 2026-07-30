@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "5ED", collectorNumber = "116")
+@CardRegistration(set = "HML", collectorNumber = "36a")
+@CardRegistration(set = "HML", collectorNumber = "36b")
 public class ReefPirates extends Card {
 
     public ReefPirates() {

@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.UntapLockReleaseService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
@@ -62,6 +63,7 @@ public class MayMiscHandlerService {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LifeSupport lifeSupport;
     private final CreatureControlService creatureControlService;
+    private final UntapLockReleaseService untapLockReleaseService;
     // @Lazy to break circular dependency:
     // MayMiscHandlerService → TriggerCollectionService → TriggeredAbilityQueueService → PlayerInputService → MayAbilityHandlerService → MayMiscHandlerService
     @Autowired @Lazy
@@ -116,6 +118,8 @@ public class MayMiscHandlerService {
             sourcePermanent.untap();
             // A "for as long as this stays tapped" control effect (Seasinger) ends on untap.
             creatureControlService.onSourceUntapped(gameData, sourcePermanent);
+            // Giant Oyster: the -1/-1 counters its untap lock accrued go away with the lock.
+            untapLockReleaseService.releaseUntapLocks(gameData, sourcePermanent);
             String logEntry = player.getUsername() + " untaps " + sourceCard.getName() + ".";
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " untaps " , sourceCard, "."));
             log.info("Game {} - {} untaps {} (may-not-untap choice)", gameData.id, player.getUsername(), sourceCard.getName());

@@ -66,6 +66,17 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
                 : p -> baseFilter.test(p)
                         && predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext);
 
+        if (e.perCreatureAmount()) {
+            // The amount describes the creature being damaged, so it is evaluated per creature with
+            // that creature standing in as the amount's source permanent (Baki's Curse).
+            damageSupport.damageAllCreaturesOnBattlefield(gameData, entry,
+                    p -> gameQueryService.applyDamageMultiplier(gameData,
+                            amountEvaluationService.evaluate(gameData, e.amount(),
+                                    AmountContext.forStackEntry(entry, p)), entry),
+                    creatureFilter);
+            return;
+        }
+
         damageSupport.damageAllCreaturesOnBattlefield(gameData, entry, damage, creatureFilter);
 
         if (e.damagesPlayers()) {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.*;
-import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 public class RevealTopCardOfLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final LifeSupport lifeSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -28,6 +29,7 @@ public class RevealTopCardOfLibraryEffectHandler implements NormalEffectHandlerB
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
 
+        RevealTopCardOfLibraryEffect revealEffect = (RevealTopCardOfLibraryEffect) effect;
         UUID targetPlayerId = entry.getTargetId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         String playerName = gameData.playerIdToName.get(targetPlayerId);
@@ -38,9 +40,14 @@ public class RevealTopCardOfLibraryEffectHandler implements NormalEffectHandlerB
         } else {
             Card topCard = deck.getFirst();
             gameLogService.append(gameData, GameLog.textCardText(playerName + " reveals " , topCard, " from the top of their library."));
+
+            if (revealEffect.lifeGainIfLand() > 0 && topCard.hasType(CardType.LAND)) {
+                lifeSupport.applyGainLife(gameData, entry.getControllerId(), revealEffect.lifeGainIfLand(),
+                        entry.getCard().getName(), entry.getCard(), entry.getEntryType());
+            }
         }
 
         log.info("Game {} - {} reveals top card of library", gameData.id, playerName);
-    
+
     }
 }

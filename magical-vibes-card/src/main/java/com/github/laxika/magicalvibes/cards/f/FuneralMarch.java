@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedControllerSacrifices
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5ED", collectorNumber = "164")
+@CardRegistration(set = "HML", collectorNumber = "48")
 public class FuneralMarch extends Card {
 
     public FuneralMarch() {

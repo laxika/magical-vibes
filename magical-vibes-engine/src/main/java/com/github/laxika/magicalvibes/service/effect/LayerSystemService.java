@@ -1303,11 +1303,12 @@ public class LayerSystemService {
                     }
                 }
             }
-            case OWN_CREATURES, ALL_OWN_CREATURES, OPPONENT_CREATURES, ALL_CREATURES -> {
+            case OWN_CREATURES, ALL_OWN_CREATURES, OPPONENT_CREATURES, ALL_CREATURES, ALL_CREATURES_INCLUDING_SELF -> {
                 for (PermanentSlot slot : slots) {
-                    if (slot.permanent() == source.permanent()) continue;
+                    if (slot.permanent() == source.permanent() && scope != GrantScope.ALL_CREATURES_INCLUDING_SELF) continue;
                     boolean own = slot.controllerId().equals(source.controllerId());
                     boolean inScope = scope == GrantScope.ALL_CREATURES
+                            || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF
                             || (scope == GrantScope.OPPONENT_CREATURES ? !own : own);
                     if (inScope && isCreatureForL4(slot.permanent(), board.states().get(slot.permanent().getId()))
                             && matchesL4Filter(slot, filter, board)) {

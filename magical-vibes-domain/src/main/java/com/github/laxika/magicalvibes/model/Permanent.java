@@ -255,6 +255,10 @@ public class Permanent {
      *  {@link com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect}.
      *  Consumed by {@code BlockLegalityService}/{@code CombatHelper}; cleared by {@link #resetModifiers()}. */
     private final List<PermanentPredicate> unblockableIfDefenderControlsUntilEndOfTurn = new ArrayList<>();
+    /** Players who may target this permanent this turn as though it didn't have shroud (Autumn
+     *  Willow). Read by the shroud checks in {@code TargetLegalityService}/{@code ValidTargetService};
+     *  cleared by {@link #resetModifiers()}. */
+    private final Set<UUID> shroudIgnoredByPlayersUntilEndOfTurn = new HashSet<>();
     private final Set<UUID> cantBlockIds = new HashSet<>();
     private final Set<UUID> mustBlockIds = new HashSet<>();
     /** If true, this permanent is exiled instead of going to any other zone when it leaves the battlefield (CR 614.6). */
@@ -502,6 +506,7 @@ public class Permanent {
         this.blockRestrictionsUntilEndOfTurn.addAll(source.blockRestrictionsUntilEndOfTurn);
         this.unblockableIfDefenderControlsUntilEndOfTurn.addAll(source.unblockableIfDefenderControlsUntilEndOfTurn);
         this.exileIfLeavesBattlefield = source.exileIfLeavesBattlefield;
+        this.shroudIgnoredByPlayersUntilEndOfTurn.addAll(source.shroudIgnoredByPlayersUntilEndOfTurn);
         this.cantBlockIds.addAll(source.cantBlockIds);
         this.mustBlockIds.addAll(source.mustBlockIds);
         this.untapPreventedByPermanentIds.addAll(source.untapPreventedByPermanentIds);
@@ -635,6 +640,21 @@ public class Permanent {
         this.grantedKeywords.clear();
         this.transientSubtypes.clear();
         this.grantedCardTypes.clear();
+    }
+
+    /**
+     * Lets the given player target this permanent for the rest of the turn as though it didn't have
+     * shroud (Autumn Willow). Other players are unaffected.
+     */
+    public void allowShroudIgnoredBy(UUID playerId) {
+        if (playerId != null) {
+            this.shroudIgnoredByPlayersUntilEndOfTurn.add(playerId);
+        }
+    }
+
+    /** Whether the given player may currently target this permanent as though it had no shroud. */
+    public boolean ignoresShroudFor(UUID playerId) {
+        return playerId != null && shroudIgnoredByPlayersUntilEndOfTurn.contains(playerId);
     }
 
     public void setAttackedThisTurn(boolean attackedThisTurn) {
@@ -920,6 +940,7 @@ public class Permanent {
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.clear();
         this.blockRestrictionsUntilEndOfTurn.clear();
         this.unblockableIfDefenderControlsUntilEndOfTurn.clear();
+        this.shroudIgnoredByPlayersUntilEndOfTurn.clear();
         this.cantBlockIds.clear();
         this.mustBlockIds.clear();
         this.losesAllAbilitiesUntilEndOfTurn = false;

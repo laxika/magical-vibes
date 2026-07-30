@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "318")
+@CardRegistration(set = "HML", collectorNumber = "92")
 public class PrimalOrder extends Card {
 
     public PrimalOrder() {

@@ -111,6 +111,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentHasSameNameAsSourcePredicate` | `()` | permanents with same name as source (works with clones) | `gameData` + `sourceCardId` |
 | `PermanentHasSourceChosenSubtypePredicate` | `()` | permanents carrying the subtype chosen as the **source** entered the battlefield (`Permanent.chosenSubtype`, set by `ChooseBasicLandTypeOnEnterEffect` and friends); matches nothing when the source is gone or made no choice. Supported in `StaticEffectSupport.matchesStaticFilter` (context-aware path), so it works as a static scope filter — Shimmer (`GrantKeywordEffect(PHASING, ALL_LANDS, …)` = "each land of the chosen type has phasing") | `gameData` + `sourceCardId` |
 | `PermanentNamedPredicate` | `(String cardName)` | permanents with the given name (exact `Card.getName()` equality); e.g. "a permanent named Guan Yu, Sainted Warrior" | none |
+| `PermanentNameInPredicate` | `(Set<String> cardNames)` | permanents whose name is one of a fixed roster of names (exact `Card.getName()` equality). For "a name originally printed in the Homelands expansion" (Apocalypse Chime) — the card class owns the name list, so a later reprint of a listed name still matches | none |
 
 ### Source-relative predicates
 

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "5ED", collectorNumber = "70")
+@CardRegistration(set = "HML", collectorNumber = "21")
 public class AetherStorm extends Card {
 
     public AetherStorm() {

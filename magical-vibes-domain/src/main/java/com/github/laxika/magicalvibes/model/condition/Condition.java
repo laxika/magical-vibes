@@ -94,6 +94,7 @@ public sealed interface Condition permits
         SourceCounterThreshold,
         SourceDamagedCreatureDiedThisTurn,
         SourceHasSubtype,
+        SourceBlockedOrWasBlockedByColorThisTurn,
         SourceIsAttacking,
         SourceIsPaired,
         SourceIsTapped,

@@ -20,6 +20,10 @@ import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
@@ -413,6 +417,12 @@ public class CombatAttackService {
                 // Filter out controls-another-permanent conditionals when condition not met (intervening-if, CR 603.4)
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof ControlsAnotherPermanent
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(attacker, playerId)));
+
+                // Filter out defending-player conditionals when condition not met (intervening-if, CR 603.4)
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && isDefendingPlayerCondition(ce.condition())
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(attacker, playerId)));
 
@@ -895,6 +905,20 @@ public class CombatAttackService {
         return indices;
     }
 
+
+    /**
+     * Whether a condition is evaluated against the defending player, and so can be resolved at
+     * attack-trigger time. Recurses through {@link NotCondition} so negated wordings such as
+     * Spectral Bears' "if defending player controls no black nontoken permanents" are covered.
+     */
+    private boolean isDefendingPlayerCondition(Condition condition) {
+        return switch (condition) {
+            case DefendingPlayerControlsPermanent ignored -> true;
+            case DefendingPlayerPoisoned ignored -> true;
+            case NotCondition not -> isDefendingPlayerCondition(not.inner());
+            default -> false;
+        };
+    }
 
     private void validateMaximumAttackRequirements(GameData gameData, UUID playerId,
                                                     List<Integer> attackableIndices,

@@ -80,7 +80,7 @@ public class CombatTriggerService {
                                 autoTargetOpponent = true;
                             }
                             // If subtype doesn't match, skip this effect
-                        } else if (effect instanceof CombatOpponentReferencingEffect) {
+                        } else if (effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent()) {
                             // "blocks or becomes blocked by a [filter] creature, ... that creature"
                             // (e.g. Venom). Auto-target the combat opponent; the effect's handler
                             // re-checks the filter at resolution.
@@ -189,7 +189,7 @@ public class CombatTriggerService {
                                     autoTargetBlocker = true;
                                 }
                                 // If subtype doesn't match, skip this effect for this blocker
-                            } else if (effect instanceof CombatOpponentReferencingEffect) {
+                            } else if (effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent()) {
                                 // Auto-target this blocker; the handler re-checks the filter (Venom).
                                 transformedEffects.add(effect);
                                 autoTargetBlocker = true;

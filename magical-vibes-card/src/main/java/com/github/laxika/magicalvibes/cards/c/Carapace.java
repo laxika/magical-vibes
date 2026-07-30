@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "281")
+@CardRegistration(set = "HML", collectorNumber = "84a")
+@CardRegistration(set = "HML", collectorNumber = "84b")
 public class Carapace extends Card {
 
     public Carapace() {

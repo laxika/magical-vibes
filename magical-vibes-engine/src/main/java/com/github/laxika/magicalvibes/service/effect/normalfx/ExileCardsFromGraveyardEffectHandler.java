@@ -40,6 +40,7 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
         String playerName = gameData.playerIdToName.get(controllerId);
 
         // Exile targeted cards that are still in graveyards
+        int exiledCount = 0;
         if (targetCardIds != null && !targetCardIds.isEmpty()) {
             List<String> exiledNames = new ArrayList<>();
             for (UUID cardId : targetCardIds) {
@@ -49,6 +50,7 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
                     graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);
                 }
             }
+            exiledCount = exiledNames.size();
             if (!exiledNames.isEmpty()) {
                 String logEntry = playerName + " exiles " + String.join(", ", exiledNames) + " from graveyard.";
                 gameLogService.append(gameData, GameLog.text(logEntry));
@@ -56,9 +58,19 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
             }
         }
 
-        // Gain life after exile
-        if (e.lifeGain() > 0) {
-            lifeSupport.applyGainLife(gameData, controllerId, e.lifeGain());
+        // Gain life after exile — flat, or once per card actually exiled this way (Rysorian Badger).
+        int lifeGain = e.lifeGainPerExiledCard() ? e.lifeGain() * exiledCount : e.lifeGain();
+        if (lifeGain > 0) {
+            lifeSupport.applyGainLife(gameData, controllerId, lifeGain);
+        }
+
+        // "If you do, this creature assigns no combat damage this turn" — only when something was
+        // actually exiled, and only for the ability's source permanent (the unblocked attacker).
+        if (e.assignNoCombatDamage() && exiledCount > 0 && entry.getSourcePermanentId() != null) {
+            gameData.creaturesPreventedFromDealingCombatDamage.add(entry.getSourcePermanentId());
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                    " assigns no combat damage this turn."));
+            log.info("Game {} - {} assigns no combat damage this turn", gameData.id, entry.getCard().getName());
         }
     }
 }

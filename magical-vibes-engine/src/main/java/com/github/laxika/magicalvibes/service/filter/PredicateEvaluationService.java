@@ -95,6 +95,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNameInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -725,6 +726,8 @@ public class PredicateEvaluationService {
             }
             case PermanentNamedPredicate namedPredicate ->
                     permanent.getCard().getName().equals(namedPredicate.cardName());
+            case PermanentNameInPredicate nameInPredicate ->
+                    nameInPredicate.cardNames().contains(permanent.getCard().getName());
             case PermanentHasCountersPredicate hasCountersPredicate ->
                     switch (hasCountersPredicate.counterType()) {
                         case PLUS_ONE_PLUS_ONE -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0;

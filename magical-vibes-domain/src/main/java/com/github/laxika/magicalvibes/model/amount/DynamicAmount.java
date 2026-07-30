@@ -65,6 +65,7 @@ public sealed interface DynamicAmount permits
         SourceToughness,
         Sum,
         TargetPlayerLifeTotal,
+        TargetPlayerPoisonCounters,
         TargetManaValue,
         TargetSpellManaValue,
         TargetToughness,

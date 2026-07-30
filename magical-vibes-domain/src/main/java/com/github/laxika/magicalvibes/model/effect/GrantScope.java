@@ -30,7 +30,18 @@ public enum GrantScope {
     OWN_PERMANENTS,
     /** All creatures the targeted player controls (one-shot, e.g. Shields of Velis Vel). */
     TARGET_PLAYERS_CREATURES,
+    /**
+     * All creatures on the battlefield <em>except</em> the source permanent itself.
+     * Use this for "other …" wordings, or when the source can never match the filter.
+     */
     ALL_CREATURES,
+    /**
+     * All creatures on the battlefield <em>including</em> the source permanent itself.
+     * Use this for global anthems whose filter the source also passes
+     * ("Minotaur creatures get +1/+0" on a Minotaur) — if the source loses the
+     * subtype it stops boosting itself as well.
+     */
+    ALL_CREATURES_INCLUDING_SELF,
     ALL_PERMANENTS,
     ENCHANTED_PLAYER_CREATURES,
     OWN_LANDS,

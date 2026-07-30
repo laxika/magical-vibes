@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.TapAndSkipUntapAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -50,6 +52,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -93,6 +96,9 @@ class CombatServiceTest {
 
     @Mock
     private DamageSupport damageSupport;
+
+    @Mock
+    private TapUntapSupport tapUntapSupport;
 
     @InjectMocks
     private CombatService combatService;
@@ -408,6 +414,34 @@ class CombatServiceTest {
             assertThat(gd.combatDamagePendingIndices).isEmpty();
             assertThat(gd.combatDamagePhase1Complete).isFalse();
             assertThat(gd.combatDamagePhase1State).isNull();
+        }
+    }
+
+    @Nested
+    @DisplayName("processEndOfCombatTaps")
+    class ProcessEndOfCombatTapsTest {
+
+        @Test
+        @DisplayName("Taps the scheduled permanent and locks its next untap step")
+        void tapsAndLocksScheduledPermanent() {
+            Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));
+            gd.queueDelayedAction(new TapAndSkipUntapAtEndOfCombat(creature.getId()));
+
+            combatService.processEndOfCombatTaps(gd);
+
+            verify(tapUntapSupport).tapPermanent(gd, creature);
+            assertThat(creature.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gd.getDelayedActions(TapAndSkipUntapAtEndOfCombat.class)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Skips a permanent that already left the battlefield")
+        void skipsMissingPermanent() {
+            gd.queueDelayedAction(new TapAndSkipUntapAtEndOfCombat(UUID.randomUUID()));
+
+            combatService.processEndOfCombatTaps(gd);
+
+            verifyNoInteractions(tapUntapSupport);
         }
     }
 

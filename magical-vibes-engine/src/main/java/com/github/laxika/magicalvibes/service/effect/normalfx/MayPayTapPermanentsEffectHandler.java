@@ -24,7 +24,7 @@ public class MayPayTapPermanentsEffectHandler implements NormalEffectHandlerBean
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),
                 entry.getControllerId(),
-                List.of(e.wrapped()),
+                e.wrapped() == null ? List.of() : List.of(e.wrapped()),
                 entry.getCard().getName() + " - " + e.prompt(),
                 entry.getTargetId(),
                 null,

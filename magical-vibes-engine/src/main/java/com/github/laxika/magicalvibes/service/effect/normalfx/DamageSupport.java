@@ -31,6 +31,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.function.ToIntFunction;
 
 /**
  * Shared damage helpers used by every "normal" Damage effect handler and by other services
@@ -496,10 +497,24 @@ public class DamageSupport {
     }
 
     public void damageFilteredCreatures(GameData gameData, StackEntry entry, int damage, Collection<Permanent> permanents, Predicate<Permanent> filter) {
+        damageFilteredCreatures(gameData, entry, p -> damage, permanents, filter);
+    }
+
+    /**
+     * Variant whose damage is computed per creature, for amounts that describe the creature being
+     * damaged (Baki's Curse: 2 damage per Aura attached to that creature).
+     */
+    public void damageAllCreaturesOnBattlefield(GameData gameData, StackEntry entry, ToIntFunction<Permanent> damage, Predicate<Permanent> filter) {
+        gameData.forEachBattlefield((playerId, battlefield) ->
+                damageFilteredCreatures(gameData, entry, damage, battlefield, filter)
+        );
+    }
+
+    public void damageFilteredCreatures(GameData gameData, StackEntry entry, ToIntFunction<Permanent> damage, Collection<Permanent> permanents, Predicate<Permanent> filter) {
         for (Permanent p : permanents) {
             if (!filter.test(p)) continue;
             if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromDamageSource(gameData, p, entry.getCard())) continue;
-            dealCreatureDamage(gameData, entry, p, damage);
+            dealCreatureDamage(gameData, entry, p, damage.applyAsInt(p));
         }
     }
 

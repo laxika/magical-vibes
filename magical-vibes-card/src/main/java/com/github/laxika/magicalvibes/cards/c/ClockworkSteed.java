@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "357")
+@CardRegistration(set = "HML", collectorNumber = "103")
 public class ClockworkSteed extends Card {
 
     public ClockworkSteed() {

@@ -778,8 +778,9 @@ public class ValidTargetService {
      * Returns true if the permanent is blocked from being targeted by the given controller.
      */
     private boolean isBlockedByHexproofOrGrantedEffect(GameData gameData, Permanent perm, UUID controllerId) {
-        // Shroud
-        if (gameQueryService.hasKeyword(gameData, perm, Keyword.SHROUD)) {
+        // Shroud (Autumn Willow can hand out a per-player exemption for the turn)
+        if (gameQueryService.hasKeyword(gameData, perm, Keyword.SHROUD)
+                && !perm.ignoresShroudFor(controllerId)) {
             return true;
         }
 

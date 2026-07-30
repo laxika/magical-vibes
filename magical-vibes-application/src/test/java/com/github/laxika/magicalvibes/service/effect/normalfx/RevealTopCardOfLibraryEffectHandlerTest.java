@@ -45,6 +45,8 @@ class RevealTopCardOfLibraryEffectHandlerTest {
     private BattlefieldEntryService battlefieldEntryService;
     @Mock
     private ExileService exileService;
+    @Mock
+    private LifeSupport lifeSupport;
     private LibraryRevealSupport libraryRevealSupport;
     private GameData gd;
     private UUID player1Id;
@@ -75,7 +77,7 @@ class RevealTopCardOfLibraryEffectHandlerTest {
 
         libraryRevealSupport = new LibraryRevealSupport(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
-        revealTopCardOfLibraryEffectHandler = new RevealTopCardOfLibraryEffectHandler(gameLogService);
+        revealTopCardOfLibraryEffectHandler = new RevealTopCardOfLibraryEffectHandler(gameLogService, lifeSupport);
 
     }
 
@@ -134,5 +136,37 @@ class RevealTopCardOfLibraryEffectHandlerTest {
 
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("library is empty")));
+            }
+
+            @Test
+            @DisplayName("Gains life when the revealed card is a land and lifeGainIfLand is set")
+            void gainsLifeOnRevealedLand() {
+                Card topCard = createCard("Forest", CardType.LAND);
+                gd.playerDecks.get(player2Id).add(topCard);
+
+                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect(1);
+                Card source = createCard("Prophecy", CardType.SORCERY);
+                StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, source,
+                        player1Id, "Prophecy", List.of(effect), 0,
+                        player2Id, null);
+
+                revealTopCardOfLibraryEffectHandler.resolve(gd, entry, effect);
+
+                verify(lifeSupport).applyGainLife(gd, player1Id, 1, "Prophecy", source, StackEntryType.SORCERY_SPELL);
+            }
+
+            @Test
+            @DisplayName("No life gain when the revealed card is not a land")
+            void noLifeGainOnNonLand() {
+                gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears", CardType.CREATURE));
+
+                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect(1);
+                StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Prophecy", CardType.SORCERY),
+                        player1Id, "Prophecy", List.of(effect), 0,
+                        player2Id, null);
+
+                revealTopCardOfLibraryEffectHandler.resolve(gd, entry, effect);
+
+                verifyNoInteractions(lifeSupport);
             }
 }

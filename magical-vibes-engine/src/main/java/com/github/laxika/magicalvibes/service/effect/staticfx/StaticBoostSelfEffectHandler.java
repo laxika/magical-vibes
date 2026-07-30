@@ -27,7 +27,8 @@ public class StaticBoostSelfEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (StaticBoostEffect) effect;
-        if ((boost.scope() == GrantScope.SELF || boost.scope() == GrantScope.ALL_OWN_CREATURES)
+        if ((boost.scope() == GrantScope.SELF || boost.scope() == GrantScope.ALL_OWN_CREATURES
+                || boost.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF)
                 && support.matchesStaticFilter(context.target(), boost.filter())) {
             accumulator.addPower(boost.powerBoost());
             accumulator.addToughness(boost.toughnessBoost());

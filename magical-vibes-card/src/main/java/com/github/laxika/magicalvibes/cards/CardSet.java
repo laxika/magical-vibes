@@ -37,6 +37,7 @@ public enum CardSet {
     SET_INR("INR"),
     SET_ICE("ICE"),
     SET_MIR("MIR"),
+    SET_HML("HML"),
     SET_ALA("ALA"),
     SET_CON("CON"),
     SET_AKH("AKH"),

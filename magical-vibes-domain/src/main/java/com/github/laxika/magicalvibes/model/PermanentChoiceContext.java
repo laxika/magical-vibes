@@ -59,6 +59,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record SacrificeCreatureThenSearchLibrary(UUID sacrificingPlayerId) implements PermanentChoiceContext {}
 
+    /** Retribution: {@code sacrificingPlayerId} picks which of the two targeted creatures they
+     *  sacrifice; the other one gets a -1/-1 counter from {@code sourceCard}. */
+    record SacrificeOneOfTwoThenCounterOnOther(UUID sacrificingPlayerId, Card sourceCard, UUID controllerId,
+                                               UUID firstPermanentId, UUID secondPermanentId) implements PermanentChoiceContext {}
+
     record SacrificeCreatureOpponentsLoseLife(UUID sacrificingPlayerId, String sourceCardName) implements PermanentChoiceContext {}
 
     /**

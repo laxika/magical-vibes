@@ -437,6 +437,8 @@ public class PotentialManaService {
             case ONLY_DURING_YOUR_UPKEEP -> playerId.equals(gameData.activePlayerId)
                     && gameData.currentStep == TurnStep.UPKEEP;
             case ONLY_DURING_ANY_UPKEEP -> gameData.currentStep == TurnStep.UPKEEP;
+            case ONLY_DURING_OPPONENTS_UPKEEP -> gameData.currentStep == TurnStep.UPKEEP
+                    && !playerId.equals(gameData.activePlayerId);
             case ONLY_WHILE_ATTACKING -> permanent != null && permanent.isAttacking();
             case ONLY_WHILE_ATTACKING_OR_BLOCKING -> permanent != null
                     && (permanent.isAttacking() || permanent.isBlocking());
@@ -447,6 +449,7 @@ public class PotentialManaService {
             case BEFORE_BLOCKERS_DECLARED -> gameData.currentStep.isBeforeBlockersDeclared()
                     && gameData.combatPhasesThisTurn <= 1;
             case ONLY_DURING_COMBAT -> gameData.currentStep.isCombatPhase();
+            case ONLY_BEFORE_END_OF_COMBAT -> gameData.currentStep.isBeforeEndOfCombat();
             case ONLY_DURING_DECLARE_ATTACKERS_IF_ATTACKED -> gameData.currentStep == TurnStep.DECLARE_ATTACKERS
                     && gameQueryService.isPlayerBeingAttacked(gameData, playerId);
             case ONLY_DURING_DECLARE_BLOCKERS -> gameData.currentStep == TurnStep.DECLARE_BLOCKERS;

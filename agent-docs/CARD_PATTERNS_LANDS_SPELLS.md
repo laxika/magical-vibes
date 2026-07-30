@@ -115,6 +115,7 @@ on what the mana may pay for.
 | Counter (filtered by subtype) + exile | `f/FaerieTrickery.java` | StackEntryPredicateTargetFilter + StackEntryNotPredicate(StackEntrySubtypeInPredicate(FAERIE)) + CounterSpellEffect(CounteredSpellDestination.EXILE) — counter target non-Faerie spell, exile it instead |
 | Counter + bonus | `d/Discombobulate.java` | Counter + ReorderTopCardsOfLibraryEffect |
 | Counter + bounce | `l/LostInTheMist.java` | CounterSpellEffect + ReturnToHandEffect.target() — targets both a spell and a permanent. Uses `targetId` (spell, Zone.STACK) + `targetIds` (permanent). Multi-zone fizzle: only fizzles if ALL targets become illegal |
+| Two opponent creatures: they sacrifice one, other gets -1/-1 | `r/Retribution.java` | Two `target(TargetFilters.creatureAnOpponentControls())` groups (the engine is 2-player, so both are the same opponent) + SPELL `SacrificeOneOfTwoTargetCreaturesThenCounterOnOtherEffect()` bound to the first group |
 | Counter (filtered) + draw | `b/BoneToAsh.java` | CounterSpellEffect + DrawCardEffect + creature-spell filter via target() chain |
 | Counter (filtered) + life loss | `p/PsychicBarrier.java` | TargetSpellControllerLosesLifeEffect(1) + CounterSpellEffect + creature-spell filter. Life loss placed before counter so target is still on stack |
 | Counter-unless-pay + discard | `f/FrightfulDelusion.java` | TargetSpellControllerDiscardsEffect(1) + CounterUnlessPaysEffect(1). Discard placed before counter so target is still on stack |

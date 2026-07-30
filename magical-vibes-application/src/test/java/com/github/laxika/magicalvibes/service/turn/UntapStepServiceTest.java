@@ -57,11 +57,15 @@ class UntapStepServiceTest {
     @Mock
     private PermanentRemovalService permanentRemovalService;
 
+    @Mock
+    private PhasingService phasingService;
+
     // Real support so untapPermanent actually untaps; its trigger service is an inert mock.
     @Spy
     private TapUntapSupport tapUntapSupport =
             new TapUntapSupport(org.mockito.Mockito.mock(TriggerCollectionService.class),
-                    org.mockito.Mockito.mock(CreatureControlService.class));
+                    org.mockito.Mockito.mock(CreatureControlService.class),
+                    org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battlefield.UntapLockReleaseService.class));
 
     @InjectMocks
     private UntapStepService sut;

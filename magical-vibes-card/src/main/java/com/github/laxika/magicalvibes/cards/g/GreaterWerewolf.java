@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnCombatOpponentAtEndOfCombatEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "166")
+@CardRegistration(set = "HML", collectorNumber = "51")
 public class GreaterWerewolf extends Card {
 
     public GreaterWerewolf() {

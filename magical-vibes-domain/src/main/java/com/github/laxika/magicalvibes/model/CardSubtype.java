@@ -34,6 +34,7 @@ public enum CardSubtype {
     SIEGE("Siege"),
     DRUID("Druid"),
     DRYAD("Dryad"),
+    DWARF("Dwarf"),
     RANGER("Ranger"),
     SPIDER("Spider"),
     BEAST("Beast"),

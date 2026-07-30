@@ -1019,7 +1019,8 @@ public class TargetLegalityService {
     }
 
     private String untargetableReason(GameData gameData, Permanent target, UUID sourcePlayerId) {
-        if (gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)) {
+        if (gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)
+                && !target.ignoresShroudFor(sourcePlayerId)) {
             return target.getCard().getName() + " has shroud and can't be targeted";
         }
         UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());

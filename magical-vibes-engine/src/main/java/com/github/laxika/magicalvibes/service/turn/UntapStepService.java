@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticOrbEffect;
 import com.github.laxika.magicalvibes.model.effect.StorageMatrixEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -414,7 +415,10 @@ public class UntapStepService {
     private boolean matchingStaticPreventsUntap(GameData gameData, Permanent permanent) {
         return gameData.anyPermanentMatches(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof MatchingPermanentsDoesntUntapEffect lock
-                        && predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, lock.filter())));
+                        // Source-relative filters (An-Zerrin Ruins' chosen creature type) need the
+                        // locking permanent as the filter's source, not just the game state.
+                        && predicateEvaluationService.matchesPermanentPredicate(permanent, lock.filter(),
+                                FilterContext.of(gameData).withSourceCardId(source.getCard().getId()))));
     }
 
     List<UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect> collectUntapOnEachOtherPlayersStepEffects(

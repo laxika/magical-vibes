@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDamaged
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
@@ -18,6 +19,7 @@ import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtEndOfC
 import com.github.laxika.magicalvibes.model.action.RemoveCounterFromSourceAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.PutMinusOneCounterAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.TapAndSkipUntapAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -74,8 +76,11 @@ public class TurnProgressionService {
                     || gameData.hasDelayedAction(RemoveCounterFromSourceAtEndOfCombat.class)
                     || gameData.hasDelayedAction(GainControlOfPermanentAtEndOfCombat.class)
                     || gameData.hasDelayedAction(ExileAndReturnTransformedAtEndOfCombat.class)
-                    || gameData.hasDelayedAction(DestroyCombatOpponentsAtEndOfCombat.class))) {
+                    || gameData.hasDelayedAction(DealDamageToPermanentAtEndOfCombat.class)
+                    || gameData.hasDelayedAction(DestroyCombatOpponentsAtEndOfCombat.class)
+                    || gameData.hasDelayedAction(TapAndSkipUntapAtEndOfCombat.class))) {
             combatService.processEndOfCombatSacrifices(gameData);
+            combatService.processEndOfCombatTaps(gameData);
             combatService.processEndOfCombatExiles(gameData);
             combatService.processEndOfCombatEquipmentDestruction(gameData);
             combatService.processEndOfCombatDestructions(gameData);
@@ -84,6 +89,7 @@ public class TurnProgressionService {
             combatService.processEndOfCombatSourceCounters(gameData);
             combatService.processEndOfCombatOpponentCounters(gameData);
             combatService.processEndOfCombatCounterRemovals(gameData);
+            combatService.processEndOfCombatDamage(gameData);
             combatService.processEndOfCombatControlGains(gameData);
             combatService.processEndOfCombatExileAndReturnTransformed(gameData);
             gameData.priorityPassedBy.clear();
@@ -286,6 +292,7 @@ public class TurnProgressionService {
         gameData.combatDamageToPlayerControllerSubtypesThisTurn.clear();
         gameData.controllersDealtCombatDamageWithChangelingThisTurn.clear();
         gameData.combatBlockOpponentSubtypesThisTurn.clear();
+        gameData.combatBlockOpponentColorsThisTurn.clear();
         gameData.creaturesInCombatWithChangelingThisTurn.clear();
         gameData.combatBlockOpponentIdsThisTurn.clear();
         gameData.playersDealtDamageThisTurn.clear();

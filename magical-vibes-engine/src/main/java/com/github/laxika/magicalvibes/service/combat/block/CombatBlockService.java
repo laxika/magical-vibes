@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfC
 import com.github.laxika.magicalvibes.model.effect.DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockPerEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -59,6 +60,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.combat.CombatHelper;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
@@ -88,6 +90,7 @@ public class CombatBlockService {
     private final CombatAttackService combatAttackService;
     private final CombatTriggerService combatTriggerService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final GraveyardTargetingService graveyardTargetingService;
 
     /**
      * Returns the battlefield indices of creatures the given player can legally declare as blockers.
@@ -414,7 +417,7 @@ public class CombatBlockService {
                                 || (e instanceof SkipNextUntapEffect s && s.scope() == TapUntapScope.TARGET)
                                 || e instanceof DealDamageToTargetCreatureEffect
                                 || e instanceof DestroyCombatOpponentAtEndOfCombatEffect
-                                || e instanceof CombatOpponentReferencingEffect
+                                || (e instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent())
                                 || e instanceof PutCounterOnCombatOpponentAtEndOfCombatEffect
                                 || e instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect
                                 || (e instanceof GrantKeywordEffect gk && gk.scope() == GrantScope.TARGET));
@@ -848,7 +851,19 @@ public class CombatBlockService {
                 continue;
             }
             List<CardEffect> effects = attacker.getCard().getEffects(EffectSlot.ON_ATTACKS_UNBLOCKED);
-            if (!effects.isEmpty()) {
+            GraveyardCardChoosingEffect graveyardChoice = effects.stream()
+                    .filter(GraveyardCardChoosingEffect.class::isInstance)
+                    .map(GraveyardCardChoosingEffect.class::cast)
+                    .findFirst()
+                    .orElse(null);
+            if (graveyardChoice != null) {
+                // "you may exile up to two target creature cards from defending player's graveyard"
+                // (Rysorian Badger): the targets are chosen as the trigger goes on the stack, so the
+                // service owns pushing the entry (and its own logging).
+                graveyardTargetingService.handleUnblockedAttackGraveyardChoiceTargeting(gameData, activeId,
+                        attacker.getCard(), effects, attacker.getId(), defenderId, graveyardChoice);
+                pushed++;
+            } else if (!effects.isEmpty()) {
                 StackEntry trigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         attacker.getCard(),
@@ -1473,6 +1488,9 @@ public class CombatBlockService {
         subtypes.addAll(opponent.getCard().getSubtypes());
         subtypes.addAll(opponent.getGrantedSubtypes());
         subtypes.addAll(opponent.getTransientSubtypes());
+        gameData.combatBlockOpponentColorsThisTurn
+                .computeIfAbsent(creature.getId(), k -> ConcurrentHashMap.newKeySet())
+                .addAll(gameQueryService.getEffectiveColors(gameData, opponent));
         gameData.combatBlockOpponentIdsThisTurn
                 .computeIfAbsent(creature.getId(), k -> ConcurrentHashMap.newKeySet())
                 .add(opponent.getId());

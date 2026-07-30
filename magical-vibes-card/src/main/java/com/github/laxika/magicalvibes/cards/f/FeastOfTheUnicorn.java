@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "6ED", collectorNumber = "130")
+@CardRegistration(set = "HML", collectorNumber = "47a")
+@CardRegistration(set = "HML", collectorNumber = "47b")
 public class FeastOfTheUnicorn extends Card {
 
     public FeastOfTheUnicorn() {

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
+@CardRegistration(set = "HML", collectorNumber = "59a")
+@CardRegistration(set = "HML", collectorNumber = "59b")
 @CardRegistration(set = "SHM", collectorNumber = "80")
 @CardRegistration(set = "5ED", collectorNumber = "199")
 public class Torture extends Card {

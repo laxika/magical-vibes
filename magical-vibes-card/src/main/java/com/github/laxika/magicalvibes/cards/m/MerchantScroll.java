@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "91")
+@CardRegistration(set = "HML", collectorNumber = "33")
 public class MerchantScroll extends Card {
 
     public MerchantScroll() {

@@ -255,6 +255,12 @@ public class GameData {
      * pay-or-discard prompt after the one currently being decided. Cleared when the queue drains.
      */
     public final List<UUID> revealHandDiscardUnlessPaysRemaining = new ArrayList<>();
+    /**
+     * DestroyCreaturesThatDamagedSourceUnlessControllerPaysLife: ids of the damaging creatures still
+     * to be offered the pay-or-destroy prompt after the one currently being decided. Cleared when the
+     * queue drains.
+     */
+    public final List<UUID> destroyDamagersUnlessPaysRemaining = new ArrayList<>();
     public final GraveyardTargetOperationState graveyardTargetOperation = new GraveyardTargetOperationState();
     public final CloneOperationState cloneOperation = new CloneOperationState();
     public StackEntry pendingEffectResolutionEntry;
@@ -751,6 +757,12 @@ public class GameData {
      *  blocked or was blocked by had at the moment of the block (recorded at declare-blockers time). Used by
      *  "target creature that blocked or was blocked by a [subtype] this turn" spells (Time to Reflect). */
     public final Map<UUID, Set<CardSubtype>> combatBlockOpponentSubtypesThisTurn = new ConcurrentHashMap<>();
+
+    /** Tracks, per creature that participated in a block this turn, the union of colors the creatures it
+     *  blocked or was blocked by had at the moment of the block (recorded at declare-blockers time). Used by
+     *  "activate only if this creature blocked or was blocked by a [color] creature this turn" abilities
+     *  (Sea Troll). */
+    public final Map<UUID, Set<CardColor>> combatBlockOpponentColorsThisTurn = new ConcurrentHashMap<>();
 
     /** Tracks creatures that blocked or were blocked by a Changeling creature this turn (which counts as
      *  every creature subtype). Complements {@link #combatBlockOpponentSubtypesThisTurn}. */
@@ -2067,6 +2079,8 @@ public class GameData {
         copy.controllersDealtCombatDamageWithChangelingThisTurn.addAll(this.controllersDealtCombatDamageWithChangelingThisTurn);
         this.combatBlockOpponentSubtypesThisTurn.forEach((k, v) ->
                 copy.combatBlockOpponentSubtypesThisTurn.put(k, new HashSet<>(v)));
+        this.combatBlockOpponentColorsThisTurn.forEach((k, v) ->
+                copy.combatBlockOpponentColorsThisTurn.put(k, new HashSet<>(v)));
         copy.creaturesInCombatWithChangelingThisTurn.addAll(this.creaturesInCombatWithChangelingThisTurn);
         this.combatBlockOpponentIdsThisTurn.forEach((k, v) ->
                 copy.combatBlockOpponentIdsThisTurn.put(k, new HashSet<>(v)));
@@ -2140,6 +2154,7 @@ public class GameData {
         copy.forcedCostOrElseSourceControllerId = this.forcedCostOrElseSourceControllerId;
         copy.eachPlayerDamageUnlessPaysRemaining.addAll(this.eachPlayerDamageUnlessPaysRemaining);
         copy.revealHandDiscardUnlessPaysRemaining.addAll(this.revealHandDiscardUnlessPaysRemaining);
+        copy.destroyDamagersUnlessPaysRemaining.addAll(this.destroyDamagersUnlessPaysRemaining);
 
         // --- Unified delayed-action queue (immutable records, shallow copy — shared Card refs, as the
         //     per-mechanic fields it replaced were copied) ---

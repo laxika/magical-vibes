@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "HML", collectorNumber = "10a")
 @CardRegistration(set = "6ED", collectorNumber = "31")
 @CardRegistration(set = "5ED", collectorNumber = "46")
 public class MesaFalcon extends Card {

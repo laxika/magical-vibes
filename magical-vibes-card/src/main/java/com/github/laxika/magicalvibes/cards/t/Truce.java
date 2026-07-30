@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDrawUpToNGainLifePerCardBelowEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "65")
+@CardRegistration(set = "HML", collectorNumber = "20")
 public class Truce extends Card {
 
     public Truce() {

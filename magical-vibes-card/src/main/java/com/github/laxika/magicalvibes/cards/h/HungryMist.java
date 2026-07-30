@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "302")
+@CardRegistration(set = "HML", collectorNumber = "88a")
+@CardRegistration(set = "HML", collectorNumber = "88b")
 public class HungryMist extends Card {
 
     public HungryMist() {

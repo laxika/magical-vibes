@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerUntapRemoveFromCombat;
@@ -12,6 +13,7 @@ import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtEndOfC
 import com.github.laxika.magicalvibes.model.action.PutMinusOneCounterAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.RemoveCounterFromSourceAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.TapAndSkipUntapAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -39,6 +41,8 @@ import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
+import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -79,6 +83,8 @@ public class CombatService {
     private final PermanentCounterSupport permanentCounterSupport;
     private final PermanentControlSupport permanentControlSupport;
     private final DamageSupport damageSupport;
+    private final StateBasedActionService stateBasedActionService;
+    private final TapUntapSupport tapUntapSupport;
 
     /** Layer-2 control effect wrapping each end-of-combat control gain (drives layer classification). */
     private static final GainControlOfTargetEffect CONTROL_OPPONENT_EFFECT =
@@ -206,6 +212,28 @@ public class CombatService {
             }
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Taps every creature scheduled by Joven's Ferrets and increments its skip-untap count, so it
+     * misses its controller's next untap step. Creatures that already left the battlefield are
+     * skipped; an already-tapped creature still picks up the untap lock.
+     */
+    public void processEndOfCombatTaps(GameData gameData) {
+        List<TapAndSkipUntapAtEndOfCombat> actions =
+                gameData.drainDelayedActions(TapAndSkipUntapAtEndOfCombat.class);
+        for (TapAndSkipUntapAtEndOfCombat action : actions) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
+            if (perm == null) {
+                continue;
+            }
+            tapUntapSupport.tapPermanent(gameData, perm);
+            perm.setSkipUntapCount(perm.getSkipUntapCount() + 1);
+            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                    " is tapped and doesn't untap during its controller's next untap step."));
+            log.info("Game {} - {} tapped and untap-locked at end of combat", gameData.id,
+                    perm.getCard().getName());
+        }
     }
 
     /**
@@ -371,6 +399,29 @@ public class CombatService {
                 "{4}",
                 List.of(REMOVE_PARALYZATION_COUNTER_EFFECT),
                 "{4}: Remove a paralyzation counter from this creature."));
+    }
+
+    /**
+     * Deals the scheduled damage to all permanents marked for end-of-combat damage (Dwarven Sea
+     * Clan's "This creature deals 2 damage to that creature at end of combat"). The source card is
+     * carried on the action, so the damage is still dealt with last-known information when the
+     * source already left the battlefield. Lethal damage is cleaned up by the caller's state-based
+     * action check.
+     */
+    public void processEndOfCombatDamage(GameData gameData) {
+        List<DealDamageToPermanentAtEndOfCombat> toDamage =
+                gameData.drainDelayedActions(DealDamageToPermanentAtEndOfCombat.class);
+        for (DealDamageToPermanentAtEndOfCombat action : toDamage) {
+            Permanent target = gameQueryService.findPermanentById(gameData, action.permanentId());
+            if (target == null || action.damage() <= 0 || action.sourceCard() == null) {
+                continue;
+            }
+            StackEntry damageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, action.sourceCard(),
+                    action.controllerId(), action.sourceCard().getName(), List.<CardEffect>of(),
+                    action.permanentId(), action.sourcePermanentId());
+            damageSupport.resolveCreatureTargetDamage(gameData, damageEntry, action.damage());
+        }
+        stateBasedActionService.performStateBasedActions(gameData);
     }
 
     /**

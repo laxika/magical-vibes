@@ -10,4 +10,14 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>Descriptive only: membership is a fact about the effect, never a score.
  */
 public interface CombatOpponentReferencingEffect extends CardEffect {
+
+    /**
+     * Whether this instance actually acts on the combat opponent. Effects whose scope decides
+     * where they apply (e.g. {@link GrantKeywordEffect}, which only references the opponent with
+     * {@link GrantScope#TARGET}) override this so the other scopes keep resolving against the
+     * source/its controller instead of being auto-targeted.
+     */
+    default boolean referencesCombatOpponent() {
+        return true;
+    }
 }

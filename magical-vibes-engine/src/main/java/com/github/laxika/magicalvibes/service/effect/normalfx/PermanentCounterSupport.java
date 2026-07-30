@@ -229,6 +229,7 @@ public class PermanentCounterSupport {
                 yield "+0/+1";
             }
             case CARRION -> { target.setCounterCount(CounterType.CARRION, target.getCounterCount(CounterType.CARRION) + count); yield "carrion"; }
+            case CURRENCY -> { target.setCounterCount(CounterType.CURRENCY, target.getCounterCount(CounterType.CURRENCY) + count); yield "currency"; }
             case DOOM -> { target.setCounterCount(CounterType.DOOM, target.getCounterCount(CounterType.DOOM) + count); yield "doom"; }
             case CORPSE -> {
                 if (count <= 0) { yield null; }
@@ -248,6 +249,7 @@ public class PermanentCounterSupport {
             case BRICK -> { target.setCounterCount(CounterType.BRICK, target.getCounterCount(CounterType.BRICK) + count); yield "brick"; }
             case EYEBALL -> { target.setCounterCount(CounterType.EYEBALL, target.getCounterCount(CounterType.EYEBALL) + count); yield "eyeball"; }
             case GROWTH -> { target.setCounterCount(CounterType.GROWTH, target.getCounterCount(CounterType.GROWTH) + count); yield "growth"; }
+            case POLYP -> { target.setCounterCount(CounterType.POLYP, target.getCounterCount(CounterType.POLYP) + count); yield "polyp"; }
             case PAGE -> { target.setCounterCount(CounterType.PAGE, target.getCounterCount(CounterType.PAGE) + count); yield "page"; }
             case STUN -> { target.setCounterCount(CounterType.STUN, target.getCounterCount(CounterType.STUN) + count); yield "stun"; }
             case TOWER -> { target.setCounterCount(CounterType.TOWER, target.getCounterCount(CounterType.TOWER) + count); yield "tower"; }
