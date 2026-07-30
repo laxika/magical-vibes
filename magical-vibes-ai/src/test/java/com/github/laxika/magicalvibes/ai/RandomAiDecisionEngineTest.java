@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.cards.b.BackFromTheBrink;
 import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.s.StormCauldron;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -125,5 +128,85 @@ class RandomAiDecisionEngineTest {
         } finally {
             watcher.uninstall();
         }
+    }
+
+    @Test
+    void passesPriorityWhenNoGraveyardCreatureManaCostIsPayable() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addToBattlefield(aiPlayer, new BackFromTheBrink());
+        Permanent forest = harness.addToBattlefieldAndReturn(aiPlayer, new Forest());
+        forest.tap();
+        harness.setGraveyard(aiPlayer, List.of(new LlanowarElves()));
+        harness.setHand(aiPlayer, List.of());
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+
+        engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gameData.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameData.priorityPassedBy).contains(aiPlayer.getId());
+    }
+
+    @Test
+    void paysForAndExilesTheAffordableGraveyardCreature() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+        LlanowarElves affordableCreature = new LlanowarElves();
+
+        harness.addToBattlefield(aiPlayer, new BackFromTheBrink());
+        Permanent forest = harness.addToBattlefieldAndReturn(aiPlayer, new Forest());
+        harness.setGraveyard(aiPlayer, List.of(affordableCreature, new GrizzlyBears()));
+        harness.setHand(aiPlayer, List.of());
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+
+        engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gameData.interaction.isAwaitingInput()).isTrue();
+
+        engine.handleEvent(AiDecisionKind.INTERACTION);
+
+        assertThat(gameData.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameData.playerGraveyards.get(aiPlayer.getId()))
+                .extracting(Card::getId)
+                .doesNotContain(affordableCreature.getId());
+        assertThat(gameData.stack).hasSize(1);
+    }
+
+    private RandomAiDecisionEngine createAlwaysActivateEngine(
+            GameTestHarness harness, Player aiPlayer) {
+        return new RandomAiDecisionEngine(
+                harness.getGameData().id,
+                aiPlayer,
+                harness.getGameRegistry(),
+                harness.getGameService(),
+                harness.getGameQueryService(),
+                harness.getBlockLegalityService(),
+                harness.getCombatAttackService(),
+                harness.getGameActionAvailabilityService(),
+                harness.getCastingCostService(),
+                harness.getCastingPermissionService(),
+                harness.getTargetValidationService(),
+                harness.getTargetLegalityService(),
+                new Random() {
+                    @Override
+                    public boolean nextBoolean() {
+                        return true;
+                    }
+                },
+                new FuzzTelemetry());
     }
 }

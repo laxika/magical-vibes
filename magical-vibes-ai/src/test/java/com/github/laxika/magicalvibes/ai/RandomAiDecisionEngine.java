@@ -71,6 +71,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
     private final Random rng;
     private final FuzzTelemetry telemetry;
     private final Map<AbilityActivationKey, Integer> abilityActivationsThisTurn = new HashMap<>();
+    private UUID plannedGraveyardExileCostCardId;
     private int trackedActivationTurn = Integer.MIN_VALUE;
 
     private record AbilityActivationKey(UUID permanentId, int abilityIndex) {}
@@ -98,6 +99,21 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         PendingInteraction active = gameData.interaction.activeInteraction();
         if (active != null && AiUtils.isRespondingFor(gameData, aiPlayer.getId(), active.decidingPlayerId())) {
             telemetry.recordInteractionPrompt(active.getClass().getSimpleName());
+        }
+        if (active instanceof PendingInteraction.GraveyardExileCostChoice choice
+                && plannedGraveyardExileCostCardId != null) {
+            List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of());
+            for (int i = 0; i < graveyard.size(); i++) {
+                if (graveyard.get(i).getId().equals(plannedGraveyardExileCostCardId)
+                        && choice.validIndices().contains(i)) {
+                    plannedGraveyardExileCostCardId = null;
+                    final int chosenIndex = i;
+                    send(() -> gameActions.answerInteraction(
+                            new InteractionAnswer.GraveyardCardChosen(chosenIndex)));
+                    return;
+                }
+            }
+            plannedGraveyardExileCostCardId = null;
         }
         super.handleInteractionPrompt(gameData);
     }
@@ -241,10 +257,26 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             int additionalGenericCost =
                     gameActions.getActivatedAbilityAdditionalGenericCost(
                             gameData, permanent, candidate.abilityIndex(), targetId, null);
-            if (candidate.ability().getManaCost() != null || additionalGenericCost > 0) {
+            ExileCardFromGraveyardCost dynamicManaCost =
+                    findPayExiledCardManaCost(candidate.ability());
+            Card plannedGraveyardCard = null;
+            if (dynamicManaCost != null) {
+                plannedGraveyardCard = chooseAffordableGraveyardCostCard(
+                        gameData, dynamicManaCost, virtualPool, additionalGenericCost);
+                if (plannedGraveyardCard == null) {
+                    telemetry.recordSkip("ability: dynamic mana cost unpayable",
+                            permanent.getCard().getName());
+                    continue;
+                }
+            }
+
+            String manaCost = plannedGraveyardCard != null
+                    ? plannedGraveyardCard.getManaCost()
+                    : candidate.ability().getManaCost();
+            if (manaCost != null || additionalGenericCost > 0) {
                 // A {T}-ability's own source must not be tapped for mana
                 manaManager.tapSourcesForAbilityCost(
-                        gameData, aiPlayer.getId(), candidate.ability().getManaCost(),
+                        gameData, aiPlayer.getId(), manaCost,
                         additionalGenericCost, manaTapAction(),
                         candidate.ability().isRequiresTap() ? candidate.permanent().getId() : null);
                 if (gameData.interaction.isAwaitingInput()) {
@@ -260,11 +292,20 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 continue;
             }
 
+            ManaPool actualPool = gameData.playerManaPools.get(aiPlayer.getId());
+            if (dynamicManaCost != null) {
+                plannedGraveyardCard = chooseAffordableGraveyardCostCard(
+                        gameData, dynamicManaCost, actualPool, additionalGenericCost);
+                if (plannedGraveyardCard == null) {
+                    continue;
+                }
+            }
+
             // Re-verify with the engine against the ACTUAL pool: tapping can under-deliver
             // relative to the virtual-pool plan (e.g. the {T}-ability's own source was the
             // only untapped producer left), and a doomed request is rejected silently.
             if (!canActivateAbility(gameData, permanent, candidate.ability(),
-                    candidate.abilityIndex(), gameData.playerManaPools.get(aiPlayer.getId()),
+                    candidate.abilityIndex(), actualPool,
                     targetId, null)) {
                 continue;
             }
@@ -276,6 +317,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final UUID finalTargetId = targetId;
             int stackSizeBefore = gameData.stack.size();
             boolean tappedBefore = permanent.isTapped();
+            plannedGraveyardExileCostCardId = plannedGraveyardCard != null
+                    ? plannedGraveyardCard.getId()
+                    : null;
             send(() -> gameActions.handleActivateAbility(
                     new ActivateAbilityRequest(finalPermIdx, abilIdx, null, finalTargetId, null, null, null)));
 
@@ -288,10 +332,15 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                     || (!tappedBefore && permanent.isTapped())
                     || gameData.status != GameStatus.RUNNING;
             if (!activated) {
+                plannedGraveyardExileCostCardId = null;
                 log.warn("Random AI: ActivateAbility failed silently in game {}. Permanent='{}' abilityIndex={} step={} activePlayer={}",
                         gameId, permanent.getCard().getName(), candidate.abilityIndex(),
                         gameData.currentStep, gameData.activePlayerId);
                 continue;
+            }
+            if (!(gameData.interaction.activeInteraction()
+                    instanceof PendingInteraction.GraveyardExileCostChoice)) {
+                plannedGraveyardExileCostCardId = null;
             }
             abilityActivationsThisTurn.merge(
                     new AbilityActivationKey(permanent.getId(), candidate.abilityIndex()), 1, Integer::sum);
@@ -299,6 +348,34 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             return true;
         }
         return false;
+    }
+
+    private ExileCardFromGraveyardCost findPayExiledCardManaCost(ActivatedAbility ability) {
+        return ability.getEffects().stream()
+                .filter(ExileCardFromGraveyardCost.class::isInstance)
+                .map(ExileCardFromGraveyardCost.class::cast)
+                .filter(ExileCardFromGraveyardCost::payExiledCardManaCost)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private Card chooseAffordableGraveyardCostCard(
+            GameData gameData, ExileCardFromGraveyardCost cost, ManaPool manaPool,
+            int additionalGenericCost) {
+        List<Card> affordable = gameData.playerGraveyards
+                .getOrDefault(aiPlayer.getId(), List.of())
+                .stream()
+                .filter(card -> cost.requiredType() == null || card.hasType(cost.requiredType()))
+                .filter(card -> cost.requiredSubtype() == null
+                        || card.getSubtypes().contains(cost.requiredSubtype()))
+                .filter(card -> card.getManaCost() != null)
+                .filter(card -> new ManaCost(card.getManaCost())
+                        .canPay(manaPool, additionalGenericCost))
+                .toList();
+        if (affordable.isEmpty()) {
+            return null;
+        }
+        return affordable.get(rng.nextInt(affordable.size()));
     }
 
     // ===== Random Spell Casting =====
