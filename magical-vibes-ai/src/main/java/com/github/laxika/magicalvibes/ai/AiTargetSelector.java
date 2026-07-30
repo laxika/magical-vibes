@@ -1030,13 +1030,13 @@ class AiTargetSelector {
             }
         }
 
-        // For "any target" damage, fall back to opponent's face
-        if (canTargetPlayer) {
-            if (opponentId != null
-                    && !gameQueryService.playerHasShroud(gameData, opponentId)
-                    && !gameQueryService.playerHasHexproof(gameData, opponentId)) {
-                return opponentId;
-            }
+        // For "any target" damage, fall back to opponent's face. One effect allowing a player
+        // target doesn't make the player legal for the ability as a whole: a companion effect may
+        // require a permanent (Samite Alchemist's "prevent … to target creature you control. Tap
+        // that creature."), so the engine gets the final say here too.
+        if (canTargetPlayer && opponentId != null
+                && isValidAbilityTarget(gameData, ability, opponentId, aiPlayerId, source)) {
+            return opponentId;
         }
 
         return null;
@@ -1100,9 +1100,15 @@ class AiTargetSelector {
      */
     private boolean isValidAbilityPermanentTarget(GameData gameData, ActivatedAbility ability,
                                                   Permanent target, UUID aiPlayerId, Permanent source) {
+        return isValidAbilityTarget(gameData, ability, target.getId(), aiPlayerId, source);
+    }
+
+    /** {@link #isValidAbilityPermanentTarget} for any target id, permanent or player. */
+    private boolean isValidAbilityTarget(GameData gameData, ActivatedAbility ability,
+                                         UUID targetId, UUID aiPlayerId, Permanent source) {
         try {
             targetLegalityService.validateActivatedAbilityTargeting(gameData, aiPlayerId, ability,
-                    ability.getEffects(), target.getId(), null, source.getCard(), 0);
+                    ability.getEffects(), targetId, null, source.getCard(), 0);
             return true;
         } catch (IllegalStateException | IllegalArgumentException e) {
             return false;

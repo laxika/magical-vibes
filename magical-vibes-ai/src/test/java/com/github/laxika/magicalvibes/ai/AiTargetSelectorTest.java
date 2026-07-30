@@ -73,14 +73,17 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -1665,6 +1668,28 @@ class AiTargetSelectorTest {
             UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
 
             assertThat(target).isEqualTo(bears.getId());
+        }
+
+        @Test
+        @DisplayName("Does not fall back to opponent's face when a companion effect needs a permanent")
+        void doesNotFallBackToPlayerWhenAbilityAlsoNeedsPermanentTarget() {
+            // Samite Alchemist's shape: the prevention effect allows a player target, but the
+            // tap rider does not and the filter restricts to a creature the AI controls.
+            harness.addToBattlefield(human, new GrizzlyBears());
+            Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new EliteVanguard());
+
+            ActivatedAbility ability = new ActivatedAbility(true, "{W}{W}",
+                    List.of(PreventDamageEffect.nextToTarget(4),
+                            new TapPermanentsEffect(TapUntapScope.TARGET),
+                            new SkipNextUntapEffect(TapUntapScope.TARGET)),
+                    "{W}{W}, {T}: Prevent the next 4 damage that would be dealt this turn to target "
+                            + "creature you control. Tap that creature.",
+                    new ControlledPermanentPredicateTargetFilter(
+                            new PermanentIsCreaturePredicate(), "Target must be a creature you control"));
+
+            UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
+
+            assertThat(target).isNull();
         }
 
         @Test
