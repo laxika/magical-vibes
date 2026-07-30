@@ -131,6 +131,9 @@ class AbilityActivationServiceTest {
         lenient().when(castingCostService.getImposedSacrificeRequirementForAbility(
                         eq(gameData), any()))
                 .thenReturn(CastingCostService.ImposedSacrificeRequirement.none());
+        // No Angel of Jubilation — life payments and creature sacrifices are legal ability costs.
+        lenient().when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData))
+                .thenReturn(true);
     }
 
     // =========================================================================
@@ -1180,6 +1183,26 @@ class AbilityActivationServiceTest {
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Must choose a creature to sacrifice");
+        }
+
+        @Test
+        @DisplayName("Sacrifice creature cost: refused while an Angel of Jubilation effect is out")
+        void sacrificeCreatureCostRefusedWhenCreaturesCantBeSacrificed() {
+            Card huskCard = createCreatureCard("Nantuko Husk", 2, 2);
+            huskCard.addActivatedAbility(new ActivatedAbility(
+                    false, null, List.of(new SacrificeCreatureCost(false, false), new BoostSelfEffect(2, 2)),
+                    "Sacrifice a creature: +2/+2"
+            ));
+            Permanent husk = addReadyPermanent(player1Id, huskCard);
+
+            when(gameQueryService.computeStaticBonus(gameData, husk)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(husk), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)).thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Players can't sacrifice creatures to activate abilities");
         }
     }
 

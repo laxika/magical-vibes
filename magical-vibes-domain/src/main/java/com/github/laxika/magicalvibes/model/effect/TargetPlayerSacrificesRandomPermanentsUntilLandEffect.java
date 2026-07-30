@@ -10,4 +10,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>Used by Tyrant of Discord (ETB); pair with a {@code PlayerPredicateTargetFilter(OPPONENT)}.
  */
 public record TargetPlayerSacrificesRandomPermanentsUntilLandEffect() implements CardEffect {
+
+    @Override
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER);
+    }
 }
