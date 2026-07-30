@@ -136,6 +136,14 @@ class MCTSEngineTest {
         harness.addToBattlefield(player2, new TragedyFeaster());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.setHand(player1, List.of());
+        // Same rollout noise the tiny-budget test below pins away, and for the same reason: the
+        // harness deals both players a shuffled library and opening hand from an unseeded Random
+        // (GameSetupService), the simulated opponent casts creatures out of that hand, and those
+        // board swings dwarf the 1 life a Rod ping is worth. The engine's own seed does not cover
+        // this — it fixes the search, not the state being searched.
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, inertLibrary());
+        harness.setLibrary(player2, inertLibrary());
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);
         gd.stack.clear();
