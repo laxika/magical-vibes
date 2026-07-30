@@ -309,7 +309,16 @@ public class CastingCostService {
     }
 
     public boolean hasAlternativeZeroCostFromBattlefield(GameData gameData, UUID playerId, Card card) {
-        return findFreeCastSource(gameData, playerId, card) != null;
+        return hasAlternativeZeroCostFromBattlefield(gameData, playerId, card, true);
+    }
+
+    /**
+     * As {@link #hasAlternativeZeroCostFromBattlefield(GameData, UUID, Card)}, but {@code fromHand}
+     * tells whether the spell is being cast from the caster's hand. Pass {@code false} for casts from
+     * any other zone (top of library, exile) so a hand-only source (Omniscience) is not offered.
+     */
+    public boolean hasAlternativeZeroCostFromBattlefield(GameData gameData, UUID playerId, Card card, boolean fromHand) {
+        return findFreeCastSource(gameData, playerId, card, fromHand) != null;
     }
 
     /**
@@ -320,7 +329,16 @@ public class CastingCostService {
      * {@link #hasAlternativeZeroCostFromBattlefield} instead.
      */
     public boolean consumeFreeCastFromBattlefield(GameData gameData, UUID playerId, Card card) {
-        FreeCastSource source = findFreeCastSource(gameData, playerId, card);
+        return consumeFreeCastFromBattlefield(gameData, playerId, card, true);
+    }
+
+    /**
+     * As {@link #consumeFreeCastFromBattlefield(GameData, UUID, Card)}, but {@code fromHand} tells
+     * whether the spell is being cast from the caster's hand (see
+     * {@link #hasAlternativeZeroCostFromBattlefield(GameData, UUID, Card, boolean)}).
+     */
+    public boolean consumeFreeCastFromBattlefield(GameData gameData, UUID playerId, Card card, boolean fromHand) {
+        FreeCastSource source = findFreeCastSource(gameData, playerId, card, fromHand);
         if (source == null) return false;
         if (source.effect().oncePerTurn()) {
             gameData.freeCastPermanentUsedThisTurn.add(source.permanent().getId());
@@ -336,9 +354,10 @@ public class CastingCostService {
      * alternative cost currently applicable to {@code card}: the filter matches, any counter-based
      * mana-value cap is satisfied, and a once-each-turn source has not yet been used this turn. An
      * unlimited source (e.g. Rooftop Storm) is preferred over a once-each-turn source (As Foretold)
-     * so the limited use is not spent while a free one is available.
+     * so the limited use is not spent while a free one is available. A hand-only source (Omniscience)
+     * is skipped entirely when the spell is not being cast from hand.
      */
-    private FreeCastSource findFreeCastSource(GameData gameData, UUID playerId, Card card) {
+    private FreeCastSource findFreeCastSource(GameData gameData, UUID playerId, Card card, boolean fromHand) {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return null;
         FreeCastSource oncePerTurnFallback = null;
@@ -346,6 +365,7 @@ public class CastingCostService {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof AlternativeCostForSpellsEffect altCost
                         && new ManaCost(altCost.manaCost()).getManaValue() == 0
+                        && (fromHand || !altCost.fromHandOnly())
                         && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)
                         && manaValueCapSatisfied(perm, card, altCost)
                         && !(altCost.oncePerTurn() && gameData.freeCastPermanentUsedThisTurn.contains(perm.getId()))) {

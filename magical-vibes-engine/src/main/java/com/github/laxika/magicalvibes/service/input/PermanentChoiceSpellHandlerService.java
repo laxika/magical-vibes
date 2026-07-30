@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ImprovisationCapstoneCastSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -36,10 +36,10 @@ public class PermanentChoiceSpellHandlerService {
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
-    // @Lazy breaks the cycle: PermanentChoiceSpellHandlerService → ImprovisationCapstoneCastSupport →
+    // @Lazy breaks the cycle: PermanentChoiceSpellHandlerService → ExileFreeCastQueueSupport →
     // PlayerInputService → InteractionHandlerRegistry → ImprovisationCapstoneCastChoiceInteractionHandler
-    // → ImprovisationCapstoneCastSupport.
-    private final ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport;
+    // → ExileFreeCastQueueSupport.
+    private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
     private final ExileCastTargetSupport exileCastTargetSupport;
     private final InputCompletionService inputCompletionService;
 
@@ -48,7 +48,7 @@ public class PermanentChoiceSpellHandlerService {
                                               GameLogService gameLogService,
                                               TriggerCollectionService triggerCollectionService,
                                               PlayerInputService playerInputService,
-                                              @Lazy ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport,
+                                              @Lazy ExileFreeCastQueueSupport exileFreeCastQueueSupport,
                                               ExileCastTargetSupport exileCastTargetSupport,
                                               @Lazy InputCompletionService inputCompletionService) {
         this.gameQueryService = gameQueryService;
@@ -56,7 +56,7 @@ public class PermanentChoiceSpellHandlerService {
         this.gameLogService = gameLogService;
         this.triggerCollectionService = triggerCollectionService;
         this.playerInputService = playerInputService;
-        this.improvisationCapstoneCastSupport = improvisationCapstoneCastSupport;
+        this.exileFreeCastQueueSupport = exileFreeCastQueueSupport;
         this.exileCastTargetSupport = exileCastTargetSupport;
         this.inputCompletionService = inputCompletionService;
     }
@@ -246,8 +246,8 @@ public class PermanentChoiceSpellHandlerService {
      * selection, so resume casting the remainder of the queue before yielding priority.
      */
     private void resumeAfterExileCast(GameData gameData, UUID controllerId) {
-        if (!gameData.pendingImprovisationCapstoneCastQueue.isEmpty()) {
-            improvisationCapstoneCastSupport.castNextFromQueue(gameData, controllerId);
+        if (!gameData.pendingFreeCastQueue.isEmpty()) {
+            exileFreeCastQueueSupport.castNextFromQueue(gameData, controllerId);
             return;
         }
 

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "71")
 @CardRegistration(set = "M12", collectorNumber = "74")
+@CardRegistration(set = "M13", collectorNumber = "64")
 public class Redirect extends Card {
 
     public Redirect() {

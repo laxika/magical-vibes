@@ -5,5 +5,7 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public enum PutOnTopOfLibraryScope {
     TARGET,
-    SELF
+    SELF,
+    /** Both the source permanent and the chosen target permanent (Void Stalker). */
+    SELF_AND_TARGET
 }

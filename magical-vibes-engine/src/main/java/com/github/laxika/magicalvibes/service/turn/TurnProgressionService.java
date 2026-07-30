@@ -251,6 +251,7 @@ public class TurnProgressionService {
             }
         }
         gameData.turnNumber++;
+        gameData.turnsTakenByPlayer.merge(nextActive, 1, Integer::sum);
         gameData.currentStep = TurnStep.first();
         gameData.interaction.clearAwaitingInput();
         gameData.priorityPassedBy.clear();

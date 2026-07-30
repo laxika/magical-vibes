@@ -26,10 +26,11 @@ import java.util.UUID;
  * name and put it onto the battlefield" flow (Clarion Ultimatum tapped, Doubling Chant untapped
  * and creature-only) — after each single-name pick resolves the next name in the queue begins its
  * own search;
- * {@code remainingColorToHandPicks} is the queue of colours still to search for, one card per
- * colour to hand, in a "search for a white card, a blue card, ..." flow (Conflux) — after each
- * single-colour pick resolves the next colour begins its own search, and the library is shuffled
- * once when the queue empties;
+ * {@code remainingToHandPicks} is the queue of descriptors still to search for, one card per
+ * descriptor to hand, in a "search for a white card, a blue card, ..." (Conflux) or "search for an
+ * Island card, a Swamp card, and a Mountain card" (Gem of Becoming) flow — after each single-pick
+ * search resolves the next descriptor begins its own search, and the library is shuffled once when
+ * the queue empties;
  * {@code naturalBalance} is the APNAP remainder of Natural Balance's per-player "up to X basic
  * lands onto the battlefield" searches plus the forced land sacrifices to perform once every
  * search has resolved.
@@ -44,8 +45,29 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
                                     List<UUID> remainingEachPlayerCreatureToBattlefieldSearches,
                                     SecondBoundedPick secondBoundedPick,
                                     SameNamePickQueue remainingSameNamePicks,
-                                    List<CardColor> remainingColorToHandPicks,
+                                    List<ToHandPick> remainingToHandPicks,
                                     NaturalBalanceQueue naturalBalance) {
+
+    /**
+     * One queued "search your library for a &lt;descriptor&gt; card, reveal it, put it into your hand"
+     * pick. Exactly one of {@code color} (Conflux) and {@code subtype} (Gem of Becoming) is set; it
+     * selects the library cards offered for that pick and names it in the prompt.
+     */
+    public record ToHandPick(CardColor color, CardSubtype subtype) {
+
+        public static ToHandPick ofColor(CardColor color) {
+            return new ToHandPick(color, null);
+        }
+
+        public static ToHandPick ofSubtype(CardSubtype subtype) {
+            return new ToHandPick(null, subtype);
+        }
+
+        /** The descriptor spliced into the prompt and game log ("a blue card", "an Island card"). */
+        public String describe() {
+            return color != null ? color.name().toLowerCase() : subtype.getDisplayName();
+        }
+    }
 
     /**
      * State for the second of two bounded picks: the card {@code type} still to be offered and where
@@ -100,7 +122,7 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
         remainingEachPlayerBasicLandSearches = List.copyOf(remainingEachPlayerBasicLandSearches);
         remainingEachPlayerCreatureToHandSearches = List.copyOf(remainingEachPlayerCreatureToHandSearches);
         remainingEachPlayerCreatureToBattlefieldSearches = List.copyOf(remainingEachPlayerCreatureToBattlefieldSearches);
-        remainingColorToHandPicks = List.copyOf(remainingColorToHandPicks);
+        remainingToHandPicks = List.copyOf(remainingToHandPicks);
     }
 
     public static LibrarySearchFollowUp forBasicLandToHand() {
@@ -145,7 +167,16 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
 
     /** The queue of colours still to search for, one card per colour to hand (Conflux). */
     public static LibrarySearchFollowUp colorToHandPicks(List<CardColor> colors) {
-        return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, List.of(), null, null, colors, null);
+        return toHandPicks(colors.stream().map(ToHandPick::ofColor).toList());
+    }
+
+    /** The queue of subtypes still to search for, one card per subtype to hand (Gem of Becoming). */
+    public static LibrarySearchFollowUp subtypeToHandPicks(List<CardSubtype> subtypes) {
+        return toHandPicks(subtypes.stream().map(ToHandPick::ofSubtype).toList());
+    }
+
+    private static LibrarySearchFollowUp toHandPicks(List<ToHandPick> picks) {
+        return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, List.of(), null, null, picks, null);
     }
 
     /** Natural Balance's remaining per-player basic-land picks plus the sacrifices that follow them. */
@@ -161,7 +192,7 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
                 eachPlayerSearchTapped, opponentExileChoice, imprintSourcePermanentId,
                 remainingEachPlayerCreatureToHandSearches, eachPlayerCreatureToHandCount,
                 remainingEachPlayerCreatureToBattlefieldSearches, secondBoundedPick, remainingSameNamePicks,
-                remainingColorToHandPicks, naturalBalance);
+                remainingToHandPicks, naturalBalance);
     }
 
     /** The same follow-up with the each-player creature-to-hand remainder advanced past the current searcher. */
@@ -170,7 +201,7 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
                 remainingEachPlayerBasicLandSearches, eachPlayerSearchTapped, opponentExileChoice,
                 imprintSourcePermanentId, remaining, eachPlayerCreatureToHandCount,
                 remainingEachPlayerCreatureToBattlefieldSearches, secondBoundedPick, remainingSameNamePicks,
-                remainingColorToHandPicks, naturalBalance);
+                remainingToHandPicks, naturalBalance);
     }
 
     /** The same follow-up with the each-player creature-to-battlefield remainder advanced past the current searcher. */
@@ -179,7 +210,7 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
                 remainingEachPlayerBasicLandSearches, eachPlayerSearchTapped, opponentExileChoice,
                 imprintSourcePermanentId, remainingEachPlayerCreatureToHandSearches,
                 eachPlayerCreatureToHandCount, remaining, secondBoundedPick, remainingSameNamePicks,
-                remainingColorToHandPicks, naturalBalance);
+                remainingToHandPicks, naturalBalance);
     }
 
     /** The same follow-up with the same-name-pick queue advanced past the current name. */
@@ -188,11 +219,11 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
                 remainingEachPlayerBasicLandSearches, eachPlayerSearchTapped, opponentExileChoice,
                 imprintSourcePermanentId, remainingEachPlayerCreatureToHandSearches,
                 eachPlayerCreatureToHandCount, remainingEachPlayerCreatureToBattlefieldSearches,
-                secondBoundedPick, remaining, remainingColorToHandPicks, naturalBalance);
+                secondBoundedPick, remaining, remainingToHandPicks, naturalBalance);
     }
 
-    /** The same follow-up with the colour-to-hand queue advanced past the current colour (Conflux). */
-    public LibrarySearchFollowUp withRemainingColorToHandPicks(List<CardColor> remaining) {
+    /** The same follow-up with the to-hand pick queue advanced past the current pick. */
+    public LibrarySearchFollowUp withRemainingToHandPicks(List<ToHandPick> remaining) {
         return new LibrarySearchFollowUp(basicLandToHand, cardToGraveyard,
                 remainingEachPlayerBasicLandSearches, eachPlayerSearchTapped, opponentExileChoice,
                 imprintSourcePermanentId, remainingEachPlayerCreatureToHandSearches,
@@ -206,7 +237,7 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
                 remainingEachPlayerBasicLandSearches, eachPlayerSearchTapped, opponentExileChoice,
                 imprintSourcePermanentId, remainingEachPlayerCreatureToHandSearches,
                 eachPlayerCreatureToHandCount, remainingEachPlayerCreatureToBattlefieldSearches,
-                secondBoundedPick, remainingSameNamePicks, remainingColorToHandPicks, queue);
+                secondBoundedPick, remainingSameNamePicks, remainingToHandPicks, queue);
     }
 
     /** The same follow-up with the consumed basic-land-to-hand flag cleared. */
@@ -215,7 +246,7 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
                 eachPlayerSearchTapped, opponentExileChoice, imprintSourcePermanentId,
                 remainingEachPlayerCreatureToHandSearches, eachPlayerCreatureToHandCount,
                 remainingEachPlayerCreatureToBattlefieldSearches, secondBoundedPick, remainingSameNamePicks,
-                remainingColorToHandPicks, naturalBalance);
+                remainingToHandPicks, naturalBalance);
     }
 
     /** The same follow-up with the consumed card-to-graveyard flag cleared. */
@@ -224,6 +255,7 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
                 eachPlayerSearchTapped, opponentExileChoice, imprintSourcePermanentId,
                 remainingEachPlayerCreatureToHandSearches, eachPlayerCreatureToHandCount,
                 remainingEachPlayerCreatureToBattlefieldSearches, secondBoundedPick, remainingSameNamePicks,
-                remainingColorToHandPicks, naturalBalance);
+                remainingToHandPicks, naturalBalance);
     }
 }
+

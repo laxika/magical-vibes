@@ -17,6 +17,12 @@ public record DiscardHandEffect(DiscardRecipient recipient)
     }
 
     @Override
+    public TargetSpec targetSpec() {
+        return recipient == DiscardRecipient.TARGET_PLAYER
+                ? TargetSpec.benign(TargetCategory.PLAYER) : TargetSpec.NONE;
+    }
+
+    @Override
     public TriggerContext combatDamageTriggerContext() {
         return recipient == DiscardRecipient.TARGET_PLAYER ? TriggerContext.DAMAGED_PLAYER : null;
     }

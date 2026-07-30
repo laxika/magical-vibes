@@ -690,12 +690,12 @@ public class DamageSupport {
             } else {
                 int currentLife = gameData.getLife(playerId);
                 int newLife = currentLife - effectiveDamage;
-                // Worship: damage can't reduce the controller's life total below 1 while they control a creature.
+                // Worship / Elderscale Wurm: damage can't reduce the player's life total past an active floor.
                 // The full damage is still dealt (lifelink/damage triggers see the full amount); only the life
-                // total reduction is capped. Does nothing if the player is already at 0 or less life.
-                if (currentLife >= 1 && newLife < 1
-                        && gameQueryService.damageCantReduceLifeBelowOne(gameData, playerId)) {
-                    newLife = 1;
+                // total reduction is capped.
+                int lifeFloor = gameQueryService.damageLifeFloor(gameData, playerId, currentLife);
+                if (newLife < lifeFloor) {
+                    newLife = lifeFloor;
                 }
                 gameData.playerLifeTotals.put(playerId, newLife);
                 int lifeLost = currentLife - newLife;

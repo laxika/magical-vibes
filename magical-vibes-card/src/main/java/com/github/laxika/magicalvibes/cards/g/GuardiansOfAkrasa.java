@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 @CardRegistration(set = "ALA", collectorNumber = "12")
+@CardRegistration(set = "M13", collectorNumber = "18")
 public class GuardiansOfAkrasa extends Card {
 
     public GuardiansOfAkrasa() {

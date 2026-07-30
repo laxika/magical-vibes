@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "M10", collectorNumber = "176")
 @CardRegistration(set = "M11", collectorNumber = "171")
 @CardRegistration(set = "M12", collectorNumber = "172")
+@CardRegistration(set = "M13", collectorNumber = "168")
 public class ElvishArchdruid extends Card {
 
     public ElvishArchdruid() {

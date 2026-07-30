@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToEnteringPowerEffect;
 
 @CardRegistration(set = "LRW", collectorNumber = "173")
+@CardRegistration(set = "M13", collectorNumber = "136")
 public class HamletbackGoliath extends Card {
 
     public HamletbackGoliath() {

@@ -15,11 +15,21 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * is at most the number of that counter on the source permanent — "a spell you cast with mana value X
  * or less, where X is the number of time counters on this enchantment" (As Foretold, {@code CounterType.TIME}).
  * {@code oncePerTurn} limits the source to a single use of the alternative cost each turn.
+ *
+ * <p>{@code fromHandOnly} restricts the alternative cost to spells cast from the controller's hand —
+ * "you may cast spells from your hand without paying their mana costs" (Omniscience). Sources without
+ * this restriction (Rooftop Storm, Jodah, As Foretold) apply regardless of the zone cast from.
  */
 public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
-                                             CounterType manaValueCapCounter, boolean oncePerTurn) implements CardEffect {
+                                             CounterType manaValueCapCounter, boolean oncePerTurn,
+                                             boolean fromHandOnly) implements CardEffect {
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter) {
-        this(manaCost, filter, null, false);
+        this(manaCost, filter, null, false, false);
+    }
+
+    public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
+                                          CounterType manaValueCapCounter, boolean oncePerTurn) {
+        this(manaCost, filter, manaValueCapCounter, oncePerTurn, false);
     }
 }

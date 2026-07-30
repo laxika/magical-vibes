@@ -108,8 +108,12 @@ public class TargetValidationService {
             // Player and zone categories perform NO permanent-type check here: players are
             // validated on the player path, and spell/graveyard/exile targets are guarded by
             // their own zone paths.
-            case PLAYER, PLAYER_OR_PERMANENT, SPELL_ON_STACK, GRAVEYARD_CARD,
-                 ANY_GRAVEYARD_CARD, CONTROLLERS_GRAVEYARD_CARD, EXILE_CARD, NONE -> { }
+            case GRAVEYARD_CARD, ANY_GRAVEYARD_CARD, CONTROLLERS_GRAVEYARD_CARD -> {
+                if (!gameQueryService.canGraveyardCardsBeTargeted(ctx.gameData())) {
+                    throw new IllegalStateException("Cards in graveyards can't be the targets of spells or abilities");
+                }
+            }
+            case PLAYER, PLAYER_OR_PERMANENT, SPELL_ON_STACK, EXILE_CARD, NONE -> { }
         }
 
         // Predicate narrowing and the harmful protection check apply to a permanent target only.

@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardO
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PlayerDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
@@ -166,7 +167,18 @@ public class ValidTargetService {
         }
 
         if (allowedTargets.contains(TargetType.GRAVEYARD)) {
-            validGraveyardCardIds.addAll(computeValidGraveyardTargets(gameData, card, spellEffects, controllerId, xValue));
+            // A graveyard target group declares its own scope + card filter, so per-position
+            // enumeration honours the group being filled (Spelltwine: own graveyard, then an
+            // opponent's). Groups that declare no graveyard filter keep the card-wide enumeration.
+            TargetFilter graveyardPositionFilter = isMultiTarget && positionIndex < card.getMultiTargetFilters().size()
+                    ? card.getMultiTargetFilters().get(positionIndex)
+                    : null;
+            if (graveyardPositionFilter instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
+                validGraveyardCardIds.addAll(
+                        computeValidGraveyardTargetsForFilter(gameData, card, graveyardFilter, controllerId, excludeIds));
+            } else {
+                validGraveyardCardIds.addAll(computeValidGraveyardTargets(gameData, card, spellEffects, controllerId, xValue));
+            }
         }
 
         String prompt = "Select a target for " + card.getName();
@@ -660,7 +672,38 @@ public class ValidTargetService {
      * Computes valid graveyard card targets for a spell. Handles scope filtering (controller's
      * graveyard, opponent's, or all), card predicate filtering, and X-value mana value matching.
      */
+    /**
+     * Enumerates the legal cards for a graveyard target group that declares its own scope and card
+     * filter, excluding cards already chosen for an earlier group.
+     */
+    public List<UUID> computeValidGraveyardTargetsForFilter(GameData gameData, Card card,
+                                                            GraveyardCardPredicateTargetFilter filter,
+                                                            UUID controllerId, Set<UUID> excludeIds) {
+        List<UUID> searchPlayerIds = switch (filter.scope()) {
+            case CONTROLLERS_GRAVEYARD -> List.of(controllerId);
+            case OPPONENT_GRAVEYARD -> gameData.orderedPlayerIds.stream()
+                    .filter(id -> !id.equals(controllerId)).toList();
+            case ALL_GRAVEYARDS -> gameData.orderedPlayerIds;
+        };
+
+        List<UUID> validIds = new ArrayList<>();
+        for (UUID playerId : searchPlayerIds) {
+            for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
+                if (excludeIds.contains(c.getId())) continue;
+                if (filter.predicate() != null
+                        && !predicateEvaluationService.matchesCardPredicate(c, filter.predicate(), card.getId())) {
+                    continue;
+                }
+                validIds.add(c.getId());
+            }
+        }
+        return validIds;
+    }
+
     private List<UUID> computeValidGraveyardTargets(GameData gameData, Card card, List<CardEffect> spellEffects, UUID controllerId, Integer xValue) {
+        if (!gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
+            return List.of();
+        }
         int effectiveXValue = xValue != null ? xValue : 0;
         List<UUID> validIds = new ArrayList<>();
 
@@ -709,6 +752,9 @@ public class ValidTargetService {
 
     private List<UUID> computeValidGraveyardTargetsForAbility(GameData gameData, ActivatedAbility ability,
                                                                 UUID controllerId, Set<UUID> excludeIds) {
+        if (!gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
+            return List.of();
+        }
         List<UUID> validIds = new ArrayList<>();
 
         for (CardEffect effect : ability.getEffects()) {

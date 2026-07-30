@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreLifeThanC
 import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreLifeThanAnOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
+import com.github.laxika.magicalvibes.model.condition.ControllerOwnTurnCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
@@ -81,6 +82,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreCreatu
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreLands;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
+import com.github.laxika.magicalvibes.model.condition.OpponentGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
@@ -287,6 +289,8 @@ public class ConditionEvaluationService {
                     isDefendingPlayerPoisoned(gameData, ctx.controllerId());
             case OpponentPoisoned ignored ->
                     isAnyOpponentPoisoned(gameData, ctx.controllerId());
+            case OpponentGraveyardAtLeast c ->
+                    anyOpponentGraveyardAtLeast(gameData, ctx.controllerId(), c.threshold());
             case OpponentDealtDamageThisTurn c ->
                     wasAnyOpponentDealtDamageThisTurn(gameData, ctx.controllerId(), c.minimumAmount());
             case SelfDealtDamageToOpponentThisTurn ignored ->
@@ -323,6 +327,9 @@ public class ConditionEvaluationService {
                             && gameData.getSpellCastColorsSpent(ctx.sourceCard().getId()).contains(c.color());
             case ControllerTurn ignored ->
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.activePlayerId);
+            case ControllerOwnTurnCountAtMost c ->
+                    ctx.controllerId() != null && ctx.controllerId().equals(gameData.activePlayerId)
+                            && gameData.turnsTakenByPlayer.getOrDefault(ctx.controllerId(), 0) <= c.maxTurns();
             case NotControllerTurn ignored ->
                     ctx.controllerId() != null && !ctx.controllerId().equals(gameData.activePlayerId);
             case TargetPermanentMatches c -> {
@@ -987,6 +994,18 @@ public class ConditionEvaluationService {
 
     private boolean anyGraveyardAtLeast(GameData gameData, int threshold) {
         return gameData.playerGraveyards.values().stream().anyMatch(graveyard -> graveyard.size() >= threshold);
+    }
+
+    private boolean anyOpponentGraveyardAtLeast(GameData gameData, UUID controllerId, int threshold) {
+        if (controllerId == null) return false;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) continue;
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard != null && graveyard.size() >= threshold) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean anyLibraryAtMost(GameData gameData, int threshold) {

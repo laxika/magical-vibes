@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "271")
+@CardRegistration(set = "M13", collectorNumber = "191")
 public class SilklashSpider extends Card {
 
     public SilklashSpider() {

@@ -33,7 +33,7 @@ public class TargetPlayerLosesGameEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (TargetPlayerLosesGameEffect) effect;
-        UUID losingPlayerId = e.playerId();
+        UUID losingPlayerId = e.playerId() != null ? e.playerId() : entry.getTargetId();
         if (losingPlayerId == null || !gameData.playerIds.contains(losingPlayerId)) {
             return;
         }

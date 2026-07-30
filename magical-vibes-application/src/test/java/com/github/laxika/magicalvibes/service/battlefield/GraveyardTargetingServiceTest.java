@@ -33,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -51,7 +52,9 @@ class GraveyardTargetingServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new GraveyardTargetingService(predicateEvaluationService, gameLogService, playerInputService);
+        service = new GraveyardTargetingService(predicateEvaluationService, gameLogService, playerInputService,
+                gameQueryService);
+        lenient().when(gameQueryService.canGraveyardCardsBeTargeted(any())).thenReturn(true);
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

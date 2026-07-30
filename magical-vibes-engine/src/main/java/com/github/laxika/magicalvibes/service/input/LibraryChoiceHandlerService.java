@@ -356,7 +356,7 @@ public class LibraryChoiceHandlerService {
             if (librarySearchSupport.startNextEachPlayerCreatureToHandSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
-            if (librarySearchSupport.startNextColorToHandPick(gameData, playerId, followUp)) return;
+            if (librarySearchSupport.startNextToHandPick(gameData, playerId, followUp)) return;
             if (naturalBalanceSupport.advance(gameData, followUp)) return;
             finishSearchAndResume(gameData);
             return;
@@ -871,7 +871,7 @@ public class LibraryChoiceHandlerService {
         if (librarySearchSupport.startNextEachPlayerCreatureToHandSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
-        if (librarySearchSupport.startNextColorToHandPick(gameData, playerId, followUp)) return;
+        if (librarySearchSupport.startNextToHandPick(gameData, playerId, followUp)) return;
         if (naturalBalanceSupport.advance(gameData, followUp)) return;
         finishSearchAndResume(gameData);
     }

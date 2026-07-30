@@ -22,9 +22,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+/**
+ * Casts a queue of exiled cards "without paying their mana costs" one at a time, so a cast that
+ * pauses for target selection can resume the remaining ones (Improvisation Capstone, Hazoret's
+ * Undying Fury, Brilliant Ultimatum, Spelltwine's two copies).
+ *
+ * <p>Entries queued through {@link #queueCopiesForFreeCast} are copies rather than real cards: they
+ * are cast as copies and cease to exist instead of being put into a zone.</p>
+ */
 @Slf4j
 @Component
-public class ImprovisationCapstoneCastSupport {
+public class ExileFreeCastQueueSupport {
 
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
@@ -33,7 +41,7 @@ public class ImprovisationCapstoneCastSupport {
     private final InputCompletionService inputCompletionService;
 
     // @Lazy mirrors ExileFreeCastSupport: breaks the cycle back through the input services.
-    public ImprovisationCapstoneCastSupport(GameLogService gameLogService,
+    public ExileFreeCastQueueSupport(GameLogService gameLogService,
                                             PlayerInputService playerInputService,
                                             TriggerCollectionService triggerCollectionService,
                                             ExileCastTargetSupport exileCastTargetSupport,
@@ -55,9 +63,19 @@ public class ImprovisationCapstoneCastSupport {
             return;
         }
 
-        gameData.pendingImprovisationCapstoneCastQueue.clear();
-        gameData.pendingImprovisationCapstoneCastQueue.addAll(cardIds);
+        gameData.pendingFreeCastQueue.clear();
+        gameData.pendingFreeCastQueue.addAll(cardIds);
         castNextFromQueue(gameData, player.getId());
+    }
+
+    /**
+     * Queues copies sitting in exile to be cast for free, in the given order, and starts the chain.
+     * Each is cast as a copy, so it ceases to exist on resolution (CR 707.10a).
+     */
+    public void queueCopiesForFreeCast(GameData gameData, UUID playerId, List<UUID> copyIds) {
+        gameData.pendingFreeCastQueue.addAll(copyIds);
+        gameData.pendingFreeCastAsCopyIds.addAll(copyIds);
+        castNextFromQueue(gameData, playerId);
     }
 
     /**
@@ -71,12 +89,13 @@ public class ImprovisationCapstoneCastSupport {
      * {@code GameData.deferPlayerLossCheck} so no player can ever lose to a state-based action again.
      */
     public void castNextFromQueue(GameData gameData, UUID playerId) {
-        if (gameData.pendingImprovisationCapstoneCastQueue.isEmpty()) {
+        if (gameData.pendingFreeCastQueue.isEmpty()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
-        UUID cardId = gameData.pendingImprovisationCapstoneCastQueue.removeFirst();
+        UUID cardId = gameData.pendingFreeCastQueue.removeFirst();
+        boolean asCopy = gameData.pendingFreeCastAsCopyIds.remove(cardId);
         ExiledCardEntry exiledEntry = gameData.findExiledCard(cardId);
         if (exiledEntry == null) {
             castNextFromQueue(gameData, playerId);
@@ -97,8 +116,12 @@ public class ImprovisationCapstoneCastSupport {
                     : !firstCandidates.isEmpty();
 
             if (!hasLegalTargets) {
-                // It was never cast, and nothing in the oracle text moves it elsewhere: it stays exiled.
-                gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets and stays exiled."));
+                // A real card was never cast and nothing moves it elsewhere: it stays exiled. A copy
+                // that can't be legally cast simply ceases to exist (CR 707.10a).
+                if (asCopy) {
+                    gameData.removeFromExile(cardId);
+                }
+                gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets."));
                 castNextFromQueue(gameData, playerId);
                 return;
             }
@@ -106,7 +129,7 @@ public class ImprovisationCapstoneCastSupport {
             // Remove from exile now that it will be cast; the ExileCastSpellTarget flow puts it on the stack.
             gameData.removeFromExile(cardId);
             gameData.interaction.setPermanentChoiceContext(
-                    new PermanentChoiceContext.ExileCastSpellTarget(card, playerId, spellEffects, spellType));
+                    new PermanentChoiceContext.ExileCastSpellTarget(card, playerId, spellEffects, spellType, asCopy));
             playerInputService.beginPermanentChoice(gameData, playerId, firstCandidates,
                     "Choose a target for " + card.getName() + ".");
             gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ", card, " without paying its mana cost — choosing target."));
@@ -114,10 +137,12 @@ public class ImprovisationCapstoneCastSupport {
         }
 
         gameData.removeFromExile(cardId);
-        gameData.stack.add(new StackEntry(
+        StackEntry entry = new StackEntry(
                 spellType, card, playerId, card.getName(),
                 spellEffects, 0, (UUID) null, null
-        ));
+        );
+        entry.setCopy(asCopy);
+        gameData.stack.add(entry);
         gameData.recordSpellCast(playerId, card);
         gameData.priorityPassedBy.clear();
         gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ", card, " without paying its mana cost."));

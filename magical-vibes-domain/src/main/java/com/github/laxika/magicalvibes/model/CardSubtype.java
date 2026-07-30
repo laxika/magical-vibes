@@ -152,6 +152,7 @@ public enum CardSubtype {
     CARTOUCHE("Cartouche"),
     CHANDRA("Chandra"),
     CHIMERA("Chimera"),
+    HELLION("Hellion"),
     BOLAS("Bolas"),
     DEVIL("Devil"),
     SAGA("Saga"),

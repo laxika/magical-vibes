@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 @CardRegistration(set = "8ED", collectorNumber = "276")
+@CardRegistration(set = "M13", collectorNumber = "187")
 public class Revive extends Card {
 
     public Revive() {

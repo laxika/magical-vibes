@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "72")
+@CardRegistration(set = "M13", collectorNumber = "66")
 public class ScrollThief extends Card {
 
     public ScrollThief() {

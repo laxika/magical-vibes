@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M12", collectorNumber = "136")
+@CardRegistration(set = "M13", collectorNumber = "134")
 public class GoblinArsonist extends Card {
 
     public GoblinArsonist() {

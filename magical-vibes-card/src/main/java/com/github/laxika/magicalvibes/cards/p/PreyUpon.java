@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "200")
+@CardRegistration(set = "M13", collectorNumber = "181")
 public class PreyUpon extends Card {
 
     public PreyUpon() {

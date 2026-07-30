@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "58")
+@CardRegistration(set = "M13", collectorNumber = "56")
 public class JaceMemoryAdept extends Card {
 
     public JaceMemoryAdept() {

@@ -572,7 +572,7 @@ public class GameViewProjectionFactory {
             return playable;
         }
 
-        if (castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, topCard)) {
+        if (castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, topCard, false)) {
             playable.add(cardViewFactory.create(topCard));
         } else {
             ManaCost cost = topCard.getParsedManaCost();

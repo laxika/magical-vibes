@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "M12", collectorNumber = "189")
+@CardRegistration(set = "M13", collectorNumber = "183")
 public class PrimordialHydra extends Card {
 
     public PrimordialHydra() {

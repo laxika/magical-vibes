@@ -247,6 +247,21 @@ public class PermanentRemovalService {
      *         {@code false} if it was not on any battlefield
      */
     public boolean removePermanentToLibraryTop(GameData gameData, Permanent target) {
+        return removePermanentToLibraryTop(gameData, target, false);
+    }
+
+    /**
+     * Removes a permanent from the battlefield and puts its card on top of the owner's library,
+     * optionally shuffling that owner's library afterwards ("… then that player shuffles their
+     * library", Void Stalker).
+     *
+     * @param gameData the current game state
+     * @param target   the permanent to tuck
+     * @param shuffle  whether the owner shuffles their library after the card is placed
+     * @return {@code true} if the permanent was found on a battlefield and removed,
+     *         {@code false} if it was not on any battlefield
+     */
+    public boolean removePermanentToLibraryTop(GameData gameData, Permanent target, boolean shuffle) {
         // Replacement effect: exile instead of going to library (CR 614.6)
         if (tryApplyExileReplacementEffect(gameData, target, false, "going to the library")) {
             return true;
@@ -270,6 +285,9 @@ public class PermanentRemovalService {
             gameData.playerDecks.get(ownerId).add(0, leaving);
         }
         handleExileReturnOnLeave(gameData, target);
+        if (shuffle) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
+        }
         return true;
     }
 
@@ -417,6 +435,7 @@ public class PermanentRemovalService {
     public boolean removeOrphanedAuras(GameData gameData) {
         var result = auraAttachmentService.removeOrphanedAuras(gameData);
         for (var removal : result.removals()) {
+            triggerCollectionService.collectDeathTrigger(gameData, removal.card(), removal.controllerId(), false);
             triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, removal.card(), removal.controllerId());
         }
         return result.anyChange();
@@ -431,6 +450,7 @@ public class PermanentRemovalService {
     public boolean enforceAttachmentLegality(GameData gameData) {
         var result = auraAttachmentService.enforceAttachmentLegality(gameData);
         for (var removal : result.removals()) {
+            triggerCollectionService.collectDeathTrigger(gameData, removal.card(), removal.controllerId(), false);
             triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, removal.card(), removal.controllerId());
         }
         return result.anyChange();

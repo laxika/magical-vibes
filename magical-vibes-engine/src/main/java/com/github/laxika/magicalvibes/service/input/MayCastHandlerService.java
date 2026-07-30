@@ -781,14 +781,19 @@ public class MayCastHandlerService {
             return;
         }
 
-        // Verify the card is still in hand
-        List<Card> hand = gameData.playerHands.get(player.getId());
+        // Verify the card is still in hand. Mindclaw Shaman casts from the targeted player's hand,
+        // so the card is not necessarily in the choosing player's own hand.
+        List<Card> hand = null;
         int cardIndex = -1;
-        for (int i = 0; i < hand.size(); i++) {
-            if (hand.get(i).getId().equals(cardToCast.getId())) {
-                cardIndex = i;
-                break;
+        for (List<Card> candidate : gameData.playerHands.values()) {
+            for (int i = 0; i < candidate.size(); i++) {
+                if (candidate.get(i).getId().equals(cardToCast.getId())) {
+                    hand = candidate;
+                    cardIndex = i;
+                    break;
+                }
             }
+            if (cardIndex != -1) break;
         }
 
         if (cardIndex == -1) {
@@ -859,8 +864,9 @@ public class MayCastHandlerService {
             List<UUID> validTargets = buildValidSpellTargets(gameData, card, spellEffects);
 
             if (validTargets.isEmpty()) {
-                // No valid targets — card goes to graveyard
-                graveyardService.addCardToGraveyard(gameData, playerId, card);
+                // No valid targets — card goes to its owner's graveyard
+                UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : playerId;
+                graveyardService.addCardToGraveyard(gameData, ownerId, card);
                 gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets."));
                 log.info("Game {} - {} cast-from-hand has no valid targets", gameData.id, card.getName());
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

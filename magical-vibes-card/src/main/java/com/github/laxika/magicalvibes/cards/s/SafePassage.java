@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 
 @CardRegistration(set = "M10", collectorNumber = "28")
 @CardRegistration(set = "M11", collectorNumber = "26")
+@CardRegistration(set = "M13", collectorNumber = "30")
 public class SafePassage extends Card {
 
     public SafePassage() {

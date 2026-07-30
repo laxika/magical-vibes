@@ -79,6 +79,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final DestructionSupport destructionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MaySacrificeForCounterSupport maySacrificeForCounterSupport;
     private final LifeSupport lifeSupport;
+    private final com.github.laxika.magicalvibes.service.DrawService drawService;
     private final LibrarySearchSupport librarySearchSupport;
     private final SoulbondSupport soulbondSupport;
     private final MayAbilityTapCostService mayAbilityTapCostService;
@@ -855,6 +856,34 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (power > 0 && ctx.targetId() != null) {
             damageSupport.dealDividedDamageToAnyTargets(gameData, ctx.sourceCard(), ctx.controllerId(),
                     Map.of(ctx.targetId(), power));
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleSacrificeAnotherCreatureGainLifeAndDraw(GameData gameData, UUID permanentId,
+                                                             PermanentChoiceContext.SacrificeAnotherCreatureGainLifeAndDraw ctx) {
+        Permanent toSacrifice = gameQueryService.findPermanentById(gameData, permanentId);
+        if (toSacrifice == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+
+        // Capture effective power before removing from battlefield (static bonuses still apply;
+        // negative power counts as 0).
+        int power = Math.max(0, gameQueryService.getEffectivePower(gameData, toSacrifice));
+
+        permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
+
+        String playerName = gameData.playerIdToName.get(ctx.controllerId());
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices ", toSacrifice.getCard(), "."));
+        log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
+                toSacrifice.getCard().getName(), ctx.sourceCard().getName());
+
+        if (power > 0) {
+            lifeSupport.applyGainLife(gameData, ctx.controllerId(), power, ctx.sourceCard().getName());
+            for (int i = 0; i < power; i++) {
+                drawService.resolveDrawCard(gameData, ctx.controllerId());
+            }
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

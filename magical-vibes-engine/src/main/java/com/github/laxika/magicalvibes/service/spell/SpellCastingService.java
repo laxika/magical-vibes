@@ -2833,7 +2833,7 @@ public class SpellCastingService {
             EnumMap<ManaColor, Integer> promotedPool = new EnumMap<>(ManaColor.class);
             reserved.keySet().forEach(color -> promotedPool.put(color, pool.get(color)));
             try {
-                paySpellManaCost(gameData, playerId, card, effectiveXValue, List.of(), null);
+                paySpellManaCostFromNonHandZone(gameData, playerId, card, effectiveXValue);
             } finally {
                 if (!reserved.isEmpty()) {
                     // The reserved mana counts as spent first (it is the only thing it can pay for),
@@ -3031,7 +3031,7 @@ public class SpellCastingService {
         deck.removeFirst();
 
         // Pay mana cost
-        paySpellManaCost(gameData, playerId, card, effectiveXValue, List.of(), null);
+        paySpellManaCostFromNonHandZone(gameData, playerId, card, effectiveXValue);
 
         StackEntryType entryType = cardTypeToStackEntryType(card.getType());
 
@@ -3109,9 +3109,27 @@ public class SpellCastingService {
     public void paySpellManaCost(GameData gameData, UUID playerId, Card card, int effectiveXValue, List<ManaColor> convokeContributions, Integer phyrexianLifeCount, boolean kicked, int extraCostReduction, int targetingTax, String escalateManaSuffix) {
         gameData.addSpellCastManaSpent(card.getId(),
                 computeSpellManaPayment(gameData, playerId, card, effectiveXValue, convokeContributions,
-                        phyrexianLifeCount, kicked, extraCostReduction, targetingTax, escalateManaSuffix));
-        // Cavern of Souls: mana that carries an uncounterable rider makes the spell it paid for
-        // uncounterable for as long as it stays on the stack.
+                        phyrexianLifeCount, kicked, extraCostReduction, targetingTax, escalateManaSuffix, true));
+        applyUncounterableGrantingMana(gameData, playerId, card);
+    }
+
+    /**
+     * Pays a spell's mana cost for a cast from a zone other than the caster's hand (top of library,
+     * exile). Identical to {@link #paySpellManaCost(GameData, UUID, Card, int, List, Integer)} except
+     * that a hand-only battlefield free-cast source (Omniscience) does not apply.
+     */
+    public void paySpellManaCostFromNonHandZone(GameData gameData, UUID playerId, Card card, int effectiveXValue) {
+        gameData.addSpellCastManaSpent(card.getId(),
+                computeSpellManaPayment(gameData, playerId, card, effectiveXValue, List.of(),
+                        null, false, 0, 0, "", false));
+        applyUncounterableGrantingMana(gameData, playerId, card);
+    }
+
+    /**
+     * Cavern of Souls: mana that carries an uncounterable rider makes the spell it paid for
+     * uncounterable for as long as it stays on the stack.
+     */
+    private void applyUncounterableGrantingMana(GameData gameData, UUID playerId, Card card) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         if (pool != null && pool.consumeSpentUncounterableGrantingMana()) {
             gameData.spellsMadeUncounterable.add(card.getId());
@@ -3121,7 +3139,7 @@ public class SpellCastingService {
     private int computeSpellManaPayment(GameData gameData, UUID playerId, Card card, int effectiveXValue,
                                         List<ManaColor> convokeContributions, Integer phyrexianLifeCount,
                                         boolean kicked, int extraCostReduction, int targetingTax,
-                                        String escalateManaSuffix) {
+                                        String escalateManaSuffix, boolean fromHand) {
         String suffix = escalateManaSuffix != null ? escalateManaSuffix : "";
         String baseMana = card.getManaCost() != null ? card.getManaCost() : "";
         String totalMana = baseMana + suffix;
@@ -3132,7 +3150,7 @@ public class SpellCastingService {
 
         // Alternative zero cost (e.g. Rooftop Storm, As Foretold): skip the mana cost, but escalate
         // is still paid (CR 702.124c — free cast waives the mana cost, not additional costs).
-        if (castingCostService.consumeFreeCastFromBattlefield(gameData, playerId, card)) {
+        if (castingCostService.consumeFreeCastFromBattlefield(gameData, playerId, card, fromHand)) {
             if (suffix.isEmpty()) return 0;
             ManaCost escalateOnly = new ManaCost(suffix);
             if (!escalateOnly.canPay(pool, additionalCost)) {

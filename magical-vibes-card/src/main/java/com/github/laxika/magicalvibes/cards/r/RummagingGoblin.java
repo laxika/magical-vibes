@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "160")
+@CardRegistration(set = "M13", collectorNumber = "146")
 public class RummagingGoblin extends Card {
 
     public RummagingGoblin() {

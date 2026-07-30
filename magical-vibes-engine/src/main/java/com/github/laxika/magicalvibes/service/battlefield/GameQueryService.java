@@ -60,7 +60,8 @@ import com.github.laxika.magicalvibes.model.effect.AllDamageDealtWithWitherEffec
 import com.github.laxika.magicalvibes.model.effect.NoncombatDamageToOpponentCreaturesAsMinusCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceDamageCantBePreventedEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageCantReduceLifeBelowOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
+import com.github.laxika.magicalvibes.model.effect.LifeFloorCondition;
 import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourcesOfColorsAreColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
@@ -96,6 +97,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardAbilityGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardCardsCantBeTargetedEffect;
 import com.github.laxika.magicalvibes.model.effect.MadnessGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerHexproofEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
@@ -107,6 +109,7 @@ import com.github.laxika.magicalvibes.model.effect.TwistBasicLandManaColorsEffec
 import com.github.laxika.magicalvibes.model.effect.LandManaProducesFixedColorEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBySelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventColorDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfFromCreaturesEffect;
@@ -777,6 +780,15 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if cards in graveyards may be chosen as targets of spells and abilities.
+     * Returns {@code false} when a {@link GraveyardCardsCantBeTargetedEffect} is on any battlefield
+     * (e.g. Ground Seal). Non-targeting graveyard interaction is unaffected.
+     */
+    public boolean canGraveyardCardsBeTargeted(GameData gameData) {
+        return !anyBattlefieldHasStaticEffect(gameData, GraveyardCardsCantBeTargetedEffect.class);
+    }
+
+    /**
      * Returns {@code true} if the given player may activate abilities of creatures they control as
      * though those creatures had haste (i.e. they control a permanent with
      * {@link ActivateCreatureAbilitiesAsThoughHasteEffect}, e.g. Thousand-Year Elixir). This only
@@ -875,18 +887,29 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if damage dealt to this player can't reduce their life total below 1
-     * (Worship). This is true only when the player controls a permanent with
-     * {@link DamageCantReduceLifeBelowOneEffect} AND currently controls a creature (Worship's
-     * "If you control a creature" clause).
+     * Returns the highest life-total floor that damage dealt to this player can't reduce them past,
+     * or 0 when no {@link DamageLifeFloorEffect} on their battlefield currently applies. Each such
+     * effect only contributes its floor while its {@link LifeFloorCondition} holds, evaluated
+     * against the player's state before the damage is applied ({@code currentLife}).
      */
-    public boolean damageCantReduceLifeBelowOne(GameData gameData, UUID playerId) {
-        if (!playerBattlefieldHasStaticEffect(gameData, playerId, DamageCantReduceLifeBelowOneEffect.class)) {
-            return false;
-        }
+    public int damageLifeFloor(GameData gameData, UUID playerId, int currentLife) {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null) return false;
-        return bf.stream().anyMatch(p -> isCreature(gameData, p));
+        if (bf == null) return 0;
+        boolean controlsCreature = bf.stream().anyMatch(p -> isCreature(gameData, p));
+        int floor = 0;
+        for (Permanent perm : bf) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (!(effect instanceof DamageLifeFloorEffect lifeFloor)) continue;
+                boolean active = switch (lifeFloor.condition()) {
+                    case CONTROLS_A_CREATURE -> controlsCreature;
+                    case LIFE_AT_LEAST_FLOOR -> currentLife >= lifeFloor.floor();
+                };
+                if (active && currentLife >= lifeFloor.floor()) {
+                    floor = Math.max(floor, lifeFloor.floor());
+                }
+            }
+        }
+        return floor;
     }
 
     // --- Creature / type classification ---
@@ -3764,6 +3787,11 @@ public class GameQueryService {
         if (isCombatDamage && hasAuraWithEffect(gameData, creature, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) {
             return true;
         }
+        // Fog Bank: "Prevent all combat damage that would be dealt to and dealt by this creature."
+        if (isCombatDamage && creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(PreventAllCombatDamageToAndBySelfEffect.class::isInstance)) {
+            return true;
+        }
         if (isCombatDamage && gameData.creaturesPreventedFromDealingCombatDamage.contains(creature.getId())) {
             return true;
         }
@@ -3922,6 +3950,12 @@ public class GameQueryService {
             return false;
         }
         if (hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateTapAbilitiesEffect.class)) {
+            return false;
+        }
+
+        // Floating per-permanent lock (Detain, Xathrid Gorgon's petrification) — mana abilities
+        // are activated abilities too, so a blanket lock stops them as well.
+        if (isLockedFromActivatingAbilities(gameData, permanent.getId())) {
             return false;
         }
 

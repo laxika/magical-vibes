@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 @CardRegistration(set = "M12", collectorNumber = "114")
+@CardRegistration(set = "M13", collectorNumber = "111")
 public class TormentedSoul extends Card {
 
     public TormentedSoul() {

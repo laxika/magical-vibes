@@ -47,9 +47,10 @@ public class BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffectHandler imp
 
         String keywordName = e.keyword().name().charAt(0)
                 + e.keyword().name().substring(1).toLowerCase().replace('_', ' ');
-        String logEntry = equippedCreature.getCard().getName() + " gets +" + e.powerBoost() + "/+"
-                + e.toughnessBoost() + " and gains " + keywordName + " until end of turn.";
-        gameLogService.append(gameData, GameLog.builder().card(equippedCreature.getCard()).text(" gets +" + e.powerBoost() + "/+" + e.toughnessBoost() + " and gains " + keywordName + " until end of turn.").build());
+        String boostText = e.powerBoost() == 0 && e.toughnessBoost() == 0
+                ? ""
+                : " gets +" + e.powerBoost() + "/+" + e.toughnessBoost() + " and";
+        gameLogService.append(gameData, GameLog.builder().card(equippedCreature.getCard()).text(boostText + " gains " + keywordName + " until end of turn.").build());
         log.info("Game {} - {} gets +{}/+{} and gains {} until end of turn", gameData.id,
                 equippedCreature.getCard().getName(), e.powerBoost(), e.toughnessBoost(), e.keyword());
     }

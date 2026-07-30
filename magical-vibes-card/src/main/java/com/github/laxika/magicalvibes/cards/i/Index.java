@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffec
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "8ED", collectorNumber = "84")
+@CardRegistration(set = "M13", collectorNumber = "55")
 public class Index extends Card {
 
     public Index() {

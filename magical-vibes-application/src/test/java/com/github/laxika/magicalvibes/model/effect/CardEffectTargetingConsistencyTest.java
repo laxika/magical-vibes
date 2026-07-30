@@ -61,9 +61,6 @@ class CardEffectTargetingConsistencyTest {
             // Static marker: TargetingRestrictionEffect is a "can't be targeted by X" property read
             // by the target-legality services; it never resolves or targets anything itself.
             "TargetingRestrictionEffect",
-            // Pre-resolved: the losing player's UUID is stored in the record constructor
-            // (used by emblem/delayed effects that already know the player).
-            "TargetPlayerLosesGameEffect",
             // Pre-resolved: the draw-step player's UUID is baked into the stack entry when the
             // EACH_DRAW_TRIGGERED trigger is pushed in StepTriggerService (Maralen of the Mornsong);
             // it never enters the shared target-collection pipeline.

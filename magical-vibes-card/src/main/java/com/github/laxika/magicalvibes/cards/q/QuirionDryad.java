@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSou
 import java.util.Set;
 
 @CardRegistration(set = "10E", collectorNumber = "287")
+@CardRegistration(set = "M13", collectorNumber = "184")
 public class QuirionDryad extends Card {
 
     public QuirionDryad() {

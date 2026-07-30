@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "DKA", collectorNumber = "106")
+@CardRegistration(set = "M13", collectorNumber = "151")
 public class TorchFiend extends Card {
 
     public TorchFiend() {

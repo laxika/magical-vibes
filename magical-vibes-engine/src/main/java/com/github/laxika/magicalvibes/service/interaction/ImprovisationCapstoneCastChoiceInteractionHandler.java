@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 public class ImprovisationCapstoneCastChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.ImprovisationCapstoneCastChoice> {
 
-    private final ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport;
+    private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
     @Override
     public Class<PendingInteraction.ImprovisationCapstoneCastChoice> handledType() {
@@ -36,6 +36,6 @@ public class ImprovisationCapstoneCastChoiceInteractionHandler
                              PendingInteraction.ImprovisationCapstoneCastChoice interaction,
                              InteractionAnswer answer) {
         List<UUID> cardIds = ((InteractionAnswer.CardsChosen) answer).cardIds();
-        improvisationCapstoneCastSupport.castChosenSpellsWithoutPaying(gameData, player, cardIds);
+        exileFreeCastQueueSupport.castChosenSpellsWithoutPaying(gameData, player, cardIds);
     }
 }

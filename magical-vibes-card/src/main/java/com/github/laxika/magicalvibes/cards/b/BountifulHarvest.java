@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "M10", collectorNumber = "170")
 @CardRegistration(set = "M12", collectorNumber = "166")
+@CardRegistration(set = "M13", collectorNumber = "163")
 public class BountifulHarvest extends Card {
 
     public BountifulHarvest() {

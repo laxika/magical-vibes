@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link SearchLibraryForOneCardOfEachColorToHandEffect} (Conflux): searches the
  * controller's library for one card of each colour to hand, driven through the shared
- * {@link LibrarySearchSupport#startNextColorToHandPick} colour queue so that each colour is a
+ * {@link LibrarySearchSupport#startNextToHandPick} descriptor queue so that each colour is a
  * separate revealed pick and the library is shuffled once after the last colour.
  */
 @Component
@@ -51,7 +51,7 @@ public class SearchLibraryForOneCardOfEachColorToHandEffectHandler implements No
             return;
         }
 
-        librarySearchSupport.startNextColorToHandPick(gameData, controllerId,
+        librarySearchSupport.startNextToHandPick(gameData, controllerId,
                 LibrarySearchFollowUp.colorToHandPicks(COLORS));
     }
 }

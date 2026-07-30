@@ -8,6 +8,7 @@ package com.github.laxika.magicalvibes.model.filter;
 public sealed interface TargetFilter permits
         AnyTargetPredicateTargetFilter,
         ControlledPermanentPredicateTargetFilter,
+        GraveyardCardPredicateTargetFilter,
         OwnedPermanentPredicateTargetFilter,
         PermanentPredicateTargetFilter,
         PlayerPredicateTargetFilter,

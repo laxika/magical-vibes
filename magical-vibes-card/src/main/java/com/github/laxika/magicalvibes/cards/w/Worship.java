@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.DamageCantReduceLifeBelowOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
+import com.github.laxika.magicalvibes.model.effect.LifeFloorCondition;
 
 @CardRegistration(set = "9ED", collectorNumber = "55")
 @CardRegistration(set = "8ED", collectorNumber = "57")
@@ -11,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.DamageCantReduceLifeBelowOneE
 public class Worship extends Card {
 
     public Worship() {
-        addEffect(EffectSlot.STATIC, new DamageCantReduceLifeBelowOneEffect());
+        addEffect(EffectSlot.STATIC, new DamageLifeFloorEffect(1, LifeFloorCondition.CONTROLS_A_CREATURE));
     }
 }

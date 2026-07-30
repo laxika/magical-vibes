@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "56")
 @CardRegistration(set = "M12", collectorNumber = "56")
+@CardRegistration(set = "M13", collectorNumber = "53")
 public class HarborSerpent extends Card {
 
     public HarborSerpent() {

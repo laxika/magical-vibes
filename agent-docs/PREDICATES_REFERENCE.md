@@ -35,6 +35,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `OwnedPermanentPredicateTargetFilter` | `(PermanentPredicate, String errorMsg)` | Target only permanents YOU OWN matching predicate (ownership via stolenCreatures map) |
 | `StackEntryPredicateTargetFilter` | `(StackEntryPredicate, String errorMsg)` | Target a spell on the stack |
 | `PlayerPredicateTargetFilter` | `(PlayerPredicate, String errorMsg)` | Target a player matching predicate |
+| `GraveyardCardPredicateTargetFilter` | `(CardPredicate, GraveyardSearchScope)` | Target a card in a graveyard, with the scope declared **per target group** — this is what lets one spell take two graveyard targets with different scopes (Spelltwine: "target instant or sorcery card from your graveyard **and** target instant or sorcery card from an opponent's graveyard"). `null` predicate = any card. Enumeration (`ValidTargetService.computeValidGraveyardTargetsForFilter`), cast-time validation, and the CR 608.2b resolution recheck all key off this filter, so the effect itself just needs a graveyard `targetSpec()` and can stay unbound to read every chosen card |
 
 ## PermanentPredicate compositions
 

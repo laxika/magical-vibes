@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "74")
+@CardRegistration(set = "M13", collectorNumber = "70")
 public class StormtideLeviathan extends Card {
 
     public StormtideLeviathan() {

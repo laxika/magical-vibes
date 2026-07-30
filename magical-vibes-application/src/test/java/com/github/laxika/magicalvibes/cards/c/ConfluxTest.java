@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -40,7 +41,8 @@ class ConfluxTest extends BaseCardTest {
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.HAND);
         assertThat(search.params().reveals()).isTrue();
         assertThat(search.params().canFailToFind()).isTrue();
-        assertThat(search.params().followUp().remainingColorToHandPicks())
+        assertThat(search.params().followUp().remainingToHandPicks())
+                .extracting(LibrarySearchFollowUp.ToHandPick::color)
                 .containsExactly(CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN);
     }
 
@@ -80,7 +82,8 @@ class ConfluxTest extends BaseCardTest {
         var search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).extracting(Card::getName).containsExactly("Fugitive Wizard");
-        assertThat(search.params().followUp().remainingColorToHandPicks())
+        assertThat(search.params().followUp().remainingToHandPicks())
+                .extracting(LibrarySearchFollowUp.ToHandPick::color)
                 .containsExactly(CardColor.BLACK, CardColor.RED, CardColor.GREEN);
     }
 

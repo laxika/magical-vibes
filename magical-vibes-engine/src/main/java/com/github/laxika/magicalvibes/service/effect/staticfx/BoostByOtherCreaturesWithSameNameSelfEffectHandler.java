@@ -34,6 +34,7 @@ public class BoostByOtherCreaturesWithSameNameSelfEffectHandler implements Stati
         final int[] count = {0};
         gameData.forEachPermanent((playerId, permanent) -> {
             if (permanent.getId().equals(context.source().getId())) return;
+            if (boost.onlyControlled() && !playerId.equals(context.sourceControllerId())) return;
             if (!support.isEffectivelyCreature(permanent, hasAnimateArtifacts)) return;
             if (!sourceName.equals(permanent.getCard().getName())) return;
             count[0]++;

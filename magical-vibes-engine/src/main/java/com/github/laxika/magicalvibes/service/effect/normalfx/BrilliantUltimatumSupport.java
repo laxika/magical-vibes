@@ -36,7 +36,7 @@ public class BrilliantUltimatumSupport {
     private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport;
+    private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
     private final InputCompletionService inputCompletionService;
     private final com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator;
 
@@ -44,13 +44,13 @@ public class BrilliantUltimatumSupport {
     public BrilliantUltimatumSupport(GameLogService gameLogService,
                                      BattlefieldEntryService battlefieldEntryService,
                                      InteractionHandlerRegistry interactionHandlerRegistry,
-                                     @Lazy ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport,
+                                     @Lazy ExileFreeCastQueueSupport exileFreeCastQueueSupport,
                                      @Lazy InputCompletionService inputCompletionService,
                                      com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator) {
         this.gameLogService = gameLogService;
         this.battlefieldEntryService = battlefieldEntryService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
-        this.improvisationCapstoneCastSupport = improvisationCapstoneCastSupport;
+        this.exileFreeCastQueueSupport = exileFreeCastQueueSupport;
         this.inputCompletionService = inputCompletionService;
         this.mutationCoordinator = mutationCoordinator;
     }
@@ -145,7 +145,7 @@ public class BrilliantUltimatumSupport {
 
         if (!spellCardIds.isEmpty()) {
             // Reuses the shared exile free-cast queue (handles targeting, the stack, and cast triggers).
-            improvisationCapstoneCastSupport.castChosenSpellsWithoutPaying(gameData, player, spellCardIds);
+            exileFreeCastQueueSupport.castChosenSpellsWithoutPaying(gameData, player, spellCardIds);
             return;
         }
 

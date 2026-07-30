@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffect;
 
 @CardRegistration(set = "M12", collectorNumber = "76")
+@CardRegistration(set = "M13", collectorNumber = "69")
 public class SphinxOfUthuun extends Card {
 
     public SphinxOfUthuun() {

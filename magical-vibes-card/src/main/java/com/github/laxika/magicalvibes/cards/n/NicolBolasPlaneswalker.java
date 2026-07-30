@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "120")
+@CardRegistration(set = "M13", collectorNumber = "199")
 public class NicolBolasPlaneswalker extends Card {
 
     public NicolBolasPlaneswalker() {

@@ -252,6 +252,8 @@ public class MulliganService {
         gameData.status = GameStatus.RUNNING;
         gameData.activePlayerId = gameData.startingPlayerId;
         gameData.turnNumber = 1;
+        gameData.turnsTakenByPlayer.clear();
+        gameData.turnsTakenByPlayer.put(gameData.activePlayerId, 1);
         gameData.currentStep = TurnStep.first();
 
         String logEntry1 = "Mulligan phase complete!";

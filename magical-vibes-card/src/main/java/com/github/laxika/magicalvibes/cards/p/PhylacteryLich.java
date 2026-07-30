@@ -12,6 +12,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 @CardRegistration(set = "M11", collectorNumber = "110")
+@CardRegistration(set = "M13", collectorNumber = "104")
 public class PhylacteryLich extends Card {
 
     public PhylacteryLich() {

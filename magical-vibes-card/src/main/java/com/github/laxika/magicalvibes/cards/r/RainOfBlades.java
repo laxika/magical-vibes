@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "35")
+@CardRegistration(set = "M13", collectorNumber = "28")
 public class RainOfBlades extends Card {
 
     private static final PermanentPredicate ATTACKING_CREATURE = new PermanentAllOfPredicate(List.of(

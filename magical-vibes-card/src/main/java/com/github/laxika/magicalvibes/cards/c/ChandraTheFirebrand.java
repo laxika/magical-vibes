@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "124")
+@CardRegistration(set = "M13", collectorNumber = "123")
 public class ChandraTheFirebrand extends Card {
 
     public ChandraTheFirebrand() {

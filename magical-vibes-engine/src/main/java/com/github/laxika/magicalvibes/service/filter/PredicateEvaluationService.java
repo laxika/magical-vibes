@@ -107,6 +107,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePow
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
@@ -1129,6 +1130,8 @@ public class PredicateEvaluationService {
             case AnyTargetPredicateTargetFilter f ->
                     matchesPermanentPredicate(target, f.permanentPredicate(), filterContext);
             case PlayerPredicateTargetFilter ignored -> false;
+            // A graveyard-card group never matches a permanent target.
+            case GraveyardCardPredicateTargetFilter ignored -> false;
             // Stack-entry filters never restrict a permanent target.
             case StackEntryPredicateTargetFilter ignored -> true;
         };
@@ -1141,6 +1144,7 @@ public class PredicateEvaluationService {
             case PermanentPredicateTargetFilter f -> f.errorMessage();
             case AnyTargetPredicateTargetFilter f -> f.errorMessage();
             case PlayerPredicateTargetFilter f -> f.errorMessage();
+            case GraveyardCardPredicateTargetFilter ignored -> "Target must be a card in a graveyard";
             case StackEntryPredicateTargetFilter f -> f.errorMessage();
         };
     }

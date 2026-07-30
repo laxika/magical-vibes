@@ -144,7 +144,7 @@ public class DamageTriggerCollectorService {
             DamageSourceControllerAwareEffect trigger, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
         CardEffect effectToAdd = trigger.bindDamageSourceController(dc.damageSourceControllerId(), dc.damageDealt());
-        addDealtDamageEntry(match.gameData(), dc.damagedCreature(), effectToAdd);
+        addDealtDamageEntry(match.gameData(), dc.damagedCreature(), effectToAdd, dc.damageDealt());
         return true;
     }
 
@@ -434,16 +434,21 @@ public class DamageTriggerCollectorService {
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE)
     private boolean handleDealtDamageDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
-        addDealtDamageEntry(match.gameData(), dc.damagedCreature(), effect);
+        addDealtDamageEntry(match.gameData(), dc.damagedCreature(), effect, dc.damageDealt());
         return true;
     }
 
+    /**
+     * Queues a plain ON_DEALT_DAMAGE triggered ability. The damage dealt is snapshotted onto the
+     * entry's eventValue so "it deals that much damage" effects can read it with an
+     * {@code EventValue} amount (Stuffy Doll).
+     */
     private void addDealtDamageEntry(com.github.laxika.magicalvibes.model.GameData gameData,
-            Permanent damagedCreature, CardEffect effect) {
+            Permanent damagedCreature, CardEffect effect, int damageDealt) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, damagedCreature.getId());
         if (controllerId == null) return;
 
-        gameData.stack.add(new StackEntry(
+        StackEntry triggerEntry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 damagedCreature.getCard(),
                 controllerId,
@@ -451,7 +456,9 @@ public class DamageTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 damagedCreature.getId()
-        ));
+        );
+        triggerEntry.setEventValue(damageDealt);
+        gameData.stack.add(triggerEntry);
         gameLogService.append(gameData, GameLog.abilityTriggers(damagedCreature.getCard()));
         log.info("Game {} - {} ON_DEALT_DAMAGE trigger fires", gameData.id, damagedCreature.getCard().getName());
     }

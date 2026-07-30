@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
 
+@CardRegistration(set = "M13", collectorNumber = "210")
 @CardRegistration(set = "6ED", collectorNumber = "308")
 @CardRegistration(set = "5ED", collectorNumber = "395")
 @CardRegistration(set = "4ED", collectorNumber = "342")

@@ -7,5 +7,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "7ED", collectorNumber = "312")
 @CardRegistration(set = "9ED", collectorNumber = "306")
 @CardRegistration(set = "8ED", collectorNumber = "310")
+@CardRegistration(set = "M13", collectorNumber = "209")
 public class PhyrexianHulk extends Card {
 }

@@ -432,6 +432,15 @@ public class CombatAttackService {
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(attacker, playerId)));
 
+                // Filter out minimum-attackers conditionals (e.g. Odric, Master Tactician's
+                // "whenever this and at least three other creatures attack") when attacker count
+                // is below the threshold. Attacker count is snapshotted for resolution via xValue.
+                ConditionContext attackCountCtx = ConditionContext.forPermanent(attacker, playerId)
+                        .withXValue(attackerIndices.size());
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof MinimumAttackers
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(), attackCountCtx));
+
                 if (!allEffects.isEmpty()) {
                     // Separate non-targeting "you may" effects (e.g. Primeval Titan's may-search) from
                     // effects that need the normal resolution path (mandatory effects and targeting may effects
@@ -491,13 +500,14 @@ public class CombatAttackService {
                             // Capture the attacked player/planeswalker so non-targeting attack
                             // triggers that act on the defending player (e.g. Nemesis of Reason's
                             // MillDefendingPlayerEffect) can read it as attackedTargetId.
+                            // xValue locks the attacker count for MinimumAttackers (Odric / similar).
                             StackEntry attackTrigger = new StackEntry(
                                     StackEntryType.TRIGGERED_ABILITY,
                                     attacker.getCard(),
                                     playerId,
                                     attacker.getCard().getName() + "'s attack trigger",
                                     otherEffects,
-                                    null,
+                                    attackerIndices.size(),
                                     attacker.getId()
                             );
                             attackTrigger.setAttackedTargetId(attacker.getAttackTarget());

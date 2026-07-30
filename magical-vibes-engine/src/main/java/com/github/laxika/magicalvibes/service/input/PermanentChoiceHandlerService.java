@@ -143,6 +143,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleSacrificeArtifactForDividedDamage(gameData, permanentId, sadd);
         } else if (context instanceof PermanentChoiceContext.SacrificeAnotherCreatureDealPowerDamage sacpd) {
             battlefieldHandler.handleSacrificeAnotherCreatureDealPowerDamage(gameData, permanentId, sacpd);
+        } else if (context instanceof PermanentChoiceContext.SacrificeAnotherCreatureGainLifeAndDraw sacgld) {
+            battlefieldHandler.handleSacrificeAnotherCreatureGainLifeAndDraw(gameData, permanentId, sacgld);
         } else if (context instanceof PermanentChoiceContext.ExploitSacrifice exploitSac) {
             battlefieldHandler.handleExploitSacrifice(gameData, permanentId, exploitSac);
         } else if (context instanceof PermanentChoiceContext.ExploitTriggerTarget exploitTt) {

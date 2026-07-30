@@ -31,18 +31,24 @@ public class PutTargetOnTopOfLibraryEffectHandler implements NormalEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PutTargetOnTopOfLibraryEffect) effect;
+        boolean bothAndShuffle = e.scope() == PutOnTopOfLibraryScope.SELF_AND_TARGET;
 
-                Permanent target = e.scope() == PutOnTopOfLibraryScope.SELF
-                        ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
-                        : gameQueryService.findPermanentById(gameData, entry.getTargetId());
-                if (target == null) return;
+        if (e.scope() != PutOnTopOfLibraryScope.SELF) {
+            tuck(gameData, gameQueryService.findPermanentById(gameData, entry.getTargetId()), bothAndShuffle);
+        }
+        if (e.scope() != PutOnTopOfLibraryScope.TARGET) {
+            tuck(gameData, gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()), bothAndShuffle);
+        }
 
-                if (permanentRemovalService.removePermanentToLibraryTop(gameData, target)) {
-                    gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is put on top of its owner's library."));
-                    log.info("Game {} - {} put on top of library", gameData.id, target.getCard().getName());
-                }
+        permanentRemovalService.removeOrphanedAuras(gameData);
+    }
 
-                permanentRemovalService.removeOrphanedAuras(gameData);
-    
+    private void tuck(GameData gameData, Permanent permanent, boolean shuffle) {
+        if (permanent == null) return;
+
+        if (permanentRemovalService.removePermanentToLibraryTop(gameData, permanent, shuffle)) {
+            gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is put on top of its owner's library."));
+            log.info("Game {} - {} put on top of library", gameData.id, permanent.getCard().getName());
+        }
     }
 }

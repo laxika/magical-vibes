@@ -1692,7 +1692,9 @@ public class CombatDamageService {
                     log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger fires", gameData.id, data.card().getName());
                     continue;
                 }
-                gameData.stack.add(new StackEntry(
+                // The combat damage dealt snapshots onto eventValue so "it deals that much damage"
+                // effects can read it with an EventValue amount (Stuffy Doll).
+                StackEntry triggerEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         data.card(),
                         data.controllerId(),
@@ -1700,7 +1702,9 @@ public class CombatDamageService {
                         new ArrayList<>(List.of(effectToAdd)),
                         null,
                         data.permanentId()
-                ));
+                );
+                triggerEntry.setEventValue(data.damageDealt());
+                gameData.stack.add(triggerEntry);
                 gameLogService.append(gameData, GameLog.abilityTriggers(data.card()));
                 log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger fires", gameData.id, data.card().getName());
             }
@@ -1817,11 +1821,11 @@ public class CombatDamageService {
             if (gameQueryService.canPlayerLifeChange(gameData, defenderId)) {
                 int currentLife = gameData.getLife(defenderId);
                 int newLife = currentLife - state.damageToDefendingPlayer;
-                // Worship: combat damage can't reduce the controller's life total below 1 while they
-                // control a creature. The full damage is still dealt; only the life reduction is capped.
-                if (currentLife >= 1 && newLife < 1
-                        && gameQueryService.damageCantReduceLifeBelowOne(gameData, defenderId)) {
-                    newLife = 1;
+                // Worship / Elderscale Wurm: combat damage can't reduce the player's life total past an
+                // active floor. The full damage is still dealt; only the life reduction is capped.
+                int lifeFloor = gameQueryService.damageLifeFloor(gameData, defenderId, currentLife);
+                if (newLife < lifeFloor) {
+                    newLife = lifeFloor;
                 }
                 gameData.playerLifeTotals.put(defenderId, newLife);
                 int lifeLost = currentLife - newLife;

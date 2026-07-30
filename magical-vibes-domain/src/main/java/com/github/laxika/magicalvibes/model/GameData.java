@@ -62,6 +62,11 @@ public class GameData {
     public TurnStep currentStep;
     public UUID activePlayerId;
     public int turnNumber;
+    /**
+     * Number of turns each player has taken so far this game, including the turn currently in progress
+     * and any extra turns. Used by cards that speak of "your first, second, or third turns of the game".
+     */
+    public final Map<UUID, Integer> turnsTakenByPlayer = new ConcurrentHashMap<>();
     /** Final authoritative runtime result; null until the game has ended. */
     public GameEventFact.GameResult gameResult;
     public UUID winnerPlayerId;
@@ -594,8 +599,18 @@ public class GameData {
     /** Spell names a player has already resolved while controlling (for Paradigm's "first time" check). */
     public final Map<UUID, Set<String>> paradigmResolvedSpellNames = new ConcurrentHashMap<>();
 
-    /** Remaining exiled spells to cast for an in-progress Improvisation Capstone resolution. */
-    public final Deque<UUID> pendingImprovisationCapstoneCastQueue = new ArrayDeque<>();
+    /**
+     * Remaining exiled cards to cast for free during an in-progress resolution (Improvisation
+     * Capstone, Brilliant Ultimatum, Spelltwine's copies). Drained one card at a time so a cast that
+     * pauses for target selection can resume the rest.
+     */
+    public final Deque<UUID> pendingFreeCastQueue = new ArrayDeque<>();
+
+    /**
+     * Ids in {@link #pendingFreeCastQueue} that are copies, not real cards — they are cast as copies
+     * and cease to exist on resolution (CR 707.10a) instead of being put into a graveyard.
+     */
+    public final Set<UUID> pendingFreeCastAsCopyIds = ConcurrentHashMap.newKeySet();
 
     /** Delayed triggers from Chancellor-style opening hand reveals.
      *  Fires once per opponent when they cast their first spell of the game. */
@@ -2056,6 +2071,7 @@ public class GameData {
         copy.playerMulliganDecisionIds.putAll(this.playerMulliganDecisionIds);
         copy.playerBottomDecisionIds.putAll(this.playerBottomDecisionIds);
         copy.landsPlayedThisTurn.putAll(this.landsPlayedThisTurn);
+        copy.turnsTakenByPlayer.putAll(this.turnsTakenByPlayer);
         copy.additionalLandsThisTurn.putAll(this.additionalLandsThisTurn);
         this.permanentsEnteredBattlefieldThisTurn.forEach((k, v) ->
                 copy.permanentsEnteredBattlefieldThisTurn.put(k, new ArrayList<>(v)));
@@ -2328,7 +2344,8 @@ public class GameData {
             names.addAll(v);
             copy.paradigmResolvedSpellNames.put(k, names);
         });
-        copy.pendingImprovisationCapstoneCastQueue.addAll(this.pendingImprovisationCapstoneCastQueue);
+        copy.pendingFreeCastQueue.addAll(this.pendingFreeCastQueue);
+        copy.pendingFreeCastAsCopyIds.addAll(this.pendingFreeCastAsCopyIds);
 
         // --- Turn-scoped counters ---
         // Read by ConditionEvaluationService / AmountEvaluationService / TurnProgressionService and

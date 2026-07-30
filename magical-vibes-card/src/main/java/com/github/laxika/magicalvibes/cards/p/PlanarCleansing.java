@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M10", collectorNumber = "24")
+@CardRegistration(set = "M13", collectorNumber = "26")
 public class PlanarCleansing extends Card {
 
     public PlanarCleansing() {

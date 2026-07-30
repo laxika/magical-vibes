@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M11", collectorNumber = "158")
+@CardRegistration(set = "M13", collectorNumber = "155")
 public class VolcanicStrength extends Card {
 
     public VolcanicStrength() {

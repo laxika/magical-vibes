@@ -20,9 +20,11 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link ExchangeControlOfTargetPermanentsEffect} (Puca's Mischief). Reads the two targets
- * from {@code targetIds}: {@code [0]} the permanent the ability's controller controls, {@code [1]}
- * the opponent's permanent. Re-checks target legality at resolution (CR 701.10 / Gatherer ruling: if
- * either target has become illegal the exchange doesn't happen) and, if both are still legal, swaps
+ * from {@code targetIds}: for cards that pin the first target to the ability's controller, {@code [0]}
+ * is that controller's permanent and {@code [1]} the opponent's; for "two target creatures" wordings
+ * either slot may belong to anyone. Re-checks target legality at resolution (CR 701.12a: if either
+ * target has become illegal the exchange doesn't happen) and, if both are still legal and controlled
+ * by different players (CR 701.12b), swaps
  * their controllers permanently by creating two layer-2 control effects via {@link CreatureControlService}.
  */
 @Component
@@ -62,13 +64,17 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
             return;
         }
 
-        // Re-check legality (CR 701.10): the first target must still be a matching permanent the
-        // controller controls, the second a matching permanent an opponent controls (plus, for
-        // Puca's Mischief, with equal or lesser mana value). If any condition no longer holds, the
-        // exchange doesn't happen.
+        // Re-check legality (CR 701.12a): both targets must still be matching permanents and must be
+        // controlled by different players (CR 701.12b - if the same player controls both, the
+        // exchange does nothing). Cards whose wording pins the first target to the ability's
+        // controller ("target land you control and target land an opponent controls") additionally
+        // require that split; plus, for Puca's Mischief, equal or lesser mana value.
         ExchangeControlOfTargetPermanentsEffect exchange = (ExchangeControlOfTargetPermanentsEffect) effect;
-        boolean stillLegal = ownController.equals(controllerId)
-                && !opponentController.equals(controllerId)
+        boolean controllersDiffer = !ownController.equals(opponentController);
+        boolean ownershipSplitOk = !exchange.requireFirstTargetControlledByController()
+                || (ownController.equals(controllerId) && !opponentController.equals(controllerId));
+        boolean stillLegal = controllersDiffer
+                && ownershipSplitOk
                 && predicateEvaluationService.matchesPermanentPredicate(gameData, ownTarget, exchange.targetPredicate())
                 && predicateEvaluationService.matchesPermanentPredicate(gameData, opponentTarget, exchange.targetPredicate())
                 && (!exchange.requireOpponentManaValueNotGreater()

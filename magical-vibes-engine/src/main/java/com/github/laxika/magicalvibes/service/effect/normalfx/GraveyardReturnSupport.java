@@ -308,25 +308,33 @@ public class GraveyardReturnSupport {
                 return;
             }
 
+            boolean toBattlefield = effect.destination() == GraveyardChoiceDestination.BATTLEFIELD;
             graveyardService.beginGraveyardLeaveBatch(gameData);
             try {
                 for (Card card : toReturn) {
                     graveyard.remove(card);
-                    gameData.addCardToHand(controllerId, card);
                     trackedIds.remove(card.getId());
                     graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
+                    if (toBattlefield) {
+                        putCardOntoBattlefield(gameData, controllerId, card,
+                                effect.grantColor(), effect.grantSubtype(), effect.enterTapped());
+                        applyBattlefieldReturnRiders(gameData, controllerId, card, effect);
+                    } else {
+                        gameData.addCardToHand(controllerId, card);
+                    }
                 }
             } finally {
                 graveyardService.endGraveyardLeaveBatch(gameData);
             }
 
+            String destinationLabel = toBattlefield ? " from graveyard to the battlefield." : " from graveyard to hand.";
             String playerName = gameData.playerIdToName.get(controllerId);
             GameLog.Builder builder = GameLog.builder().text(playerName + " returns ");
             appendCardList(builder, toReturn);
-            builder.text(" from graveyard to hand.");
+            builder.text(destinationLabel);
             gameLogService.append(gameData, builder.build());
-            log.info("Game {} - {} returns {} card(s) from graveyard to hand",
-                    gameData.id, playerName, toReturn.size());
+            log.info("Game {} - {} returns {} card(s) from graveyard to {}",
+                    gameData.id, playerName, toReturn.size(), toBattlefield ? "battlefield" : "hand");
             return;
         }
 

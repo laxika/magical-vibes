@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
@@ -547,6 +548,13 @@ public class TargetLegalityService {
                 continue;
             }
 
+            // Graveyard-targeting position (the group declares which graveyards and which cards)
+            TargetFilter slotFilter = getPositionFilter(perPositionFilters, i);
+            if (slotFilter instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
+                validateGraveyardCardTarget(gameData, card, graveyardFilter, targetId, controllerId);
+                continue;
+            }
+
             // Permanent-targeting position
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) {
@@ -555,7 +563,7 @@ public class TargetLegalityService {
 
             // Apply per-position target filter if available; otherwise fall back to
             // the card-level targetFilter, or require a creature target as default.
-            TargetFilter positionFilter = getPositionFilter(perPositionFilters, i);
+            TargetFilter positionFilter = slotFilter;
             if (positionFilter != null) {
                 predicateEvaluationService.validateTargetFilter(positionFilter, target,
                         filterContext(gameData, card.getId(), controllerId));
@@ -573,6 +581,40 @@ public class TargetLegalityService {
         }
 
         validateMultiTargetConstraint(gameData, card.getMultiTargetConstraint(), targetIds);
+    }
+
+    /**
+     * Validates one target of a graveyard target group: the card must still be in a graveyard the
+     * group's scope allows and match the group's card filter.
+     */
+    private void validateGraveyardCardTarget(GameData gameData, Card card,
+                                             GraveyardCardPredicateTargetFilter filter,
+                                             UUID targetId, UUID controllerId) {
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, targetId);
+        UUID graveyardOwnerId = graveyardCard == null
+                ? null
+                : gameQueryService.findGraveyardOwnerById(gameData, targetId);
+        if (graveyardOwnerId == null) {
+            throw new IllegalStateException("Target card not found in any graveyard");
+        }
+        switch (filter.scope()) {
+            case CONTROLLERS_GRAVEYARD -> {
+                if (!graveyardOwnerId.equals(controllerId)) {
+                    throw new IllegalStateException("Target must be in your graveyard");
+                }
+            }
+            case OPPONENT_GRAVEYARD -> {
+                if (graveyardOwnerId.equals(controllerId)) {
+                    throw new IllegalStateException("Target must be in an opponent's graveyard");
+                }
+            }
+            case ALL_GRAVEYARDS -> { }
+        }
+        if (filter.predicate() != null
+                && !predicateEvaluationService.matchesCardPredicate(graveyardCard, filter.predicate(), card.getId())) {
+            throw new IllegalStateException("Target must be a "
+                    + CardPredicateUtils.describeFilter(filter.predicate()));
+        }
     }
 
     /**
@@ -645,10 +687,17 @@ public class TargetLegalityService {
             for (int i = 0; i < declaredTargetIds.size(); i++) {
                 UUID targetId = declaredTargetIds.get(i);
                 TargetFilter targetFilter = targetFilters.get(i);
-                boolean legal = secondaryTargetsAreOnStack
-                        ? checkSpellTargetOnStack(gameData, targetId, targetFilter, entry.getControllerId(),
-                                entry.getSourcePermanentSnapshot(), entry.getXValue()).isEmpty()
-                        : isBattlefieldTargetLegalOnResolution(gameData, entry, targetId, targetFilter);
+                boolean legal;
+                if (targetFilter instanceof GraveyardCardPredicateTargetFilter) {
+                    // A graveyard target group's positions live in a graveyard, not on the battlefield
+                    // (Spelltwine). It stays legal as long as the card is still in a graveyard.
+                    legal = gameQueryService.findCardInGraveyardById(gameData, targetId) != null;
+                } else if (secondaryTargetsAreOnStack) {
+                    legal = checkSpellTargetOnStack(gameData, targetId, targetFilter, entry.getControllerId(),
+                            entry.getSourcePermanentSnapshot(), entry.getXValue()).isEmpty();
+                } else {
+                    legal = isBattlefieldTargetLegalOnResolution(gameData, entry, targetId, targetFilter);
+                }
                 if (legal) {
                     anySecondaryTargetLegal = true;
                 } else {

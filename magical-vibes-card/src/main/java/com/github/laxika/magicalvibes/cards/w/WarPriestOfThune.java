@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M11", collectorNumber = "38")
+@CardRegistration(set = "M13", collectorNumber = "39")
 public class WarPriestOfThune extends Card {
 
     public WarPriestOfThune() {

@@ -268,6 +268,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
 
         gameData.interaction.clearAwaitingInput();
         gameData.turnNumber = 1;
+        gameData.turnsTakenByPlayer.clear();
 
         // Step 4: Each player draws 7 cards (CR 726 — pregame procedure)
         for (UUID playerId : gameData.orderedPlayerIds) {

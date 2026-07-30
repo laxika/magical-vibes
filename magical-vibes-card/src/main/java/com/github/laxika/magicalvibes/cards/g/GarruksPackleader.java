@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "177")
+@CardRegistration(set = "M13", collectorNumber = "175")
 public class GarruksPackleader extends Card {
 
     public GarruksPackleader() {

@@ -552,6 +552,29 @@ class TurnProgressionServiceTest {
         }
 
         @Test
+        @DisplayName("Increments the new active player's own turn count")
+        void incrementsTurnsTakenForNewActivePlayer() {
+            gd.turnsTakenByPlayer.put(player1Id, 1);
+
+            turnProgressionService.advanceTurn(gd);
+
+            assertThat(gd.turnsTakenByPlayer.get(player2Id)).isEqualTo(1);
+            assertThat(gd.turnsTakenByPlayer.get(player1Id)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("An extra turn counts toward its taker's own turn count")
+        void extraTurnCountsTowardTurnsTaken() {
+            gd.turnsTakenByPlayer.put(player1Id, 2);
+            gd.extraTurns.addLast(player1Id);
+
+            turnProgressionService.advanceTurn(gd);
+
+            assertThat(gd.activePlayerId).isEqualTo(player1Id);
+            assertThat(gd.turnsTakenByPlayer.get(player1Id)).isEqualTo(3);
+        }
+
+        @Test
         @DisplayName("Resets current step to UNTAP")
         void resetsCurrentStep() {
             gd.currentStep = TurnStep.CLEANUP;
