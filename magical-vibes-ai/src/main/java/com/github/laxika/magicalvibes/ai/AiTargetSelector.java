@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -491,14 +492,55 @@ class AiTargetSelector {
             return;
         }
         UUID boardOpponent = boardOwner.equals(aiPlayerId) ? opponentId : aiPlayerId;
-        gameData.playerBattlefields.getOrDefault(boardOwner, List.of()).stream()
+        List<Permanent> candidates = gameData.playerBattlefields.getOrDefault(boardOwner, List.of()).stream()
                 .filter(p -> !alreadyChosen.contains(p.getId()) && !chosen.contains(p.getId()))
                 .filter(p -> validTargetService.isValidMultiTargetPermanent(gameData, card, p, aiPlayerId, groupFilter))
                 .sorted(Comparator.comparingDouble(
                         (Permanent p) -> generalTargetPriority(gameData, p, boardOwner, boardOpponent)).reversed())
-                .limit((long) limit - chosen.size())
-                .map(Permanent::getId)
-                .forEach(chosen::add);
+                .toList();
+        for (Permanent candidate : candidates) {
+            if (chosen.size() >= limit) {
+                return;
+            }
+            // Checked against picks this call already made as well as earlier groups' — the
+            // restriction covers the whole chosen set, and a stream filter would only ever see
+            // the state the pipeline started with.
+            if (!satisfiesMultiTargetConstraint(gameData, card, candidate, alreadyChosen, chosen)) {
+                continue;
+            }
+            chosen.add(candidate.getId());
+        }
+    }
+
+    /**
+     * Whether adding {@code candidate} to the targets chosen so far still satisfies the card's
+     * cross-target restriction (CR 601.2c), which the per-position filters can't express. The
+     * engine rejects an announcement that violates it, so a candidate failing this check must be
+     * passed over rather than submitted.
+     */
+    private boolean satisfiesMultiTargetConstraint(GameData gameData, Card card, Permanent candidate,
+                                                   Set<UUID> alreadyChosen, List<UUID> chosen) {
+        MultiTargetConstraint constraint = card.getMultiTargetConstraint();
+        if (constraint == null) {
+            return true;
+        }
+        Set<UUID> chosenSoFar = new HashSet<>(alreadyChosen);
+        chosenSoFar.addAll(chosen);
+        for (UUID chosenId : chosenSoFar) {
+            Permanent other = gameQueryService.findPermanentById(gameData, chosenId);
+            if (other == null) {
+                continue; // A chosen player target imposes no permanent-to-permanent restriction
+            }
+            boolean compatible = switch (constraint) {
+                case SHARE_NO_CREATURE_TYPES -> !gameQueryService.shareCreatureType(gameData, other, candidate);
+                case SHARE_ARTIFACT_CREATURE_OR_LAND_TYPE ->
+                        gameQueryService.sharesArtifactCreatureOrLandType(other, candidate);
+            };
+            if (!compatible) {
+                return false;
+            }
+        }
+        return true;
     }
 
     boolean isValidPermanentTarget(GameData gameData, Card card, Permanent target, UUID aiPlayerId) {

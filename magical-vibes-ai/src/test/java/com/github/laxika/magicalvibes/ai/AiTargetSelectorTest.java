@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.p.PathToExile;
 import com.github.laxika.magicalvibes.cards.p.Pounce;
 import com.github.laxika.magicalvibes.cards.q.QuicksilverGeyser;
+import com.github.laxika.magicalvibes.cards.r.RivalsDuel;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Skulduggery;
 import com.github.laxika.magicalvibes.cards.s.SlaveOfBolas;
@@ -1361,6 +1362,38 @@ class AiTargetSelectorTest {
 
             assertThat(targets).isNotNull();
             assertThat(targets).hasSize(2);
+        }
+
+        @Test
+        @DisplayName("Rivals' Duel: never picks two creatures that share a creature type")
+        void rivalsDuelRespectsShareNoCreatureTypesConstraint() {
+            // Both opponent creatures are Bears, so the second target has to come from the
+            // AI's own board — picking the other Bear would have the cast rejected outright.
+            Permanent oppBearsOne = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+            Permanent oppBearsTwo = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+            Permanent ownAngel = harness.addToBattlefieldAndReturn(aiPlayer, new SerraAngel());
+
+            List<UUID> targets = targetSelector.chooseMultiTargets(gd, new RivalsDuel(), aiPlayer.getId());
+
+            assertThat(targets).hasSize(2);
+            assertThat(targets).contains(ownAngel.getId());
+            assertThat(targets).containsAnyOf(oppBearsOne.getId(), oppBearsTwo.getId());
+            assertThat(harness.getGameQueryService().shareCreatureType(
+                    gd,
+                    harness.getGameQueryService().findPermanentById(gd, targets.get(0)),
+                    harness.getGameQueryService().findPermanentById(gd, targets.get(1)))).isFalse();
+        }
+
+        @Test
+        @DisplayName("Rivals' Duel: returns null when every creature shares a creature type")
+        void rivalsDuelReturnsNullWhenOnlySharedTypesAvailable() {
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+
+            List<UUID> targets = targetSelector.chooseMultiTargets(gd, new RivalsDuel(), aiPlayer.getId());
+
+            assertThat(targets).isNull();
         }
 
         @Test
