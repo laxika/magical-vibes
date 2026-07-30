@@ -253,6 +253,8 @@ public class CardChoiceHandlerService {
             // Continue "each player discards" queue (e.g. Serum Raker's death trigger)
             if (!followUp.remainingEachPlayerDiscards().isEmpty()) {
                 playerInteractionSupport.startNextEachPlayerDiscard(gameData, followUp);
+                // The queue can drain without prompting anyone (every remaining player has an
+                // empty hand); fall through so the rest of the spell still resolves.
                 if (gameData.interaction.isAwaitingInput()) {
                     return;
                 }
@@ -344,27 +346,35 @@ public class CardChoiceHandlerService {
                         gameData.id, player.getUsername(), sourceCard.getName());
             }
 
-            // Resume resolving remaining effects on the same spell/ability
-            // (e.g. "Target player discards a card, then mills a card.")
-            if (gameData.pendingEffectResolutionEntry != null) {
-                effectResolutionService.resolveEffectsFrom(gameData,
-                        gameData.pendingEffectResolutionEntry,
-                        gameData.pendingEffectResolutionIndex);
-            }
-
-            // A resumed effect may have created a pending may ability
-            // (e.g. Frightful Delusion: discard → counter-unless-pay)
-            if (!gameData.pendingMayAbilities.isEmpty()) {
-                playerInputService.processNextMayAbility(gameData);
-                return;
-            }
-
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-
-            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            resumeRemainingEffectsAfterDiscard(gameData);
         }
+    }
+
+    /**
+     * Resumes the parked spell/ability once a discard flow has fully finished, then ends the
+     * input through {@link InputCompletionService}.
+     */
+    private void resumeRemainingEffectsAfterDiscard(GameData gameData) {
+        // Resume resolving remaining effects on the same spell/ability
+        // (e.g. "Target player discards a card, then mills a card.")
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        // A resumed effect may have created a pending may ability
+        // (e.g. Frightful Delusion: discard → counter-unless-pay)
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     /** Answers EXILE_FROM_HAND_CHOICE, including the multi-pick countdown carried on the record. */

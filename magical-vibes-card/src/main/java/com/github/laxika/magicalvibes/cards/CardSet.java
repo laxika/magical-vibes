@@ -23,6 +23,7 @@ public enum CardSet {
     SET_10E("10E"),
     SET_M10("M10"),
     SET_M11("M11"),
+    SET_M12("M12"),
     SET_LRW("LRW"),
     SET_MOR("MOR"),
     SET_SHM("SHM"),

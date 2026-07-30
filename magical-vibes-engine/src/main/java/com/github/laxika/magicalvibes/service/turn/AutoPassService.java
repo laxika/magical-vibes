@@ -179,8 +179,8 @@ public class AutoPassService {
         }
 
         // Process any pending enters-from-graveyard targeted triggers
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.EntersFromGraveyardTriggerTarget.class)) {
-            triggerCollectionService.processNextEntersFromGraveyardTriggerTarget(gameData);
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.EnteringPermanentAnyTargetTrigger.class)) {
+            triggerCollectionService.processNextEnteringPermanentAnyTarget(gameData);
         }
 
         // Process any pending saga chapter targeted triggers

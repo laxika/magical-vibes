@@ -205,6 +205,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("Tap abilities of " + permanent.getCard().getName() + " can't be activated (Serra Bestiary)");
         }
         validateNotBlockedByStaticAbilityLock(gameData, permanent);
+        validateNotBlockedByOpponentsTurnRestriction(gameData, playerId, permanent);
 
         permanent.tap();
 
@@ -598,6 +599,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
         }
         validateNotBlockedByStaticAbilityLock(gameData, permanent);
+        validateNotBlockedByOpponentsTurnRestriction(gameData, playerId, permanent);
         // Overwhelming Splendor: sacrifice abilities are never mana / loyalty abilities
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, null);
 
@@ -2133,6 +2135,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
         }
         validateNotBlockedByStaticAbilityLock(gameData, permanent);
+        validateNotBlockedByOpponentsTurnRestriction(gameData, playerId, permanent);
 
         // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
@@ -3121,6 +3124,20 @@ public class AbilityActivationService {
             throw new IllegalStateException(
                     "You can only activate mana abilities and loyalty abilities (Overwhelming Splendor)");
         }
+    }
+
+    /**
+     * Grand Abolisher: during its controller's turn, their opponents can't activate abilities of
+     * artifacts, creatures or enchantments. Mana abilities are included; abilities of lands and
+     * other permanent types stay usable.
+     */
+    private void validateNotBlockedByOpponentsTurnRestriction(GameData gameData, UUID playerId, Permanent permanent) {
+        if (!gameQueryService.isLockedOutByOpponentsTurnRestriction(gameData, playerId)) return;
+        if (!gameQueryService.isCreature(gameData, permanent)
+                && !gameQueryService.isArtifact(gameData, permanent)
+                && !gameQueryService.isEnchantment(gameData, permanent)) return;
+        throw new IllegalStateException("You can't activate abilities of artifacts, creatures, "
+                + "or enchantments during your opponent's turn");
     }
 
     private void validateNotBlockedByStaticAbilityLock(GameData gameData, Permanent permanent) {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "35")
+@CardRegistration(set = "M12", collectorNumber = "39")
 public class SunTitan extends Card {
 
     public SunTitan() {

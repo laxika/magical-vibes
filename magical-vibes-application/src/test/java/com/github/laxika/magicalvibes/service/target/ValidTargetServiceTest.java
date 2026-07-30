@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -819,6 +821,33 @@ class ValidTargetServiceTest {
 
             assertThat(response.validPermanentIds()).contains(creature.getId());
             assertThat(response.validPlayerIds()).containsExactlyInAnyOrder(player1Id, player2Id);
+        }
+
+        @Test
+        @DisplayName("filterless 'each of up to N targets' group offers players plus creatures only")
+        void filterlessGroupAbility_offersAnyTargets() {
+            Card sourceCard = createCreatureCard();
+            sourceCard.setColor(CardColor.RED);
+            ActivatedAbility ability = new ActivatedAbility(false, null,
+                    List.of(new DealDamageToEachTargetEffect(new Fixed(6))),
+                    "Deal 6 damage to each of up to six targets",
+                    null, -6, null, null, List.of(), 0, 6);
+
+            Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
+            Card landCard = new Card();
+            landCard.setName("Test Land");
+            landCard.setType(CardType.LAND);
+            Permanent land = addPermanentToBattlefield(player2Id, landCard);
+            when(gameQueryService.isCreature(gameData, creature)).thenReturn(true);
+            when(gameQueryService.isCreature(gameData, land)).thenReturn(false);
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
+                    gameData, sourceCard, ability, player1Id, 0);
+
+            assertThat(response.validPermanentIds()).containsExactly(creature.getId());
+            assertThat(response.validPlayerIds()).containsExactlyInAnyOrder(player1Id, player2Id);
+            assertThat(response.minTargets()).isZero();
+            assertThat(response.maxTargets()).isEqualTo(6);
         }
 
         @Test

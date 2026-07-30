@@ -325,6 +325,10 @@ public class Permanent {
     /** Zone the spell that produced this permanent was cast from, when known (gates "if cast from a
      *  graveyard, it enters with … counters" as-enters replacements — e.g. Worldheart Phoenix). */
     @Setter private Zone castFromZone;
+    /** Total bloodthirst granted to the spell that produced this permanent while it was on the stack
+     *  (Bloodlord of Vaasgoth). Read as an as-enters replacement alongside the card's printed
+     *  bloodthirst; per CR 702.54c each instance applies separately, so grants simply add up. */
+    @Setter private int grantedBloodthirst;
     /** Cards of the creatures sacrificed to this permanent's devour ability as it entered (CR 702.82).
      *  Read by {@code CreaturesDevoured} ("for each creature it devoured" — Tar Fiend) via its size and by
      *  {@code DevouredCreaturesOfSubtype} ("twice the number of Goblins it devoured" — Voracious Dragon). */
@@ -521,6 +525,7 @@ public class Permanent {
         this.evoked = source.evoked;
         this.prowl = source.prowl;
         this.castFromZone = source.castFromZone;
+        this.grantedBloodthirst = source.grantedBloodthirst;
         this.devouredCreatures.addAll(source.devouredCreatures);
         this.meldComponentCards.addAll(source.meldComponentCards);
         this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);

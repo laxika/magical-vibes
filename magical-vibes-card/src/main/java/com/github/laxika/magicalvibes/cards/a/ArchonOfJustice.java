@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EVE", collectorNumber = "1")
+@CardRegistration(set = "M12", collectorNumber = "6")
 public class ArchonOfJustice extends Card {
 
     public ArchonOfJustice() {

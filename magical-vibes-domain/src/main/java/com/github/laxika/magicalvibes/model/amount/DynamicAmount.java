@@ -69,6 +69,8 @@ public sealed interface DynamicAmount permits
         TargetSpellManaValue,
         TargetToughness,
         TargetPower,
+        TotalPowerOfCardsExiledWithSource,
+        TotalToughnessOfCardsExiledWithSource,
         UntappedLandsAtTurnStart,
         XValue {
 }

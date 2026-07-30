@@ -9,6 +9,15 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@code DamageSupport.applyControllerAllDamagePrevention}. Damage to the controller's permanents
  * is unaffected; contrast {@link PreventAllDamageToControllerAndExileFromGraveyardEffect}, which
  * carries a graveyard-exile rider.
+ *
+ * <p>With {@code onlyDuringControllersTurn} the prevention applies only while the controller is the
+ * active player ("During your turn, prevent all damage that would be dealt to you.", Personal
+ * Sanctuary).
  */
-public record PreventAllDamageToControllerEffect() implements CardEffect {
+public record PreventAllDamageToControllerEffect(boolean onlyDuringControllersTurn)
+        implements CardEffect {
+
+    public PreventAllDamageToControllerEffect() {
+        this(false);
+    }
 }

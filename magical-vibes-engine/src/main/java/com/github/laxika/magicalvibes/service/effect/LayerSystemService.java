@@ -1036,12 +1036,12 @@ public class LayerSystemService {
                             null, false, false, null, grant.supertype()));
                 }
             }
-            case GrantChosenSubtypeToOwnCreaturesEffect ignored -> {
+            case GrantChosenSubtypeToOwnCreaturesEffect grant -> {
                 manage(board, instance);
                 if (instance.source() == null) return;
                 CardSubtype chosen = instance.source().permanent().getChosenSubtype();
                 if (chosen == null) return;
-                for (PermanentSlot target : scopeTargets(instance, GrantScope.OWN_CREATURES, null, slots, slotsById, board)) {
+                for (PermanentSlot target : scopeTargets(instance, grant.scope(), null, slots, slotsById, board)) {
                     states.get(target.permanent().getId()).addSubtype(chosen);
                     record(board, instance, target, new L4Contribution(
                             chosen, false, false, null, null));
@@ -1282,6 +1282,11 @@ public class LayerSystemService {
         PermanentSlot source = instance.source();
         List<PermanentSlot> targets = new ArrayList<>();
         switch (scope) {
+            case SELF -> {
+                if (matchesL4Filter(source, filter, board)) {
+                    targets.add(source);
+                }
+            }
             case ENCHANTED_CREATURE, ENCHANTED_PERMANENT, EQUIPPED_CREATURE -> {
                 Permanent sourcePermanent = source.permanent();
                 if (sourcePermanent.isAttached()) {

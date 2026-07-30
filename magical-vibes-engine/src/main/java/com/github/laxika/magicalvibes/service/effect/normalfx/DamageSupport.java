@@ -678,6 +678,7 @@ public class DamageSupport {
                                 : null,
                         effectiveDamage);
                 triggerCollectionService.checkNoncombatDamageToOpponentTriggers(gameData, playerId);
+                triggerCollectionService.checkRedSpellOrPlaneswalkerDamageToOpponentTriggers(gameData, playerId, entry);
                 checkSpellLifelink(gameData, entry, effectiveDamage);
             }
         }
@@ -903,7 +904,9 @@ public class DamageSupport {
     /**
      * Glacial Chasm: "Prevent all damage that would be dealt to you." Returns how much of the
      * damage aimed at {@code playerId} is prevented (all of it, when they control a permanent with
-     * {@link PreventAllDamageToControllerEffect} and the damage is preventable).
+     * {@link PreventAllDamageToControllerEffect} and the damage is preventable). Effects flagged
+     * {@code onlyDuringControllersTurn} (Personal Sanctuary) apply only while that player is the
+     * active player.
      */
     public int applyControllerAllDamagePrevention(GameData gameData, UUID playerId, int damage) {
         if (!gameQueryService.isDamagePreventable(gameData)) return 0;
@@ -912,9 +915,11 @@ public class DamageSupport {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return 0;
 
+        boolean controllersTurn = playerId.equals(gameData.activePlayerId);
         boolean hasEffect = battlefield.stream().anyMatch(p ->
                 p.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> e instanceof PreventAllDamageToControllerEffect));
+                        .anyMatch(e -> e instanceof PreventAllDamageToControllerEffect prevent
+                                && (!prevent.onlyDuringControllersTurn() || controllersTurn)));
         return hasEffect ? damage : 0;
     }
 

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesHandAndGrav
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "75")
+@CardRegistration(set = "M12", collectorNumber = "77")
 public class TimeReversal extends Card {
 
     public TimeReversal() {

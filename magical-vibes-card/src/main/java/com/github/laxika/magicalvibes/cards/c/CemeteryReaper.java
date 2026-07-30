@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M10", collectorNumber = "87")
+@CardRegistration(set = "M12", collectorNumber = "86")
 public class CemeteryReaper extends Card {
 
     public CemeteryReaper() {

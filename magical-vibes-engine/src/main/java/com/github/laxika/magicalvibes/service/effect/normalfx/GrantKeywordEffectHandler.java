@@ -155,9 +155,16 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             // abilities" or keyword removal survives it (and vice versa). The legacy bucket is
             // still written for direct Permanent.hasKeyword callers; the layered pass seeds it
             // and then replays this grant at its real timestamp.
-            bucketFor(target, grant.duration()).addAll(grant.keywords());
+            // WHILE_SOURCE_ON_BATTLEFIELD grants live only as floating effects: the legacy
+            // buckets are both cleared by turn cleanup, which would silently end the grant.
+            if (grant.duration() != GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD) {
+                bucketFor(target, grant.duration()).addAll(grant.keywords());
+            }
+            UUID floatingSourceId = grant.duration() == GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                    ? entry.getSourcePermanentId()
+                    : null;
             gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
-                    entry.getCard().getName(), null, entry.getControllerId(), grant,
+                    entry.getCard().getName(), floatingSourceId, entry.getControllerId(), grant,
                     target.getId(), null, null, floatingDurationFor(grant.duration()), 0));
             String keywordNames = formatKeywords(grant.keywords());
             String logEntry = target.getCard().getName() + " gains " + keywordNames + " " + durationLabel(grant.duration()) + ".";
@@ -167,9 +174,11 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
     }
 
     private EffectDuration floatingDurationFor(GrantDuration duration) {
-        return duration == GrantDuration.UNTIL_YOUR_NEXT_TURN
-                ? EffectDuration.UNTIL_YOUR_NEXT_TURN
-                : EffectDuration.UNTIL_END_OF_TURN;
+        return switch (duration) {
+            case UNTIL_YOUR_NEXT_TURN -> EffectDuration.UNTIL_YOUR_NEXT_TURN;
+            case WHILE_SOURCE_ON_BATTLEFIELD -> EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD;
+            case END_OF_TURN -> EffectDuration.UNTIL_END_OF_TURN;
+        };
     }
 
     private Set<Keyword> bucketFor(Permanent permanent, GrantDuration duration) {
@@ -179,9 +188,11 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
     }
 
     private String durationLabel(GrantDuration duration) {
-        return duration == GrantDuration.UNTIL_YOUR_NEXT_TURN
-                ? "until your next turn"
-                : "until end of turn";
+        return switch (duration) {
+            case UNTIL_YOUR_NEXT_TURN -> "until your next turn";
+            case WHILE_SOURCE_ON_BATTLEFIELD -> "for as long as you control its source";
+            case END_OF_TURN -> "until end of turn";
+        };
     }
 
     private String formatKeywords(Set<Keyword> keywords) {

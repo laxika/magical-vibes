@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpel
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "71")
+@CardRegistration(set = "M12", collectorNumber = "74")
 public class Redirect extends Card {
 
     public Redirect() {

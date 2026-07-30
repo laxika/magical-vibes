@@ -979,6 +979,9 @@ public class SpellCastTriggerCollectorService {
                 entry.setTargetId(castingPlayerId);
                 entry.setNonTargeting(true);
             }
+            // Contextual "it" = the spell that caused the trigger, still on the stack below this
+            // ability (Bloodlord of Vaasgoth's bloodthirst grant).
+            entry.setTriggeringCardId(spellCard.getId());
             match.gameData().stack.add(entry);
         }
         return true;

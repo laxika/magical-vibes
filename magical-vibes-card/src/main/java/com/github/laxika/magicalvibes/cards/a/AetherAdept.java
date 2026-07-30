@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M11", collectorNumber = "41")
+@CardRegistration(set = "M12", collectorNumber = "41")
 public class AetherAdept extends Card {
 
     public AetherAdept() {

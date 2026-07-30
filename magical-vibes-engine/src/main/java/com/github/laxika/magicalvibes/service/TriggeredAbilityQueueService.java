@@ -612,10 +612,10 @@ public class TriggeredAbilityQueueService {
         }
     }
 
-    public void processNextEntersFromGraveyardTriggerTarget(GameData gameData) {
-        while (gameData.hasPendingInteraction(PermanentChoiceContext.EntersFromGraveyardTriggerTarget.class)) {
-            PermanentChoiceContext.EntersFromGraveyardTriggerTarget pending =
-                    gameData.peekPendingInteraction(PermanentChoiceContext.EntersFromGraveyardTriggerTarget.class);
+    public void processNextEnteringPermanentAnyTarget(GameData gameData) {
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.EnteringPermanentAnyTargetTrigger.class)) {
+            PermanentChoiceContext.EnteringPermanentAnyTargetTrigger pending =
+                    gameData.peekPendingInteraction(PermanentChoiceContext.EnteringPermanentAnyTargetTrigger.class);
 
             // "Any target" — every creature and planeswalker on every battlefield, plus every player.
             List<UUID> validPermanentTargets = new ArrayList<>();
@@ -633,7 +633,7 @@ public class TriggeredAbilityQueueService {
             List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
 
             // There are always valid targets (at least the players).
-            gameData.pollPendingInteraction(PermanentChoiceContext.EntersFromGraveyardTriggerTarget.class);
+            gameData.pollPendingInteraction(PermanentChoiceContext.EnteringPermanentAnyTargetTrigger.class);
             gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
                     validPermanentTargets, validPlayerTargets,

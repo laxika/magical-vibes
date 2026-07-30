@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M10", collectorNumber = "203")
 @CardRegistration(set = "M11", collectorNumber = "195")
+@CardRegistration(set = "M12", collectorNumber = "193")
 public class RuneclawBear extends Card {
 }

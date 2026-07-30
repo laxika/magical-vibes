@@ -19,5 +19,14 @@ public enum GrantDuration {
     END_OF_TURN,
 
     /** Lasts until the start of the controller's next turn (via {@code Permanent.untilNextTurnKeywords}). */
-    UNTIL_YOUR_NEXT_TURN
+    UNTIL_YOUR_NEXT_TURN,
+
+    /**
+     * "for as long as you control [source]" (Aegis Angel). Neither temporary bucket applies: the
+     * grant is stamped as an {@code EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD} floating layer-6
+     * effect keyed to the source permanent, so it survives cleanup and ends only when the source
+     * leaves the battlefield ({@code GameData.expireFloatingEffectsForDepartedSource}) or its
+     * creator loses control of it ({@code CreatureControlService}).
+     */
+    WHILE_SOURCE_ON_BATTLEFIELD
 }

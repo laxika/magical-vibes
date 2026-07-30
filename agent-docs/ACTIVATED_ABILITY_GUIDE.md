@@ -157,6 +157,25 @@ Counted in `GameData.activatedAbilityUsesThisGame` (permanent id → ability ind
 
 ---
 
+### 3c. Modal ability ("{cost}: Choose one …")
+
+Put a raw `ChooseOneEffect` in the ability's effect list. Unlike a modal *spell* (mode unwrapped at cast time in `SpellCastingService`), an activated ability keeps the `ChooseOneEffect` on the stack and `ChooseOneEffectHandler` prompts for the mode as the ability resolves. A mode may hold several effects via `ChooseOneOption(label, List.of(...))`.
+
+```java
+// {G}: Choose one. Activate only once each turn.
+addActivatedAbility(new ActivatedAbility(false, "{G}", List.of(new ChooseOneEffect(List.of(
+        new ChooseOneEffect.ChooseOneOption(RHINO_MODE, List.of(
+                new SourceBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.RHINO),
+                new SetBasePowerToughnessEffect(4, 4, GrantScope.SELF),
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF))),
+        …))),
+        "{G}: Choose one. Activate only once each turn.", 1));
+```
+
+**Limitation:** the per-mode `targetFilter` is only wired into the cast path, so modes must be non-targeting. Skinshifter. Tests answer the prompt with `harness.handleListChoice(player, modeLabel)`.
+
+---
+
 ### 4. Ability with timing restriction
 
 ```java
@@ -466,6 +485,8 @@ new ActivatedAbility(requiresTap, manaCost, effects, description,
 **Use when:** The ability targets multiple permanents or players. Each position in `multiTargetFilters` (a `List<TargetFilter>`) constrains the corresponding target selection. Use `PlayerPredicateTargetFilter` for player-targeting positions or permanent filters for permanent-targeting positions. `minTargets` and `maxTargets` define the required count. The frontend enters multi-target selection mode when `maxTargets > 1`. Targets are passed via `StackEntry.getTargetIds()`.
 
 Cards: `BrassSquire` (2 targets: Equipment + creature), `SoulConduit` (2 targets: player + player)
+
+**Filterless "any target" group** ("−6: deals 6 damage to each of up to six targets" — Chandra, the Firebrand): pass `multiTargetFilters = List.of()` with `minTargets 0` / `maxTargets 6` on the full ctor. With no global and no per-position filter, `ValidTargetService`/`TargetLegalityService` derive the slot type from the effects' `targetSpec()`: when every permanent-targeting effect also targets players the slot is "any target", so players are offered alongside creatures and planeswalkers and every other permanent type is rejected. A filterless group is routed onto the multi-target path by `maxTargets > 1` even though `isMultiTarget()` (per-position filters) is false — X-scaled groups stay on the single-target path.
 
 **X-scaled target count** ("{X}, {T}, Sacrifice this artifact: X target creatures with power 2 or less can't be blocked this turn" — Runed Arch): use the full ctor with a single `targetFilter`, empty `multiTargetFilters`, `minTargets = 0` and a sanity `maxTargets` cap, then chain `.withXScaledTargets()`. This is the ability-side counterpart of `Card.targetX`: the paid X bounds the target count via `ActivatedAbility.getEffectiveMinTargets/MaxTargets(x)`, honoured by `TargetLegalityService.validateMultiTargetAbility(..., xValue)` and `ValidTargetService.computeValidTargetsForAbility(..., xValue)`. Per-position filtering falls back to the ability's single `targetFilter`, and the chosen group rides on `StackEntry.getTargetIds()` (so any handler that fans over `getTargetIds()` — e.g. `MakeCreatureUnblockableEffect` — works unchanged).
 
@@ -857,6 +878,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD` | Enchanted permanent leaves battlefield (any destination) |
 | `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD` | Opponent's land enters. Wrap with `ConditionalEffect(new PermanentEnteredThisTurn(predicate, minCount), wrapped)` for "second+ land" |
 | `ON_ALLY_LAND_ENTERS_BATTLEFIELD` | Your land enters (landfall) |
+| `GRAVEYARD_ON_COMBAT_DAMAGE_TO_YOU_OR_YOUR_PLANESWALKER` | Combat damage is dealt to the controller or to a planeswalker they control, while this card is in their graveyard. Fires once per combat damage step per damaged player in `CombatDamageService.checkGraveyardCombatDamageToYouOrPlaneswalkerTriggers`. Unlike every other graveyard slot this one **targets**: the trigger is routed through the `AttackTriggerTarget` pending-choice pipeline, so the card's `target(...)` filter narrows the legal targets and the ability is skipped when none exist (CR 603.3c). Used by Vengeful Pharaoh (`ConditionalEffect(SourceCardInGraveyard, DestroyTargetPermanentEffect)` + `PutSourceCardFromGraveyardIntoLibraryNFromTopEffect(0)`, `TargetFilters.attackingCreature()`) |
 | `GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD` | Like ON_ALLY_LAND_ENTERS_BATTLEFIELD but fires from the controller's graveyard. Wrap in `TriggeringCardConditionalEffect(new CardSubtypePredicate(...), wrapped)` to filter by the entering land, and wrap the inner effect in `MayEffect(ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardIsSelfPredicate()).build(), ...)` for "you may return this card from your graveyard to your hand". Scanned over the land controller's graveyard in `TriggerCollectionService.checkAllyLandEntersTriggers`. Used by Reach of Branches ("whenever a Forest you control enters") |
 | `ON_OPPONENT_CREATURE_DIES` | An opponent's creature dies |
 | `ON_DEALT_DAMAGE` | This creature is dealt damage (combat or non-combat) |
@@ -867,6 +889,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_OPPONENT_SHUFFLES_LIBRARY` | Opponent shuffles library |
 | `ON_CONTROLLER_GAINS_LIFE` | Controller gains life |
 | `ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE` | Opponent dealt noncombat damage |
+| `GRAVEYARD_ON_OPPONENT_DAMAGED_BY_RED_SPELL_OR_PLANESWALKER` | Opponent dealt damage by your red instant/sorcery spell or red planeswalker, fired from your graveyard |
 | `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER` | A creature you control deals combat damage to a player |
 | `ON_SELF_MILLED` | This card is milled into graveyard |
 | `STATE_TRIGGERED` | State-triggered ability (rule 603.8). Fires when predicate is true, won't retrigger while on stack |

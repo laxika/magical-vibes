@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
+import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp.SameNamePickQueue;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -165,34 +166,42 @@ public class LibrarySearchSupport {
     }
 
     /**
-     * Starts the next pending "search for a card with the same name and put it onto the battlefield
-     * tapped" pick from the follow-up's same-name queue (Clarion Ultimatum). Each queue entry is one
-     * chosen permanent's name; the advanced remainder rides the begun search. Names with no matching
-     * card in the library are skipped. Returns true if a search was initiated, false if the queue is
-     * exhausted, search is prevented, or the library is empty.
+     * Starts the next pending "search for a card with the same name and put it onto the battlefield"
+     * pick from the follow-up's same-name queue (Clarion Ultimatum, Doubling Chant). Each queue entry
+     * is one permanent's name; the queue's own destination and creature-only restriction apply to
+     * every pick, and the advanced remainder rides the begun search. Names with no matching card in
+     * the library are skipped. Returns true if a search was initiated, false if the queue is
+     * exhausted or absent, search is prevented, or the library is empty.
      */
     public boolean startNextSameNamePick(GameData gameData, UUID playerId, LibrarySearchFollowUp followUp) {
         if (isSearchPrevented(gameData, playerId)) return false;
 
+        SameNamePickQueue queue = followUp.remainingSameNamePicks();
+        if (queue == null) return false;
+
+        boolean tapped = queue.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED;
         List<Card> deck = gameData.playerDecks.get(playerId);
-        List<String> remaining = new ArrayList<>(followUp.remainingSameNamePicks());
+        List<String> remaining = new ArrayList<>(queue.names());
         while (!remaining.isEmpty()) {
             String name = remaining.remove(0);
             if (deck == null || deck.isEmpty()) {
                 return false;
             }
-            List<Card> matches = deck.stream().filter(card -> name.equals(card.getName())).toList();
+            List<Card> matches = deck.stream()
+                    .filter(card -> name.equals(card.getName()))
+                    .filter(card -> !queue.creatureOnly() || card.hasType(CardType.CREATURE))
+                    .toList();
             if (matches.isEmpty()) {
                 continue;
             }
-            String prompt = "You may search your library for a card named " + name
-                    + " and put it onto the battlefield tapped.";
+            String prompt = "You may search your library for a " + (queue.creatureOnly() ? "creature card" : "card")
+                    + " named " + name + " and put it onto the battlefield" + (tapped ? " tapped." : ".");
             sendLibrarySearchToPlayer(gameData, playerId,
                     LibrarySearchParams.builder(playerId, new ArrayList<>(matches))
                             .canFailToFind(true)
                             .filterCardName(name)
-                            .destination(LibrarySearchDestination.BATTLEFIELD_TAPPED)
-                            .followUp(followUp.withRemainingSameNamePicks(remaining))
+                            .destination(queue.destination())
+                            .followUp(followUp.withRemainingSameNamePicks(queue.withNames(remaining)))
                             .build(), prompt, true);
             return true;
         }
@@ -286,6 +295,26 @@ public class LibrarySearchSupport {
             boolean canFailToFind,
             LibrarySearchDestination destination,
             LibrarySearchFollowUp followUp) {
+        return performLibrarySearch(gameData, controllerId, filter, noMatchDescription, prompt,
+                reveals, canFailToFind, destination, followUp, null);
+    }
+
+    /**
+     * @param attachToPermanentId when non-null (paired with
+     *        {@link LibrarySearchDestination#BATTLEFIELD_ATTACHED_TO_PERMANENT}), the found card
+     *        enters the battlefield attached to that permanent.
+     */
+    public boolean performLibrarySearch(
+            GameData gameData,
+            UUID controllerId,
+            Predicate<Card> filter,
+            String noMatchDescription,
+            String prompt,
+            boolean reveals,
+            boolean canFailToFind,
+            LibrarySearchDestination destination,
+            LibrarySearchFollowUp followUp,
+            UUID attachToPermanentId) {
         if (isSearchPrevented(gameData, controllerId)) return false;
 
         List<Card> deck = gameData.playerDecks.get(controllerId);
@@ -313,6 +342,7 @@ public class LibrarySearchSupport {
                 .prompt(prompt)
                 .destination(destination)
                 .followUp(followUp)
+                .attachToPermanentId(attachToPermanentId)
                 .build(), prompt, canFailToFind);
 
         log.info("Game {} - {} searches their library ({} matches)", gameData.id, playerName, matchingCards.size());

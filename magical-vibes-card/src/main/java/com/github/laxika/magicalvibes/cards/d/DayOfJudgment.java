@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "12")
+@CardRegistration(set = "M12", collectorNumber = "12")
 public class DayOfJudgment extends Card {
 
     public DayOfJudgment() {

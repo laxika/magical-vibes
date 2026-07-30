@@ -10,5 +10,12 @@ import java.util.UUID;
  * At trigger collection time, a new instance with actual values is created
  * and placed on the stack.
  */
-public record DamageSourceControllerSacrificesPermanentsEffect(int count, UUID sacrificingPlayerId) implements CardEffect {
+public record DamageSourceControllerSacrificesPermanentsEffect(int count, UUID sacrificingPlayerId)
+        implements DamageSourceControllerAwareEffect {
+
+    @Override
+    public CardEffect bindDamageSourceController(UUID controllerId, int damageDealt) {
+        if (controllerId == null || damageDealt <= 0) return this;
+        return new DamageSourceControllerSacrificesPermanentsEffect(damageDealt, controllerId);
+    }
 }

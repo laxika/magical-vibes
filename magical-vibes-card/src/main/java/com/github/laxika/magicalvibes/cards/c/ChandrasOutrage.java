@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "128")
+@CardRegistration(set = "M12", collectorNumber = "125")
 public class ChandrasOutrage extends Card {
 
     public ChandrasOutrage() {

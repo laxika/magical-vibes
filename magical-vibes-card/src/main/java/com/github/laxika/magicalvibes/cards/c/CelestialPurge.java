@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "M10", collectorNumber = "7")
 @CardRegistration(set = "M11", collectorNumber = "9")
+@CardRegistration(set = "M12", collectorNumber = "11")
 @CardRegistration(set = "CON", collectorNumber = "5")
 public class CelestialPurge extends Card {
 

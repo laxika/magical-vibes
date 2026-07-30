@@ -296,10 +296,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  creature or player before the triggered ability goes on the stack. */
     record DrawTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
-    /** "Whenever a creature enters from your graveyard, that creature deals damage equal to its power to
-     *  any target." The {@code sourcePermanentId} points at the creature that entered (the damage source);
-     *  {@code sourceCard} is the permanent whose ability triggered (e.g. Flayer of the Hatebound). */
-    record EntersFromGraveyardTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+    /** An enters-the-battlefield trigger that needs an "any target" choice and whose effect resolves
+     *  against the permanent that just entered rather than the triggering permanent — e.g. "that creature
+     *  deals damage equal to its power to any target". The {@code sourcePermanentId} points at the
+     *  permanent that entered (the damage source); {@code sourceCard} is the permanent whose ability
+     *  triggered (Flayer of the Hatebound, Warstorm Surge). */
+    record EnteringPermanentAnyTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
     /** ETB trigger that needs to target a spell on the stack (e.g. Naru Meha's copy ability). */
     record ETBSpellTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,

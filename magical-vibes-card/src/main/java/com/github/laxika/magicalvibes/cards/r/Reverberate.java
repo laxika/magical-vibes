@@ -11,6 +11,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "155")
+@CardRegistration(set = "M12", collectorNumber = "152")
 public class Reverberate extends Card {
 
     public Reverberate() {

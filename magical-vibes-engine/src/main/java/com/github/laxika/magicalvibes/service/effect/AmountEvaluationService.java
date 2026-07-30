@@ -48,6 +48,8 @@ import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.IfSourceAttacking;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreaturePower;
+import com.github.laxika.magicalvibes.model.amount.TotalPowerOfCardsExiledWithSource;
+import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreatureToughness;
 import com.github.laxika.magicalvibes.model.amount.LandsMatchingImprintedName;
 import com.github.laxika.magicalvibes.model.amount.LifeLostThisTurn;
@@ -211,6 +213,10 @@ public class AmountEvaluationService {
                             : gameData.damageDealtToPlayersThisTurn.getOrDefault(ctx.controllerId(), 0);
             case DamageDealtToOpponentsThisTurn ignored ->
                     damageDealtToOpponentsThisTurn(gameData, ctx);
+            case TotalPowerOfCardsExiledWithSource ignored ->
+                    totalPTOfCardsExiledWithSource(gameData, ctx, true);
+            case TotalToughnessOfCardsExiledWithSource ignored ->
+                    totalPTOfCardsExiledWithSource(gameData, ctx, false);
             case ImprintedCreaturePower ignored ->
                     imprintedCreaturePT(gameData, ctx, true);
             case ImprintedCreatureToughness ignored ->
@@ -700,6 +706,18 @@ public class AmountEvaluationService {
             }
         });
         return count[0];
+    }
+
+    private int totalPTOfCardsExiledWithSource(GameData gameData, AmountContext ctx, boolean power) {
+        if (ctx.sourcePermanent() == null) return 0;
+        int total = 0;
+        for (Card exiled : gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId())) {
+            Integer value = power ? exiled.getPower() : exiled.getToughness();
+            if (value != null) {
+                total += value;
+            }
+        }
+        return total;
     }
 
     private int imprintedCreaturePT(GameData gameData, AmountContext ctx, boolean power) {

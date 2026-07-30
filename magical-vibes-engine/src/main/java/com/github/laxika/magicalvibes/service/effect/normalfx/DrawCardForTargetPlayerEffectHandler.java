@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,9 +55,15 @@ public class DrawCardForTargetPlayerEffectHandler implements NormalEffectHandler
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
 
-        UUID targetPlayerId = entry.getTargetId();
-        for (int i = 0; i < amount; i++) {
-            drawService.resolveDrawCard(gameData, targetPlayerId);
+        // Single-target abilities carry one targetId; multi-target ones ("any number of target
+        // players each draw twenty cards", Jace, Memory Adept) carry a flat legal-target list.
+        List<UUID> targetPlayerIds = entry.getTargetIds().isEmpty()
+                ? Collections.singletonList(entry.getTargetId())
+                : entry.getTargetIds();
+        for (UUID targetPlayerId : targetPlayerIds) {
+            for (int i = 0; i < amount; i++) {
+                drawService.resolveDrawCard(gameData, targetPlayerId);
+            }
         }
     }
 }

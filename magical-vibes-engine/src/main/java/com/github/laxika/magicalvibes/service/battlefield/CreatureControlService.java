@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
@@ -263,14 +264,14 @@ public class CreatureControlService {
 
     /**
      * When a permanent changes controllers, "for as long as you control [source]" control
-     * effects keyed to it as their SOURCE end if their creator lost it; the permanents they
-     * were holding get recomputed.
+     * effects and keyword grants (Aegis Angel) keyed to it as their SOURCE end if their creator
+     * lost it; the permanents they were holding get recomputed.
      */
     private void expireSourceControllerDependentEffects(GameData gameData, Permanent source) {
         UUID sourceController = gameData.findControllerOf(source);
         List<FloatingContinuousEffect> expired = new ArrayList<>();
         for (FloatingContinuousEffect fe : List.copyOf(gameData.floatingEffects)) {
-            if (fe.isControlEffect()
+            if ((fe.isControlEffect() || fe.effect() instanceof GrantKeywordEffect)
                     && fe.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
                     && source.getId().equals(fe.sourcePermanentId())
                     && !fe.controllerId().equals(sourceController)) {

@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "M10", collectorNumber = "135")
 @CardRegistration(set = "M11", collectorNumber = "136")
+@CardRegistration(set = "M12", collectorNumber = "130")
 public class FieryHellhound extends Card {
 
     public FieryHellhound() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M10", collectorNumber = "18")
+@CardRegistration(set = "M12", collectorNumber = "24")
 public class Lifelink extends Card {
 
     public Lifelink() {

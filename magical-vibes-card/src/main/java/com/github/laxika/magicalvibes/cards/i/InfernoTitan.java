@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "146")
+@CardRegistration(set = "M12", collectorNumber = "147")
 public class InfernoTitan extends Card {
 
     public InfernoTitan() {

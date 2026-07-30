@@ -32,8 +32,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -226,6 +225,7 @@ public class CombatDamageService {
         updateMarkedDamageFromCombat(gameData, atkBf, defBf, state);
         applyPlayerDamage(gameData, state, defenderId);
         applyPlaneswalkerDamage(gameData, state);
+        checkGraveyardCombatDamageToYouOrPlaneswalkerTriggers(gameData, state, defenderId);
 
         // Snapshot attacker IDs so blocking state can be cleaned up for attackers that die.
         Set<UUID> attackerIdsBefore = new HashSet<>();
@@ -335,6 +335,15 @@ public class CombatDamageService {
         processSourceDealsDamageReflectionTriggers(gameData, state);
 
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeDamageTriggers, activeId);
+
+        // Graveyard combat-damage triggers pick their target while combat is still in the damage
+        // step (CR 603.3d) — waiting for the next priority pass would let end of combat clear the
+        // attacking flags out from under an "attacking creature" target restriction.
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
+            triggerCollectionService.processNextAttackTriggerTarget(gameData);
+        }
+
         if (gameData.interaction.isAwaitingInput()) {
             return CombatResult.DONE;
         }
@@ -1186,8 +1195,10 @@ public class CombatDamageService {
                             desc, List.of(effect));
                 }
                 // Wire the combat damage dealt as the event value so "discards that many cards"
-                // (DiscardEffect with an EventValue amount, e.g. Needle Specter) reads it.
-                if (effect instanceof DiscardEffect) {
+                // (DiscardEffect with an EventValue amount, e.g. Needle Specter) or "draw that many
+                // cards" (DrawCardEffect with an EventValue amount, e.g. Hunter's Insight) reads it.
+                if (effect instanceof DiscardEffect
+                        || (effect instanceof DrawCardEffect draw && draw.amount() instanceof EventValue)) {
                     se.setEventValue(damageDealt);
                 }
                 se.setNonTargeting(true);
@@ -1345,6 +1356,47 @@ public class CombatDamageService {
                     gameLogService.append(gameData, GameLog.cardThen(card,
                             "'s graveyard trigger goes on the stack."));
                 }
+            }
+        }
+    }
+
+    /**
+     * Fires {@code GRAVEYARD_ON_COMBAT_DAMAGE_TO_YOU_OR_YOUR_PLANESWALKER} triggers from the
+     * graveyards of every player who was dealt combat damage this step, either directly or on a
+     * planeswalker they control. E.g. Vengeful Pharaoh — "Whenever combat damage is dealt to you or
+     * a planeswalker you control, if this card is in your graveyard, destroy target attacking
+     * creature, then put this card on top of your library."
+     *
+     * <p>The trigger targets, so it is routed through the {@code AttackTriggerTarget} pending-choice
+     * pipeline rather than pushed straight onto the stack: the target is chosen as the ability is
+     * put on the stack (CR 603.3d), and the ability is skipped entirely when no legal target exists.
+     * The stack entry's source is the graveyard card itself (no source permanent).
+     */
+    private void checkGraveyardCombatDamageToYouOrPlaneswalkerTriggers(GameData gameData,
+                                                                       CombatDamageState state,
+                                                                       UUID defenderId) {
+        Set<UUID> damagedPlayerIds = new LinkedHashSet<>();
+        if (state.damageToDefendingPlayer > 0 || state.poisonDamageToDefendingPlayer > 0) {
+            damagedPlayerIds.add(defenderId);
+        }
+        for (var entry : state.damageToPlaneswalkers.entrySet()) {
+            if (entry.getValue() <= 0) continue;
+            UUID planeswalkerController = gameQueryService.findPermanentController(gameData, entry.getKey());
+            if (planeswalkerController != null) {
+                damagedPlayerIds.add(planeswalkerController);
+            }
+        }
+
+        for (UUID playerId : damagedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card card : new ArrayList<>(graveyard)) {
+                List<CardEffect> effects = card.getEffects(
+                        EffectSlot.GRAVEYARD_ON_COMBAT_DAMAGE_TO_YOU_OR_YOUR_PLANESWALKER);
+                if (effects.isEmpty()) continue;
+                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                        card, playerId, new ArrayList<>(effects), null));
+                gameLogService.append(gameData, GameLog.cardThen(card, "'s graveyard trigger triggers."));
             }
         }
     }
@@ -1575,10 +1627,8 @@ public class CombatDamageService {
         for (DealtDamageTriggerData data : triggerData) {
             for (CardEffect effect : data.card().getEffects(EffectSlot.ON_DEALT_DAMAGE)) {
                 CardEffect effectToAdd = effect;
-                if (effect instanceof DamageSourceControllerSacrificesPermanentsEffect && data.damageDealt() > 0 && data.sourceControllerId() != null) {
-                    effectToAdd = new DamageSourceControllerSacrificesPermanentsEffect(data.damageDealt(), data.sourceControllerId());
-                } else if (effect instanceof DamageSourceControllerGetsPoisonCounterEffect && data.sourceControllerId() != null) {
-                    effectToAdd = new DamageSourceControllerGetsPoisonCounterEffect(data.sourceControllerId());
+                if (effect instanceof DamageSourceControllerAwareEffect aware) {
+                    effectToAdd = aware.bindDamageSourceController(data.sourceControllerId(), data.damageDealt());
                 } else if (effect instanceof DealDamageToTargetOpponentOrPlaneswalkerEffect) {
                     // Targeting effect — auto-target opponent when no planeswalkers, otherwise queue for choice
                     boolean hasPlaneswalkers = false;

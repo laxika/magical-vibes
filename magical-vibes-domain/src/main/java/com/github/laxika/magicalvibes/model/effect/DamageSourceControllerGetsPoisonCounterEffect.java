@@ -10,5 +10,11 @@ import java.util.UUID;
  * At trigger collection time, a new instance with the actual source controller
  * is created and placed on the stack.
  */
-public record DamageSourceControllerGetsPoisonCounterEffect(UUID damageSourceControllerId) implements CardEffect {
+public record DamageSourceControllerGetsPoisonCounterEffect(UUID damageSourceControllerId)
+        implements DamageSourceControllerAwareEffect {
+
+    @Override
+    public CardEffect bindDamageSourceController(UUID controllerId, int damageDealt) {
+        return controllerId == null ? this : new DamageSourceControllerGetsPoisonCounterEffect(controllerId);
+    }
 }

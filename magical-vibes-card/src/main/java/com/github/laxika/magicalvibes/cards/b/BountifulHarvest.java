@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "M10", collectorNumber = "170")
+@CardRegistration(set = "M12", collectorNumber = "166")
 public class BountifulHarvest extends Card {
 
     public BountifulHarvest() {

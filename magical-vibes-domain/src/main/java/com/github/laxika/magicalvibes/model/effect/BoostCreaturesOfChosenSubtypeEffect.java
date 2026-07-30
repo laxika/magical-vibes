@@ -16,16 +16,31 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * controls are boosted (Vanquisher's Banner, Door of Destinies). When {@code true} every creature
  * of the chosen type is boosted regardless of controller, including the source itself if it is a
  * creature of that type (Brass Herald — "Creatures of the chosen type get +1/+1").
+ * <p>
+ * When {@code excludeSelf} is {@code true} the source permanent never boosts itself even if it is a
+ * creature of the chosen type — "<em>Other</em> creatures you control of the chosen type get +1/+1"
+ * (Adaptive Automaton).
  */
 public record BoostCreaturesOfChosenSubtypeEffect(int powerBoost, int toughnessBoost,
                                                   CounterType scalingCounter,
-                                                  boolean allControllers) implements CardEffect {
+                                                  boolean allControllers,
+                                                  boolean excludeSelf) implements CardEffect {
 
     public BoostCreaturesOfChosenSubtypeEffect(int powerBoost, int toughnessBoost) {
-        this(powerBoost, toughnessBoost, null, false);
+        this(powerBoost, toughnessBoost, null, false, false);
     }
 
     public BoostCreaturesOfChosenSubtypeEffect(int powerBoost, int toughnessBoost, CounterType scalingCounter) {
-        this(powerBoost, toughnessBoost, scalingCounter, false);
+        this(powerBoost, toughnessBoost, scalingCounter, false, false);
+    }
+
+    public BoostCreaturesOfChosenSubtypeEffect(int powerBoost, int toughnessBoost,
+                                               CounterType scalingCounter, boolean allControllers) {
+        this(powerBoost, toughnessBoost, scalingCounter, allControllers, false);
+    }
+
+    /** "Other creatures you control of the chosen type get +P/+T." */
+    public static BoostCreaturesOfChosenSubtypeEffect otherOwnCreatures(int powerBoost, int toughnessBoost) {
+        return new BoostCreaturesOfChosenSubtypeEffect(powerBoost, toughnessBoost, null, false, true);
     }
 }

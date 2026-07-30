@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -243,6 +244,34 @@ public class EnterTriggerCollectorService {
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (deal damage to entering creature)",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
+        return true;
+    }
+
+    /**
+     * "Whenever a creature you control enters, it deals damage equal to its power to any target"
+     * (Warstorm Surge). The entering creature — not this permanent — is the damage source (CR 608.2h),
+     * so the pending any-target choice carries the entering permanent's id as {@code sourcePermanentId};
+     * that is what {@code SourcePower} and the damage pipeline read at resolution. The permanent-targeting
+     * default would instead bind this enchantment and offer no player targets.
+     */
+    @CollectsTrigger(value = DealDamageToAnyTargetEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAllyCreatureEntersDealsPowerDamage(TriggerMatchContext match,
+            DealDamageToAnyTargetEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (enteringPermanentId == null) {
+            // The creature already left the battlefield; it has no power to deal damage with.
+            return true;
+        }
+        Card sourceCard = match.permanent().getCard();
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.EnteringPermanentAnyTargetTrigger(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), enteringPermanentId));
+        }
+        logTriggered(match);
+        log.info("Game {} - {} triggers for {} entering (entering creature deals its power to any target)",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
         return true;
     }

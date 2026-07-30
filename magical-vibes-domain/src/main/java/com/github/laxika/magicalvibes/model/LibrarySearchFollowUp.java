@@ -23,8 +23,9 @@ import java.util.UUID;
  * graveyard);
  * {@code remainingSameNamePicks} is the queue of permanent names still to search for, one entry
  * per chosen permanent, in a "for each chosen permanent, you may search for a card with the same
- * name and put it onto the battlefield tapped" flow (Clarion Ultimatum) — after each single-name
- * pick resolves the next name in the queue begins its own search;
+ * name and put it onto the battlefield" flow (Clarion Ultimatum tapped, Doubling Chant untapped
+ * and creature-only) — after each single-name pick resolves the next name in the queue begins its
+ * own search;
  * {@code remainingColorToHandPicks} is the queue of colours still to search for, one card per
  * colour to hand, in a "search for a white card, a blue card, ..." flow (Conflux) — after each
  * single-colour pick resolves the next colour begins its own search, and the library is shuffled
@@ -42,7 +43,7 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
                                     int eachPlayerCreatureToHandCount,
                                     List<UUID> remainingEachPlayerCreatureToBattlefieldSearches,
                                     SecondBoundedPick secondBoundedPick,
-                                    List<String> remainingSameNamePicks,
+                                    SameNamePickQueue remainingSameNamePicks,
                                     List<CardColor> remainingColorToHandPicks,
                                     NaturalBalanceQueue naturalBalance) {
 
@@ -52,6 +53,23 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
      * false = bottom of the library).
      */
     public record SecondBoundedPick(CardType type, boolean restToGraveyard) {
+    }
+
+    /**
+     * A "for each of these permanents, you may search your library for a card with the same name and
+     * put it onto the battlefield" queue: the {@code names} still to be searched for, whether only
+     * creature cards qualify ({@code creatureOnly}, Doubling Chant) and where the found card goes.
+     */
+    public record SameNamePickQueue(List<String> names, boolean creatureOnly,
+                                    LibrarySearchDestination destination) {
+
+        public SameNamePickQueue {
+            names = List.copyOf(names);
+        }
+
+        public SameNamePickQueue withNames(List<String> remaining) {
+            return new SameNamePickQueue(remaining, creatureOnly, destination);
+        }
     }
 
     /** One player's "may search for up to {@code count} basic land cards" pick (Natural Balance). */
@@ -76,64 +94,65 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
     }
 
     public static final LibrarySearchFollowUp NONE =
-            new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, List.of(), null, List.of(), List.of(), null);
+            new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, List.of(), null, null, List.of(), null);
 
     public LibrarySearchFollowUp {
         remainingEachPlayerBasicLandSearches = List.copyOf(remainingEachPlayerBasicLandSearches);
         remainingEachPlayerCreatureToHandSearches = List.copyOf(remainingEachPlayerCreatureToHandSearches);
         remainingEachPlayerCreatureToBattlefieldSearches = List.copyOf(remainingEachPlayerCreatureToBattlefieldSearches);
-        remainingSameNamePicks = List.copyOf(remainingSameNamePicks);
         remainingColorToHandPicks = List.copyOf(remainingColorToHandPicks);
     }
 
     public static LibrarySearchFollowUp forBasicLandToHand() {
-        return new LibrarySearchFollowUp(true, false, List.of(), false, null, null, List.of(), 0, List.of(), null, List.of(), List.of(), null);
+        return new LibrarySearchFollowUp(true, false, List.of(), false, null, null, List.of(), 0, List.of(), null, null, List.of(), null);
     }
 
     public static LibrarySearchFollowUp forCardToGraveyard() {
-        return new LibrarySearchFollowUp(false, true, List.of(), false, null, null, List.of(), 0, List.of(), null, List.of(), List.of(), null);
+        return new LibrarySearchFollowUp(false, true, List.of(), false, null, null, List.of(), 0, List.of(), null, null, List.of(), null);
     }
 
     public static LibrarySearchFollowUp forSecondBoundedPick(CardType type, boolean restToGraveyard) {
         return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, List.of(),
-                new SecondBoundedPick(type, restToGraveyard), List.of(), List.of(), null);
+                new SecondBoundedPick(type, restToGraveyard), null, List.of(), null);
     }
 
     public static LibrarySearchFollowUp eachPlayerBasicLand(List<UUID> remainingSearchers, boolean tapped) {
-        return new LibrarySearchFollowUp(false, false, remainingSearchers, tapped, null, null, List.of(), 0, List.of(), null, List.of(), List.of(), null);
+        return new LibrarySearchFollowUp(false, false, remainingSearchers, tapped, null, null, List.of(), 0, List.of(), null, null, List.of(), null);
     }
 
     public static LibrarySearchFollowUp eachPlayerCreaturesToHand(List<UUID> remainingSearchers, int count) {
-        return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, remainingSearchers, count, List.of(), null, List.of(), List.of(), null);
+        return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, remainingSearchers, count, List.of(), null, null, List.of(), null);
     }
 
     public static LibrarySearchFollowUp eachPlayerCreatureToBattlefield(List<UUID> remainingSearchers) {
-        return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, remainingSearchers, null, List.of(), List.of(), null);
+        return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, remainingSearchers, null, null, List.of(), null);
     }
 
     public static LibrarySearchFollowUp opponentExile(PendingOpponentExileChoice choice) {
-        return new LibrarySearchFollowUp(false, false, List.of(), false, choice, null, List.of(), 0, List.of(), null, List.of(), List.of(), null);
+        return new LibrarySearchFollowUp(false, false, List.of(), false, choice, null, List.of(), 0, List.of(), null, null, List.of(), null);
     }
 
     public static LibrarySearchFollowUp imprint(UUID sourcePermanentId) {
-        return new LibrarySearchFollowUp(false, false, List.of(), false, null, sourcePermanentId, List.of(), 0, List.of(), null, List.of(), List.of(), null);
+        return new LibrarySearchFollowUp(false, false, List.of(), false, null, sourcePermanentId, List.of(), 0, List.of(), null, null, List.of(), null);
     }
 
-    /** The queue of permanent names still to search for (Clarion Ultimatum), one entry per chosen permanent. */
-    public static LibrarySearchFollowUp sameNamePicks(List<String> names) {
-        return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, List.of(), null, names, List.of(), null);
+    /** The queue of permanent names still to search for, one entry per permanent (Clarion Ultimatum, Doubling Chant). */
+    public static LibrarySearchFollowUp sameNamePicks(List<String> names, boolean creatureOnly,
+                                                      LibrarySearchDestination destination) {
+        return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, List.of(), null,
+                new SameNamePickQueue(names, creatureOnly, destination), List.of(), null);
     }
 
     /** The queue of colours still to search for, one card per colour to hand (Conflux). */
     public static LibrarySearchFollowUp colorToHandPicks(List<CardColor> colors) {
-        return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, List.of(), null, List.of(), colors, null);
+        return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, List.of(), null, null, colors, null);
     }
 
     /** Natural Balance's remaining per-player basic-land picks plus the sacrifices that follow them. */
     public static LibrarySearchFollowUp naturalBalance(List<BasicLandsPick> remainingPicks,
                                                        List<PendingForcedSacrifice> sacrifices) {
         return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, List.of(), null,
-                List.of(), List.of(), new NaturalBalanceQueue(remainingPicks, sacrifices));
+                null, List.of(), new NaturalBalanceQueue(remainingPicks, sacrifices));
     }
 
     /** The same follow-up with the each-player basic-land remainder advanced past the current searcher. */
@@ -163,8 +182,8 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
                 remainingColorToHandPicks, naturalBalance);
     }
 
-    /** The same follow-up with the same-name-pick queue advanced past the current name (Clarion Ultimatum). */
-    public LibrarySearchFollowUp withRemainingSameNamePicks(List<String> remaining) {
+    /** The same follow-up with the same-name-pick queue advanced past the current name. */
+    public LibrarySearchFollowUp withRemainingSameNamePicks(SameNamePickQueue remaining) {
         return new LibrarySearchFollowUp(basicLandToHand, cardToGraveyard,
                 remainingEachPlayerBasicLandSearches, eachPlayerSearchTapped, opponentExileChoice,
                 imprintSourcePermanentId, remainingEachPlayerCreatureToHandSearches,

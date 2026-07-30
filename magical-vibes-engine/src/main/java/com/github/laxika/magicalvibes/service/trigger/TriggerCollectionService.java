@@ -358,6 +358,42 @@ public class TriggerCollectionService {
             }
         }
 
+        // "When you next cast an instant or sorcery spell this turn, copy that spell"
+        // (e.g. Chandra, the Firebrand −2). Same one-shot shape as Primal Wellspring's trigger, but
+        // tracked in the turn-scoped counter so it survives mana drain.
+        Integer pendingTurnCopies = gameData.pendingNextInstantSorceryCopyThisTurnCount.get(castingPlayerId);
+        if (pendingTurnCopies != null && pendingTurnCopies > 0
+                && (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY))) {
+            StackEntry spellEntry = null;
+            for (StackEntry se : gameData.stack) {
+                if (se.getCard().getId().equals(spellCard.getId())) {
+                    spellEntry = se;
+                    break;
+                }
+            }
+            if (spellEntry != null) {
+                StackEntry snapshot = new StackEntry(spellEntry);
+                CopyControllerCastSpellEffect copyEffect =
+                        new CopyControllerCastSpellEffect(snapshot, castingPlayerId);
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        spellCard,
+                        castingPlayerId,
+                        "Copy " + spellCard.getName(),
+                        new ArrayList<>(List.of(copyEffect))
+                ));
+                int remaining = pendingTurnCopies - 1;
+                if (remaining <= 0) {
+                    gameData.pendingNextInstantSorceryCopyThisTurnCount.remove(castingPlayerId);
+                } else {
+                    gameData.pendingNextInstantSorceryCopyThisTurnCount.put(castingPlayerId, remaining);
+                }
+                gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied."));
+                log.info("Game {} - {} delayed spell-copy trigger queued for {}",
+                        gameData.id, spellCard.getName(), castingPlayerId);
+            }
+        }
+
         // "Until end of turn, whenever you cast an instant or sorcery spell, copy it"
         // (e.g. The Mirari Conjecture chapter III)
         if (gameData.playersWithSpellCopyUntilEndOfTurn.contains(castingPlayerId)
@@ -2034,6 +2070,50 @@ public class TriggerCollectionService {
         });
     }
 
+    /**
+     * Chandra's Phoenix: "Whenever an opponent is dealt damage by a red instant or sorcery spell you
+     * control or by a red planeswalker you control, return this card from your graveyard to your hand."
+     *
+     * <p>{@code entry} is the stack entry that dealt the damage. It qualifies when it is a red instant
+     * or sorcery spell, or an ability whose source card is a red planeswalker. The graveyard scanned is
+     * the entry controller's ("you control"), and the damaged player must be one of their opponents.
+     */
+    public void checkRedSpellOrPlaneswalkerDamageToOpponentTriggers(GameData gameData, UUID damagedPlayerId,
+                                                                    StackEntry entry) {
+        if (entry == null) return;
+
+        UUID controllerId = entry.getControllerId();
+        if (controllerId == null || controllerId.equals(damagedPlayerId)) return;
+
+        Card sourceCard = entry.getEffectiveDamageSourceCard();
+        if (sourceCard == null || !sourceCard.getColors().contains(CardColor.RED)) return;
+
+        boolean redSpell = entry.getEntryType() == StackEntryType.INSTANT_SPELL
+                || entry.getEntryType() == StackEntryType.SORCERY_SPELL;
+        boolean redPlaneswalker = sourceCard.hasType(CardType.PLANESWALKER);
+        if (!redSpell && !redPlaneswalker) return;
+
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        if (graveyard == null) return;
+
+        for (Card card : new ArrayList<>(graveyard)) {
+            List<CardEffect> effects =
+                    card.getEffects(EffectSlot.GRAVEYARD_ON_OPPONENT_DAMAGED_BY_RED_SPELL_OR_PLANESWALKER);
+            if (effects == null || effects.isEmpty()) continue;
+
+            for (CardEffect effect : effects) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        controllerId,
+                        card.getName() + "'s ability",
+                        new ArrayList<>(List.of(effect))
+                ));
+                gameLogService.append(gameData, GameLog.abilityTriggers(card));
+            }
+        }
+    }
+
     // ── Queue-processing delegates ─────────────────────────────────────
 
     public void processNextDeathTriggerTarget(GameData gameData) {
@@ -2089,8 +2169,8 @@ public class TriggerCollectionService {
         triggeredAbilityQueueService.processNextDrawTriggerTarget(gameData);
     }
 
-    public void processNextEntersFromGraveyardTriggerTarget(GameData gameData) {
-        triggeredAbilityQueueService.processNextEntersFromGraveyardTriggerTarget(gameData);
+    public void processNextEnteringPermanentAnyTarget(GameData gameData) {
+        triggeredAbilityQueueService.processNextEnteringPermanentAnyTarget(gameData);
     }
 
     public void processNextSagaChapterTarget(GameData gameData) {
@@ -3414,7 +3494,7 @@ public class TriggerCollectionService {
 
             for (CardEffect effect : effects) {
                 gameData.queueInteraction(
-                        new PermanentChoiceContext.EntersFromGraveyardTriggerTarget(
+                        new PermanentChoiceContext.EnteringPermanentAnyTargetTrigger(
                                 perm.getCard(), playerId, new ArrayList<>(List.of(effect)), enteringPermanentId));
                 gameLogService.append(gameData, GameLog.cardTextCard(perm.getCard(), "'s ability triggers (",
                         enteringCreature, " entered from a graveyard)."));

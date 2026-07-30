@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.Set;
 
 @CardRegistration(set = "9ED", collectorNumber = "313")
+@CardRegistration(set = "M12", collectorNumber = "220")
 public class ThranGolem extends Card {
 
     public ThranGolem() {

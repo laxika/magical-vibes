@@ -604,7 +604,8 @@ public class MultiPermanentChoiceHandlerService {
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(playerId) + " chooses no permanents."));
         } else if (librarySearchSupport.startNextSameNamePick(gameData, playerId,
-                LibrarySearchFollowUp.sameNamePicks(names))) {
+                LibrarySearchFollowUp.sameNamePicks(names, false,
+                        com.github.laxika.magicalvibes.model.LibrarySearchDestination.BATTLEFIELD_TAPPED))) {
             // A same-name search is now active; it resumes effect resolution on completion.
             return;
         } else if (!librarySearchSupport.isSearchPrevented(gameData, playerId)) {

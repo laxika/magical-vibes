@@ -205,8 +205,8 @@ public class StackResolutionService {
             }
         }
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersFromGraveyardTriggerTarget.class)) {
-            triggerCollectionService.processNextEntersFromGraveyardTriggerTarget(gameData);
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.EnteringPermanentAnyTargetTrigger.class)) {
+            triggerCollectionService.processNextEnteringPermanentAnyTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
@@ -241,6 +241,8 @@ public class StackResolutionService {
         perm.setCastFromZone(entry.getSourceZone());
         // Keywords the spell grants the permanent as it enters (Choreographed Sparks' hasty copy).
         perm.getGrantedKeywords().addAll(entry.getGrantedKeywordsOnEntry());
+        // Bloodthirst granted while the spell was on the stack (Bloodlord of Vaasgoth).
+        perm.setGrantedBloodthirst(entry.getGrantedBloodthirst());
         // Mirage flash clause: cast at a time a sorcery couldn't have been cast, so its controller
         // sacrifices the permanent it becomes at the beginning of the next cleanup step.
         if (entry.isCastWhenSorceryCouldNotBeCast() && card.getEffects(EffectSlot.STATIC).stream()

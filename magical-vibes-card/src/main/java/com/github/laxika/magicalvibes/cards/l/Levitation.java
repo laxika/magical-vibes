@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+@CardRegistration(set = "M12", collectorNumber = "61")
 @CardRegistration(set = "M10", collectorNumber = "60")
 @CardRegistration(set = "9ED", collectorNumber = "83")
 @CardRegistration(set = "7ED", collectorNumber = "82")

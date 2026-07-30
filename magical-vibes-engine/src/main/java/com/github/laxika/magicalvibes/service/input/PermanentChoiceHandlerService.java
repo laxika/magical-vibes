@@ -181,8 +181,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleLifeGainTrigger(gameData, permanentId, lgt);
         } else if (context instanceof PermanentChoiceContext.DrawTriggerAnyTarget dt) {
             triggerHandler.handleDrawTrigger(gameData, permanentId, dt);
-        } else if (context instanceof PermanentChoiceContext.EntersFromGraveyardTriggerTarget efg) {
-            triggerHandler.handleEntersFromGraveyardTrigger(gameData, permanentId, efg);
+        } else if (context instanceof PermanentChoiceContext.EnteringPermanentAnyTargetTrigger efg) {
+            triggerHandler.handleEnteringPermanentAnyTarget(gameData, permanentId, efg);
         } else if (context instanceof PermanentChoiceContext.ETBSpellTargetTrigger etbStt) {
             triggerHandler.handleETBSpellTargetTrigger(gameData, permanentId, etbStt);
         } else if (context instanceof PermanentChoiceContext.ETBTokenTargetTrigger etbTtt) {

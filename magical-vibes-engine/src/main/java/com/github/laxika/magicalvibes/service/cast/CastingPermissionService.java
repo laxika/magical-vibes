@@ -128,6 +128,9 @@ public class CastingPermissionService {
     public boolean isPlayerPreventedFromCasting(GameData gameData, UUID playerId) {
         if (gameData.playersSilencedThisTurn.contains(playerId)) return true;
 
+        // Grand Abolisher: during its controller's turn their opponents can't cast spells.
+        if (gameQueryService.isLockedOutByOpponentsTurnRestriction(gameData, playerId)) return true;
+
         if (!gameData.playersDeclaredAttackersThisTurn.contains(playerId)) return false;
 
         for (UUID pid : gameData.orderedPlayerIds) {

@@ -410,6 +410,30 @@ public class GraveyardChoiceHandlerService {
             }
         }
 
+        // As-enters "exile any number of creature cards from your graveyard" (CR 614.1c, Sutured
+        // Ghoul): exile the chosen cards tracked with the entering permanent, then resume the entry
+        // so its ETB triggers fire with the exiled cards already recorded.
+        if (gameData.graveyardTargetOperation.asEntersExile != null) {
+            var context = gameData.graveyardTargetOperation.asEntersExile;
+            gameData.graveyardTargetOperation.asEntersExile = null;
+            gameData.interaction.clearAwaitingInput();
+            for (UUID cardId : cardIds) {
+                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                if (card != null) {
+                    permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
+                    exileService.exileCard(gameData, player.getId(), card, context.enteringPermanentId());
+                    gameLogService.append(gameData, GameLog.textCardText(
+                            player.getUsername() + " exiles ", card, " from their graveyard."));
+                }
+            }
+            battlefieldEntryService.processCreatureETBEffects(gameData, context.controllerId(), context.card(),
+                    context.targetId(), context.wasCastFromHand(), context.etbMode(), context.kicked());
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
+            return;
+        }
+
         // Resolution-time "exile up to one …" mid-resolution choices (Grixis Sojourners exile-only,
         // God-Pharaoh's Gift exile+4/4 black Zombie token copy with haste until EOT): the choice was
         // begun mid-resolution, so complete the effect and resume the paused ability rather than

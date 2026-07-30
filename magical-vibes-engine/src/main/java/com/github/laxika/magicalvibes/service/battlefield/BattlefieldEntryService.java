@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
+import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCreatureCardsFromGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -22,6 +24,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
@@ -534,6 +537,30 @@ public class BattlefieldEntryService {
                         gameData.id, card.getName(), count, enterWith.type());
             }
         }
+
+        applyGrantedBloodthirst(gameData, controllerId, permanent);
+    }
+
+    /**
+     * Bloodthirst granted to the spell while it was on the stack (Bloodlord of Vaasgoth). Bloodthirst
+     * is a static ability — "If an opponent was dealt damage this turn, this permanent enters with N
+     * +1/+1 counters on it" (CR 702.54a) — so the grant resolves here as an as-enters replacement,
+     * separately from any bloodthirst printed on the card (CR 702.54c).
+     */
+    private void applyGrantedBloodthirst(GameData gameData, UUID controllerId, Permanent permanent) {
+        int granted = permanent.getGrantedBloodthirst();
+        if (granted <= 0) return;
+
+        ConditionContext conditionContext = new ConditionContext(controllerId, null, permanent,
+                permanent.getCard(), false, false, permanent.getCastFromZone(), 0, null, null, false);
+        if (!conditionEvaluationService.isMet(gameData, new OpponentDealtDamageThisTurn(1), conditionContext)) {
+            return;
+        }
+
+        permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + granted);
+        log.info("Game {} - {} enters with {} +1/+1 counter(s) from granted bloodthirst",
+                gameData.id, permanent.getCard().getName(), granted);
     }
 
     /**
@@ -783,6 +810,30 @@ public class BattlefieldEntryService {
                 return;
             }
             // No other creatures — devours nothing; ETB triggers proceed with 0 devoured creatures.
+        }
+
+        // "As this creature enters, exile any number of creature cards from your graveyard"
+        // (CR 614.1c, Sutured Ghoul). The exiled cards are tracked with the entering permanent so
+        // its characteristic-defining power/toughness can be derived from them.
+        boolean needsGraveyardExile = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof ExileAnyNumberOfCreatureCardsFromGraveyardOnEnterEffect);
+        if (needsGraveyardExile) {
+            List<Card> creatureCards = gameData.playerGraveyards
+                    .getOrDefault(controllerId, List.of()).stream()
+                    .filter(c -> c.hasType(CardType.CREATURE))
+                    .toList();
+            if (!creatureCards.isEmpty()) {
+                List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+                Permanent justEntered = bf.get(bf.size() - 1);
+                gameData.graveyardTargetOperation.asEntersExile =
+                        new GraveyardTargetOperationState.AsEntersGraveyardExileContext(
+                                justEntered.getId(), controllerId, card, targetId, wasCastFromHand, etbMode, kicked);
+                playerInputService.beginMultiGraveyardChoice(gameData, controllerId,
+                        new ArrayList<>(creatureCards), creatureCards.size(),
+                        card.getName() + " — Exile any number of creature cards from your graveyard.");
+                return;
+            }
+            // Empty graveyard — nothing is exiled; the creature enters with 0 total power/toughness.
         }
 
         processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, etbMode, kicked, targetIds);

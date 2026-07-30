@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "M10", collectorNumber = "43")
 @CardRegistration(set = "M11", collectorNumber = "43")
+@CardRegistration(set = "M12", collectorNumber = "42")
 public class AlluringSiren extends Card {
 
     public AlluringSiren() {

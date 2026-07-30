@@ -559,6 +559,13 @@ public class GameData {
      *  Decremented when an instant/sorcery is cast; cleared when mana pools drain. */
     public final Map<UUID, Integer> pendingNextInstantSorceryCopyCount = new ConcurrentHashMap<>();
 
+    /** Pending one-shot "when you next cast an instant or sorcery spell this turn, copy that spell"
+     *  delayed triggers (e.g. Chandra, the Firebrand's −2). Each value tracks how many copies are
+     *  pending for that player. Decremented when an instant/sorcery is cast; unlike
+     *  {@link #pendingNextInstantSorceryCopyCount} these survive mana drain and are cleared at end
+     *  of turn. */
+    public final Map<UUID, Integer> pendingNextInstantSorceryCopyThisTurnCount = new ConcurrentHashMap<>();
+
     /**
      * Paradigm (CR 702.192): delayed triggers that fire at the beginning of each of the
      * controller's precombat main phases for the rest of the game.
@@ -2242,6 +2249,7 @@ public class GameData {
 
         // --- Pending one-shot spell copy triggers (Primal Wellspring) ---
         copy.pendingNextInstantSorceryCopyCount.putAll(this.pendingNextInstantSorceryCopyCount);
+        copy.pendingNextInstantSorceryCopyThisTurnCount.putAll(this.pendingNextInstantSorceryCopyThisTurnCount);
 
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);

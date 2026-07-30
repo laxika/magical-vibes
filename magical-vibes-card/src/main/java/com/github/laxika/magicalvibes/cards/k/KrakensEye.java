@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "10E", collectorNumber = "329")
 @CardRegistration(set = "M10", collectorNumber = "213")
 @CardRegistration(set = "M11", collectorNumber = "210")
+@CardRegistration(set = "M12", collectorNumber = "211")
 public class KrakensEye extends Card {
 
     public KrakensEye() {

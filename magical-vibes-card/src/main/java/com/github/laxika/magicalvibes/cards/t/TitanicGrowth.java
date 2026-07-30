@@ -1,0 +1,14 @@
+package com.github.laxika.magicalvibes.cards.t;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+
+@CardRegistration(set = "M12", collectorNumber = "198")
+public class TitanicGrowth extends Card {
+
+    public TitanicGrowth() {
+        addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(4, 4));
+    }
+}

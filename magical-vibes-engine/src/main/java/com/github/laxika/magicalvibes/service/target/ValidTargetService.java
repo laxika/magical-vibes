@@ -244,7 +244,11 @@ public class ValidTargetService {
         List<UUID> validPlayerIds = new ArrayList<>();
         Set<UUID> excludeIds = alreadySelectedIds != null && !alreadySelectedIds.isEmpty() ? Set.copyOf(alreadySelectedIds) : Set.of();
 
-        if (ability.isMultiTarget()) {
+        // A filterless group ability ("each of up to six targets") declares no per-position filters
+        // but still announces a group, so it takes the multi-target path too — mirroring the
+        // dispatch in AbilityActivationService. X-scaled groups keep the single-target path, which
+        // derives their bounds from the paid X.
+        if (ability.isMultiTarget() || (ability.getMaxTargets() > 1 && !ability.isXScaledTargets())) {
             // Multi-target ability: use per-position filter
             int positionIndex = alreadySelectedIds != null ? alreadySelectedIds.size() : 0;
             TargetFilter positionFilter = positionIndex < ability.getMultiTargetFilters().size()
@@ -260,8 +264,24 @@ public class ValidTargetService {
                     }
                 }
             } else {
+                // "Each of up to N targets" (Chandra, the Firebrand −6): an unfiltered position whose
+                // effects target both players and permanents is an "any target" slot, so it offers
+                // players alongside creatures and planeswalkers — never other permanent types.
+                boolean anyTargetPosition = positionFilter == null && isAnyTargetAbility(ability);
+                if (anyTargetPosition) {
+                    for (UUID playerId : gameData.playerIds) {
+                        if (excludeIds.contains(playerId)) continue;
+                        if (isValidPlayerTarget(gameData, ability.getTargetFilter(), playerId, controllerId)) {
+                            validPlayerIds.add(playerId);
+                        }
+                    }
+                }
                 gameData.forEachPermanent((playerId, perm) -> {
                     if (excludeIds.contains(perm.getId())) return;
+                    if (anyTargetPosition
+                            && !gameQueryService.isCreature(gameData, perm) && !isPlaneswalker(perm)) {
+                        return;
+                    }
                     if (isValidAbilityPermanentTarget(gameData, sourceCard, ability, perm, controllerId, false, permanentIndex, positionFilter)) {
                         validPermanentIds.add(perm.getId());
                     }
@@ -322,6 +342,21 @@ public class ValidTargetService {
         }
 
         return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds, minTargets, maxTargets, prompt);
+    }
+
+    /**
+     * True when a multi-target ability's target slots are "any target" — it declares no global or
+     * per-position filter and every permanent-targeting effect also targets players.
+     */
+    public static boolean isAnyTargetAbility(ActivatedAbility ability) {
+        if (ability.getTargetFilter() != null) {
+            return false;
+        }
+        List<CardEffect> permanentEffects = ability.getEffects().stream()
+                .filter(e -> e.targetSpec().category().includesPermanents())
+                .toList();
+        return !permanentEffects.isEmpty()
+                && permanentEffects.stream().allMatch(e -> e.targetSpec().category().includesPlayers());
     }
 
     /**

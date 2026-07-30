@@ -55,4 +55,21 @@ public class GraveyardTargetOperationState {
      * {@code ForgottenLoreEffectHandler}.
      */
     public boolean resolutionTimeForgottenLoreResume;
+    /**
+     * As-enters "exile any number of creature cards from your graveyard" (CR 614.1c, Sutured
+     * Ghoul). When set, {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen} exiles the
+     * chosen cards tracked with the entering permanent and then resumes the entry by running its
+     * ETB triggers, instead of pushing a new stack entry. Set by
+     * {@code BattlefieldEntryService.handleCreatureEnteredBattlefield}.
+     */
+    public AsEntersGraveyardExileContext asEntersExile;
+
+    /**
+     * The entry context needed to resume {@code BattlefieldEntryService.processCreatureETBEffects}
+     * after an as-enters graveyard exile choice.
+     */
+    public record AsEntersGraveyardExileContext(UUID enteringPermanentId, UUID controllerId, Card card,
+                                                UUID targetId, boolean wasCastFromHand, int etbMode,
+                                                boolean kicked) {
+    }
 }

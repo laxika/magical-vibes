@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M11", collectorNumber = "151")
+@CardRegistration(set = "M12", collectorNumber = "151")
 public class ManicVandal extends Card {
 
     public ManicVandal() {

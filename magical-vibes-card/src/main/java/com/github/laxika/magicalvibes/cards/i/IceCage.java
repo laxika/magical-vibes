@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M10", collectorNumber = "56")
 @CardRegistration(set = "M11", collectorNumber = "57")
+@CardRegistration(set = "M12", collectorNumber = "57")
 public class IceCage extends Card {
 
     public IceCage() {

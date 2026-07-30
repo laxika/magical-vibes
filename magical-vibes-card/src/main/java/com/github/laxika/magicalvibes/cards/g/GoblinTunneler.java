@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "143")
+@CardRegistration(set = "M12", collectorNumber = "142")
 public class GoblinTunneler extends Card {
 
     public GoblinTunneler() {

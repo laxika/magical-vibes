@@ -1108,8 +1108,8 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleEntersFromGraveyardTrigger(GameData gameData, UUID targetId,
-                                                 PermanentChoiceContext.EntersFromGraveyardTriggerTarget efg) {
+    public void handleEnteringPermanentAnyTarget(GameData gameData, UUID targetId,
+                                                 PermanentChoiceContext.EnteringPermanentAnyTargetTrigger efg) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 efg.sourceCard(),
@@ -1126,8 +1126,8 @@ public class PermanentChoiceTriggerHandlerService {
         gameLogService.append(gameData, GameLog.builder().card(efg.sourceCard()).text("'s triggered ability targets " + targetName + ".").build());
         log.info("Game {} - {} enters-from-graveyard trigger targets {}", gameData.id, efg.sourceCard().getName(), targetName);
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersFromGraveyardTriggerTarget.class)) {
-            triggerCollectionService.processNextEntersFromGraveyardTriggerTarget(gameData);
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.EnteringPermanentAnyTargetTrigger.class)) {
+            triggerCollectionService.processNextEnteringPermanentAnyTarget(gameData);
             return;
         }
 

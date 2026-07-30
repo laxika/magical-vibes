@@ -150,6 +150,13 @@ public class StackEntry {
      */
     private final Set<Keyword> grantedKeywordsOnEntry = EnumSet.noneOf(Keyword.class);
     /**
+     * Bloodthirst granted to this creature spell while it is on the stack (Bloodlord of Vaasgoth:
+     * "it gains bloodthirst 3"). Per CR 702.54c each instance of bloodthirst applies separately, so
+     * repeated grants accumulate. Stamped onto the entering {@code Permanent.grantedBloodthirst} by
+     * {@code StackResolutionService} and turned into +1/+1 counters by the as-enters replacement.
+     */
+    @Setter private int grantedBloodthirst;
+    /**
      * Ids of permanents (tokens) created by effects earlier in <em>this</em> resolution. Populated
      * by the token-creation handlers and read back by a later effect on the same entry that acts on
      * "those tokens" — e.g. Gilt-Leaf Ambush grants deathtouch on a clash win to the tokens it just
@@ -373,6 +380,7 @@ public class StackEntry {
         this.targetIdsFromAssignments = source.targetIdsFromAssignments;
         this.illegalTargetIndices.addAll(source.illegalTargetIndices);
         this.grantedKeywordsOnEntry.addAll(source.grantedKeywordsOnEntry);
+        this.grantedBloodthirst = source.grantedBloodthirst;
     }
 
     // Multi-target triggered ability with source permanent constructor (e.g. "two target players exchange life totals")

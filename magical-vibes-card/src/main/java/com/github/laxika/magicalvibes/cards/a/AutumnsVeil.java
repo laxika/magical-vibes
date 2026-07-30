@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantControllerSpellsCantBeCo
 import java.util.Set;
 
 @CardRegistration(set = "M11", collectorNumber = "162")
+@CardRegistration(set = "M12", collectorNumber = "164")
 public class AutumnsVeil extends Card {
 
     public AutumnsVeil() {

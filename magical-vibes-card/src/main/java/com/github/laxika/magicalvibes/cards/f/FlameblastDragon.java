@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PayXManaDealXDamageToAnyTargetEffect;
 
 @CardRegistration(set = "ALA", collectorNumber = "100")
+@CardRegistration(set = "M12", collectorNumber = "133")
 public class FlameblastDragon extends Card {
 
     public FlameblastDragon() {

@@ -13,6 +13,11 @@ import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffec
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import org.junit.jupiter.api.BeforeEach;
@@ -445,6 +450,43 @@ class CreatureControlServiceTest {
             applySteal(player1Id, bear, EffectDuration.UNTIL_END_OF_TURN, null);
 
             assertThat(gd.isStolenUntilEndOfTurn(bear.getId())).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("source control change")
+    class SourceControlChange {
+
+        @Test
+        @DisplayName("A 'for as long as you control [source]' keyword grant ends when its creator loses the source")
+        void keywordGrantEndsWhenCreatorLosesSource() {
+            Permanent angel = addCreature(player1Id, "Aegis Angel");
+            Permanent bear = addCreature(player1Id, "Grizzly Bears");
+            addIndestructibleGrant(angel, bear);
+
+            applySteal(player2Id, angel, EffectDuration.PERMANENT, null);
+
+            assertThat(gd.floatingEffects).noneMatch(fe -> fe.effect() instanceof GrantKeywordEffect);
+        }
+
+        @Test
+        @DisplayName("The keyword grant survives while its creator keeps the source")
+        void keywordGrantSurvivesWhenSourceStays() {
+            Permanent angel = addCreature(player1Id, "Aegis Angel");
+            Permanent bear = addCreature(player1Id, "Grizzly Bears");
+            addIndestructibleGrant(angel, bear);
+
+            applySteal(player2Id, bear, EffectDuration.PERMANENT, null);
+
+            assertThat(gd.floatingEffects).anyMatch(fe -> fe.effect() instanceof GrantKeywordEffect);
+        }
+
+        private void addIndestructibleGrant(Permanent source, Permanent affected) {
+            gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Aegis Angel",
+                    source.getId(), player1Id,
+                    new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET,
+                            GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD),
+                    affected.getId(), null, null, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
     }
 }

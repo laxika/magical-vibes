@@ -225,7 +225,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this creature or another creature enters the battlefield from the
      *  controller's graveyard. Checked in {@code BattlefieldEntryService.checkEntersFromGraveyardTriggers}
      *  after a creature enters, using the {@code enteredFromGraveyardOwnerId} flag on the entering
-     *  permanent. Routed into the any-target pipeline ({@code EntersFromGraveyardTriggerTarget} interactions).
+     *  permanent. Routed into the any-target pipeline ({@code EnteringPermanentAnyTargetTrigger} interactions).
      *  Used by Flayer of the Hatebound. */
     ON_CREATURE_ENTERS_FROM_GRAVEYARD,
     /** "Whenever this creature or another permanent enters from a graveyard" — fires for ANY permanent
@@ -342,6 +342,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@link com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect}. Checked in
      *  {@code CombatDamageService.checkAllyCreatureCombatDamageToPlayerTriggers}. Used by Auntie's Snitch. */
     GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+    /** Triggers when combat damage is dealt to the controller or to a planeswalker they control,
+     *  while this card is in the controller's graveyard. Fired once per combat damage step per
+     *  damaged player in {@code CombatDamageService.checkGraveyardCombatDamageToYouOrPlaneswalkerTriggers}.
+     *  Unlike the other graveyard slots this one supports targeting: the trigger is routed through
+     *  the {@code AttackTriggerTarget} pending-choice pipeline, so the card's {@code target(...)}
+     *  filter narrows the legal targets. Used by Vengeful Pharaoh. */
+    GRAVEYARD_ON_COMBAT_DAMAGE_TO_YOU_OR_YOUR_PLANESWALKER,
     /** Triggers whenever a land the controller controls enters the battlefield, while this card is
      *  in the controller's graveyard. Like {@link #ON_ALLY_LAND_ENTERS_BATTLEFIELD} but fired from
      *  the graveyard. Wrap the effect in {@code TriggeringCardConditionalEffect} to filter by the
@@ -354,6 +361,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  entering creature (e.g. Unconventional Tactics — "whenever a Zombie you control enters"). Checked
      *  in {@code TriggerCollectionService.checkAllyCreatureEntersTriggers}. */
     GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+    /** "Whenever an opponent is dealt damage by a red instant or sorcery spell you control or by a red
+     *  planeswalker you control" — fired from the controller's graveyard (Chandra's Phoenix). Checked in
+     *  {@code TriggerCollectionService.checkRedSpellOrPlaneswalkerDamageToOpponentTriggers}, called from
+     *  the noncombat player-damage path in {@code DamageSupport}: the resolving stack entry must be an
+     *  instant/sorcery spell that is red, or an activated/triggered ability whose source card is a red
+     *  planeswalker, and the damaged player must be an opponent of that entry's controller. */
+    GRAVEYARD_ON_OPPONENT_DAMAGED_BY_RED_SPELL_OR_PLANESWALKER,
     /** Triggers whenever one or more +1/+1 counters are put on this permanent.
      *  Fired from {@code PermanentCounterSupport} after each counter-placement event (once per
      *  event regardless of count). Used by Berta, Wise Extrapolator. */

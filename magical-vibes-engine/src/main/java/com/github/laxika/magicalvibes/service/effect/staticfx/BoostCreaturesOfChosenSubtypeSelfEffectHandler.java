@@ -35,6 +35,7 @@ public class BoostCreaturesOfChosenSubtypeSelfEffectHandler implements StaticEff
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostCreaturesOfChosenSubtypeEffect) effect;
+        if (boost.excludeSelf()) return;
         CardSubtype chosenSubtype = context.source().getChosenSubtype();
         if (chosenSubtype == null) return;
         Permanent source = context.source();

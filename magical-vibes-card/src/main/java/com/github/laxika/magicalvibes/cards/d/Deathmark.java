@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "134")
 @CardRegistration(set = "M10", collectorNumber = "90")
 @CardRegistration(set = "M11", collectorNumber = "91")
+@CardRegistration(set = "M12", collectorNumber = "90")
 public class Deathmark extends Card {
 
     public Deathmark() {

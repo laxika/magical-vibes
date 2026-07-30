@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantTransformEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDuringYourTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackUnlessPaysEffect;
@@ -2193,6 +2194,14 @@ public class GameQueryService {
                 protectedTypes.addAll(protection.protectionFromCardTypes());
             }
         }
+        // Protection granted by another permanent's static effect (e.g. Spirit Mantle via
+        // GrantEffectEffect(ProtectionFromCardTypesEffect, ENCHANTED_CREATURE)).
+        for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
+            if (effect instanceof ProtectionGrantingEffect protection) {
+                if (protection.protectsFromEverything()) return true;
+                protectedTypes.addAll(protection.protectionFromCardTypes());
+            }
+        }
         if (protectedTypes.isEmpty()) return false;
         if (protectedTypes.contains(CardType.ARTIFACT) && isArtifact(source)) return true;
         if (protectedTypes.contains(CardType.CREATURE) && isCreature(gameData, source)) return true;
@@ -3199,6 +3208,21 @@ public class GameQueryService {
                 p.isAttached() && playerId.equals(p.getAttachedTo())
                         && p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof EnchantedPlayerCantActivateNonManaNonLoyaltyAbilitiesEffect));
+    }
+
+    /**
+     * True if {@code playerId} is locked out by an opponent's
+     * {@link OpponentsCantCastOrActivateDuringYourTurnEffect} (Grand Abolisher): that opponent
+     * controls the source and it is currently their turn, so {@code playerId} can neither cast
+     * spells nor activate abilities of artifacts, creatures or enchantments.
+     */
+    public boolean isLockedOutByOpponentsTurnRestriction(GameData gameData, UUID playerId) {
+        UUID activePlayerId = gameData.activePlayerId;
+        if (activePlayerId == null || activePlayerId.equals(playerId)) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
+        if (battlefield == null) return false;
+        return battlefield.stream().anyMatch(p -> p.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(OpponentsCantCastOrActivateDuringYourTurnEffect.class::isInstance));
     }
 
     /**

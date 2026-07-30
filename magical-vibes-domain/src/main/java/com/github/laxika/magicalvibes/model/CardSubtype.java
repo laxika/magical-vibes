@@ -61,6 +61,7 @@ public enum CardSubtype {
     EYE("Eye"),
     FAERIE("Faerie"),
     FISH("Fish"),
+    FROG("Frog"),
     FUNGUS("Fungus"),
     MERFOLK("Merfolk"),
     OCTOPUS("Octopus"),
@@ -157,6 +158,7 @@ public enum CardSubtype {
     ASSEMBLY_WORKER("Assembly-Worker"),
     PEGASUS("Pegasus"),
     PEASANT("Peasant"),
+    PENTAVITE("Pentavite"),
     PEST("Pest"),
     PIRATE("Pirate"),
     PLANT("Plant"),
@@ -177,6 +179,7 @@ public enum CardSubtype {
     HYDRA("Hydra"),
     MANTICORE("Manticore"),
     JACKAL("Jackal"),
+    SALAMANDER("Salamander"),
     SAMUT("Samut"),
     ARCANE("Arcane");
 

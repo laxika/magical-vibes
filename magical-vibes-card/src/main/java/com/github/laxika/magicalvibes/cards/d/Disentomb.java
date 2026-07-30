@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "M10", collectorNumber = "92")
 @CardRegistration(set = "M11", collectorNumber = "94")
+@CardRegistration(set = "M12", collectorNumber = "93")
 public class Disentomb extends Card {
 
     public Disentomb() {

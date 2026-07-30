@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleSelfAndGraveyardIntoLi
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "206")
+@CardRegistration(set = "M12", collectorNumber = "208")
 public class ElixirOfImmortality extends Card {
 
     public ElixirOfImmortality() {

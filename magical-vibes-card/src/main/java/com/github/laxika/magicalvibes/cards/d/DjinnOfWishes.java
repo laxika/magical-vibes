@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeOrExi
 import java.util.List;
 
 @CardRegistration(set = "M10", collectorNumber = "50")
+@CardRegistration(set = "M12", collectorNumber = "51")
 public class DjinnOfWishes extends Card {
 
     public DjinnOfWishes() {

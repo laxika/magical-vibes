@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SpellTarget;
@@ -268,11 +269,19 @@ public class TargetLegalityService {
         validateMultiTargetCount(targetIds, ability.getEffectiveMinTargets(xValue), ability.getEffectiveMaxTargets(xValue));
 
         List<TargetFilter> perPositionFilters = ability.getMultiTargetFilters();
+        boolean anyTarget = ValidTargetService.isAnyTargetAbility(ability);
         for (int i = 0; i < targetIds.size(); i++) {
             UUID targetId = targetIds.get(i);
             TargetFilter positionFilter = getPositionFilter(perPositionFilters, i);
             if (positionFilter == null) {
                 positionFilter = ability.getTargetFilter();
+            }
+
+            // "Any target" position (Chandra, the Firebrand −6): players are legal alongside
+            // creatures and planeswalkers, and no other permanent type is.
+            if (positionFilter == null && anyTarget && gameData.playerIds.contains(targetId)) {
+                validatePlayerTargetable(gameData, targetId, playerId);
+                continue;
             }
 
             // Player-targeting position
@@ -292,6 +301,11 @@ public class TargetLegalityService {
             }
 
             validatePermanentTargetable(gameData, target, playerId);
+            if (positionFilter == null && anyTarget
+                    && !gameQueryService.isCreature(gameData, target)
+                    && !target.getCard().hasType(CardType.PLANESWALKER)) {
+                throw new IllegalStateException(target.getCard().getName() + " is not a legal target");
+            }
             validateHexproofFromColor(gameData, target, sourceCard, playerId);
 
             // Can't be targeted by non-color sources (e.g. Gaea's Revenge)

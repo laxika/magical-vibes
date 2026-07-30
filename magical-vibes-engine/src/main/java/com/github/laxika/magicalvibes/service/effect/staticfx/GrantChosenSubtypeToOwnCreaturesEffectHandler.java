@@ -22,9 +22,11 @@ public class GrantChosenSubtypeToOwnCreaturesEffectHandler implements StaticEffe
 
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var grant = (GrantChosenSubtypeToOwnCreaturesEffect) effect;
         CardSubtype chosenSubtype = context.source().getChosenSubtype();
         if (chosenSubtype == null) return;
-        if (support.matchesCreatureScope(context, GrantScope.OWN_CREATURES, null)) {
+        if (grant.scope() == GrantScope.SELF) return;
+        if (support.matchesCreatureScope(context, grant.scope(), null)) {
             accumulator.addGrantedSubtype(chosenSubtype);
         }
     }

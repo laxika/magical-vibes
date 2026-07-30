@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "M11", collectorNumber = "192")
+@CardRegistration(set = "M12", collectorNumber = "188")
 public class PrimevalTitan extends Card {
 
     public PrimevalTitan() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "112")
+@CardRegistration(set = "M12", collectorNumber = "104")
 public class ReassemblingSkeleton extends Card {
 
     public ReassemblingSkeleton() {

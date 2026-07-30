@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "56")
+@CardRegistration(set = "M12", collectorNumber = "56")
 public class HarborSerpent extends Card {
 
     public HarborSerpent() {

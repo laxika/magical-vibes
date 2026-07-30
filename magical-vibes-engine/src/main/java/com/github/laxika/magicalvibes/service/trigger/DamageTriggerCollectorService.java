@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerMillsEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -133,26 +135,15 @@ public class DamageTriggerCollectorService {
 
     // ── ON_DEALT_DAMAGE ────────────────────────────────────────────────
 
-    @CollectsTrigger(value = DamageSourceControllerSacrificesPermanentsEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE)
-    private boolean handleDamageSourceSacrifice(TriggerMatchContext match,
-            DamageSourceControllerSacrificesPermanentsEffect trigger, TriggerContext ctx) {
+    @CollectsTriggers({
+        @CollectsTrigger(value = DamageSourceControllerSacrificesPermanentsEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE),
+        @CollectsTrigger(value = DamageSourceControllerGetsPoisonCounterEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE),
+        @CollectsTrigger(value = DamageSourceControllerMillsEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE)
+    })
+    private boolean handleDamageSourceControllerAware(TriggerMatchContext match,
+            DamageSourceControllerAwareEffect trigger, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
-        CardEffect effectToAdd = trigger;
-        if (dc.damageDealt() > 0 && dc.damageSourceControllerId() != null) {
-            effectToAdd = new DamageSourceControllerSacrificesPermanentsEffect(dc.damageDealt(), dc.damageSourceControllerId());
-        }
-        addDealtDamageEntry(match.gameData(), dc.damagedCreature(), effectToAdd);
-        return true;
-    }
-
-    @CollectsTrigger(value = DamageSourceControllerGetsPoisonCounterEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE)
-    private boolean handleDamageSourcePoisonCounter(TriggerMatchContext match,
-            DamageSourceControllerGetsPoisonCounterEffect trigger, TriggerContext ctx) {
-        TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
-        CardEffect effectToAdd = trigger;
-        if (dc.damageSourceControllerId() != null) {
-            effectToAdd = new DamageSourceControllerGetsPoisonCounterEffect(dc.damageSourceControllerId());
-        }
+        CardEffect effectToAdd = trigger.bindDamageSourceController(dc.damageSourceControllerId(), dc.damageDealt());
         addDealtDamageEntry(match.gameData(), dc.damagedCreature(), effectToAdd);
         return true;
     }

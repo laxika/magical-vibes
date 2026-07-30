@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.Set;
 
 @CardRegistration(set = "M11", collectorNumber = "130")
+@CardRegistration(set = "M12", collectorNumber = "128")
 public class Combust extends Card {
 
     public Combust() {

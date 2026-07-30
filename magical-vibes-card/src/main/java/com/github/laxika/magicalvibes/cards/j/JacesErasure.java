@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "M11", collectorNumber = "59")
+@CardRegistration(set = "M12", collectorNumber = "60")
 public class JacesErasure extends Card {
 
     public JacesErasure() {
