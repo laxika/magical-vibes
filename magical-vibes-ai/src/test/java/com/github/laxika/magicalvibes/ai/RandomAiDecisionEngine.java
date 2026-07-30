@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.service.GameService;
@@ -598,6 +599,15 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                     continue;
                 }
             }
+
+            // Chosen after mana payment: tapping can sacrifice a permanent for mana, which would
+            // invalidate a selection made earlier and get the whole cast rejected.
+            List<UUID> multiSacrificeIds = selectRandomMultiSacrificeTargets(gameData, card);
+            if (multiSacrificeIds == null) {
+                telemetry.recordSkip("spell: multi-permanent sacrifice cost unpayable", card.getName());
+                continue;
+            }
+
             final UUID finalTargetId = targetId;
             final Integer finalXValue = xValue;
             final Integer finalExileGraveyardCardIndex = exileGraveyardCardIndex;
@@ -606,8 +616,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
             final List<UUID> finalMultiTargetIds = multiTargetIds;
             final Integer finalDiscardHandCardIndex = discardHandCardIndex;
+            final List<UUID> finalMultiSacrificeIds = multiSacrificeIds;
             send(() -> gameActions.handlePlayCard(
-                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, null, null, null)));
+                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, null, null, finalMultiSacrificeIds)));
 
             // Game may have ended while paying costs (e.g. Manabarbs killing the caster
             // on a land tap) — every later action no-ops, which is not a legality bug.
@@ -679,12 +690,14 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
      * permanent (sacrifice, return to hand, put a counter on a creature you control). Driven by
      * {@link CostEffect#consumedPermanentFilter()} so a new cost record is covered as soon as it
      * declares its filter — an unrecognized cost would send a null id and have the cast rejected.
-     * Returns null if the card has no such cost.
+     * Returns null if the card has no such cost. Multi-permanent sacrifice costs also declare a
+     * filter but are paid through their own list field, so they are handled by
+     * {@link #selectRandomMultiSacrificeTargets} instead.
      */
     private UUID selectRandomSacrificeTarget(GameData gameData, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (!(effect instanceof CostEffect cost)) {
+            if (!(effect instanceof CostEffect cost) || effect instanceof SacrificeMultiplePermanentsCost) {
                 continue;
             }
             PermanentPredicate filter = cost.consumedPermanentFilter();
@@ -697,6 +710,30 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             return matching.isEmpty() ? null : matching.get(rng.nextInt(matching.size())).getId();
         }
         return null;
+    }
+
+    /**
+     * Selects random distinct permanents to pay a multi-permanent sacrifice additional cast cost
+     * (Phyrexian Tribute's "sacrifice two creatures"). Returns an empty list when the card has no
+     * such cost, and null when it has one but too few matching permanents remain — the engine
+     * rejects the whole cast unless exactly {@code count} ids are supplied.
+     */
+    private List<UUID> selectRandomMultiSacrificeTargets(GameData gameData, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (!(effect instanceof SacrificeMultiplePermanentsCost cost)) {
+                continue;
+            }
+            List<Permanent> matching = new ArrayList<>(battlefield.stream()
+                    .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                    .toList());
+            if (matching.size() < cost.count()) {
+                return null;
+            }
+            Collections.shuffle(matching, rng);
+            return matching.subList(0, cost.count()).stream().map(Permanent::getId).toList();
+        }
+        return List.of();
     }
 
     // ===== Random Target Selection =====

@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -709,11 +710,13 @@ public class GameSimulator {
         tapLandsForCard(gd, playerId, card, pc.xValue());
         List<Integer> exileIndices = computeExileNGraveyardIndices(gd, playerId, card);
         UUID sacrificeId = computeSacrificeTarget(gd, playerId, card);
+        List<UUID> multiSacrificeIds = computeMultiSacrificeTargets(gd, playerId, card);
         Integer discardIndex = computeDiscardCostIndex(gd, playerId, card);
-        if (exileIndices != null || sacrificeId != null || discardIndex != null) {
+        if (exileIndices != null || sacrificeId != null || discardIndex != null
+                || !multiSacrificeIds.isEmpty()) {
             gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(),
                     null, List.of(), List.of(), false, sacrificeId, null, null, null, exileIndices,
-                    false, discardIndex);
+                    false, discardIndex, null, null, multiSacrificeIds);
         } else {
             gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(), null);
         }
@@ -1141,12 +1144,13 @@ public class GameSimulator {
 
     /**
      * Finds the first valid sacrifice target for the card's sacrifice cost.
-     * Returns null if the card has no sacrifice cost.
+     * Returns null if the card has no sacrifice cost. Multi-permanent sacrifice costs are paid
+     * through their own list field — see {@link #computeMultiSacrificeTargets}.
      */
     private UUID computeSacrificeTarget(GameData gd, UUID playerId, Card card) {
         List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof CostEffect cost) {
+            if (effect instanceof CostEffect cost && !(effect instanceof SacrificeMultiplePermanentsCost)) {
                 PermanentPredicate filter = cost.consumedPermanentFilter();
                 if (filter != null) {
                     return battlefield.stream()
@@ -1156,6 +1160,28 @@ public class GameSimulator {
             }
         }
         return null;
+    }
+
+    /**
+     * Finds the permanents to pay a multi-permanent sacrifice cast cost (Phyrexian Tribute's
+     * "sacrifice two creatures"). Returns an empty list when the card has no such cost or too few
+     * matching permanents — the engine rejects the cast unless exactly {@code count} ids arrive,
+     * and enumeration already filters unpayable casts via {@code canPayAdditionalSpellCosts}.
+     */
+    private List<UUID> computeMultiSacrificeTargets(GameData gd, UUID playerId, Card card) {
+        List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (!(effect instanceof SacrificeMultiplePermanentsCost cost)) {
+                continue;
+            }
+            List<UUID> chosen = battlefield.stream()
+                    .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gd, p, cost.filter()))
+                    .limit(cost.count())
+                    .map(Permanent::getId)
+                    .toList();
+            return chosen.size() == cost.count() ? chosen : List.of();
+        }
+        return List.of();
     }
 
     /**

@@ -4,10 +4,13 @@ import com.github.laxika.magicalvibes.cards.b.BackFromTheBrink;
 import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.o.Okk;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianTribute;
 import com.github.laxika.magicalvibes.cards.s.StormCauldron;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -184,6 +187,42 @@ class RandomAiDecisionEngineTest {
                 .extracting(Card::getId)
                 .doesNotContain(affordableCreature.getId());
         assertThat(gameData.stack).hasSize(1);
+    }
+
+    @Test
+    void castsSpellWithMultiPermanentSacrificeCost() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addToBattlefield(opponent, new HowlingMine());
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(aiPlayer, new Swamp());
+        }
+        harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+        harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+        harness.setHand(aiPlayer, List.of(new PhyrexianTribute()));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard().getName()).isEqualTo("Phyrexian Tribute");
+            assertThat(gameData.playerGraveyards.get(aiPlayer.getId()))
+                    .extracting(Card::getName)
+                    .containsExactly("Grizzly Bears", "Grizzly Bears");
+        } finally {
+            watcher.uninstall();
+        }
     }
 
     private RandomAiDecisionEngine createAlwaysActivateEngine(
