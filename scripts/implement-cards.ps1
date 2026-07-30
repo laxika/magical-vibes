@@ -52,7 +52,7 @@ if (-not $PSBoundParameters.ContainsKey("Model") -or [string]::IsNullOrWhiteSpac
 }
 
 if (-not $PSBoundParameters.ContainsKey("Effort") -or [string]::IsNullOrWhiteSpace($Effort)) {
-    $Effort = if ($Runner -eq "codex") { "low" } else { "low" }
+    $Effort = if ($Runner -eq "codex") { "xhigh" } else { "low" }
 }
 
 if ($Runner -eq "grok" -and $PSBoundParameters.ContainsKey("Effort")) {
