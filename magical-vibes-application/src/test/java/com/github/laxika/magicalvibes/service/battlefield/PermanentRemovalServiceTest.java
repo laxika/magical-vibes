@@ -72,6 +72,9 @@ class PermanentRemovalServiceTest {
     @Mock
     private ExileService exileService;
 
+    @Mock
+    private UntapLockReleaseService untapLockReleaseService;
+
     @InjectMocks
     private PermanentRemovalService prs;
 
