@@ -12,12 +12,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SepticRatsTest extends BaseCardTest {
 
-    // ===== Attack trigger fires =====
-
     @Test
-    @DisplayName("Attacking puts ON_ATTACK trigger on the stack")
+    @DisplayName("Attacking puts the trigger on the stack when the defending player is poisoned")
     void attackPutsTriggerOnStack() {
-        Permanent rats = addCreatureReady(player1, new SepticRats());
+        addCreatureReady(player1, new SepticRats());
+        gd.playerPoisonCounters.put(player2.getId(), 1);
 
         declareAttackers(player1, List.of(0));
 
@@ -26,8 +25,6 @@ class SepticRatsTest extends BaseCardTest {
                 e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && e.getCard().getName().equals("Septic Rats"));
     }
-
-    // ===== Conditional boost — defending player poisoned =====
 
     @Test
     @DisplayName("Gets +1/+1 when attacking if defending player is poisoned")
@@ -49,8 +46,8 @@ class SepticRatsTest extends BaseCardTest {
         // No poison counters on defender
 
         declareAttackers(player1, List.of(0));
-        resolveAllTriggers();
 
+        assertThat(gd.stack).isEmpty();
         assertThat(rats.getPowerModifier()).isEqualTo(0);
         assertThat(rats.getToughnessModifier()).isEqualTo(0);
     }
@@ -68,6 +65,4 @@ class SepticRatsTest extends BaseCardTest {
         assertThat(rats.getPowerModifier()).isEqualTo(0);
         assertThat(rats.getToughnessModifier()).isEqualTo(0);
     }
-
-    // ===== Helper methods =====
 }

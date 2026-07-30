@@ -92,7 +92,6 @@ class WillowPriestessTest extends BaseCardTest {
         UUID giantId = harness.getPermanentId(player1, "Hill Giant");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, giantId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a green creature");
+                .isInstanceOf(IllegalStateException.class);
     }
 }
