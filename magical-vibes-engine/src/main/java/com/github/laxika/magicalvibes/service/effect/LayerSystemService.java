@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BasicLandsOfChosenTypesBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessUntilEndOfTurnEffect;
@@ -146,6 +147,16 @@ public class LayerSystemService {
     @Autowired
     @Lazy
     private GameQueryService gameQueryService;
+
+    /**
+     * Evaluates the conditions of the conditional wrappers admitted to the layer-4 pass (see
+     * {@link #admitsConditionalWrapper}), against the states as of the instances applied so far.
+     * Injected lazily: the evaluation service depends on {@code GameQueryService}, which depends
+     * on this service.
+     */
+    @Autowired
+    @Lazy
+    private ConditionEvaluationService conditionEvaluationService;
 
     /**
      * The type-changing decision one layer-4 effect made for one permanent, expressed as the
@@ -431,8 +442,11 @@ public class LayerSystemService {
      * </ul>
      *
      * <p>NOT covered (assembly-only inputs — the per-target {@code StaticBonus} is rebuilt on
-     * every query and only the finished board is cached): emblems, conditional-wrapper
-     * conditions, life totals, turn/step state, amount evaluation beyond the fields above.
+     * every query and only the finished board is cached): emblems, the conditions of the
+     * conditional wrappers the pass did not collect, life totals, turn/step state, amount
+     * evaluation beyond the fields above. The wrappers the pass DOES collect are exactly those
+     * whose conditions read only what is hashed here — that is what
+     * {@link ConditionBoardStability} decides, so widening it means widening this method too.
      *
      * <p>Known gap: mutating the one unfrozen runtime copy card in place after a query was
      * cached (Cryptoplasm/Evil Twin exception baking happens inside the same resolution as the
@@ -742,8 +756,8 @@ public class LayerSystemService {
         try {
             return LayerClassifier.classify(effect, false);
         } catch (IllegalArgumentException unclassified) {
-            // Effects without a layer classification (and wrappers around them, e.g. the
-            // conditional self-animations) stay legacy-only for now.
+            // Effects without a layer classification (and wrappers around them) stay
+            // legacy-only for now.
             return null;
         }
     }
@@ -774,14 +788,7 @@ public class LayerSystemService {
         List<EffectInstance> instances = new ArrayList<>();
         for (PermanentSlot slot : slots) {
             for (CardEffect effect : slot.permanent().getCard().getEffects(EffectSlot.STATIC)) {
-                // Conditional wrappers are NEVER part of the board computation: their
-                // conditions read volatile game state (life totals, active player, poison,
-                // top of library, ...) that the board-cache fingerprint deliberately does not
-                // cover, so baking their result into the (memoized) board would go stale.
-                // They stay unmanaged — the static-bonus assembly evaluates the condition
-                // fresh on every query (legacy-additive, outside timestamp order; see
-                // LAYER_SYSTEM.md §5).
-                if (isConditionalWrapper(effect)) {
+                if (isConditionalWrapper(effect) && !admitsConditionalWrapper(effect, layer)) {
                     continue;
                 }
                 LayerClassifier.LayerClassification classification = classifyOrNull(effect);
@@ -800,7 +807,8 @@ public class LayerSystemService {
         }
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floating : gameData.floatingEffects) {
-                if (isConditionalWrapper(floating.effect())) {
+                if (isConditionalWrapper(floating.effect())
+                        && !admitsConditionalWrapper(floating.effect(), layer)) {
                     continue;
                 }
                 LayerClassifier.LayerClassification classification = classifyOrNull(floating.effect());
@@ -821,11 +829,40 @@ public class LayerSystemService {
         return instances;
     }
 
-    /** Conditional wrappers are excluded from the board computation (assembly-evaluated per
-     *  query instead) — the board must remain a pure function of the fingerprinted inputs. */
+    /** Conditional wrappers are excluded from the board computation by default (assembly-evaluated
+     *  per query instead) — the board must remain a pure function of the fingerprinted inputs.
+     *  {@link #admitsConditionalWrapper} carves out the cases where that holds. */
     private static boolean isConditionalWrapper(CardEffect effect) {
         return effect instanceof ConditionalEffect
                 || effect instanceof EnchantedPermanentConditionalEffect;
+    }
+
+    /**
+     * Whether a conditional wrapper takes part in the board computation for the layer being
+     * collected. Default-deny; a wrapper is admitted only when both hold:
+     *
+     * <ol>
+     * <li>its condition reads nothing beyond what {@link #computeBoardFingerprint} hashes
+     *     ({@link ConditionBoardStability}). Most conditions read volatile state — life totals,
+     *     active player, poison, per-turn trackers, combat — and baking their verdict into the
+     *     memoized board would go stale.</li>
+     * <li>the layer is layer 4. A type change is what the rest of the pass has to see mid-pass:
+     *     later-layer filters and the recursion-safe static-filter leaves ask whether the
+     *     permanent is a creature, and CR 613.8 dependency ordering can only relate instances it
+     *     collected. A conditional grant landing in layers 5-7 changes nothing another layer
+     *     reads, so it stays legacy-additive through the static-bonus assembly, which evaluates
+     *     its condition fresh on every query.</li>
+     * </ol>
+     *
+     * <p>{@code EnchantedPermanentConditionalEffect} is never admitted — neither of its branches
+     * is type-changing on any current card, and its predicate is not a {@code Condition}.
+     *
+     * <p>agent-docs/STATIC_EVALUATION_MIGRATION.md stage C0 records the tradeoff this resolves.
+     */
+    private static boolean admitsConditionalWrapper(CardEffect effect, Layer layer) {
+        return layer == Layer.L4_TYPE
+                && effect instanceof ConditionalEffect conditional
+                && ConditionBoardStability.readsOnlyFingerprintedState(conditional.condition());
     }
 
     /** Equal-timestamp tie-break within one source: lose-all, then keyword removals, then grants. */
@@ -1030,9 +1067,21 @@ public class LayerSystemService {
             manage(board, instance);
             return;
         }
+        applyL4Effect(gameData, instance, instance.effect(), slots, slotsById, board);
+    }
+
+    /**
+     * Applies one layer-4 effect on behalf of an instance. Split out of
+     * {@link #applyL4Instance} so an admitted {@link ConditionalEffect} whose condition held can
+     * hand its wrapped effect straight back in, keeping the instance's source, timestamp and
+     * CR 613.6 bookkeeping.
+     */
+    private void applyL4Effect(GameData gameData, EffectInstance instance, CardEffect effect,
+                               List<PermanentSlot> slots, Map<UUID, PermanentSlot> slotsById,
+                               LayeredBoardState board) {
         Map<UUID, CharacteristicState> states = board.states();
         Map<UUID, CardSubtype> landTypeOverrides = board.landTypeOverrides();
-        switch (instance.effect()) {
+        switch (effect) {
             case GrantSubtypeEffect grant -> {
                 manage(board, instance);
                 for (PermanentSlot target : scopeTargets(instance, grant.scope(), grant.filter(), slots, slotsById, board)) {
@@ -1247,8 +1296,40 @@ public class LayerSystemService {
                     }
                 }
             }
-            // Wrappers (ConditionalEffect, EnchantedPermanentConditionalEffect) never wrap
-            // layer-4 effects today; they keep applying through the legacy handlers only.
+            case ConditionalEffect conditional -> {
+                // Reached only for the wrappers admitted by admitsConditionalWrapper. The
+                // condition is evaluated against the states as of the layer-4 instances applied
+                // so far, so Silverskin Armor's "equipped creature is an artifact" (CR 613.1d)
+                // already counts toward Rusted Relic's metalcraft once CR 613.8 dependency
+                // ordering has put the Armor first. Every other wrapper stays uncollected and
+                // keeps being evaluated per query by the static-bonus assembly.
+                PermanentSlot conditionSource = instance.source();
+                if (conditionSource == null) return;
+                if (conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forStaticEffect(conditionSource.permanent(),
+                                conditionSource.controllerId()))) {
+                    applyL4Effect(gameData, instance, conditional.wrapped(), slots, slotsById, board);
+                }
+            }
+            case AnimatePermanentsEffect animate -> {
+                // NOT managed: the base P/T, colour, subtypes and keywords are contributed by the
+                // legacy self-handler during assembly (StaticEffectSupport
+                // .applySelfOnlyConditionalStaticEffect), which must keep running. Layer 4 records
+                // only the type change, so the rest of the pass sees the animated permanent as a
+                // creature — a later layer-6 grant to "creatures you control", another layer-4
+                // effect's scope filter, and March of the Machines' noncreature test.
+                PermanentSlot animated = instance.source();
+                if (animate.scope() != GrantScope.SELF || animated == null) return;
+                CharacteristicState state = states.get(animated.permanent().getId());
+                if (state == null) return;
+                state.addCardType(CardType.CREATURE);
+                for (CardType grantedType : animate.grantedCardTypes()) {
+                    state.addCardType(grantedType);
+                }
+                for (CardSubtype subtype : animate.grantedSubtypes()) {
+                    state.addSubtype(subtype);
+                }
+            }
             default -> {
             }
         }
@@ -1442,9 +1523,11 @@ public class LayerSystemService {
 
     /**
      * Whether the permanent counts as a creature while applying layer 4: the type as computed so
-     * far (natural, or added by an earlier-timestamp L4 effect) plus the legacy one-shot
-     * animation flags. Conditional self-animations (Rusted Relic) are not visible here — their
-     * conditions cannot be evaluated without recursing into the static-bonus computation.
+     * far (natural, or added by an earlier-applied L4 effect — including a conditional
+     * self-animation the pass admitted, Rusted Relic) plus the legacy one-shot animation flags.
+     * A conditional self-animation whose condition reads outside the board fingerprint (Warden of
+     * the Wall's "not your turn") is still invisible here: {@link #admitsConditionalWrapper}
+     * leaves it to the static-bonus assembly.
      */
     private static boolean isCreatureForL4(Permanent permanent, CharacteristicState state) {
         return state.hasCardType(CardType.CREATURE) || isOneShotAnimated(permanent);

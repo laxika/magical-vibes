@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.s.SilverskinArmor;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.w.WingSplicer;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -142,6 +144,48 @@ class RustedRelicTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, relic)).isTrue();
         assertThat(gqs.getEffectivePower(gd, relic)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, relic)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("The animated relic is a Golem for another permanent's static grant")
+    void animatedRelicIsAGolemForAnotherStaticEffect() {
+        harness.addToBattlefield(player1, new RustedRelic());
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new LeoninScimitar());
+        harness.addToBattlefield(player1, new WingSplicer());
+
+        // Wing Splicer's "Golem creatures you control have flying" is a layer-6 grant whose
+        // filter reads the layer-4 subtypes (CR 613.1d/613.1f): the metalcraft animation makes
+        // the relic a Golem in layer 4, before the grant's layer.
+        Permanent relic = findPermanent(player1, "Rusted Relic");
+        assertThat(gqs.hasKeyword(gd, relic, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Without metalcraft the relic is no Golem and gets no grant")
+    void unanimatedRelicIsNotAGolem() {
+        harness.addToBattlefield(player1, new RustedRelic());
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new WingSplicer());
+
+        Permanent relic = findPermanent(player1, "Rusted Relic");
+        assertThat(gqs.hasKeyword(gd, relic, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An Equipment-granted artifact type turns metalcraft on before the Golem grant")
+    void grantedArtifactTypeOrdersAheadOfTheAnimation() {
+        harness.addToBattlefield(player1, new RustedRelic());
+        Permanent armor = harness.addToBattlefieldAndReturn(player1, new SilverskinArmor());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        armor.setAttachedTo(bears.getId());
+        harness.addToBattlefield(player1, new WingSplicer());
+
+        // CR 613.8a: the relic's metalcraft animation applies to a different set of objects
+        // depending on whether the Armor's layer-4 artifact grant applied first, so it is
+        // dependent on the Armor and applies after it — despite the relic's earlier timestamp.
+        Permanent relic = findPermanent(player1, "Rusted Relic");
+        assertThat(gqs.hasKeyword(gd, relic, Keyword.FLYING)).isTrue();
     }
 
     @Test

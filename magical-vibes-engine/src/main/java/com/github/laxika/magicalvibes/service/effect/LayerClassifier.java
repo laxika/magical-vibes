@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesByManaSymbolEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOtherMulticoloredCreaturesByColorCountEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenColorEffect;
@@ -206,6 +207,14 @@ public final class LayerClassifier {
                         ((AllLandsAreCreaturesEffect) effect).color() == null
                                 ? new LayerClassification(Set.of(Layer.L4_TYPE), false, false)
                                 : new LayerClassification(Set.of(Layer.L4_TYPE, Layer.L5_COLOR), false, true)));
+        // "~ becomes a P/T creature" from an object's own STATIC slot, always behind a condition
+        // today (Rusted Relic's metalcraft, Warden of the Wall's "not your turn"): the creature
+        // type and the granted subtypes/card types are the layer-4 contribution. Base P/T (7b),
+        // colour (5) and keywords (6) stay with the legacy self-handler in the accumulator pass —
+        // the same split AllLandsAreCreaturesEffect and EnchantedPermanentBecomesCreatureEffect
+        // use. Outside a STATIC slot this effect is a one-shot resolution (manlands, Crew) that
+        // registers its own floating 7b entry and never reaches classification.
+        map.put(AnimatePermanentsEffect.class, fixed(Layer.L4_TYPE));
         map.put(NonbasicLandsBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(LandsOfSubtypeBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(ControlledLandsBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
