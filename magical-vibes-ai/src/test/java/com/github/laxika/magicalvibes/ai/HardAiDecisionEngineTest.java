@@ -1329,23 +1329,6 @@ class HardAiDecisionEngineTest {
     }
 
     /**
-     * Makes the search throw so the AI falls back to its deterministic evaluator path. Stealing a
-     * creature is a thin cast-versus-pass margin for MCTS: passing reaches the same board, because
-     * the rollout can still cast the spell in the postcombat main. What separates the two is then
-     * whatever the rollouts draw, and the harness deals both players a freshly shuffled library
-     * (see {@code GameSetupService}), so the same board decides differently from run to run —
-     * measured at 0.34 for the cast against 0.27 for passing on one seed, and the other way on the
-     * next. The X value and the target are picked by {@code buildSpellCastingPlan}, which both
-     * paths share, so the fallback exercises exactly what these tests assert.
-     */
-    private void disableMcts(HardAiDecisionEngine ai) {
-        MCTSEngine failingMcts = Mockito.mock(MCTSEngine.class);
-        Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
-                .thenThrow(new RuntimeException("MCTS disabled for test"));
-        ai.setMctsEngine(failingMcts);
-    }
-
-    /**
      * Replaces both players' hands and libraries with cards that cannot change the board, so the
      * rollouts measure the decision under test and nothing else. A seeded {@link MCTSEngine} is not
      * on its own enough for a reproducible verdict: {@code GameSetupService} shuffles both libraries
@@ -1368,7 +1351,7 @@ class HardAiDecisionEngineTest {
     @DisplayName("Hard AI casts Entrancing Melody with X matching target creature's mana value")
     void castsEntrancingMelodyWithCorrectX() {
         HardAiDecisionEngine ai = createHardAi(player1);
-        disableMcts(ai);
+        pinLibrariesAndHands();
         giveAiPriority(player1);
         givePlayerIslands(player1, 4); // maxX = 2
 
@@ -1390,7 +1373,7 @@ class HardAiDecisionEngineTest {
     @DisplayName("Hard AI picks highest affordable target for Entrancing Melody")
     void picksHighestAffordableTargetForEntrancingMelody() {
         HardAiDecisionEngine ai = createHardAi(player1);
-        disableMcts(ai);
+        pinLibrariesAndHands();
         giveAiPriority(player1);
         givePlayerIslands(player1, 4); // maxX = 2
 
@@ -1532,9 +1515,9 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = createHardAi(player1);
         // Land selection is evaluator-only, but the follow-up cast is another thin
         // cast-versus-pass margin: passing in precombat main reaches the same board, because the
-        // rollout can still cast the bears postcombat. Take the deterministic path for the cast so
-        // the assertion measures the land choice and not the shuffle.
-        disableMcts(ai);
+        // rollout can still cast the bears postcombat. Pin the libraries so the assertion measures
+        // the land choice and not the shuffle.
+        pinLibrariesAndHands();
         giveAiPriority(player1);
 
         // AI has 1 colorless mana available from an untapped Mountain
