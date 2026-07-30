@@ -163,7 +163,7 @@ class WildEvocationTest extends BaseCardTest {
         assertThat(harness.getConn2().getMessagesContaining("\"type\":\"GAME_STATE\"")).hasSize(1);
         GameLogEntry targetLog = gd.gameLog.stream()
                 .filter(entry -> entry.plainText()
-                        .equals("Lightning Bolt targets Grizzly Bears (Wild Evocation)."))
+                        .equals("Lightning Bolt targets Grizzly Bears."))
                 .findFirst()
                 .orElseThrow();
         assertThat(targetLog.segments().getFirst())

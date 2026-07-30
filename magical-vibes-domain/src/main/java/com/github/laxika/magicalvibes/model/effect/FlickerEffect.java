@@ -68,7 +68,7 @@ public record FlickerEffect(
                 returnStep, false, null, null, 0, false);
     }
 
-    /** Exile target permanent, immediately return it under its owner's control (Cloudshift). */
+    /** Exile target permanent, immediately return it under its owner's control (Ghostly Flicker). */
     public static FlickerEffect flickerTarget() {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
                 TurnStep.END_STEP, false, null, null, 0, false);

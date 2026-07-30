@@ -276,6 +276,9 @@ public class TargetPolarityClassifier {
             entry("DealDamageToTargetPlayerOrPlaneswalkerEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDividedDamageEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffect", TargetPolarity.HARMFUL_DAMAGE),
+            // Divine Deflection prevents damage to its controller, but the target is who the
+            // prevented damage is then dealt to.
+            entry("PreventXDamageToControllerAndPermanentsAndRedirectToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RevealTopCardsBottomThenDamageIfCopyRevealedEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("TargetCreatureDealsPowerDamageToSelfEffect", TargetPolarity.HARMFUL_DAMAGE),

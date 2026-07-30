@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LayClaim;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -38,10 +39,17 @@ class CloudshiftTest extends BaseCardTest {
     @Test
     @DisplayName("Returned creature comes back under the spell's controller, not the owner")
     void returnsUnderYourControl() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        // Creature owned by player2 but currently controlled by player1.
-        gd.stolenCreatures.put(bearsId, player2.getId());
+        // Lay Claim leaves the bears owned by player2 but controlled by player1. Stealing it with a
+        // real Aura keeps the ownership record and the layer-2 control effect in step; writing only
+        // gd.stolenCreatures by hand would let state-based actions hand the bears back to player2.
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setHand(player1, List.of(new LayClaim()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+
+        harness.castEnchantment(player1, 0, bearsId);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
 
         harness.setHand(player1, List.of(new Cloudshift()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -49,6 +57,7 @@ class CloudshiftTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearsId);
         harness.passBothPriorities();
 
+        // The Aura falls off the flickered creature, but it still returns under player1's control.
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }

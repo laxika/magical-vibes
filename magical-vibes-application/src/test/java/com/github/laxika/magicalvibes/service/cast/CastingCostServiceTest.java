@@ -56,6 +56,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -97,6 +98,7 @@ class CastingCostServiceTest {
         gd.status = GameStatus.RUNNING;
         gd.activePlayerId = player1Id;
         gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+        lenient().when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(any())).thenReturn(true);
     }
 
     @Nested
@@ -819,6 +821,17 @@ class CastingCostServiceTest {
             when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
 
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("SacrificeCreatureCost — false while players can't sacrifice creatures for costs")
+        void sacrificeCreatureCostBlockedByRestriction() {
+            Card spell = spellWith(new SacrificeCreatureCost());
+            Permanent creature = new Permanent(graveyardCard("Bear", CardType.CREATURE));
+            gd.playerBattlefields.get(player1Id).add(creature);
+            when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gd)).thenReturn(false);
+
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
         }
 
         @Test

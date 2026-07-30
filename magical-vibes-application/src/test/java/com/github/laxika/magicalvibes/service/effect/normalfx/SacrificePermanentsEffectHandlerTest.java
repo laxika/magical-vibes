@@ -99,6 +99,7 @@ class SacrificePermanentsEffectHandlerTest {
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         handler = new SacrificePermanentsEffectHandler(destructionSupport, gameLogService,
                 gameQueryService, predicateEvaluationService, playerInputService, amountEvaluationService);
+        lenient().when(gameQueryService.canEffectCauseSacrifice(any(), any(), any())).thenReturn(true);
     }
 
     // ===== Helpers =====
@@ -180,6 +181,19 @@ class SacrificePermanentsEffectHandlerTest {
         @DisplayName("No effect when there is no valid target player")
         void noEffectWithoutTargetPlayer() {
             handler.resolve(gd, entry(player1Id, null), creatureSac(SacrificeRecipient.TARGET_PLAYER));
+
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+            verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
+        }
+
+        @Test
+        @DisplayName("A player an opponent's effect can't make sacrifice is skipped entirely")
+        void protectedPlayerDoesNotSacrifice() {
+            addPermanent(player2Id, "Grizzly Bears", CardType.CREATURE);
+
+            when(gameQueryService.canEffectCauseSacrifice(gd, player2Id, player1Id)).thenReturn(false);
+
+            handler.resolve(gd, entry(player1Id, player2Id), creatureSac(SacrificeRecipient.TARGET_PLAYER));
 
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
             verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
