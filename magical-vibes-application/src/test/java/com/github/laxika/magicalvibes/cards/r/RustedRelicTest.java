@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.s.SilverskinArmor;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -123,6 +125,23 @@ class RustedRelicTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, relic)).isTrue();
         assertThat(gqs.getEffectivePower(gd, relic)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, relic)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("A creature made an artifact by an Equipment counts toward metalcraft")
+    void grantedArtifactTypeCountsTowardMetalcraft() {
+        harness.addToBattlefield(player1, new RustedRelic());
+        Permanent armor = harness.addToBattlefieldAndReturn(player1, new SilverskinArmor());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        armor.setAttachedTo(bears.getId());
+
+        // Printed artifacts are only Relic + Armor. Silverskin Armor's layer-4 (CR 613.1d)
+        // grant makes the Bears an artifact too, so the true count is 3 and metalcraft is met.
+        Permanent relic = findPermanent(player1, "Rusted Relic");
+        assertThat(gqs.isArtifact(gd, bears)).isTrue();
+        assertThat(gqs.isCreature(gd, relic)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, relic)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, relic)).isEqualTo(5);
     }
 
     @Test

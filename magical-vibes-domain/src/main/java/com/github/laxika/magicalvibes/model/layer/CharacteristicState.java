@@ -306,6 +306,10 @@ public class CharacteristicState {
         return subtypes.contains(subtype);
     }
 
+    public boolean hasSupertype(CardSupertype supertype) {
+        return supertypes.contains(supertype);
+    }
+
     public boolean hasKeyword(Keyword keyword) {
         return keywords.contains(keyword);
     }

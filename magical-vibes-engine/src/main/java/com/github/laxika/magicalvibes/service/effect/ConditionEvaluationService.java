@@ -566,9 +566,13 @@ public class ConditionEvaluationService {
     }
 
     /**
-     * Metalcraft: three or more controlled artifacts. Static bonus computation must count
-     * artifacts without consulting static card-type grants (the grant lookup re-enters static
-     * bonus computation); every other context uses the general artifact check.
+     * Metalcraft: three or more controlled artifacts. Static bonus computation cannot call the
+     * general artifact check — it re-enters static bonus computation — so it counts through
+     * {@link StaticEffectSupport#isArtifactForStaticFilter}, which reads the layer-4 state
+     * already computed for the in-flight pass (CR 613.1d). Counting printed types only made an
+     * Equipment's "equipped creature is an artifact" invisible here while the layered
+     * {@code isCreature} path saw it, animating a Rusted Relic as a 0/0 that then died to
+     * CR 704.5f.
      */
     private boolean isMetalcraftMet(GameData gameData, ConditionContext ctx) {
         // No controller (e.g. static self bonus computed while the permanent is being removed):
@@ -579,7 +583,7 @@ public class ConditionEvaluationService {
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return false;
-        return battlefield.stream().filter(gameQueryService::isArtifact).count() >= 3;
+        return battlefield.stream().filter(staticEffectSupport::isArtifactForStaticFilter).count() >= 3;
     }
 
     /** Coven: three or more controlled creatures with different effective powers. */

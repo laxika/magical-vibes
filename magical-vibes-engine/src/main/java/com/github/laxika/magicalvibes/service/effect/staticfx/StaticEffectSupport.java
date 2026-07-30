@@ -289,6 +289,60 @@ public class StaticEffectSupport {
         return selfCoveringScope && matchesStaticFilter(context.target(), filter);
     }
 
+    /**
+     * Layer-4-aware artifact check (CR 613.1d) shared by the {@link PermanentIsArtifactPredicate}
+     * leaf, the historic leaf and metalcraft. While a CR 613 pass is active the in-flight state
+     * already carries type-changing grants such as Silverskin Armor's "equipped creature is an
+     * artifact in addition to its other types"; outside a pass it reads the printed type plus the
+     * transient and persistent grants stored on the {@link Permanent}.
+     *
+     * <p>Deliberately bypasses {@link #matchesStaticFilter}: that method's CR 613.6 verdict
+     * memo is keyed by filter instance, and {@code PermanentIsArtifactPredicate} is a
+     * component-less record, so every instance compares equal. Routing an unrelated caller
+     * (metalcraft) through it would hand back a verdict memoized for some other ability.
+     */
+    public boolean isArtifactForStaticFilter(Permanent target) {
+        CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
+        if (layered != null) {
+            return layered.hasCardType(CardType.ARTIFACT);
+        }
+        return gameQueryService.isArtifact(target);
+    }
+
+    /**
+     * Supertype check for static filters, combining the three sources that can disagree with the
+     * printed type line: per-permanent persistent grants and removals stored on the
+     * {@link Permanent} (Arcum's Weathervane), and layer-4 grants sitting on the in-flight state
+     * (CR 613.1d). The stored state is authoritative — it is seeded from the printed supertypes
+     * but the layered state is not told about persistent removals — so a removal blocks the
+     * layered read, while an explicit grant from either source wins.
+     *
+     * <p>{@code null} GameData: global supertype removals (Melting) need a board scan that would
+     * re-enter static-bonus assembly, so they stay invisible here. That is the same approximation
+     * every other leaf in this method makes, and it is narrower than the printed-only read it
+     * replaces.
+     */
+    private boolean hasSupertypeForStaticFilter(Permanent target, CardSupertype supertype) {
+        if (gameQueryService.hasEffectiveSupertype(null, target, supertype)) return true;
+        if (target.getPersistentRemovedSupertypes().contains(supertype)) return false;
+        CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
+        return layered != null && layered.hasSupertype(supertype);
+    }
+
+    /**
+     * Saga check for the historic leaf. Unlike {@link PermanentHasSubtypePredicate} there is no
+     * Changeling or "loses all creature types" interaction to honor — Saga is not a creature type.
+     */
+    private boolean hasSagaSubtypeForStaticFilter(Permanent target) {
+        CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
+        if (layered != null) {
+            return layered.hasSubtype(CardSubtype.SAGA);
+        }
+        return target.getCard().getSubtypes().contains(CardSubtype.SAGA)
+                || target.getTransientSubtypes().contains(CardSubtype.SAGA)
+                || target.getGrantedSubtypes().contains(CardSubtype.SAGA);
+    }
+
     public boolean matchesStaticFilter(Permanent target, PermanentPredicate filter) {
         if (filter == null) return true;
         // CR 613.6: when this exact filter instance was already evaluated by the layer-4 pass
@@ -310,8 +364,11 @@ public class StaticEffectSupport {
             if (target.isColorOverridden()) {
                 return target.getTransientColors().stream().anyMatch(p.colors()::contains);
             }
+            // Granted colors are read here for the same reason PermanentIsMulticoloredPredicate
+            // reads them: they are the persistent half of the same layer-5 state.
             return target.getEffectiveColors().stream().anyMatch(p.colors()::contains)
-                    || target.getTransientColors().stream().anyMatch(p.colors()::contains);
+                    || target.getTransientColors().stream().anyMatch(p.colors()::contains)
+                    || target.getGrantedColors().stream().anyMatch(p.colors()::contains);
         }
         if (filter instanceof PermanentHasSubtypePredicate p) {
             // "Loses all creature types" removes every creature subtype (base, transient, granted) and
@@ -360,21 +417,27 @@ public class StaticEffectSupport {
         }
         if (filter instanceof PermanentIsCreaturePredicate) {
             CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
+            // isPermanentlyAnimated is part of the animation state everywhere else
+            // (GameQueryService.isCreature / isCreatureInStaticPass, LayerSystemService's
+            // isCreatureForL4); omitting it here made the same permanent a creature to one
+            // caller and not to another.
             if (layered != null) {
                 return layered.hasCardType(CardType.CREATURE)
                         || target.isAnimatedUntilEndOfTurn()
                         || target.isAnimatedUntilEndOfCombat()
                         || target.isAnimatedUntilNextTurn()
+                        || target.isPermanentlyAnimated()
                         || target.getCounterCount(CounterType.AWAKENING) > 0;
             }
             return target.getCard().hasType(CardType.CREATURE)
                     || target.isAnimatedUntilEndOfTurn()
                     || target.isAnimatedUntilEndOfCombat()
                     || target.isAnimatedUntilNextTurn()
+                    || target.isPermanentlyAnimated()
                     || target.getCounterCount(CounterType.AWAKENING) > 0;
         }
         if (filter instanceof PermanentIsArtifactPredicate)
-            return gameQueryService.isArtifact(target);
+            return isArtifactForStaticFilter(target);
         if (filter instanceof PermanentIsLandPredicate) {
             CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
             if (layered != null) {
@@ -382,8 +445,15 @@ public class StaticEffectSupport {
             }
             return target.getCard().hasType(CardType.LAND);
         }
-        if (filter instanceof PermanentIsEnchantmentPredicate)
-            return target.getCard().hasType(CardType.ENCHANTMENT);
+        if (filter instanceof PermanentIsEnchantmentPredicate) {
+            // Layer-4-aware (CR 613.1d): Enchanted Evening and Song of the Dryads grant
+            // ENCHANTMENT, and outside a pass the grant may be stored on the permanent.
+            CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
+            if (layered != null) {
+                return layered.hasCardType(CardType.ENCHANTMENT);
+            }
+            return gameQueryService.isEnchantment(target);
+        }
         if (filter instanceof PermanentIsPlaneswalkerPredicate) {
             CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
             if (layered != null) {
@@ -394,10 +464,9 @@ public class StaticEffectSupport {
         if (filter instanceof PermanentIsTokenPredicate)
             return target.getCard().isToken();
         if (filter instanceof PermanentIsHistoricPredicate)
-            return gameQueryService.isArtifact(target)
-                    || target.getCard().getSupertypes().contains(CardSupertype.LEGENDARY)
-                    || target.getCard().getSubtypes().contains(CardSubtype.SAGA)
-                    || target.getTransientSubtypes().contains(CardSubtype.SAGA);
+            return isArtifactForStaticFilter(target)
+                    || hasSupertypeForStaticFilter(target, CardSupertype.LEGENDARY)
+                    || hasSagaSubtypeForStaticFilter(target);
         if (filter instanceof PermanentIsMulticoloredPredicate) {
             // Multicolored = two or more effective colours (colourless and monocoloured don't match).
             // Colours come from the same sources as the PermanentColorInPredicate branch above.
@@ -421,7 +490,7 @@ public class StaticEffectSupport {
         if (filter instanceof PermanentAnyOfPredicate p)
             return p.predicates().stream().anyMatch(inner -> matchesStaticFilter(target, inner));
         if (filter instanceof PermanentHasSupertypePredicate p)
-            return target.getCard().getSupertypes().contains(p.supertype());
+            return hasSupertypeForStaticFilter(target, p.supertype());
         if (filter instanceof PermanentIsAttackingPredicate)
             return target.isAttacking();
         if (filter instanceof PermanentIsBlockingPredicate)
