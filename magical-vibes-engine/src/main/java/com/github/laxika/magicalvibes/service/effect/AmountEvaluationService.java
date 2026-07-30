@@ -344,19 +344,20 @@ public class AmountEvaluationService {
     }
 
     private int countPermanents(GameData gameData, PermanentCount count, AmountContext ctx) {
-        // In static evaluation, match with a null FilterContext: type/keyword checks then
-        // use only intrinsic values, so counting never calls computeStaticBonus on other
-        // permanents (which could recurse back into the count being computed).
-        FilterContext filterContext;
-        if (ctx.staticEvaluation()) {
-            filterContext = null;
-        } else {
-            filterContext = FilterContext.of(gameData).withSourceControllerId(ctx.controllerId());
-            // Source-relative predicates (e.g. PermanentHasSameNameAsSourcePredicate on
-            // Powerstone Shard's "for each artifact you control named ~") need the source card.
-            if (ctx.sourcePermanent() != null) {
-                filterContext = filterContext.withSourceCardId(ctx.sourcePermanent().getCard().getId());
-            }
+        // In static evaluation the context carries a null GameData: type and keyword checks then
+        // use intrinsic values, so counting never calls computeStaticBonus on other permanents
+        // (which could recurse back into the count being computed). The P/T leaves are exempt —
+        // they route through GameQueryService's recursion-safe accessors. The source identity is
+        // supplied either way: it costs no query, and without it source-relative predicates
+        // silently match nothing.
+        FilterContext filterContext = ctx.staticEvaluation()
+                ? FilterContext.empty()
+                : FilterContext.of(gameData);
+        filterContext = filterContext.withSourceControllerId(ctx.controllerId());
+        // Source-relative predicates (e.g. PermanentHasSameNameAsSourcePredicate on
+        // Powerstone Shard's "for each artifact you control named ~") need the source card.
+        if (ctx.sourcePermanent() != null) {
+            filterContext = filterContext.withSourceCardId(ctx.sourcePermanent().getCard().getId());
         }
         int matches = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -376,14 +377,11 @@ public class AmountEvaluationService {
         return matches;
     }
 
-    private static final java.util.Set<CardSubtype> BASIC_LAND_SUBTYPES = java.util.EnumSet.of(
-            CardSubtype.PLAINS, CardSubtype.ISLAND, CardSubtype.SWAMP,
-            CardSubtype.MOUNTAIN, CardSubtype.FOREST);
-
     /**
-     * Domain (CR 702.42): the number of distinct basic land types among lands the controller
-     * controls. During static evaluation only intrinsic printed types are read (no
-     * {@code computeStaticBonus}, avoiding recursion); otherwise CR 305.7 land-type overrides count.
+     * Domain (an ability word, CR 207.2c): the number of distinct basic land types among lands
+     * the controller controls. CR 305.7 land-type overrides (Blood Moon, Urborg, Prismatic Omen)
+     * count in both branches; static evaluation reads them through the recursion-safe accessor,
+     * which falls back to printed types only for a land whose own static bonus is being assembled.
      */
     private int countBasicLandTypesAmongControlledLands(GameData gameData, AmountContext ctx) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
@@ -391,13 +389,9 @@ public class AmountEvaluationService {
         java.util.Set<CardSubtype> found = java.util.EnumSet.noneOf(CardSubtype.class);
         for (Permanent permanent : battlefield) {
             if (!permanent.getCard().hasType(CardType.LAND)) continue;
-            if (ctx.staticEvaluation()) {
-                for (CardSubtype st : permanent.getCard().getSubtypes()) {
-                    if (BASIC_LAND_SUBTYPES.contains(st)) found.add(st);
-                }
-            } else {
-                found.addAll(gameQueryService.effectiveBasicLandTypes(gameData, permanent));
-            }
+            found.addAll(ctx.staticEvaluation()
+                    ? gameQueryService.basicLandTypesForStaticEvaluation(gameData, permanent)
+                    : gameQueryService.effectiveBasicLandTypes(gameData, permanent));
         }
         return found.size();
     }
@@ -592,11 +586,12 @@ public class AmountEvaluationService {
         int total = 0;
         for (Permanent permanent : battlefield) {
             if (gameQueryService.isCreature(gameData, permanent)) {
-                // In static evaluation, sum intrinsic toughness so we never call computeStaticBonus
-                // (which could recurse back into the amount being computed). At cast time
-                // (staticEvaluation=false), use full effective toughness so anthems count.
+                // Anthems count in both branches. Static evaluation goes through the
+                // recursion-safe accessor, which reads the layered toughness except for a
+                // creature whose own static bonus is currently being assembled — the one case
+                // where the amount would recurse back into the number it is computing.
                 total += ctx.staticEvaluation()
-                        ? permanent.getEffectiveToughness()
+                        ? gameQueryService.toughnessForStaticFilter(permanent)
                         : gameQueryService.getEffectiveToughness(gameData, permanent);
             }
         }

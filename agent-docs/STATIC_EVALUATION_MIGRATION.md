@@ -132,22 +132,77 @@ would re-enter static-bonus assembly. Per-permanent grants and removals ARE hono
 
 ## Stage B — P/T leaves read layered numbers
 
-Medium. The largest accuracy win by volume: **anthems are currently invisible to every static
-filter.**
+Medium. The plan's headline — "anthems are invisible to every static filter" — turned out to be
+only half-closable here; see the blocker at the end of this section.
 
-- [ ] P/T predicate leaves (~`StaticEffectSupport.java:422-427`) use
+**Done 2026-07-30** — step 16 in `LAYER_SYSTEM.md`.
+
+- [x] P/T predicate leaves (~`StaticEffectSupport.java:503-508`) used
       `Permanent.getEffectivePower()/getEffectiveToughness()`, whose own javadoc calls them "the
-      legacy pre-switch fallback". No layer-7c boosts from other permanents, no 7b base-setting,
-      no 7d switch.
-- [ ] `AmountEvaluationService.totalToughnessOfControlledCreatures` (~`:595`) — the comment
-      states outright that anthems do not count. Note the mixed fidelity: the creature test one
-      line above uses the fully layered `isCreature`.
-- [ ] `AmountEvaluationService.countPermanents` (~`:348`) — null `FilterContext`, so no layered
-      types or P/T, and no source card id (source-relative predicates silently cannot match).
-- [ ] `AmountEvaluationService.countBasicLandTypesAmongControlledLands` (~`:391`) — Domain reads
-      printed basic land types only; CR 305.7 overrides (`Blood Moon`, `Urborg`,
-      `Prismatic Omen`) are ignored.
-- [ ] Same leaves in `PredicateEvaluationService` (~`:478-489`) for the mid-pass case.
+      legacy pre-switch fallback". Now `GameQueryService.powerForStaticFilter` /
+      `toughnessForStaticFilter`.
+- [x] `AmountEvaluationService.totalToughnessOfControlledCreatures` (~`:589`) — same accessor.
+      **No card produces `TotalToughnessOfControlledCreatures` today**, so this one is a
+      correctness fix with no current card behind it.
+- [x] `AmountEvaluationService.countPermanents` (~`:346`) — source card id and source controller
+      id are now supplied in static evaluation too (`FilterContext.empty()` in place of a null
+      context), so source-relative predicates can match. **Layered types are deliberately still
+      NOT read here** — that needs the type leaves of `PredicateEvaluationService` to answer from
+      `CharacteristicState` the way Stage A did for `StaticEffectSupport`, which is Stage C's
+      strangler work. P/T within the count is fixed, via the leaves above.
+- [x] `AmountEvaluationService.countBasicLandTypesAmongControlledLands` (~`:388`) — Domain now
+      honors CR 305.7 overrides in both branches, through
+      `GameQueryService.basicLandTypesForStaticEvaluation`.
+- [x] Same leaves in `PredicateEvaluationService` (~`:436-492`) — five null-`GameData` branches,
+      not the four the old line reference implied.
+
+### The accessor: three answers, not one
+
+`GameQueryService.powerForStaticFilter` answers by what is reachable without re-entering the
+assembly forever. Layer 7c lives in `assembleStaticBonusInternal`, not in the pass, so there is
+no in-flight 7c number to read the way Stage A read `CharacteristicState` for types.
+
+1. **Fully layered** — board finished, and the permanent is not itself being assembled.
+2. **Preliminary** — the permanent IS the one being assembled, which is the dominant shape (a
+   filter on P/T describes the permanent whose bonus is being built). A second assembly answers
+   it with that permanent added to `PT_LEAF_FROM_BOARD`, so the leaves inside it drop to (3) and
+   the recursion closes after one level. Only its power and toughness are trustworthy — every
+   other field was decided with degraded leaves — hence the separate `Pass.preliminaryBonusMemo`.
+3. **Board-derived** — the 7b winner from `basePt7b`, the permanent's own modifiers and counters,
+   and the 7d parity from `switchedPt7d`. Also what a leaf reached mid-pass gets.
+
+Two `ThreadLocal<Set<UUID>>`s in `GameQueryService` drive this: `ASSEMBLY_IN_PROGRESS` (recorded
+by every assembly, never blocks re-entry) and `PT_LEAF_FROM_BOARD`. `LayerSystemService` grew a
+static `activePass()` ambient hook and `Pass.gameData()`, matching the existing `activeStateFor`
+pattern — the leaves are reached through handler chains that no longer carry the game state.
+
+Still unreachable, and circular in the rules rather than only in this implementation: a layer-7c
+boost whose own filter reads the power it contributes to ("creatures with power 2 or less get
++1/+1"). It lands on (3).
+
+### Blocker found: layer-6 filters still cannot see layer 7
+
+`ConditionalEffect`-free, pass-managed L4/L5/L6 instances evaluate their filters **during**
+`applyLayer5And6`, where the board is not ready and `basePt7b`/`switchedPt7d` do not exist yet —
+so a P/T-filtered layer-6 grant reads printed numbers no matter what the accessor does. The
+assembly cannot fix it either: for a managed instance the handler re-runs with
+`setLayeredOutputsSuppressed(true)`, so the pass's mid-pass decision is the one that counts.
+
+`Tetsuko Umezawa, Fugitive` (DOM 69, "Creatures you control with power or toughness 1 or less
+can't be blocked") is the reproduction: a `Glorious Anthem` lifting a 1/1 to 2/2 should take the
+ability away, and does not. The engine's own doctrine outside the pass already disagrees with
+itself here — `PredicateEvaluationService`'s non-null-`GameData` branch decides the same
+applicability question from the fully layered P/T.
+
+This is the "layer N never reads layer >N" invariant (`LAYER_SYSTEM.md` §5.4) meeting a case the
+CR does not actually make circular: nothing about the P/T of these creatures depends on the
+layer-6 grant, so layer 7 could be resolved for a permanent before the layer-6 decision is taken.
+Closing it means making per-permanent layer-7 numbers computable ahead of L6 — a restructure that
+belongs with C1, not a leaf change.
+
+- [ ] Carried to Stage C: P/T-filtered layer-4/5/6 grants (`Tetsuko Umezawa, Fugitive`). Write
+      the two regression tests to the correct answer when C1 lands — an anthem lifting a 1/1 to
+      2/2 removes the ability, an opponent's `Cumber Stone` dropping a 2/2 to 1/2 grants it.
 
 Not throwaway work despite Stage C deleting the method: making layered P/T readable mid-pass is
 a capability Stage C requires.

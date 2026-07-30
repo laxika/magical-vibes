@@ -158,13 +158,17 @@ A whole-battlefield, layer-by-layer pass replacing the per-permanent
    and dynamic counts evaluate against the `CharacteristicState`s **as of the layers already
    applied** — an Elf lord's "Elf" filter reads L4-resolved subtypes; Nightmare's 7a Swamp
    count sees Evil Presence's L4 land-type override. There is no recursion because layer N
-   never reads layer �AN state. The null-`FilterContext` recursion guard
+   never reads layer >N state. The null-`FilterContext` recursion guard
    (`AmountEvaluationService` static contexts) is only PARTIALLY replaced (audited step 12):
-   subtype/color/keyword predicate leaves answer from the states while a pass is active, but
-   the P/T predicate leaves and toughness-based amounts still rely on the null-context
-   fallback to intrinsic `Permanent` reads (a static P/T-based filter must not re-enter
-   `computeStaticBonus` mid-pass) — the guard stays until 7b/7c state moves into
-   `CharacteristicState`.
+   subtype/color/keyword predicate leaves answer from the states while a pass is active. Since
+   step 16 the P/T predicate leaves and toughness-based amounts no longer fall back to intrinsic
+   `Permanent` reads either — they go through `GameQueryService.powerForStaticFilter`, which
+   reaches the fully layered number wherever that can be done without re-entering the assembly
+   forever, and otherwise reads the 7b/7d results off the board. **Caveat, and the reason step 16
+   did not close the stage's headline case:** a filter evaluated while the pass is still applying
+   layers 4-6 gets the board-derived reading, because layer 7 has not run. That is the layer order
+   for the effect itself, but the CR does not make a layer-6 grant's *applicability* wait on it —
+   `Tetsuko Umezawa, Fugitive` under an anthem is the open reproduction (Stage C / C1).
 5. State-based actions and all queries (`getEffectivePower`, `hasKeyword`, `isCreature`, ...)
    read the finished states.
 
@@ -269,9 +273,9 @@ expiry is not plumbed) and the AWAKENING-counter 8/8 (counters carry no timestam
 getEffectiveToughness()` callers that bypass the layered numbers** (the mana-spent-vs-P/T
 checks in `TriggerCollectionService`/`IncrementTriggerEffectHandler` were migrated to the
 layered queries in step 7): the power/toughness predicate leaves (`PredicateEvaluationService`,
-`StaticEffectSupport.matchesStaticFilter` — both can run DURING a pass, where reading layered
-P/T would violate "layer N never reads layer �AN"), `AmountEvaluationService` toughness-based
-amounts (the `staticEvaluation` branch is a deliberate recursion guard),
+`StaticEffectSupport.matchesStaticFilter`) and `AmountEvaluationService` toughness-based amounts
+— **all migrated in step 16** to `GameQueryService.powerForStaticFilter`, which keeps the direct
+`Permanent` read only as the bottom tier (mid-pass, and as the cycle breaker);
 `DeathTriggerCollectorService` last-known-information power (the permanent has left the
 battlefield, so the layered pass carries no state; since step 7 this LKI read also misses an
 active 7d switch — the floating effect can't be resolved against a departed permanent), and
@@ -1412,3 +1416,44 @@ and any deviations from this document.
     not do. Stage A is provably inert there — nothing on that board or in the
     `10e-white-theme-deck` carries a STATIC effect using a changed predicate, no metalcraft, no
     permanently-animated permanent, no granted colors.
+
+16. **P/T static-filter leaves read layered numbers (`STATIC_EVALUATION_MIGRATION.md` Stage B,
+    2026-07-30).** The five P/T leaves of `StaticEffectSupport.matchesStaticFilter` and the five
+    null-`GameData` P/T branches of `PredicateEvaluationService` no longer read
+    `Permanent.getEffectivePower()/getEffectiveToughness()`; they call the new
+    `GameQueryService.powerForStaticFilter` / `toughnessForStaticFilter`, which answer in three
+    tiers — fully layered when the board is finished and the permanent is not itself being
+    assembled; a **preliminary** second assembly when it is (the dominant shape, since a P/T
+    filter describes the permanent whose bonus is being built), run with that permanent in
+    `PT_LEAF_FROM_BOARD` so the leaves inside drop to the third tier and the recursion closes
+    after one level; and **board-derived** otherwise — the 7b winner from `basePt7b`, own
+    modifiers and counters, and the 7d parity from `switchedPt7d`. Board-derived is also what a
+    leaf reached mid-pass gets, which is the layer order, not an approximation. New machinery:
+    `ASSEMBLY_IN_PROGRESS` and `PT_LEAF_FROM_BOARD` ThreadLocals in `GameQueryService`
+    (`assembleStaticBonusInternal` became a recording wrapper around
+    `assembleStaticBonusUnguarded`; recording never blocks re-entry), `Pass.preliminaryBonusMemo`
+    kept apart from `bonusMemo` because only the P/T of a preliminary bonus is trustworthy, plus
+    a static `LayerSystemService.activePass()` hook and `Pass.gameData()` — same ambient pattern
+    as `activeStateFor`, for leaves reached through handler chains that no longer carry the game
+    state. Also in this step: `totalToughnessOfControlledCreatures` uses the accessor (no card
+    produces that amount today); `countPermanents` supplies the source card and controller ids in
+    static evaluation via `FilterContext.empty()`, so source-relative predicates can match
+    (layered *types* there are still Stage C); Domain
+    (`countBasicLandTypesAmongControlledLands`) honors CR 305.7 overrides in both branches via
+    `basicLandTypesForStaticEvaluation`, which falls back to printed types only for a land whose
+    own bonus is being assembled. A stale CR citation was corrected — Domain is an ability word
+    (CR 207.2c, verified); 702.42 is Entwine. **Blocker found, carried to Stage C:** pass-managed
+    L4/L5/L6 instances evaluate their filters during `applyLayer5And6`, before layer 7 exists,
+    and the assembly re-run is output-suppressed for them, so a P/T-filtered layer-6 grant still
+    reads printed numbers. `Tetsuko Umezawa, Fugitive` under a `Glorious Anthem` is the
+    reproduction and the rules-correct answer is the opposite of what the engine gives; nothing
+    about those creatures' P/T depends on the layer-6 grant, so this is the "layer N never reads
+    layer >N" invariant over-approximating rather than a genuine circularity. Fixing it means
+    resolving per-permanent layer 7 ahead of the L6 decision — C1 work. **Verification:**
+    SevenLayerTest 100/100, LayerDependencyTest, LayeredBoardCacheTest, LayerClassifierTest,
+    RustedRelicTest, GameQueryServiceTest, PredicateEvaluationServiceTest, the staticfx suite,
+    the Domain/count batch (Draco, ManaforceMace, AvenTrailblazer, WanderingGoblins, MightOfAlara,
+    SporeBurst, ExplodingBorders, VoicesFromTheVoid, DragDown, PowerstoneShard, BloodMoon,
+    PrismaticOmen) and **all 52 card tests** whose card uses a P/T predicate. All green. New test:
+    `MatcaRiotersTest.countsGrantedBasicLandTypes` — a lone Forest under `Prismatic Omen` is every
+    basic land type, so Matca Rioters is 5/5 where the printed-only read made it 1/1.

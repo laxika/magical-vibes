@@ -433,16 +433,20 @@ public class PredicateEvaluationService {
                         || gameData.combatBlockOpponentSubtypesThisTurn
                                 .getOrDefault(id, java.util.Set.of()).contains(p.subtype());
             }
+            // The null-GameData branches of the P/T leaves are the recursion-safe path taken
+            // from inside the layered pass. They no longer read the permanent's printed numbers:
+            // powerForStaticFilter answers with the layered value wherever that is reachable
+            // without re-entering the assembly (see GameQueryService#powerForStaticFilter).
             case PermanentPowerAtMostPredicate powerAtMostPredicate -> {
                 if (gameData == null) {
-                    yield permanent.getEffectivePower() <= powerAtMostPredicate.maxPower();
+                    yield gameQueryService.powerForStaticFilter(permanent) <= powerAtMostPredicate.maxPower();
                 }
                 yield gameQueryService.getEffectivePower(gameData, permanent) <= powerAtMostPredicate.maxPower();
             }
             case PermanentPowerAtMostXPredicate ignored -> {
                 int xVal = filterContext != null && filterContext.xValue() != null ? filterContext.xValue() : 0;
                 if (gameData == null) {
-                    yield permanent.getEffectivePower() <= xVal;
+                    yield gameQueryService.powerForStaticFilter(permanent) <= xVal;
                 }
                 yield gameQueryService.getEffectivePower(gameData, permanent) <= xVal;
             }
@@ -475,19 +479,19 @@ public class PredicateEvaluationService {
                     permanent.getCard().getManaValue() >= minManaValuePredicate.minManaValue();
             case PermanentPowerAtLeastPredicate powerAtLeastPredicate -> {
                 if (gameData == null) {
-                    yield permanent.getEffectivePower() >= powerAtLeastPredicate.minPower();
+                    yield gameQueryService.powerForStaticFilter(permanent) >= powerAtLeastPredicate.minPower();
                 }
                 yield gameQueryService.getEffectivePower(gameData, permanent) >= powerAtLeastPredicate.minPower();
             }
             case PermanentToughnessAtMostPredicate toughnessAtMostPredicate -> {
                 if (gameData == null) {
-                    yield permanent.getEffectiveToughness() <= toughnessAtMostPredicate.maxToughness();
+                    yield gameQueryService.toughnessForStaticFilter(permanent) <= toughnessAtMostPredicate.maxToughness();
                 }
                 yield gameQueryService.getEffectiveToughness(gameData, permanent) <= toughnessAtMostPredicate.maxToughness();
             }
             case PermanentToughnessAtLeastPredicate toughnessAtLeastPredicate -> {
                 if (gameData == null) {
-                    yield permanent.getEffectiveToughness() >= toughnessAtLeastPredicate.minToughness();
+                    yield gameQueryService.toughnessForStaticFilter(permanent) >= toughnessAtLeastPredicate.minToughness();
                 }
                 yield gameQueryService.getEffectiveToughness(gameData, permanent) >= toughnessAtLeastPredicate.minToughness();
             }

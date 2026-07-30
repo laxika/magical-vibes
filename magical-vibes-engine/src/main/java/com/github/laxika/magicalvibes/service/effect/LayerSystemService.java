@@ -288,6 +288,7 @@ public class LayerSystemService {
         private LayeredBoardState board;
         private boolean boardReady;
         private final Map<UUID, GameQueryService.StaticBonus> bonusMemo = new HashMap<>();
+        private final Map<UUID, GameQueryService.StaticBonus> preliminaryBonusMemo = new HashMap<>();
 
         private Pass(GameData gameData, Pass parent) {
             this.gameData = gameData;
@@ -298,6 +299,12 @@ public class LayerSystemService {
             return board;
         }
 
+        /** The game state this pass is computing for — the {@code GameData} the ambient
+         *  {@link #activePass()} hook's callers need in order to ask a layered query. */
+        public GameData gameData() {
+            return gameData;
+        }
+
         public boolean isBoardReady() {
             return boardReady;
         }
@@ -305,6 +312,27 @@ public class LayerSystemService {
         public Map<UUID, GameQueryService.StaticBonus> bonusMemo() {
             return bonusMemo;
         }
+
+        /**
+         * Memo for the P/T-only bonus {@code GameQueryService} builds when a static filter asks
+         * for the layer-7 numbers of the permanent whose assembly is already running. Kept apart
+         * from {@link #bonusMemo}: that answer is computed with the P/T leaves forced onto their
+         * board-derived fallback, so it is authoritative for power and toughness only and must
+         * never be handed out as the permanent's real {@code StaticBonus}.
+         */
+        public Map<UUID, GameQueryService.StaticBonus> preliminaryBonusMemo() {
+            return preliminaryBonusMemo;
+        }
+    }
+
+    /**
+     * Ambient hook: the layered pass running on this thread, or {@code null} outside a pass.
+     * The {@code GameData}-taking overload is the one rules code should use; this form exists
+     * for the recursion-safe filter leaves, which are reached through handler call chains that
+     * no longer carry the game state (see {@link #activeStateFor}, same rationale).
+     */
+    public static Pass activePass() {
+        return ACTIVE_PASS.get();
     }
 
     /** Returns the active pass for the given game state on this thread, or {@code null}. */

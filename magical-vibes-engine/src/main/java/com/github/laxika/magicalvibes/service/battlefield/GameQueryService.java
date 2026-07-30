@@ -1468,6 +1468,126 @@ public class GameQueryService {
     }
 
     /**
+     * Power as seen by a static filter's power leaf, and the recursion-safe counterpart of
+     * {@link #getEffectivePower(GameData, Permanent)}. Static filters are evaluated from inside
+     * the layered pass, where the fully layered query is not always reachable: layer 7c lives in
+     * {@link #assembleStaticBonusInternal}, so asking for a permanent whose assembly is already
+     * running would re-enter it forever.
+     *
+     * <p>Three answers, by what is safely available:
+     * <ul>
+     * <li><b>Fully layered</b> (anthems and every other layer-7c boost included) once the pass's
+     *     board is finished and this permanent is not itself being assembled.</li>
+     * <li><b>Preliminary</b> when the permanent IS the one being assembled — the dominant shape,
+     *     since a static effect filtered on P/T ("creatures you control with power 1 or less",
+     *     Tetsuko Umezawa, Fugitive) asks about the very permanent whose bonus is being built.
+     *     See {@link #preliminaryBonus}: a second assembly answers it, with the P/T leaves inside
+     *     that one pinned to the board-derived reading so the cycle closes after one level.
+     *     Anthems count here too.</li>
+     * <li><b>Board-derived</b> at the bottom of that recursion, and whenever the leaf is reached
+     *     mid-pass. Mid-pass is the CR 613 order, not an approximation — a filter applied in
+     *     layer 4-6 must not read numbers layer 7 has not produced yet.</li>
+     * </ul>
+     */
+    public int powerForStaticFilter(Permanent permanent) {
+        return ptForStaticFilter(permanent, true);
+    }
+
+    /** The toughness counterpart of {@link #powerForStaticFilter(Permanent)}. */
+    public int toughnessForStaticFilter(Permanent permanent) {
+        return ptForStaticFilter(permanent, false);
+    }
+
+    private int ptForStaticFilter(Permanent permanent, boolean wantPower) {
+        LayerSystemService.Pass pass = LayerSystemService.activePass();
+        if (pass == null
+                || !pass.isBoardReady()
+                // Off-battlefield targets (AI hypothetical scoring) have no state in the pass;
+                // assembling a bonus for one would reconstruct it from legacy intrinsics anyway.
+                || !pass.board().states().containsKey(permanent.getId())
+                || PT_LEAF_FROM_BOARD.get().contains(permanent.getId())) {
+            return ptFromBoard(pass, permanent, wantPower);
+        }
+        StaticBonus bonus = ASSEMBLY_IN_PROGRESS.get().contains(permanent.getId())
+                ? preliminaryBonus(pass, permanent)
+                : computeStaticBonus(pass.gameData(), permanent);
+        return wantPower
+                ? getEffectivePower(permanent, bonus)
+                : getEffectiveToughness(permanent, bonus);
+    }
+
+    /**
+     * The layer-7 numbers of a permanent whose own static-bonus assembly is already running.
+     * Re-runs the assembly for it with the permanent added to {@link #PT_LEAF_FROM_BOARD}, so
+     * any P/T leaf reached inside answers from the board instead of recursing a third time. Only
+     * the power and toughness of the result are trustworthy — every other field was decided with
+     * those leaves degraded — which is why it is memoized apart from the real bonus.
+     *
+     * <p>What still cannot be answered is a layer-7c boost whose own filter reads the power it
+     * contributes to ("creatures with power 2 or less get +1/+1"): that is circular in the rules,
+     * not just in this implementation, and it lands on the board-derived reading.
+     */
+    private StaticBonus preliminaryBonus(LayerSystemService.Pass pass, Permanent permanent) {
+        StaticBonus memoized = pass.preliminaryBonusMemo().get(permanent.getId());
+        if (memoized != null) {
+            return memoized;
+        }
+        Set<UUID> fromBoard = PT_LEAF_FROM_BOARD.get();
+        fromBoard.add(permanent.getId());
+        try {
+            StaticBonus bonus = assembleStaticBonusInternal(
+                    pass.gameData(), pass.board(), permanent, null, null, null);
+            pass.preliminaryBonusMemo().put(permanent.getId(), bonus);
+            return bonus;
+        } finally {
+            fromBoard.remove(permanent.getId());
+        }
+    }
+
+    /**
+     * P/T from the layered board alone — everything the pass resolved without running a
+     * per-target assembly: the sublayer-7b winner (CR 613.4b) over the permanent's own base,
+     * its modifiers and counters (its share of 7c), and the sublayer-7d switch (CR 613.4d).
+     * Boosts contributed by OTHER permanents are absent; so is the object's own 7a CDA, which
+     * the assembly computes. Falls back to the plain {@link Permanent} accessors with no pass.
+     */
+    private int ptFromBoard(LayerSystemService.Pass pass, Permanent permanent, boolean wantPower) {
+        LayerSystemService.LayeredBoardState board = pass == null ? null : pass.board();
+        if (board == null) {
+            return wantPower ? permanent.getEffectivePower() : permanent.getEffectiveToughness();
+        }
+        LayerSystemService.BasePt base = board.basePt7b().get(permanent.getId());
+        int power = base != null && base.power() != null
+                ? base.power() + permanent.getPowerModifiers()
+                : permanent.getEffectivePower();
+        int toughness = base != null && base.toughness() != null
+                ? base.toughness() + permanent.getToughnessModifiers()
+                : permanent.getEffectiveToughness();
+        boolean switched = board.switchedPt7d().contains(permanent.getId());
+        if (switched) {
+            return wantPower ? toughness : power;
+        }
+        return wantPower ? power : toughness;
+    }
+
+    /**
+     * Basic land types for Domain (CR 702.42) evaluated from inside the layered pass. Uses the
+     * layered {@link #effectiveBasicLandTypes} — so CR 305.7 overrides (Blood Moon, Urborg,
+     * Prismatic Omen) count — except for a land whose own static bonus is currently being
+     * assembled, where the printed types are the only recursion-free answer.
+     */
+    public Set<CardSubtype> basicLandTypesForStaticEvaluation(GameData gameData, Permanent permanent) {
+        if (ASSEMBLY_IN_PROGRESS.get().contains(permanent.getId())) {
+            Set<CardSubtype> printed = EnumSet.noneOf(CardSubtype.class);
+            for (CardSubtype subtype : permanent.getCard().getSubtypes()) {
+                if (BASIC_LAND_SUBTYPES.contains(subtype)) printed.add(subtype);
+            }
+            return printed;
+        }
+        return effectiveBasicLandTypes(gameData, permanent);
+    }
+
+    /**
      * Returns the amount of combat damage this creature assigns.
      * Normally equal to effective power, but some effects cause a creature to assign
      * damage equal to its toughness instead:
@@ -1807,7 +1927,41 @@ public class GameQueryService {
         return assembleStaticBonusInternal(gameData, board, target, null, explain, explainEffects);
     }
 
+    /**
+     * The permanents whose static-bonus assembly is on this thread's call stack. Purely a
+     * cycle detector for {@link #powerForStaticFilter}: a layer-7c boost whose own filter reads
+     * the boosted permanent's power ("creatures with power 2 or less get +1/+1") would ask for
+     * a number this very assembly is in the middle of producing. Recording is unconditional and
+     * never blocks re-entry — only the P/T leaves consult it, and only to pick their fallback.
+     */
+    private static final ThreadLocal<Set<UUID>> ASSEMBLY_IN_PROGRESS =
+            ThreadLocal.withInitial(HashSet::new);
+
+    /**
+     * The permanents whose P/T leaves must answer from the layered board alone. Populated by
+     * {@link #preliminaryBonus} for the duration of the one extra assembly it runs, which is
+     * what terminates the "filter reads the P/T of the permanent being assembled" recursion.
+     */
+    private static final ThreadLocal<Set<UUID>> PT_LEAF_FROM_BOARD =
+            ThreadLocal.withInitial(HashSet::new);
+
     private StaticBonus assembleStaticBonusInternal(
+            GameData gameData, LayerSystemService.LayeredBoardState board,
+            Permanent target, UUID targetControllerId, List<ModifierLine> explain,
+            List<GrantedEffectAttribution> explainEffects) {
+        Set<UUID> inProgress = ASSEMBLY_IN_PROGRESS.get();
+        boolean tracked = inProgress.add(target.getId());
+        try {
+            return assembleStaticBonusUnguarded(
+                    gameData, board, target, targetControllerId, explain, explainEffects);
+        } finally {
+            if (tracked) {
+                inProgress.remove(target.getId());
+            }
+        }
+    }
+
+    private StaticBonus assembleStaticBonusUnguarded(
             GameData gameData, LayerSystemService.LayeredBoardState board,
             Permanent target, UUID targetControllerId, List<ModifierLine> explain,
             List<GrantedEffectAttribution> explainEffects) {

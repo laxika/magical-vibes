@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.PrismaticOmen;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -61,6 +62,18 @@ class MatcaRiotersTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, rioters)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, rioters)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Matca Rioters counts land types granted by Prismatic Omen (CR 305.7)")
+    void countsGrantedBasicLandTypes() {
+        Permanent rioters = addRiotersReady(player1);
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new PrismaticOmen());
+
+        // The lone Forest is every basic land type in addition to its own, so domain is 5.
+        assertThat(gqs.getEffectivePower(gd, rioters)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, rioters)).isEqualTo(5);
     }
 
     @Test

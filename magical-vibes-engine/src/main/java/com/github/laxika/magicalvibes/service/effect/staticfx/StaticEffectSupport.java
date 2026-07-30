@@ -500,12 +500,15 @@ public class StaticEffectSupport {
         if (filter instanceof PermanentTruePredicate) return true;
         if (filter instanceof PermanentNamedPredicate p)
             return target.getCard().getName().equals(p.cardName());
+        // Layer-7-aware (CR 613.4): the leaves read the sublayer-7b base winner, the 7d switch
+        // and — once the pass's board is finished — every 7c boost from other permanents, so a
+        // "power 2 or less" filter no longer sees a pumped creature's printed power.
         if (filter instanceof PermanentPowerAtMostPredicate p)
-            return target.getEffectivePower() <= p.maxPower();
+            return gameQueryService.powerForStaticFilter(target) <= p.maxPower();
         if (filter instanceof PermanentToughnessAtMostPredicate p)
-            return target.getEffectiveToughness() <= p.maxToughness();
+            return gameQueryService.toughnessForStaticFilter(target) <= p.maxToughness();
         if (filter instanceof PermanentPowerAtLeastPredicate p)
-            return target.getEffectivePower() >= p.minPower();
+            return gameQueryService.powerForStaticFilter(target) >= p.minPower();
         if (filter instanceof PermanentHasCountersPredicate p)
             return switch (p.counterType()) {
                 case PLUS_ONE_PLUS_ONE -> target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0;
