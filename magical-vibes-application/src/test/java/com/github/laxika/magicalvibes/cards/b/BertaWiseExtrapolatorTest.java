@@ -99,7 +99,11 @@ class BertaWiseExtrapolatorTest extends BaseCardTest {
             assertThat(localGd.playerBattlefields.get(player1.getId()))
                     .noneMatch(p -> p.getCard().isToken() && "Fractal".equals(p.getCard().getName()));
             assertThat(localGd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.isToken() && "Fractal".equals(c.getName()));
+                    .noneMatch(c -> c.isToken() && "Fractal".equals(c.getName()));
+            assertThat(localGd.gameLog.stream().map(entry -> entry.plainText()))
+                    .anyMatch(log -> log.contains("0/0") && log.contains("Fractal")
+                            && log.contains("enters the battlefield"))
+                    .anyMatch(log -> log.contains("Fractal") && log.contains("ceases to exist"));
         }
     }
 }

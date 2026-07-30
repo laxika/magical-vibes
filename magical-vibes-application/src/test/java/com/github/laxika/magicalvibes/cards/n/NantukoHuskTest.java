@@ -377,6 +377,7 @@ class NantukoHuskTest extends BaseCardTest {
         card.setColor(CardColor.GREEN);
         card.setPower(1);
         card.setToughness(1);
+        card.setToken(true);
         return card;
     }
 }
