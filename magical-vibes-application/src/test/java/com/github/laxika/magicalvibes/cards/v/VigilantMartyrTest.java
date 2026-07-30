@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -34,7 +34,7 @@ class VigilantMartyrTest extends BaseCardTest {
     @DisplayName("Counters a spell that targets an enchantment")
     void countersSpellTargetingEnchantment() {
         addCreatureReady(player1, new VigilantMartyr());
-        harness.addToBattlefield(player1, new Pacifism());
+        harness.addToBattlefield(player1, new GloriousAnthem());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         Disenchant disenchant = new Disenchant();
@@ -42,14 +42,14 @@ class VigilantMartyrTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 2);
 
         harness.forceActivePlayer(player2);
-        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Pacifism"));
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Glorious Anthem"));
         harness.passPriority(player2);
 
         harness.activateAbility(player1, 0, 1, null, disenchant.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Disenchant");
-        harness.assertOnBattlefield(player1, "Pacifism");
+        harness.assertOnBattlefield(player1, "Glorious Anthem");
         harness.assertInGraveyard(player1, "Vigilant Martyr");
         assertThat(gd.stack).isEmpty();
     }
@@ -76,14 +76,14 @@ class VigilantMartyrTest extends BaseCardTest {
     @DisplayName("Cannot activate the counter ability without {W}{W}")
     void cannotCounterWithoutMana() {
         addCreatureReady(player1, new VigilantMartyr());
-        harness.addToBattlefield(player1, new Pacifism());
+        harness.addToBattlefield(player1, new GloriousAnthem());
 
         Disenchant disenchant = new Disenchant();
         harness.setHand(player2, List.of(disenchant));
         harness.addMana(player2, ManaColor.WHITE, 2);
 
         harness.forceActivePlayer(player2);
-        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Pacifism"));
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Glorious Anthem"));
         harness.passPriority(player2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, disenchant.getId()))

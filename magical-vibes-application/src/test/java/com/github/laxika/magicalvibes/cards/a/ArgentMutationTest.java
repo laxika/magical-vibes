@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -83,11 +83,11 @@ class ArgentMutationTest extends BaseCardTest {
     @Test
     @DisplayName("Can target an enchantment and make it an artifact")
     void canTargetEnchantment() {
-        harness.addToBattlefield(player2, new Pacifism());
+        harness.addToBattlefield(player2, new GloriousAnthem());
         harness.setHand(player1, List.of(new ArgentMutation()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Pacifism");
+        UUID targetId = harness.getPermanentId(player2, "Glorious Anthem");
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 

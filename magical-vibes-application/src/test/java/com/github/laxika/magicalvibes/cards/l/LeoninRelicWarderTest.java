@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -75,15 +75,14 @@ class LeoninRelicWarderTest extends BaseCardTest {
     @Test
     @DisplayName("ETB exiles target enchantment")
     void etbExilesTargetEnchantment() {
-        // Put Pacifism directly on the battlefield
-        harness.addToBattlefield(player2, new Pacifism());
+        harness.addToBattlefield(player2, new GloriousAnthem());
 
-        UUID pacifismId = harness.getPermanentId(player2, "Pacifism");
-        castAndExileTarget(pacifismId);
+        UUID anthemId = harness.getPermanentId(player2, "Glorious Anthem");
+        castAndExileTarget(anthemId);
 
-        harness.assertNotOnBattlefield(player2, "Pacifism");
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Pacifism"));
+                .anyMatch(c -> c.getName().equals("Glorious Anthem"));
     }
 
     @Test

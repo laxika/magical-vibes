@@ -65,7 +65,7 @@ class MysticMightTest extends BaseCardTest {
     @Test
     @DisplayName("Paying cumulative upkeep keeps Mystic Might")
     void paysCumulativeUpkeep() {
-        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MysticMight());
+        Permanent aura = addAttachedMysticMight();
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -83,7 +83,7 @@ class MysticMightTest extends BaseCardTest {
     @Test
     @DisplayName("Declining cumulative upkeep sacrifices Mystic Might")
     void declineSacrifices() {
-        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MysticMight());
+        Permanent aura = addAttachedMysticMight();
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -116,5 +116,12 @@ class MysticMightTest extends BaseCardTest {
                 harness.activateAbility(player1, 0, 0, null, plains.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    private Permanent addAttachedMysticMight() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MysticMight());
+        aura.setAttachedTo(forest.getId());
+        return aura;
     }
 }

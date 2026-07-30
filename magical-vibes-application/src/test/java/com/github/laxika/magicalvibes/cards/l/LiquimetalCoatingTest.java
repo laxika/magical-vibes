@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -247,7 +247,7 @@ class LiquimetalCoatingTest extends BaseCardTest {
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        Pacifism card = new Pacifism();
+        GloriousAnthem card = new GloriousAnthem();
         Permanent perm = new Permanent(card);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

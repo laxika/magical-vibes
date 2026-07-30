@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -54,13 +54,13 @@ class OblivionRingTest extends BaseCardTest {
     @Test
     @DisplayName("ETB can exile a nonland permanent the controller owns")
     void etbExilesOwnPermanent() {
-        harness.addToBattlefield(player1, new Pacifism());
-        UUID pacifismId = harness.getPermanentId(player1, "Pacifism");
-        castAndResolveOblivionRing(pacifismId);
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        UUID anthemId = harness.getPermanentId(player1, "Glorious Anthem");
+        castAndResolveOblivionRing(anthemId);
 
-        harness.assertNotOnBattlefield(player1, "Pacifism");
+        harness.assertNotOnBattlefield(player1, "Glorious Anthem");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Pacifism"));
+                .anyMatch(c -> c.getName().equals("Glorious Anthem"));
     }
 
     // ===== LTB return =====

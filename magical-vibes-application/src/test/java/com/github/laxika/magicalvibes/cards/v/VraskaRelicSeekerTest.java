@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -141,9 +141,9 @@ class VraskaRelicSeekerTest extends BaseCardTest {
     @DisplayName("-3 destroys target enchantment and creates a Treasure token")
     void minusThreeDestroysEnchantment() {
         Permanent vraska = addReadyVraska(player1);
-        harness.addToBattlefield(player2, new Pacifism());
+        harness.addToBattlefield(player2, new GloriousAnthem());
 
-        Permanent enchantment = findPermanent(player2, "Pacifism");
+        Permanent enchantment = findPermanent(player2, "Glorious Anthem");
 
         harness.activateAbility(player1, 0, 1, null, enchantment.getId());
         harness.passBothPriorities();
@@ -151,7 +151,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
         assertThat(vraska.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 6 - 3
 
         // Enchantment should be destroyed
-        harness.assertNotOnBattlefield(player2, "Pacifism");
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
 
         // Treasure token should exist
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()

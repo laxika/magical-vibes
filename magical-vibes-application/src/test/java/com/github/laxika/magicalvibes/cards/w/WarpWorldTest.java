@@ -273,7 +273,7 @@ class WarpWorldTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).clear();
         gd.playerDecks.get(player2.getId()).clear();
 
-        harness.addToBattlefield(player1, new Pacifism());
+        addAuraAttachedToToken(player1, new Pacifism());
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
@@ -292,8 +292,8 @@ class WarpWorldTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).clear();
         gd.playerDecks.get(player2.getId()).clear();
 
-        harness.addToBattlefield(player1, new Pacifism());
-        harness.addToBattlefield(player1, new Dehydration());
+        addAuraAttachedToToken(player1, new Pacifism());
+        addAuraAttachedToToken(player1, new Dehydration());
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
@@ -322,10 +322,10 @@ class WarpWorldTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).clear();
         gd.playerDecks.get(player2.getId()).clear();
 
-        harness.addToBattlefield(player1, new Pacifism());
-        harness.addToBattlefield(player1, new Dehydration());
-        harness.addToBattlefield(player2, new Pacifism());
-        harness.addToBattlefield(player2, new Dehydration());
+        addAuraAttachedToToken(player1, new Pacifism());
+        addAuraAttachedToToken(player1, new Dehydration());
+        addAuraAttachedToToken(player2, new Pacifism());
+        addAuraAttachedToToken(player2, new Dehydration());
 
         harness.castSorcery(player2, 0, 0);
         harness.passBothPriorities();
@@ -438,6 +438,21 @@ class WarpWorldTest extends BaseCardTest {
         card.setManaCost("");
         card.setCardText("");
         return card;
+    }
+
+    private void addAuraAttachedToToken(Player player, Card auraCard) {
+        Card tokenCard = new Card();
+        tokenCard.setName("Goblin Token");
+        tokenCard.setType(CardType.CREATURE);
+        tokenCard.setManaCost("");
+        tokenCard.setColor(CardColor.RED);
+        tokenCard.setPower(1);
+        tokenCard.setToughness(1);
+        tokenCard.setToken(true);
+
+        Permanent token = harness.addToBattlefieldAndReturn(player, tokenCard);
+        Permanent aura = harness.addToBattlefieldAndReturn(player, auraCard);
+        aura.setAttachedTo(token.getId());
     }
 }
 
