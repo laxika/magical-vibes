@@ -99,24 +99,36 @@ land, planeswalker, subtype, color and keyword leaves of
 `StaticEffectSupport.matchesStaticFilter` already read `CharacteristicState` when a pass is
 active. These do not.
 
-- [ ] `PermanentIsArtifactPredicate` leaf (~`StaticEffectSupport.java:364`) currently calls the
+**Done 2026-07-30** — step 15 in `LAYER_SYSTEM.md`.
+
+- [x] `PermanentIsArtifactPredicate` leaf (~`StaticEffectSupport.java:364`) currently calls the
       printed-only `gameQueryService.isArtifact(target)` and ignores layer-4 state even mid-pass.
       **This one line is the `Rusted Relic` bug.**
-- [ ] Route `ConditionEvaluationService.isMetalcraftMet`'s static branch (~`:547`) through that
+- [x] Route `ConditionEvaluationService.isMetalcraftMet`'s static branch (~`:547`) through that
       leaf instead of `gameQueryService::isArtifact`.
-- [ ] `PermanentIsEnchantmentPredicate` leaf (~`:373`) — printed only; misses transient and
+- [x] `PermanentIsEnchantmentPredicate` leaf (~`:373`) — printed only; misses transient and
       persistent granted ENCHANTMENT (`Enchanted Evening`, `Song of the Dryads`).
-- [ ] `PermanentHasSupertypePredicate` leaf (~`:411`) — printed only; misses granted/removed
+- [x] `PermanentHasSupertypePredicate` leaf (~`:411`) — printed only; misses granted/removed
       legendary and snow.
-- [ ] `PermanentIsHistoricPredicate` leaf (~`:384`) — uses printed artifact + printed LEGENDARY
+- [x] `PermanentIsHistoricPredicate` leaf (~`:384`) — uses printed artifact + printed LEGENDARY
       + printed/transient SAGA.
-- [ ] Divergence: the creature leaf (~`:349`) omits `isPermanentlyAnimated()`, while
+- [x] Divergence: the creature leaf (~`:349`) omits `isPermanentlyAnimated()`, while
       `isCreature`, `isCreatureInStaticPass` and `isCreatureForL4` all include it.
-- [ ] Divergence: `PermanentColorInPredicate` (~`:291`) does not read `getGrantedColors()`
+- [x] Divergence: `PermanentColorInPredicate` (~`:291`) does not read `getGrantedColors()`
       outside a pass, while `PermanentIsMulticoloredPredicate` (~`:389`) does.
 
 **Acceptance:** the reproduction above yields `relic power/toughness = 5/5`. Add it as a
 permanent test in `RustedRelicTest` (Relic + Armor + Bears, no third printed artifact).
+
+Deviation: metalcraft calls an extracted `StaticEffectSupport.isArtifactForStaticFilter` rather
+than going through `matchesStaticFilter` as the second bullet reads. The funnel's CR 613.6
+verdict memo is keyed by filter instance and `PermanentIsArtifactPredicate` is a component-less
+record, so all instances compare equal — an unrelated caller entering the funnel would collect a
+verdict memoized for some other ability. The artifact and historic leaves call the same method.
+
+Residual approximation carried into Stage B/C: the supertype leaf passes a `null` GameData to
+`hasEffectiveSupertype`, so global supertype removals (`Melting`) stay invisible — that scan
+would re-enter static-bonus assembly. Per-permanent grants and removals ARE honored.
 
 ## Stage B — P/T leaves read layered numbers
 
@@ -219,7 +231,8 @@ The primary regression spec already exists and outranks anything written for thi
 
 Build these in addition, before Stage A, and keep them green throughout:
 
-- [ ] The `Rusted Relic` + `Silverskin Armor` reproduction as a permanent test.
+- [x] The `Rusted Relic` + `Silverskin Armor` reproduction as a permanent test.
+      `RustedRelicTest.grantedArtifactTypeCountsTowardMetalcraft` (2026-07-30).
 - [ ] Characterization tests for the 17 handlers calling `matchesStaticFilter`. Pin behavior
       derived from the CR, **not** from current output — some current output is wrong (anthems
       invisible to static filters is a bug, not a baseline). Where current behavior is knowingly

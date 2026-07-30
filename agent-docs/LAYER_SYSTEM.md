@@ -1360,3 +1360,55 @@ and any deviations from this document.
     pin), staticfx suite, GameQueryService/PredicateEvaluation/TextChangeTransformer tests,
     all 58 conditional-static card tests (metalcraft/fateful-hour/hellbent families,
     ManorGargoyle, BondsOfFaith) plus the layer-heavy regression batch — all green.
+
+15. **2026-07-30 — Step 15: Stage A of `STATIC_EVALUATION_MIGRATION.md` — static-filter type
+    leaves read layer-4 state.** The recursion-safe matchers selected by
+    `ConditionContext.staticEvaluation()` read printed/stored characteristics only, so
+    continuous effects were invisible to them. `GameQueryService.isCreature` used the layered
+    artifact count while static-bonus assembly used the printed one — the same condition
+    answered two ways depending on caller. Visible break: `Rusted Relic` + `Silverskin Armor`
+    equipped to any creature. Printed artifacts = 2, but the Armor's `GrantCardTypeEffect` makes
+    the equipped creature an artifact in layer 4 (CR 613.1d), so the true count is 3 and
+    metalcraft is met; the layered path animated the Relic, the static path did not supply 5/5,
+    and the 0/0 died to CR 704.5f. Reproduced as a failing test FIRST
+    (`RustedRelicTest.grantedArtifactTypeCountsTowardMetalcraft`, observed 0/0), then fixed.
+    ENGINE CHANGES (all in `StaticEffectSupport.matchesStaticFilter` unless noted): extracted
+    `isArtifactForStaticFilter` — reads `LayerSystemService.activeStateFor` during a pass, falls
+    back to `gameQueryService.isArtifact` (printed + transient + persistent grants) outside one —
+    and pointed the artifact leaf, the historic leaf and
+    `ConditionEvaluationService.isMetalcraftMet`'s static branch at it. Enchantment leaf now
+    layered, falling back to `isEnchantment`. New `hasSupertypeForStaticFilter`: per-permanent
+    persistent grants win, persistent removals block, then layer-4 grants
+    (`GrantSupertypeToEnchantedPermanentEffect`, which had no reader — added
+    `CharacteristicState.hasSupertype`, the only domain change). Historic leaf recomposed from
+    those plus a `hasSagaSubtypeForStaticFilter` that also reads granted subtypes. Closed two
+    divergences from `PredicateEvaluationService`, which already read both: the creature leaf
+    now includes `isPermanentlyAnimated()` (`:353` there) and the color leaf now includes
+    `getGrantedColors()` (`:513` there). **Deviation from the plan:** metalcraft calls the
+    extracted method directly rather than entering `matchesStaticFilter` as Stage A's second
+    bullet reads — the funnel's CR 613.6 verdict memo is keyed by filter instance and
+    `PermanentIsArtifactPredicate` is a component-less record, so every instance compares equal
+    and an unrelated caller would collect a verdict memoized for another ability. **Known
+    limitation carried forward:** the supertype leaf passes a `null` GameData to
+    `hasEffectiveSupertype`, so global removals (`Melting`) stay invisible; that scan would
+    re-enter static-bonus assembly. Note the change is not purely additive — a layer-4
+    `overrideCardTypes` (Song of the Dryads, Lignify, Imprisoned in the Moon) can now correctly
+    make a permanent stop counting as an artifact/enchantment where the printed read kept it.
+    **Verification:** SevenLayerTest **100/100**, LayerDependencyTest 9/9,
+    LayeredBoardCacheTest, FloatingEffectLifecycleTest, ModifierExplanationTest,
+    LayerPassBenchmarkTest, the staticfx suite, PredicateEvaluationService, GameQueryService,
+    TargetFilters; plus **173 card tests** — every card whose source combines `EffectSlot.STATIC`
+    with one of the changed predicates, unioned with all 30 metalcraft cards — and a divergence
+    batch (AwakenerDruid, WakerOfTheWilds, TezzeretAgentOfBolas, PermanentViewFactory,
+    MirageMirror, EnchantedEvening, BludgeonBrawl, MoxOpal). All green; no card test needed a
+    rules verdict, so no card was silently relying on the approximation in a way this stage
+    changed. The user's full-suite run surfaced one failure,
+    `MCTSEngineTest.abilityMctsPrefersOpponentOverWardedNonlethalCreature`, diagnosed as
+    pre-existing flakiness unrelated to this step and left unfixed: `GameSetupService:41`
+    holds an unseeded `Random` and `:167` shuffles each deck with it, so MCTS's own `42L` seed
+    fixes the search but not the game state it searches; the sibling test
+    `abilityMctsFallsBackOnTargetRankingAtTinyBudget` documents a measured 17% wrong-target rate
+    on the same board and pins hands and libraries to suppress it, which the failing test does
+    not do. Stage A is provably inert there — nothing on that board or in the
+    `10e-white-theme-deck` carries a STATIC effect using a changed predicate, no metalcraft, no
+    permanently-animated permanent, no granted colors.
