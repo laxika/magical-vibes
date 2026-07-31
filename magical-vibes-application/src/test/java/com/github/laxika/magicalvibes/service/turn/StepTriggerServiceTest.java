@@ -63,7 +63,6 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GrantedUpkeepEffectSupport;
-import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -149,7 +148,7 @@ class StepTriggerServiceTest {
                 drawService,
                 gameQueryService,
                 predicateEvaluationService,
-                new ConditionEvaluationService(gameQueryService, predicateEvaluationService, new StaticEffectSupport(gameQueryService)),
+                new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
                 gameLogService,
                 playerInputService,
                 permanentRemovalService,

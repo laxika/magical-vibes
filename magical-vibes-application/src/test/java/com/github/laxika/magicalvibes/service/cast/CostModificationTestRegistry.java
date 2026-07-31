@@ -14,9 +14,7 @@ import com.github.laxika.magicalvibes.service.cast.costmod.ReduceOwnCastCostForC
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceOwnCastCostForSharedCardTypeWithImprintEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import org.mockito.Mockito;
 
 /**
  * Builds the {@link CostModificationHandlerRegistry} with all production handlers, the same
@@ -32,10 +30,8 @@ public final class CostModificationTestRegistry {
                                                         CostModificationSupport support) {
         AmountEvaluationService amountEvaluationService =
                 new AmountEvaluationService(predicateEvaluationService, gameQueryService);
-        // Cast-cost evaluation always uses non-static condition contexts, so the static-only
-        // StaticEffectSupport dependency is never invoked here.
-        ConditionEvaluationService conditionEvaluationService = new ConditionEvaluationService(
-                gameQueryService, predicateEvaluationService, Mockito.mock(StaticEffectSupport.class));
+        ConditionEvaluationService conditionEvaluationService =
+                new ConditionEvaluationService(gameQueryService, predicateEvaluationService);
 
         CostModificationHandlerRegistry registry = new CostModificationHandlerRegistry();
         registry.register(new IncreaseOpponentCastCostEffectHandler());

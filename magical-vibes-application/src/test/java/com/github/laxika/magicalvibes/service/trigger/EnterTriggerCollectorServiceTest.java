@@ -34,7 +34,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -81,7 +80,7 @@ class EnterTriggerCollectorServiceTest {
 
         service = new TriggerCollectionService(registry, gameOutcomeService, playerInputService,
                 triggeredAbilityQueueService, gameQueryService, predicateEvaluationService,
-                new ConditionEvaluationService(gameQueryService, predicateEvaluationService, new StaticEffectSupport(gameQueryService)),
+                new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
                 gameLogService, etbTokenTargetService,
                 new GrantedTriggeredAbilitySupport(gameQueryService));
 

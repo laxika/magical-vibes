@@ -87,9 +87,15 @@ generic handlers — do NOT add per-condition handlers:
 
 ## `StaticEffectSupport` public helpers
 
-- `boolean matchesStaticFilter(Permanent target, PermanentPredicate filter)` — delegates to
-  `PredicateEvaluationService.matchesStaticFilter`, which owns the recursion-safe evaluation and
-  throws on predicates that have no recursion-safe answer. A `null` filter matches everything.
+- `boolean matchesStaticFilter(StaticEffectContext context, Permanent target, PermanentPredicate filter)`
+  — delegates to `PredicateEvaluationService.matchesStaticFilter`, which owns the recursion-safe
+  evaluation and throws on predicates that have no recursion-safe answer. A `null` filter matches
+  everything. The target is separate from the context because a handler may filter permanents other
+  than the one being assembled.
+- `boolean matchesStaticLeaf(Permanent target, PermanentPredicate leaf)` — for a single predicate the
+  handler constructs itself rather than one taken from the card's ability. Same recursion-safe
+  evaluation, but it bypasses the CR 613.6 layer-4 verdict memo, which is keyed by filter instance
+  and so would hand a locally built component-less record another ability's verdict.
 - `static boolean isCreatureSubtype(CardSubtype subtype)`
 - `boolean matchesCreatureScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter)`
 - `boolean isEffectivelyCreature(Permanent permanent, boolean hasAnimateArtifacts)`

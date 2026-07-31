@@ -35,7 +35,7 @@ public class GrantEquipByManaValueEffectHandler implements StaticEffectHandlerBe
         boolean hasAnimateArtifacts = support.hasAnimateArtifactEffect(gameData);
 
         // Grant equip ability to matching permanents
-        if (support.matchesStaticFilter(target, grant.filter())) {
+        if (support.matchesStaticFilter(context, target, grant.filter())) {
             int manaValue = target.getCard().getManaValue();
             String cost = "{" + manaValue + "}";
             accumulator.addActivatedAbility(new ActivatedAbility(
@@ -58,7 +58,7 @@ public class GrantEquipByManaValueEffectHandler implements StaticEffectHandlerBe
             gameData.forEachPermanent((playerId, permanent) -> {
                 if (permanent.isAttached()
                         && permanent.getAttachedTo().equals(target.getId())
-                        && support.matchesStaticFilter(permanent, grant.filter())) {
+                        && support.matchesStaticFilter(context, permanent, grant.filter())) {
                     accumulator.addPower(permanent.getCard().getManaValue());
                 }
             });

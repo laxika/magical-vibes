@@ -29,7 +29,7 @@ public class GrantEffectSelfEffectHandler implements StaticEffectHandlerBean {
         var grant = (GrantEffectEffect) effect;
         if ((grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
                 || grant.scope() == GrantScope.ALL_OWN_CREATURES)
-                && support.matchesStaticFilter(context.target(), grant.filter())) {
+                && support.matchesStaticFilter(context, context.target(), grant.filter())) {
             accumulator.addGrantedEffect(grant.effect());
         }
     }

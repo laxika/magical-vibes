@@ -31,8 +31,8 @@ public class BoostCreaturesOfChosenSubtypeEffectHandler implements StaticEffectH
         Permanent target = context.target();
         // Recursion-safe creature check: the fully layered GameQueryService.isCreature would
         // re-enter static bonus assembly from inside this static pass.
-        if (!support.matchesStaticFilter(target, new PermanentIsCreaturePredicate())) return;
-        if (support.matchesStaticFilter(target, new PermanentHasSubtypePredicate(chosenSubtype))) {
+        if (!support.matchesStaticLeaf(target, new PermanentIsCreaturePredicate())) return;
+        if (support.matchesStaticLeaf(target, new PermanentHasSubtypePredicate(chosenSubtype))) {
             int multiplier = boost.scalingCounter() == null
                     ? 1
                     : context.source().getCounterCount(boost.scalingCounter());

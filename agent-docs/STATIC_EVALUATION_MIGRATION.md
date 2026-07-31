@@ -125,6 +125,8 @@ than going through `matchesStaticFilter` as the second bullet reads. The funnel'
 verdict memo is keyed by filter instance and `PermanentIsArtifactPredicate` is a component-less
 record, so all instances compare equal — an unrelated caller entering the funnel would collect a
 verdict memoized for some other ability. The artifact and historic leaves call the same method.
+C2 slice 2 generalized that method into `PredicateEvaluationService.matchesStaticLeaf` and deleted
+`isArtifactForStaticFilter`.
 
 Residual approximation carried into Stage B/C: the supertype leaf passes a `null` GameData to
 `hasEffectiveSupertype`, so global supertype removals (`Melting`) stay invisible — that scan
@@ -276,7 +278,7 @@ nothing else can reach it yet — list them when C2 widens admission past layer 
       split into a guard plus `applyL4Effect(instance, effect, …)`, so an admitted wrapper hands
       its wrapped effect straight back in, keeping the instance's source, timestamp and CR 613.6
       bookkeeping. Metalcraft's static branch already read the in-flight state through
-      `StaticEffectSupport.isArtifactForStaticFilter` (Stage A).
+      `StaticEffectSupport.isArtifactForStaticFilter` (Stage A; now `matchesStaticLeaf`).
 - [x] Let the existing `orderByDependency` (`:904`) handle Armor → Relic. **No new ordering logic
       was needed** — the trial-application fingerprints pick it up, because the animation's
       recorded operations appear only in the world where the Armor applied first.
@@ -347,30 +349,31 @@ ability. This matches how the other 16 P/T-filtered restriction cards already be
 
 ### C2 — strangler-fig the leaves
 
-The funnel handles **25 of the 68** `PermanentPredicate` implementations and throws on the rest,
-plus 4 more in the private context-aware overload; **14 handlers** call it, and of the two
-evaluation services only `ConditionEvaluationService` still does — Stage B moved
-`AmountEvaluationService` onto `FilterContext.empty()` into `PredicateEvaluationService`. Migrate
-**one predicate family per slice**, keeping the method as the funnel until it is empty, then delete
-it. Suite green at every step.
+`PredicateEvaluationService.matchesStaticFilter` handles **29 of the 68** `PermanentPredicate`
+implementations and throws on the rest. **14 handlers** reach it, and of the two evaluation services
+only `ConditionEvaluationService` still does — Stage B moved `AmountEvaluationService` onto
+`FilterContext.empty()` into `PredicateEvaluationService`. Migrate **one predicate family per
+slice**. Suite green at every step.
 
-Suggested family order: type leaves (done in A) → P/T leaves (done in B) → composites
-(`Not`/`AllOf`/`AnyOf`, which propagate and *invert* the approximation) → the four context-needing
-predicates currently handled only by the private overload → the ~40 that throw.
+Suggested family order: type leaves (done in A) → P/T leaves (done in B) → composites (done in C2
+slice 1) → the four context-needing predicates (done in C2 slice 2) → the ~40 that throw.
 
 - [x] Composites — **done 2026-07-31**, see "Slice 1" below.
-- [ ] Context-needing predicates (`IsEnchanted`, `ControllerControlsPermanent`,
-      `HasGreatestManaValueAmongAllCreatures`, `HasSourceChosenSubtype`)
+- [x] Context-needing predicates (`IsEnchanted`, `ControllerControlsPermanent`,
+      `HasGreatestManaValueAmongAllCreatures`, `HasSourceChosenSubtype`) — **done 2026-07-31**,
+      see "Slice 2" below.
+- [x] Delete `StaticEffectSupport.matchesStaticFilter` — done in slice 2; what is left on
+      `StaticEffectSupport` is a two-line scope adapter of the same name, not an evaluator.
 - [ ] Remaining throwing predicates
-- [ ] Delete `matchesStaticFilter`
 - [ ] Delete `ConditionContext.staticEvaluation` / `AmountContext.staticEvaluation`
 - [ ] Revert the `hasSelfBecomeCreatureEffect` boolean overload (its reason for existing is gone)
 
 #### Slice 1: one evaluator for the leaves (2026-07-31)
 
-The funnel moved to `PredicateEvaluationService.matchesStaticFilter`, and
-`StaticEffectSupport.matchesStaticFilter` is now a one-line delegate kept only because the private
-context-aware overload still has to intercept the four context-needing predicates before it.
+The funnel moved to `PredicateEvaluationService.matchesStaticFilter`, leaving
+`StaticEffectSupport.matchesStaticFilter` a one-line delegate kept only because the private
+context-aware overload still had to intercept the four context-needing predicates before it (slice 2
+removed that overload).
 Composites and the CR 613.6 layer-4 verdict memo moved with the funnel, so nested sub-predicates
 keep consulting the memo exactly as before.
 
@@ -401,6 +404,38 @@ Divergences resolved rather than preserved, each toward the more correct answer:
 Residual: `StaticEffectSupport.isCreatureSubtype` still exists as a second definition of the same
 set, because `LayerSystemService` uses it as a method reference in three `removeSubtypesIf` calls.
 Fold it into `GameQueryService` when the funnel goes.
+
+#### Slice 2: the four board-reading predicates (2026-07-31)
+
+`PredicateEvaluationService.matchesStaticFilter` now takes a `FilterContext` and answers
+`IsEnchanted`, `ControllerControlsPermanent`, `HasGreatestManaValueAmongAllCreatures` and
+`HasSourceChosenSubtype` itself, so `StaticEffectSupport`'s private context-aware overload and its
+two recursion-safe helpers are gone. What remains on `StaticEffectSupport` is
+`matchesStaticFilter(StaticEffectContext, Permanent, PermanentPredicate)`, a two-line adapter that
+builds the `FilterContext` from the static-effect context; the target stays an explicit parameter
+because several handlers filter permanents other than the one being assembled.
+
+No recursion-safe marker on `FilterContext` was needed, contrary to the earlier plan. The context is
+consulted only by those four cases; every characteristic leaf goes through `matchesStaticLeaf`,
+which passes no context down, so a `GameData` being present cannot pull a leaf onto the layered
+path. That also makes the invariant checkable by reading the funnel alone.
+
+`matchesStaticLeaf` is slice 1's `recursionSafeLeaf`, now public and named for the second thing it
+guarantees: it bypasses the CR 613.6 verdict memo. The memo is keyed by filter *instance* and most
+leaf predicates are component-less records, so a locally constructed instance compares equal to some
+unrelated ability's filter and would collect that ability's verdict. Only a filter that really is
+the ability's own may read it. Everything that constructs its own predicate now routes through
+`matchesStaticLeaf`: the land check in `matchesLandScope`, the creature checks inside
+`hasGreatestManaValueAmongAllCreatures`, the subtype check behind `HasSourceChosenSubtype`, the two
+`BoostCreaturesOfChosenSubtype` handlers and
+`GrantProtectionFromChosenTypeToOwnCreaturesSelfEffectHandler`. This subsumes
+`StaticEffectSupport.isArtifactForStaticFilter`, which existed only to dodge the same memo and is
+deleted; metalcraft calls `matchesStaticLeaf` directly.
+
+`ConditionEvaluationService` no longer depends on `StaticEffectSupport` at all — its three uses
+(`isCreatureForCondition`, `matchesPermanent`, `isMetalcraftMet`) go straight to the evaluator. Its
+static branch now also builds the same source card/controller `FilterContext` the non-static branch
+builds, so a source-relative predicate inside a static condition is no longer silently sourceless.
 
 ### Known secondary approximations to fold in
 

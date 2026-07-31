@@ -31,7 +31,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -93,7 +92,7 @@ class EffectResolutionServiceTest {
     void setUp() {
         lenient().when(stateBasedActionServiceProvider.getObject()).thenReturn(stateBasedActionService);
         effectResolutionService = new EffectResolutionService(
-                new ConditionEvaluationService(gameQueryService, predicateEvaluationService, new StaticEffectSupport(gameQueryService)),
+                new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
                 registry, gameLogService, permanentRemovalService, damageSupport, gameOutcomeService,
                 stateBasedActionServiceProvider);
         player1Id = UUID.randomUUID();

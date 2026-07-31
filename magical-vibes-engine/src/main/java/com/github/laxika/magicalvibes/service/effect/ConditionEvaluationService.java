@@ -119,6 +119,7 @@ import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTur
 import com.github.laxika.magicalvibes.model.condition.WonClash;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -146,10 +147,10 @@ import java.util.UUID;
 public class ConditionEvaluationService {
 
     private static final PermanentIsCreaturePredicate CREATURE_FILTER = new PermanentIsCreaturePredicate();
+    private static final PermanentIsArtifactPredicate ARTIFACT_FILTER = new PermanentIsArtifactPredicate();
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final StaticEffectSupport staticEffectSupport;
 
     /**
      * Evaluates whether the given condition is currently met.
@@ -535,7 +536,7 @@ public class ConditionEvaluationService {
      */
     private boolean isCreatureForCondition(GameData gameData, Permanent permanent, ConditionContext ctx) {
         return ctx.staticEvaluation()
-                ? staticEffectSupport.matchesStaticFilter(permanent, CREATURE_FILTER)
+                ? predicateEvaluationService.matchesStaticLeaf(permanent, CREATURE_FILTER)
                 : gameQueryService.isCreature(gameData, permanent);
     }
 
@@ -557,9 +558,6 @@ public class ConditionEvaluationService {
      */
     private boolean matchesPermanent(GameData gameData, Permanent permanent, PermanentPredicate filter,
                                      ConditionContext ctx) {
-        if (ctx.staticEvaluation()) {
-            return staticEffectSupport.matchesStaticFilter(permanent, filter);
-        }
         // Pass source card/controller so ownership and "is source" predicates work in conditions
         // (e.g. Gisela's "own and control Gisela and Bruna" intervening-if).
         FilterContext filterContext = FilterContext.of(gameData)
@@ -568,6 +566,9 @@ public class ConditionEvaluationService {
             filterContext = filterContext.withSourceCardId(ctx.sourceCard().getId());
         } else if (ctx.sourcePermanent() != null) {
             filterContext = filterContext.withSourceCardId(ctx.sourcePermanent().getOriginalCard().getId());
+        }
+        if (ctx.staticEvaluation()) {
+            return predicateEvaluationService.matchesStaticFilter(permanent, filter, filterContext);
         }
         return predicateEvaluationService.matchesPermanentPredicate(permanent, filter, filterContext);
     }
@@ -595,7 +596,7 @@ public class ConditionEvaluationService {
     /**
      * Metalcraft: three or more controlled artifacts. Static bonus computation cannot call the
      * general artifact check — it re-enters static bonus computation — so it counts through
-     * {@link StaticEffectSupport#isArtifactForStaticFilter}, which reads the layer-4 state
+     * {@link PredicateEvaluationService#matchesStaticLeaf}, which reads the layer-4 state
      * already computed for the in-flight pass (CR 613.1d). Counting printed types only made an
      * Equipment's "equipped creature is an artifact" invisible here while the layered
      * {@code isCreature} path saw it, animating a Rusted Relic as a 0/0 that then died to
@@ -610,7 +611,9 @@ public class ConditionEvaluationService {
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return false;
-        return battlefield.stream().filter(staticEffectSupport::isArtifactForStaticFilter).count() >= 3;
+        return battlefield.stream()
+                .filter(permanent -> predicateEvaluationService.matchesStaticLeaf(permanent, ARTIFACT_FILTER))
+                .count() >= 3;
     }
 
     /** Coven: three or more controlled creatures with different effective powers. */

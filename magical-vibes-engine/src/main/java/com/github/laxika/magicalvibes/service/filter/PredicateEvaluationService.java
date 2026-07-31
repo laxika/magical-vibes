@@ -176,6 +176,9 @@ public class PredicateEvaluationService {
 
     private final GameQueryService gameQueryService;
 
+    /** Creature leaf built here rather than taken from an ability, so it never reads the CR 613.6 memo. */
+    private static final PermanentIsCreaturePredicate STATIC_CREATURE_LEAF = new PermanentIsCreaturePredicate();
+
     // --- Card predicate matching ---
 
     /**
@@ -853,8 +856,13 @@ public class PredicateEvaluationService {
      * than degrading to the {@code null}-GameData fallback, which for a predicate that genuinely
      * needs the board (controlled-by-source, is-blocked) is a silent {@code false} — a wrong answer
      * dressed as a legitimate one.
+     *
+     * <p>The context supplies the board shape and the source's identity, which four predicates
+     * need to answer at all. It is deliberately <em>not</em> passed down to the characteristic
+     * leaves: those stay on the recursion-safe path whether or not a {@code GameData} is at hand,
+     * because having one is exactly what would let them re-enter the assembly.
      */
-    public boolean matchesStaticFilter(Permanent permanent, PermanentPredicate predicate) {
+    public boolean matchesStaticFilter(Permanent permanent, PermanentPredicate predicate, FilterContext context) {
         if (predicate == null) return true;
         // CR 613.6: when this exact filter instance was already evaluated by the layer-4 pass
         // (effect parts of one printed ability share the filter object), every later-layer part
@@ -866,41 +874,116 @@ public class PredicateEvaluationService {
             return layer4Verdict;
         }
         return switch (predicate) {
-            case PermanentNotPredicate p -> !matchesStaticFilter(permanent, p.predicate());
+            case PermanentNotPredicate p -> !matchesStaticFilter(permanent, p.predicate(), context);
             case PermanentAllOfPredicate p ->
-                    p.predicates().stream().allMatch(nested -> matchesStaticFilter(permanent, nested));
+                    p.predicates().stream().allMatch(nested -> matchesStaticFilter(permanent, nested, context));
             case PermanentAnyOfPredicate p ->
-                    p.predicates().stream().anyMatch(nested -> matchesStaticFilter(permanent, nested));
-            case PermanentColorInPredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentHasAnySubtypePredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentHasCountersPredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentHasKeywordPredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentHasSubtypePredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentHasSupertypePredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentIsArtifactPredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentIsAttackingPredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentIsBlockingPredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentIsCreaturePredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentIsEnchantmentPredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentIsHistoricPredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentIsLandPredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentIsMulticoloredPredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentIsPlaneswalkerPredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentIsTappedPredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentIsTokenPredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentNamedPredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentPowerAtLeastPredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentPowerAtMostPredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentToughnessAtMostPredicate ignored -> recursionSafeLeaf(permanent, predicate);
-            case PermanentTruePredicate ignored -> recursionSafeLeaf(permanent, predicate);
+                    p.predicates().stream().anyMatch(nested -> matchesStaticFilter(permanent, nested, context));
+            case PermanentIsEnchantedPredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                yield gameData != null && gameQueryService.isEnchanted(gameData, permanent);
+            }
+            case PermanentControllerControlsPermanentPredicate p ->
+                    controllerControlsMatchingStatic(permanent, p, context);
+            case PermanentHasGreatestManaValueAmongAllCreaturesPredicate ignored ->
+                    hasGreatestManaValueAmongAllCreaturesStatic(permanent, context);
+            case PermanentHasSourceChosenSubtypePredicate ignored -> {
+                CardSubtype chosen = sourceChosenSubtype(context);
+                yield chosen != null
+                        && matchesStaticLeaf(permanent, new PermanentHasSubtypePredicate(chosen));
+            }
+            case PermanentColorInPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentHasAnySubtypePredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentHasCountersPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentHasKeywordPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentHasSubtypePredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentHasSupertypePredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsArtifactPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsAttackingPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsBlockingPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsCreaturePredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsEnchantmentPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsHistoricPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsLandPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsMulticoloredPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsPlaneswalkerPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsTappedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsTokenPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentNamedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentPowerAtLeastPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentPowerAtMostPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentToughnessAtMostPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentTruePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             default -> throw new IllegalArgumentException(
                     "Unsupported static filter predicate: " + predicate.getClass().getSimpleName());
         };
     }
 
-    private boolean recursionSafeLeaf(Permanent permanent, PermanentPredicate predicate) {
+    /**
+     * One recursion-safe leaf, bypassing the CR 613.6 layer-4 verdict memo that
+     * {@link #matchesStaticFilter} consults. Use this for a predicate the evaluator or a caller
+     * builds itself rather than one taken from a card's ability: the memo is keyed by filter
+     * instance and most leaf predicates are component-less records, so a locally constructed
+     * instance compares equal to some unrelated ability's filter and would collect that ability's
+     * verdict. Only a filter that really is the ability's own may consult the memo.
+     */
+    public boolean matchesStaticLeaf(Permanent permanent, PermanentPredicate predicate) {
         return matchesPermanentPredicate(
                 LayerSystemService.activeStateFor(permanent.getId()), permanent, predicate, null);
+    }
+
+    /**
+     * Recursion-safe "the target's own controller controls a matching permanent" (Favorable
+     * Destiny's "as long as its controller controls another creature"). The inner filter is part
+     * of the ability's own predicate, so it goes back through the funnel rather than
+     * {@link #matchesStaticLeaf}.
+     */
+    private boolean controllerControlsMatchingStatic(Permanent target,
+                                                     PermanentControllerControlsPermanentPredicate predicate,
+                                                     FilterContext context) {
+        GameData gameData = context == null ? null : context.gameData();
+        if (gameData == null) return false;
+        UUID controllerId = gameData.findControllerOf(target);
+        List<Permanent> battlefield = controllerId == null ? null : gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+        return battlefield.stream()
+                .filter(candidate -> !predicate.excludeSelf() || !candidate.getId().equals(target.getId()))
+                .anyMatch(candidate -> matchesStaticFilter(candidate, predicate.filter(), context));
+    }
+
+    /**
+     * Recursion-safe "greatest mana value among all creatures" (Favor of the Mighty).
+     * {@link GameQueryService#hasGreatestManaValueAmongAllCreatures} calls the fully layered
+     * {@code isCreature}, which re-enters static-bonus assembly. Mana value is a copiable
+     * characteristic unaffected by layer 7, so the printed value is authoritative.
+     */
+    private boolean hasGreatestManaValueAmongAllCreaturesStatic(Permanent target, FilterContext context) {
+        GameData gameData = context == null ? null : context.gameData();
+        if (gameData == null || !matchesStaticLeaf(target, STATIC_CREATURE_LEAF)) {
+            return false;
+        }
+        int greatest = -1;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent candidate : battlefield) {
+                if (matchesStaticLeaf(candidate, STATIC_CREATURE_LEAF)) {
+                    greatest = Math.max(greatest, candidate.getCard().getManaValue());
+                }
+            }
+        }
+        return target.getCard().getManaValue() == greatest;
+    }
+
+    /** The subtype the ability's source chose as it entered, or {@code null} if it made no choice. */
+    private CardSubtype sourceChosenSubtype(FilterContext context) {
+        if (context == null) return null;
+        if (context.sourcePermanentSnapshot() != null) {
+            return context.sourcePermanentSnapshot().getChosenSubtype();
+        }
+        if (context.gameData() == null || context.sourceCardId() == null) return null;
+        Permanent source = findPermanentByCurrentCardId(context.gameData(), context.sourceCardId());
+        return source == null ? null : source.getChosenSubtype();
     }
 
     /**

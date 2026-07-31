@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControl
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -48,6 +49,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredicate;
@@ -1149,18 +1151,23 @@ class PredicateEvaluationServiceTest {
      * The recursion-safe funnel the static effect handlers reach through
      * {@code StaticEffectSupport.matchesStaticFilter}. No CR 613 pass is active here, so every
      * leaf takes its outside-a-pass branch — the state-answered branches are covered end to end
-     * by {@code SevenLayerTest} and the card tests.
+     * by {@code SevenLayerTest} and the card tests. The context carries a {@code GameData}, as it
+     * does from every handler, which is also what proves the leaves ignore it.
      */
     @Nested
     @DisplayName("matchesStaticFilter")
     class MatchesStaticFilter {
+
+        private FilterContext ctx() {
+            return FilterContext.of(gd);
+        }
 
         @Test
         @DisplayName("a null filter matches, because an absent scope filter means every permanent")
         void nullFilterMatches() {
             Permanent perm = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
 
-            assertThat(evaluator.matchesStaticFilter(perm, null)).isTrue();
+            assertThat(evaluator.matchesStaticFilter(perm, null, ctx())).isTrue();
         }
 
         @Test
@@ -1169,19 +1176,19 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes(
                     "Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
 
-            assertThat(evaluator.matchesStaticFilter(perm, new PermanentNotPredicate(new PermanentIsArtifactPredicate()))).isTrue();
+            assertThat(evaluator.matchesStaticFilter(perm, new PermanentNotPredicate(new PermanentIsArtifactPredicate()), ctx())).isTrue();
             assertThat(evaluator.matchesStaticFilter(perm, new PermanentAllOfPredicate(List.of(
                     new PermanentIsCreaturePredicate(),
-                    new PermanentHasSubtypePredicate(CardSubtype.BEAR))))).isTrue();
+                    new PermanentHasSubtypePredicate(CardSubtype.BEAR))), ctx())).isTrue();
             assertThat(evaluator.matchesStaticFilter(perm, new PermanentAllOfPredicate(List.of(
                     new PermanentIsCreaturePredicate(),
-                    new PermanentIsArtifactPredicate())))).isFalse();
+                    new PermanentIsArtifactPredicate())), ctx())).isFalse();
             assertThat(evaluator.matchesStaticFilter(perm, new PermanentAnyOfPredicate(List.of(
                     new PermanentIsArtifactPredicate(),
-                    new PermanentIsCreaturePredicate())))).isTrue();
+                    new PermanentIsCreaturePredicate())), ctx())).isTrue();
             assertThat(evaluator.matchesStaticFilter(perm, new PermanentAnyOfPredicate(List.of(
                     new PermanentIsArtifactPredicate(),
-                    new PermanentIsLandPredicate())))).isFalse();
+                    new PermanentIsLandPredicate())), ctx())).isFalse();
         }
 
         @Test
@@ -1189,7 +1196,7 @@ class PredicateEvaluationServiceTest {
         void unsupportedPredicateThrows() {
             Permanent perm = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
 
-            assertThatThrownBy(() -> evaluator.matchesStaticFilter(perm, new PermanentIsMonocoloredPredicate()))
+            assertThatThrownBy(() -> evaluator.matchesStaticFilter(perm, new PermanentIsMonocoloredPredicate(), ctx()))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("PermanentIsMonocoloredPredicate");
         }
@@ -1206,8 +1213,8 @@ class PredicateEvaluationServiceTest {
             granted.getPersistentGrantedSupertypes().add(CardSupertype.SNOW);
 
             PermanentHasSupertypePredicate snow = new PermanentHasSupertypePredicate(CardSupertype.SNOW);
-            assertThat(evaluator.matchesStaticFilter(removed, snow)).isFalse();
-            assertThat(evaluator.matchesStaticFilter(granted, snow)).isTrue();
+            assertThat(evaluator.matchesStaticFilter(removed, snow, ctx())).isFalse();
+            assertThat(evaluator.matchesStaticFilter(granted, snow, ctx())).isTrue();
         }
 
         @Test
@@ -1221,10 +1228,70 @@ class PredicateEvaluationServiceTest {
             madeSaga.getGrantedSubtypes().add(CardSubtype.SAGA);
 
             PermanentIsHistoricPredicate historic = new PermanentIsHistoricPredicate();
-            assertThat(evaluator.matchesStaticFilter(artifact, historic)).isTrue();
-            assertThat(evaluator.matchesStaticFilter(plain, historic)).isFalse();
-            assertThat(evaluator.matchesStaticFilter(madeLegendary, historic)).isTrue();
-            assertThat(evaluator.matchesStaticFilter(madeSaga, historic)).isTrue();
+            assertThat(evaluator.matchesStaticFilter(artifact, historic, ctx())).isTrue();
+            assertThat(evaluator.matchesStaticFilter(plain, historic, ctx())).isFalse();
+            assertThat(evaluator.matchesStaticFilter(madeLegendary, historic, ctx())).isTrue();
+            assertThat(evaluator.matchesStaticFilter(madeSaga, historic, ctx())).isTrue();
+        }
+
+        @Test
+        @DisplayName("is-enchanted reads the board from the context")
+        void isEnchantedReadsTheBoard() {
+            Permanent bare = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            Permanent enchanted = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            Permanent aura = addPermanent(player1Id,
+                    createAura("Heart of Light", new PreventAllDamageToAndByEnchantedCreatureEffect()));
+            aura.setAttachedTo(enchanted.getId());
+
+            PermanentIsEnchantedPredicate isEnchanted = new PermanentIsEnchantedPredicate();
+            assertThat(evaluator.matchesStaticFilter(enchanted, isEnchanted, ctx())).isTrue();
+            assertThat(evaluator.matchesStaticFilter(bare, isEnchanted, ctx())).isFalse();
+        }
+
+        @Test
+        @DisplayName("controller-controls looks at the target's own controller, not the source's")
+        void controllerControlsUsesTheTargetsController() {
+            Permanent lonely = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            Permanent accompanied = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            addPermanent(player1Id, createCreature("Runeclaw Bear", 2, 2, CardColor.GREEN));
+
+            PermanentControllerControlsPermanentPredicate another =
+                    new PermanentControllerControlsPermanentPredicate(new PermanentIsCreaturePredicate(), true);
+            assertThat(evaluator.matchesStaticFilter(accompanied, another, ctx())).isTrue();
+            assertThat(evaluator.matchesStaticFilter(lonely, another, ctx())).isFalse();
+        }
+
+        @Test
+        @DisplayName("greatest mana value compares printed mana values across both battlefields")
+        void greatestManaValueSpansBothBattlefields() {
+            Permanent small = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            Card wurm = createCreature("Craw Wurm", 6, 4, CardColor.GREEN);
+            wurm.setManaCost("{4}{G}{G}");
+            Permanent big = addPermanent(player2Id, wurm);
+
+            PermanentHasGreatestManaValueAmongAllCreaturesPredicate greatest =
+                    new PermanentHasGreatestManaValueAmongAllCreaturesPredicate();
+            assertThat(evaluator.matchesStaticFilter(big, greatest, ctx())).isTrue();
+            assertThat(evaluator.matchesStaticFilter(small, greatest, ctx())).isFalse();
+        }
+
+        @Test
+        @DisplayName("source-chosen subtype resolves the source through the context")
+        void sourceChosenSubtypeResolvesFromContext() {
+            Permanent bear = addPermanent(player1Id, createCreatureWithSubtypes(
+                    "Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            Card sourceCard = createCreature("Shimmer Source", 1, 1, CardColor.BLUE);
+            Permanent source = addPermanent(player1Id, sourceCard);
+            FilterContext ctx = FilterContext.of(gd).withSourceCardId(sourceCard.getId());
+
+            PermanentHasSourceChosenSubtypePredicate chosen = new PermanentHasSourceChosenSubtypePredicate();
+            assertThat(evaluator.matchesStaticFilter(bear, chosen, ctx)).isFalse();
+
+            source.setChosenSubtype(CardSubtype.BEAR);
+            assertThat(evaluator.matchesStaticFilter(bear, chosen, ctx)).isTrue();
+
+            source.setChosenSubtype(CardSubtype.GOBLIN);
+            assertThat(evaluator.matchesStaticFilter(bear, chosen, ctx)).isFalse();
         }
     }
 

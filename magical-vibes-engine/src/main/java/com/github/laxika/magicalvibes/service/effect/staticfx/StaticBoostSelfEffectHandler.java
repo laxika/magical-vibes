@@ -29,7 +29,7 @@ public class StaticBoostSelfEffectHandler implements StaticEffectHandlerBean {
         var boost = (StaticBoostEffect) effect;
         if ((boost.scope() == GrantScope.SELF || boost.scope() == GrantScope.ALL_OWN_CREATURES
                 || boost.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF)
-                && support.matchesStaticFilter(context.target(), boost.filter())) {
+                && support.matchesStaticFilter(context, context.target(), boost.filter())) {
             accumulator.addPower(boost.powerBoost());
             accumulator.addToughness(boost.toughnessBoost());
             accumulator.addKeywords(boost.grantedKeywords());

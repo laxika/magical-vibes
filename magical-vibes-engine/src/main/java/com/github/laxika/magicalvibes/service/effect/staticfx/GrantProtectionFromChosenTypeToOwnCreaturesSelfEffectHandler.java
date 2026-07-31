@@ -37,7 +37,7 @@ public class GrantProtectionFromChosenTypeToOwnCreaturesSelfEffectHandler implem
         var grant = (GrantProtectionFromChosenTypeToOwnCreaturesEffect) effect;
         CardSubtype chosenSubtype = context.source().getChosenSubtype();
         if (chosenSubtype == null) return;
-        if (support.matchesStaticFilter(context.target(),
+        if (support.matchesStaticLeaf(context.target(),
                 new PermanentHasSubtypePredicate(grant.recipientSubtype()))) {
             accumulator.addGrantedEffect(new ProtectionFromSubtypesEffect(Set.of(chosenSubtype), true));
         }

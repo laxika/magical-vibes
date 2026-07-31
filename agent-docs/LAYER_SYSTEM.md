@@ -281,8 +281,8 @@ expiry is not plumbed) and the AWAKENING-counter 8/8 (counters carry no timestam
 `MultiPermanentChoiceHandlerService`). **Cleanup debt — direct `Permanent.getEffectivePower()/
 getEffectiveToughness()` callers that bypass the layered numbers** (the mana-spent-vs-P/T
 checks in `TriggerCollectionService`/`IncrementTriggerEffectHandler` were migrated to the
-layered queries in step 7): the power/toughness predicate leaves (`PredicateEvaluationService`,
-`StaticEffectSupport.matchesStaticFilter`) and `AmountEvaluationService` toughness-based amounts
+layered queries in step 7): the power/toughness predicate leaves (`PredicateEvaluationService`)
+and `AmountEvaluationService` toughness-based amounts
 — **all migrated in step 16** to `GameQueryService.powerForStaticFilter`, which keeps the direct
 `Permanent` read only as the bottom tier (mid-pass, and as the cycle breaker);
 `DeathTriggerCollectorService` last-known-information power (the permanent has left the

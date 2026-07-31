@@ -36,7 +36,6 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,8 +80,7 @@ class BattlefieldEntryServiceTest {
     void setUp() {
         PredicateEvaluationService predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         ConditionEvaluationService conditionEvaluationService = new ConditionEvaluationService(
-                gameQueryService, predicateEvaluationService,
-                new StaticEffectSupport(gameQueryService));
+                gameQueryService, predicateEvaluationService);
         service = new BattlefieldEntryService(
                 gameQueryService, gameLogService, playerInputService,
                 permanentCopierService, triggerCollectionService,
@@ -314,9 +312,8 @@ class BattlefieldEntryServiceTest {
             ReflectionTestUtils.setField(lookaheadLayerSystem, "gameQueryService", lookaheadGqs);
             ReflectionTestUtils.setField(lookaheadGqs, "layerSystemService", lookaheadLayerSystem);
 
-            ConditionEvaluationService lookaheadConditions = new ConditionEvaluationService(
-                    lookaheadGqs, lookaheadEvaluator,
-                    new StaticEffectSupport(lookaheadGqs));
+            ConditionEvaluationService lookaheadConditions =
+                    new ConditionEvaluationService(lookaheadGqs, lookaheadEvaluator);
             lookaheadService = new BattlefieldEntryService(
                     lookaheadGqs, gameLogService, playerInputService,
                     permanentCopierService, triggerCollectionService,

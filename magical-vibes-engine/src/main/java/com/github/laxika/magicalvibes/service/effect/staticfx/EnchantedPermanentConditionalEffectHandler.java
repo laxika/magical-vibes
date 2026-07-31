@@ -28,7 +28,7 @@ public class EnchantedPermanentConditionalEffectHandler implements StaticEffectH
                 || !context.source().getAttachedTo().equals(context.target().getId())) {
             return;
         }
-        CardEffect activeEffect = support.matchesStaticFilter(context.target(), conditional.filter())
+        CardEffect activeEffect = support.matchesStaticFilter(context, context.target(), conditional.filter())
                 ? conditional.ifMatch()
                 : conditional.ifNotMatch();
         if (activeEffect == null) {

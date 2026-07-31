@@ -46,7 +46,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import org.junit.jupiter.api.BeforeEach;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -91,8 +90,7 @@ class EtbEffectResolverTest {
 
     @BeforeEach
     void setUp() {
-        resolver = new EtbEffectResolver(new ConditionEvaluationService(gameQueryService, predicateEvaluationService,
-                new StaticEffectSupport(gameQueryService)));
+        resolver = new EtbEffectResolver(new ConditionEvaluationService(gameQueryService, predicateEvaluationService));
         controllerId = UUID.randomUUID();
         gameData = new GameData(UUID.randomUUID(), "test", controllerId, "Player1");
         card = new Card();
