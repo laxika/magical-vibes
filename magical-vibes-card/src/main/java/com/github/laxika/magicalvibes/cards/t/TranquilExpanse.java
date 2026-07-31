@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.cards.s;
+package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,15 +8,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 
-@CardRegistration(set = "XLN", collectorNumber = "289")
-@CardRegistration(set = "AKH", collectorNumber = "274")
-public class StoneQuarry extends Card {
+@CardRegistration(set = "AKH", collectorNumber = "286")
+public class TranquilExpanse extends Card {
 
-    public StoneQuarry() {
+    public TranquilExpanse() {
         addEffect(EffectSlot.STATIC, new EntersTappedEffect());
 
-        // {T}: Add {R}.
-        addActivatedAbility(ManaAbilities.tapFor(ManaColor.RED));
+        // {T}: Add {G}.
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
 
         // {T}: Add {W}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));

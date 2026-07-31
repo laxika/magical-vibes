@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.cards.s;
+package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,17 +8,17 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 
-@CardRegistration(set = "XLN", collectorNumber = "289")
-@CardRegistration(set = "AKH", collectorNumber = "274")
-public class StoneQuarry extends Card {
+@CardRegistration(set = "AKH", collectorNumber = "282")
+public class HighlandLake extends Card {
 
-    public StoneQuarry() {
+    public HighlandLake() {
+        // This land enters tapped.
         addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+
+        // {T}: Add {U}.
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLUE));
 
         // {T}: Add {R}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.RED));
-
-        // {T}: Add {W}.
-        addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));
     }
 }
