@@ -368,6 +368,21 @@ slice 1) → the four context-needing predicates (done in C2 slice 2) → the ~4
 - [ ] Delete `ConditionContext.staticEvaluation` / `AmountContext.staticEvaluation`
 - [ ] Revert the `hasSelfBecomeCreatureEffect` boolean overload (its reason for existing is gone)
 
+**Standing decision — unsupported predicates throw, they do not answer `false`.** Routing the
+remaining predicates through `PredicateEvaluationService` with no `GameData` would make several of
+them (`ControlledBySourceController`, `IsBlocked`, and friends) return `false` rather than throw:
+a wrong answer dressed as a legitimate one, and invisible in a card test that only asserts a bonus
+is absent. Keep the `IllegalArgumentException` default arm. A predicate leaves the throwing set only
+when someone works out what its recursion-safe answer actually is and implements it — never by
+falling through.
+
+**Next slice (3).** Make recursion-safety ambient rather than a flag the caller passes: it is
+already inferable from `LayerSystemService.activePass()` plus `GameQueryService`'s
+`ASSEMBLY_IN_PROGRESS`. Then delete `ConditionContext.staticEvaluation` and
+`AmountContext.staticEvaluation` and their branches, and revert the `hasSelfBecomeCreatureEffect`
+boolean overload. The "remaining throwing predicates" item is independent of this and can wait —
+nothing in the codebase needs it yet, since anything that reached one would be failing loudly today.
+
 #### Slice 1: one evaluator for the leaves (2026-07-31)
 
 The funnel moved to `PredicateEvaluationService.matchesStaticFilter`, leaving
