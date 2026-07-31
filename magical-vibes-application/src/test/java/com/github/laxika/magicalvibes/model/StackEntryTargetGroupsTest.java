@@ -172,4 +172,28 @@ class StackEntryTargetGroupsTest {
         assertThat(entry.targetsForEffect(wrapper)).containsExactly(b);
         assertThat(entry.targetsForEffect(inner)).containsExactly(b);
     }
+
+    @Test
+    @DisplayName("Flashback aftermath slices against the back half's target groups")
+    void flashbackAftermathUsesBackHalfTargetGroups() {
+        Card back = new Card();
+        CardEffect backEffect = new BoostTargetCreatureEffect(0, 0);
+        back.target(1, 1);
+        back.target(1, 1).addEffect(EffectSlot.SPELL, backEffect);
+        back.addCastingOption(new FlashbackCast("{1}"));
+
+        Card front = new Card();
+        front.target(1, 1).addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 2));
+        front.setBackFaceCard(back);
+
+        UUID a = UUID.randomUUID();
+        UUID b = UUID.randomUUID();
+        StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, front, CONTROLLER, "back",
+                List.of(backEffect), 0, List.of(a, b));
+        entry.setCastWithFlashback(true);
+
+        assertThat(entry.targetsForGroup(0)).containsExactly(a);
+        assertThat(entry.targetsForGroup(1)).containsExactly(b);
+        assertThat(entry.targetsForEffect(backEffect)).containsExactly(b);
+    }
 }

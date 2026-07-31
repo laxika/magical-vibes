@@ -339,6 +339,8 @@ public class TurnProgressionService {
         // Gideon of the Trials +1: "until your next turn" damage-dealing prevention ends now for the
         // player whose turn is beginning (its entries are keyed by that controlling player).
         gameData.permanentsPreventedFromDealingDamageUntilNextTurn.values().removeIf(nextActive::equals);
+        // Comply: "until your next turn, your opponents can't cast spells with the chosen name".
+        gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.remove(nextActive);
         // "Until your next turn" floating continuous effects controlled by the player whose turn
         // is beginning wear off now. An expiring layer-1 copy effect (e.g. Shapesharer) reverts
         // the copied permanent's card — which may sit on any player's battlefield. A newer copy

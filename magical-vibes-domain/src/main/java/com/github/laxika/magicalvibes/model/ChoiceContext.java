@@ -277,6 +277,12 @@ public sealed interface ChoiceContext {
             implements ChoiceContext {}
 
     /**
+     * Comply: the controller names a card; until their next turn, their opponents can't cast spells
+     * with that name. Stamped on {@code GameData.opponentsCantCastNamedSpellsUntilControllerNextTurn}.
+     */
+    record OpponentsCantCastNamedSpellsUntilNextTurnChoice(UUID controllerId) implements ChoiceContext {}
+
+    /**
      * The target player names a card, then reveals the top card of their library. If it matches
      * the named card it goes to their hand; otherwise it goes to their graveyard and the source
      * ({@code sourcePermanentId}) deals {@code damageOnMiss} damage to them ({@code 0} for no

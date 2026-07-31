@@ -88,6 +88,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.JuxtaposeSupport juxtaposeSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureYouGainControlEffectHandler eachOpponentChoosesCreatureYouGainControlEffectHandler;
 
     /**
      * Retribution: the creatures' controller has picked which of the two targets to sacrifice; the
@@ -332,6 +333,18 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         // Begun mid-resolution (opponent/target-player-chooses-creature-to-destroy effects) —
         // same parked-resolution resume requirement as handleSacrificeCreature above.
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleOpponentChoosesCreatureYouGainControl(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.OpponentChoosesCreatureYouGainControl context) {
+        eachOpponentChoosesCreatureYouGainControlEffectHandler.completeChoice(gameData, permanentId, context);
+
+        // More opponents may still need to choose — leave the parked resolution until all are done.
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

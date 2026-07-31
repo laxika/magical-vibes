@@ -1811,6 +1811,22 @@ class GameQueryServiceTest {
 
             assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, entry, false)).isEqualTo(2);
         }
+
+        @Test
+        @DisplayName("returns 2 from controllerDamageDoublingsThisTurn for combat and noncombat")
+        void returnsTwoFromTurnScopedDoubling() {
+            gd.controllerDamageDoublingsThisTurn.put(player1Id, 1);
+
+            assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, null, true)).isEqualTo(2);
+
+            Card redSpell = new Card();
+            redSpell.setName("Shock");
+            redSpell.setColors(List.of(CardColor.RED));
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, redSpell, player1Id,
+                    "Shock", new ArrayList<>(), null);
+            assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, entry, false)).isEqualTo(2);
+            assertThat(gqs.getControllerDamageMultiplier(gd, player2Id, entry, false)).isEqualTo(1);
+        }
     }
 
     @Nested

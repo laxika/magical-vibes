@@ -192,6 +192,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();
+        gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.clear();
         gameData.activatedAbilityUsesThisTurn.clear();
         gameData.activatedAbilityUsesThisGame.clear();
         gameData.permanentAbilityResolutionsThisTurn.clear();

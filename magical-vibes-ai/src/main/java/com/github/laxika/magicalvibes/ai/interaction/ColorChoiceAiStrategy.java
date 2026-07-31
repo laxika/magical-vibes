@@ -97,6 +97,22 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
+        if (context instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice) {
+            // Comply: lock a name from the opponent's hand when possible.
+            UUID opponentId = getOpponentId(gameData, aiPlayerId);
+            Set<String> opponentNames = gameData.playerHands.getOrDefault(opponentId, List.of()).stream()
+                    .map(Card::getName)
+                    .collect(Collectors.toSet());
+            String chosenName = interaction.options().stream()
+                    .filter(opponentNames::contains)
+                    .findFirst()
+                    .orElse(interaction.options().isEmpty() ? "Shock" : interaction.options().getFirst());
+            log.info("AI: Choosing card name \"{}\" (opponents can't cast until next turn) in game {}",
+                    chosenName, gameId);
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenName));
+            return;
+        }
+
         if (context instanceof ChoiceContext.EachPlayerCardNameRevealChoice
                 || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice) {
             // For the reveal-top-card game: guess the top card of our library

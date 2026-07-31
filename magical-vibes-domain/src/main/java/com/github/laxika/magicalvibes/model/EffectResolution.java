@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByConvergeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -173,15 +174,16 @@ public final class EffectResolution {
      * Whether the effect can target a spell on the stack — the successor to the deleted
      * {@code CardEffect.canTargetSpell()}. Almost every effect answers this from its
      * {@link CardEffect#targetSpec()} category ({@link TargetCategory#SPELL_ON_STACK}).
-     * {@link ChangeColorTextEffect} (Glamerdye) is the one dual case that ALSO targets a spell
-     * independently of its {@code PERMANENT} spec, exposing the capability through its
-     * {@code canTargetSpell} record component; spell targets are validated on the stack path,
-     * never by the spec interpreter.
+     * Dual spell-or-permanent effects ({@link ChangeColorTextEffect}, {@link SetTargetColorEffect},
+     * {@link PutTargetSpellOrPermanentIntoLibraryNFromTopEffect}) ALSO target a spell independently
+     * of their {@code PERMANENT} spec; spell targets are validated on the stack path, never by the
+     * spec interpreter.
      */
     public static boolean targetsSpellOnStack(CardEffect e) {
         return e.targetSpec().category() == TargetCategory.SPELL_ON_STACK
                 || (e instanceof ChangeColorTextEffect c && c.canTargetSpell())
-                || e instanceof SetTargetColorEffect;
+                || e instanceof SetTargetColorEffect
+                || e instanceof PutTargetSpellOrPermanentIntoLibraryNFromTopEffect;
     }
 
     /**

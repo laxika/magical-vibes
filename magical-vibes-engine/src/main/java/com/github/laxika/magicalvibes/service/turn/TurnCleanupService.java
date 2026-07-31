@@ -212,6 +212,7 @@ public class TurnCleanupService {
         gameData.creaturesPreventedFromDealingCombatDamage.clear();
         gameData.damageCantBePreventedThisTurn = false;
         gameData.combatDamageToCreaturesDoublingsThisTurn = 0;
+        gameData.controllerDamageDoublingsThisTurn.clear();
         gameData.drawReplacementTargetToController.clear();
         gameData.pendingNextDrawLookAtTop.clear();
         gameData.pendingNextDrawFromExiledPile.clear();

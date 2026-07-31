@@ -642,6 +642,12 @@ public class GameActionAvailabilityService {
                 }
             }
 
+            // Aftermath / flashback halves may carry additional cast costs (e.g. Finish's
+            // sacrifice a creature) on the cast half, not the parent split card.
+            if (!castingCostService.canPayAdditionalSpellCosts(gameData, playerId, castHalf)) {
+                continue;
+            }
+
             playable.add(i);
         }
 

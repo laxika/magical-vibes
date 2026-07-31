@@ -696,6 +696,7 @@ public class InteractionPromptProjectionRegistry {
                 || context instanceof ChoiceContext.SphinxAmbassadorNameChoice
                 || context instanceof ChoiceContext.EachPlayerCardNameRevealChoice
                 || context instanceof ChoiceContext.NameCardMillGainLifeChoice
+                || context instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice
                 || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice;
     }
 

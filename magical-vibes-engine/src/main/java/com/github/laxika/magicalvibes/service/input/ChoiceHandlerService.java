@@ -239,6 +239,10 @@ public class ChoiceHandlerService {
             handleNameCardMillGainLifeChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice ctx) {
+            handleOpponentsCantCastNamedSpellsUntilNextTurnChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.ChooseNameExileTopRevealUntilNamedChoice ctx) {
             handleChooseNameExileTopRevealUntilNamedChoice(gameData, player, colorName, ctx);
             return;
@@ -1744,6 +1748,25 @@ public class ChoiceHandlerService {
                         topCard.getName(), controllerName, manaValue);
             }
         }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleOpponentsCantCastNamedSpellsUntilNextTurnChoice(GameData gameData, Player player,
+                                                                       String cardName,
+                                                                       ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        UUID controllerId = ctx.controllerId();
+        gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn
+                .computeIfAbsent(controllerId, k -> ConcurrentHashMap.newKeySet())
+                .add(cardName);
+
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " chooses \"" + cardName + "\". Opponents can't cast spells named "
+                        + cardName + " until " + gameData.playerIdToName.get(controllerId) + "'s next turn."));
+        log.info("Game {} - {} chooses card name \"{}\" (opponents can't cast until next turn)",
+                gameData.id, player.getUsername(), cardName);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

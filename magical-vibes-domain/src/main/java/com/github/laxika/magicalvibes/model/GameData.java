@@ -472,6 +472,12 @@ public class GameData {
      * the multiplier is {@code 2^count}. Cleared at turn cleanup.
      */
     public int combatDamageToCreaturesDoublingsThisTurn = 0;
+    /**
+     * Per-player count of "if a source you control would deal damage this turn, it deals double
+     * that damage instead" replacement effects (Insult). Each one doubles the damage, so the
+     * multiplier is {@code 2^count}. Cleared at turn cleanup.
+     */
+    public final Map<UUID, Integer> controllerDamageDoublingsThisTurn = new ConcurrentHashMap<>();
     /** Damage redirect shields (e.g. Vengeful Archon): prevention shields that redirect prevented damage to a target player. */
     public final List<DamageRedirectShield> damageRedirectShields = Collections.synchronizedList(new ArrayList<>());
     /** Pending redirect damage to deal after damage prevention (populated by DamagePreventionService, consumed by callers). */
@@ -528,6 +534,14 @@ public class GameData {
 
     /** Players who can't cast spells this turn (e.g. Silence). Cleared at end of turn and on new turn. */
     public final Set<UUID> playersSilencedThisTurn = ConcurrentHashMap.newKeySet();
+
+    /**
+     * Card names opponents of the key player can't cast spells with, until that player's next turn
+     * (Comply). Keyed by the naming controller → set of forbidden names. Cleared at the start of
+     * that controller's next turn (survives end-of-turn cleanup).
+     */
+    public final Map<UUID, Set<String>> opponentsCantCastNamedSpellsUntilControllerNextTurn =
+            new ConcurrentHashMap<>();
 
     /** Land subtype -&gt; extra mana color added whenever a player taps a land of that subtype for mana
      *  this turn (Chaos Moon's odd branch: "whenever a player taps a Mountain for mana, that player
@@ -2167,6 +2181,7 @@ public class GameData {
         });
         copy.damageCantBePreventedThisTurn = this.damageCantBePreventedThisTurn;
         copy.combatDamageToCreaturesDoublingsThisTurn = this.combatDamageToCreaturesDoublingsThisTurn;
+        copy.controllerDamageDoublingsThisTurn.putAll(this.controllerDamageDoublingsThisTurn);
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
         copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);
@@ -2416,6 +2431,8 @@ public class GameData {
 
         // --- Silence-style "opponents can't cast" flag ---
         copy.playersSilencedThisTurn.addAll(this.playersSilencedThisTurn);
+        this.opponentsCantCastNamedSpellsUntilControllerNextTurn.forEach((k, v) ->
+                copy.opponentsCantCastNamedSpellsUntilControllerNextTurn.put(k, new HashSet<>(v)));
         copy.extraManaOnLandSubtypeTapThisTurn.putAll(this.extraManaOnLandSubtypeTapThisTurn);
         copy.landSubtypeFixedManaColorThisTurn.putAll(this.landSubtypeFixedManaColorThisTurn);
         copy.allLandsFixedManaColorThisTurn = this.allLandsFixedManaColorThisTurn;

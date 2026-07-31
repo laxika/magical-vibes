@@ -361,6 +361,13 @@ public class CastingPermissionService {
                 }
             }
         }
+        // Comply: until the namer's next turn, their opponents can't cast spells with the chosen name(s).
+        for (var e : gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.entrySet()) {
+            if (e.getKey().equals(castingPlayerId)) {
+                continue;
+            }
+            forbidden.addAll(e.getValue());
+        }
         return forbidden;
     }
 

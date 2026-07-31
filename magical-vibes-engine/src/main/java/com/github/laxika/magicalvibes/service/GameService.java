@@ -536,16 +536,26 @@ public class GameService {
                                     UUID targetId, List<UUID> targetIds,
                                     List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
                                     List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex) {
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetIds,
+                exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds, retraceDiscardHandCardIndex, null);
+    }
+
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
+                                    UUID targetId, List<UUID> targetIds,
+                                    List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
+                                    List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex,
+                                    UUID sacrificePermanentId) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playFlashbackSpell(gameData, actionPlayer, graveyardCardIndex, xValue, targetId,
                         targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
-                        retraceDiscardHandCardIndex))) return;
+                        retraceDiscardHandCardIndex, sacrificePermanentId))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetIds,
-                    exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds, retraceDiscardHandCardIndex);
+                    exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds, retraceDiscardHandCardIndex,
+                    sacrificePermanentId);
         }
     }
 

@@ -2421,9 +2421,19 @@ public class SpellCastingService {
                                     UUID targetId, List<UUID> targetIds,
                                     List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
                                     List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex) {
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetIds,
+                exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds, retraceDiscardHandCardIndex, null);
+    }
+
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
+                                    UUID targetId, List<UUID> targetIds,
+                                    List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
+                                    List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex,
+                                    UUID sacrificePermanentId) {
         List<Card> graveyard = gameData.playerGraveyards.get(player.getId());
         playFlashbackSpellFromLocation(gameData, player, graveyard, graveyardCardIndex, xValue, targetId,
-                targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds, retraceDiscardHandCardIndex);
+                targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
+                retraceDiscardHandCardIndex, sacrificePermanentId);
     }
 
     public void playFlashbackSpell(GameData gameData, Player player, UUID graveyardCardId, Integer xValue,
@@ -2442,13 +2452,14 @@ public class SpellCastingService {
             throw new IllegalArgumentException("Invalid graveyard card id");
         }
         playFlashbackSpellFromLocation(gameData, player, location.graveyard(), location.index(), xValue, targetId,
-                targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds, null);
+                targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds, null, null);
     }
 
     private void playFlashbackSpellFromLocation(GameData gameData, Player player, List<Card> graveyard,
                                     int graveyardCardIndex, Integer xValue, UUID targetId, List<UUID> targetIds,
                                     List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
-                                    List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex) {
+                                    List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex,
+                                    UUID sacrificePermanentId) {
         if (tapPermanentIds == null) {
             tapPermanentIds = List.of();
         }
@@ -2539,18 +2550,18 @@ public class SpellCastingService {
             throw new IllegalStateException("Cannot cast sorcery-speed spell from graveyard now");
         }
 
-        // Additional cast costs (CR 601.2b) on a graveyard cast. Only the exile-N cost (e.g.
-        // Skaab Ruinator) has a selection wire on this path; any other additional cost is
-        // rejected up front rather than silently skipped. The exile-N selection is validated
-        // BEFORE the mana payment below — a rejected cast must leak neither the mana nor the
-        // spell's graveyard position (CR 601.2h). The spell itself still sits in this graveyard
-        // here (removed further down), so the caller's post-removal indices are checked with the
+        // Additional cast costs (CR 601.2b) on a graveyard cast. Exile-N (e.g. Skaab Ruinator) and
+        // sacrifice-a-creature (e.g. Finish) have selection wires on this path; any other additional
+        // cost is rejected up front rather than silently skipped. Selections are validated BEFORE
+        // the mana payment below — a rejected cast must leak neither the mana nor the spell's
+        // graveyard position (CR 601.2h). The spell itself still sits in this graveyard here
+        // (removed further down), so the caller's post-removal indices are checked with the
         // spell's own slot excluded.
         List<CardEffect> spellEffects = new ArrayList<>(castHalf.getEffects(EffectSlot.SPELL));
         AdditionalSpellCostService.ExtractedCosts additionalCosts = additionalSpellCostService.extractAndRemove(spellEffects);
         ExileNCardsFromGraveyardCost exileNCost = additionalCosts.exileNCardsCost();
         boolean hasUnsupportedAdditionalCost = additionalCosts.sacrificeAllCreatures()
-                || additionalCosts.sacrificeCreature() || additionalCosts.sacrificeCreatureOrPayManaCost() != null
+                || additionalCosts.sacrificeCreatureOrPayManaCost() != null
                 || additionalCosts.sacrificeArtifact()
                 || additionalCosts.sacrificePermanentCost() != null || additionalCosts.returnCreatureToHand()
                 || additionalCosts.putCounterCost() != null || additionalCosts.exileGraveyardCost() != null
@@ -2567,6 +2578,16 @@ public class SpellCastingService {
                     ? graveyardCardIndex : -1;
             additionalSpellCostService.validateExileNCardsFromGraveyardCost(gameData, player, card, exileNCost,
                     exileGraveyardCardIndices, excludedGraveyardIndex);
+        }
+        if (additionalCosts.sacrificeCreature()) {
+            // Validate only the sacrifice slice so an exile-N cost (validated above with
+            // the spell's GY index excluded) is not re-checked against a null selection.
+            AdditionalSpellCostService.ExtractedCosts sacOnly = new AdditionalSpellCostService.ExtractedCosts(
+                    false, true, null, false, null, null, null, false, null, false, null,
+                    null, null, null, null, null, null, null, null);
+            AdditionalSpellCostService.CostSelection sacSelection = new AdditionalSpellCostService.CostSelection(
+                    sacrificePermanentId, null, null, null, null, 0, -1, null);
+            additionalSpellCostService.validateAll(gameData, player, castHalf, sacOnly, sacSelection);
         }
 
         // Validate and pay flashback / disturb / graveyard cast cost
@@ -2589,6 +2610,11 @@ public class SpellCastingService {
         // Pay exile-N-cards-from-graveyard cost if present (validated above; the spell has left
         // the graveyard now, so the caller's indices apply directly)
         payExileNCardsFromGraveyardCost(gameData, player, card, exileNCost, exileGraveyardCardIndices);
+        // Pay sacrifice-a-creature additional cast cost (Finish / aftermath half). Use castHalf so
+        // tracking flags on the back-face cost are found (parent split has no SPELL-slot costs).
+        if (additionalCosts.sacrificeCreature()) {
+            payAllSacrificeCosts(gameData, player, castHalf, sacrificePermanentId, additionalCosts, effectiveXValue);
+        }
 
         if (isGraveyardCast || grantedHavengulCast || isGrantedGraveyardCast
                 || (isGrantedCyclingGraveyardCast && castHalf.getType().isPermanentType() && castHalf.getType() != CardType.LAND)

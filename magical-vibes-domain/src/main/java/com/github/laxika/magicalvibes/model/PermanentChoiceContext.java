@@ -46,6 +46,18 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     }
 
     /**
+     * Riches: {@code choosingPlayerId} picks one creature they control; remaining opponents choose
+     * next, then {@code gainingControllerId} seizes all {@code accumulatedChosenIds} simultaneously.
+     */
+    record OpponentChoosesCreatureYouGainControl(
+            UUID choosingPlayerId,
+            UUID gainingControllerId,
+            String sourceCardName,
+            List<UUID> remainingOpponentIds,
+            List<UUID> accumulatedChosenIds
+    ) implements PermanentChoiceContext {}
+
+    /**
      * Opponent accepted Infernal Denizen's upkeep may and is picking which creature of
      * {@code victimControllerId}'s to gain control of for {@code duration}, keyed to {@code sourcePermanentId}.
      */

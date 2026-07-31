@@ -505,6 +505,19 @@ public class StackEntry {
     }
 
     /**
+     * Card whose {@code target(...)} declarations and effect→group bindings apply to this entry.
+     * Aftermath / flashback spells keep the physical parent card on the stack for exile disposition,
+     * but targeting and SPELL effects come from {@link Card#graveyardCastHalf()} — without this,
+     * a multi-target back half (e.g. Fight) would slice against the front half's groups.
+     */
+    private Card targetingCard() {
+        if (card == null) {
+            return null;
+        }
+        return castWithFlashback ? card.graveyardCastHalf() : card;
+    }
+
+    /**
      * Returns the targets chosen for the given target group, resolved against this entry's
      * flat {@link #targetIds} list.
      *
@@ -532,13 +545,14 @@ public class StackEntry {
             // declared group targets the separately stored primary target.
             return targetId != null ? List.of(targetId) : List.of();
         }
-        List<SpellTarget> groups = card == null ? List.of() : card.getSpellTargets();
+        Card targeting = targetingCard();
+        List<SpellTarget> groups = targeting == null ? List.of() : targeting.getSpellTargets();
         if (groups.isEmpty()) {
             return group >= 0 && group < targetIds.size() && !illegalTargetIndices.contains(group)
                     ? List.of(targetIds.get(group)) : List.of();
         }
         int firstFlatGroup = 0;
-        if (card.isAura() && targetId != null) {
+        if (targeting.isAura() && targetId != null) {
             if (group == 0) {
                 return List.of(targetId);
             }
@@ -579,21 +593,24 @@ public class StackEntry {
      * spells and abilities (where every declared group is always populated).
      */
     public boolean isTargetGroupActive(int groupIndex) {
+        Card targeting = targetingCard();
         // The group-active concept only applies to entries that carry their surviving effects in
         // effectsToResolve (triggered abilities whose intervening-if may have gated some out). Spell
         // entries resolve from card.getEffects(...) and leave effectsToResolve empty — there every
         // declared group is populated, so fall back to legacy positional slicing (all groups active).
-        if (card == null || effectsToResolve.isEmpty()) {
+        // Flashback/aftermath spells do put SPELL effects into effectsToResolve (from the cast half),
+        // so they continue into the binding check below using targetingCard().
+        if (targeting == null || effectsToResolve.isEmpty()) {
             return true;
         }
         // A bare positional target group — one no effect is bound to, e.g. Blood Feud's first fight
         // target which the FightTargetsEffect (bound to the second group) reads by index — is never a
         // gated-out trigger group; it always contributes its chosen targets to the flat list.
-        if (!card.bindsEffectToTargetGroup(groupIndex)) {
+        if (!targeting.bindsEffectToTargetGroup(groupIndex)) {
             return true;
         }
         for (CardEffect effect : effectsToResolve) {
-            if (card.getEffectTargetIndex(effect) == groupIndex) {
+            if (targeting.getEffectTargetIndex(effect) == groupIndex) {
                 return true;
             }
         }
@@ -610,14 +627,15 @@ public class StackEntry {
      * resolves against that lone target.</p>
      */
     public List<UUID> targetsForEffect(CardEffect effect) {
-        int group = card == null ? -1 : card.getEffectTargetIndex(effect);
+        Card targeting = targetingCard();
+        int group = targeting == null ? -1 : targeting.getEffectTargetIndex(effect);
         if (group < 0) {
             return getTargetIds();
         }
         if (targetIds.isEmpty()) {
             // On an aura the lone targetId is the enchant target (group 0), never a later
             // group's target — an effect bound to a later group simply has no target chosen.
-            if (card.isAura() && group != 0) {
+            if (targeting.isAura() && group != 0) {
                 return List.of();
             }
             return targetId != null ? List.of(targetId) : List.of();

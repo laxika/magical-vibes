@@ -3723,13 +3723,15 @@ public class GameQueryService {
 
     /**
      * Returns the per-controller damage multiplier based on {@link DoubleControllerDamageEffect}
-     * permanents on the battlefield. Only applies when the source is controlled by the same player
-     * who controls the permanent with the effect.
+     * permanents on the battlefield and turn-scoped {@code controllerDamageDoublingsThisTurn}
+     * (Insult). Only applies when the source is controlled by the same player who controls the
+     * permanent with the effect / who resolved the turn-scoped effect.
      *
-     * <p>Each effect has a {@code stackFilter} predicate and an {@code appliesToCombatDamage} flag.
+     * <p>Each static effect has a {@code stackFilter} predicate and an {@code appliesToCombatDamage} flag.
      * For stack-based damage, the effect applies if the filter is {@code null} (matches all) or if
      * the entry matches the filter. For combat damage ({@code isCombat=true}), the effect applies
-     * only if {@code appliesToCombatDamage} is {@code true}.
+     * only if {@code appliesToCombatDamage} is {@code true}. Turn-scoped doublings apply to both
+     * combat and noncombat damage.
      *
      * <p>Multiple instances stack multiplicatively.
      *
@@ -3756,6 +3758,11 @@ public class GameQueryService {
                 }
             }
         });
+        // Insult: "if a source you control would deal damage this turn, it deals double instead"
+        int turnDoublings = gameData.controllerDamageDoublingsThisTurn.getOrDefault(controllerId, 0);
+        for (int i = 0; i < turnDoublings; i++) {
+            multiplier[0] *= 2;
+        }
         return multiplier[0];
     }
 
