@@ -2102,6 +2102,7 @@ public class GameData {
         copy.eachPlayerPayLife.consecutivePasses = this.eachPlayerPayLife.consecutivePasses;
         copy.eachPlayerPayLife.lifePaid.putAll(this.eachPlayerPayLife.lifePaid);
         copy.eachPlayerPayLife.currentPlayerId = this.eachPlayerPayLife.currentPlayerId;
+        copy.eachPlayerPayLife.sourceSetCode = this.eachPlayerPayLife.sourceSetCode;
         copy.illicitAuction.active = this.illicitAuction.active;
         copy.illicitAuction.order.addAll(this.illicitAuction.order);
         copy.illicitAuction.index = this.illicitAuction.index;

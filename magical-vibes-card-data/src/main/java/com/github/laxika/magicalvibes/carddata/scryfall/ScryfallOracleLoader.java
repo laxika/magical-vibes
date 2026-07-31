@@ -99,6 +99,7 @@ public class ScryfallOracleLoader implements OracleLoader {
     /**
      * Token art for the set, from Scryfall's separate {@code t}-prefixed set. Never throws: a set
      * with no token set is normal, and a token fetch failing is not a reason to fail the card load.
+     * Loads creature and non-creature tokens (Treasure, Food, …); skips emblems.
      */
     private Map<String, CardPrintingRegistry.TokenImageData> loadTokens(String setCode) {
         String tokenSetCode = "t" + setCode.toLowerCase();
@@ -107,11 +108,12 @@ public class ScryfallOracleLoader implements OracleLoader {
             for (Map.Entry<String, JsonNode> entry : parseSetJson(cache.get(tokenSetCode)).entrySet()) {
                 JsonNode tokenNode = entry.getValue();
                 String typeLine = tokenNode.has("type_line") ? tokenNode.get("type_line").asText() : "";
-                if (!typeLine.contains("Creature")) continue;
+                if (typeLine.contains("Emblem")) continue;
 
                 String name = tokenNode.get("name").asText();
-                Integer power = CardDataSupport.parseIntField(tokenNode, "power");
-                Integer toughness = CardDataSupport.parseIntField(tokenNode, "toughness");
+                boolean isCreature = typeLine.contains("Creature");
+                Integer power = isCreature ? CardDataSupport.parseIntField(tokenNode, "power") : null;
+                Integer toughness = isCreature ? CardDataSupport.parseIntField(tokenNode, "toughness") : null;
                 List<CardColor> colors = FaceOracleMapper.mapColors(
                         CardDataSupport.strings(tokenNode, "colors"));
                 CardColor color = colors.isEmpty() ? null : colors.get(0);

@@ -38,8 +38,11 @@ final class TokenCardFactory {
      * @param power         already-evaluated printed power (dynamic X/X blueprints are resolved by
      *                      the caller); ignored for a non-creature token
      * @param toughness     already-evaluated printed toughness; ignored for a non-creature token
-     * @param sourceSetCode set whose token art to use, or {@code null} to leave the token artless —
-     *                      for callers that no longer know the card that created it
+     * @param sourceSetCode preferred set for token art (the creating card's set), or {@code null}
+     *                      to leave the token artless — for callers that no longer know the card that
+     *                      created it. When the preferred set has no matching token,
+     *                      {@link CardPrintingRegistry#getTokenImage} falls back to another
+     *                      registered set that does.
      */
     static Card create(CreateTokenEffect token, int power, int toughness, String sourceSetCode) {
         boolean isCreature = token.primaryType() == CardType.CREATURE;

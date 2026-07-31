@@ -1291,7 +1291,7 @@ public class MayPenaltyChoiceHandlerService {
             UUID opponentId = gameQueryService.getOpponentId(gameData, sourceControllerId);
             for (int i = 0; opponentId != null && i < tokenCost.count(); i++) {
                 destructionSupport.createTokenForPlayer(gameData, opponentId, tokenCost.tokenTemplate(),
-                        ability.sourceCard().getName(), null);
+                        ability.sourceCard().getName(), ability.sourceCard().getSetCode());
             }
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;

@@ -209,9 +209,10 @@ public class MtgjsonOracleLoader implements OracleLoader {
     }
 
     /**
-     * Creature-token image data from the set file's {@code tokens} array, keyed under the Scryfall
-     * token set code ("t" + set code), which is what the frontend image fetch expects. Unlike
-     * Scryfall, MTGJSON ships tokens inline in the set file, so this needs no second fetch.
+     * Token image data from the set file's {@code tokens} array, keyed under the Scryfall token set
+     * code ("t" + set code), which is what the frontend image fetch expects. Loads creature and
+     * non-creature tokens (Treasure, Food, …); skips emblems. Unlike Scryfall, MTGJSON ships tokens
+     * inline in the set file, so this needs no second fetch.
      */
     static Map<String, TokenImageData> parseTokens(String setCode, JsonNode setData) {
         if (!setData.has("tokens") || setData.get("tokens").isEmpty()) {
@@ -226,15 +227,16 @@ public class MtgjsonOracleLoader implements OracleLoader {
                 continue;
             }
             String typeLine = tokenNode.has("type") ? tokenNode.get("type").asText() : "";
-            if (!typeLine.contains("Creature")) {
+            if (typeLine.contains("Emblem")) {
                 continue;
             }
 
             String name = tokenNode.has("faceName")
                     ? tokenNode.get("faceName").asText()
                     : tokenNode.get("name").asText();
-            Integer power = CardDataSupport.parseIntField(tokenNode, "power");
-            Integer toughness = CardDataSupport.parseIntField(tokenNode, "toughness");
+            boolean isCreature = typeLine.contains("Creature");
+            Integer power = isCreature ? CardDataSupport.parseIntField(tokenNode, "power") : null;
+            Integer toughness = isCreature ? CardDataSupport.parseIntField(tokenNode, "toughness") : null;
             List<CardColor> colors = FaceOracleMapper.mapColors(sortedSymbols(tokenNode, "colors"));
             CardColor color = colors.isEmpty() ? null : colors.get(0);
 

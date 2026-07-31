@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,6 +35,30 @@ class VarchildsWarRidersTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(riders);
         assertThat(survivorCount(player2)).isEqualTo(1);
         assertThat(survivorCount(player1)).isZero();
+    }
+
+    @Test
+    @DisplayName("Survivor tokens fall back to another set's printing when ALL has none")
+    void survivorTokenFallsBackWhenSourceSetLacksPrinting() {
+        CardPrintingRegistry.registerTokenImages("FALLBACK_SURV", Map.of(
+                CardPrintingRegistry.buildTokenKey("Survivor", 1, 1, CardColor.RED),
+                new CardPrintingRegistry.TokenImageData("tfallback", "1")));
+
+        VarchildsWarRiders riders = new VarchildsWarRiders();
+        riders.setSetCode("ALL");
+        riders.setCollectorNumber("83");
+        harness.addToBattlefieldAndReturn(player1, riders);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        Permanent survivor = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(p -> "Survivor".equals(p.getCard().getName()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(survivor.getCard().getSetCode()).isEqualTo("tfallback");
+        assertThat(survivor.getCard().getCollectorNumber()).isEqualTo("1");
     }
 
     @Test

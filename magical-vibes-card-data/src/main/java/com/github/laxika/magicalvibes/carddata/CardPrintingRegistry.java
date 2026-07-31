@@ -42,33 +42,56 @@ public final class CardPrintingRegistry {
         TOKEN_IMAGES.put(setCode, tokenMap);
     }
 
+    /** Drops every registered token image map. Used by unit tests that seed their own fixtures. */
+    public static void clearTokenImages() {
+        TOKEN_IMAGES.clear();
+    }
+
     /**
-     * Looks up the token art for a token created by a card from the given set. Falls back to
-     * stripping a "Phyrexian " prefix when there is no exact match, since token cards use the
-     * pre-errata names (e.g. "Golem" instead of "Phyrexian Golem"). Returns null when there is no
-     * matching token image, and for a null {@code setCode} — callers that no longer know which
-     * card created the token get the artless fallback rather than an exception.
+     * Looks up the token art for a token created by a card from the given set. Prefers a printing
+     * from that set; if the set has no matching token, falls back to any other registered set that
+     * does (stable set-code order). Also tries stripping a "Phyrexian " prefix when there is no
+     * exact match, since token cards use the pre-errata names (e.g. "Golem" instead of
+     * "Phyrexian Golem"). Returns null when no registered set has the token, and for a null
+     * {@code setCode} — callers that no longer know which card created the token get the artless
+     * fallback rather than an exception.
      */
     public static TokenImageData getTokenImage(String setCode, String tokenName, int power, int toughness, CardColor color) {
         if (setCode == null) return null;
-        Map<String, TokenImageData> tokenMap = TOKEN_IMAGES.get(setCode);
-        if (tokenMap == null) return null;
-        String key = buildTokenKey(tokenName, power, toughness, color);
-        TokenImageData result = tokenMap.get(key);
-        if (result == null && tokenName.startsWith("Phyrexian ")) {
-            key = buildTokenKey(tokenName.substring("Phyrexian ".length()), power, toughness, color);
-            result = tokenMap.get(key);
-        }
-        return result;
+        TokenImageData preferred = lookupInSet(setCode, tokenName, power, toughness, color);
+        if (preferred != null) return preferred;
+        return findInOtherSets(setCode, tokenName, power, toughness, color);
     }
 
     /** Looks up the token art for a non-creature token (no power/toughness). */
     public static TokenImageData getTokenImage(String setCode, String tokenName, CardColor color) {
         if (setCode == null) return null;
+        TokenImageData preferred = lookupInSet(setCode, tokenName, null, null, color);
+        if (preferred != null) return preferred;
+        return findInOtherSets(setCode, tokenName, null, null, color);
+    }
+
+    private static TokenImageData lookupInSet(String setCode, String tokenName,
+                                              Integer power, Integer toughness, CardColor color) {
         Map<String, TokenImageData> tokenMap = TOKEN_IMAGES.get(setCode);
         if (tokenMap == null) return null;
-        String key = buildTokenKey(tokenName, null, null, color);
-        return tokenMap.get(key);
+        TokenImageData result = tokenMap.get(buildTokenKey(tokenName, power, toughness, color));
+        if (result == null && tokenName.startsWith("Phyrexian ")) {
+            result = tokenMap.get(buildTokenKey(
+                    tokenName.substring("Phyrexian ".length()), power, toughness, color));
+        }
+        return result;
+    }
+
+    private static TokenImageData findInOtherSets(String preferredSetCode, String tokenName,
+                                                  Integer power, Integer toughness, CardColor color) {
+        return TOKEN_IMAGES.keySet().stream()
+                .filter(other -> !other.equals(preferredSetCode))
+                .sorted()
+                .map(other -> lookupInSet(other, tokenName, power, toughness, color))
+                .filter(data -> data != null)
+                .findFirst()
+                .orElse(null);
     }
 
     /** The key format of {@link #TOKEN_IMAGES}; both loaders build keys with it when registering. */

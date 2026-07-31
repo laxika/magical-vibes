@@ -49,6 +49,7 @@ public class EachPlayerPaysAnyLifeForTokensEffectHandler implements NormalEffect
             // Fresh entry: seed the round-robin (controller first, then remaining players in turn order).
             state.reset();
             state.active = true;
+            state.sourceSetCode = entry.getCard().getSetCode();
             UUID controllerId = entry.getControllerId();
             state.order.add(controllerId);
             state.lifePaid.put(controllerId, 0);
@@ -112,9 +113,8 @@ public class EachPlayerPaysAnyLifeForTokensEffectHandler implements NormalEffect
         for (UUID playerId : state.order) {
             int count = state.lifePaid.getOrDefault(playerId, 0);
             for (int i = 0; i < count; i++) {
-                // Only the source card's name survives the pay-life interaction, not its set, so
-                // these tokens keep the artless fallback they have always had.
-                destructionSupport.createTokenForPlayer(gameData, playerId, effect.token(), cardName, null);
+                destructionSupport.createTokenForPlayer(gameData, playerId, effect.token(), cardName,
+                        state.sourceSetCode);
             }
         }
         state.reset();

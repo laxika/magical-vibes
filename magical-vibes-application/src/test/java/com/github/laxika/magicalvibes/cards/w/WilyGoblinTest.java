@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -56,11 +58,33 @@ class WilyGoblinTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve creature
         harness.passBothPriorities(); // Resolve ETB trigger
 
-        Permanent token = findPermanent(player1, "Treasure");
+        Permanent treasure = findPermanent(player1, "Treasure");
 
-        assertThat(token.getCard().getType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(token.getCard().getSubtypes()).contains(CardSubtype.TREASURE);
-        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(treasure.getCard().getType()).isEqualTo(CardType.ARTIFACT);
+        assertThat(treasure.getCard().getSubtypes()).contains(CardSubtype.TREASURE);
+        assertThat(treasure.getCard().isToken()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Treasure token art prefers the XLN token set when that printing is registered")
+    void treasureTokenUsesSourceSetWhenRegistered() {
+        CardPrintingRegistry.registerTokenImages("XLN", Map.of(
+                CardPrintingRegistry.buildTokenKey("Treasure", null, null, null),
+                new CardPrintingRegistry.TokenImageData("txln", "7")));
+
+        WilyGoblin goblin = new WilyGoblin();
+        goblin.setSetCode("XLN");
+        goblin.setCollectorNumber("174");
+        harness.setHand(player1, List.of(goblin));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent treasure = findPermanent(player1, "Treasure");
+        assertThat(treasure.getCard().getSetCode()).isEqualTo("txln");
+        assertThat(treasure.getCard().getCollectorNumber()).isEqualTo("7");
     }
 
     @Test

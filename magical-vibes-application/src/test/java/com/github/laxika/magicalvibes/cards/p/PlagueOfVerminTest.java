@@ -13,7 +13,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PlagueOfVerminTest extends BaseCardTest {
 
     private void cast(Player caster) {
-        harness.setHand(caster, List.of(new PlagueOfVermin()));
+        PlagueOfVermin plague = new PlagueOfVermin();
+        plague.setSetCode("SHM");
+        plague.setCollectorNumber("73");
+        harness.setHand(caster, List.of(plague));
         harness.addMana(caster, ManaColor.BLACK, 1);
         harness.addMana(caster, ManaColor.COLORLESS, 6);
         harness.castSorcery(caster, 0, 0);
@@ -44,6 +47,14 @@ class PlagueOfVerminTest extends BaseCardTest {
         harness.assertLife(player2, 18);
         assertThat(ratCount(player1)).isEqualTo(3);
         assertThat(ratCount(player2)).isEqualTo(2);
+        assertThat(findPermanents(player1, "Rat")).allSatisfy(rat -> {
+            assertThat(rat.getCard().getSetCode()).isEqualTo("tshm");
+            assertThat(rat.getCard().getCollectorNumber()).isNotBlank();
+        });
+        assertThat(findPermanents(player2, "Rat")).allSatisfy(rat -> {
+            assertThat(rat.getCard().getSetCode()).isEqualTo("tshm");
+            assertThat(rat.getCard().getCollectorNumber()).isNotBlank();
+        });
     }
 
     @Test

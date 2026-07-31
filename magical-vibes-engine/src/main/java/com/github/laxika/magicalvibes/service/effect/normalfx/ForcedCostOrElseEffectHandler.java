@@ -116,7 +116,8 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                         null, null, entry.getSourcePermanentId()));
                 return;
             }
-            createOpponentTokens(gameData, entry.getControllerId(), tokenCost, entry.getCard().getName());
+            createOpponentTokens(gameData, entry.getControllerId(), tokenCost, entry.getCard().getName(),
+                    entry.getCard().getSetCode());
             return;
         }
 
@@ -175,13 +176,15 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
      * payer's opponent creates one token per required count. Shared with the may-prompt accept path.
      */
     public void createOpponentTokens(GameData gameData, UUID payerId,
-            com.github.laxika.magicalvibes.model.effect.OpponentCreatesTokensCost cost, String sourceName) {
+            com.github.laxika.magicalvibes.model.effect.OpponentCreatesTokensCost cost, String sourceName,
+            String sourceSetCode) {
         UUID opponentId = gameQueryService.getOpponentId(gameData, payerId);
         if (opponentId == null) {
             return;
         }
         for (int i = 0; i < cost.count(); i++) {
-            destructionSupport.createTokenForPlayer(gameData, opponentId, cost.tokenTemplate(), sourceName, null);
+            destructionSupport.createTokenForPlayer(gameData, opponentId, cost.tokenTemplate(), sourceName,
+                    sourceSetCode);
         }
     }
 

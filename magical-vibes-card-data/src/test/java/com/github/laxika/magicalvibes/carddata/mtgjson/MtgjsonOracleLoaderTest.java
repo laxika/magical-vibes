@@ -178,7 +178,7 @@ class MtgjsonOracleLoaderTest {
     }
 
     @Test
-    void parsesCreatureTokensUnderScryfallTokenSetCode() {
+    void parsesCreatureAndNonCreatureTokensUnderScryfallTokenSetCode() {
         JsonNode setData = MAPPER.readTree("""
                 {
                   "name": "Fake Set",
@@ -186,6 +186,8 @@ class MtgjsonOracleLoaderTest {
                   "tokens": [
                     { "name": "Wolf", "number": "5", "type": "Token Creature \\u2014 Wolf",
                       "power": "2", "toughness": "2", "colors": ["G"] },
+                    { "name": "Treasure", "number": "7", "type": "Token Artifact \\u2014 Treasure",
+                      "colors": [] },
                     { "name": "Sorin Emblem", "number": "6", "type": "Emblem \\u2014 Sorin", "colors": [] }
                   ]
                 }
@@ -200,7 +202,12 @@ class MtgjsonOracleLoaderTest {
         assertThat(wolf.setCode()).isEqualTo("tzzz");
         assertThat(wolf.collectorNumber()).isEqualTo("5");
 
-        // The emblem is not a creature and must not be included
-        assertThat(tokens).hasSize(1);
+        CardPrintingRegistry.TokenImageData treasure =
+                tokens.get(CardPrintingRegistry.buildTokenKey("Treasure", null, null, null));
+        assertThat(treasure).isNotNull();
+        assertThat(treasure.collectorNumber()).isEqualTo("7");
+
+        // Emblems are not tokens created by CreateTokenEffect
+        assertThat(tokens).hasSize(2);
     }
 }

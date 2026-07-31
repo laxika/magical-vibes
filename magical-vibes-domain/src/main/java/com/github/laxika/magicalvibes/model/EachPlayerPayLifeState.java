@@ -31,6 +31,8 @@ public class EachPlayerPayLifeState {
     public final Map<UUID, Integer> lifePaid = new LinkedHashMap<>();
     /** The player currently choosing how much life to pay. */
     public UUID currentPlayerId;
+    /** Set code of the resolving source card, for token art preference. */
+    public String sourceSetCode;
 
     public void reset() {
         active = false;
@@ -39,5 +41,6 @@ public class EachPlayerPayLifeState {
         consecutivePasses = 0;
         lifePaid.clear();
         currentPlayerId = null;
+        sourceSetCode = null;
     }
 }
