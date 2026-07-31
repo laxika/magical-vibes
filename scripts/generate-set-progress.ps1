@@ -27,17 +27,34 @@
     Skip the Scryfall lookup that supplies the "cards in Magic" denominator. The page still
     renders; the unique-cards tile just loses its share and meter.
 
+.PARAMETER CachePath
+    Where the downloaded MTGJSON set list is cached between runs. Defaults to
+    scripts/.cache/SetList.json.
+
+.PARAMETER CacheMaxAgeHours
+    How long a cached set list stays usable. Defaults to 720 hours (30 days); pass -RefreshCache
+    after a new set releases to pick it up sooner.
+
+.PARAMETER RefreshCache
+    Download the set list even if the cache is still fresh.
+
 .EXAMPLE
     ./scripts/generate-set-progress.ps1
 
 .EXAMPLE
     ./scripts/generate-set-progress.ps1 -OutputPath C:\tmp\progress.html
+
+.EXAMPLE
+    ./scripts/generate-set-progress.ps1 -RefreshCache
 #>
 [CmdletBinding()]
 param(
     [string] $OutputPath,
     [string] $SetListPath,
-    [switch] $SkipCardNameCatalog
+    [switch] $SkipCardNameCatalog,
+    [string] $CachePath,
+    [int] $CacheMaxAgeHours = 720,
+    [switch] $RefreshCache
 )
 
 $ErrorActionPreference = "Stop"
@@ -50,12 +67,16 @@ if (-not $OutputPath) {
     $OutputPath = Join-Path $PSScriptRoot "stats/index.html"
 }
 
+if (-not $CachePath) {
+    $CachePath = Join-Path $PSScriptRoot ".cache/SetList.json"
+}
+
 $userAgent = "magical-vibes-set-progress/1.0"
 
 function Read-ImplementedPrintings {
     <#
         .SYNOPSIS
-            Returns per-set printing counts plus the per-card printing distribution.
+            Returns per-set printing counts plus the implemented card and printing totals.
 
         Card classes live in single-letter directories under cards/; the infrastructure types
         (CardSet, CardScanner, ...) sit alongside them and carry no registrations, so only the
@@ -70,7 +91,7 @@ function Read-ImplementedPrintings {
     $pattern = [regex] '@CardRegistration\(\s*set\s*=\s*"([^"]+)"\s*,\s*collectorNumber\s*=\s*"([^"]+)"\s*\)'
 
     $setCounts = @{}
-    $printingsPerCard = [System.Collections.Generic.List[int]]::new()
+    $uniqueCards = 0
     $totalPrintings = 0
     $faceOnlyClasses = 0
 
@@ -88,7 +109,7 @@ function Read-ImplementedPrintings {
             continue
         }
 
-        $printingsPerCard.Add($registrations.Count)
+        $uniqueCards++
         $totalPrintings += $registrations.Count
 
         foreach ($registration in $registrations) {
@@ -108,9 +129,7 @@ function Read-ImplementedPrintings {
     return [pscustomobject]@{
         SetCounts        = $setCounts
         TotalPrintings   = $totalPrintings
-        UniqueCards      = $printingsPerCard.Count
-        ReprintedCards   = @($printingsPerCard | Where-Object { $_ -gt 1 }).Count
-        SinglePrinting   = @($printingsPerCard | Where-Object { $_ -eq 1 }).Count
+        UniqueCards      = $uniqueCards
         FaceOnlyClasses  = $faceOnlyClasses
         ScannedFiles     = @($files).Count
     }
@@ -137,32 +156,70 @@ function Read-SupportedSetCodes {
 }
 
 function Get-MtgJsonSetList {
-    param([string] $LocalPath)
+    <#
+        .SYNOPSIS
+            The MTGJSON SetList, from an explicit local file, the on-disk cache, or the network.
+
+        The set list only really moves when a new set releases, so a cached body younger than
+        $MaxAgeHours is reused rather than pulling 11 MB again. A stale cache is still kept as a
+        fallback: if the download fails the run continues on the old set list rather than dying,
+        since a slightly outdated denominator is far better than no page at all.
+    #>
+    param(
+        [string] $LocalPath,
+        [string] $CachePath,
+        [int] $MaxAgeHours,
+        [switch] $Refresh
+    )
 
     if ($LocalPath) {
         Write-Host "Reading MTGJSON set list from $LocalPath"
-        $raw = [System.IO.File]::ReadAllText($LocalPath)
-    } else {
-        $url = "https://mtgjson.com/api/v5/SetList.json"
-        # An 11 MB body over a flaky link drops often enough that one dropped connection
-        # should not cost the whole run.
-        $raw = $null
-        for ($attempt = 1; $attempt -le 3; $attempt++) {
-            try {
-                Write-Host "Downloading set list from $url (attempt $attempt of 3) ..."
-                $response = Invoke-WebRequest -Uri $url -UseBasicParsing -UserAgent $userAgent
-                $raw = [System.Text.Encoding]::UTF8.GetString($response.RawContentStream.ToArray())
-                break
-            } catch {
-                if ($attempt -eq 3) { throw }
-                Write-Warning "Download failed: $($_.Exception.Message)"
-                Start-Sleep -Seconds (2 * $attempt)
-            }
-        }
+        return @(([System.IO.File]::ReadAllText($LocalPath) | ConvertFrom-Json).data)
     }
 
-    $parsed = $raw | ConvertFrom-Json
-    return @($parsed.data)
+    $cacheAge = $null
+    if (Test-Path -LiteralPath $CachePath) {
+        $cacheAge = (Get-Date) - (Get-Item -LiteralPath $CachePath).LastWriteTime
+    }
+
+    if ($null -ne $cacheAge -and -not $Refresh -and $cacheAge.TotalHours -lt $MaxAgeHours) {
+        Write-Host ("Using cached set list from {0} ({1:N1} days old)." -f $CachePath, $cacheAge.TotalDays)
+        return @(([System.IO.File]::ReadAllText($CachePath) | ConvertFrom-Json).data)
+    }
+
+    $url = "https://mtgjson.com/api/v5/SetList.json"
+    # An 11 MB body over a flaky link drops often enough that one dropped connection
+    # should not cost the whole run.
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        try {
+            Write-Host "Downloading set list from $url (attempt $attempt of 3) ..."
+            $response = Invoke-WebRequest -Uri $url -UseBasicParsing -UserAgent $userAgent
+            $raw = [System.Text.Encoding]::UTF8.GetString($response.RawContentStream.ToArray())
+            $parsed = $raw | ConvertFrom-Json
+
+            # Written only after the body parses, so the cache never holds a truncated
+            # or error-page response that would poison every later run.
+            $cacheDir = Split-Path -Parent $CachePath
+            if ($cacheDir -and -not (Test-Path -LiteralPath $cacheDir)) {
+                New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null
+            }
+            [System.IO.File]::WriteAllText($CachePath, $raw, [System.Text.UTF8Encoding]::new($false))
+            Write-Host "Cached set list at $CachePath"
+
+            return @($parsed.data)
+        } catch {
+            Write-Warning "Download failed: $($_.Exception.Message)"
+            if ($attempt -lt 3) {
+                Start-Sleep -Seconds (2 * $attempt)
+                continue
+            }
+            if ($null -ne $cacheAge) {
+                Write-Warning ("Falling back to the stale cached set list ({0:N1} days old)." -f $cacheAge.TotalDays)
+                return @(([System.IO.File]::ReadAllText($CachePath) | ConvertFrom-Json).data)
+            }
+            throw
+        }
+    }
 }
 
 function Get-UniqueCardCount {
@@ -195,7 +252,8 @@ $supportedCodes = Read-SupportedSetCodes -CardRoot $cardRoot
 $supportedLookup = @{}
 foreach ($code in $supportedCodes) { $supportedLookup[$code] = $true }
 
-$setList = Get-MtgJsonSetList -LocalPath $SetListPath
+$setList = Get-MtgJsonSetList -LocalPath $SetListPath -CachePath $CachePath `
+    -MaxAgeHours $CacheMaxAgeHours -Refresh:$RefreshCache
 Write-Host "Set list contains $($setList.Count) sets."
 
 $uniqueCardNamesInMagic = 0
@@ -315,8 +373,6 @@ $payload = [ordered]@{
     totals    = [ordered]@{
         uniqueCards        = $implemented.UniqueCards
         printings          = $implemented.TotalPrintings
-        reprintedCards     = $implemented.ReprintedCards
-        singlePrinting     = $implemented.SinglePrinting
         faceOnlyClasses    = $implemented.FaceOnlyClasses
         supportedSetCount  = $supportedSets.Count
         supportedTotal     = $supportedTotal
@@ -692,8 +748,8 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
       <input type="search" class="search" id="search" placeholder="Search by set name or code&hellip;" aria-label="Search sets">
       <div class="segmented" role="group" aria-label="Filter sets">
         <button type="button" class="chip" data-filter="all" aria-pressed="true">All sets</button>
-        <button type="button" class="chip" data-filter="supported" aria-pressed="false">Supported</button>
         <button type="button" class="chip" data-filter="started" aria-pressed="false">In progress</button>
+        <button type="button" class="chip" data-filter="full" aria-pressed="false">Fully supported</button>
       </div>
       <label class="sort-label" for="sort">Sort</label>
       <select id="sort">
@@ -822,13 +878,6 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
               fmt(T.missingInSupported) + " missing"
       },
       {
-        label: "Cards with reprints",
-        value: fmt(T.reprintedCards),
-        part: T.reprintedCards,
-        whole: T.uniqueCards,
-        note: "of " + fmt(T.uniqueCards) + " implemented cards"
-      },
-      {
         label: "Sets covered",
         value: fmt(T.startedSets),
         part: T.startedSets,
@@ -853,8 +902,15 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
 
   var state = { filter: "all", search: "", sort: "impl" };
 
+  function isComplete(set) {
+    return set.total > 0 && set.impl >= set.total;
+  }
+
   function matches(set) {
-    if (state.filter === "supported" && !set.supported) { return false; }
+    // "Fully supported" means both halves of the promise: the engine can build decks from the
+    // set *and* every card in it exists. A complete set the engine cannot use, or a supported
+    // set with holes in it, fails the filter.
+    if (state.filter === "full" && !(set.supported && isComplete(set))) { return false; }
     if (state.filter === "started" && set.impl === 0) { return false; }
 
     if (state.search) {
@@ -878,8 +934,7 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
 
   function rowHtml(set) {
     var pct = pctOf(set);
-    var complete = set.total > 0 && set.impl >= set.total;
-    var fillClass = "meter-fill" + (complete ? " done" : "") + (set.impl === 0 ? " empty" : "");
+    var fillClass = "meter-fill" + (isComplete(set) ? " done" : "") + (set.impl === 0 ? " empty" : "");
     var symbol = set.keyrune ? '<i class="ss ss-' + escapeHtml(set.keyrune) + '" aria-hidden="true"></i>' : "";
     var badge = set.supported ? '<span class="badge">Supported</span>' : "";
     var pctText = set.impl === 0 ? "0%" : (pct >= 99.95 ? "100%" : pct.toFixed(0) + "%");
@@ -952,8 +1007,8 @@ if ($outputDir -and -not (Test-Path -LiteralPath $outputDir)) {
 $sizeKb = [Math]::Round((Get-Item -LiteralPath $OutputPath).Length / 1KB, 1)
 Write-Host ""
 Write-Host "Wrote $OutputPath ($sizeKb KB)"
-Write-Host ("  {0} unique cards, {1} printings, {2} reprinted" -f `
-    $implemented.UniqueCards, $implemented.TotalPrintings, $implemented.ReprintedCards)
+Write-Host ("  {0} unique cards, {1} printings" -f `
+    $implemented.UniqueCards, $implemented.TotalPrintings)
 Write-Host ("  {0}/{1} printings across {2} supported sets ({3:N1}%)" -f `
     $supportedImpl, $supportedTotal, $supportedSets.Count,
     $(if ($supportedTotal) { ($supportedImpl / $supportedTotal) * 100 } else { 0 }))
