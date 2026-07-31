@@ -382,9 +382,8 @@ public class PredicateEvaluationService {
                         ? gameQueryService.isArtifact(permanent)
                         : gameQueryService.isArtifact(gameData, permanent);
                 yield artifact
-                        || permanent.getCard().getSupertypes().contains(CardSupertype.LEGENDARY)
-                        || permanent.getCard().getSubtypes().contains(CardSubtype.SAGA)
-                        || permanent.getTransientSubtypes().contains(CardSubtype.SAGA);
+                        || gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.LEGENDARY)
+                        || hasSagaSubtype(permanent);
             }
             case PermanentIsEnchantedPredicate ignored ->
                     gameData != null && gameQueryService.isEnchanted(gameData, permanent);
@@ -840,6 +839,71 @@ public class PredicateEvaluationService {
     }
 
     /**
+     * Recursion-safe variant for callers running inside static-bonus assembly: the static effect
+     * handlers and {@link com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService}.
+     * The fully layered {@link #matchesPermanentPredicate(Permanent, PermanentPredicate, FilterContext)}
+     * would re-enter {@code GameQueryService.computeStaticBonus}, which is what is currently being
+     * computed, so every leaf is answered from the in-flight {@link CharacteristicState} while a
+     * pass is active and from the permanent's own stored state otherwise.
+     *
+     * <p>A {@code null} predicate matches — this evaluates scope filters, where "no filter" means
+     * "every permanent in scope", not the "no predicate, no match" of a target predicate.
+     *
+     * <p>Only the predicates that have a recursion-safe answer are accepted. The rest throw rather
+     * than degrading to the {@code null}-GameData fallback, which for a predicate that genuinely
+     * needs the board (controlled-by-source, is-blocked) is a silent {@code false} — a wrong answer
+     * dressed as a legitimate one.
+     */
+    public boolean matchesStaticFilter(Permanent permanent, PermanentPredicate predicate) {
+        if (predicate == null) return true;
+        // CR 613.6: when this exact filter instance was already evaluated by the layer-4 pass
+        // (effect parts of one printed ability share the filter object), every later-layer part
+        // applies to the layer-4-determined set — re-evaluating against the finished states
+        // would let a self-referencing filter (Bludgeon Brawl's "non-Equipment artifact")
+        // negate its own output.
+        Boolean layer4Verdict = LayerSystemService.activeL4FilterVerdict(predicate, permanent.getId());
+        if (layer4Verdict != null) {
+            return layer4Verdict;
+        }
+        return switch (predicate) {
+            case PermanentNotPredicate p -> !matchesStaticFilter(permanent, p.predicate());
+            case PermanentAllOfPredicate p ->
+                    p.predicates().stream().allMatch(nested -> matchesStaticFilter(permanent, nested));
+            case PermanentAnyOfPredicate p ->
+                    p.predicates().stream().anyMatch(nested -> matchesStaticFilter(permanent, nested));
+            case PermanentColorInPredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentHasAnySubtypePredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentHasCountersPredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentHasKeywordPredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentHasSubtypePredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentHasSupertypePredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentIsArtifactPredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentIsAttackingPredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentIsBlockingPredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentIsCreaturePredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentIsEnchantmentPredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentIsHistoricPredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentIsLandPredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentIsMulticoloredPredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentIsPlaneswalkerPredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentIsTappedPredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentIsTokenPredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentNamedPredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentPowerAtLeastPredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentPowerAtMostPredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentToughnessAtMostPredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            case PermanentTruePredicate ignored -> recursionSafeLeaf(permanent, predicate);
+            default -> throw new IllegalArgumentException(
+                    "Unsupported static filter predicate: " + predicate.getClass().getSimpleName());
+        };
+    }
+
+    private boolean recursionSafeLeaf(Permanent permanent, PermanentPredicate predicate) {
+        return matchesPermanentPredicate(
+                LayerSystemService.activeStateFor(permanent.getId()), permanent, predicate, null);
+    }
+
+    /**
      * CR 613 layered-pass variant: answers type/subtype leaf predicates from the given
      * {@link CharacteristicState} (the permanent's characteristics as computed by the layers
      * applied so far) instead of the raw permanent, and delegates every other predicate to
@@ -879,6 +943,24 @@ public class PredicateEvaluationService {
                         ? permanent.hasKeyword(Keyword.CHANGELING)
                         : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING))));
             }
+            case PermanentIsCreaturePredicate ignored ->
+                    state.hasCardType(CardType.CREATURE) || isOneShotAnimated(permanent);
+            case PermanentIsArtifactPredicate ignored ->
+                    state.hasCardType(CardType.ARTIFACT);
+            case PermanentIsLandPredicate ignored ->
+                    state.hasCardType(CardType.LAND);
+            case PermanentIsEnchantmentPredicate ignored ->
+                    state.hasCardType(CardType.ENCHANTMENT);
+            case PermanentIsPlaneswalkerPredicate ignored ->
+                    state.hasCardType(CardType.PLANESWALKER);
+            case PermanentHasKeywordPredicate p ->
+                    state.hasKeyword(p.keyword());
+            case PermanentHasSupertypePredicate p ->
+                    hasSupertype(state, permanent, gameData, p.supertype());
+            case PermanentIsHistoricPredicate ignored ->
+                    state.hasCardType(CardType.ARTIFACT)
+                            || hasSupertype(state, permanent, gameData, CardSupertype.LEGENDARY)
+                            || state.hasSubtype(CardSubtype.SAGA);
             case PermanentNotPredicate p ->
                     !matchesPermanentPredicate(state, permanent, p.predicate(), filterContext);
             case PermanentAllOfPredicate p -> {
@@ -899,6 +981,48 @@ public class PredicateEvaluationService {
             }
             default -> matchesPermanentPredicate(permanent, predicate, filterContext);
         };
+    }
+
+    /**
+     * The animation flags that make a permanent a creature without any layer-4 effect saying so.
+     * Kept alongside the state read because a {@link CharacteristicState} is built from continuous
+     * effects only, while these are one-shot resolutions recorded on the permanent.
+     */
+    private static boolean isOneShotAnimated(Permanent permanent) {
+        return permanent.isAnimatedUntilEndOfTurn()
+                || permanent.isAnimatedUntilEndOfCombat()
+                || permanent.isAnimatedUntilNextTurn()
+                || permanent.isPermanentlyAnimated()
+                || permanent.getCounterCount(CounterType.AWAKENING) > 0;
+    }
+
+    /**
+     * Supertype during a CR 613 pass, combining the sources that can disagree with the printed
+     * type line: per-permanent persistent grants and removals stored on the {@link Permanent}
+     * (Arcum's Weathervane) and layer-4 grants sitting on the in-flight state (CR 613.1d). The
+     * stored state is authoritative for removals — it is seeded from the printed supertypes but
+     * the layered state is not told about persistent removals — so a removal blocks the layered
+     * read, while an explicit grant from either source wins.
+     */
+    private boolean hasSupertype(CharacteristicState state, Permanent permanent,
+                                 GameData gameData, CardSupertype supertype) {
+        if (gameQueryService.hasEffectiveSupertype(gameData, permanent, supertype)) {
+            return true;
+        }
+        if (permanent.getPersistentRemovedSupertypes().contains(supertype)) {
+            return false;
+        }
+        return state.hasSupertype(supertype);
+    }
+
+    /**
+     * Saga is not a creature type, so unlike {@link PermanentHasSubtypePredicate} there is no
+     * Changeling or "loses all creature types" interaction to honor here.
+     */
+    private static boolean hasSagaSubtype(Permanent permanent) {
+        return permanent.getCard().getSubtypes().contains(CardSubtype.SAGA)
+                || permanent.getTransientSubtypes().contains(CardSubtype.SAGA)
+                || permanent.getGrantedSubtypes().contains(CardSubtype.SAGA);
     }
 
     /** An attacking creature is blocked if any permanent references its id as a blocking target. */

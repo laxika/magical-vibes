@@ -169,6 +169,7 @@ public class GameQueryService {
             CardSubtype.AURA,
             CardSubtype.EQUIPMENT,
             CardSubtype.AJANI,
+            CardSubtype.KOTH,
             CardSubtype.BOLAS
     );
 

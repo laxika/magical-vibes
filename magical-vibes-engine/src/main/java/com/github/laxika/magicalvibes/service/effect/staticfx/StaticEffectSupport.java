@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
@@ -21,42 +18,24 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumSet;
@@ -73,6 +52,15 @@ import java.util.UUID;
 public class StaticEffectSupport {
 
     private final GameQueryService gameQueryService;
+
+    /**
+     * Evaluates the filter predicates the handlers pass in. Injected lazily because the
+     * evaluation service queries game state through {@link GameQueryService}, which reaches
+     * the static effect handlers that own this support bean.
+     */
+    @Autowired
+    @Lazy
+    private PredicateEvaluationService predicateEvaluationService;
 
     private static final PermanentIsCreaturePredicate CREATURE_PREDICATE = new PermanentIsCreaturePredicate();
 
@@ -296,10 +284,10 @@ public class StaticEffectSupport {
      * artifact in addition to its other types"; outside a pass it reads the printed type plus the
      * transient and persistent grants stored on the {@link Permanent}.
      *
-     * <p>Deliberately bypasses {@link #matchesStaticFilter}: that method's CR 613.6 verdict
-     * memo is keyed by filter instance, and {@code PermanentIsArtifactPredicate} is a
-     * component-less record, so every instance compares equal. Routing an unrelated caller
-     * (metalcraft) through it would hand back a verdict memoized for some other ability.
+     * <p>Deliberately bypasses {@link #matchesStaticFilter}: the funnel's CR 613.6 verdict memo
+     * is keyed by filter instance, and {@code PermanentIsArtifactPredicate} is a component-less
+     * record, so every instance compares equal. Routing an unrelated caller (metalcraft) through
+     * it would hand back a verdict memoized for some other ability.
      */
     public boolean isArtifactForStaticFilter(Permanent target) {
         CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
@@ -310,236 +298,14 @@ public class StaticEffectSupport {
     }
 
     /**
-     * Supertype check for static filters, combining the three sources that can disagree with the
-     * printed type line: per-permanent persistent grants and removals stored on the
-     * {@link Permanent} (Arcum's Weathervane), and layer-4 grants sitting on the in-flight state
-     * (CR 613.1d). The stored state is authoritative — it is seeded from the printed supertypes
-     * but the layered state is not told about persistent removals — so a removal blocks the
-     * layered read, while an explicit grant from either source wins.
-     *
-     * <p>{@code null} GameData: global supertype removals (Melting) need a board scan that would
-     * re-enter static-bonus assembly, so they stay invisible here. That is the same approximation
-     * every other leaf in this method makes, and it is narrower than the printed-only read it
-     * replaces.
+     * The recursion-safe filter funnel every static effect handler goes through. Kept as the
+     * handlers' entry point while the four context-needing predicates above still have to be
+     * intercepted here; the evaluation itself lives in
+     * {@link PredicateEvaluationService#matchesStaticFilter}, which is where the layered
+     * evaluation of the same predicates lives too.
      */
-    private boolean hasSupertypeForStaticFilter(Permanent target, CardSupertype supertype) {
-        if (gameQueryService.hasEffectiveSupertype(null, target, supertype)) return true;
-        if (target.getPersistentRemovedSupertypes().contains(supertype)) return false;
-        CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
-        return layered != null && layered.hasSupertype(supertype);
-    }
-
-    /**
-     * Saga check for the historic leaf. Unlike {@link PermanentHasSubtypePredicate} there is no
-     * Changeling or "loses all creature types" interaction to honor — Saga is not a creature type.
-     */
-    private boolean hasSagaSubtypeForStaticFilter(Permanent target) {
-        CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
-        if (layered != null) {
-            return layered.hasSubtype(CardSubtype.SAGA);
-        }
-        return target.getCard().getSubtypes().contains(CardSubtype.SAGA)
-                || target.getTransientSubtypes().contains(CardSubtype.SAGA)
-                || target.getGrantedSubtypes().contains(CardSubtype.SAGA);
-    }
-
     public boolean matchesStaticFilter(Permanent target, PermanentPredicate filter) {
-        if (filter == null) return true;
-        // CR 613.6: when this exact filter instance was already evaluated by the layer-4 pass
-        // (effect parts of one printed ability share the filter object), every later-layer part
-        // applies to the layer-4-determined set — re-evaluating against the finished states
-        // would let a self-referencing filter (Bludgeon Brawl's "non-Equipment artifact")
-        // negate its own output.
-        Boolean layer4Verdict = LayerSystemService.activeL4FilterVerdict(filter, target.getId());
-        if (layer4Verdict != null) {
-            return layer4Verdict;
-        }
-        if (filter instanceof PermanentColorInPredicate p) {
-            // While a CR 613 layered pass is active, colors are answered from the layer-5
-            // state, so a color setter ("becomes red") is visible to later-layer filters.
-            CharacteristicState layeredColors = LayerSystemService.activeStateFor(target.getId());
-            if (layeredColors != null) {
-                return layeredColors.getColors().stream().anyMatch(p.colors()::contains);
-            }
-            if (target.isColorOverridden()) {
-                return target.getTransientColors().stream().anyMatch(p.colors()::contains);
-            }
-            // Granted colors are read here for the same reason PermanentIsMulticoloredPredicate
-            // reads them: they are the persistent half of the same layer-5 state.
-            return target.getEffectiveColors().stream().anyMatch(p.colors()::contains)
-                    || target.getTransientColors().stream().anyMatch(p.colors()::contains)
-                    || target.getGrantedColors().stream().anyMatch(p.colors()::contains);
-        }
-        if (filter instanceof PermanentHasSubtypePredicate p) {
-            // "Loses all creature types" removes every creature subtype (base, transient, granted) and
-            // nullifies the Changeling grant (handled by hasKeyword).
-            if (isCreatureSubtype(p.subtype()) && target.isLosesAllCreatureTypesUntilEndOfTurn()) return false;
-            // While a CR 613 layered pass is active, subtypes are answered from the
-            // layer-4-corrected state, so lord/aura filters see type-changing effects.
-            CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
-            if (layered != null) {
-                // Changeling checked on the state (layer-6 grants like Wings of Velis Vel) OR
-                // intrinsically: a changeling that lost all abilities keeps its creature types
-                // (the ability's layer-4 contribution is not retroactively undone, CR 613).
-                return layered.hasSubtype(p.subtype())
-                        || (isCreatureSubtype(p.subtype())
-                        && (layered.hasKeyword(Keyword.CHANGELING) || target.hasKeyword(Keyword.CHANGELING)));
-            }
-            return target.getCard().getSubtypes().contains(p.subtype())
-                    || target.getTransientSubtypes().contains(p.subtype())
-                    || target.getGrantedSubtypes().contains(p.subtype())
-                    || (isCreatureSubtype(p.subtype()) && target.hasKeyword(Keyword.CHANGELING));
-        }
-        if (filter instanceof PermanentHasAnySubtypePredicate p) {
-            Set<CardSubtype> wanted = target.isLosesAllCreatureTypesUntilEndOfTurn()
-                    ? p.subtypes().stream().filter(st -> !isCreatureSubtype(st)).collect(java.util.stream.Collectors.toSet())
-                    : p.subtypes();
-            CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
-            if (layered != null) {
-                return wanted.stream().anyMatch(layered::hasSubtype)
-                        || (wanted.stream().anyMatch(StaticEffectSupport::isCreatureSubtype)
-                        && (layered.hasKeyword(Keyword.CHANGELING) || target.hasKeyword(Keyword.CHANGELING)));
-            }
-            return target.getCard().getSubtypes().stream().anyMatch(wanted::contains)
-                    || target.getTransientSubtypes().stream().anyMatch(wanted::contains)
-                    || target.getGrantedSubtypes().stream().anyMatch(wanted::contains)
-                    || (wanted.stream().anyMatch(StaticEffectSupport::isCreatureSubtype)
-                    && target.hasKeyword(Keyword.CHANGELING));
-        }
-        if (filter instanceof PermanentHasKeywordPredicate p) {
-            // Layer-6-aware while a pass is active: the state holds the keywords as of the
-            // layers applied so far (grants added, removals and ability loss applied).
-            CharacteristicState layeredKeywords = LayerSystemService.activeStateFor(target.getId());
-            if (layeredKeywords != null) {
-                return layeredKeywords.hasKeyword(p.keyword());
-            }
-            return target.hasKeyword(p.keyword());
-        }
-        if (filter instanceof PermanentIsCreaturePredicate) {
-            CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
-            // isPermanentlyAnimated is part of the animation state everywhere else
-            // (GameQueryService.isCreature / isCreatureInStaticPass, LayerSystemService's
-            // isCreatureForL4); omitting it here made the same permanent a creature to one
-            // caller and not to another.
-            if (layered != null) {
-                return layered.hasCardType(CardType.CREATURE)
-                        || target.isAnimatedUntilEndOfTurn()
-                        || target.isAnimatedUntilEndOfCombat()
-                        || target.isAnimatedUntilNextTurn()
-                        || target.isPermanentlyAnimated()
-                        || target.getCounterCount(CounterType.AWAKENING) > 0;
-            }
-            return target.getCard().hasType(CardType.CREATURE)
-                    || target.isAnimatedUntilEndOfTurn()
-                    || target.isAnimatedUntilEndOfCombat()
-                    || target.isAnimatedUntilNextTurn()
-                    || target.isPermanentlyAnimated()
-                    || target.getCounterCount(CounterType.AWAKENING) > 0;
-        }
-        if (filter instanceof PermanentIsArtifactPredicate)
-            return isArtifactForStaticFilter(target);
-        if (filter instanceof PermanentIsLandPredicate) {
-            CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
-            if (layered != null) {
-                return layered.hasCardType(CardType.LAND);
-            }
-            return target.getCard().hasType(CardType.LAND);
-        }
-        if (filter instanceof PermanentIsEnchantmentPredicate) {
-            // Layer-4-aware (CR 613.1d): Enchanted Evening and Song of the Dryads grant
-            // ENCHANTMENT, and outside a pass the grant may be stored on the permanent.
-            CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
-            if (layered != null) {
-                return layered.hasCardType(CardType.ENCHANTMENT);
-            }
-            return gameQueryService.isEnchantment(target);
-        }
-        if (filter instanceof PermanentIsPlaneswalkerPredicate) {
-            CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
-            if (layered != null) {
-                return layered.hasCardType(CardType.PLANESWALKER);
-            }
-            return target.getCard().hasType(CardType.PLANESWALKER);
-        }
-        if (filter instanceof PermanentIsTokenPredicate)
-            return target.getCard().isToken();
-        if (filter instanceof PermanentIsHistoricPredicate)
-            return isArtifactForStaticFilter(target)
-                    || hasSupertypeForStaticFilter(target, CardSupertype.LEGENDARY)
-                    || hasSagaSubtypeForStaticFilter(target);
-        if (filter instanceof PermanentIsMulticoloredPredicate) {
-            // Multicolored = two or more effective colours (colourless and monocoloured don't match).
-            // Colours come from the same sources as the PermanentColorInPredicate branch above.
-            CharacteristicState layeredColors = LayerSystemService.activeStateFor(target.getId());
-            if (layeredColors != null) {
-                return layeredColors.getColors().size() >= 2;
-            }
-            if (target.isColorOverridden()) {
-                return target.getTransientColors().size() >= 2;
-            }
-            Set<CardColor> combined = EnumSet.noneOf(CardColor.class);
-            combined.addAll(target.getEffectiveColors());
-            combined.addAll(target.getTransientColors());
-            combined.addAll(target.getGrantedColors());
-            return combined.size() >= 2;
-        }
-        if (filter instanceof PermanentNotPredicate p)
-            return !matchesStaticFilter(target, p.predicate());
-        if (filter instanceof PermanentAllOfPredicate p)
-            return p.predicates().stream().allMatch(inner -> matchesStaticFilter(target, inner));
-        if (filter instanceof PermanentAnyOfPredicate p)
-            return p.predicates().stream().anyMatch(inner -> matchesStaticFilter(target, inner));
-        if (filter instanceof PermanentHasSupertypePredicate p)
-            return hasSupertypeForStaticFilter(target, p.supertype());
-        if (filter instanceof PermanentIsAttackingPredicate)
-            return target.isAttacking();
-        if (filter instanceof PermanentIsBlockingPredicate)
-            return target.isBlocking();
-        if (filter instanceof PermanentIsTappedPredicate)
-            return target.isTapped();
-        if (filter instanceof PermanentTruePredicate) return true;
-        if (filter instanceof PermanentNamedPredicate p)
-            return target.getCard().getName().equals(p.cardName());
-        // Layer-7-aware (CR 613.4): the leaves read the sublayer-7b base winner, the 7d switch
-        // and — once the pass's board is finished — every 7c boost from other permanents, so a
-        // "power 2 or less" filter no longer sees a pumped creature's printed power.
-        if (filter instanceof PermanentPowerAtMostPredicate p)
-            return gameQueryService.powerForStaticFilter(target) <= p.maxPower();
-        if (filter instanceof PermanentToughnessAtMostPredicate p)
-            return gameQueryService.toughnessForStaticFilter(target) <= p.maxToughness();
-        if (filter instanceof PermanentPowerAtLeastPredicate p)
-            return gameQueryService.powerForStaticFilter(target) >= p.minPower();
-        if (filter instanceof PermanentHasCountersPredicate p)
-            return switch (p.counterType()) {
-                case PLUS_ONE_PLUS_ONE -> target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0;
-                case MINUS_ONE_MINUS_ONE -> target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0;
-                case CHARGE -> target.getCounterCount(CounterType.CHARGE) > 0;
-                case LOYALTY -> target.getCounterCount(CounterType.LOYALTY) > 0;
-                case HATCHLING -> target.getCounterCount(CounterType.HATCHLING) > 0;
-                case SLIME -> target.getCounterCount(CounterType.SLIME) > 0;
-                case STUDY -> target.getCounterCount(CounterType.STUDY) > 0;
-                case WISH -> target.getCounterCount(CounterType.WISH) > 0;
-                case LORE -> target.getCounterCount(CounterType.LORE) > 0;
-                case AIM -> target.getCounterCount(CounterType.AIM) > 0;
-                case FEATHER -> target.getCounterCount(CounterType.FEATHER) > 0;
-                case MUSIC -> target.getCounterCount(CounterType.MUSIC) > 0;
-                case PARALYZATION -> target.getCounterCount(CounterType.PARALYZATION) > 0;
-                case ANY -> target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0
-                        || target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
-                        || target.getCounterCount(CounterType.CHARGE) > 0
-                        || target.getCounterCount(CounterType.LOYALTY) > 0
-                        || target.getCounterCount(CounterType.HATCHLING) > 0
-                        || target.getCounterCount(CounterType.SLIME) > 0
-                        || target.getCounterCount(CounterType.STUDY) > 0
-                        || target.getCounterCount(CounterType.WISH) > 0
-                        || target.getCounterCount(CounterType.LORE) > 0
-                        || target.getCounterCount(CounterType.AIM) > 0
-                        || target.getCounterCount(CounterType.FEATHER) > 0
-                        || target.getCounterCount(CounterType.MUSIC) > 0
-                        || target.getCounterCount(CounterType.PARALYZATION) > 0;
-                default -> false;
-            };
-        throw new IllegalArgumentException("Unsupported static filter predicate: " + filter.getClass().getSimpleName());
+        return predicateEvaluationService.matchesStaticFilter(target, filter);
     }
 
     public static boolean isCreatureSubtype(CardSubtype subtype) {

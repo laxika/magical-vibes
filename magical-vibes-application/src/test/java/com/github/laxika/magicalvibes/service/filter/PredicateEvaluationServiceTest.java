@@ -42,7 +42,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -1140,6 +1142,89 @@ class PredicateEvaluationServiceTest {
             StackEntry creature = new StackEntry(
                     StackEntryType.CREATURE_SPELL, bears, player2Id, "Grizzly Bears", new ArrayList<>());
             assertThat(evaluator.matchesStackEntryPredicate(creature, filter, player2Id)).isFalse();
+        }
+    }
+
+    /**
+     * The recursion-safe funnel the static effect handlers reach through
+     * {@code StaticEffectSupport.matchesStaticFilter}. No CR 613 pass is active here, so every
+     * leaf takes its outside-a-pass branch — the state-answered branches are covered end to end
+     * by {@code SevenLayerTest} and the card tests.
+     */
+    @Nested
+    @DisplayName("matchesStaticFilter")
+    class MatchesStaticFilter {
+
+        @Test
+        @DisplayName("a null filter matches, because an absent scope filter means every permanent")
+        void nullFilterMatches() {
+            Permanent perm = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+
+            assertThat(evaluator.matchesStaticFilter(perm, null)).isTrue();
+        }
+
+        @Test
+        @DisplayName("composites propagate the recursion-safe evaluation to their operands")
+        void compositesPropagate() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes(
+                    "Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+
+            assertThat(evaluator.matchesStaticFilter(perm, new PermanentNotPredicate(new PermanentIsArtifactPredicate()))).isTrue();
+            assertThat(evaluator.matchesStaticFilter(perm, new PermanentAllOfPredicate(List.of(
+                    new PermanentIsCreaturePredicate(),
+                    new PermanentHasSubtypePredicate(CardSubtype.BEAR))))).isTrue();
+            assertThat(evaluator.matchesStaticFilter(perm, new PermanentAllOfPredicate(List.of(
+                    new PermanentIsCreaturePredicate(),
+                    new PermanentIsArtifactPredicate())))).isFalse();
+            assertThat(evaluator.matchesStaticFilter(perm, new PermanentAnyOfPredicate(List.of(
+                    new PermanentIsArtifactPredicate(),
+                    new PermanentIsCreaturePredicate())))).isTrue();
+            assertThat(evaluator.matchesStaticFilter(perm, new PermanentAnyOfPredicate(List.of(
+                    new PermanentIsArtifactPredicate(),
+                    new PermanentIsLandPredicate())))).isFalse();
+        }
+
+        @Test
+        @DisplayName("a predicate with no recursion-safe answer throws instead of silently not matching")
+        void unsupportedPredicateThrows() {
+            Permanent perm = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+
+            assertThatThrownBy(() -> evaluator.matchesStaticFilter(perm, new PermanentIsMonocoloredPredicate()))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("PermanentIsMonocoloredPredicate");
+        }
+
+        @Test
+        @DisplayName("a persistently granted supertype counts, and a persistent removal blocks the printed one")
+        void supertypeHonorsPersistentGrantsAndRemovals() {
+            Card printedSnow = createLand("Snow-Covered Forest");
+            printedSnow.setSupertypes(Set.of(CardSupertype.SNOW));
+            Permanent removed = addPermanent(player1Id, printedSnow);
+            removed.getPersistentRemovedSupertypes().add(CardSupertype.SNOW);
+
+            Permanent granted = addPermanent(player1Id, createLand("Forest"));
+            granted.getPersistentGrantedSupertypes().add(CardSupertype.SNOW);
+
+            PermanentHasSupertypePredicate snow = new PermanentHasSupertypePredicate(CardSupertype.SNOW);
+            assertThat(evaluator.matchesStaticFilter(removed, snow)).isFalse();
+            assertThat(evaluator.matchesStaticFilter(granted, snow)).isTrue();
+        }
+
+        @Test
+        @DisplayName("historic reads the effective legendary supertype and granted Saga, not only the printed line")
+        void historicReadsGrantedLegendaryAndSaga() {
+            Permanent artifact = addPermanent(player1Id, createArtifact("Angel's Feather"));
+            Permanent plain = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            Permanent madeLegendary = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            madeLegendary.getPersistentGrantedSupertypes().add(CardSupertype.LEGENDARY);
+            Permanent madeSaga = addPermanent(player1Id, createEnchantment("Chapter"));
+            madeSaga.getGrantedSubtypes().add(CardSubtype.SAGA);
+
+            PermanentIsHistoricPredicate historic = new PermanentIsHistoricPredicate();
+            assertThat(evaluator.matchesStaticFilter(artifact, historic)).isTrue();
+            assertThat(evaluator.matchesStaticFilter(plain, historic)).isFalse();
+            assertThat(evaluator.matchesStaticFilter(madeLegendary, historic)).isTrue();
+            assertThat(evaluator.matchesStaticFilter(madeSaga, historic)).isTrue();
         }
     }
 

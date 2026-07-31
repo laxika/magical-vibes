@@ -347,22 +347,60 @@ ability. This matches how the other 16 P/T-filtered restriction cards already be
 
 ### C2 — strangler-fig the leaves
 
-`matchesStaticFilter` handles **22 of 67** `PermanentPredicate` implementations and throws on the
-rest; **14 handlers** call it, plus both evaluation services. Migrate **one predicate family per
-slice**, keeping the method as the funnel until it is empty, then delete it. Suite green at every
-step.
+The funnel handles **25 of the 68** `PermanentPredicate` implementations and throws on the rest,
+plus 4 more in the private context-aware overload; **14 handlers** call it, and of the two
+evaluation services only `ConditionEvaluationService` still does — Stage B moved
+`AmountEvaluationService` onto `FilterContext.empty()` into `PredicateEvaluationService`. Migrate
+**one predicate family per slice**, keeping the method as the funnel until it is empty, then delete
+it. Suite green at every step.
 
 Suggested family order: type leaves (done in A) → P/T leaves (done in B) → composites
 (`Not`/`AllOf`/`AnyOf`, which propagate and *invert* the approximation) → the four context-needing
 predicates currently handled only by the private overload → the ~40 that throw.
 
-- [ ] Composites
+- [x] Composites — **done 2026-07-31**, see "Slice 1" below.
 - [ ] Context-needing predicates (`IsEnchanted`, `ControllerControlsPermanent`,
       `HasGreatestManaValueAmongAllCreatures`, `HasSourceChosenSubtype`)
 - [ ] Remaining throwing predicates
 - [ ] Delete `matchesStaticFilter`
 - [ ] Delete `ConditionContext.staticEvaluation` / `AmountContext.staticEvaluation`
 - [ ] Revert the `hasSelfBecomeCreatureEffect` boolean overload (its reason for existing is gone)
+
+#### Slice 1: one evaluator for the leaves (2026-07-31)
+
+The funnel moved to `PredicateEvaluationService.matchesStaticFilter`, and
+`StaticEffectSupport.matchesStaticFilter` is now a one-line delegate kept only because the private
+context-aware overload still has to intercept the four context-needing predicates before it.
+Composites and the CR 613.6 layer-4 verdict memo moved with the funnel, so nested sub-predicates
+keep consulting the memo exactly as before.
+
+Why the funnel could not simply *become* the state overload: `matchesL4Filter` writes into
+`board.l4FilterVerdicts()` on every call, so a memo read inside the overload would freeze the first
+verdict and defeat `orderByDependency`'s trial applications. The memo read belongs in the funnel,
+which layer 4 does not go through.
+
+The Stage A/B corrections had all landed in the funnel, not in `PredicateEvaluationService`, so its
+recursion-safe path had to catch up. Its `CharacteristicState` overload only answered subtypes and
+composites; the creature, artifact, land, enchantment, planeswalker, keyword, supertype and historic
+leaves now answer from the state too. **That also fixes layer 4 itself** — `matchesL4Filter`
+evaluates layer-4 scope filters through that overload, so before this a layer-4 scope filter on
+`PermanentIsArtifactPredicate` read the printed type and could not see a grant an earlier-applied
+layer-4 effect had just made.
+
+Divergences resolved rather than preserved, each toward the more correct answer:
+
+- `PermanentIsHistoricPredicate` now reads the effective LEGENDARY supertype and granted SAGA in
+  **both** paths. The layered path previously read printed LEGENDARY and printed/transient SAGA
+  while answering the artifact third of the same question from the layered type.
+- `PermanentHasSubtypePredicate` outside a pass now honors `getTransientCreatureTypeOverride()`
+  (Boldwyr Intimidator). The funnel's copy never did.
+- `GameQueryService.NON_CREATURE_SUBTYPES` was missing `KOTH`, so it disagreed with
+  `StaticEffectSupport`'s copy about whether "loses all creature types" strips a planeswalker's
+  KOTH subtype. KOTH added; the two sets are now identical.
+
+Residual: `StaticEffectSupport.isCreatureSubtype` still exists as a second definition of the same
+set, because `LayerSystemService` uses it as a method reference in three `removeSubtypesIf` calls.
+Fold it into `GameQueryService` when the funnel goes.
 
 ### Known secondary approximations to fold in
 
@@ -371,9 +409,9 @@ predicates currently handled only by the private overload → the ~40 that throw
   `BoostBySharedCreatureTypeEffectHandler`.
 - `hasAnimateArtifactEffect` / `matchesAnimateLand` scan printed `EffectSlot.STATIC` only, and
   compare against printed subtypes.
-- Emblem handling in `GameQueryService` (~`:1858-1880`) passes null `GameData` for the same
+- Emblem handling in `GameQueryService` (~`:2106-2144`) passes null `GameData` for the same
   reason, with mixed fidelity between the boost and its filter.
-- `applySelfOnlyConditionalStaticEffect` (~`StaticEffectSupport.java:253`) drops non-`Fixed`
+- `applySelfOnlyConditionalStaticEffect` (~`StaticEffectSupport.java:235`) drops non-`Fixed`
   animation P/T to 0.
 
 ## Verification assets

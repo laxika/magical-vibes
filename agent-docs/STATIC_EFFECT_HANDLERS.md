@@ -87,7 +87,9 @@ generic handlers — do NOT add per-condition handlers:
 
 ## `StaticEffectSupport` public helpers
 
-- `boolean matchesStaticFilter(Permanent target, PermanentPredicate filter)`
+- `boolean matchesStaticFilter(Permanent target, PermanentPredicate filter)` — delegates to
+  `PredicateEvaluationService.matchesStaticFilter`, which owns the recursion-safe evaluation and
+  throws on predicates that have no recursion-safe answer. A `null` filter matches everything.
 - `static boolean isCreatureSubtype(CardSubtype subtype)`
 - `boolean matchesCreatureScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter)`
 - `boolean isEffectivelyCreature(Permanent permanent, boolean hasAnimateArtifacts)`
