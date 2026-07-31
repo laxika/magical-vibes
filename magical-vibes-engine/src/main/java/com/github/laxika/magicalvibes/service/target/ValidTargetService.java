@@ -679,6 +679,9 @@ public class ValidTargetService {
     public List<UUID> computeValidGraveyardTargetsForFilter(GameData gameData, Card card,
                                                             GraveyardCardPredicateTargetFilter filter,
                                                             UUID controllerId, Set<UUID> excludeIds) {
+        if (!gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
+            return List.of();
+        }
         List<UUID> searchPlayerIds = switch (filter.scope()) {
             case CONTROLLERS_GRAVEYARD -> List.of(controllerId);
             case OPPONENT_GRAVEYARD -> gameData.orderedPlayerIds.stream()

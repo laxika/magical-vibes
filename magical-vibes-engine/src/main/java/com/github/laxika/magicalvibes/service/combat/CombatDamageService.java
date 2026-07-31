@@ -1823,8 +1823,9 @@ public class CombatDamageService {
                 int newLife = currentLife - state.damageToDefendingPlayer;
                 // Worship / Elderscale Wurm: combat damage can't reduce the player's life total past an
                 // active floor. The full damage is still dealt; only the life reduction is capped.
+                // 0 means no active floor — do not clamp (life may go negative).
                 int lifeFloor = gameQueryService.damageLifeFloor(gameData, defenderId, currentLife);
-                if (newLife < lifeFloor) {
+                if (lifeFloor > 0 && newLife < lifeFloor) {
                     newLife = lifeFloor;
                 }
                 gameData.playerLifeTotals.put(defenderId, newLife);

@@ -888,9 +888,10 @@ public class GameQueryService {
 
     /**
      * Returns the highest life-total floor that damage dealt to this player can't reduce them past,
-     * or 0 when no {@link DamageLifeFloorEffect} on their battlefield currently applies. Each such
-     * effect only contributes its floor while its {@link LifeFloorCondition} holds, evaluated
-     * against the player's state before the damage is applied ({@code currentLife}).
+     * or {@code 0} when no {@link DamageLifeFloorEffect} on their battlefield currently applies.
+     * Callers must treat {@code 0} as "no floor" (do not clamp life to 0). Each such effect only
+     * contributes its floor while its {@link LifeFloorCondition} holds, evaluated against the
+     * player's state before the damage is applied ({@code currentLife}).
      */
     public int damageLifeFloor(GameData gameData, UUID playerId, int currentLife) {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);

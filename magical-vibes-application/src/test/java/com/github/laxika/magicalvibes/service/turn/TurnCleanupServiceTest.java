@@ -331,6 +331,47 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Clears mustBeBlockedThisTurn flag when it is the only modifier")
+        void clearsMustBeBlockedThisTurnAlone() {
+            Card card = createCardWithName("Grizzly Bears");
+            Permanent perm = new Permanent(card);
+            perm.setMustBeBlockedThisTurn(true);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(perm.isMustBeBlockedThisTurn()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Clears mustBlockThisTurnIfAble flag when it is the only modifier")
+        void clearsMustBlockThisTurnIfAbleAlone() {
+            Card card = createCardWithName("Grizzly Bears");
+            Permanent perm = new Permanent(card);
+            perm.setMustBlockThisTurnIfAble(true);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(perm.isMustBlockThisTurnIfAble()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Clears must-block assignments and extra block grants when they are the only modifiers")
+        void clearsMustBlockIdsAndAdditionalBlocksAlone() {
+            Card card = createCardWithName("Grizzly Bears");
+            Permanent perm = new Permanent(card);
+            perm.getMustBlockIds().add(UUID.randomUUID());
+            perm.setAdditionalBlocksUntilEndOfTurn(2);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(perm.getMustBlockIds()).isEmpty();
+            assertThat(perm.getAdditionalBlocksUntilEndOfTurn()).isZero();
+        }
+
+        @Test
         @DisplayName("Clears global damage prevention flags")
         void clearsGlobalDamagePreventionFlags() {
             gd.globalDamagePreventionShield = 10;

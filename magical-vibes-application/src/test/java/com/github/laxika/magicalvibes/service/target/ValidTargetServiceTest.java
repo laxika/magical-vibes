@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -108,6 +109,8 @@ class ValidTargetServiceTest {
         validTargetService = new ValidTargetService(
                 gameQueryService, predicateEvaluationService, targetLegalityService, targetValidationService);
         lenient().when(targetValidationService.checkEffectTargets(any(), any())).thenReturn(Optional.empty());
+        // Ground Seal gate — default open so graveyard enumeration tests are not emptied by the mock.
+        lenient().when(gameQueryService.canGraveyardCardsBeTargeted(any())).thenReturn(true);
     }
 
     // ===== Helpers =====
@@ -1762,6 +1765,31 @@ class ValidTargetServiceTest {
                             .findFirst().map(Card::getName).orElse("unknown"))
                     .collect(Collectors.toSet());
             assertThat(resultNames).isEqualTo(expectedNames);
+        }
+
+        @Test
+        @DisplayName("filter-based enumeration returns matching cards while graveyards can be targeted")
+        void graveyardTargetsForFilter_returnsMatches() {
+            List<UUID> validIds = validTargetService.computeValidGraveyardTargetsForFilter(
+                    gameData, createCard(),
+                    new GraveyardCardPredicateTargetFilter(new CardTypePredicate(CardType.CREATURE),
+                            GraveyardSearchScope.ALL_GRAVEYARDS),
+                    player1Id, Set.of());
+
+            assertThat(validIds).containsExactly(gyCreature.getId());
+        }
+
+        @Test
+        @DisplayName("filter-based enumeration is empty when graveyard cards can't be targeted (Ground Seal)")
+        void graveyardTargetsForFilter_emptyWhenGraveyardsUntargetable() {
+            when(gameQueryService.canGraveyardCardsBeTargeted(gameData)).thenReturn(false);
+
+            List<UUID> validIds = validTargetService.computeValidGraveyardTargetsForFilter(
+                    gameData, createCard(),
+                    new GraveyardCardPredicateTargetFilter(null, GraveyardSearchScope.ALL_GRAVEYARDS),
+                    player1Id, Set.of());
+
+            assertThat(validIds).isEmpty();
         }
 
         @Test

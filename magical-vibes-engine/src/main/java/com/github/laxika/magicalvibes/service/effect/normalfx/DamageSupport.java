@@ -693,8 +693,9 @@ public class DamageSupport {
                 // Worship / Elderscale Wurm: damage can't reduce the player's life total past an active floor.
                 // The full damage is still dealt (lifelink/damage triggers see the full amount); only the life
                 // total reduction is capped.
+                // 0 means no active floor — do not clamp (life may go negative).
                 int lifeFloor = gameQueryService.damageLifeFloor(gameData, playerId, currentLife);
-                if (newLife < lifeFloor) {
+                if (lifeFloor > 0 && newLife < lifeFloor) {
                     newLife = lifeFloor;
                 }
                 gameData.playerLifeTotals.put(playerId, newLife);

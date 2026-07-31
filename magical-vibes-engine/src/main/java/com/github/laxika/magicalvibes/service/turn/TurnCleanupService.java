@@ -129,28 +129,14 @@ public class TurnCleanupService {
             // CR 514.2 — remove all damage marked on permanents during cleanup step
             p.setMarkedDamage(0);
             p.setDamagedByDeathtouch(false);
-            if (p.getPowerModifier() != 0 || p.getToughnessModifier() != 0 || !p.getGrantedKeywords().isEmpty()
-                    || !p.getRemovedKeywords().isEmpty()
-                    || p.getDamagePreventionShield() != 0 || p.getDamageToCounterPreventionShield() != 0
-                    || p.getRegenerationShield() != 0 || p.isCantBeBlocked() || p.isCantBlockThisTurn()
-                    || p.isAnimatedUntilEndOfTurn() || p.isAnimatedUntilEndOfCombat() || p.isCantRegenerateThisTurn()
-                    || p.isDamagedCreaturesCantRegenerateThisTurn()
-                    || p.isExileInsteadOfDieThisTurn() || !p.getGrantedCardTypes().isEmpty()
-                    || p.isMustAttackThisTurn() || p.isMustBeBlockedByAllThisTurn()
-                    || p.isBasePowerToughnessOverriddenUntilEndOfTurn()
-                    || !p.getTemporaryActivatedAbilities().isEmpty() || !p.getTransientSubtypes().isEmpty()
-                    || !p.getTemporaryTriggeredEffects().isEmpty()
-                    || p.isLosesAllAbilitiesUntilEndOfTurn()
-                    || p.isColorOverridden() || !p.getTransientColors().isEmpty()
-                    || !p.getProtectionFromColorsUntilEndOfTurn().isEmpty()
-                    || !p.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn().isEmpty()
-                    || !p.getBlockRestrictionsUntilEndOfTurn().isEmpty()
-                    || !p.getUnblockableIfDefenderControlsUntilEndOfTurn().isEmpty()) {
-                p.resetModifiers();
-                p.setDamagePreventionShield(0);
-                p.setDamageToCounterPreventionShield(0);
-                p.setRegenerationShield(0);
-            }
+            // Reset unconditionally: resetModifiers() only touches "until end of turn" state, so it is a
+            // no-op on an unmodified permanent. Guarding it on a hand-maintained list of dirty flags let
+            // state it clears (must-be-blocked, must-block, transient type overrides, ...) survive cleanup
+            // whenever that was the permanent's only modification.
+            p.resetModifiers();
+            p.setDamagePreventionShield(0);
+            p.setDamageToCounterPreventionShield(0);
+            p.setRegenerationShield(0);
         });
 
         gameData.playerDamagePreventionShields.clear();
