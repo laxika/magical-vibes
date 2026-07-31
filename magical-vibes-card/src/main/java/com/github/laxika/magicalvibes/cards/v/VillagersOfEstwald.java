@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "224")
+@CardRegistration(set = "ISD", collectorNumber = "209")
 public class VillagersOfEstwald extends Card {
 
     public VillagersOfEstwald() {
