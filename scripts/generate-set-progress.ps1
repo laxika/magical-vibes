@@ -349,11 +349,13 @@ function Get-EnglishPlayableBaseSize {
         .SYNOPSIS
             English playable base printing count for a set, or the SetList fallback.
 
-        Counts English (or language-less) cards whose collector number is digits with an optional
-        a-d art letter. Lettered isAlternative printings that share a digit-only sibling are
-        skipped so Portal demo-game 6d drops out while Homelands 10b (no plain 10) stays.
-        Foreign-language alt-arts such as Portal's Simplified Chinese 30s are excluded by the
-        language filter. Falls back to MTGJSON baseSetSize when set card data is unavailable.
+        Counts distinct English (or language-less) collector numbers that are digits with an
+        optional a-d art letter. Distinct numbers matter because MTGJSON stores each face of a
+        DFC as its own row sharing one collector number (DKA would otherwise read 171 instead of
+        158). Lettered isAlternative printings that share a digit-only sibling are skipped so
+        Portal demo-game 6d drops out while Homelands 10b (no plain 10) stays. Foreign-language
+        alt-arts such as Portal's Simplified Chinese 30s are excluded by the language filter.
+        Falls back to MTGJSON baseSetSize when set card data is unavailable.
     #>
     param(
         [string] $SetCode,
@@ -393,7 +395,9 @@ function Get-EnglishPlayableBaseSize {
         $candidates.Add($card)
     }
 
-    $count = 0
+    # Unique collector numbers: DFC front/back share a number and must count once.
+    $eligibleNumbers = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::Ordinal)
     foreach ($card in $candidates) {
         $number = [string] $card.number
         $lettered = $script:LetteredCollectorNumberPattern.Match($number)
@@ -407,10 +411,10 @@ function Get-EnglishPlayableBaseSize {
                 continue
             }
         }
-        $count++
+        [void] $eligibleNumbers.Add($number)
     }
 
-    return $count
+    return $eligibleNumbers.Count
 }
 
 Write-Host "Scanning card sources in $cardRoot ..."
