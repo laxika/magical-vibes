@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardXAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsAmongControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsLandsCouldProduceEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeUntappedLandCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardOneManaOfEachColorAmongControlledEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.ManaColorLandScope;
@@ -494,7 +495,7 @@ public class ActivatedAbilityExecutionService {
             }
             if (effect instanceof AwardManaEffect award) {
                 int amount = amountEvaluationService.evaluate(gameData, award.amount(),
-                        AmountContext.forManaAbility(permanent, playerId)) * manaMultiplier;
+                        AmountContext.forManaAbility(permanent, playerId, xValue)) * manaMultiplier;
                 if (amount > 0) {
                     ManaPool pool = gameData.playerManaPools.get(playerId);
                     pool.add(award.color(), amount);
@@ -599,7 +600,7 @@ public class ActivatedAbilityExecutionService {
                 }
             } else if (effect instanceof AwardManaOfColorsEffect ofColors) {
                 int picks = amountEvaluationService.evaluate(gameData, ofColors.amount(),
-                        AmountContext.forManaAbility(permanent, playerId)) * manaMultiplier;
+                        AmountContext.forManaAbility(permanent, playerId, xValue)) * manaMultiplier;
                 if (picks <= 0) {
                     // no-op
                 } else if (ofColors.colors().size() == 1) {
@@ -710,6 +711,26 @@ public class ActivatedAbilityExecutionService {
                             .text(player.getUsername() + " activates ")
                             .card(permanent.getCard())
                             .text(" but produces no mana (no matching land could produce colored mana).")
+                            .build());
+                }
+            } else if (effect instanceof AwardManaOfTypeUntappedLandCouldProduceEffect) {
+                Set<ManaColor> availableTypes = collectManaTypesUntappedLandCouldProduce(gameData, permanent);
+                if (availableTypes.size() == 1) {
+                    ManaColor onlyType = availableTypes.iterator().next();
+                    gameData.playerManaPools.get(playerId).add(onlyType);
+                    gameLogService.append(gameData, GameLog.textCardText(
+                            player.getUsername() + " adds {" + onlyType.getCode() + "} from ", permanent.getCard(), "."));
+                } else if (availableTypes.size() > 1) {
+                    ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource);
+                    List<String> types = availableTypes.stream().map(Enum::name).sorted().toList();
+                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                            playerId, null, null, choiceContext, types, "Choose a type of mana to add."));
+                    log.info("Game {} - Awaiting {} to choose a mana type from the untapped land", gameData.id, player.getUsername());
+                } else {
+                    gameLogService.append(gameData, GameLog.builder()
+                            .text(player.getUsername() + " activates ")
+                            .card(permanent.getCard())
+                            .text(" but produces no mana (the untapped land could produce none).")
                             .build());
                 }
             } else if (effect instanceof GainLifeEffect gain) {
@@ -881,7 +902,7 @@ public class ActivatedAbilityExecutionService {
         for (CardEffect effect : effects) {
             if (effect instanceof AwardManaEffect award) {
                 total += amountEvaluationService.evaluate(gameData, award.amount(),
-                        AmountContext.forManaAbility(permanent, playerId));
+                        AmountContext.forManaAbility(permanent, playerId, xValue));
             } else if (effect instanceof AwardXAnyColorManaEffect) {
                 total += xValue;
             } else if (effect instanceof AwardManaToChosenPlayerEffect chosen) {
@@ -890,7 +911,7 @@ public class ActivatedAbilityExecutionService {
                 total += aace.amount();
             } else if (effect instanceof AwardManaOfColorsEffect ofColors) {
                 total += amountEvaluationService.evaluate(gameData, ofColors.amount(),
-                        AmountContext.forManaAbility(permanent, playerId));
+                        AmountContext.forManaAbility(permanent, playerId, xValue));
             } else if (effect instanceof AwardRestrictedManaEffect arm) {
                 total += arm.amount();
             } else if (effect instanceof AwardFlashbackOnlyAnyColorManaEffect fba) {
@@ -906,6 +927,10 @@ public class ActivatedAbilityExecutionService {
                 total += collectColorsAmongControlled(gameData, playerId, eachColor.predicate()).size();
             } else if (effect instanceof AwardManaOfColorsLandsCouldProduceEffect landColors) {
                 if (!collectColorsLandsCouldProduce(gameData, playerId, landColors).isEmpty()) {
+                    total += 1;
+                }
+            } else if (effect instanceof AwardManaOfTypeUntappedLandCouldProduceEffect) {
+                if (!collectManaTypesUntappedLandCouldProduce(gameData, permanent).isEmpty()) {
                     total += 1;
                 }
             } else if (effect instanceof AddNotedManaForLastExiledCardEffect) {
@@ -1038,6 +1063,41 @@ public class ActivatedAbilityExecutionService {
             }
         }
         return colors;
+    }
+
+    /**
+     * The mana types the land untapped to pay this ability's untap cost could produce, colorless
+     * included ("one mana of any type that land could produce", Benthic Explorers). Empty if the
+     * recorded permanent is gone or is not a land that produces mana.
+     */
+    private Set<ManaColor> collectManaTypesUntappedLandCouldProduce(GameData gameData, Permanent source) {
+        UUID untappedLandId = source.getChosenPermanentId();
+        Permanent land = untappedLandId == null ? null : gameQueryService.findPermanentById(gameData, untappedLandId);
+        Set<ManaColor> types = EnumSet.noneOf(ManaColor.class);
+        if (land == null || !land.getCard().hasType(CardType.LAND)) {
+            return types;
+        }
+        collectManaTypesFromEffects(land.getCard().getEffects(EffectSlot.ON_TAP), types);
+        for (ActivatedAbility ability : land.getCard().getActivatedAbilities()) {
+            collectManaTypesFromEffects(ability.getEffects(), types);
+        }
+        return types;
+    }
+
+    private void collectManaTypesFromEffects(List<CardEffect> effects, Set<ManaColor> types) {
+        for (CardEffect effect : effects) {
+            if (effect instanceof AwardManaEffect award) {
+                if (award.color() != null) {
+                    types.add(award.color());
+                }
+            } else if (effect instanceof AwardAnyColorManaEffect) {
+                types.add(ManaColor.WHITE);
+                types.add(ManaColor.BLUE);
+                types.add(ManaColor.BLACK);
+                types.add(ManaColor.RED);
+                types.add(ManaColor.GREEN);
+            }
+        }
     }
 
     private void collectManaColorsFromEffects(List<CardEffect> effects, Set<CardColor> colors) {

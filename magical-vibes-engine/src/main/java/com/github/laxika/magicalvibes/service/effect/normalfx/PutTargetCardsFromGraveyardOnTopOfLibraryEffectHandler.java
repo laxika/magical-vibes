@@ -25,6 +25,11 @@ public class PutTargetCardsFromGraveyardOnTopOfLibraryEffectHandler implements N
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PutTargetCardsFromGraveyardOnTopOfLibraryEffect) effect;
 
+        if (e.fromOtherGraveyards()) {
+            graveyardReturnSupport.putTargetedCardsFromAnyGraveyardOnTopOfLibrary(gameData, entry);
+            return;
+        }
+
         List<Card> library = gameData.playerDecks.get(entry.getControllerId());
         graveyardReturnSupport.processTargetedGraveyardCards(gameData, entry,
                 (graveyard, card) -> library.addFirst(card),

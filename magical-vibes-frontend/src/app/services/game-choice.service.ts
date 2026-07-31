@@ -459,6 +459,7 @@ export class GameChoiceService {
       case 'BLACK': return 'Black';
       case 'RED': return 'Red';
       case 'GREEN': return 'Green';
+      case 'COLORLESS': return 'Colorless';
       case 'PLAINS': return 'Plains';
       case 'ISLAND': return 'Island';
       case 'SWAMP': return 'Swamp';

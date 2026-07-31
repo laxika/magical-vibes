@@ -24,6 +24,9 @@ public class Permanent {
     private Card card;
     private final Card originalCard;
     private boolean tapped;
+    /** True once the "sacrifice a [permanent] instead of entering" replacement (Balduvian Trading
+     *  Post) has been paid for this permanent, so the re-entry after the choice isn't replaced again. */
+    @Setter private boolean entryCostPaid;
     private boolean attacking;
     /** The UUID of the player or planeswalker this creature is attacking. Null when not attacking. */
     @Setter private UUID attackTarget;
@@ -72,6 +75,15 @@ public class Permanent {
      *  in {@code DamagePreventionService.applyCreaturePreventionShield}; reset at turn cleanup. */
     @Setter private int damageToCounterPreventionShield;
     @Setter private int regenerationShield;
+    /** How many of this permanent's {@link #regenerationShield}s carry Soldevi Sentry's rider — when
+     *  such a shield is actually used, the controller's opponent may draw a card. Plain shields are
+     *  consumed first, so a rider shield is only spent once it is all that is left. Reset at turn
+     *  cleanup alongside {@link #regenerationShield}. */
+    @Setter private int opponentDrawRegenerationShield;
+    /** How many times this permanent has regenerated this turn (CR 701.15). Incremented every time a
+     *  regeneration shield is actually applied; reset at turn cleanup. Read by
+     *  {@code TimesSourceRegeneratedThisTurn} for Spiny Starfish. */
+    @Setter private int timesRegeneratedThisTurn;
     @Setter private UUID attachedTo;
     /**
      * Soulbond pairing (CR 702.94): id of the other creature this permanent is paired with, or
@@ -125,6 +137,11 @@ public class Permanent {
      *  any time a sorcery couldn't have been cast. The cleanup sweep sacrifices it before
      *  {@link #resetModifiers()} runs, so the flag deliberately survives that reset. */
     @Setter private boolean sacrificeAtNextCleanup;
+    /** If true, this permanent is returned to its owner's hand at the beginning of the next cleanup step
+     *  ({@code ReturnSourceToHandAtNextCleanupEffect}, Thawing Glaciers). Like
+     *  {@link #sacrificeAtNextCleanup} the sweep runs before {@link #resetModifiers()}, so the flag
+     *  deliberately survives that reset. */
+    @Setter private boolean returnToHandAtNextCleanup;
     /** Secrets of Strixhaven "Prepared": true while this permanent is prepared (CR-style designation). While
      *  prepared, a copy of its prepare spell sits in exile (see {@link #preparedSpellCardId}) and the controller
      *  may cast it; casting it unprepares this permanent. */
@@ -179,6 +196,11 @@ public class Permanent {
      *  New counter kinds require only a new {@link CounterType} value — never a new field here.
      *  Read/write via {@link #getCounterCount(CounterType)} / {@link #setCounterCount(CounterType, int)}. */
     private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
+    /** Counters this permanent must shed at the beginning of the next cleanup step, keyed by type.
+     *  Populated by the "for each counter you put on a creature this way, remove a counter from that
+     *  creature at the beginning of the next cleanup step" rider (Bounty of the Hunt) and swept by
+     *  {@code TurnCleanupService}. Absent keys mean nothing pending. */
+    private final Map<CounterType, Integer> countersToRemoveAtNextCleanup = new EnumMap<>(CounterType.class);
     @Setter private int loyaltyActivationsThisTurn;
     /**
      * Siege battles: the opponent chosen to protect this battle as it entered. Only that player
@@ -442,6 +464,8 @@ public class Permanent {
         this.damagePreventionShield = source.damagePreventionShield;
         this.damageToCounterPreventionShield = source.damageToCounterPreventionShield;
         this.regenerationShield = source.regenerationShield;
+        this.opponentDrawRegenerationShield = source.opponentDrawRegenerationShield;
+        this.timesRegeneratedThisTurn = source.timesRegeneratedThisTurn;
         this.attachedTo = source.attachedTo;
         this.pairedWithId = source.pairedWithId;
         this.chosenColor = source.chosenColor;
@@ -473,6 +497,7 @@ public class Permanent {
         source.persistentTriggeredEffects.forEach((slot, effects) ->
                 this.persistentTriggeredEffects.put(slot, new ArrayList<>(effects)));
         this.sacrificeAtNextCleanup = source.sacrificeAtNextCleanup;
+        this.returnToHandAtNextCleanup = source.returnToHandAtNextCleanup;
         this.basePowerToughnessOverriddenUntilEndOfTurn = source.basePowerToughnessOverriddenUntilEndOfTurn;
         this.basePowerOverride = source.basePowerOverride;
         this.baseToughnessOverride = source.baseToughnessOverride;
@@ -485,6 +510,7 @@ public class Permanent {
         this.permanentAnimatedPower = source.permanentAnimatedPower;
         this.permanentAnimatedToughness = source.permanentAnimatedToughness;
         this.counters.putAll(source.counters);
+        this.countersToRemoveAtNextCleanup.putAll(source.countersToRemoveAtNextCleanup);
         this.loyaltyActivationsThisTurn = source.loyaltyActivationsThisTurn;
         this.protectorPlayerId = source.protectorPlayerId;
         this.enteredFromGraveyardOwnerId = source.enteredFromGraveyardOwnerId;
@@ -724,6 +750,7 @@ public class Permanent {
         return powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
                 + getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)
                 - getCounterCount(CounterType.MINUS_ONE_MINUS_ZERO)
+                - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)
                 + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO);
     }
 
@@ -737,7 +764,8 @@ public class Permanent {
                 + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)
                 + getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)
                 - getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)
-                - 2 * getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO);
+                - 2 * getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO)
+                - getCounterCount(CounterType.MINUS_TWO_MINUS_ONE);
     }
 
     /**
@@ -751,6 +779,7 @@ public class Permanent {
         return getBasePower() + powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
                 + getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)
                 - getCounterCount(CounterType.MINUS_ONE_MINUS_ZERO)
+                - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)
                 + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO);
     }
 
@@ -760,7 +789,8 @@ public class Permanent {
                 + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)
                 + getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)
                 - getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)
-                - 2 * getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO);
+                - 2 * getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO)
+                - getCounterCount(CounterType.MINUS_TWO_MINUS_ONE);
     }
 
     /**

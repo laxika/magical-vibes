@@ -59,6 +59,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  may-ability to replace the draw. Used by Island Sanctuary (holds an {@code IslandSanctuaryEffect}). */
     MAY_SKIP_DRAW_STEP_DRAW,
     END_STEP_TRIGGERED,
+    /** End-step trigger fired from a card sitting in its owner's graveyard ("At the beginning of the
+     *  end step, if this card is in your graveyard …"). Fires at EVERY end step, not just the card
+     *  owner's, and is scanned across all players' graveyards by
+     *  {@code StepTriggerService.handleEndStepTriggers}. Supports an intervening-if
+     *  {@link com.github.laxika.magicalvibes.model.effect.ConditionalEffect} gate checked at trigger
+     *  time. Used by Krovikan Horror. Contrast {@link #GRAVEYARD_UPKEEP_TRIGGERED}. */
+    GRAVEYARD_END_STEP_TRIGGERED,
     CONTROLLER_END_STEP_TRIGGERED,
     /** "At the beginning of each opponent's end step" — fires during the end step of any player who
      *  is an opponent of this permanent's controller (i.e. not the controller's own end step).
@@ -242,6 +249,15 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code ON_ENTER_BATTLEFIELD} so a normal cast never asks for a target.
      *  Used by Treacherous Pit-Dweller. */
     ON_SELF_ENTERS_FROM_GRAVEYARD,
+    /** "Whenever a player puts a permanent onto the battlefield" — fires for EVERY permanent entering
+     *  under ANY player's control (including the source itself), once per entering permanent, for every
+     *  permanent on any battlefield carrying this slot. Checked in
+     *  {@code TriggerCollectionService.checkAnyPermanentEntersTriggers}. The entering permanent's
+     *  controller is baked in as the non-targeting {@code targetId}, so a player-directed effect
+     *  (e.g. {@code SacrificePermanentsEffect(…, SacrificeRecipient.TARGET_PLAYER)}) acts on "that
+     *  player". Filter which permanents trigger it with a {@code TriggeringCardConditionalEffect}
+     *  wrapper. Used by Nature's Wrath. */
+    ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_GAINS_LIFE,
     ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE,
     ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,

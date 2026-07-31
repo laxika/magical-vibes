@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenLandOfSubtypeTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenSnowLandTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.TappedSnowLandDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddRestrictedManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -246,6 +248,50 @@ public class LandTapTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
                         + " adds 1 additional " + producedColor.name().toLowerCase() + " mana."));
+        return true;
+    }
+
+    @CollectsTrigger(value = AddProducedManaWhenSnowLandTappedEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    private boolean handleAddProducedManaWhenSnowLandTapped(TriggerMatchContext match,
+            AddProducedManaWhenSnowLandTappedEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
+
+        Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
+        if (tappedLand == null) return false;
+        if (!gameQueryService.hasEffectiveSupertype(match.gameData(), tappedLand, CardSupertype.SNOW)) return false;
+
+        ManaColor producedColor = null;
+        for (CardEffect tapEffect : tappedLand.getCard().getEffects(EffectSlot.ON_TAP)) {
+            if (tapEffect instanceof AwardManaEffect awardMana) {
+                producedColor = awardMana.color();
+                break;
+            }
+        }
+        if (producedColor == null) return false;
+
+        // "That player adds..." — the tapping player is the land's controller.
+        ManaPool pool = match.gameData().playerManaPools.get(lt.tappingPlayerId());
+        pool.add(producedColor);
+
+        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
+                        + " adds 1 additional " + producedColor.name().toLowerCase() + " mana."));
+        return true;
+    }
+
+    @CollectsTrigger(value = TappedSnowLandDoesntUntapEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    private boolean handleTappedSnowLandDoesntUntap(TriggerMatchContext match,
+            TappedSnowLandDoesntUntapEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
+
+        Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
+        if (tappedLand == null) return false;
+        if (!gameQueryService.hasEffectiveSupertype(match.gameData(), tappedLand, CardSupertype.SNOW)) return false;
+
+        tappedLand.setSkipUntapCount(tappedLand.getSkipUntapCount() + 1);
+
+        gameLogService.append(match.gameData(), GameLog.cardTextCard(match.permanent().getCard(),
+                " triggers — ", tappedLand.getCard(), " doesn't untap during its controller's next untap step."));
         return true;
     }
 

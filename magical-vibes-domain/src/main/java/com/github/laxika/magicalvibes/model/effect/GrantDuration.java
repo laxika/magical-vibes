@@ -28,5 +28,13 @@ public enum GrantDuration {
      * leaves the battlefield ({@code GameData.expireFloatingEffectsForDepartedSource}) or its
      * creator loses control of it ({@code CreatureControlService}).
      */
-    WHILE_SOURCE_ON_BATTLEFIELD
+    WHILE_SOURCE_ON_BATTLEFIELD,
+
+    /**
+     * No stated duration, so the grant lasts until the end of the game (CR 611.2a) — Nature's Blessing's
+     * "that creature gains banding, first strike, or trample". Stamped as an
+     * {@code EffectDuration.PERMANENT} floating layer-6 effect and mirrored into
+     * {@code Permanent.persistentGrantedKeywords}, neither of which turn cleanup clears.
+     */
+    INDEFINITE
 }

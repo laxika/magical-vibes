@@ -52,6 +52,16 @@ public class GainLifeEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (e.recipient() == GainLifeRecipient.OPPONENT) {
+            // "target opponent gains N life": derived opponent (two-player engine), so the entry's
+            // target slot stays free for a sibling effect on the same ability.
+            UUID opponentId = gameQueryService.getOpponentId(gameData, entry.getControllerId());
+            if (opponentId != null) {
+                lifeSupport.applyGainLife(gameData, opponentId, amount);
+            }
+            return;
+        }
+
         lifeSupport.applyGainLife(gameData, entry.getControllerId(), amount, null,
                 entry.getCard(), entry.getEntryType());
     }

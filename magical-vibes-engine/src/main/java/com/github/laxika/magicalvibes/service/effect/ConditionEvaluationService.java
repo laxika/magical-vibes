@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.condition.CameUnderControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardDirectlyAboveSelfInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.CardsAboveSelfInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
@@ -49,11 +50,13 @@ import com.github.laxika.magicalvibes.model.condition.Coven;
 import com.github.laxika.magicalvibes.model.condition.CreatureAttackingController;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
+import com.github.laxika.magicalvibes.model.condition.DealtDamageByRedSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.condition.DevouredCreature;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.EnchantedCreatureDidntAttack;
 import com.github.laxika.magicalvibes.model.condition.EnchantedCreaturePowerAtLeast;
+import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.DidntGainLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Enchanted;
 import com.github.laxika.magicalvibes.model.condition.EndStepPlayerDidntCastCreatureSpell;
@@ -63,6 +66,7 @@ import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
+import com.github.laxika.magicalvibes.model.condition.ImprintedCardMatches;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardNameMatchesEnteringPermanent;
 import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -71,6 +75,7 @@ import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.AttachedPermanentControllerControlsNoOther;
 import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
+import com.github.laxika.magicalvibes.model.condition.SourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NoPlayerHasCardsInHand;
 import com.github.laxika.magicalvibes.model.condition.TotalPermanentCountEven;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
@@ -100,6 +105,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
 import com.github.laxika.magicalvibes.model.condition.SourceBlockedOrWasBlockedByColorThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
+import com.github.laxika.magicalvibes.model.condition.SourceWasBlockedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
@@ -221,6 +227,9 @@ public class ConditionEvaluationService {
                     controlledCreaturesTotalPower(gameData, ctx) >= c.threshold();
             case ControlsCreatureWithGreatestPower ignored ->
                     controlsCreatureWithGreatestPower(gameData, ctx);
+            case SourceRegeneratedThisTurn ignored ->
+                    sourcePermanent(gameData, ctx) != null
+                            && sourcePermanent(gameData, ctx).getTimesRegeneratedThisTurn() > 0;
             case NoOtherPermanent c ->
                     noOtherMatchingPermanent(gameData, ctx, c.filter());
             case AttachedPermanentControllerControlsNoOther c ->
@@ -239,6 +248,8 @@ public class ConditionEvaluationService {
                     countMatchingGraveyardCards(gameData, ctx, c) >= c.threshold();
             case CardsAboveSelfInGraveyard c ->
                     countCardsAboveSelfInGraveyard(gameData, ctx, c) >= c.threshold();
+            case CardDirectlyAboveSelfInGraveyard c ->
+                    matchesCardDirectlyAboveSelfInGraveyard(gameData, ctx, c);
             case CardsInLibraryAtLeast c ->
                     countCardsInLibrary(gameData, ctx.controllerId()) >= c.threshold();
             case AnyGraveyardAtLeast c ->
@@ -265,6 +276,8 @@ public class ConditionEvaluationService {
                     enchantedCreatureDidntAttackThisTurn(gameData, ctx);
             case EnchantedCreaturePowerAtLeast c ->
                     enchantedCreaturePowerAtLeast(gameData, ctx, c.threshold());
+            case EnchantedPermanentMatches c ->
+                    enchantedPermanentMatches(gameData, ctx, c.filter());
             case AttacksAlone ignored ->
                     countAttackingCreatures(gameData, ctx.controllerId()) == 1;
             case FirstCombatPhase ignored ->
@@ -291,6 +304,8 @@ public class ConditionEvaluationService {
                     isAnyOpponentPoisoned(gameData, ctx.controllerId());
             case OpponentGraveyardAtLeast c ->
                     anyOpponentGraveyardAtLeast(gameData, ctx.controllerId(), c.threshold());
+            case DealtDamageByRedSpellThisTurn ignored ->
+                    gameData.lastRedSpellDamagerThisTurn.containsKey(ctx.controllerId());
             case OpponentDealtDamageThisTurn c ->
                     wasAnyOpponentDealtDamageThisTurn(gameData, ctx.controllerId(), c.minimumAmount());
             case SelfDealtDamageToOpponentThisTurn ignored ->
@@ -377,6 +392,9 @@ public class ConditionEvaluationService {
                             && gameData.combatBlockOpponentColorsThisTurn
                                     .getOrDefault(ctx.sourcePermanentId(), java.util.Set.of())
                                     .contains(c.color());
+            case SourceWasBlockedThisTurn ignored ->
+                    ctx.sourcePermanentId() != null
+                            && gameData.creaturesBlockedThisTurn.contains(ctx.sourcePermanentId());
             case SourceIsAttacking ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.isAttacking();
@@ -389,6 +407,7 @@ public class ConditionEvaluationService {
                     isTopCardOfLibraryColor(gameData, ctx.controllerId(), c);
             case BlockedByMinCreatures c ->
                     countBlockersOfSource(gameData, ctx) >= c.minBlockers();
+            case ImprintedCardMatches c -> imprintedCardMatches(gameData, ctx, c);
             case ImprintedCardNameMatchesEnteringPermanent ignored ->
                     imprintedCardNameMatches(gameData, ctx);
             case OpponentControlsMoreCreatures c ->
@@ -808,6 +827,29 @@ public class ConditionEvaluationService {
         return count;
     }
 
+    /**
+     * Checks whether the card immediately above the source card in its controller's (ordered)
+     * graveyard matches the condition's filter. Later indices are higher on the pile, so "directly
+     * above" is exactly index {@code selfIndex + 1}.
+     */
+    private boolean matchesCardDirectlyAboveSelfInGraveyard(GameData gameData, ConditionContext ctx,
+                                                            CardDirectlyAboveSelfInGraveyard c) {
+        if (ctx.controllerId() == null || ctx.sourceCard() == null) return false;
+        List<Card> graveyard = gameData.playerGraveyards.get(ctx.controllerId());
+        if (graveyard == null) return false;
+        int selfIndex = -1;
+        for (int i = 0; i < graveyard.size(); i++) {
+            if (graveyard.get(i).getId().equals(ctx.sourceCard().getId())) {
+                selfIndex = i;
+                break;
+            }
+        }
+        if (selfIndex < 0 || selfIndex + 1 >= graveyard.size()) return false;
+        Card above = graveyard.get(selfIndex + 1);
+        return c.filter() == null
+                || predicateEvaluationService.matchesCardPredicate(above, c.filter(), null, gameData, ctx.controllerId());
+    }
+
     private boolean sourceDidntAttackThisTurn(GameData gameData, ConditionContext ctx) {
         if (ctx.sourcePermanentId() == null) return true;
         Permanent source = sourcePermanent(gameData, ctx);
@@ -833,6 +875,14 @@ public class ConditionEvaluationService {
         Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
         if (enchanted == null) return false;
         return gameQueryService.getEffectivePower(gameData, enchanted) >= threshold;
+    }
+
+    private boolean enchantedPermanentMatches(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
+        Permanent aura = sourcePermanent(gameData, ctx);
+        if (aura == null || !aura.isAttached()) return false;
+        Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        if (enchanted == null) return false;
+        return matchesPermanent(gameData, enchanted, filter, ctx);
     }
 
     private long countAttackingCreatures(GameData gameData, UUID controllerId) {
@@ -1064,6 +1114,14 @@ public class ConditionEvaluationService {
             }
         });
         return blockerCount[0];
+    }
+
+    private boolean imprintedCardMatches(GameData gameData, ConditionContext ctx, ImprintedCardMatches condition) {
+        Permanent source = sourcePermanent(gameData, ctx);
+        if (source == null) return false;
+        Card imprintedCard = gameData.getImprintedCard(source.getCard());
+        return imprintedCard != null && predicateEvaluationService.matchesCardPredicate(
+                imprintedCard, condition.filter(), source.getCard().getId(), gameData, ctx.controllerId());
     }
 
     private boolean imprintedCardNameMatches(GameData gameData, ConditionContext ctx) {

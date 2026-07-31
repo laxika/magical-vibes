@@ -73,6 +73,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record MaySacrificeForCounterOnSource(UUID controllerId, UUID sourcePermanentId, Card sourceCard)
             implements PermanentChoiceContext {}
 
+    /**
+     * Gargantuan Gorilla: the controller accepted the upkeep "you may sacrifice a Forest" and is
+     * picking which one; a snow Forest grants {@code sourcePermanentId} trample until end of turn.
+     */
+    record GargantuanGorillaSacrificeForest(UUID controllerId, UUID sourcePermanentId, Card sourceCard)
+            implements PermanentChoiceContext {}
+
     record ForcedCostOrElse(UUID controllerId, UUID sourcePermanentId, Card sourceCard,
                             com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect effect) implements PermanentChoiceContext {}
 
@@ -200,6 +207,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** "Sacrifice this permanent unless you sacrifice a [permanent]." The chosen permanent is sacrificed. (Sacred Mesa.) */
     record SacrificeOwnPermanentOrSacrificeSelf(UUID controllerId, UUID sourceCardId) implements PermanentChoiceContext {}
+
+    /** "If this permanent would enter, sacrifice a [permanent] instead. If you do, put it onto the
+     *  battlefield. If you don't, put it into its owner's graveyard." (Balduvian Trading Post.) The
+     *  entering permanent is parked here — it is in no zone while the choice is pending. Choosing
+     *  {@code controllerId} (offered as a player option) declines, sending the card to the graveyard. */
+    record SacrificePermanentToEnter(UUID controllerId, Permanent enteringPermanent) implements PermanentChoiceContext {}
 
     /** Champion a creature: exile the chosen creature until the source permanent leaves the battlefield. */
     record ChampionCreature(UUID sourcePermanentId, UUID controllerId) implements PermanentChoiceContext {}

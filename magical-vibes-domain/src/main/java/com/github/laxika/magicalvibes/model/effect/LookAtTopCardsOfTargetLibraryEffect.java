@@ -30,8 +30,10 @@ public record LookAtTopCardsOfTargetLibraryEffect(DynamicAmount count, TargetLib
 
     @Override
     public TargetSpec targetSpec() {
-        return action == TargetLibraryAction.MAY_SHUFFLE
-                ? TargetSpec.benign(TargetCategory.PLAYER)
-                : CardEffect.super.targetSpec();
+        return switch (action) {
+            case MAY_SHUFFLE -> TargetSpec.benign(TargetCategory.PLAYER);
+            case KEEP_ONE_ON_TOP_EXILE_REST -> TargetSpec.harmful(TargetCategory.PLAYER);
+            default -> CardEffect.super.targetSpec();
+        };
     }
 }

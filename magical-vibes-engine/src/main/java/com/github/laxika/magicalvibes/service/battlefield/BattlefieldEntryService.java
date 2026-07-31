@@ -55,7 +55,9 @@ import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithA
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentsWithSameNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAsEntersOrGraveyardEffect;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -98,6 +100,8 @@ public class BattlefieldEntryService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
+    private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
+    private final PermanentRemovalService permanentRemovalService;
 
     // @Lazy on triggerCollectionService and permanentCounterSupport breaks the constructor cycle:
     // BattlefieldEntryService → TriggerCollectionService/PermanentCounterSupport →
@@ -113,7 +117,11 @@ public class BattlefieldEntryService {
                                    AmountEvaluationService amountEvaluationService,
                                    ConditionEvaluationService conditionEvaluationService,
                                    PredicateEvaluationService predicateEvaluationService,
-                                   @Lazy com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport) {
+                                   @Lazy com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport,
+                                   com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService,
+                                   @Lazy PermanentRemovalService permanentRemovalService) {
+        this.permanentRemovalService = permanentRemovalService;
+        this.graveyardService = graveyardService;
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
@@ -166,6 +174,10 @@ public class BattlefieldEntryService {
                                              Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
                                              int xValue, boolean kicked) {
         controllerId = resolveEnteringController(gameData, controllerId, permanent);
+        if (!applySacrificePermanentToEnter(gameData, controllerId, permanent)) {
+            return;
+        }
+        applySacrificeOtherPermanentsWithSameName(gameData, controllerId, permanent);
         Map<UUID, List<Permanent>> hidden = hideSimultaneouslyEntered(gameData, simultaneouslyEntered);
         try {
             carrySpellTextReplacements(gameData, permanent);
@@ -467,6 +479,94 @@ public class BattlefieldEntryService {
                 }
             }
         });
+    }
+
+    /**
+     * "If this land would enter, instead sacrifice each other permanent named [this] you control,
+     * then put this land onto the battlefield." (Sheltered Valley.)
+     *
+     * <p>Runs before the entering permanent is placed, so it can never sacrifice itself. The
+     * entering permanent always enters; only the older copies leave.
+     */
+    private void applySacrificeOtherPermanentsWithSameName(GameData gameData, UUID controllerId, Permanent permanent) {
+        boolean present = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(SacrificeOtherPermanentsWithSameNameOnEnterEffect.class::isInstance);
+        if (!present) {
+            return;
+        }
+        String name = permanent.getCard().getName();
+        List<Permanent> doomed = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+                .filter(p -> name.equals(p.getCard().getName()))
+                .toList();
+        for (Permanent other : doomed) {
+            if (permanentRemovalService.removePermanentToGraveyard(gameData, other)) {
+                triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, controllerId, other.getCard());
+                gameLogService.append(gameData, GameLog.cardThen(other.getCard(), " is sacrificed."));
+            }
+        }
+        if (!doomed.isEmpty()) {
+            permanentRemovalService.removeOrphanedAuras(gameData);
+        }
+    }
+
+    /**
+     * "If this permanent would enter, sacrifice a [permanent] instead. If you do, put it onto the
+     * battlefield. If you don't, put it into its owner's graveyard." (Balduvian Trading Post.)
+     *
+     * <p>Returns {@code false} when the permanent must not be placed right now — either it went to
+     * the graveyard (no legal sacrifice available) or the controller is being prompted to choose
+     * one, in which case entry resumes in {@link #completeSacrificePermanentToEnter}.
+     */
+    private boolean applySacrificePermanentToEnter(GameData gameData, UUID controllerId, Permanent permanent) {
+        if (permanent.isEntryCostPaid()) {
+            return true;
+        }
+        SacrificePermanentAsEntersOrGraveyardEffect effect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(SacrificePermanentAsEntersOrGraveyardEffect.class::isInstance)
+                .map(SacrificePermanentAsEntersOrGraveyardEffect.class::cast)
+                .findFirst().orElse(null);
+        if (effect == null) {
+            return true;
+        }
+        List<UUID> sacrificeable = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, effect.filter()))
+                .map(Permanent::getId)
+                .toList();
+        if (sacrificeable.isEmpty()) {
+            putEnteringPermanentIntoGraveyard(gameData, controllerId, permanent, effect);
+            return false;
+        }
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.SacrificePermanentToEnter(controllerId, permanent));
+        playerInputService.beginAnyTargetChoice(gameData, controllerId, sacrificeable, List.of(controllerId),
+                permanent.getCard().getName() + " — Sacrifice " + effect.description()
+                        + "? (Choose yourself to decline; " + permanent.getCard().getName()
+                        + " is then put into its owner's graveyard.)");
+        return false;
+    }
+
+    /**
+     * Resumes a {@link PermanentChoiceContext.SacrificePermanentToEnter} choice: {@code null} means
+     * the controller declined (the card goes to its owner's graveyard), otherwise the chosen
+     * permanent has already been sacrificed by the caller and the parked permanent now enters.
+     */
+    public void completeSacrificePermanentToEnter(GameData gameData, UUID controllerId, Permanent permanent, boolean sacrificed) {
+        if (!sacrificed) {
+            putEnteringPermanentIntoGraveyard(gameData, controllerId, permanent, null);
+            return;
+        }
+        permanent.setEntryCostPaid(true);
+        putPermanentOntoBattlefield(gameData, controllerId, permanent);
+    }
+
+    private void putEnteringPermanentIntoGraveyard(GameData gameData, UUID controllerId, Permanent permanent,
+                                                    SacrificePermanentAsEntersOrGraveyardEffect effect) {
+        Card card = permanent.getCard();
+        UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : controllerId;
+        graveyardService.addCardToGraveyard(gameData, ownerId, card);
+        gameLogService.append(gameData, GameLog.cardThen(card, " is put into its owner's graveyard instead of entering."));
+        log.info("Game {} - {} put into graveyard instead of entering ({})", gameData.id, card.getName(),
+                effect == null ? "declined" : "no " + effect.description());
     }
 
     private void applySelfEnterTapped(Permanent enteringPermanent) {
@@ -965,6 +1065,7 @@ public class BattlefieldEntryService {
         triggerCollectionService.checkAllyNontokenArtifactEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkOpponentCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAnyCreatureEntersTriggers(gameData, controllerId, card);
+        triggerCollectionService.checkAnyPermanentEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkEnchantedPlayerCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkEntersFromGraveyardTriggers(gameData, controllerId, card);
         triggerCollectionService.checkPermanentEntersFromGraveyardTriggers(gameData, controllerId, card);

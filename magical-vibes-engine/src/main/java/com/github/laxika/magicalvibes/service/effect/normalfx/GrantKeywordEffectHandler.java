@@ -131,6 +131,8 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             if (ids.isEmpty() && entry.getTargetId() != null) {
                 ids = List.of(entry.getTargetId());
             }
+        } else if (grant.scope() == GrantScope.BANDED_WITH_SELF) {
+            ids = bandmatesOf(gameData, entry.getSourcePermanentId());
         } else if (grant.scope() == GrantScope.TOKENS_CREATED_THIS_RESOLUTION) {
             ids = List.copyOf(entry.getCreatedPermanentIds());
         } else {
@@ -173,24 +175,51 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
+    /**
+     * The other attacking creatures sharing the source's attacking band (CR 702.22c). The source
+     * itself is excluded, and an empty list is returned when it is not attacking in a band.
+     */
+    private List<UUID> bandmatesOf(GameData gameData, UUID sourceId) {
+        if (sourceId == null) {
+            return List.of();
+        }
+        Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
+        if (source == null || source.getBandId() == null) {
+            return List.of();
+        }
+        List<UUID> bandmates = new java.util.ArrayList<>();
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (permanent.isAttacking()
+                    && source.getBandId().equals(permanent.getBandId())
+                    && !permanent.getId().equals(sourceId)) {
+                bandmates.add(permanent.getId());
+            }
+        });
+        return bandmates;
+    }
+
     private EffectDuration floatingDurationFor(GrantDuration duration) {
         return switch (duration) {
             case UNTIL_YOUR_NEXT_TURN -> EffectDuration.UNTIL_YOUR_NEXT_TURN;
             case WHILE_SOURCE_ON_BATTLEFIELD -> EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD;
+            case INDEFINITE -> EffectDuration.PERMANENT;
             case END_OF_TURN -> EffectDuration.UNTIL_END_OF_TURN;
         };
     }
 
     private Set<Keyword> bucketFor(Permanent permanent, GrantDuration duration) {
-        return duration == GrantDuration.UNTIL_YOUR_NEXT_TURN
-                ? permanent.getUntilNextTurnKeywords()
-                : permanent.getGrantedKeywords();
+        return switch (duration) {
+            case UNTIL_YOUR_NEXT_TURN -> permanent.getUntilNextTurnKeywords();
+            case INDEFINITE -> permanent.getPersistentGrantedKeywords();
+            default -> permanent.getGrantedKeywords();
+        };
     }
 
     private String durationLabel(GrantDuration duration) {
         return switch (duration) {
             case UNTIL_YOUR_NEXT_TURN -> "until your next turn";
             case WHILE_SOURCE_ON_BATTLEFIELD -> "for as long as you control its source";
+            case INDEFINITE -> "indefinitely";
             case END_OF_TURN -> "until end of turn";
         };
     }

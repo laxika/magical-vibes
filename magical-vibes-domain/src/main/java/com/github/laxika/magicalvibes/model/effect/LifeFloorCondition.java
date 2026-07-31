@@ -6,6 +6,9 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public enum LifeFloorCondition {
 
+    /** Unconditional — the floor always applies while the source is on the battlefield (Sustaining Spirit). */
+    ALWAYS,
+
     /** The player controls at least one creature (Worship). */
     CONTROLS_A_CREATURE,
 

@@ -6,11 +6,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentCreatesTokensCost;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -47,19 +50,27 @@ public class CumulativeUpkeepEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        // "When a player doesn't pay this permanent's cumulative upkeep, …" (Thought Lash) rides
+        // along with the sacrifice on the unpaid branch.
+        List<CardEffect> unpaid = new ArrayList<>();
+        unpaid.add(new SacrificeSelfEffect());
+        unpaid.addAll(e.unpaidEffects());
+
         ForcedCostOrElseEffect payOrSacrifice;
         if (e.isSacrificeCost()) {
             payOrSacrifice = new ForcedCostOrElseEffect(
-                    new SacrificeMultiplePermanentsCost(ageCounters, e.sacrificeFilter()),
-                    List.of(new SacrificeSelfEffect()),
-                    true);
+                    new SacrificeMultiplePermanentsCost(ageCounters, e.sacrificeFilter()), unpaid, true);
+        } else if (e.opponentTokenPerAge() != null) {
+            payOrSacrifice = new ForcedCostOrElseEffect(
+                    new OpponentCreatesTokensCost(ageCounters, e.opponentTokenPerAge()), unpaid, true);
+        } else if (e.exileTopCardsPerAge()) {
+            payOrSacrifice = new ForcedCostOrElseEffect(
+                    new ExileTopCardOfLibraryCost(ageCounters), unpaid, true);
         } else {
             String totalCost = e.costPerAge().repeat(ageCounters);
             int totalLife = e.lifePerAge() * ageCounters;
             payOrSacrifice = new ForcedCostOrElseEffect(
-                    new PayManaCost(totalCost, null, true, totalLife),
-                    List.of(new SacrificeSelfEffect()),
-                    true);
+                    new PayManaCost(totalCost, null, true, totalLife), unpaid, true);
         }
         forcedCostOrElseEffectHandler.resolve(gameData, entry, payOrSacrifice);
     }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "59")
+@CardRegistration(set = "ALL", collectorNumber = "25")
 public class Browse extends Card {
 
     public Browse() {

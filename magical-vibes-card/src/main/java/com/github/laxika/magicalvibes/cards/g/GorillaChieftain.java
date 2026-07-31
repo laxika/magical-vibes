@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 
 import java.util.List;
 
+@CardRegistration(set = "ALL", collectorNumber = "94a")
+@CardRegistration(set = "ALL", collectorNumber = "94b")
 @CardRegistration(set = "6ED", collectorNumber = "235")
 @CardRegistration(set = "7ED", collectorNumber = "250")
 public class GorillaChieftain extends Card {

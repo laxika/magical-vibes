@@ -58,6 +58,12 @@ public class DistributeCountersAmongTargetsEffectHandler implements NormalEffect
             }
             permanentCounterSupport.placeCounterOnPermanent(
                     gameData, entry, target, e.counterType(), assignment.getValue());
+            if (e.removeAtNextCleanup()) {
+                // Bounty of the Hunt's delayed rider: one counter comes back off per counter put on
+                // this way. TurnCleanupService sheds them, clamped to what the creature still has.
+                target.getCountersToRemoveAtNextCleanup()
+                        .merge(e.counterType(), assignment.getValue(), Integer::sum);
+            }
         }
     }
 

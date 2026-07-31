@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DisturbCast;
+import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
@@ -103,6 +104,10 @@ public class CardViewFactory {
         int alternateCostTapCount = altCastOpt.flatMap(a -> a.getCost(TapUntappedPermanentsCost.class)).map(TapUntappedPermanentsCost::count).orElse(0);
         int alternateCostReturnCount = altCastOpt.flatMap(a -> a.getCost(ReturnPermanentsCost.class)).map(ReturnPermanentsCost::count).orElse(0);
         String alternateCostManaCost = altCastOpt.flatMap(a -> a.getCost(ManaCastingCost.class)).map(ManaCastingCost::manaCost).orElse(null);
+        int alternateCostExileHandCount = altCastOpt.flatMap(a -> a.getCost(ExileCardsFromHandCastingCost.class))
+                .map(ExileCardsFromHandCastingCost::count).orElse(0);
+        String alternateCostExileHandLabel = altCastOpt.flatMap(a -> a.getCost(ExileCardsFromHandCastingCost.class))
+                .map(ExileCardsFromHandCastingCost::label).orElse(null);
 
         return new CardView(
                 card.getId(),
@@ -137,6 +142,8 @@ public class CardViewFactory {
                 alternateCostTapCount,
                 alternateCostReturnCount,
                 alternateCostManaCost,
+                alternateCostExileHandCount,
+                alternateCostExileHandLabel,
                 graveyardAbilityViews,
                 handAbilityViews,
                 card.getBackFaceCard() != null,

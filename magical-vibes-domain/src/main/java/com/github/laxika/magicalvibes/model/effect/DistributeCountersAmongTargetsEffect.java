@@ -23,16 +23,32 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  *       (Spoils of War), where {@code total} is evaluated from game state at cast time.</li>
  * </ul>
  *
- * @param counterType the counter to place.
- * @param total       the total number of counters to distribute.
- * @param mode        how the total is split among the targets.
+ * @param counterType           the counter to place.
+ * @param total                 the total number of counters to distribute.
+ * @param mode                  how the total is split among the targets.
+ * @param removeAtNextCleanup   when {@code true}, every counter placed is scheduled to be removed
+ *                              from that same creature at the beginning of the next cleanup step
+ *                              ("For each +1/+1 counter you put on a creature this way, remove a
+ *                              +1/+1 counter from that creature at the beginning of the next
+ *                              cleanup step" — Bounty of the Hunt), making the boost effectively
+ *                              last only for the turn.
  */
 public record DistributeCountersAmongTargetsEffect(
-        CounterType counterType, DynamicAmount total, DivisionMode mode) implements CardEffect {
+        CounterType counterType, DynamicAmount total, DivisionMode mode, boolean removeAtNextCleanup)
+        implements CardEffect {
 
     /** Fixed total split evenly across a {@code target(filter, 1, 2)} group (Splendid Agony). */
     public static DistributeCountersAmongTargetsEffect evenlyAmongTargets(CounterType counterType, int total) {
-        return new DistributeCountersAmongTargetsEffect(counterType, new Fixed(total), DivisionMode.EVEN);
+        return new DistributeCountersAmongTargetsEffect(counterType, new Fixed(total), DivisionMode.EVEN, false);
+    }
+
+    /**
+     * Fixed total distributed as the controller chooses among the announced target creatures, with
+     * every placed counter removed again at the beginning of the next cleanup step (Bounty of the
+     * Hunt — "Distribute three +1/+1 counters among one, two, or three target creatures").
+     */
+    public static DistributeCountersAmongTargetsEffect chosenUntilNextCleanup(CounterType counterType, int total) {
+        return new DistributeCountersAmongTargetsEffect(counterType, new Fixed(total), DivisionMode.CHOSEN, true);
     }
 
     /**
@@ -42,12 +58,13 @@ public record DistributeCountersAmongTargetsEffect(
      */
     public static DistributeCountersAmongTargetsEffect chosenAmongTargetCreatures(
             CounterType counterType, DynamicAmount total) {
-        return new DistributeCountersAmongTargetsEffect(counterType, total, DivisionMode.CHOSEN);
+        return new DistributeCountersAmongTargetsEffect(counterType, total, DivisionMode.CHOSEN, false);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        boolean harmful = counterType == CounterType.MINUS_ONE_MINUS_ONE;
+        boolean harmful = counterType == CounterType.MINUS_ONE_MINUS_ONE
+                || counterType == CounterType.MINUS_TWO_MINUS_ONE;
         // CHOSEN-mode targets ride on StackEntry.damageAssignments, so targetId is null on that path.
         // PLAYER_OR_PERMANENT is a no-op in the spec interpreter, which preserves that null tolerance;
         // the kept @ValidatesTarget validator (CreatureModTargetValidators) enforces creature-only

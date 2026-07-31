@@ -38,7 +38,9 @@ public record PreventDamageEffect(
                 || scope == PreventionScope.NEXT_TO_CONTROLLER
                 || scope == PreventionScope.NEXT_TO_SELF
                 || scope == PreventionScope.NEXT_TO_ENCHANTED
-                || scope == PreventionScope.NEXT_TO_TARGET;
+                || scope == PreventionScope.NEXT_TO_TARGET
+                || scope == PreventionScope.NEXT_TO_TARGET_CREATURE
+                || scope == PreventionScope.NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER;
         if (needsAmount && amount == null) {
             throw new IllegalArgumentException("NEXT_* prevention scopes require an amount: " + scope);
         }
@@ -84,6 +86,16 @@ public record PreventDamageEffect(
     /** "Prevent the next X damage that would be dealt to any target" (Alabaster Potion). */
     public static PreventDamageEffect nextToTarget(DynamicAmount amount) {
         return new PreventDamageEffect(PreventionScope.NEXT_TO_TARGET, amount, false, null, null, null);
+    }
+
+    /** "Prevent the next {@code amount} damage that would be dealt to target creature" (Soldevi Heretic). */
+    public static PreventDamageEffect nextToTargetCreature(int amount) {
+        return new PreventDamageEffect(PreventionScope.NEXT_TO_TARGET_CREATURE, new Fixed(amount), false, null, null, null);
+    }
+
+    /** "Prevent the next {@code amount} damage that would be dealt to target player or planeswalker" (Wandering Mage). */
+    public static PreventDamageEffect nextToTargetPlayerOrPlaneswalker(int amount) {
+        return new PreventDamageEffect(PreventionScope.NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER, new Fixed(amount), false, null, null, null);
     }
 
     /** "Prevent all combat damage that would be dealt this turn." */
@@ -174,6 +186,8 @@ public record PreventDamageEffect(
         return switch (scope) {
             case NEXT_TO_TARGET -> TargetSpec.benign(TargetCategory.ANY_TARGET);
             case ALL_COMBAT_EXCEPT_TARGET -> TargetSpec.benign(TargetCategory.CREATURE);
+            case NEXT_TO_TARGET_CREATURE -> TargetSpec.benign(TargetCategory.CREATURE);
+            case NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER -> TargetSpec.benign(TargetCategory.PLAYER_OR_PLANESWALKER);
             case ALL_TO_TARGET_CREATURES, ALL_BY_TARGET_CREATURES -> TargetSpec.benign(TargetCategory.CREATURE);
             case ALL_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN -> TargetSpec.benign(TargetCategory.PERMANENT);
             default -> TargetSpec.NONE;

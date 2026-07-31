@@ -82,6 +82,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
@@ -386,6 +387,14 @@ public class PredicateEvaluationService {
                 }
                 Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
                 yield sourcePermanent != null && permanent.getAttachedTo().equals(sourcePermanent.getId());
+            }
+            case PermanentIsHostOfSourceAuraPredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Permanent sourceAura = findPermanentByOriginalCardId(gameData, sourceCardId);
+                yield sourceAura != null && sourceAura.isAttached()
+                        && sourceAura.getAttachedTo().equals(permanent.getId());
             }
             case PermanentIsAuraAttachedToCreaturePredicate ignored -> {
                 if (gameData == null || !permanent.getCard().isAura() || !permanent.isAttached()) {

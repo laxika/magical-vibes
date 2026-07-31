@@ -302,7 +302,7 @@ public class GameViewProjectionFactory {
             }
         }
 
-        boolean reveals = allHandsRevealed || opponentRevealsOwnHand;
+        boolean reveals = allHandsRevealed || opponentRevealsOwnHand || opponentHandRevealedBySource(gameData, playerId);
         if (!reveals) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) return List.of();
@@ -325,6 +325,24 @@ public class GameViewProjectionFactory {
             }
         }
         return List.of();
+    }
+
+    /**
+     * {@code true} if an opponent of {@code playerId} was made to play with their hand revealed by a
+     * source permanent (Stromgald Spy) that is still on the battlefield.
+     */
+    private boolean opponentHandRevealedBySource(GameData gameData, UUID playerId) {
+        for (Map.Entry<UUID, Set<UUID>> entry : gameData.handsRevealedWhileSourceOnBattlefield.entrySet()) {
+            if (gameQueryService.findPermanentById(gameData, entry.getKey()) == null) {
+                continue;
+            }
+            for (UUID revealedPlayerId : entry.getValue()) {
+                if (!revealedPlayerId.equals(playerId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     List<List<CardView>> getRevealedLibraryTopCards(GameData data, UUID viewerId) {

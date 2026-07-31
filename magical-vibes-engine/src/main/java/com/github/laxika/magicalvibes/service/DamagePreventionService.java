@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.EyeForAnEyeReflection;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PlayerNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
@@ -690,6 +691,48 @@ public class DamagePreventionService {
         }
 
         gameData.creatureDamageRedirectShields.addAll(toReAdd);
+        return remaining;
+    }
+
+    /**
+     * Martyrdom: redirect the next N damage this turn dealt to a protected player onto a fixed
+     * permanent. Any source, amount-limited, consumed as it absorbs damage. This is a redirection
+     * (replacement) effect, so it applies even when damage can't be prevented. The redirect only
+     * happens while the destination is still a permanent on the battlefield; otherwise the damage is
+     * dealt normally and the shield is left in place. Redirected damage is queued in
+     * {@link GameData#pendingSourceRedirectDamage} for the caller's {@code processSourceRedirectDamage}.
+     *
+     * @param protectedPlayerId the player receiving damage
+     * @param damage            the raw damage amount
+     * @return the remaining damage after redirection
+     */
+    public int applyPlayerNextDamageRedirectShields(GameData gameData, UUID protectedPlayerId, int damage) {
+        // No isDamagePreventable check — this is redirection (replacement), not prevention.
+        if (damage <= 0 || protectedPlayerId == null || gameData.playerNextDamageRedirectShields.isEmpty()) return damage;
+
+        int remaining = damage;
+        List<PlayerNextDamageRedirectShield> toReAdd = new ArrayList<>();
+        Iterator<PlayerNextDamageRedirectShield> it = gameData.playerNextDamageRedirectShields.iterator();
+
+        while (it.hasNext() && remaining > 0) {
+            PlayerNextDamageRedirectShield shield = it.next();
+            if (!shield.protectedPlayerId().equals(protectedPlayerId)) continue;
+            UUID destinationId = shield.redirectTargetPermanentId();
+            if (gameQueryService.findPermanentById(gameData, destinationId) == null) continue;
+
+            int redirected = Math.min(shield.remainingAmount(), remaining);
+            remaining -= redirected;
+            it.remove();
+            if (redirected < shield.remainingAmount()) {
+                toReAdd.add(shield.withReducedAmount(redirected));
+            }
+            if (redirected > 0) {
+                gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                        protectedPlayerId, null, redirected, destinationId));
+            }
+        }
+
+        gameData.playerNextDamageRedirectShields.addAll(toReAdd);
         return remaining;
     }
 

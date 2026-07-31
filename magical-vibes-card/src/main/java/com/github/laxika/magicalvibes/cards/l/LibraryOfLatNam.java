@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.LibraryOfLatNamEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "6ED", collectorNumber = "78")
+@CardRegistration(set = "ALL", collectorNumber = "31")
 public class LibraryOfLatNam extends Card {
 
     public LibraryOfLatNam() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "236")
+@CardRegistration(set = "ALL", collectorNumber = "87")
 public class ElvishBard extends Card {
 
     public ElvishBard() {

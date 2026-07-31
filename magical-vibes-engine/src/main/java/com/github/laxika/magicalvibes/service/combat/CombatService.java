@@ -353,7 +353,8 @@ public class CombatService {
     /**
      * Puts the scheduled counters on all permanents marked for end-of-combat counter placement on a
      * combat opponent (e.g. Greater Werewolf's "put a -0/-2 counter on each creature blocking or
-     * blocked by this creature"). Respects {@code cantHaveCounters}. When {@code alsoTap} is set
+     * blocked by this creature") — also used for the source itself (Kjeldoran Home Guard), including
+     * its "and create a … token" rider. Respects {@code cantHaveCounters}. When {@code alsoTap} is set
      * the permanent is tapped (Dread Wight). Paralyzation counters also grant
      * "{4}: Remove a paralyzation counter from this creature" for as long as the permanent remains
      * (source-independent — survives the creating creature leaving).
@@ -365,6 +366,14 @@ public class CombatService {
             Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
             if (perm == null || action.amount() <= 0) {
                 continue;
+            }
+            // One trigger does both, so the token is created even when the counter can't be placed.
+            if (action.tokenForController() != null) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
+                if (controllerId != null) {
+                    permanentControlSupport.applyCreateToken(gameData, controllerId,
+                            action.tokenForController(), perm.getCard().getSetCode());
+                }
             }
             if (gameQueryService.cantHaveCounters(gameData, perm)) {
                 continue;

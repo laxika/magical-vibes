@@ -23,6 +23,16 @@ package com.github.laxika.magicalvibes.model.effect;
 public record MayPayManaEffect(String manaCost, CardEffect wrapped, String prompt,
                                MayPayPayer payer, CardEffect elseEffect, int lifeCost) implements CardEffect {
 
+    /**
+     * Delegates to the wrapped effect, like {@link MayEffect}: the target of "you may pay {X}. If
+     * you do, [targeted effect]" is chosen when the ability goes on the stack (CR 603.3d), while
+     * the payment choice happens at resolution (CR 603.5).
+     */
+    @Override
+    public TargetSpec targetSpec() {
+        return wrapped.targetSpec();
+    }
+
     public MayPayManaEffect(String manaCost, CardEffect wrapped, String prompt) {
         this(manaCost, wrapped, prompt, MayPayPayer.CONTROLLER, null, 0);
     }

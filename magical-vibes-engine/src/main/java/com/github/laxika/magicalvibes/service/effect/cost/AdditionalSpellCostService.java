@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
+import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
@@ -81,7 +82,8 @@ public class AdditionalSpellCostService {
             DiscardCardTypeCost.class,
             DiscardCardOrPayManaCost.class,
             EscalateDiscardCost.class,
-            EscalateManaCost.class);
+            EscalateManaCost.class,
+            RepeatableAdditionalManaCost.class);
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -109,7 +111,8 @@ public class AdditionalSpellCostService {
             DiscardCardTypeCost discardCost,
             DiscardCardOrPayManaCost discardCardOrPayManaCost,
             EscalateDiscardCost escalateDiscardCost,
-            EscalateManaCost escalateManaCost
+            EscalateManaCost escalateManaCost,
+            RepeatableAdditionalManaCost repeatableManaCost
     ) {
         /** True when the spell has any additional cast cost at all. */
         public boolean any() {
@@ -121,7 +124,8 @@ public class AdditionalSpellCostService {
                     || payXLife || payLifeCost != null
                     || exileGraveyardCost != null || exileXCardsCost != null || exileNCardsCost != null
                     || discardCost != null || discardCardOrPayManaCost != null
-                    || escalateDiscardCost != null || escalateManaCost != null;
+                    || escalateDiscardCost != null || escalateManaCost != null
+                    || repeatableManaCost != null;
         }
 
         /** True when the spell has any escalate cost (mana and/or discard). */
@@ -196,9 +200,10 @@ public class AdditionalSpellCostService {
         DiscardCardOrPayManaCost discardOrPay = removeFirst(effects, DiscardCardOrPayManaCost.class);
         EscalateDiscardCost escalateDiscardCost = removeFirst(effects, EscalateDiscardCost.class);
         EscalateManaCost escalateManaCost = removeFirst(effects, EscalateManaCost.class);
+        RepeatableAdditionalManaCost repeatableManaCost = removeFirst(effects, RepeatableAdditionalManaCost.class);
         return new ExtractedCosts(sacAllCreatures, sacCreature, sacOrPay, sacArtifact, permCost, multiPermCost, tapAnyNumberCost, returnCreature,
                 putCounterCost, payXLife, payLifeCost, exileGraveyardCost, exileXCardsCost, exileNCardsCost, discardCost, discardOrPay,
-                escalateDiscardCost, escalateManaCost);
+                escalateDiscardCost, escalateManaCost, repeatableManaCost);
     }
 
     /** Reads the card's additional cast costs without touching the card (for gating queries). */
@@ -492,6 +497,28 @@ public class AdditionalSpellCostService {
             return "";
         }
         return cost.manaCost().repeat(times);
+    }
+
+    /**
+     * Builds the mana-symbol suffix paid for a {@link RepeatableAdditionalManaCost} — the caster's
+     * chosen payments concatenated, so the normal mana path pays them as part of the spell's total
+     * cost (CR 601.2f–h), exactly as escalate's suffix is paid. Rejects a payment that is not one
+     * of the cost's declared options, and any payment at all on a spell without the cost.
+     */
+    public String repeatedAdditionalCostSuffix(Card card, RepeatableAdditionalManaCost cost, List<String> payments) {
+        if (payments == null || payments.isEmpty()) {
+            return "";
+        }
+        if (cost == null) {
+            throw new IllegalStateException(card.getName() + " has no repeatable additional cost to pay");
+        }
+        for (String payment : payments) {
+            if (!cost.manaCosts().contains(payment)) {
+                throw new IllegalStateException("Invalid additional cost payment " + payment
+                        + " for " + card.getName());
+            }
+        }
+        return String.join("", payments);
     }
 
     /**

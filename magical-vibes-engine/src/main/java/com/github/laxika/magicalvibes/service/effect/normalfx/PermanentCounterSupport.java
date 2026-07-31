@@ -213,6 +213,11 @@ public class PermanentCounterSupport {
                 target.setCounterCount(CounterType.MINUS_ONE_MINUS_ZERO, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ZERO) + count);
                 yield "-1/-0";
             }
+            case MINUS_TWO_MINUS_ONE -> {
+                if (count <= 0) { yield null; }
+                target.setCounterCount(CounterType.MINUS_TWO_MINUS_ONE, target.getCounterCount(CounterType.MINUS_TWO_MINUS_ONE) + count);
+                yield "-2/-1";
+            }
             case MINUS_ZERO_MINUS_ONE -> {
                 if (count <= 0) { yield null; }
                 target.setCounterCount(CounterType.MINUS_ZERO_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE) + count);
@@ -269,9 +274,12 @@ public class PermanentCounterSupport {
                 yield "fungus";
             }
             case ICE -> { target.setCounterCount(CounterType.ICE, target.getCounterCount(CounterType.ICE) + count); yield "ice"; }
+            case INFECTION -> { target.setCounterCount(CounterType.INFECTION, target.getCounterCount(CounterType.INFECTION) + count); yield "infection"; }
             case MUSIC -> { target.setCounterCount(CounterType.MUSIC, target.getCounterCount(CounterType.MUSIC) + count); yield "music"; }
             case WIND -> { target.setCounterCount(CounterType.WIND, target.getCounterCount(CounterType.WIND) + count); yield "wind"; }
+            case WAGE -> { target.setCounterCount(CounterType.WAGE, target.getCounterCount(CounterType.WAGE) + count); yield "wage"; }
             case VORTEX -> { target.setCounterCount(CounterType.VORTEX, target.getCounterCount(CounterType.VORTEX) + count); yield "vortex"; }
+            case VELOCITY -> { target.setCounterCount(CounterType.VELOCITY, target.getCounterCount(CounterType.VELOCITY) + count); yield "velocity"; }
             default -> throw new IllegalStateException("Unsupported counter type: " + counterType);
         };
         if (counterName == null) return;

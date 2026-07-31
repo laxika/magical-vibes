@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesHandAndGrav
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 
 @CardRegistration(set = "6ED", collectorNumber = "65")
+@CardRegistration(set = "ALL", collectorNumber = "26")
 public class DiminishingReturns extends Card {
 
     public DiminishingReturns() {

@@ -2048,6 +2048,10 @@ public class CombatDamageService {
             // Saving Grace: redirect all combat damage this turn to the defending player onto the enchanted creature.
             damage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, defenderId, null, damage);
             processSourceRedirectDamage(gameData);
+            // Martyrdom: redirect the next N combat damage to the defending player onto the creature
+            // carrying the ability.
+            damage = damagePreventionService.applyPlayerNextDamageRedirectShields(gameData, defenderId, damage);
+            processSourceRedirectDamage(gameData);
             // Ghostly Flame can make the attacker a colourless source of damage.
             CardColor attackerColor = gameQueryService.getDamageSourceColor(gameData, atkStats.color());
             if (damage > 0

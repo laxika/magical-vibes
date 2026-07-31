@@ -24,6 +24,7 @@ public enum CounterType {
     HATCHLING,
     HOOFPRINT,
     ICE,
+    INFECTION,
     INVITATION,
     LANDMARK,
     LOYALTY,
@@ -33,6 +34,7 @@ public enum CounterType {
     MUSIC,
     MINUS_ONE_MINUS_ONE,
     MINUS_ONE_MINUS_ZERO,
+    MINUS_TWO_MINUS_ONE,
     MINUS_ZERO_MINUS_ONE,
     MINUS_ZERO_MINUS_TWO,
     OMEN,
@@ -58,6 +60,8 @@ public enum CounterType {
     PAGE,
     TOWER,
     TIME,
+    VELOCITY,
     VITALITY,
-    VORTEX
+    VORTEX,
+    WAGE
 }

@@ -6,8 +6,11 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.HandToLibraryPlacement;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -60,9 +63,38 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
             }
         }
 
+        // The shuffle-in variant is mandatory, so an empty or short answer falls back to the
+        // first legal cards instead of skipping the requirement (Lat-Nam's Legacy).
+        if (interaction.shuffleIn()) {
+            for (UUID id : interaction.validCardIds()) {
+                if (validated.size() >= interaction.maxCount()) {
+                    break;
+                }
+                if (!validated.contains(id)) {
+                    validated.add(id);
+                }
+            }
+        }
+
         gameData.interaction.clearAwaitingInput();
 
         if (validated.isEmpty()) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (interaction.shuffleIn()) {
+            shuffleIntoLibrary(gameData, player, validated);
+            if (interaction.thenEffect() != null && interaction.thenEffectSourceCard() != null) {
+                Card sourceCard = interaction.thenEffectSourceCard();
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        sourceCard,
+                        player.getId(),
+                        sourceCard.getName() + "'s effect",
+                        List.of(interaction.thenEffect())
+                ));
+            }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -75,6 +107,29 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
 
         putOnLibrary(gameData, player, validated, interaction.placement() == HandToLibraryPlacement.TOP);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Moves the chosen hand cards into the library and shuffles it. */
+    private void shuffleIntoLibrary(GameData gameData, Player player, List<UUID> chosenCardIds) {
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        List<Card> deck = gameData.playerDecks.get(playerId);
+
+        int moved = 0;
+        for (UUID id : chosenCardIds) {
+            Card found = hand.stream().filter(c -> c.getId().equals(id)).findFirst().orElse(null);
+            if (found != null) {
+                hand.remove(found);
+                deck.add(found);
+                moved++;
+            }
+        }
+        LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " shuffles "
+                + moved + " card(s) from their hand into their library."));
+        log.info("Game {} - {} shuffled {} card(s) from hand into library",
+                gameData.id, player.getUsername(), moved);
     }
 
     /**

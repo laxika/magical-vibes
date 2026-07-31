@@ -43,9 +43,9 @@ public class TargetPlayerDiscardsUnlessPutsCardOnTopOfLibraryHandler implements 
 
         if (accepted) {
             List<Card> handSnapshot = List.copyOf(hand);
-            interactionHandlerRegistry.begin(gameData, new PendingInteraction.PutCardsFromHandOnLibraryCardChoice(
-                    playerId, handSnapshot.stream().map(Card::getId).toList(), handSnapshot, 1,
-                    HandToLibraryPlacement.TOP));
+            interactionHandlerRegistry.begin(gameData, PendingInteraction.PutCardsFromHandOnLibraryCardChoice
+                    .putOnLibrary(playerId, handSnapshot.stream().map(Card::getId).toList(), handSnapshot, 1,
+                            HandToLibraryPlacement.TOP));
             return;
         }
 

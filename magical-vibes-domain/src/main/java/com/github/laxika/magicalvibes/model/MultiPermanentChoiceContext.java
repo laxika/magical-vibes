@@ -61,6 +61,15 @@ public sealed interface MultiPermanentChoiceContext {
     record ExileAttackingCreatures() implements MultiPermanentChoiceContext {
     }
 
+    /**
+     * The controller destroys the chosen creatures an opponent controls (Fatal Lore's second mode).
+     * {@code sourceName} names the destroying source in the game log and {@code cannotBeRegenerated}
+     * carries the "they can't be regenerated" clause.
+     */
+    record DestroyCreaturesOpponentControls(String sourceName, boolean cannotBeRegenerated)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** The controller returns the chosen permanents to their owners' hands (Resounding Wave cycling trigger). */
     record ReturnTargetPermanentsToHand() implements MultiPermanentChoiceContext {
     }

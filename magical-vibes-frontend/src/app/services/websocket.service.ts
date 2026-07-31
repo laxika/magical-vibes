@@ -171,6 +171,8 @@ export interface Card {
   alternateCostTapCount: number;
   alternateCostReturnCount: number;
   alternateCostManaCost: string | null;
+  alternateCostExileHandCount: number;
+  alternateCostExileHandLabel: string | null;
   graveyardActivatedAbilities: ActivatedAbilityView[];
   handActivatedAbilities?: ActivatedAbilityView[];
   transformable: boolean;

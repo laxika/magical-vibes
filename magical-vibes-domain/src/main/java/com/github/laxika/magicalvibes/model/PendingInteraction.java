@@ -17,7 +17,7 @@ import java.util.UUID;
 public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingSphinxAmbassadorChoice, PendingCapriciousEfreetState,
         PendingKarnScionRevealChoice, PendingKarnScionExileReturn,
-        PendingReturnExiledWithSourceCard,
+        PendingReturnExiledWithSourceCard, PendingPortalPileSearch,
         PendingKarnRestart, PendingKnowledgePoolCast, PendingPileSeparation,
         PendingInteraction.XValueChoice, PendingInteraction.AlternateCastXValueChoice,
         PendingInteraction.Scry,
@@ -50,6 +50,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.PermanentChoice,
         PendingInteraction.AdNauseamRepeatChoice,
         PendingInteraction.ExiledPermanentPutOntoBattlefieldChoice,
+        PendingInteraction.LimDulsVaultRepeatChoice,
+        PendingInteraction.LimDulsVaultOrderChoice,
         PendingInteraction.CombatDamageAssignment,
         PendingInteraction.AttackerDeclaration,
         PendingInteraction.BlockerDeclaration {
@@ -1030,15 +1032,39 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * follow-up {@link PutCardsFromHandOnLibraryDestinationChoice} (Dream Cache), while
      * {@code TOP} (Brainstorm) and {@code BOTTOM} (Amass the Components) place the chosen cards
      * immediately.
+     *
+     * <p>When {@code shuffleIn} is {@code true} the chosen cards are instead shuffled into the
+     * library and the pick is mandatory (Lat-Nam's Legacy); {@code thenEffect} — if set — is pushed
+     * onto the stack as a reflexive triggered ability from {@code thenEffectSourceCard} afterwards
+     * ("Shuffle a card from your hand into your library. If you do, …"). {@code placement} is
+     * unused on that path.
      */
     record PutCardsFromHandOnLibraryCardChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                java.util.List<Card> cards, int maxCount,
-                                               HandToLibraryPlacement placement)
+                                               HandToLibraryPlacement placement,
+                                               boolean shuffleIn, Card thenEffectSourceCard,
+                                               com.github.laxika.magicalvibes.model.effect.CardEffect thenEffect)
             implements PendingInteraction {
 
         public PutCardsFromHandOnLibraryCardChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
             cards = java.util.List.copyOf(cards);
+        }
+
+        /** "Put up to {@code maxCount} cards from your hand on your library" (Dream Cache, Brainstorm). */
+        public static PutCardsFromHandOnLibraryCardChoice putOnLibrary(UUID playerId,
+                java.util.List<UUID> validCardIds, java.util.List<Card> cards, int maxCount,
+                HandToLibraryPlacement placement) {
+            return new PutCardsFromHandOnLibraryCardChoice(playerId, validCardIds, cards, maxCount, placement,
+                    false, null, null);
+        }
+
+        /** "Shuffle {@code count} cards from your hand into your library. If you do, {@code thenEffect}." */
+        public static PutCardsFromHandOnLibraryCardChoice shuffleIntoLibrary(UUID playerId,
+                java.util.List<UUID> validCardIds, java.util.List<Card> cards, int count,
+                Card sourceCard, com.github.laxika.magicalvibes.model.effect.CardEffect thenEffect) {
+            return new PutCardsFromHandOnLibraryCardChoice(playerId, validCardIds, cards, count,
+                    HandToLibraryPlacement.TOP, true, sourceCard, thenEffect);
         }
 
         @Override
@@ -1048,7 +1074,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
+            return new InteractionOptions.MultiCardPick(validCardIds, shuffleIn ? maxCount : 0, maxCount);
         }
     }
 
@@ -1134,18 +1160,29 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * grants that player permission to play each exiled card (e.g. Fiend of the Shadows).
      * {@code remainingChoosers} + {@code cardsPerPlayer} chain additional opponents after this
      * player's picks (Nicol Bolas, God-Pharaoh +1 "each opponent exiles two cards").
+     * {@code faceDown} exiles the chosen card face down (CR 406.3), which also makes it visible
+     * only to the source permanent's controller (Gustha's Scepter).
      */
     record ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
                                UUID sourcePermanentId, UUID playPermissionControllerId,
                                int remainingCount, String prompt,
-                               java.util.List<UUID> remainingChoosers, int cardsPerPlayer)
+                               java.util.List<UUID> remainingChoosers, int cardsPerPlayer,
+                               boolean faceDown)
             implements PendingInteraction, HandChoice {
 
         public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
                                    UUID sourcePermanentId, UUID playPermissionControllerId,
                                    int remainingCount, String prompt) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
-                    remainingCount, prompt, java.util.List.of(), 0);
+                    remainingCount, prompt, java.util.List.of(), 0, false);
+        }
+
+        public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                   UUID sourcePermanentId, UUID playPermissionControllerId,
+                                   int remainingCount, String prompt,
+                                   java.util.List<UUID> remainingChoosers, int cardsPerPlayer) {
+            this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
+                    remainingCount, prompt, remainingChoosers, cardsPerPlayer, false);
         }
 
         @Override
@@ -1324,6 +1361,47 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return InteractionOptions.ACCEPT_DECLINE;
+        }
+    }
+
+    /**
+     * Lim-Dûl's Vault: after each look at the top five cards, {@code playerId} decides whether to
+     * pay 1 life to bottom {@code lookedAt} and look at five more. The looked-at cards are held
+     * out of the library while this is pending, and their names are spelled out in the prompt
+     * text (the accept/decline wire shape carries no card list). Accepting is legal only while
+     * the deciding player's life total is at least 1 (CR 119.4).
+     */
+    record LimDulsVaultRepeatChoice(UUID playerId, java.util.List<Card> lookedAt)
+            implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.ACCEPT_DECLINE;
+        }
+    }
+
+    /**
+     * Lim-Dûl's Vault: the "in any order" ordering of the held-out {@code cards}, either onto the
+     * bottom of the library after an accepted repeat ({@code toBottom}) or onto the top after the
+     * final shuffle. A dedicated kind rather than {@link LibraryReorder} because answering it must
+     * continue the vault loop instead of ending the resolution.
+     */
+    record LimDulsVaultOrderChoice(UUID playerId, java.util.List<Card> cards, boolean toBottom)
+            implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.UNENUMERATED;
         }
     }
 

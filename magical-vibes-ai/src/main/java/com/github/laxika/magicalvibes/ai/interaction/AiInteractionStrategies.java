@@ -51,6 +51,8 @@ public final class AiInteractionStrategies {
         register(new SylvanLibraryChoiceAiStrategy());
         register(new AdNauseamRepeatChoiceAiStrategy());
         register(new ExiledPermanentPutOntoBattlefieldChoiceAiStrategy());
+        register(new LimDulsVaultRepeatChoiceAiStrategy());
+        register(new LimDulsVaultOrderChoiceAiStrategy());
         register(new CombatDamageAssignmentAiStrategy());
     }
 

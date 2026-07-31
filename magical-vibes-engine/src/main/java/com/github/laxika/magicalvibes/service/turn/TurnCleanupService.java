@@ -60,6 +60,8 @@ public class TurnCleanupService {
      */
     public void applyCleanupResets(GameData gameData) {
         sacrificePermanentsFlaggedForCleanup(gameData);
+        returnPermanentsFlaggedForCleanup(gameData);
+        removeCountersScheduledForCleanup(gameData);
         resetEndOfTurnModifiers(gameData);
         tapPermanentsReturningToOwner(gameData);
         creatureControlService.reconcileControl(gameData);
@@ -84,6 +86,43 @@ public class TurnCleanupService {
             permanentRemovalService.removePermanentToGraveyard(gameData, permanent);
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Returns every permanent carrying a "return this to its owner's hand at the beginning of the
+     * next cleanup step" rider (Thawing Glaciers) to its owner's hand.
+     */
+    private void returnPermanentsFlaggedForCleanup(GameData gameData) {
+        List<Permanent> returning = new ArrayList<>();
+        gameData.forEachPermanent((playerId, p) -> {
+            if (p.isReturnToHandAtNextCleanup()) {
+                returning.add(p);
+            }
+        });
+        if (returning.isEmpty()) {
+            return;
+        }
+        for (Permanent permanent : returning) {
+            permanent.setReturnToHandAtNextCleanup(false);
+            permanentRemovalService.removePermanentToHand(gameData, permanent);
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Sheds counters scheduled by a "remove a counter from that creature at the beginning of the
+     * next cleanup step" rider (Bounty of the Hunt). Removal is clamped to the counters the
+     * creature still has, so a creature that already lost them keeps a non-negative count.
+     */
+    private void removeCountersScheduledForCleanup(GameData gameData) {
+        gameData.forEachPermanent((playerId, p) -> {
+            if (p.getCountersToRemoveAtNextCleanup().isEmpty()) {
+                return;
+            }
+            p.getCountersToRemoveAtNextCleanup().forEach((counterType, amount) ->
+                    p.setCounterCount(counterType, Math.max(0, p.getCounterCount(counterType) - amount)));
+            p.getCountersToRemoveAtNextCleanup().clear();
+        });
     }
 
     /**
@@ -129,6 +168,7 @@ public class TurnCleanupService {
             // CR 514.2 — remove all damage marked on permanents during cleanup step
             p.setMarkedDamage(0);
             p.setDamagedByDeathtouch(false);
+            p.setTimesRegeneratedThisTurn(0);
             // Reset unconditionally: resetModifiers() only touches "until end of turn" state, so it is a
             // no-op on an unmodified permanent. Guarding it on a hand-maintained list of dirty flags let
             // state it clears (must-be-blocked, must-block, transient type overrides, ...) survive cleanup
@@ -137,6 +177,7 @@ public class TurnCleanupService {
             p.setDamagePreventionShield(0);
             p.setDamageToCounterPreventionShield(0);
             p.setRegenerationShield(0);
+            p.setOpponentDrawRegenerationShield(0);
         });
 
         gameData.playerDamagePreventionShields.clear();
@@ -144,6 +185,7 @@ public class TurnCleanupService {
         gameData.sourceDamageRedirectShields.clear();
         gameData.creatureDamageRedirectShields.clear();
         gameData.turnDamageRedirectToCreatureShields.clear();
+        gameData.playerNextDamageRedirectShields.clear();
         gameData.targetSourceDamagePreventionShields.clear();
         gameData.globalDamagePreventionShield = 0;
         gameData.preventAllCombatDamage = false;

@@ -73,6 +73,14 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect 
         return new ReturnToHandEffect(BounceScope.TARGET_PLAYERS_OWNED, filter, 0, 0);
     }
 
+    /**
+     * Returns every Aura attached to the targeted permanent to its owner's hand, whoever controls
+     * the Aura (Scarab of the Unseen). The Auras themselves are not targeted.
+     */
+    public static ReturnToHandEffect aurasAttachedToTarget() {
+        return new ReturnToHandEffect(BounceScope.AURAS_ATTACHED_TO_TARGET, null, 0, 0);
+    }
+
     public BounceScope scope() {
         return scope;
     }
@@ -94,7 +102,7 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect 
         // Only the single-target scope targets a battlefield permanent (PERMANENT reproduces its
         // requireBattlefieldTarget guard); the target-players scopes target a player (the old
         // validator imposed no guard there); the self / all-matching scopes target nothing.
-        if (scope == BounceScope.TARGET) {
+        if (scope == BounceScope.TARGET || scope == BounceScope.AURAS_ATTACHED_TO_TARGET) {
             return TargetSpec.benign(TargetCategory.PERMANENT);
         }
         if (scope == BounceScope.TARGET_PLAYERS_PERMANENTS || scope == BounceScope.TARGET_PLAYERS_OWNED) {

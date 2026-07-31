@@ -56,6 +56,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
             case ALL_MATCHING -> resolveAllMatching(gameData, entry, e);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
             case TARGET_PLAYERS_OWNED -> resolveTargetPlayersOwned(gameData, entry, e);
+            case AURAS_ATTACHED_TO_TARGET -> resolveAurasAttachedToTarget(gameData, entry);
         }
     }
 
@@ -163,6 +164,21 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
                         })
                         .filter(p -> e.filter() == null
                                 || predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))
+                        .toList()));
+
+        bounceAll(gameData, entry, toReturn);
+    }
+
+    private void resolveAurasAttachedToTarget(GameData gameData, StackEntry entry) {
+        UUID targetId = entry.getTargetId();
+        if (targetId == null || gameQueryService.findPermanentById(gameData, targetId) == null) {
+            return;
+        }
+
+        List<Permanent> toReturn = new ArrayList<>();
+        gameData.forEachBattlefield((playerId, battlefield) ->
+                toReturn.addAll(battlefield.stream()
+                        .filter(p -> p.getCard().isAura() && p.isAttached() && targetId.equals(p.getAttachedTo()))
                         .toList()));
 
         bounceAll(gameData, entry, toReturn);

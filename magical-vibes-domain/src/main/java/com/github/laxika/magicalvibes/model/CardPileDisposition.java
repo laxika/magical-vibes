@@ -10,5 +10,11 @@ public enum CardPileDisposition {
     /** Brilliant Ultimatum: chosen pile is offered to be played/cast for free from exile; the rest stay exiled. */
     PLAY_FROM_EXILE,
     /** Fact-or-Fiction style (Unesh, Criosphinx Sovereign): chosen pile → controller's hand; other pile → controller's graveyard. */
-    HAND
+    HAND,
+    /**
+     * Phyrexian Portal: the pile the controller picks is searched for one card to put into their
+     * hand (the rest of that pile is shuffled into their library); the other pile is exiled. The
+     * piles stay face down to the controller while they pick, so both are described by card count.
+     */
+    SEARCH_ONE_TO_HAND
 }

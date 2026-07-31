@@ -602,6 +602,41 @@ public class GraveyardTargetingService {
                 "Choose up to " + maxTargetsCap + " target " + filterLabel + "s from your graveyard.");
     }
 
+    /**
+     * "Put up to N target cards from an opponent's graveyard on top of their library"
+     * (Misinformation). Pools every opponent's graveyard as a legal target but flags the choice
+     * {@code singleGraveyard}, so all chosen cards must come from the same opponent's graveyard.
+     */
+    public void handleUpToNOpponentGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                                            StackEntryType entryType, CardPredicate filter,
+                                                            int maxTargetsCap, List<CardEffect> spellEffects) {
+        List<Card> matchingCards = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) {
+                continue;
+            }
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card graveyardCard : graveyard) {
+                if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
+                    matchingCards.add(graveyardCard);
+                }
+            }
+        }
+
+        int maxTargets = Math.min(maxTargetsCap, matchingCards.size());
+        gameData.graveyardTargetOperation.card = card;
+        gameData.graveyardTargetOperation.controllerId = controllerId;
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(spellEffects);
+        gameData.graveyardTargetOperation.entryType = entryType;
+        gameData.graveyardTargetOperation.xValue = 0;
+        gameData.graveyardTargetOperation.anyNumber = true;
+        gameData.graveyardTargetOperation.singleGraveyard = true;
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
+                "Choose up to " + maxTargetsCap + " target card" + (maxTargetsCap != 1 ? "s" : "")
+                        + " from an opponent's graveyard.");
+    }
+
     public void handleUpToNTargetPlayerGraveyardSpellTargeting(GameData gameData, UUID controllerId,
                                                                 UUID targetPlayerId, Card card,
                                                                 StackEntryType entryType, CardPredicate filter, int maxTargetsCap,

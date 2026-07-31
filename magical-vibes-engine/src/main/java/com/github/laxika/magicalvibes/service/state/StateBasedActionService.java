@@ -76,6 +76,7 @@ public class StateBasedActionService {
 
             anyPerformed |= sacrificeCompletedSagas(gameData, processedIds);
             anyPerformed |= sacrificeCreaturesOnSeraphControlLoss(gameData);
+            anyPerformed |= putExiledCardsIntoGraveyardOnControlLoss(gameData);
             anyPerformed |= cancelCounters(gameData);
             anyPerformed |= applyWorldRule(gameData);
 
@@ -349,6 +350,40 @@ public class StateBasedActionService {
      * entry) is the "how long" ordering, so the newest world permanent is the one with the highest
      * timestamp and it survives only when it holds that timestamp alone.
      */
+    /**
+     * Gustha's Scepter: "When you lose control of this artifact, put all cards exiled with this
+     * artifact into their owner's graveyard." A player loses control both when another player gains
+     * control of it and when it leaves the battlefield, so both cases empty the pile. Modeled as an
+     * SBA-timed check like {@link #sacrificeCreaturesOnSeraphControlLoss} — the engine has no
+     * control-change triggered-ability slot.
+     */
+    private boolean putExiledCardsIntoGraveyardOnControlLoss(GameData gameData) {
+        if (gameData.exiledCardsToGraveyardOnControlLossWatch.isEmpty()) return false;
+
+        boolean anyMoved = false;
+        for (UUID permanentId : new ArrayList<>(gameData.exiledCardsToGraveyardOnControlLossWatch.keySet())) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            UUID previousController = gameData.exiledCardsToGraveyardOnControlLossWatch.get(permanentId);
+            UUID currentController = permanent != null ? gameData.findControllerOf(permanent) : null;
+            if (permanent != null && previousController != null && previousController.equals(currentController)) {
+                continue;
+            }
+
+            for (var exiled : new ArrayList<>(gameData.exiledCards)) {
+                if (!permanentId.equals(exiled.sourcePermanentId())) continue;
+                Card card = exiled.card();
+                gameData.removeFromExile(card.getId());
+                graveyardService.addCardToGraveyard(gameData, exiled.ownerId(), card);
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        " is put into its owner's graveyard (its controller lost control of the permanent that exiled it)."));
+                log.info("Game {} - {} put into graveyard on exiler control loss", gameData.id, card.getName());
+                anyMoved = true;
+            }
+            gameData.exiledCardsToGraveyardOnControlLossWatch.remove(permanentId);
+        }
+        return anyMoved;
+    }
+
     private boolean applyWorldRule(GameData gameData) {
         List<Permanent> worlds = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {

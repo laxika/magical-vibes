@@ -53,5 +53,11 @@ public enum GrantScope {
      * follow a token-creation effect on the same spell/ability, e.g. Gilt-Leaf Ambush's clash-win
      * deathtouch grant.
      */
-    TOKENS_CREATED_THIS_RESOLUTION
+    TOKENS_CREATED_THIS_RESOLUTION,
+    /**
+     * The other attacking creatures in the same attacking band (CR 702.22) as the source
+     * permanent. The source itself is excluded — "banded with this creature" means the rest
+     * of the band. Yields nothing when the source is not attacking in a band.
+     */
+    BANDED_WITH_SELF
 }

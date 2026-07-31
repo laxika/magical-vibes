@@ -80,6 +80,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.IncreaseActivationCostPerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostPerCounterEffect;
@@ -1057,8 +1058,18 @@ public class AbilityActivationService {
             payManaCost(gameData, playerId, abilityCost, effectiveXValue, false, false);
         }
 
-        // Pay the "discard this card" cost intrinsic to a hand-activated ability
+        // Pay the "discard this card" cost intrinsic to a hand-activated ability — or exile it
+        // instead when the printed cost says so (Elvish Spirit Guide). Exiling is not a discard, so
+        // no discard triggers fire; and the ability produces mana, so it resolves immediately
+        // without using the stack (CR 605.1a).
         hand.remove(handCardIndex);
+        if (ability.isExilesSourceFromHand()) {
+            exileService.exileCard(gameData, playerId, card);
+            resolveHandManaAbility(gameData, player, card, abilityEffects, effectiveXValue);
+            gameData.priorityPassedBy.clear();
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            return;
+        }
         UUID previousCyclingCard = gameData.cardEnteringGraveyardByCycling;
         if (ability.isCyclingAbility()) {
             gameData.cardEnteringGraveyardByCycling = card.getId();
@@ -1108,6 +1119,28 @@ public class AbilityActivationService {
             playerInputService.processNextMayAbility(gameData);
         }
         mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
+
+    /**
+     * Resolves the mana produced by a hand-activated mana ability whose source card has just been
+     * exiled to pay its cost (Elvish Spirit Guide). A mana ability never uses the stack (CR 605.1a),
+     * and the source is no longer a permanent, so the mana goes straight into the controller's pool.
+     * Mana-doubling effects keyed on tapping a permanent do not apply here.
+     */
+    private void resolveHandManaAbility(GameData gameData, Player player, Card card,
+                                        List<CardEffect> abilityEffects, int xValue) {
+        ManaPool pool = gameData.playerManaPools.get(player.getId());
+        for (CardEffect effect : abilityEffects) {
+            if (effect instanceof AwardManaEffect awardMana) {
+                int amount = awardMana.amount() instanceof Fixed fixed ? fixed.value() : xValue;
+                if (amount > 0) {
+                    pool.add(awardMana.color(), amount);
+                }
+            }
+        }
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " exiles ", card, " from their hand for mana."));
+        log.info("Game {} - {} exiles {} from hand for mana", gameData.id, player.getUsername(), card.getName());
     }
 
     /**
@@ -1560,6 +1593,11 @@ public class AbilityActivationService {
                 .map(e -> (MillControllerCost) e)
                 .findFirst();
 
+        Optional<ExileTopCardOfLibraryCost> exileTopLibraryCost = abilityEffects.stream()
+                .filter(e -> e instanceof ExileTopCardOfLibraryCost)
+                .map(e -> (ExileTopCardOfLibraryCost) e)
+                .findFirst();
+
         boolean discardHandCost = abilityEffects.stream().anyMatch(e -> e instanceof DiscardHandCost);
 
         Optional<RemoveChargeCountersFromSourceCost> removeChargeCost = abilityEffects.stream()
@@ -1591,7 +1629,7 @@ public class AbilityActivationService {
         // Pay life cost
         if (payLifeCost.isPresent()) {
             int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 0);
-            int amount = payLifeCost.get().effectiveAmount(currentLife);
+            int amount = payLifeCost.get().effectiveAmount(currentLife, sourceCounterCount(permanent, payLifeCost.get()));
             gameData.playerLifeTotals.put(playerId, currentLife - amount);
         }
 
@@ -1724,6 +1762,11 @@ public class AbilityActivationService {
             graveyardService.resolveMillPlayer(gameData, playerId, millControllerCost.get().count());
         }
 
+        // Pay exile-top-of-library cost (e.g. Royal Herbalist)
+        if (exileTopLibraryCost.isPresent()) {
+            payExileTopOfLibraryCost(gameData, playerId, permanent, exileTopLibraryCost.get());
+        }
+
         // Pay discard-your-hand cost
         if (discardHandCost) {
             payDiscardHandCost(gameData, player);
@@ -1766,13 +1809,19 @@ public class AbilityActivationService {
                     }
                 }
             }
-            // Same for a predicate-based sacrifice cost that scales off the sacrificed permanent's power
-            if (handler.costEffect() instanceof SacrificePermanentCost sacPermCost && sacPermCost.trackSacrificedPower()) {
+            // Same for a predicate-based sacrifice cost that scales off the sacrificed permanent
+            if (handler.costEffect() instanceof SacrificePermanentCost sacPermCost
+                    && (sacPermCost.trackSacrificedPower() || sacPermCost.trackSacrificedManaValue())) {
                 List<UUID> autoPayIds = handler.getValidChoiceIds(gameData, playerId);
                 if (autoPayIds.size() <= handler.requiredCount() && !autoPayIds.isEmpty()) {
                     Permanent autoTarget = gameQueryService.findPermanentById(gameData, autoPayIds.getFirst());
                     if (autoTarget != null) {
-                        effectiveXValue = gameQueryService.getEffectivePower(gameData, autoTarget);
+                        if (sacPermCost.trackSacrificedPower()) {
+                            effectiveXValue = gameQueryService.getEffectivePower(gameData, autoTarget);
+                        }
+                        if (sacPermCost.trackSacrificedManaValue()) {
+                            effectiveXValue = autoTarget.getCard().getManaValue();
+                        }
                     }
                 }
             }
@@ -1838,6 +1887,17 @@ public class AbilityActivationService {
         return enchanted;
     }
 
+    /**
+     * Remembers the permanent untapped to pay a single-permanent {@link UntapMultiplePermanentsCost}
+     * so {@code AwardManaOfTypeUntappedLandCouldProduceEffect} can read which land was untapped
+     * (Benthic Explorers).
+     */
+    private void recordUntappedCostPermanent(CardEffect costEffect, Permanent source, UUID chosenPermanentId) {
+        if (costEffect instanceof UntapMultiplePermanentsCost untapCost && untapCost.count() == 1) {
+            source.setChosenPermanentId(chosenPermanentId);
+        }
+    }
+
     private boolean handlePermanentChoiceCost(GameData gameData, Player player, Permanent source,
                                                int abilityIndex, int xValue, UUID targetId, Zone targetZone,
                                                PermanentChoiceCostHandler handler) {
@@ -1850,6 +1910,7 @@ public class AbilityActivationService {
                 Permanent chosen = gameQueryService.findPermanentById(gameData, id);
                 if (chosen != null) {
                     handler.validateAndPay(gameData, player, chosen);
+                    recordUntappedCostPermanent(handler.costEffect(), source, chosen.getId());
                 }
             }
             return false;
@@ -1894,9 +1955,13 @@ public class AbilityActivationService {
         if (chosen == null) {
             throw new IllegalStateException("Invalid target permanent");
         }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null || !battlefield.contains(chosen)) {
-            throw new IllegalStateException("Must choose a permanent you control");
+        boolean opponentControlledCost = context.costEffect() instanceof UntapMultiplePermanentsCost untapCost
+                && untapCost.opponentControlled();
+        if (!opponentControlledCost) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null || !battlefield.contains(chosen)) {
+                throw new IllegalStateException("Must choose a permanent you control");
+            }
         }
 
         // Capture sacrificed creature's tracked values before sacrifice (e.g. Birthing Pod, Fling)
@@ -1917,8 +1982,13 @@ public class AbilityActivationService {
             }
         }
 
-        if (context.costEffect() instanceof SacrificePermanentCost sacPermCost && sacPermCost.trackSacrificedPower()) {
-            updatedXValue = gameQueryService.getEffectivePower(gameData, chosen);
+        if (context.costEffect() instanceof SacrificePermanentCost sacPermCost) {
+            if (sacPermCost.trackSacrificedPower()) {
+                updatedXValue = gameQueryService.getEffectivePower(gameData, chosen);
+            }
+            if (sacPermCost.trackSacrificedManaValue()) {
+                updatedXValue = chosen.getCard().getManaValue();
+            }
         }
 
         handler.validateAndPay(gameData, player, chosen);
@@ -1927,6 +1997,7 @@ public class AbilityActivationService {
         if (context.costEffect() instanceof TapCreatureCost tapCost && tapCost.trackTappedCreaturePower()) {
             sourcePermanent.setChosenPermanentId(chosenPermanentId);
         }
+        recordUntappedCostPermanent(context.costEffect(), sourcePermanent, chosenPermanentId);
 
         int remaining = context.remaining() - handler.lastPaymentWeight();
         // Costs whose valid choices depend on prior picks (e.g. tap two creatures sharing a type)
@@ -2215,7 +2286,7 @@ public class AbilityActivationService {
                 .findFirst();
         if (payLifeCost.isPresent()) {
             int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
-            int needed = payLifeCost.get().effectiveAmount(life);
+            int needed = payLifeCost.get().effectiveAmount(life, sourceCounterCount(permanent, payLifeCost.get()));
             if (life < needed) {
                 throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
             }
@@ -2337,6 +2408,19 @@ public class AbilityActivationService {
             List<Card> deck = gameData.playerDecks.get(playerId);
             if (deck == null || deck.size() < required) {
                 throw new IllegalStateException("Not enough cards in library to mill (need " + required + ")");
+            }
+        }
+
+        // Exile-top-of-library cost (e.g. Royal Herbalist: "{2}, Exile the top card of your library: …")
+        Optional<ExileTopCardOfLibraryCost> exileTopLibraryCost = abilityEffects.stream()
+                .filter(e -> e instanceof ExileTopCardOfLibraryCost)
+                .map(e -> (ExileTopCardOfLibraryCost) e)
+                .findFirst();
+        if (exileTopLibraryCost.isPresent()) {
+            int required = exileTopLibraryCost.get().count();
+            List<Card> deck = gameData.playerDecks.get(playerId);
+            if (deck == null || deck.size() < required) {
+                throw new IllegalStateException("Not enough cards in library to exile (need " + required + ")");
             }
         }
 
@@ -2739,6 +2823,14 @@ public class AbilityActivationService {
         return loyaltyCost;
     }
 
+    /**
+     * Counters on the source permanent that scale a {@link PayLifeCost} ("pay 3 life for each
+     * velocity counter on this enchantment"). Zero for the fixed and half-life forms.
+     */
+    private int sourceCounterCount(Permanent permanent, PayLifeCost cost) {
+        return cost.perSourceCounter() == null ? 0 : permanent.getCounterCount(cost.perSourceCounter());
+    }
+
     private void payLoyaltyCost(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability, int effectiveXValue) {
         int loyaltyCost = validateLoyaltyCost(gameData, playerId, permanent, ability, effectiveXValue);
         permanent.setCounterCount(CounterType.LOYALTY, permanent.getCounterCount(CounterType.LOYALTY) + loyaltyCost);
@@ -2927,6 +3019,29 @@ public class AbilityActivationService {
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " discards " , paid, " as an activation cost."));
         log.info("Game {} - {} discards {} as activation cost", gameData.id, player.getUsername(), paid.getName());
+    }
+
+    private void payExileTopOfLibraryCost(GameData gameData, UUID playerId, Permanent permanent,
+                                          ExileTopCardOfLibraryCost cost) {
+        int count = cost.count();
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+        for (int i = 0; i < count; i++) {
+            if (deck == null || deck.isEmpty()) {
+                throw new IllegalStateException("Not enough cards in library to exile (need " + count + ")");
+            }
+            Card topCard = deck.removeFirst();
+            exileService.exileCard(gameData, playerId, topCard);
+            // Remember the exiled card so the ability's effect can look at it at resolution
+            // (Storm Elemental's "if the exiled card is a snow land").
+            if (cost.imprintOnSource()) {
+                gameData.setImprintedCard(permanent.getCard(), topCard);
+            }
+            gameLogService.append(gameData, GameLog.textCardText(
+                    playerName + " exiles ", topCard, " from the top of their library as a cost."));
+            log.info("Game {} - {} exiles {} from library top as activation cost",
+                    gameData.id, playerName, topCard.getName());
+        }
     }
 
     private void payDiscardHandCost(GameData gameData, Player player) {

@@ -48,6 +48,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsLandPredicate` | `()` | lands |
 | `PermanentIsEnchantmentPredicate` | `()` | enchantments |
 | `PermanentIsEnchantedPredicate` | `()` | permanents that have at least one Aura attached (i.e. are enchanted), regardless of who controls the Aura — needs game data. Used by Greater Auramancy ("Enchanted creatures you control have shroud") |
+| `PermanentIsHostOfSourceAuraPredicate` | `()` | the permanent the **source Aura** is currently attached to (the enchanted permanent) — needs game data + `sourceCardId`. Wrap in `PermanentNotPredicate` for "target creature other than enchanted creature" (Kjeldoran Pride's `{2}{U}` reattach ability) |
 | `PermanentIsAuraAttachedToCreaturePredicate` | `()` | an Aura permanent currently attached to a creature (checks `card.isAura()`, `isAttached()`, and that the host permanent is a creature — needs game data). Used to filter the Aura target of Crown of the Ages ("target Aura attached to a creature") |
 | `PermanentIsAuraAttachedToSourcePredicate` | `()` | an Aura permanent currently attached to the **source** permanent, whoever controls the Aura — needs game data + `sourceCardId`. Pair with `DestroyAllPermanentsEffect` for "Destroy all Auras attached to CARDNAME" (Hakim, Loreweaver) |
 | `PermanentIsPlaneswalkerPredicate` | `()` | planeswalkers |

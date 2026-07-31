@@ -27,6 +27,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
+    private final LibraryExileSupport libraryExileSupport;
     private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
 
     @Override
@@ -85,6 +86,40 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost exileCost) {
+            // "Cumulative upkeep — Exile the top card of your library" (Thought Lash): too few
+            // cards means the cost can't be paid at all, so the penalty resolves immediately.
+            if (!libraryExileSupport.hasAtLeast(gameData, entry.getControllerId(), exileCost.count())) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                return;
+            }
+            if (e.optional()) {
+                gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                        entry.getCard(), entry.getControllerId(), List.of(e),
+                        entry.getCard().getName() + " - Exile the top " + exileCost.count()
+                                + " card(s) of your library?",
+                        null, null, entry.getSourcePermanentId()));
+                return;
+            }
+            libraryExileSupport.exileTopCards(gameData, entry.getControllerId(), exileCost.count());
+            return;
+        }
+
+        if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.OpponentCreatesTokensCost tokenCost) {
+            // "Have an opponent create a … token" (Varchild's War-Riders): nothing can make this
+            // unpayable, so the only question is whether the controller wants to pay.
+            if (e.optional()) {
+                gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                        entry.getCard(), entry.getControllerId(), List.of(e),
+                        entry.getCard().getName() + " - Have an opponent create "
+                                + tokenCost.count() + " " + tokenCost.tokenTemplate().tokenName() + " token(s)?",
+                        null, null, entry.getSourcePermanentId()));
+                return;
+            }
+            createOpponentTokens(gameData, entry.getControllerId(), tokenCost, entry.getCard().getName());
+            return;
+        }
+
         if (e.forcedCost() instanceof SacrificeMultiplePermanentsCost multiCost) {
             resolveMultiplePermanentSacrifice(gameData, entry, e, multiCost);
             return;
@@ -133,6 +168,21 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                                 controllerId, entry.getSourcePermanentId(), entry.getCard(), e));
                 playerInputService.beginPermanentChoice(gameData, controllerId, matchingPermanentIds,
                         "Choose a permanent to sacrifice (" + sacrificePermanent.description() + ").");
+    }
+
+    /**
+     * Pays an {@link com.github.laxika.magicalvibes.model.effect.OpponentCreatesTokensCost}: the
+     * payer's opponent creates one token per required count. Shared with the may-prompt accept path.
+     */
+    public void createOpponentTokens(GameData gameData, UUID payerId,
+            com.github.laxika.magicalvibes.model.effect.OpponentCreatesTokensCost cost, String sourceName) {
+        UUID opponentId = gameQueryService.getOpponentId(gameData, payerId);
+        if (opponentId == null) {
+            return;
+        }
+        for (int i = 0; i < cost.count(); i++) {
+            destructionSupport.createTokenForPlayer(gameData, opponentId, cost.tokenTemplate(), sourceName, null);
+        }
     }
 
     /** Seating order rotated so the active player is first (APNAP). */

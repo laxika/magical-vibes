@@ -37,6 +37,8 @@ export function browseInfoToCard(info: BrowseCardInfo): Card {
     alternateCostTapCount: 0,
     alternateCostReturnCount: 0,
     alternateCostManaCost: null,
+    alternateCostExileHandCount: 0,
+    alternateCostExileHandLabel: null,
     graveyardActivatedAbilities: [],
     transformable: false,
     kickerCost: null,

@@ -110,6 +110,7 @@ export class TargetingChoiceService {
     // Alternate casting cost
     this.choosingAlternateCost = false;
     this.selectingAlternateCostCreatures = false;
+    this.selectingAlternateCostHandCard = false;
     this.alternateCostCardIndex = -1;
     this.alternateCostCardName = '';
     this.alternateCostSacrificeCount = 0;
@@ -117,6 +118,8 @@ export class TargetingChoiceService {
     this.alternateCostTapCount = 0;
     this.alternateCostReturnCount = 0;
     this.alternateCostManaCost = '';
+    this.alternateCostExileHandCount = 0;
+    this.alternateCostExileHandLabel = '';
     this.alternateCostSelectedIds.set([]);
     // Graveyard targeting
     this.targetingGraveyard = false;
@@ -241,7 +244,12 @@ export class TargetingChoiceService {
   alternateCostTapCount = 0;
   alternateCostReturnCount = 0;
   alternateCostManaCost = '';
+  alternateCostExileHandCount = 0;
+  alternateCostExileHandLabel = '';
   alternateCostSelectedIds = signal<string[]>([]);
+  selectingAlternateCostHandCard = false;
+  /** Hand index to exile when confirming an exile-from-hand alternate cast (pre-removal index). */
+  private pendingAlternateExileHandIndex: number | null = null;
 
   // --- Graveyard targeting state ---
   targetingGraveyard = false;
@@ -378,6 +386,8 @@ export class TargetingChoiceService {
         this.alternateCostTapCount = card.alternateCostTapCount;
         this.alternateCostReturnCount = card.alternateCostReturnCount;
         this.alternateCostManaCost = card.alternateCostManaCost ?? '';
+        this.alternateCostExileHandCount = card.alternateCostExileHandCount ?? 0;
+        this.alternateCostExileHandLabel = card.alternateCostExileHandLabel ?? '';
         return;
       }
 
@@ -751,6 +761,10 @@ export class TargetingChoiceService {
       cardIndex,
       targetId
     };
+    if (this.pendingAlternateExileHandIndex != null) {
+      msg.discardHandCardIndex = this.pendingAlternateExileHandIndex;
+      this.pendingAlternateExileHandIndex = null;
+    }
     if (this.pendingPhyrexianLifeCount != null) {
       msg.phyrexianLifeCount = this.pendingPhyrexianLifeCount;
     }
@@ -780,7 +794,9 @@ export class TargetingChoiceService {
     // held back while the player taps mana sources; it is sent automatically once the
     // pool covers it (see onGameStateUpdate). Zone plays (flashback/exile/library-top)
     // keep the immediate path — the server marked them strictly affordable.
-    const isZonePlay = msg.flashback || msg.fromExileCardId != null || msg.fromLibraryTop;
+    const isZonePlay = msg.flashback || msg.fromExileCardId != null || msg.fromLibraryTop
+        || msg.discardHandCardIndex != null
+        || (msg.alternateCostSacrificePermanentIds?.length ?? 0) > 0;
     if (!isZonePlay && this.beginCastPaymentIfUnaffordable(msg)) {
       return;
     }
@@ -1459,8 +1475,46 @@ export class TargetingChoiceService {
 
   choosePayAlternateCost(): void {
     this.choosingAlternateCost = false;
-    this.selectingAlternateCostCreatures = true;
+    const battlefieldNeeded = this.alternateCostSacrificeCount + this.alternateCostTapCount + this.alternateCostReturnCount;
+    if (battlefieldNeeded > 0) {
+      this.selectingAlternateCostCreatures = true;
+      this.alternateCostSelectedIds.set([]);
+      return;
+    }
+    if (this.alternateCostExileHandCount > 0) {
+      this.selectingAlternateCostHandCard = true;
+      return;
+    }
+    // Free / condition-only alternate cost (no permanent or hand payment)
+    this.websocketService.send({
+      type: MessageType.PLAY_CARD,
+      cardIndex: this.alternateCostCardIndex,
+      alternateCostSacrificePermanentIds: []
+    });
+    this.resetAlternateCostState();
+  }
+
+  /** Hand-card click while paying an exile-from-hand alternate casting cost. */
+  selectAlternateCostHandCard(handIndex: number): void {
+    if (!this.selectingAlternateCostHandCard) return;
+    if (handIndex === this.alternateCostCardIndex) return;
+    const spellIndex = this.alternateCostCardIndex;
+    this.pendingAlternateExileHandIndex = handIndex;
+    this.selectingAlternateCostHandCard = false;
+    this.choosingAlternateCost = false;
+    this.selectingAlternateCostCreatures = false;
+    // Keep spell index; clear other alternate UI state but preserve pending exile index.
+    this.alternateCostCardIndex = -1;
+    this.alternateCostCardName = '';
+    this.alternateCostSacrificeCount = 0;
+    this.alternateCostLifePayment = 0;
+    this.alternateCostTapCount = 0;
+    this.alternateCostReturnCount = 0;
+    this.alternateCostManaCost = '';
+    this.alternateCostExileHandCount = 0;
+    this.alternateCostExileHandLabel = '';
     this.alternateCostSelectedIds.set([]);
+    this.continuePlayCard(spellIndex);
   }
 
   toggleAlternateCostCreature(permanentId: string): void {
@@ -1499,6 +1553,7 @@ export class TargetingChoiceService {
   private resetAlternateCostState(): void {
     this.choosingAlternateCost = false;
     this.selectingAlternateCostCreatures = false;
+    this.selectingAlternateCostHandCard = false;
     this.alternateCostCardIndex = -1;
     this.alternateCostCardName = '';
     this.alternateCostSacrificeCount = 0;
@@ -1506,7 +1561,10 @@ export class TargetingChoiceService {
     this.alternateCostTapCount = 0;
     this.alternateCostReturnCount = 0;
     this.alternateCostManaCost = '';
+    this.alternateCostExileHandCount = 0;
+    this.alternateCostExileHandLabel = '';
     this.alternateCostSelectedIds.set([]);
+    this.pendingAlternateExileHandIndex = null;
   }
 
   // ========== Tap / ability activation ==========

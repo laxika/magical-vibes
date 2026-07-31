@@ -20,6 +20,7 @@ public record LibrarySearchParams(
         boolean reorderRemainingToBottom,
         boolean reorderRemainingToTop,
         boolean restToGraveyard,
+        boolean restToExile,
         boolean shuffleAfterSelection,
         String prompt,
         LibrarySearchDestination destination,
@@ -57,7 +58,7 @@ public record LibrarySearchParams(
     public LibrarySearchParams withCards(List<Card> newCards) {
         return new LibrarySearchParams(playerId, newCards, reveals, canFailToFind, targetPlayerId,
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                restToGraveyard, shuffleAfterSelection, prompt, destination, filterCardTypes,
+                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                 manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep);
@@ -74,6 +75,7 @@ public record LibrarySearchParams(
         private boolean reorderRemainingToBottom;
         private boolean reorderRemainingToTop;
         private boolean restToGraveyard;
+        private boolean restToExile;
         private boolean shuffleAfterSelection = true;
         private String prompt;
         private LibrarySearchDestination destination = LibrarySearchDestination.HAND;
@@ -134,6 +136,11 @@ public record LibrarySearchParams(
 
         public Builder restToGraveyard(boolean restToGraveyard) {
             this.restToGraveyard = restToGraveyard;
+            return this;
+        }
+
+        public Builder restToExile(boolean restToExile) {
+            this.restToExile = restToExile;
             return this;
         }
 
@@ -221,7 +228,7 @@ public record LibrarySearchParams(
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                    restToGraveyard, shuffleAfterSelection, prompt, destination, filterCardTypes,
+                    restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, filterCardTypes,
                     accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                     filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                     manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep);

@@ -24,7 +24,9 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.OpponentGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayGainControlOfCreatureYouControlEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
@@ -76,8 +78,11 @@ public class DestructionSupport {
     private final com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService predicateEvaluationService;
     private final LifeSupport lifeSupport;
     private final OpponentMayGainControlOfCreatureYouControlEffectHandler opponentMayGainControlHandler;
+    private final OpponentGainsControlOfSourceCreatureEffectHandler opponentGainsControlOfSourceHandler;
+    private final RemoveAllCountersFromSelfEffectHandler removeAllCountersFromSelfHandler;
     private final PhasingService phasingService;
     private final ExileSelfEffectHandler exileSelfEffectHandler;
+    private final LibraryExileSupport libraryExileSupport;
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                            List<UUID> protectedIds, String sourceName) {
@@ -489,6 +494,16 @@ public class DestructionSupport {
                 dealDamageToControllerThenTapSourceIfDealt(gameData, entry, damageThenTap.damage());
             } else if (elseEffect instanceof DestroySourcePermanentEffect destroySource) {
                 destroySource(gameData, entry, destroySource.cannotBeRegenerated());
+            } else if (elseEffect instanceof com.github.laxika.magicalvibes.model.effect.ExileControllerLibraryEffect) {
+                // "When a player doesn't pay this enchantment's cumulative upkeep, that player
+                // exiles all cards from their library" (Thought Lash).
+                libraryExileSupport.exileEntireLibrary(gameData, entry.getControllerId());
+            } else if (elseEffect instanceof RemoveAllCountersFromSelfEffect removeCounters) {
+                // "remove all wage counters from this creature" (Rogue Skycaptain).
+                removeAllCountersFromSelfHandler.resolve(gameData, entry, removeCounters);
+            } else if (elseEffect instanceof OpponentGainsControlOfSourceCreatureEffect gainControl) {
+                // "an opponent gains control of it" (Rogue Skycaptain).
+                opponentGainsControlOfSourceHandler.resolve(gameData, entry, gainControl);
             } else if (elseEffect instanceof OpponentMayGainControlOfCreatureYouControlEffect steal) {
                 opponentMayGainControlHandler.offer(gameData, entry, steal);
                 // Interaction started — further else-effects would race the may-prompt.

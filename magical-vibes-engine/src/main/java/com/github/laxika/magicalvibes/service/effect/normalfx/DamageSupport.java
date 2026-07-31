@@ -598,6 +598,9 @@ public class DamageSupport {
         // Saving Grace: redirect all damage this turn to the player onto the enchanted creature.
         rawDamage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, playerId, null, rawDamage);
         processSourceRedirectDamage(gameData);
+        // Martyrdom: redirect the next N damage to the player onto the creature carrying the ability.
+        rawDamage = damagePreventionService.applyPlayerNextDamageRedirectShields(gameData, playerId, rawDamage);
+        processSourceRedirectDamage(gameData);
         if (rawDamage <= 0) return;
         if (!damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, source.getColor())) {
             rawDamage = damagePreventionService.applyOpponentSourceDamageReduction(gameData, playerId, entry.getControllerId(), rawDamage);
@@ -715,6 +718,7 @@ public class DamageSupport {
                 accumulateSourceDamageForReflection(gameData, source, entry.getControllerId(), effectiveDamage);
                 gameData.recordDamageToPlayer(playerId, effectiveDamage);
                 gameData.recordNoncombatDamageSourceToPlayer(entry.getSourcePermanentId(), playerId);
+                recordRedSpellDamage(gameData, entry, source, playerId);
                 triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId(), false);
                 triggerCollectionService.checkEnchantedCreatureDealtDamageToControllerReflectTriggers(gameData, playerId, entry.getSourcePermanentId(), effectiveDamage);
                 // The stack entry's controller is the damage source's controller (caster/activator);
@@ -732,6 +736,21 @@ public class DamageSupport {
             }
         }
         processEyeForAnEyeReflections(gameData);
+    }
+
+    /**
+     * Remembers the controller of a red instant or sorcery spell that just dealt damage to a player,
+     * so Suffocation can find "the last red instant or sorcery spell that dealt damage to you this turn".
+     */
+    private void recordRedSpellDamage(GameData gameData, StackEntry entry, Card source, UUID playerId) {
+        if (source == null || !source.getColors().contains(CardColor.RED)) {
+            return;
+        }
+        if (entry.getEntryType() != StackEntryType.INSTANT_SPELL
+                && entry.getEntryType() != StackEntryType.SORCERY_SPELL) {
+            return;
+        }
+        gameData.recordRedSpellDamageToPlayer(playerId, entry.getControllerId());
     }
 
     /**

@@ -70,6 +70,8 @@ class BattlefieldEntryServiceTest {
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private GraveyardTargetingService graveyardTargetingService;
     @Mock private ETBTokenTargetService etbTokenTargetService;
+    @Mock private com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
+    @Mock private PermanentRemovalService permanentRemovalService;
 
     private BattlefieldEntryService service;
     private GameData gd;
@@ -89,7 +91,8 @@ class BattlefieldEntryServiceTest {
                 new AmountEvaluationService(predicateEvaluationService, gameQueryService),
                 conditionEvaluationService, predicateEvaluationService,
                 new com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport(
-                        gameQueryService, predicateEvaluationService, gameLogService, playerInputService));
+                        gameQueryService, predicateEvaluationService, gameLogService, playerInputService),
+                graveyardService, permanentRemovalService);
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -322,7 +325,8 @@ class BattlefieldEntryServiceTest {
                     new AmountEvaluationService(lookaheadEvaluator, lookaheadGqs),
                     lookaheadConditions, lookaheadEvaluator,
                     new com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport(
-                            lookaheadGqs, lookaheadEvaluator, gameLogService, playerInputService));
+                            lookaheadGqs, lookaheadEvaluator, gameLogService, playerInputService),
+                    graveyardService, permanentRemovalService);
 
             playerId = UUID.randomUUID();
             opponentId = UUID.randomUUID();

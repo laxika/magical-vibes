@@ -61,6 +61,14 @@ public class StackEntry {
     @Setter private UUID ownerIdOverride;
     @Setter private boolean kicked;
     /**
+     * The individual mana payments the caster chose for this spell's
+     * {@link com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost}, one entry
+     * per repetition ("you may pay {1}{R} and/or {1}{G} any number of times"). Snapshotted at cast
+     * time and read back at resolution by
+     * {@link com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount}.
+     */
+    @Setter private List<String> repeatedAdditionalCosts = List.of();
+    /**
      * Whether this spell was cast at a time a sorcery couldn't have been cast. Only stamped on hand
      * casts, and only read by the Mirage flash clause
      * ({@code FlashCastWithCleanupSacrificeEffect}), which flags the entering permanent for
@@ -363,6 +371,8 @@ public class StackEntry {
         this.sourceZone = source.sourceZone;
         this.ownerIdOverride = source.ownerIdOverride;
         this.kicked = source.kicked;
+        this.repeatedAdditionalCosts = source.repeatedAdditionalCosts.isEmpty()
+                ? List.of() : new ArrayList<>(source.repeatedAdditionalCosts);
         this.castWhenSorceryCouldNotBeCast = source.castWhenSorceryCouldNotBeCast;
         this.evoked = source.evoked;
         this.prowl = source.prowl;

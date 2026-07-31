@@ -523,6 +523,19 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, xValue, null, null, targetIds, List.of());
     }
 
+    /**
+     * Casts a sorcery that pays a repeatable additional mana cost ("you may pay {1}{R} and/or
+     * {1}{G} any number of times" — Primitive Justice). {@code repeatedAdditionalCosts} lists one
+     * chosen payment per repetition; X is the resulting number of targets ({@code 1 + repetitions}).
+     */
+    public void castSorceryWithRepeatedCosts(Player player, int cardIndex, List<String> repeatedAdditionalCosts,
+                                             List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 1 + repeatedAdditionalCosts.size(), null, null,
+                targetIds, List.of(), false, null, null, null, null, null, false, null, null, null, null,
+                repeatedAdditionalCosts);
+    }
+
     public void castSorceryWithSacrifice(Player player, int cardIndex, UUID sacrificePermanentId) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, sacrificePermanentId);
@@ -565,6 +578,26 @@ public class GameTestHarness {
     public void castInstantWithDiscard(Player player, int cardIndex, UUID targetId, Integer discardHandCardIndex) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, List.of(), null, List.of(), false, discardHandCardIndex);
+    }
+
+    /**
+     * Cast a targeted instant using an exile-from-hand alternate casting cost
+     * ({@code discardHandCardIndex} is the pre-removal hand index of the card to exile).
+     */
+    public void castInstantWithAlternateExileFromHand(Player player, int cardIndex, UUID targetId,
+                                                      int exileHandCardIndex) {
+        castInstantWithDiscard(player, cardIndex, targetId, exileHandCardIndex);
+    }
+
+    /**
+     * Cast a divided-damage instant using an exile-from-hand alternate casting cost (Pyrokinesis).
+     * {@code exileHandCardIndex} is the pre-removal hand index of the card to exile.
+     */
+    public void castInstantWithAlternateExileFromHand(Player player, int cardIndex,
+                                                      Map<UUID, Integer> damageAssignments,
+                                                      int exileHandCardIndex) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, damageAssignments, List.of(), List.of(), false, null, null, List.of(), null, List.of(), false, exileHandCardIndex);
     }
 
     public void castSorceryWithSacrifice(Player player, int cardIndex, UUID targetId, UUID sacrificePermanentId) {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 import java.util.List;
 
+@CardRegistration(set = "ALL", collectorNumber = "76")
 @CardRegistration(set = "7ED", collectorNumber = "207")
 @CardRegistration(set = "6ED", collectorNumber = "198")
 public class Pillage extends Card {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.combat.block;
 
+import com.github.laxika.magicalvibes.cards.a.AwesomePresence;
 import com.github.laxika.magicalvibes.cards.d.DreamProwler;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -338,6 +339,33 @@ class CombatBlockServiceTest extends BaseCardTest {
 
             assertThat(firstHipparion.isBlocking()).isTrue();
             assertThat(secondHipparion.isBlocking()).isTrue();
+            assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("An attacker-side per-blocker tax stacks with the blocker's own block cost")
+        void attackerSideTaxStacksWithBlockerCost() {
+            // Awesome Presence on the attacker ({3} per blocker) + Hipparion blocking power 3+ ({1}).
+            Permanent giant = attacking(player1, new HillGiant());
+            Permanent presence = new Permanent(new AwesomePresence());
+            presence.setAttachedTo(giant.getId());
+            gd.playerBattlefields.get(player1.getId()).add(presence);
+            Permanent hipparion = addCreatureReady(player2, new Hipparion());
+            enterDeclareBlockers();
+
+            List<BlockerAssignment> block = List.of(
+                    new BlockerAssignment(defenderIndex(hipparion), attackerIndex(giant)));
+
+            harness.addMana(player2, ManaColor.WHITE, 3);
+            assertThatThrownBy(() -> gs.declareBlockers(gd, player2, block))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Not enough mana to pay block cost (4 required)");
+
+            harness.addMana(player2, ManaColor.WHITE, 1);
+            harness.beginBlockerDeclarationInput();
+            assertThatCode(() -> gs.declareBlockers(gd, player2, block)).doesNotThrowAnyException();
+
+            assertThat(hipparion.isBlocking()).isTrue();
             assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
         }
 
