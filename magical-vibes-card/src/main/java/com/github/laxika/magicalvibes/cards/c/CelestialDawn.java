@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlledNonlandPermanentsAr
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsAnyColorEffect;
 
 @CardRegistration(set = "MIR", collectorNumber = "6")
+@CardRegistration(set = "6ED", collectorNumber = "7")
 public class CelestialDawn extends Card {
 
     public CelestialDawn() {
