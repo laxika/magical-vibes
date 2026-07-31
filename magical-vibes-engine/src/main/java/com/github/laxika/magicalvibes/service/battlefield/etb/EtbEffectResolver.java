@@ -79,7 +79,7 @@ public class EtbEffectResolver {
         register(ConditionalEffect.class, (ctx, effect) -> {
             ConditionalEffect conditional = (ConditionalEffect) effect;
             ConditionContext conditionContext = new ConditionContext(ctx.controllerId(), null, null,
-                    ctx.card(), ctx.kicked(), ctx.prowl(), ctx.wasCastFromHand() ? Zone.HAND : null, 0, null, null, false);
+                    ctx.card(), ctx.kicked(), ctx.prowl(), ctx.wasCastFromHand() ? Zone.HAND : null, 0, null, null);
             return switch (conditional.condition()) {
                 // Kicked intervening-if (CR 603.4): unwrap when kicked, otherwise drop.
                 case Kicked ignored -> ctx.kicked() ? conditional.wrapped() : null;

@@ -40,7 +40,7 @@ public class ReduceCastCostForMatchingSpellsEffectHandler implements CostModific
         // Evaluated against the source permanent so source-relative amounts (counters on this
         // creature) work; the spell being cast has no permanent of its own yet.
         var amountContext = new AmountContext(context.castingPlayerId(), source.sourcePermanent(),
-                null, 0, 0, false);
+                null, 0, 0);
         return -amountEvaluationService.evaluate(context.gameData(), reduce.amount(), amountContext);
     }
 }

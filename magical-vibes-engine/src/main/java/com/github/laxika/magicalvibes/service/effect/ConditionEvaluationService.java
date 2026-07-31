@@ -484,7 +484,7 @@ public class ConditionEvaluationService {
         if (battlefield == null) return 0;
         int totalPower = 0;
         for (Permanent permanent : battlefield) {
-            if (isCreatureForCondition(gameData, permanent, ctx)) {
+            if (isCreatureForCondition(gameData, permanent)) {
                 totalPower += gameQueryService.getEffectivePower(gameData, permanent);
             }
         }
@@ -504,7 +504,7 @@ public class ConditionEvaluationService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                if (!isCreatureForCondition(gameData, permanent, ctx)) continue;
+                if (!isCreatureForCondition(gameData, permanent)) continue;
                 int power = gameQueryService.getEffectivePower(gameData, permanent);
                 if (bestOverall == null || power > bestOverall) bestOverall = power;
                 if (playerId.equals(controllerId) && (bestControlled == null || power > bestControlled)) {
@@ -520,7 +520,7 @@ public class ConditionEvaluationService {
         if (battlefield == null) return 0;
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (isCreatureForCondition(gameData, permanent, ctx)) {
+            if (isCreatureForCondition(gameData, permanent)) {
                 count++;
             }
         }
@@ -528,14 +528,14 @@ public class ConditionEvaluationService {
     }
 
     /**
-     * Creature check for condition evaluation. During static bonus computation
-     * ({@link ConditionContext#staticEvaluation()}) the fully layered
+     * Creature check for condition evaluation. Inside static bonus computation
+     * ({@link GameQueryService#isStaticEvaluationActive()}) the fully layered
      * {@link GameQueryService#isCreature} would recurse back into static assembly, so the
      * recursion-safe static filter matcher is used instead — the same contract
      * {@link #matchesPermanent} follows for permanent predicates.
      */
-    private boolean isCreatureForCondition(GameData gameData, Permanent permanent, ConditionContext ctx) {
-        return ctx.staticEvaluation()
+    private boolean isCreatureForCondition(GameData gameData, Permanent permanent) {
+        return GameQueryService.isStaticEvaluationActive()
                 ? predicateEvaluationService.matchesStaticLeaf(permanent, CREATURE_FILTER)
                 : gameQueryService.isCreature(gameData, permanent);
     }
@@ -567,7 +567,7 @@ public class ConditionEvaluationService {
         } else if (ctx.sourcePermanent() != null) {
             filterContext = filterContext.withSourceCardId(ctx.sourcePermanent().getOriginalCard().getId());
         }
-        if (ctx.staticEvaluation()) {
+        if (GameQueryService.isStaticEvaluationActive()) {
             return predicateEvaluationService.matchesStaticFilter(permanent, filter, filterContext);
         }
         return predicateEvaluationService.matchesPermanentPredicate(permanent, filter, filterContext);
@@ -606,7 +606,7 @@ public class ConditionEvaluationService {
         // No controller (e.g. static self bonus computed while the permanent is being removed):
         // controller-dependent conditions are simply not met
         if (ctx.controllerId() == null) return false;
-        if (!ctx.staticEvaluation()) {
+        if (!GameQueryService.isStaticEvaluationActive()) {
             return gameQueryService.isMetalcraftMet(gameData, ctx.controllerId());
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
@@ -793,7 +793,7 @@ public class ConditionEvaluationService {
         int count = 0;
         for (Card card : graveyard) {
             if (card.isToken()) continue;
-            boolean matches = ctx.staticEvaluation()
+            boolean matches = GameQueryService.isStaticEvaluationActive()
                     ? predicateEvaluationService.matchesCardPredicate(card, c.filter(), null)
                     : c.filter() == null || predicateEvaluationService.matchesCardPredicate(card, c.filter(),
                             null, gameData, ctx.controllerId());
@@ -1087,7 +1087,7 @@ public class ConditionEvaluationService {
         if (source == null || source.getPairedWithId() != null) {
             return false;
         }
-        if (!isCreatureForCondition(gameData, source, ctx)) {
+        if (!isCreatureForCondition(gameData, source)) {
             return false;
         }
         UUID controllerId = ctx.controllerId();
@@ -1102,7 +1102,7 @@ public class ConditionEvaluationService {
             if (p.getId().equals(source.getId())) {
                 continue;
             }
-            if (p.getPairedWithId() == null && isCreatureForCondition(gameData, p, ctx)) {
+            if (p.getPairedWithId() == null && isCreatureForCondition(gameData, p)) {
                 return true;
             }
         }

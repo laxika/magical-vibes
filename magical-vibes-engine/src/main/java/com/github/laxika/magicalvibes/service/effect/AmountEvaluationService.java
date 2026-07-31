@@ -356,13 +356,13 @@ public class AmountEvaluationService {
     }
 
     private int countPermanents(GameData gameData, PermanentCount count, AmountContext ctx) {
-        // In static evaluation the context carries a null GameData: type and keyword checks then
+        // In static evaluation the filter context carries a null GameData: type and keyword checks then
         // use intrinsic values, so counting never calls computeStaticBonus on other permanents
         // (which could recurse back into the count being computed). The P/T leaves are exempt —
         // they route through GameQueryService's recursion-safe accessors. The source identity is
         // supplied either way: it costs no query, and without it source-relative predicates
         // silently match nothing.
-        FilterContext filterContext = ctx.staticEvaluation()
+        FilterContext filterContext = GameQueryService.isStaticEvaluationActive()
                 ? FilterContext.empty()
                 : FilterContext.of(gameData);
         filterContext = filterContext.withSourceControllerId(ctx.controllerId());
@@ -401,7 +401,7 @@ public class AmountEvaluationService {
         java.util.Set<CardSubtype> found = java.util.EnumSet.noneOf(CardSubtype.class);
         for (Permanent permanent : battlefield) {
             if (!permanent.getCard().hasType(CardType.LAND)) continue;
-            found.addAll(ctx.staticEvaluation()
+            found.addAll(GameQueryService.isStaticEvaluationActive()
                     ? gameQueryService.basicLandTypesForStaticEvaluation(gameData, permanent)
                     : gameQueryService.effectiveBasicLandTypes(gameData, permanent));
         }
@@ -602,7 +602,7 @@ public class AmountEvaluationService {
                 // recursion-safe accessor, which reads the layered toughness except for a
                 // creature whose own static bonus is currently being assembled — the one case
                 // where the amount would recurse back into the number it is computing.
-                total += ctx.staticEvaluation()
+                total += GameQueryService.isStaticEvaluationActive()
                         ? gameQueryService.toughnessForStaticFilter(permanent)
                         : gameQueryService.getEffectiveToughness(gameData, permanent);
             }

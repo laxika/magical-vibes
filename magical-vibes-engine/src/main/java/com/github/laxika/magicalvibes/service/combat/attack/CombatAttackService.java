@@ -745,7 +745,7 @@ public class CombatAttackService {
                     if (innerEffect instanceof ConditionalEffect ce
                             && ce.condition() instanceof MinimumAttackers mac) {
                         ConditionContext ctx = new ConditionContext(playerId, null, null, card,
-                                false, false, null, attackerIndices.size(), null, null, false);
+                                false, false, null, attackerIndices.size(), null, null);
                         if (!conditionEvaluationService.isMet(gameData, mac, ctx)) {
                             log.info("Game {} - {} graveyard attack trigger skipped ({} attackers, need {})",
                                     gameData.id, card.getName(), attackerIndices.size(), mac.minimumAttackers());

@@ -1022,28 +1022,21 @@ public class GameQueryService {
     /**
      * Returns {@code true} if the permanent has a conditional self-scope
      * {@link AnimatePermanentsEffect} and its condition is currently met.
+     *
+     * <p>Callable from inside static-bonus assembly and from the layered queries alike: the
+     * animation condition is recursion-safe wherever it has to be, because
+     * {@link #isStaticEvaluationActive()} sees the assembly the caller is in. Checking it with
+     * the fully layered queries from inside one (Rusted Relic's metalcraft counting artifacts
+     * through the layered {@code isArtifact}) re-enters the assembly and recurses forever.
      */
     public boolean hasSelfBecomeCreatureEffect(GameData gameData, Permanent permanent) {
-        return hasSelfBecomeCreatureEffect(gameData, permanent, false);
-    }
-
-    /**
-     * {@link #hasSelfBecomeCreatureEffect(GameData, Permanent)} with an explicit evaluation mode.
-     * Callers inside static-bonus assembly must pass {@code staticEvaluation = true}: the
-     * animation condition would otherwise be checked with the fully layered queries (Rusted
-     * Relic's metalcraft counting artifacts via the layered {@code isArtifact}), which re-enter
-     * static assembly and recurse forever. The static mode uses the recursion-safe matchers.
-     */
-    public boolean hasSelfBecomeCreatureEffect(GameData gameData, Permanent permanent, boolean staticEvaluation) {
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof ConditionalEffect conditional
                     && conditional.wrapped() instanceof AnimatePermanentsEffect animate
                     && animate.scope() == GrantScope.SELF) {
                 UUID controllerId = findPermanentController(gameData, permanent.getId());
                 if (controllerId == null) continue;
-                ConditionContext context = staticEvaluation
-                        ? ConditionContext.forStaticEffect(permanent, controllerId)
-                        : ConditionContext.forPermanent(permanent, controllerId);
+                ConditionContext context = ConditionContext.forPermanent(permanent, controllerId);
                 if (conditionEvaluationService.isMet(gameData, conditional.condition(), context)) {
                     return true;
                 }
@@ -2008,6 +2001,26 @@ public class GameQueryService {
      */
     private static final ThreadLocal<Set<UUID>> PT_LEAF_FROM_BOARD =
             ThreadLocal.withInitial(HashSet::new);
+
+    /**
+     * True when this thread is somewhere the fully layered queries must not be called, because
+     * calling one would re-enter the work already in flight: inside a static-bonus assembly, or
+     * inside a layered pass that is still building its board.
+     *
+     * <p>This is the ambient replacement for the {@code staticEvaluation} flag that
+     * {@code ConditionContext} and {@code AmountContext} used to carry. The flag said the same
+     * thing, but said it at the call site — every caller had to know which side of the boundary
+     * it was on, and a caller that reached an evaluation service through a chain it did not
+     * write (or a layered query that happened to be invoked from inside an assembly) got the
+     * layered branch and recursed. Both facts are recorded by the machinery that creates the
+     * situation, so the boundary can be observed rather than declared.
+     *
+     * <p>The condition and amount evaluation services consult this to pick their recursion-safe
+     * matchers, which read printed and layer-4 state instead of asking {@code computeStaticBonus}.
+     */
+    public static boolean isStaticEvaluationActive() {
+        return !ASSEMBLY_IN_PROGRESS.get().isEmpty() || LayerSystemService.buildingBoard();
+    }
 
     private StaticBonus assembleStaticBonusInternal(
             GameData gameData, LayerSystemService.LayeredBoardState board,

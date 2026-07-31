@@ -632,7 +632,7 @@ public class BattlefieldEntryService {
             } else if (effect instanceof ConditionalEffect conditional
                     && conditional.wrapped() instanceof EnterWithCountersEffect wrapped) {
                 ConditionContext conditionContext = new ConditionContext(controllerId, null, permanent,
-                        card, kicked, false, permanent.getCastFromZone(), xValue, null, null, false);
+                        card, kicked, false, permanent.getCastFromZone(), xValue, null, null);
                 if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
                     continue;
                 }
@@ -642,7 +642,7 @@ public class BattlefieldEntryService {
             }
 
             int count = amountEvaluationService.evaluate(gameData, enterWith.count(),
-                    new AmountContext(controllerId, permanent, null, xValue, 0, false));
+                    new AmountContext(controllerId, permanent, null, xValue, 0));
             // Vizier of Remedies also replaces "enters with N -1/-1 counters" (both are replacement
             // effects). The permanent isn't on the battlefield yet, so use its entering controller.
             if (enterWith.type() == CounterType.MINUS_ONE_MINUS_ONE) {
@@ -685,7 +685,7 @@ public class BattlefieldEntryService {
         if (granted <= 0) return;
 
         ConditionContext conditionContext = new ConditionContext(controllerId, null, permanent,
-                permanent.getCard(), false, false, permanent.getCastFromZone(), 0, null, null, false);
+                permanent.getCard(), false, false, permanent.getCastFromZone(), 0, null, null);
         if (!conditionEvaluationService.isMet(gameData, new OpponentDealtDamageThisTurn(1), conditionContext)) {
             return;
         }

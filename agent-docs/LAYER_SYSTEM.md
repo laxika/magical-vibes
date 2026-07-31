@@ -1567,3 +1567,35 @@ and any deviations from this document.
     JacesSentinelTest and SteelOfTheGodheadTest (the other `CantBeBlockedEffect` users),
     GameQueryServiceTest, the block-legality suite, `layers.*` (SevenLayerTest 100/100) and
     RustedRelicTest all green.
+
+19. **Recursion-safety is ambient; the `staticEvaluation` flags are deleted
+    (`STATIC_EVALUATION_MIGRATION.md` Stage C, C2 slice 3, 2026-07-31).** `ConditionContext` and
+    `AmountContext` no longer carry a `staticEvaluation` component, and
+    `GameQueryService.hasSelfBecomeCreatureEffect`'s boolean overload is gone. The seven branches
+    that read the flags (four in `ConditionEvaluationService` — the creature check, the permanent
+    matcher, metalcraft and the graveyard card count; three in `AmountEvaluationService` —
+    `countPermanents`, Domain and `totalToughnessOfControlledCreatures`) now ask the new
+    `GameQueryService.isStaticEvaluationActive()`, true when `ASSEMBLY_IN_PROGRESS` is non-empty
+    (step 16's ThreadLocal — this thread is inside `assembleStaticBonusInternal`) or when the new
+    `LayerSystemService.buildingBoard()` reports a pass on this thread whose board is unfinished.
+    The flag was a claim each call site made about where it was, and a call site reached through a
+    chain it did not write got it wrong — which is how the original stack overflow happened
+    (`isCreature` → `hasSelfBecomeCreatureEffect` → metalcraft on the layered branch during an
+    assembly); the boolean overload was a manual patch for the three chains someone had found.
+    Both facts are recorded by the machinery that creates the situation, so the boundary is now
+    observed rather than declared, and chains nobody has found are covered too.
+    `buildingBoard()` walks the whole `Pass` parent chain: a nested pass opened mid-build finishes
+    its own board while the outer build is still in flight, so reading only the innermost pass
+    would report ready and re-open the hole. Two surfaces widened deliberately: everything reached
+    during a board build is recursion-safe now, not only the handlers that remembered to say so
+    (which is also the CR 613 reading order — mid-build there are no layer-7 numbers); and
+    `AttackLegalityService`'s `CreaturesWithPowerGreaterThanAmountCantAttackEffect` branch, which
+    used `AmountContext.forStaticEffect` from outside any assembly purely to carry source and
+    controller, now evaluates fully layered (inert — `Ensnaring Bridge` is the only card with the
+    effect and `CardsInHand` reads no permanent). `forStaticEffect` survives on both context types
+    for what it says at the call site; on `ConditionContext` it is now identical to `forPermanent`.
+    **Verification:** `layers.*` (SevenLayerTest 100/100, LayerDependencyTest, LayeredBoardCacheTest,
+    LayerClassifierTest, ModifierExplanationTest, FloatingEffectLifecycleTest), GameQueryServiceTest,
+    PredicateEvaluationServiceTest, the staticfx suite, RustedRelicTest, WardenOfTheWallTest,
+    TetsukoUmezawaFugitiveTest, EnsnaringBridgeTest, the metalcraft, animation, Splicer/Golem,
+    divergence and Domain batches. All green.

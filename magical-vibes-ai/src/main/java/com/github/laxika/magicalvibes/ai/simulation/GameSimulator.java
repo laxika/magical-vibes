@@ -624,7 +624,7 @@ public class GameSimulator {
     private double abilityTargetPriority(GameData gd, UUID targetId, UUID playerId,
                                          UUID opponentId, Permanent source,
                                          ActivatedAbility ability, boolean harmful) {
-        AmountContext amountContext = new AmountContext(playerId, source, null, 0, 0, false);
+        AmountContext amountContext = new AmountContext(playerId, source, null, 0, 0);
         int damage = ability.getEffects().stream()
                 .filter(DamageDealingEffect.class::isInstance)
                 .map(DamageDealingEffect.class::cast)

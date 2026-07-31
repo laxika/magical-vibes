@@ -159,7 +159,7 @@ public class LandTapTriggerCollectorService {
 
         if (mana instanceof AwardManaEffect award) {
             int amount = amountEvaluationService.evaluate(gameData, award.amount(),
-                    new AmountContext(tappingPlayerId, null, null, 0, 0, false));
+                    new AmountContext(tappingPlayerId, null, null, 0, 0));
             if (amount <= 0) {
                 return false;
             }

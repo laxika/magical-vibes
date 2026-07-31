@@ -412,14 +412,14 @@ public class BoardEvaluator {
                 if (effect instanceof CostEffect) continue;
                 if (effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures()) {
                     bonus += amountEvaluationService.evaluate(gameData, dmg.damageAmount(),
-                            new AmountContext(controllerId, perm, null, 0, 0, false)) * 2.0;
+                            new AmountContext(controllerId, perm, null, 0, 0)) * 2.0;
                 } else if (effect instanceof RemovalEffect rem && rem.removalKind() == RemovalKind.EXILE) {
                     bonus += 9.0;
                 } else if (effect instanceof RemovalEffect rem && rem.removalKind() == RemovalKind.DESTROY) {
                     bonus += 8.0;
                 } else if (effect instanceof CardDrawingEffect draw) {
                     int drawAmount = amountEvaluationService.evaluate(gameData, draw.drawnCardAmount(),
-                            new AmountContext(controllerId, perm, null, 0, 0, false));
+                            new AmountContext(controllerId, perm, null, 0, 0));
                     bonus += drawAmount * 4.0;
                 }
             }

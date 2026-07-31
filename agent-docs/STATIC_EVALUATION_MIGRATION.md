@@ -71,14 +71,16 @@ Armor changes what the Relic's effect does, neither is a CDA.
 Landed with this document (crash fix for the fuzz-test stack overflow, targeted tests green):
 
 - `GameQueryService.hasSelfBecomeCreatureEffect(GameData, Permanent, boolean)` overload; the
-  2-arg form delegates with `false`.
-- Three static-pass callers pass `true`: `StaticEffectSupport.isEffectivelyCreature`,
+  2-arg form delegated with `false`.
+- Three static-pass callers passed `true`: `StaticEffectSupport.isEffectivelyCreature`,
   `AllLandsAreCreaturesEffectHandler`, `LayerSystemService` layer-7b.
 - Two regression tests in `RustedRelicTest` (anthem + metalcraft, anthem without metalcraft).
 
-**Keep this.** It is the prerequisite that routes static-pass callers to the recursion-safe
-branch. Stage A then makes that branch correct. Dropping it re-opens the stack overflow, because
-`ConditionEvaluationService.isMetalcraftMet` takes the layered branch whenever the flag is off.
+It was the prerequisite that routed static-pass callers to the recursion-safe branch, which
+Stage A then made correct. **Removed in C2 slice 3** together with the flags themselves: the
+recursion-safe branch is now selected by `GameQueryService.isStaticEvaluationActive()`, which
+observes the same fact the callers used to declare, so those three callers no longer have to.
+The `RustedRelicTest` regression tests stay.
 
 ## Working agreement
 
@@ -365,8 +367,10 @@ slice 1) → the four context-needing predicates (done in C2 slice 2) → the ~4
 - [x] Delete `StaticEffectSupport.matchesStaticFilter` — done in slice 2; what is left on
       `StaticEffectSupport` is a two-line scope adapter of the same name, not an evaluator.
 - [ ] Remaining throwing predicates
-- [ ] Delete `ConditionContext.staticEvaluation` / `AmountContext.staticEvaluation`
-- [ ] Revert the `hasSelfBecomeCreatureEffect` boolean overload (its reason for existing is gone)
+- [x] Delete `ConditionContext.staticEvaluation` / `AmountContext.staticEvaluation` — **done
+      2026-07-31**, see "Slice 3" below.
+- [x] Revert the `hasSelfBecomeCreatureEffect` boolean overload (its reason for existing is gone)
+      — done in slice 3.
 
 **Standing decision — unsupported predicates throw, they do not answer `false`.** Routing the
 remaining predicates through `PredicateEvaluationService` with no `GameData` would make several of
@@ -376,12 +380,9 @@ is absent. Keep the `IllegalArgumentException` default arm. A predicate leaves t
 when someone works out what its recursion-safe answer actually is and implements it — never by
 falling through.
 
-**Next slice (3).** Make recursion-safety ambient rather than a flag the caller passes: it is
-already inferable from `LayerSystemService.activePass()` plus `GameQueryService`'s
-`ASSEMBLY_IN_PROGRESS`. Then delete `ConditionContext.staticEvaluation` and
-`AmountContext.staticEvaluation` and their branches, and revert the `hasSelfBecomeCreatureEffect`
-boolean overload. The "remaining throwing predicates" item is independent of this and can wait —
-nothing in the codebase needs it yet, since anything that reached one would be failing loudly today.
+**Next slice (4).** Only the throwing predicates are left, and nothing in the codebase needs them
+yet — anything that reached one would be failing loudly today. Take one when a card demands it,
+and only with a worked-out recursion-safe answer per the standing decision above.
 
 #### Slice 1: one evaluator for the leaves (2026-07-31)
 
@@ -451,6 +452,53 @@ deleted; metalcraft calls `matchesStaticLeaf` directly.
 (`isCreatureForCondition`, `matchesPermanent`, `isMetalcraftMet`) go straight to the evaluator. Its
 static branch now also builds the same source card/controller `FilterContext` the non-static branch
 builds, so a source-relative predicate inside a static condition is no longer silently sourceless.
+
+#### Slice 3: recursion-safety became ambient, and the flags are gone (2026-07-31)
+
+`ConditionContext.staticEvaluation` and `AmountContext.staticEvaluation` are deleted, along with
+their seven branches (four in `ConditionEvaluationService`, three in `AmountEvaluationService`) and
+the `hasSelfBecomeCreatureEffect(GameData, Permanent, boolean)` overload. The branches now ask
+`GameQueryService.isStaticEvaluationActive()`, which is true when either
+
+- `ASSEMBLY_IN_PROGRESS` is non-empty — this thread is inside `assembleStaticBonusInternal`; or
+- `LayerSystemService.buildingBoard()` — some pass on this thread has not finished its board.
+
+Both facts were already recorded by the machinery that creates the situation (Stage B added the
+first, the pass has always had the second), so the boundary is observed instead of declared. Why
+that is better than the flag and not merely tidier: the flag was a claim each caller made about
+where it was, and a caller reached through a chain it did not write got it wrong. That is exactly
+how the original stack overflow happened — `isCreature` → `hasSelfBecomeCreatureEffect` →
+metalcraft took the layered branch while an assembly was running, because the layered query has no
+way to know its caller is a static handler. The boolean overload was a manual patch for the three
+call chains someone had found. Ambient detection covers the ones nobody has found.
+
+`buildingBoard()` walks the whole parent chain rather than reading `activePass().isBoardReady()`:
+a nested pass opened mid-build finishes its own board while the outer build is still in flight, so
+the innermost pass alone would report ready and re-open the hole.
+
+Two contexts widened rather than narrowed, both deliberately:
+
+- `LayerSystemService.buildingBoard()` makes *everything* reached during a board build
+  recursion-safe, not just the handlers that remembered to say so. This is also the CR 613 reading
+  order — mid-build there are no layer-7 numbers and only the layers applied so far.
+- `AttackLegalityService`'s `CreaturesWithPowerGreaterThanAmountCantAttackEffect` branch used
+  `AmountContext.forStaticEffect` from outside any assembly, purely to carry the source and
+  controller, and so ran on the degraded matchers for no reason. It now evaluates fully layered.
+  Inert in practice: `Ensnaring Bridge` is the only card with the effect and its amount is
+  `CardsInHand`, which reads no permanent.
+
+`forStaticEffect` survives on both context types — identical to `forPermanent` on
+`ConditionContext` now — because it still says at the call site which kind of evaluation is being
+set up. Neither selects anything any more.
+
+**Verification:** `layers.*` (SevenLayerTest 100/100, LayerDependencyTest, LayeredBoardCacheTest,
+LayerClassifierTest, ModifierExplanationTest, FloatingEffectLifecycleTest), GameQueryServiceTest,
+PredicateEvaluationServiceTest, the staticfx suite, RustedRelicTest, WardenOfTheWallTest,
+TetsukoUmezawaFugitiveTest, EnsnaringBridgeTest, the metalcraft batch (ArdentRecruit,
+AuriokEdgewright, EtchedChampion, IndomitableArchangel, JorKadeenThePrevailer, PuresteelPaladin,
+SilverskinArmor, SpireSerpent, CarapaceForger, ChromeSteed, MoxOpal), the animation batch
+(MarchOfTheMachines, JadeStatue, Mutavault, InkmothNexus), the Splicer/Golem batch, and the
+Stage A/B divergence and Domain batches. All green.
 
 ### Known secondary approximations to fold in
 

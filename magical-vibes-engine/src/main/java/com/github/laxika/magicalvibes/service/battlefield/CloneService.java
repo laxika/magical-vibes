@@ -189,7 +189,7 @@ public class CloneService {
         if (amount == null) return;
         if (gameQueryService.cantHaveCountersForController(gameData, perm, controllerId)) return;
         int count = amountEvaluationService.evaluate(gameData, amount,
-                new AmountContext(controllerId, perm, null, xValue, 0, false));
+                new AmountContext(controllerId, perm, null, xValue, 0));
         if (count > 0) {
             perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                     perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + count);

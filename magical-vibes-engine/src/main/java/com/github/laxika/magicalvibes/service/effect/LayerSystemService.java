@@ -346,6 +346,23 @@ public class LayerSystemService {
         return ACTIVE_PASS.get();
     }
 
+    /**
+     * True while any pass on this thread is still building its board. Half of the ambient
+     * recursion-safety signal read by {@link GameQueryService#isStaticEvaluationActive()}: until
+     * the board is finished there are no layer-7 numbers and only partially applied layer-4/5/6
+     * states, so a layered query asked from inside the build would answer from a board that does
+     * not exist yet — or start a second pass to build one.
+     *
+     * <p>The whole parent chain is walked, not just the innermost pass: a nested pass opened
+     * mid-build finishes its own board while the outer build is still in flight.
+     */
+    public static boolean buildingBoard() {
+        for (Pass pass = ACTIVE_PASS.get(); pass != null; pass = pass.parent) {
+            if (!pass.boardReady) return true;
+        }
+        return false;
+    }
+
     /** Returns the active pass for the given game state on this thread, or {@code null}. */
     public Pass activePass(GameData gameData) {
         Pass pass = ACTIVE_PASS.get();
@@ -1897,7 +1914,7 @@ public class LayerSystemService {
                         if (isSource(instance, target)) continue;
                         Permanent permanent = target.permanent();
                         if (board.marchAnimatedIds().contains(permanent.getId())
-                                && !gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent, true)) {
+                                && !gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent)) {
                             int manaValue = permanent.getCard().getManaValue();
                             entries.add(new BasePtEntry(permanent.getId(), manaValue, manaValue,
                                     instance.timestamp(), instance.position(),

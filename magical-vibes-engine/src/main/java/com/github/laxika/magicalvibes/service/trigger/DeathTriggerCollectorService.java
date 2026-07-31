@@ -1303,7 +1303,7 @@ public class DeathTriggerCollectorService {
             CreateTokenForTargetPlayerEffect effect, TriggerContext ctx) {
         TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
         CreateTokenEffect blueprint = effect.tokenEffect();
-        AmountContext amountContext = new AmountContext(sl.controllerId(), match.permanent(), null, 0, 0, false);
+        AmountContext amountContext = new AmountContext(sl.controllerId(), match.permanent(), null, 0, 0);
         CreateTokenEffect frozen = blueprint.withPowerToughness(
                 amountEvaluationService.evaluate(match.gameData(), blueprint.power(), amountContext),
                 amountEvaluationService.evaluate(match.gameData(), blueprint.toughness(), amountContext));

@@ -3210,7 +3210,7 @@ public class AbilityActivationService {
         if (ability.getMaxActivationsPerTurnAmount() != null) {
             // Cap recomputed from the current board at every activation (Withering Wisps).
             int dynamicCap = amountEvaluationService.evaluate(gameData, ability.getMaxActivationsPerTurnAmount(),
-                    new AmountContext(playerId, permanent, null, 0, 0, false));
+                    new AmountContext(playerId, permanent, null, 0, 0));
             if (currentCount >= dynamicCap) {
                 throw new IllegalStateException("This ability can be activated no more times each turn than "
                         + (ability.getMaxActivationsPerTurnDescription() != null

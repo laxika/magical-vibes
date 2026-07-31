@@ -248,7 +248,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         AmountContext context = AmountContext.forStackEntry(entry, source);
         if (e.countPerSacrificingPlayer()) {
             context = new AmountContext(sacrificingPlayerId, source, context.targetPermanentId(),
-                    context.xValue(), context.eventValue(), false, context.chosenPermanentId());
+                    context.xValue(), context.eventValue(), context.chosenPermanentId());
         }
         return amountEvaluationService.evaluate(gameData, e.count(), context);
     }
