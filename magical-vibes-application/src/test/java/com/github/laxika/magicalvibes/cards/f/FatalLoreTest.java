@@ -86,7 +86,8 @@ class FatalLoreTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.activateAbility(player2, 0, 0, null, null);
 
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve the regeneration shield
+        harness.passBothPriorities(); // resolve Fatal Lore
         harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
 

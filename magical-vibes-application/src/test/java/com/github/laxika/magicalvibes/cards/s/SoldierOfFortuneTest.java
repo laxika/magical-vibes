@@ -16,7 +16,7 @@ class SoldierOfFortuneTest extends BaseCardTest {
     @Test
     @DisplayName("Activating taps the creature and puts a player-targeting ability on the stack")
     void activateTapsAndTargets() {
-        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new SoldierOfFortune());
+        Permanent soldier = addCreatureReady(player1, new SoldierOfFortune());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, player1.getId());
@@ -30,7 +30,7 @@ class SoldierOfFortuneTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving shuffles the targeted controller's library")
     void resolvingShufflesOwnLibrary() {
-        harness.addToBattlefield(player1, new SoldierOfFortune());
+        addCreatureReady(player1, new SoldierOfFortune());
         harness.addMana(player1, ManaColor.RED, 1);
 
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
@@ -46,7 +46,7 @@ class SoldierOfFortuneTest extends BaseCardTest {
     @Test
     @DisplayName("Can target an opponent to shuffle their library")
     void canTargetOpponent() {
-        harness.addToBattlefield(player1, new SoldierOfFortune());
+        addCreatureReady(player1, new SoldierOfFortune());
         harness.addMana(player1, ManaColor.RED, 1);
 
         int opponentDeckSizeBefore = gd.playerDecks.get(player2.getId()).size();
@@ -62,7 +62,7 @@ class SoldierOfFortuneTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without the required mana")
     void cannotActivateWithoutMana() {
-        harness.addToBattlefield(player1, new SoldierOfFortune());
+        addCreatureReady(player1, new SoldierOfFortune());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -71,7 +71,7 @@ class SoldierOfFortuneTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate again while tapped")
     void cannotActivateWhileTapped() {
-        harness.addToBattlefield(player1, new SoldierOfFortune());
+        addCreatureReady(player1, new SoldierOfFortune());
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, player1.getId());

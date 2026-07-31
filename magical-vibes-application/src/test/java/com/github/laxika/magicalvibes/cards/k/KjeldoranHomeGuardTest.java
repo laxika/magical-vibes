@@ -49,12 +49,12 @@ class KjeldoranHomeGuardTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the block trigger
 
         assertThat(guard.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isZero();
-        assertThat(findPermanent(player2, "Deserter")).isNull();
+        assertThat(findPermanents(player2, "Deserter")).isEmpty();
 
         leaveEndOfCombat();
 
         assertThat(guard.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isEqualTo(1);
-        assertThat(findPermanent(player2, "Deserter")).isNotNull();
+        assertThat(findPermanents(player2, "Deserter")).hasSize(1);
     }
 
     @Test
@@ -70,7 +70,7 @@ class KjeldoranHomeGuardTest extends BaseCardTest {
         leaveEndOfCombat();
 
         assertThat(guard.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isZero();
-        assertThat(findPermanent(player1, "Deserter")).isNull();
+        assertThat(findPermanents(player1, "Deserter")).isEmpty();
     }
 
     private void leaveEndOfCombat() {

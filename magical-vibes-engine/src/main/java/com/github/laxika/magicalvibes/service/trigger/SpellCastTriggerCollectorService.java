@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
@@ -919,10 +920,10 @@ public class SpellCastTriggerCollectorService {
         // Snapshot CountersOnSource damage at trigger time (Imminent Doom ruling: damage equals
         // the counter count as the ability triggered, not as it resolves).
         resolved = snapshotCountersOnSourceDamage(resolved, match.permanent());
-        boolean selfTarget = resolved.stream().anyMatch(e -> e.targetSpec().selfTargeting());
-        boolean needsPlayerTarget = resolved.stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
-        boolean needsPermanentTarget = resolved.stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
-        boolean needsGraveyardTarget = resolved.stream().anyMatch(e -> e.targetSpec().category().isGraveyard());
+        boolean selfTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).selfTargeting());
+        boolean needsPlayerTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).category().includesPlayers());
+        boolean needsPermanentTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).category().includesPermanents());
+        boolean needsGraveyardTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).category().isGraveyard());
         boolean needsTargeting = needsPlayerTarget || needsPermanentTarget;
         boolean playerTargetOnly = needsPlayerTarget && !needsPermanentTarget;
         boolean needsSpellManaSpentX = resolved.stream().anyMatch(this::effectNeedsSpellManaSpentX);
@@ -985,6 +986,18 @@ public class SpellCastTriggerCollectorService {
             match.gameData().stack.add(entry);
         }
         return true;
+    }
+
+    /**
+     * The targeting a spell-cast trigger must resolve before it goes on the stack.
+     * {@link MayPayManaEffect} delegates its spec to the effect it wraps, which is right for
+     * "you may pay {X}. If you do, [targeted effect]" abilities whose cost lives on the trigger
+     * ({@code trigger.manaCost()}). A card that instead writes the payment into its own resolved
+     * effects settles everything at resolution, and its player is the caster bound below as a
+     * non-target (Leshrac's Sigil's "that player's hand"), so it must not open a target choice.
+     */
+    private static TargetSpec triggerTargetSpec(CardEffect effect) {
+        return effect instanceof MayPayManaEffect ? TargetSpec.NONE : effect.targetSpec();
     }
 
     private List<CardEffect> snapshotCountersOnSourceDamage(List<CardEffect> effects, Permanent source) {

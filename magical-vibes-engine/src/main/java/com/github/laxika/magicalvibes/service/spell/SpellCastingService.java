@@ -682,9 +682,10 @@ public class SpellCastingService {
         boolean hasSacrificeForCostReduction = !alternateCostSacrificePermanentIds.isEmpty() && !fromGraveyard
                 && handEarly.get(cardIndex).getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(SacrificeCreaturesForCostReductionEffect.class::isInstance);
-        boolean hasExileHandAlternateCost = handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class)
-                .flatMap(a -> a.getCost(ExileCardsFromHandCastingCost.class))
-                .isPresent();
+        boolean hasExileHandAlternateCost = !fromGraveyard
+                && handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class)
+                        .flatMap(a -> a.getCost(ExileCardsFromHandCastingCost.class))
+                        .isPresent();
         boolean usingAlternateCost = forceAlternateCost
                 || (!alternateCostSacrificePermanentIds.isEmpty() && !hasSacrificeForCostReduction)
                 || (hasExileHandAlternateCost && discardHandCardIndex != null);

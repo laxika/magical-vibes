@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.springframework.stereotype.Service;
@@ -124,12 +125,30 @@ public class TargetValidationService {
             return;
         }
         if (spec.predicate() != null
-                && !predicateEvaluationService.matchesPermanentPredicate(ctx.gameData(), target, spec.predicate())) {
+                && !predicateEvaluationService.matchesPermanentPredicate(target, spec.predicate(), sourceFilterContext(ctx))) {
             throw new IllegalStateException("Target does not match the required predicate");
         }
         if (spec.harmful()) {
             checkProtection(ctx, target);
         }
+    }
+
+    /**
+     * The context a spec's narrowing predicate is evaluated in. Source-relative predicates
+     * ("target creature blocking or blocked by this creature", "another creature you control")
+     * resolve nothing without the source, so the ability's source card and — when the source is a
+     * permanent — its controller must travel with the predicate.
+     */
+    private FilterContext sourceFilterContext(TargetValidationContext ctx) {
+        FilterContext filterContext = FilterContext.of(ctx.gameData());
+        if (ctx.sourceCard() != null) {
+            filterContext = filterContext.withSourceCardId(ctx.sourceCard().getId());
+            UUID controllerId = findSourcePermanentController(ctx);
+            if (controllerId != null) {
+                filterContext = filterContext.withSourceControllerId(controllerId);
+            }
+        }
+        return filterContext;
     }
 
     public void validateEffectTargets(List<CardEffect> effects, TargetValidationContext context) {

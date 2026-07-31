@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -24,6 +25,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 /**
@@ -162,7 +165,8 @@ class TargetValidationServiceSpecTest {
     void predicateNarrowingRejectsNonMatch() {
         Permanent perm = permanentOnBattlefield("Runeclaw Bear", CardType.CREATURE);
         PermanentPredicate predicate = new PermanentIsArtifactPredicate();
-        when(predicateEvaluationService.matchesPermanentPredicate(gd, perm, predicate)).thenReturn(false);
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(perm), eq(predicate), any(FilterContext.class)))
+                .thenReturn(false);
 
         assertThat(check(new PermanentBenignWithPredicateEffect(predicate), perm.getId()))
                 .contains("Target does not match the required predicate");
@@ -173,7 +177,8 @@ class TargetValidationServiceSpecTest {
     void predicateNarrowingAcceptsMatch() {
         Permanent perm = permanentOnBattlefield("Ornithopter", CardType.ARTIFACT);
         PermanentPredicate predicate = new PermanentIsArtifactPredicate();
-        when(predicateEvaluationService.matchesPermanentPredicate(gd, perm, predicate)).thenReturn(true);
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(perm), eq(predicate), any(FilterContext.class)))
+                .thenReturn(true);
 
         assertThat(check(new PermanentBenignWithPredicateEffect(predicate), perm.getId())).isEmpty();
     }

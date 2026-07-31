@@ -76,6 +76,9 @@ abstract class AbstractDamageHandlerTest {
         // controlled creatures) by dealCreatureDamage; the second UUID is null on the player path, so match with any().
         lenient().when(damagePreventionService.applyTurnDamageRedirectToCreature(eq(gd), any(), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));
+        // Martyrdom redirect is likewise a pass-through — dealDamageToPlayer calls it unconditionally.
+        lenient().when(damagePreventionService.applyPlayerNextDamageRedirectShields(eq(gd), any(), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(2));
         setUpHandler();
     }
 

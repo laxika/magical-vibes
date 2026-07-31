@@ -91,7 +91,12 @@ class CardEffectTargetingConsistencyTest {
             "TargetPermanentControllerDrawsCardEffect",
             // Pre-resolved: EACH_UPKEEP_TRIGGERED carries Emberwilde Djinn's active player on the
             // stack entry, so this effect never asks the shared pipeline to choose a player.
-            "TargetPlayerMayPayManaOrLifeEffect"
+            "TargetPlayerMayPayManaOrLifeEffect",
+            // Pre-resolved: in a two-player game the sole opponent of the resolving controller is
+            // derived rather than chosen (Phelddagrif, Soldevi Heretic), leaving the entry's target
+            // slot free for a sibling effect on the same spell that does target.
+            "TargetOpponentCreatesTokenEffect",
+            "TargetOpponentMayDrawCardEffect"
     );
 
     @Test
