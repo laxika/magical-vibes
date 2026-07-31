@@ -440,7 +440,7 @@ class TargetLegalityServiceTest {
         void throwsWhenTargetCantBeTargetedBySpellColor() {
             Permanent target = addPermanent(player2Id, createCreature("Strider", CardColor.GREEN));
             Card spell = createTargetingSpell("Blue Bolt", CardColor.BLUE);
-            when(gameQueryService.cantBeTargetedBySpellColor(gd, target, CardColor.BLUE)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySpellColor(gd, target, CardColor.BLUE, player1Id)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
@@ -1277,7 +1277,7 @@ class TargetLegalityServiceTest {
             spell.setColor(CardColor.BLUE);
             Permanent target = addPermanent(player2Id, createCreature("Strider", CardColor.GREEN));
             when(gameQueryService.isCreature(gd, target)).thenReturn(true);
-            when(gameQueryService.cantBeTargetedBySpellColor(gd, target, CardColor.BLUE)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySpellColor(gd, target, CardColor.BLUE, player1Id)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
                     List.of(target.getId()), player1Id))
@@ -1503,7 +1503,7 @@ class TargetLegalityServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
                     spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
-            when(gameQueryService.cantBeTargetedBySpellColor(gd, target, CardColor.RED)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySpellColor(gd, target, CardColor.RED, player1Id)).thenReturn(true);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
         }

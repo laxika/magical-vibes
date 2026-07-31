@@ -55,6 +55,7 @@ class QuickenTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.setHand(player1, List.of(new Divination(), new Divination()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 

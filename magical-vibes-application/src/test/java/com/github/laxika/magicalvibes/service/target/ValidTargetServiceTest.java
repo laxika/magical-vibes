@@ -296,7 +296,7 @@ class ValidTargetServiceTest {
             Card creatureCard = createCreatureCard();
             Permanent perm = new Permanent(creatureCard);
 
-            when(gameQueryService.cantBeTargetedBySpellColor(gameData, perm, CardColor.RED)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySpellColor(gameData, perm, CardColor.RED, player1Id)).thenReturn(true);
 
             boolean result = validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spell, player1Id);
 

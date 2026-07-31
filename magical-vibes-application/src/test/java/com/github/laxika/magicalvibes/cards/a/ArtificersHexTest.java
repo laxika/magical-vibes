@@ -53,6 +53,7 @@ class ArtificersHexTest extends BaseCardTest {
         addHexOn(player1, shield);
 
         advanceToUpkeep(player1);
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(creature.getId()));
@@ -69,6 +70,7 @@ class ArtificersHexTest extends BaseCardTest {
         addHexOn(player1, shield);
 
         advanceToUpkeep(player1);
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(creature.getId()));

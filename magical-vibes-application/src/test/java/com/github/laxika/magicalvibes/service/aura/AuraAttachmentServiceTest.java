@@ -402,6 +402,7 @@ class AuraAttachmentServiceTest {
 
             when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
             when(gameQueryService.hasProtectionFromSource(gd, host, equipment)).thenReturn(false);
+            when(gameQueryService.isCreature(gd, equipment)).thenReturn(false);
             when(gameQueryService.isCreature(gd, host)).thenReturn(false);
 
             var result = service.enforceAttachmentLegality(gd);
@@ -442,6 +443,7 @@ class AuraAttachmentServiceTest {
 
             when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
             when(gameQueryService.hasProtectionFromSource(gd, host, equipment)).thenReturn(false);
+            when(gameQueryService.isCreature(gd, equipment)).thenReturn(false);
             when(gameQueryService.isCreature(gd, host)).thenReturn(true);
 
             var result = service.enforceAttachmentLegality(gd);
