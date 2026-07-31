@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -70,6 +71,8 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -101,6 +104,7 @@ public class ActivatedAbilityExecutionService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final AmountEvaluationService amountEvaluationService;
+    private final ConditionEvaluationService conditionEvaluationService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
@@ -489,7 +493,22 @@ public class ActivatedAbilityExecutionService {
             }
         }
 
+        // ConditionalEffect riders ("If you control a Nissa planeswalker, you gain 2 life") are
+        // evaluated here and unwrapped to their inner effect when the condition is met; unmet
+        // conditions drop the rider. Supported wrapped riders are the same fixed set below.
+        List<CardEffect> effectsToResolve = new ArrayList<>(snapshotEffects.size());
         for (CardEffect effect : snapshotEffects) {
+            if (effect instanceof ConditionalEffect conditional) {
+                if (conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forPermanent(permanent, playerId))) {
+                    effectsToResolve.add(conditional.wrapped());
+                }
+            } else {
+                effectsToResolve.add(effect);
+            }
+        }
+
+        for (CardEffect effect : effectsToResolve) {
             if ((dampingReplacement || twistReplacement) && effect instanceof ManaProducingEffect) {
                 continue;
             }

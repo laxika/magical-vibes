@@ -21,8 +21,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link TormentOfHailfireEffect}: "Repeat the following process X times. Each opponent
- * loses N life unless that player sacrifices a nonland permanent of their choice or discards a card."
+ * Resolves {@link TormentOfHailfireEffect}: "Repeat the following process N times. Each opponent
+ * loses lifeLoss life unless that player sacrifices a nonland permanent of their choice or discards a
+ * card." {@code N} is {@link TormentOfHailfireEffect#fixedIterations()} when non-null, otherwise the
+ * stack entry's {@code xValue}.
  *
  * <p>The flow is driven one opponent at a time and re-runs on every choice completion (kept alive via
  * {@link GameData#rerunCurrentEffectAfterInteraction}), mirroring
@@ -52,15 +54,19 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        int lifeLoss = ((TormentOfHailfireEffect) effect).lifeLoss();
+        TormentOfHailfireEffect torment = (TormentOfHailfireEffect) effect;
+        int lifeLoss = torment.lifeLoss();
         TormentState state = gameData.torment;
         String sourceName = entry.getCard().getName();
 
         if (!state.active) {
-            // Fresh entry: seed the iteration counter (X) and start processing.
+            // Fresh entry: seed the iteration counter and start processing.
             state.reset();
             state.active = true;
-            state.remainingIterations = Math.max(0, entry.getXValue());
+            int iterations = torment.fixedIterations() != null
+                    ? torment.fixedIterations()
+                    : entry.getXValue();
+            state.remainingIterations = Math.max(0, iterations);
             advance(gameData, entry, sourceName, lifeLoss);
             return;
         }

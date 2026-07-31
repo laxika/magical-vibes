@@ -699,6 +699,10 @@ public class TargetLegalityService {
             validateControlledByFirstTarget(gameData, targetIds);
             return;
         }
+        if (constraint == MultiTargetConstraint.AT_MOST_TWO_CREATURES_AND_TWO_LANDS) {
+            validateAtMostTwoCreaturesAndTwoLands(gameData, targetIds);
+            return;
+        }
         List<Permanent> targets = targetIds.stream()
                 .map(id -> gameQueryService.findPermanentById(gameData, id))
                 .filter(java.util.Objects::nonNull)
@@ -719,9 +723,50 @@ public class TargetLegalityService {
                                     "Chosen permanents must share an artifact, creature, or land type");
                         }
                     }
+                    case CONTROLLED_BY_FIRST_TARGET, AT_MOST_TWO_CREATURES_AND_TWO_LANDS -> {
+                        // Handled by early returns above.
+                    }
                 }
             }
         }
+    }
+
+    /**
+     * "Up to two target creatures and up to two target lands" — each permanent consumes one target
+     * slot; dual-typed permanents may be assigned to either quota.
+     */
+    private void validateAtMostTwoCreaturesAndTwoLands(GameData gameData, List<UUID> targetIds) {
+        if (!fitsAtMostTwoCreaturesAndTwoLands(gameData, targetIds)) {
+            throw new IllegalStateException(
+                    "Must target at most two creatures and at most two lands");
+        }
+    }
+
+    public boolean fitsAtMostTwoCreaturesAndTwoLands(GameData gameData, List<UUID> targetIds) {
+        int pureCreatures = 0;
+        int pureLands = 0;
+        int duals = 0;
+        for (UUID id : targetIds) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+            if (permanent == null) {
+                continue;
+            }
+            boolean creature = gameQueryService.isCreature(gameData, permanent);
+            boolean land = gameQueryService.isLand(gameData, permanent);
+            if (creature && land) {
+                duals++;
+            } else if (creature) {
+                pureCreatures++;
+            } else if (land) {
+                pureLands++;
+            } else {
+                return false;
+            }
+        }
+        if (pureCreatures > 2 || pureLands > 2) {
+            return false;
+        }
+        return duals <= (2 - pureCreatures) + (2 - pureLands);
     }
 
     /**

@@ -76,7 +76,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD) {
-            resolveMayPutOntoBattlefield(gameData, entry, e, lookCount);
+            resolveMayPutOntoBattlefield(gameData, entry, e, lookCount, chooseCount);
         } else if (e.chosenDestination() == LibrarySearchDestination.TOP_OF_LIBRARY) {
             resolvePutOneOnTop(gameData, entry, lookCount);
         } else if (e.optional()) {
@@ -94,16 +94,18 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
-    // ===== you may put one matching card onto the battlefield, rest on the bottom =====
-    // (Mayael the Anima; Mitotic Manipulation via CardSharesNameWithAPermanentPredicate)
+    // you may put matching card(s) onto the battlefield, rest on the bottom
+    // (Mayael the Anima / Mitotic Manipulation: one card via LibrarySearch;
+    //  Nissa, Genesis Mage −10: any number via LibraryRevealChoice + random bottom)
 
     private void resolveMayPutOntoBattlefield(GameData gameData, StackEntry entry,
-            LookAtTopCardsEffect e, int lookCount) {
+            LookAtTopCardsEffect e, int lookCount, int chooseCount) {
         LibraryRevealSupport.TopCardsResult result =
                 libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
         if (result == null) return;
         UUID controllerId = result.controllerId();
         List<Card> topCards = result.topCards();
+        String playerName = result.playerName();
 
         UUID sourceCardId = entry.getCard() != null ? entry.getCard().getId() : null;
         List<Card> matchingCards = topCards.stream()
@@ -111,22 +113,44 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         card, e.choosePredicate(), sourceCardId, gameData, controllerId))
                 .toList();
 
+        boolean randomBottom = e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM;
+        boolean anyNumber = chooseCount > 1 || randomBottom;
+
         if (matchingCards.isEmpty()) {
-            libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, topCards);
+            if (randomBottom) {
+                java.util.Collections.shuffle(topCards);
+                gameData.playerDecks.get(controllerId).addAll(topCards);
+                gameLogService.append(gameData, GameLog.text(playerName
+                        + " finds no eligible cards. All cards are put on the bottom of their library in a random order."));
+            } else {
+                libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, topCards);
+            }
             return;
         }
 
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
-                LibrarySearchParams.builder(controllerId, matchingCards)
-                        .canFailToFind(true)
-                        .sourceCards(topCards)
-                        .reorderRemainingToBottom(true)
-                        .shuffleAfterSelection(false)
-                        .prompt("You may put one of these cards onto the battlefield.")
-                        .destination(LibrarySearchDestination.BATTLEFIELD)
-                        .build(),
-                "You may put one of these cards onto the battlefield.",
-                true));
+        if (!anyNumber) {
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                    LibrarySearchParams.builder(controllerId, matchingCards)
+                            .canFailToFind(true)
+                            .sourceCards(topCards)
+                            .reorderRemainingToBottom(true)
+                            .shuffleAfterSelection(false)
+                            .prompt("You may put one of these cards onto the battlefield.")
+                            .destination(LibrarySearchDestination.BATTLEFIELD)
+                            .build(),
+                    "You may put one of these cards onto the battlefield.",
+                    true));
+            return;
+        }
+
+        int maxCount = Math.min(chooseCount, matchingCards.size());
+        String prompt = randomBottom
+                ? "Choose any number of eligible cards to put onto the battlefield. The rest go to the bottom of your library in a random order."
+                : "Choose any number of eligible cards to put onto the battlefield. The rest go to the bottom of your library.";
+        List<UUID> cardIds = matchingCards.stream().map(Card::getId).toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
+                controllerId, topCards, cardIds, false, false, !randomBottom, randomBottom, false, 0, null,
+                maxCount, prompt));
     }
 
     // ===== put one of the looked-at cards on top, rest on the bottom (Cream of the Crop) =====

@@ -85,6 +85,7 @@ class ActivatedAbilityExecutionServiceTest {
     @Mock private StateBasedActionService stateBasedActionService;
     @Mock private GameQueryService gameQueryService;
     @Mock private com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
     @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
@@ -288,6 +289,53 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             verify(lifeSupport).applyGainLife(gameData, player1Id, 1);
+        }
+
+        @Test
+        @DisplayName("ConditionalEffect GainLife rider applies only when condition is met")
+        void conditionalGainLifeRiderAppliesWhenConditionMet() {
+            Card card = createCard("Avid Reclaimer", CardType.CREATURE);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            var condition = new com.github.laxika.magicalvibes.model.condition.ControlsPermanent(
+                    new com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate(CardSubtype.NISSA));
+            List<CardEffect> effects = List.of(
+                    new AwardManaEffect(ManaColor.GREEN, 1),
+                    new com.github.laxika.magicalvibes.model.effect.ConditionalEffect(condition, new GainLifeEffect(2)));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects,
+                    "{T}: Add {G}. If you control a Nissa planeswalker, you gain 2 life.");
+
+            stubIsCreature(perm, true);
+            when(amountEvaluationService.evaluate(eq(gameData), eq(new Fixed(1)), any())).thenReturn(1);
+            when(amountEvaluationService.evaluate(eq(gameData), eq(new Fixed(2)), any())).thenReturn(2);
+            when(conditionEvaluationService.isMet(eq(gameData), eq(condition), any())).thenReturn(true);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            verify(lifeSupport).applyGainLife(gameData, player1Id, 2);
+            assertThat(gameData.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("ConditionalEffect GainLife rider is skipped when condition is not met")
+        void conditionalGainLifeRiderSkippedWhenConditionNotMet() {
+            Card card = createCard("Avid Reclaimer", CardType.CREATURE);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            var condition = new com.github.laxika.magicalvibes.model.condition.ControlsPermanent(
+                    new com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate(CardSubtype.NISSA));
+            List<CardEffect> effects = List.of(
+                    new AwardManaEffect(ManaColor.GREEN, 1),
+                    new com.github.laxika.magicalvibes.model.effect.ConditionalEffect(condition, new GainLifeEffect(2)));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects,
+                    "{T}: Add {G}. If you control a Nissa planeswalker, you gain 2 life.");
+
+            stubIsCreature(perm, true);
+            when(amountEvaluationService.evaluate(eq(gameData), eq(new Fixed(1)), any())).thenReturn(1);
+            when(conditionEvaluationService.isMet(eq(gameData), eq(condition), any())).thenReturn(false);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            verify(lifeSupport, never()).applyGainLife(any(), any(), org.mockito.ArgumentMatchers.anyInt());
+            assertThat(gameData.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(1);
         }
 
         @Test

@@ -27,10 +27,11 @@ import java.util.UUID;
  * and creature-only) — after each single-name pick resolves the next name in the queue begins its
  * own search;
  * {@code remainingToHandPicks} is the queue of descriptors still to search for, one card per
- * descriptor to hand, in a "search for a white card, a blue card, ..." (Conflux) or "search for an
- * Island card, a Swamp card, and a Mountain card" (Gem of Becoming) flow — after each single-pick
- * search resolves the next descriptor begins its own search, and the library is shuffled once when
- * the queue empties;
+ * descriptor to hand, in a "search for a white card, a blue card, ..." (Conflux), "search for an
+ * Island card, a Swamp card, and a Mountain card" (Gem of Becoming), or "search for a card named
+ * Forest, a card named Brambleweft Behemoth, ..." (Nissa's Encouragement, library remainder after
+ * graveyard auto-takes) flow — after each single-pick search resolves the next descriptor begins
+ * its own search, and the library is shuffled once when the queue empties;
  * {@code naturalBalance} is the APNAP remainder of Natural Balance's per-player "up to X basic
  * lands onto the battlefield" searches plus the forced land sacrifices to perform once every
  * search has resolved.
@@ -50,21 +51,32 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
 
     /**
      * One queued "search your library for a &lt;descriptor&gt; card, reveal it, put it into your hand"
-     * pick. Exactly one of {@code color} (Conflux) and {@code subtype} (Gem of Becoming) is set; it
-     * selects the library cards offered for that pick and names it in the prompt.
+     * pick. Exactly one of {@code color} (Conflux), {@code subtype} (Gem of Becoming), or
+     * {@code cardName} (Nissa's Encouragement) is set; it selects the library cards offered for that
+     * pick and names it in the prompt.
      */
-    public record ToHandPick(CardColor color, CardSubtype subtype) {
+    public record ToHandPick(CardColor color, CardSubtype subtype, String cardName) {
 
         public static ToHandPick ofColor(CardColor color) {
-            return new ToHandPick(color, null);
+            return new ToHandPick(color, null, null);
         }
 
         public static ToHandPick ofSubtype(CardSubtype subtype) {
-            return new ToHandPick(null, subtype);
+            return new ToHandPick(null, subtype, null);
         }
 
-        /** The descriptor spliced into the prompt and game log ("a blue card", "an Island card"). */
+        public static ToHandPick ofName(String cardName) {
+            return new ToHandPick(null, null, cardName);
+        }
+
+        /**
+         * Colour/subtype descriptor spliced into "a &lt;descriptor&gt; card" prompts
+         * ("blue", "Island"). Named picks use {@link #cardName()} directly instead.
+         */
         public String describe() {
+            if (cardName != null) {
+                return cardName;
+            }
             return color != null ? color.name().toLowerCase() : subtype.getDisplayName();
         }
     }
@@ -173,6 +185,14 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
     /** The queue of subtypes still to search for, one card per subtype to hand (Gem of Becoming). */
     public static LibrarySearchFollowUp subtypeToHandPicks(List<CardSubtype> subtypes) {
         return toHandPicks(subtypes.stream().map(ToHandPick::ofSubtype).toList());
+    }
+
+    /**
+     * The queue of exact card names still to search for, one card per name to hand
+     * (Nissa's Encouragement library remainder).
+     */
+    public static LibrarySearchFollowUp namedToHandPicks(List<String> names) {
+        return toHandPicks(names.stream().map(ToHandPick::ofName).toList());
     }
 
     private static LibrarySearchFollowUp toHandPicks(List<ToHandPick> picks) {

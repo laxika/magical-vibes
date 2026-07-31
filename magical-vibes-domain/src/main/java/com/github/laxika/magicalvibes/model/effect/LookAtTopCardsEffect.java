@@ -34,6 +34,9 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *   <li>{@link #mayPutMatchingOntoBattlefield(int, CardPredicate)} — you may put one matching card
  *       onto the battlefield, rest on the bottom (Mayael the Anima; Mitotic Manipulation via
  *       {@code CardSharesNameWithAPermanentPredicate}).</li>
+ *   <li>{@link #mayPutAnyNumberMatchingOntoBattlefieldRestOnBottomRandom(int, CardPredicate)} — you
+ *       may put any number of matching cards onto the battlefield; the rest go on the bottom in a
+ *       random order (Nissa, Genesis Mage −10).</li>
  *   <li>{@link #putOneOnTopRestOnBottom(int)} — put one back on top, rest on the bottom (Cream of
  *       the Crop's materialised trigger).</li>
  * </ul>
@@ -135,6 +138,17 @@ public record LookAtTopCardsEffect(
     public static LookAtTopCardsEffect mayPutMatchingOntoBattlefield(int lookCount, CardPredicate choosePredicate) {
         return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), choosePredicate,
                 LookDestination.BOTTOM_OF_LIBRARY, false, LibrarySearchDestination.BATTLEFIELD, true);
+    }
+
+    /**
+     * You may put any number of matching cards onto the battlefield; the rest go on the bottom of
+     * the library in a random order (Nissa, Genesis Mage −10).
+     */
+    public static LookAtTopCardsEffect mayPutAnyNumberMatchingOntoBattlefieldRestOnBottomRandom(
+            int lookCount, CardPredicate choosePredicate) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(lookCount), choosePredicate,
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
+                LibrarySearchDestination.BATTLEFIELD, true);
     }
 
     /** Put one of the looked-at cards on top of your library and the rest on the bottom (Cream of the Crop). */

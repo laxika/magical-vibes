@@ -526,6 +526,11 @@ class AiTargetSelector {
         }
         Set<UUID> chosenSoFar = new HashSet<>(alreadyChosen);
         chosenSoFar.addAll(chosen);
+        if (constraint == MultiTargetConstraint.AT_MOST_TWO_CREATURES_AND_TWO_LANDS) {
+            List<UUID> trial = new ArrayList<>(chosenSoFar);
+            trial.add(candidate.getId());
+            return targetLegalityService.fitsAtMostTwoCreaturesAndTwoLands(gameData, trial);
+        }
         for (UUID chosenId : chosenSoFar) {
             Permanent other = gameQueryService.findPermanentById(gameData, chosenId);
             UUID candidateControllerId = gameQueryService.findPermanentController(gameData, candidate.getId());
@@ -544,6 +549,7 @@ class AiTargetSelector {
                         gameQueryService.sharesArtifactCreatureOrLandType(other, candidate);
                 case CONTROLLED_BY_FIRST_TARGET -> java.util.Objects.equals(candidateControllerId,
                         gameQueryService.findPermanentController(gameData, other.getId()));
+                case AT_MOST_TWO_CREATURES_AND_TWO_LANDS -> true; // handled above
             };
             if (!compatible) {
                 return false;

@@ -21,5 +21,11 @@ public enum MultiTargetConstraint {
      * permanent (e.g. Chandra, Pyromaster's "up to one target creature that player or that
      * planeswalker's controller controls").
      */
-    CONTROLLED_BY_FIRST_TARGET
+    CONTROLLED_BY_FIRST_TARGET,
+    /**
+     * At most two of the chosen permanents may be creatures and at most two may be lands
+     * ("Untap up to two target creatures and up to two target lands" — Nissa, Genesis Mage +2).
+     * Dual-typed permanents (creature lands) may be assigned to either quota.
+     */
+    AT_MOST_TWO_CREATURES_AND_TWO_LANDS
 }

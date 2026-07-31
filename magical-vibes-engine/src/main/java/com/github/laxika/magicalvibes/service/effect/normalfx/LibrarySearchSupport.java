@@ -210,12 +210,12 @@ public class LibrarySearchSupport {
 
     /**
      * Starts the next "search for a card matching the queued descriptor, reveal it, put it into your
-     * hand" pick from the follow-up's queue (a colour for Conflux, a subtype for Gem of Becoming).
-     * Each queue entry is one descriptor, searched in order; the advanced remainder rides the begun
-     * search. Descriptors with no matching card left in the library are skipped without shuffling.
-     * When the queue is exhausted the library is shuffled once (the single shuffle for the whole
-     * search) and false is returned; returns true if a search was begun, false if the search is
-     * prevented or no descriptor remains to search.
+     * hand" pick from the follow-up's queue (a colour for Conflux, a subtype for Gem of Becoming, or
+     * an exact card name for Nissa's Encouragement). Each queue entry is one descriptor, searched in
+     * order; the advanced remainder rides the begun search. Descriptors with no matching card left
+     * in the library are skipped without shuffling. When the queue is exhausted the library is
+     * shuffled once (the single shuffle for the whole search) and false is returned; returns true if
+     * a search was begun, false if the search is prevented or no descriptor remains to search.
      */
     public boolean startNextToHandPick(GameData gameData, UUID playerId, LibrarySearchFollowUp followUp) {
         if (isSearchPrevented(gameData, playerId)) return false;
@@ -230,17 +230,25 @@ public class LibrarySearchSupport {
             if (matches.isEmpty()) {
                 continue;
             }
-            String descriptor = pick.describe();
-            sendLibrarySearchToPlayer(gameData, playerId,
-                    LibrarySearchParams.builder(playerId, new ArrayList<>(matches))
-                            .reveals(true)
-                            .canFailToFind(true)
-                            .destination(LibrarySearchDestination.HAND)
-                            .shuffleAfterSelection(false)
-                            .followUp(followUp.withRemainingToHandPicks(remaining))
-                            .build(),
-                    "Search your library for a " + descriptor + " card to reveal and put into your hand.", true,
-                    playerName + " searches their library for a " + descriptor + " card.");
+            String prompt;
+            String logMsg;
+            var builder = LibrarySearchParams.builder(playerId, new ArrayList<>(matches))
+                    .reveals(true)
+                    .canFailToFind(true)
+                    .destination(LibrarySearchDestination.HAND)
+                    .shuffleAfterSelection(false)
+                    .followUp(followUp.withRemainingToHandPicks(remaining));
+            if (pick.cardName() != null) {
+                builder.filterCardName(pick.cardName());
+                prompt = "Search your library for a card named " + pick.cardName()
+                        + " to reveal and put into your hand.";
+                logMsg = playerName + " searches their library for a card named " + pick.cardName() + ".";
+            } else {
+                String descriptor = pick.describe();
+                prompt = "Search your library for a " + descriptor + " card to reveal and put into your hand.";
+                logMsg = playerName + " searches their library for a " + descriptor + " card.";
+            }
+            sendLibrarySearchToPlayer(gameData, playerId, builder.build(), prompt, true, logMsg);
             return true;
         }
 
@@ -253,6 +261,9 @@ public class LibrarySearchSupport {
     }
 
     private static boolean matchesToHandPick(Card card, LibrarySearchFollowUp.ToHandPick pick) {
+        if (pick.cardName() != null) {
+            return pick.cardName().equals(card.getName());
+        }
         return pick.color() != null
                 ? card.getColors().contains(pick.color())
                 : card.getSubtypes().contains(pick.subtype());

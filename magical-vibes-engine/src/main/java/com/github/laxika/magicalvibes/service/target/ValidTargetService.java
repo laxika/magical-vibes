@@ -327,6 +327,17 @@ public class ValidTargetService {
                                 gameQueryService.findPermanentController(gameData, id)));
             }
 
+            // "Up to two creatures and up to two lands" (Nissa, Genesis Mage +2): drop candidates
+            // that would make a legal assignment to the two quotas impossible.
+            if (ability.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_TWO_CREATURES_AND_TWO_LANDS) {
+                List<UUID> already = alreadySelectedIds != null ? alreadySelectedIds : List.of();
+                validPermanentIds.removeIf(id -> {
+                    List<UUID> trial = new ArrayList<>(already);
+                    trial.add(id);
+                    return !targetLegalityService.fitsAtMostTwoCreaturesAndTwoLands(gameData, trial);
+                });
+            }
+
             String prompt = "Select targets for " + sourceCard.getName() + " ability";
             return new ValidTargetsResponse(validPermanentIds, validPlayerIds, ability.getMinTargets(), ability.getMaxTargets(), prompt);
         }

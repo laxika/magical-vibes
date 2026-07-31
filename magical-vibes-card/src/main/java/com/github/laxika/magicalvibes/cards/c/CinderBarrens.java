@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "280")
+@CardRegistration(set = "HOU", collectorNumber = "209")
 public class CinderBarrens extends Card {
 
     public CinderBarrens() {
