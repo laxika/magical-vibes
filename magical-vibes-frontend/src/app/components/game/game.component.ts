@@ -1398,6 +1398,11 @@ export class GameComponent implements OnInit, OnDestroy {
     for (const se of g.stack) {
       if (se.cardId === entry.targetId) return se.card.name;
     }
+    for (const graveyard of g.graveyards) {
+      for (const card of graveyard) {
+        if (card.id === entry.targetId) return card.name;
+      }
+    }
     return null;
   }
 
