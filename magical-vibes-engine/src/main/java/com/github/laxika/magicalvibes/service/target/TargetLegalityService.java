@@ -576,14 +576,23 @@ public class TargetLegalityService {
      * where each target type is validated separately.
      */
     public void validateGraveyardEffectTargetOnly(GameData gameData, Card card, UUID targetId) {
-        List<CardEffect> graveyardEffects = card.getEffects(EffectSlot.SPELL).stream()
+        validateGraveyardEffectTargetOnly(gameData, card, card.getEffects(EffectSlot.SPELL), targetId, 0);
+    }
+
+    /**
+     * Mixed graveyard + permanent validation against an explicit effect list (modal unwrap) and
+     * the announced X (Profane Command's MV ≤ X reanimate mode).
+     */
+    public void validateGraveyardEffectTargetOnly(GameData gameData, Card card, List<CardEffect> effects,
+                                                  UUID targetId, int xValue) {
+        List<CardEffect> graveyardEffects = effects.stream()
                 .filter(e -> e.targetSpec().category().isGraveyard())
                 // Unwrap conditional reanimation (e.g. Torrent of Souls' "if {B} was spent") so the
                 // inner effect's card-type filter is enforced when the graveyard target is chosen.
                 .map(e -> e instanceof ConditionalEffect conditional ? conditional.wrapped() : e)
                 .toList();
         targetValidationService.validateEffectTargets(graveyardEffects,
-                new TargetValidationContext(gameData, targetId, Zone.GRAVEYARD, card));
+                new TargetValidationContext(gameData, targetId, Zone.GRAVEYARD, card, xValue));
     }
 
     public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds, UUID controllerId) {

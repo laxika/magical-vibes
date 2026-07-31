@@ -339,7 +339,7 @@ public class SpellCastingService {
                                 }
                             }
                         } else if (chosen.targetFilter() != null) {
-                            SpellTarget spellTarget = card.target(chosen.targetFilter());
+                            SpellTarget spellTarget = declareModeTarget(card, chosen);
                             for (CardEffect modeEffect : chosen.effects()) {
                                 card.registerEffectTargetIndex(modeEffect, spellTarget.getIndex());
                             }
@@ -350,6 +350,20 @@ public class SpellCastingService {
             }
         }
         return effectiveXValue;
+    }
+
+    /**
+     * Declares the cast-time target group for a chosen modal mode from its {@code targetFilter}
+     * and optional min/max/X-scaled bounds (Profane Command's "up to X target creatures").
+     */
+    private SpellTarget declareModeTarget(Card card, ChooseOneEffect.ChooseOneOption chosen) {
+        if (chosen.xScaledTargets()) {
+            return card.targetX(chosen.targetFilter(), chosen.maxTargets());
+        }
+        if (chosen.minTargets() != 1 || chosen.maxTargets() != 1) {
+            return card.target(chosen.targetFilter(), chosen.minTargets(), chosen.maxTargets());
+        }
+        return card.target(chosen.targetFilter());
     }
 
     private void applyModalEtbTargetFilter(Card card, int effectiveXValue) {
@@ -1086,7 +1100,9 @@ public class SpellCastingService {
                 }
                 if (card.getMaxTargets() > 0) {
                     // Mixed graveyard + permanent targeting: validate only graveyard effects
-                    targetLegalityService.validateGraveyardEffectTargetOnly(gameData, card, targetId);
+                    // (use the modal-unwrapped effect list + paid X so MV≤X / MV=X gates fire)
+                    targetLegalityService.validateGraveyardEffectTargetOnly(
+                            gameData, card, graveyardTargetingSource, targetId, effectiveXValue);
                 } else {
                     targetLegalityService.validateEffectTargetInZone(gameData, card, graveyardTargetingSource, targetId, Zone.GRAVEYARD, effectiveXValue);
                 }
@@ -1104,7 +1120,8 @@ public class SpellCastingService {
                 }
                 if (card.getMaxTargets() > 0) {
                     // Mixed graveyard + permanent targeting: validate only graveyard effects
-                    targetLegalityService.validateGraveyardEffectTargetOnly(gameData, card, targetId);
+                    targetLegalityService.validateGraveyardEffectTargetOnly(
+                            gameData, card, graveyardTargetingSource, targetId, effectiveXValue);
                 } else {
                     targetLegalityService.validateEffectTargetInZone(gameData, card, graveyardTargetingSource, targetId, Zone.GRAVEYARD);
                 }

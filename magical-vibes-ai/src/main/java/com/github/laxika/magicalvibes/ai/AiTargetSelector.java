@@ -715,6 +715,11 @@ class AiTargetSelector {
                             .filter(c -> c.getManaValue() >= 1 && c.getManaValue() <= maxAffordableX)
                             .toList();
                 }
+                if (rge.requiresManaValueAtMostX() && maxAffordableX < Integer.MAX_VALUE) {
+                    candidates = candidates.stream()
+                            .filter(c -> c.getManaValue() <= maxAffordableX)
+                            .toList();
+                }
             } else {
                 // For non-return effects: controller-only → own graveyard,
                 // canTargetAnyGraveyard → all graveyards, otherwise → opponent's

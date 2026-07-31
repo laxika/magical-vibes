@@ -84,6 +84,9 @@ public class GraveyardTargetValidators {
         if (effect.requiresManaValueEqualsX() && graveyardCard.getManaValue() != ctx.xValue()) {
             throw new IllegalStateException("Target card's mana value must equal X (" + ctx.xValue() + ")");
         }
+        if (effect.requiresManaValueAtMostX() && graveyardCard.getManaValue() > ctx.xValue()) {
+            throw new IllegalStateException("Target card's mana value must be " + ctx.xValue() + " or less");
+        }
         if (effect.maxManaValueEqualsLifeGainedThisTurn()) {
             UUID controllerId = tvs.findSourcePermanentController(ctx);
             int lifeGained = controllerId == null ? 0 : ctx.gameData().getLifeGainedThisTurn(controllerId);

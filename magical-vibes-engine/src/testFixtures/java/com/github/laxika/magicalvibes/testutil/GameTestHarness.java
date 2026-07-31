@@ -640,6 +640,28 @@ public class GameTestHarness {
         gameService.playModalXCard(gameData, player, cardIndex, modeIndex, xValue, targetId);
     }
 
+    /**
+     * Cast a choose-two (or choose-N) modal sorcery that also has an {@code {X}} cost
+     * (e.g. Profane Command). Modes are encoded as a bitmask; {@code xValue} is the paid X.
+     */
+    public void castModalSorceryWithModesForX(Player player, int cardIndex, int choicesRequired,
+                                              int[] modeIndices, int xValue, List<UUID> targetIds) {
+        castModalSorceryWithModesForX(player, cardIndex, choicesRequired, modeIndices, xValue, null, targetIds);
+    }
+
+    /**
+     * Cast a choose-two modal {@code {X}} sorcery with an optional graveyard/spell {@code targetId}
+     * and permanent/player {@code targetIds} (Profane Command reanimate + another mode).
+     */
+    public void castModalSorceryWithModesForX(Player player, int cardIndex, int choicesRequired,
+                                              int[] modeIndices, int xValue, UUID targetId,
+                                              List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playModalXCard(gameData, player, cardIndex,
+                ChooseOneEffect.encodeModeSelection(choicesRequired, modeIndices),
+                xValue, targetId, targetIds);
+    }
+
     /** Cast a modal instant, choosing the mode at {@code modeIndex} and passing multiple targets. */
     public void castModalInstant(Player player, int cardIndex, int modeIndex, List<UUID> targetIds) {
         ensurePriority(player);

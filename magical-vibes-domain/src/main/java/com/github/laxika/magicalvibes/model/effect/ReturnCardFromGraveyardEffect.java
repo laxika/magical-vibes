@@ -89,6 +89,8 @@ import lombok.Builder;
  *                             {@link #exileIfLeavesBattlefield} flag — Shallow Grave has no such clause
  * @param requiresManaValueEqualsX {@code true} to restrict targeting to cards whose mana value equals
  *                             the spell's X value (e.g. Postmortem Lunge)
+ * @param requiresManaValueAtMostX {@code true} to restrict targeting to cards whose mana value is
+ *                             less than or equal to the spell's X value (e.g. Profane Command)
  * @param grantColor           when non-null, permanently grants this color to the returned creature
  *                             "in addition to its other colors" (e.g. Rise from the Grave)
  * @param grantSubtype         when non-null, permanently grants this subtype to the returned creature
@@ -164,6 +166,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean grantHaste,
         boolean exileAtEndStep,
         boolean requiresManaValueEqualsX,
+        boolean requiresManaValueAtMostX,
         CardColor grantColor,
         CardSubtype grantSubtype,
         boolean enterTapped,

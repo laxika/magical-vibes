@@ -767,6 +767,9 @@ public class ValidTargetService {
                         if (rge.requiresManaValueEqualsX() && c.getManaValue() != effectiveXValue) {
                             continue;
                         }
+                        if (rge.requiresManaValueAtMostX() && c.getManaValue() > effectiveXValue) {
+                            continue;
+                        }
                         if (rge.targetPutIntoGraveyardFromBattlefieldThisTurn()
                                 && !gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn
                                 .getOrDefault(playerId, Set.of()).contains(c.getId())) {

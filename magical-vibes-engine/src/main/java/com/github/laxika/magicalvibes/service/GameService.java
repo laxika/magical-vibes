@@ -320,13 +320,24 @@ public class GameService {
      * {@code modalXValue} carries the real X paid (e.g. Alabaster Potion).
      */
     public void playModalXCard(GameData gameData, Player player, int cardIndex, int modeIndex, int modalXValue, UUID targetId) {
+        playModalXCard(gameData, player, cardIndex, modeIndex, modalXValue, targetId, List.of());
+    }
+
+    /**
+     * Casts a modal {@code {X}} spell with an optional graveyard/spell {@code targetId} and
+     * permanent/player {@code targetIds} (e.g. Profane Command's choose-two + X).
+     * {@code modeIndex} is a 0-based mode for choose-one, or a negative bitmask from
+     * {@link com.github.laxika.magicalvibes.model.effect.ChooseOneEffect#encodeModeSelection}.
+     */
+    public void playModalXCard(GameData gameData, Player player, int cardIndex, int modeIndex, int modalXValue,
+                               UUID targetId, List<UUID> targetIds) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
-                () -> playModalXCard(gameData, actionPlayer, cardIndex, modeIndex, modalXValue, targetId))) return;
+                () -> playModalXCard(gameData, actionPlayer, cardIndex, modeIndex, modalXValue, targetId, targetIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
-            spellCastingService.playCard(gameData, player, cardIndex, modeIndex, targetId, null, List.of(), List.of(),
+            spellCastingService.playCard(gameData, player, cardIndex, modeIndex, targetId, null, targetIds, List.of(),
                     false, null, null, List.of(), null, null, false, null, modalXValue);
         }
     }

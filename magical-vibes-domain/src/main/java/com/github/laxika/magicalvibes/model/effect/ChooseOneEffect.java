@@ -113,28 +113,52 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
      * copy one instant/sorcery spell AND one creature spell) supplies {@code targetFilters} — one
      * per declared target — instead. When present, the modal cast declares one {@code target()} slot
      * per filter and maps each of the mode's effects (in order) to its own target index.
+     * <p>
+     * {@code minTargets}/{@code maxTargets}/{@code xScaledTargets} control the target group
+     * declared from {@code targetFilter} at unwrap time. Defaults are a single required target
+     * ({@code 1, 1, false}). Pass {@code xScaledTargets=true} with {@code minTargets=0} for
+     * "up to X target …" modes (Profane Command's fear mode) — the paid X bounds the count via
+     * {@link com.github.laxika.magicalvibes.model.Card#targetX}.
      */
     public record ChooseOneOption(String label, List<CardEffect> effects, TargetFilter targetFilter,
-                                  List<TargetFilter> targetFilters) {
+                                  List<TargetFilter> targetFilters, int minTargets, int maxTargets,
+                                  boolean xScaledTargets) {
+        public ChooseOneOption {
+            if (minTargets < 0) {
+                throw new IllegalArgumentException("minTargets must be >= 0");
+            }
+            if (maxTargets < minTargets) {
+                throw new IllegalArgumentException("maxTargets must be >= minTargets");
+            }
+        }
+
         public ChooseOneOption(String label, CardEffect effect) {
-            this(label, List.of(effect), null, null);
+            this(label, List.of(effect), null, null, 1, 1, false);
         }
 
         public ChooseOneOption(String label, CardEffect effect, TargetFilter targetFilter) {
-            this(label, List.of(effect), targetFilter, null);
+            this(label, List.of(effect), targetFilter, null, 1, 1, false);
         }
 
         public ChooseOneOption(String label, List<CardEffect> effects) {
-            this(label, effects, null, null);
+            this(label, effects, null, null, 1, 1, false);
         }
 
         public ChooseOneOption(String label, List<CardEffect> effects, TargetFilter targetFilter) {
-            this(label, effects, targetFilter, null);
+            this(label, effects, targetFilter, null, 1, 1, false);
         }
 
         /** Multi-target mode: one target filter per effect, mapped positionally. */
         public ChooseOneOption(String label, List<CardEffect> effects, List<TargetFilter> targetFilters) {
-            this(label, effects, null, targetFilters);
+            this(label, effects, null, targetFilters, 1, 1, false);
+        }
+
+        /**
+         * Mode whose target count scales with the spell's paid X ("up to X target creatures …").
+         * {@code cap} is only a sanity ceiling; the effective max is {@code min(X, cap)}.
+         */
+        public static ChooseOneOption upToXTargets(String label, CardEffect effect, TargetFilter filter, int cap) {
+            return new ChooseOneOption(label, List.of(effect), filter, null, 0, cap, true);
         }
 
         /** Backward-compatible accessor for single-effect modes (returns the first effect). */
