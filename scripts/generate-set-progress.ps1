@@ -911,7 +911,8 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
     // set *and* every card in it exists. A complete set the engine cannot use, or a supported
     // set with holes in it, fails the filter.
     if (state.filter === "full" && !(set.supported && isComplete(set))) { return false; }
-    if (state.filter === "started" && set.impl === 0) { return false; }
+    // Started but not finished: at least one printing implemented, and the set is not complete.
+    if (state.filter === "started" && (set.impl === 0 || isComplete(set))) { return false; }
 
     if (state.search) {
       var needle = state.search.toLowerCase();
