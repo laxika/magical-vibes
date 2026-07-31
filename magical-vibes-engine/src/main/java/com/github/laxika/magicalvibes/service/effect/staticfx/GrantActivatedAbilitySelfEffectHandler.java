@@ -37,7 +37,7 @@ public class GrantActivatedAbilitySelfEffectHandler implements StaticEffectHandl
         var grant = (GrantActivatedAbilityEffect) effect;
         if ((grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
                 || grant.scope() == GrantScope.ALL_OWN_CREATURES)
-                && support.matchesStaticFilter(context.target(), grant.filter())) {
+                && support.matchesStaticFilter(context, context.target(), grant.filter())) {
             accumulator.addActivatedAbility(grant.ability().withGrantSource(context.source().getId()));
         }
     }
