@@ -142,7 +142,10 @@ public class ScryfallOracleLoader implements OracleLoader {
         Thread.sleep(100);
 
         List<JsonNode> allCards = new ArrayList<>();
-        String url = "https://api.scryfall.com/cards/search?q=set:" + setCode.toLowerCase() + "&unique=prints";
+        // include_variations=true pulls lettered printings that are variations of a base card
+        // (Portal demo-game 6d/69d, etc.). Without it Scryfall omits them from set searches.
+        String url = "https://api.scryfall.com/cards/search?q=set:" + setCode.toLowerCase()
+                + "&unique=prints&include_variations=true";
 
         try (HttpClient client = HttpClient.newHttpClient()) {
             while (url != null) {

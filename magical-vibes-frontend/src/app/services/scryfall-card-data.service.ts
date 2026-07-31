@@ -80,7 +80,8 @@ export class ScryfallCardDataService {
   private async fetchSet(lowerSet: string, originalSetCode: string): Promise<void> {
     const allCards: Record<string, ScryfallCardData> = {};
 
-    let url: string | null = `https://api.scryfall.com/cards/search?q=set:${encodeURIComponent(lowerSet)}&unique=prints`;
+    let url: string | null =
+      `https://api.scryfall.com/cards/search?q=set:${encodeURIComponent(lowerSet)}&unique=prints&include_variations=true`;
 
     while (url) {
       const page: ScryfallSearchResponse = await this.fetchQueue.enqueueJson<ScryfallSearchResponse>(url);

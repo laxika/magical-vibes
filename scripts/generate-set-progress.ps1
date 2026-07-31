@@ -7,11 +7,14 @@
     SetList, and writes one static HTML file. The file is rewritten from scratch on every run, so
     deleting it and re-running restores it completely.
 
-    Set totals come from MTGJSON's baseSetSize rather than Scryfall's card_count: Scryfall counts
+    Set totals start from MTGJSON's baseSetSize rather than Scryfall's card_count: Scryfall counts
     every printing including foil variants, which triples the denominator for sets like 9ED (710
-    vs 350 real cards). Where the project registers printings beyond the base set (XLN, DOM ship
-    planeswalker-deck and buy-a-box cards above the base numbering) the denominator widens to the
-    implemented count so completion caps at 100% instead of exceeding it.
+    vs 350 real cards). When MTGJSON set card data is available, that size is refined to English
+    playable printings (digits with an optional a-d art letter), which drops foreign-language
+    alt-arts that Portal folds into baseSetSize and skips demo-game lettered alternatives that
+    duplicate a digit-only sibling. Where the project registers printings beyond the base set
+    (XLN, DOM ship planeswalker-deck and buy-a-box cards above the base numbering) the
+    denominator widens to the implemented count so completion caps at 100% instead of exceeding it.
 
     Everything the page needs is inlined except web fonts and the Keyrune set-symbol font, which
     load from CDNs.
@@ -71,7 +74,12 @@ if (-not $CachePath) {
     $CachePath = Join-Path $PSScriptRoot ".cache/SetList.json"
 }
 
+$setCacheDir = Join-Path $PSScriptRoot ".cache/sets"
 $userAgent = "magical-vibes-set-progress/1.0"
+
+# Same lettered art range the card browser keeps (Homelands 10a/10b, Fallen Empires a-d).
+$script:BaseCollectorNumberPattern = [regex]'^\d+[a-d]?$'
+$script:LetteredCollectorNumberPattern = [regex]'^(\d+)[a-d]$'
 
 function Read-ImplementedPrintings {
     <#
@@ -243,6 +251,168 @@ function Get-UniqueCardCount {
     }
 }
 
+function Read-MtgJsonSetCardsFromFile {
+    <#
+        .SYNOPSIS
+            Card array from a cached MTGJSON set document, or $null if unreadable.
+    #>
+    param([string] $Path)
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return $null
+    }
+
+    try {
+        $parsed = [System.IO.File]::ReadAllText($Path) | ConvertFrom-Json
+        if ($null -eq $parsed.data -or $null -eq $parsed.data.cards) {
+            return $null
+        }
+        return @($parsed.data.cards)
+    } catch {
+        Write-Warning "Could not parse MTGJSON set file ${Path}: $($_.Exception.Message)"
+        return $null
+    }
+}
+
+function Get-MtgJsonSetCards {
+    <#
+        .SYNOPSIS
+            MTGJSON cards for one set: local card-data cache, scripts/.cache/sets, or a fetch.
+
+        Prefers magical-vibes-card-data's mtgjson-*.json when present (already downloaded by the
+        engine). Otherwise reuses scripts/.cache/sets/{code}.json, and when -AllowFetch is set
+        downloads from MTGJSON once so supported sets still refine correctly on a cold machine.
+    #>
+    param(
+        [string] $SetCode,
+        [string] $RepoRoot,
+        [string] $SetCacheDir,
+        [int] $MaxAgeHours,
+        [switch] $Refresh,
+        [switch] $AllowFetch
+    )
+
+    $lower = $SetCode.ToLowerInvariant()
+    $localPath = Join-Path $RepoRoot "magical-vibes-card-data/card-data-cache/mtgjson-$lower.json"
+    $cards = Read-MtgJsonSetCardsFromFile -Path $localPath
+    if ($null -ne $cards) {
+        return $cards
+    }
+
+    $cachePath = Join-Path $SetCacheDir "$lower.json"
+    $cacheAge = $null
+    if (Test-Path -LiteralPath $cachePath) {
+        $cacheAge = (Get-Date) - (Get-Item -LiteralPath $cachePath).LastWriteTime
+    }
+
+    if ($null -ne $cacheAge -and -not $Refresh -and $cacheAge.TotalHours -lt $MaxAgeHours) {
+        $cards = Read-MtgJsonSetCardsFromFile -Path $cachePath
+        if ($null -ne $cards) {
+            return $cards
+        }
+    }
+
+    if (-not $AllowFetch) {
+        if ($null -ne $cacheAge) {
+            return Read-MtgJsonSetCardsFromFile -Path $cachePath
+        }
+        return $null
+    }
+
+    $url = "https://mtgjson.com/api/v5/$($SetCode.ToUpperInvariant()).json"
+    try {
+        Write-Host "Downloading MTGJSON set $SetCode for English base-size refinement ..."
+        $response = Invoke-WebRequest -Uri $url -UseBasicParsing -UserAgent $userAgent
+        $raw = [System.Text.Encoding]::UTF8.GetString($response.RawContentStream.ToArray())
+        $parsed = $raw | ConvertFrom-Json
+        if ($null -eq $parsed.data -or $null -eq $parsed.data.cards) {
+            Write-Warning "MTGJSON set $SetCode had no card list; falling back to baseSetSize."
+            return $null
+        }
+
+        if (-not (Test-Path -LiteralPath $SetCacheDir)) {
+            New-Item -ItemType Directory -Path $SetCacheDir -Force | Out-Null
+        }
+        [System.IO.File]::WriteAllText($cachePath, $raw, [System.Text.UTF8Encoding]::new($false))
+        return @($parsed.data.cards)
+    } catch {
+        Write-Warning "Could not download MTGJSON set ${SetCode}: $($_.Exception.Message)"
+        if ($null -ne $cacheAge) {
+            return Read-MtgJsonSetCardsFromFile -Path $cachePath
+        }
+        return $null
+    }
+}
+
+function Get-EnglishPlayableBaseSize {
+    <#
+        .SYNOPSIS
+            English playable base printing count for a set, or the SetList fallback.
+
+        Counts English (or language-less) cards whose collector number is digits with an optional
+        a-d art letter. Lettered isAlternative printings that share a digit-only sibling are
+        skipped so Portal demo-game 6d drops out while Homelands 10b (no plain 10) stays.
+        Foreign-language alt-arts such as Portal's Simplified Chinese 30s are excluded by the
+        language filter. Falls back to MTGJSON baseSetSize when set card data is unavailable.
+    #>
+    param(
+        [string] $SetCode,
+        [int] $Fallback,
+        [string] $RepoRoot,
+        [string] $SetCacheDir,
+        [int] $MaxAgeHours,
+        [switch] $Refresh,
+        [switch] $AllowFetch
+    )
+
+    $cards = Get-MtgJsonSetCards -SetCode $SetCode -RepoRoot $RepoRoot -SetCacheDir $SetCacheDir `
+        -MaxAgeHours $MaxAgeHours -Refresh:$Refresh -AllowFetch:$AllowFetch
+    if ($null -eq $cards) {
+        return $Fallback
+    }
+
+    $englishNumbers = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::Ordinal)
+    $candidates = [System.Collections.Generic.List[object]]::new()
+
+    foreach ($card in $cards) {
+        $lang = $null
+        if ($card.PSObject.Properties.Name -contains "language") {
+            $lang = $card.language
+        }
+        if ($null -ne $lang -and $lang -ne "English") {
+            continue
+        }
+
+        $number = [string] $card.number
+        if (-not $script:BaseCollectorNumberPattern.IsMatch($number)) {
+            continue
+        }
+
+        [void] $englishNumbers.Add($number)
+        $candidates.Add($card)
+    }
+
+    $count = 0
+    foreach ($card in $candidates) {
+        $number = [string] $card.number
+        $lettered = $script:LetteredCollectorNumberPattern.Match($number)
+        if ($lettered.Success) {
+            $isAlternative = $false
+            if ($card.PSObject.Properties.Name -contains "isAlternative" -and $card.isAlternative) {
+                $isAlternative = [bool] $card.isAlternative
+            }
+            $digitSibling = $lettered.Groups[1].Value
+            if ($isAlternative -and $englishNumbers.Contains($digitSibling)) {
+                continue
+            }
+        }
+        $count++
+    }
+
+    return $count
+}
+
 Write-Host "Scanning card sources in $cardRoot ..."
 $implemented = Read-ImplementedPrintings -CardRoot $cardRoot
 Write-Host ("Found {0} printings across {1} card classes ({2} sets)." -f `
@@ -292,7 +462,9 @@ foreach ($set in $setList) {
         $implementedCount = $implemented.SetCounts[$code]
     }
 
-    $baseSize = [int] $set.baseSetSize
+    $baseSize = Get-EnglishPlayableBaseSize -SetCode $code -Fallback ([int] $set.baseSetSize) `
+        -RepoRoot $repoRoot -SetCacheDir $setCacheDir -MaxAgeHours $CacheMaxAgeHours `
+        -Refresh:$RefreshCache -AllowFetch:($supportedLookup.ContainsKey($code))
     # XLN/DOM register printings numbered above the base set (planeswalker decks, buy-a-box), so
     # the honest denominator is whichever is larger.
     $total = [Math]::Max($baseSize, $implementedCount)
@@ -785,9 +957,10 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
 
   <footer>
     <div>
-      Set totals come from <strong>MTGJSON</strong>&rsquo;s base set size, which counts a set&rsquo;s real cards and
-      excludes the foil and showcase variants that inflate other card counts. A handful of sets ship
-      printings numbered above the base set, so their denominator widens to the implemented count.
+      Set totals start from <strong>MTGJSON</strong>&rsquo;s base set size and, when set card data is
+      available, keep only English playable printings (so Portal&rsquo;s Simplified Chinese alt-arts
+      do not inflate the denominator). A handful of sets ship printings numbered above the base set,
+      so their denominator widens to the implemented count.
       <strong>Promos, tokens, art cards, oversized cards, memorabilia, Un-sets, The List and the
       foreign-border and European reprint series are left out entirely</strong> &mdash; each is
       either not a real card or already counted under the set it reprints.
