@@ -189,9 +189,10 @@ public class AbilityActivationService {
                 || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
             throw new IllegalStateException("Permanent has lost its abilities");
         }
-        // Check for land type override (e.g. Evil Presence making a land into a Swamp)
-        ManaColor overriddenManaColor = getOverriddenLandManaColor(gameData, permanent);
-        if (permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty() && overriddenManaColor == null) {
+        // Check for land type override (e.g. Evil Presence / Lush Growth)
+        List<ManaColor> overriddenManaColors = gameQueryService.getOverriddenLandManaColors(gameData, permanent);
+        ManaColor overriddenManaColor = overriddenManaColors.size() == 1 ? overriddenManaColors.getFirst() : null;
+        if (permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty() && overriddenManaColors.isEmpty()) {
             throw new IllegalStateException("Permanent has no tap effects");
         }
         if (permanent.isSummoningSick() && gameQueryService.isCreature(gameData, permanent) && !gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE)
@@ -224,7 +225,7 @@ public class AbilityActivationService {
                 : Set.of();
         if (fixedLandColor != null) {
             int totalMana = 0;
-            if (overriddenManaColor != null) {
+            if (!overriddenManaColors.isEmpty()) {
                 totalMana = manaMultiplier;
             } else {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
@@ -242,7 +243,7 @@ public class AbilityActivationService {
             }
         } else if (!twistedColors.isEmpty()) {
             int totalMana = 0;
-            if (overriddenManaColor != null) {
+            if (!overriddenManaColors.isEmpty()) {
                 totalMana = manaMultiplier;
             } else {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
@@ -268,9 +269,21 @@ public class AbilityActivationService {
                             "Choose a color of mana to add (Reality Twist)."));
                 }
             }
-        } else if (overriddenManaColor != null) {
-            // Land type is overridden — produce the new basic land type's mana instead of original
-            manaPool.add(overriddenManaColor, manaMultiplier);
+        } else if (!overriddenManaColors.isEmpty()) {
+            // Land type is overridden — produce a new basic land type's mana instead of original
+            if (overriddenManaColors.size() == 1) {
+                manaPool.add(overriddenManaColors.getFirst(), manaMultiplier);
+                if (isCreatureSource) {
+                    manaPool.addCreatureMana(overriddenManaColors.getFirst(), manaMultiplier);
+                }
+            } else {
+                ChoiceContext.ManaColorChoice choiceContext =
+                        new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier);
+                List<String> colors = overriddenManaColors.stream().map(Enum::name).toList();
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        playerId, null, null, choiceContext, colors,
+                        "Choose a color of mana to add."));
+            }
         } else {
             // Damping Sphere replacement: if a land is tapped for two or more mana, it produces {C} instead.
             boolean dampingReplacement = false;
@@ -459,8 +472,9 @@ public class AbilityActivationService {
         if (permanent.isTapped()) {
             throw new IllegalStateException("Land is already tapped");
         }
-        ManaColor overriddenManaColor = getOverriddenLandManaColor(gameData, permanent);
-        if (permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty() && overriddenManaColor == null) {
+        List<ManaColor> overriddenManaColors = gameQueryService.getOverriddenLandManaColors(gameData, permanent);
+        ManaColor overriddenManaColor = overriddenManaColors.size() == 1 ? overriddenManaColors.getFirst() : null;
+        if (permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty() && overriddenManaColors.isEmpty()) {
             throw new IllegalStateException("Land has no mana ability");
         }
 
@@ -473,7 +487,7 @@ public class AbilityActivationService {
                 : Set.of();
         if (fixedLandColor != null) {
             int totalMana = 0;
-            if (overriddenManaColor != null) {
+            if (!overriddenManaColors.isEmpty()) {
                 totalMana = 1;
             } else {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
@@ -489,7 +503,7 @@ public class AbilityActivationService {
             }
         } else if (!twistedColors.isEmpty()) {
             int totalMana = 0;
-            if (overriddenManaColor != null) {
+            if (!overriddenManaColors.isEmpty()) {
                 totalMana = 1;
             } else {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
@@ -513,9 +527,18 @@ public class AbilityActivationService {
                             "Choose a color of mana to add (Reality Twist)."));
                 }
             }
-        } else if (overriddenManaColor != null) {
-            manaPool.add(overriddenManaColor, 1);
-            manaPool.addSpellOnlyMana(overriddenManaColor, 1);
+        } else if (!overriddenManaColors.isEmpty()) {
+            if (overriddenManaColors.size() == 1) {
+                manaPool.add(overriddenManaColor, 1);
+                manaPool.addSpellOnlyMana(overriddenManaColor, 1);
+            } else {
+                ChoiceContext.ManaColorChoice choiceContext =
+                        new ChoiceContext.ManaColorChoice(playerId, false, 1);
+                List<String> colors = overriddenManaColors.stream().map(Enum::name).toList();
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        playerId, null, null, choiceContext, colors,
+                        "Choose a color of mana to add."));
+            }
         } else {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
                 if (effect instanceof AwardManaEffect awardMana) {

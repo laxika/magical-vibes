@@ -4078,14 +4078,29 @@ public class GameQueryService {
     }
 
     /**
-     * Returns the overridden mana color for a land whose land types have been set by a
-     * type-changing effect (Evil Presence, Convincing Mirage, Blood Moon, Tideshaper Mystic, ...),
-     * or {@code null} if no land-type-setting effect applies. Resolved by the CR 613 layer-4
-     * pass, so of several setters the latest timestamp wins (CR 613.7).
+     * Returns the overridden mana color for a land whose land types have been set to a
+     * <em>single</em> basic land type by a type-changing effect (Evil Presence, Convincing Mirage,
+     * Blood Moon, Tideshaper Mystic, ...), or {@code null} if no land-type-setting effect applies
+     * or the setter grants multiple types (see {@link #getOverriddenLandManaColors}). Resolved by
+     * the CR 613 layer-4 pass, so of several setters the latest timestamp wins (CR 613.7).
      */
     public ManaColor getOverriddenLandManaColor(GameData gameData, Permanent permanent) {
-        CardSubtype override = layerSystemService.landTypeOverrideFor(gameData, permanent.getId());
-        return override == null ? null
-                : EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(override);
+        List<ManaColor> colors = getOverriddenLandManaColors(gameData, permanent);
+        return colors.size() == 1 ? colors.getFirst() : null;
+    }
+
+    /**
+     * Returns the mana colors corresponding to every basic land type a type-changing effect set
+     * on this permanent (Evil Presence → one color; Lush Growth → red, green, and white), or an
+     * empty list if no land-type-setting effect applies. Order follows the effect's subtype list.
+     */
+    public List<ManaColor> getOverriddenLandManaColors(GameData gameData, Permanent permanent) {
+        List<CardSubtype> override = layerSystemService.landTypeOverrideFor(gameData, permanent.getId());
+        if (override == null || override.isEmpty()) {
+            return List.of();
+        }
+        return override.stream()
+                .map(EnchantedPermanentBecomesTypeEffect::manaColorForLandSubtype)
+                .toList();
     }
 }

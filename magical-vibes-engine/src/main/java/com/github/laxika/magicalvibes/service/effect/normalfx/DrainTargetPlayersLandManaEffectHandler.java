@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -151,8 +152,14 @@ public class DrainTargetPlayersLandManaEffectHandler implements NormalEffectHand
             return true;
         }
         ManaColor overridden = gameQueryService.getOverriddenLandManaColor(gameData, perm);
+        List<ManaColor> overriddenColors = gameQueryService.getOverriddenLandManaColors(gameData, perm);
         if (overridden != null) {
             pool.add(overridden, multiplier);
+            return true;
+        }
+        if (overriddenColors.size() > 1) {
+            // Multi-type: pick one deterministically for this non-interactive drain path.
+            pool.add(overriddenColors.getFirst(), multiplier);
             return true;
         }
         if (PotentialManaService.hasOnTapManaEffects(perm.getCard())) {

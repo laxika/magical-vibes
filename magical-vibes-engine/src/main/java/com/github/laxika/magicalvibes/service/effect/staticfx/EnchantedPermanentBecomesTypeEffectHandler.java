@@ -19,7 +19,9 @@ public class EnchantedPermanentBecomesTypeEffectHandler implements StaticEffectH
         var becomesType = (EnchantedPermanentBecomesTypeEffect) effect;
         if (context.source().isAttached()
                 && context.source().getAttachedTo().equals(context.target().getId())) {
-            accumulator.addGrantedSubtype(becomesType.subtype());
+            for (var subtype : becomesType.subtypes()) {
+                accumulator.addGrantedSubtype(subtype);
+            }
             accumulator.setSubtypeOverriding(true);
             if (becomesType.isBasicLandSubtype()) {
                 accumulator.setLandSubtypeOverriding(true);

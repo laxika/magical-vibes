@@ -433,13 +433,13 @@ public class AiManaManager {
             return List.of(); // Tapping would prompt for which replacement color to add
         }
         int triggerCost = attachedTapTriggerCost(gameData, permanent);
-        ManaColor overriddenLandColor = card.hasType(CardType.LAND)
-                ? gameQueryService.getOverriddenLandManaColor(gameData, permanent)
-                : null;
+        List<ManaColor> overriddenLandColors = card.hasType(CardType.LAND)
+                ? gameQueryService.getOverriddenLandManaColors(gameData, permanent)
+                : List.of();
         int versatilityCost = Math.max(0, (replacementColors.isEmpty()
                 ? getProducedColors(card).size()
                 : replacementColors.size()) - 1) * 5;
-        if (overriddenLandColor != null) {
+        if (!overriddenLandColors.isEmpty()) {
             ManaActivation activation = new ManaActivation(permanent.getId(), null);
             int optionCost = ACTIVATION_COST + versatilityCost + triggerCost;
             List<ManaOption> options = new ArrayList<>(replacementColors.size());
@@ -496,8 +496,8 @@ public class AiManaManager {
         if (!twistedColors.isEmpty()) {
             return twistedColors;
         }
-        ManaColor overriddenColor = gameQueryService.getOverriddenLandManaColor(gameData, permanent);
-        return overriddenColor != null ? Set.of(overriddenColor) : Set.of();
+        List<ManaColor> overriddenColors = gameQueryService.getOverriddenLandManaColors(gameData, permanent);
+        return overriddenColors.isEmpty() ? Set.of() : new LinkedHashSet<>(overriddenColors);
     }
 
     /**

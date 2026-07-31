@@ -166,9 +166,21 @@ public class LayerSystemService {
      * let self-referencing filters negate their own output (e.g. Bludgeon Brawl's
      * "each non-Equipment artifact is an Equipment").
      */
-    public record L4Contribution(CardSubtype grantedSubtype, boolean subtypeOverriding,
+    public record L4Contribution(List<CardSubtype> grantedSubtypes, boolean subtypeOverriding,
                                  boolean landSubtypeOverriding, CardType grantedCardType,
                                  CardSupertype grantedSupertype, boolean cardTypeOverriding) {
+
+        public L4Contribution {
+            grantedSubtypes = grantedSubtypes == null ? List.of() : List.copyOf(grantedSubtypes);
+        }
+
+        /** Single-subtype contribution. */
+        public L4Contribution(CardSubtype grantedSubtype, boolean subtypeOverriding,
+                              boolean landSubtypeOverriding, CardType grantedCardType,
+                              CardSupertype grantedSupertype, boolean cardTypeOverriding) {
+            this(grantedSubtype == null ? List.of() : List.of(grantedSubtype), subtypeOverriding,
+                    landSubtypeOverriding, grantedCardType, grantedSupertype, cardTypeOverriding);
+        }
 
         /** Additive / subtype-only contribution (no card-type override). */
         public L4Contribution(CardSubtype grantedSubtype, boolean subtypeOverriding,
@@ -178,8 +190,14 @@ public class LayerSystemService {
                     grantedSupertype, false);
         }
 
+        /** Multi-subtype land-type setter (Lush Growth). */
+        public L4Contribution(List<CardSubtype> grantedSubtypes, boolean subtypeOverriding,
+                              boolean landSubtypeOverriding) {
+            this(grantedSubtypes, subtypeOverriding, landSubtypeOverriding, null, null, false);
+        }
+
         public void replay(StaticBonusAccumulator accumulator) {
-            if (grantedSubtype != null) {
+            for (CardSubtype grantedSubtype : grantedSubtypes) {
                 accumulator.addGrantedSubtype(grantedSubtype);
             }
             if (subtypeOverriding) {
@@ -226,7 +244,7 @@ public class LayerSystemService {
     }
 
     public record LayeredBoardState(Map<UUID, CharacteristicState> states,
-                                    Map<UUID, CardSubtype> landTypeOverrides,
+                                    Map<UUID, List<CardSubtype>> landTypeOverrides,
                                     Set<UUID> marchAnimatedIds,
                                     Set<CardEffect> managedL4Effects,
                                     Map<CardEffect, Map<UUID, L4Contribution>> l4Contributions,
@@ -653,11 +671,11 @@ public class LayerSystemService {
     }
 
     /**
-     * The basic land type this permanent's land types were set to by the latest-timestamp
-     * land-type-setting effect (Sea's Claim, Blood Moon, Tideshaper Mystic, ...), or {@code null}
-     * if no such effect applies. Determines the land's mana ability per CR 305.7.
+     * The basic land type(s) this permanent's land types were set to by the latest-timestamp
+     * land-type-setting effect (Sea's Claim, Blood Moon, Lush Growth, Tideshaper Mystic, ...),
+     * or {@code null} if no such effect applies. Determines the land's mana ability per CR 305.7.
      */
-    public CardSubtype landTypeOverrideFor(GameData gameData, UUID permanentId) {
+    public List<CardSubtype> landTypeOverrideFor(GameData gameData, UUID permanentId) {
         Pass active = activePass(gameData);
         if (active != null && active.board != null) {
             return active.board.landTypeOverrides().get(permanentId);
@@ -1102,7 +1120,7 @@ public class LayerSystemService {
                                List<PermanentSlot> slots, Map<UUID, PermanentSlot> slotsById,
                                LayeredBoardState board) {
         Map<UUID, CharacteristicState> states = board.states();
-        Map<UUID, CardSubtype> landTypeOverrides = board.landTypeOverrides();
+        Map<UUID, List<CardSubtype>> landTypeOverrides = board.landTypeOverrides();
         switch (effect) {
             case GrantSubtypeEffect grant -> {
                 manage(board, instance);
@@ -1151,12 +1169,13 @@ public class LayerSystemService {
                 for (PermanentSlot target : scopeTargets(instance, GrantScope.ENCHANTED_PERMANENT, null, slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     if (becomes.isBasicLandSubtype()) {
-                        setLandType(state, target.permanent().getId(), becomes.subtype(), landTypeOverrides);
+                        setLandTypes(state, target.permanent().getId(), becomes.subtypes(), landTypeOverrides);
                     } else {
+                        // Non-land subtypes: single creature-type setter (existing cards are single-type).
                         setCreatureType(state, becomes.subtype());
                     }
                     record(board, instance, target, new L4Contribution(
-                            becomes.subtype(), true, becomes.isBasicLandSubtype(), null, null));
+                            becomes.subtypes(), true, becomes.isBasicLandSubtype()));
                 }
             }
             case EnchantedPermanentBecomesChosenTypeEffect ignored -> {
@@ -1180,7 +1199,7 @@ public class LayerSystemService {
                     CharacteristicState state = states.get(target.permanent().getId());
                     state.overrideCardTypes(Set.of(CardType.LAND));
                     record(board, instance, target, new L4Contribution(
-                            null, false, false, CardType.LAND, null, true));
+                            List.<CardSubtype>of(), false, false, CardType.LAND, null, true));
                 }
             }
             case EnchantedPermanentBecomesCreatureEffect becomes -> {
@@ -1382,15 +1401,23 @@ public class LayerSystemService {
      *  dependent on Blood Moon (CR 613.8). Later-timestamp setters overwrite the recorded
      *  override. */
     private void setLandType(CharacteristicState state, UUID permanentId, CardSubtype subtype,
-                             Map<UUID, CardSubtype> landTypeOverrides) {
+                             Map<UUID, List<CardSubtype>> landTypeOverrides) {
+        setLandTypes(state, permanentId, List.of(subtype), landTypeOverrides);
+    }
+
+    /** "Becomes [land types]" (one or more basic land types), CR 305.7. */
+    private void setLandTypes(CharacteristicState state, UUID permanentId, List<CardSubtype> subtypes,
+                              Map<UUID, List<CardSubtype>> landTypeOverrides) {
         state.removeSubtypesIf(LAND_SUBTYPES::contains);
-        state.addSubtype(subtype);
+        for (CardSubtype subtype : subtypes) {
+            state.addSubtype(subtype);
+        }
         if (state.hasCardType(CardType.LAND)) {
             // CR 305.7 only strips lands; setting a basic land type on a non-land (nothing in
             // the pool does this today) would not remove its abilities.
             state.removePrintedAbilities();
         }
-        landTypeOverrides.put(permanentId, subtype);
+        landTypeOverrides.put(permanentId, List.copyOf(subtypes));
     }
 
     /** "Is a [creature type]" (overriding): clears the other creature types, then adds. */
@@ -1631,7 +1658,7 @@ public class LayerSystemService {
      * application order, like everywhere else.
      */
     private void applyTextChangesToPrintedLandTypes(Permanent permanent, CharacteristicState state,
-                                                    Map<UUID, CardSubtype> landTypeOverrides) {
+                                                    Map<UUID, List<CardSubtype>> landTypeOverrides) {
         for (TextReplacement replacement : permanent.getTextReplacements()) {
             CardSubtype from = TextChangeTransformer.basicLandTypeForWord(replacement.fromWord());
             CardSubtype to = TextChangeTransformer.basicLandTypeForWord(replacement.toWord());
@@ -1641,7 +1668,7 @@ public class LayerSystemService {
             state.removeSubtypesIf(subtype -> subtype == from);
             state.addSubtype(to);
             if (state.hasCardType(CardType.LAND)) {
-                landTypeOverrides.put(permanent.getId(), to);
+                landTypeOverrides.put(permanent.getId(), List.of(to));
             }
         }
     }

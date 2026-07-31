@@ -136,10 +136,16 @@ public final class TextChangeTransformer {
                     substitution.fromColor() != null && grant.color() == substitution.fromColor()
                             ? new GrantColorEffect(substitution.toColor(), grant.scope(), grant.overriding())
                             : grant;
-            case EnchantedPermanentBecomesTypeEffect becomes ->
-                    substitution.fromLandType() != null && becomes.subtype() == substitution.fromLandType()
-                            ? new EnchantedPermanentBecomesTypeEffect(substitution.toLandType())
-                            : becomes;
+            case EnchantedPermanentBecomesTypeEffect becomes -> {
+                if (substitution.fromLandType() == null) {
+                    yield becomes;
+                }
+                List<CardSubtype> updated = becomes.subtypes().stream()
+                        .map(s -> s == substitution.fromLandType() ? substitution.toLandType() : s)
+                        .toList();
+                yield updated.equals(becomes.subtypes()) ? becomes
+                        : new EnchantedPermanentBecomesTypeEffect(updated);
+            }
             case NonbasicLandsBecomeTypeEffect becomes ->
                     substitution.fromLandType() != null && becomes.subtype() == substitution.fromLandType()
                             ? new NonbasicLandsBecomeTypeEffect(substitution.toLandType())
