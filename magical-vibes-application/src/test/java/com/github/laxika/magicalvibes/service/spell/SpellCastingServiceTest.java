@@ -108,6 +108,9 @@ class SpellCastingServiceTest {
     private GraveyardService graveyardService;
 
     @Mock
+    private com.github.laxika.magicalvibes.service.exile.ExileService exileService;
+
+    @Mock
     private GraveyardTargetingService graveyardTargetingService;
 
     @Mock
@@ -138,7 +141,7 @@ class SpellCastingServiceTest {
                 gameQueryService, predicateEvaluationService, actionAvailabilityService, gameLogService,
                 castingCostService, castingPermissionService, turnProgressionService,
                 targetLegalityService, permanentRemovalService, triggerCollectionService,
-                graveyardService, amountEvaluationService, conditionEvaluationService,
+                graveyardService, exileService, amountEvaluationService, conditionEvaluationService,
                 new AdditionalSpellCostService(gameQueryService, predicateEvaluationService),
                 mutationCoordinator, stateBasedActionService);
         player1Id = UUID.randomUUID();

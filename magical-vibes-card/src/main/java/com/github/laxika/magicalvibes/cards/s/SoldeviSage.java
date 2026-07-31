@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "99")
+@CardRegistration(set = "ALL", collectorNumber = "34a")
+@CardRegistration(set = "ALL", collectorNumber = "34b")
 public class SoldeviSage extends Card {
 
     public SoldeviSage() {

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
@@ -467,6 +468,19 @@ public class CastingCostService {
                     .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, returnCost.get().filter()))
                     .count();
             if (matchingCount < returnCost.get().count()) return false;
+        }
+
+        var exileHandCost = altCast.getCost(ExileCardsFromHandCastingCost.class);
+        if (exileHandCost.isPresent()) {
+            List<Card> hand = gameData.playerHands.get(playerId);
+            if (hand == null) return false;
+            long matchingCount = hand.stream()
+                    .filter(c -> c != card)
+                    .filter(c -> exileHandCost.get().predicate() == null
+                            || predicateEvaluationService.matchesCardPredicate(
+                                    c, exileHandCost.get().predicate(), c.getId()))
+                    .count();
+            if (matchingCount < exileHandCost.get().count()) return false;
         }
 
         var manaCost = altCast.getCost(ManaCastingCost.class);

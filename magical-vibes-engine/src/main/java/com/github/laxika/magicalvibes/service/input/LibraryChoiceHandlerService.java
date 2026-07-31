@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingOpponentExileChoice;
+import com.github.laxika.magicalvibes.model.PendingPortalPileSearch;
 import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -106,6 +107,7 @@ public class LibraryChoiceHandlerService {
         boolean reorderRemainingToBottom = librarySearch.reorderRemainingToBottom();
         boolean reorderRemainingToTop = librarySearch.reorderRemainingToTop();
         boolean restToGraveyard = librarySearch.restToGraveyard();
+        boolean restToExile = librarySearch.restToExile();
         boolean shuffleAfterSelection = librarySearch.shuffleAfterSelection();
         LibrarySearchFollowUp followUp = librarySearch.followUp();
         LibrarySearchDestination destination = librarySearch.destination() != null
@@ -148,7 +150,7 @@ public class LibraryChoiceHandlerService {
 
         List<Card> deck = gameData.playerDecks.get(deckOwnerId);
 
-        if (reorderRemainingToBottom || reorderRemainingToTop || restToGraveyard) {
+        if (reorderRemainingToBottom || reorderRemainingToTop || restToGraveyard || restToExile) {
             if (sourceCards == null) {
                 throw new IllegalStateException("Missing source cards for revealed-card choice");
             }
@@ -276,6 +278,25 @@ public class LibraryChoiceHandlerService {
             // pick, run the second-type pick over the same looked-at cards before disposing the rest.
             if (followUp.secondBoundedPick() != null
                     && startSecondBoundedPick(gameData, deckOwnerId, sourceCards, followUp.secondBoundedPick())) {
+                return;
+            }
+
+            if (restToExile) {
+                if (!sourceCards.isEmpty()) {
+                    GameLog.Builder exileLog = GameLog.builder().text(player.getUsername() + " exiles ");
+                    for (int i = 0; i < sourceCards.size(); i++) {
+                        if (i > 0) {
+                            exileLog.text(", ");
+                        }
+                        exileLog.card(sourceCards.get(i));
+                    }
+                    exileLog.text(".");
+                    for (Card card : new ArrayList<>(sourceCards)) {
+                        exileService.exileCard(gameData, deckOwnerId, card);
+                    }
+                    gameLogService.append(gameData, exileLog.build());
+                }
+                finishSearchAndResume(gameData);
                 return;
             }
 
@@ -1176,6 +1197,12 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        // Phyrexian Portal: controller searched the kept pile; the rest shuffles into their library.
+        if (gameData.hasPendingInteraction(PendingPortalPileSearch.class)) {
+            handlePortalPileSearch(gameData, allRevealedCards, cardIds, controllerId);
+            return;
+        }
+
         // Punisher reveal (Sword-Point Diplomacy etc.): opponent chose which cards to deny (paying life)
         if (libraryRevealChoice.lifeCostPerSelection() > 0 && libraryRevealChoice.beneficiaryPlayerId() != null) {
             handlePunisherRevealChoice(gameData, allRevealedCards, cardIds,
@@ -1440,6 +1467,34 @@ public class LibraryChoiceHandlerService {
                 break;
             }
         }
+
+        finishSearchAndResume(gameData);
+    }
+
+    /**
+     * Phyrexian Portal: the controller has searched the pile they kept. The selected card (searching
+     * may fail to find, CR 701.23b) goes to their hand and every other card of the pile goes back
+     * into their library, which is then shuffled.
+     */
+    private void handlePortalPileSearch(GameData gameData, List<Card> pileCards,
+                                        List<UUID> selectedCardIds, UUID controllerId) {
+        gameData.clearPendingInteractions(PendingPortalPileSearch.class);
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        Set<UUID> chosenIds = new HashSet<>(selectedCardIds);
+        List<Card> deck = gameData.playerDecks.computeIfAbsent(controllerId, k -> new ArrayList<>());
+        for (Card card : pileCards) {
+            if (chosenIds.contains(card.getId())) {
+                gameData.addCardToHand(controllerId, card);
+                gameLogService.append(gameData,
+                        GameLog.textCardText(playerName + " puts ", card, " into their hand."));
+            } else {
+                deck.add(card);
+            }
+        }
+        LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+        gameLogService.append(gameData,
+                GameLog.text(playerName + " shuffles the rest of the pile into their library."));
 
         finishSearchAndResume(gameData);
     }

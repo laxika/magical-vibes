@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroySourcePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyUnlessPaysPerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -43,9 +44,10 @@ public class DestroyUnlessPaysPerCounterEffectHandler implements NormalEffectHan
         }
 
         String totalCost = e.costPerCounter().repeat(counters);
+        CardEffect elseEffect = e.sacrifice() ? new SacrificeSelfEffect() : new DestroySourcePermanentEffect();
         ForcedCostOrElseEffect payOrDestroy = new ForcedCostOrElseEffect(
                 new PayManaCost(totalCost),
-                List.of(new DestroySourcePermanentEffect()),
+                List.of(elseEffect),
                 true);
         forcedCostOrElseEffectHandler.resolve(gameData, entry, payOrDestroy);
     }

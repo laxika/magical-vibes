@@ -829,6 +829,14 @@ public class PlayerInputService {
     public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId,
                                          UUID playPermissionControllerId, int remainingCount,
                                          List<UUID> remainingChoosers, int cardsPerPlayer) {
+        beginExileFromHandChoice(gameData, playerId, sourcePermanentId, playPermissionControllerId,
+                remainingCount, remainingChoosers, cardsPerPlayer, false);
+    }
+
+    public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId,
+                                         UUID playPermissionControllerId, int remainingCount,
+                                         List<UUID> remainingChoosers, int cardsPerPlayer,
+                                         boolean faceDown) {
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = allHandIndices(hand);
 
@@ -836,7 +844,7 @@ public class PlayerInputService {
                 playerId, validIndices, sourcePermanentId, playPermissionControllerId, remainingCount,
                 "Choose a card to exile.",
                 remainingChoosers != null ? remainingChoosers : List.of(),
-                cardsPerPlayer));
+                cardsPerPlayer, faceDown));
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount) {

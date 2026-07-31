@@ -19,5 +19,10 @@ public enum TargetLibraryAction {
      * The controller may put the single looked-at top card on the bottom of that player's library;
      * declining leaves it on top (Coral Fighters). Only meaningful with {@code count == 1}.
      */
-    MAY_PUT_TOP_ON_BOTTOM
+    MAY_PUT_TOP_ON_BOTTOM,
+    /**
+     * The <em>target player</em> — not the controller — looks at the cards, puts one of them back
+     * on top of their library, and the rest are exiled (Ashnod's Cylix).
+     */
+    KEEP_ONE_ON_TOP_EXILE_REST
 }

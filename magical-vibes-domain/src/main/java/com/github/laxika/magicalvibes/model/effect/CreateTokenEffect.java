@@ -72,6 +72,15 @@ public record CreateTokenEffect(
         return new CreateTokenEffect(primaryType, new Fixed(newAmount), tokenName, power, toughness, color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary, initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn);
     }
 
+    /**
+     * Copy of this blueprint with already-evaluated power/toughness, all other fields preserved.
+     * Used where an "X/X token, where X is …" blueprint must be frozen before the value it counts
+     * disappears (Phantasmal Sphere's counters, read as the creature leaves the battlefield).
+     */
+    public CreateTokenEffect withPowerToughness(int newPower, int newToughness) {
+        return new CreateTokenEffect(primaryType, amount, tokenName, new Fixed(newPower), new Fixed(newToughness), color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary, initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn);
+    }
+
     /** Canonical shape with a dynamic token count and printed power/toughness */
     public CreateTokenEffect(CardType primaryType, DynamicAmount amount, String tokenName, int power, int toughness,
                              CardColor color, Set<CardColor> colors, List<CardSubtype> subtypes,

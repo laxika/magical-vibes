@@ -106,6 +106,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.AdNauseamRepeatChoice.class, this::projectAdNauseamRepeatChoice);
         register(PendingInteraction.ExiledPermanentPutOntoBattlefieldChoice.class,
                 this::projectExiledPermanentPutOntoBattlefieldChoice);
+        register(PendingInteraction.LimDulsVaultRepeatChoice.class, this::projectLimDulsVaultRepeatChoice);
+        register(PendingInteraction.LimDulsVaultOrderChoice.class, this::projectLimDulsVaultOrderChoice);
         register(PendingInteraction.AttackerDeclaration.class, this::projectAttackerDeclaration);
         register(PendingInteraction.BlockerDeclaration.class, this::projectBlockerDeclaration);
         register(PendingInteraction.CombatDamageAssignment.class,
@@ -455,12 +457,15 @@ public class InteractionPromptProjectionRegistry {
             case BOTTOM -> "the bottom of";
             case PLAYER_CHOICE -> "top or bottom of";
         };
+        String prompt = interaction.shuffleIn()
+                ? "Choose " + interaction.maxCount() + " card(s) to shuffle into your library."
+                : "Choose " + interaction.maxCount() + " card(s) to put on " + destination
+                        + " your library.";
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
                 cardViews(interaction.cards()),
                 interaction.maxCount(),
-                "Choose " + interaction.maxCount() + " card(s) to put on " + destination
-                        + " your library.");
+                prompt);
     }
 
     private InteractionPromptMessage projectPutCardsFromHandOnLibraryDestinationChoice(
@@ -541,6 +546,27 @@ public class InteractionPromptProjectionRegistry {
                         + interaction.sourceName() + ")",
                 true,
                 null);
+    }
+
+    private InteractionPromptMessage projectLimDulsVaultRepeatChoice(
+            GameData gameData, PendingInteraction.LimDulsVaultRepeatChoice interaction) {
+        // The accept/decline shape carries no card list, so the looked-at cards are named in the
+        // prompt text; it is delivered only to the deciding player, so the information stays private.
+        String names = interaction.lookedAt().stream().map(Card::getName).collect(Collectors.joining(", "));
+        boolean canPayLife = gameData.getLife(interaction.playerId()) >= 1;
+        return InteractionPromptMessage.acceptDecline(
+                "Top of your library: " + names + ". Pay 1 life to put them on the bottom and look at five more?",
+                canPayLife,
+                null);
+    }
+
+    private InteractionPromptMessage projectLimDulsVaultOrderChoice(
+            GameData gameData, PendingInteraction.LimDulsVaultOrderChoice interaction) {
+        return InteractionPromptMessage.cardOrder(
+                cardViews(interaction.cards()),
+                interaction.toBottom()
+                        ? "Put these cards on the bottom of your library in any order"
+                        : "Put these cards on top of your library in any order");
     }
 
     private AvailableAttackersMessage projectAttackerDeclaration(

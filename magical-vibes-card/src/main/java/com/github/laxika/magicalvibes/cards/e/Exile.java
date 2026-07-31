@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "6ED", collectorNumber = "21")
+@CardRegistration(set = "ALL", collectorNumber = "3")
 public class Exile extends Card {
 
     public Exile() {

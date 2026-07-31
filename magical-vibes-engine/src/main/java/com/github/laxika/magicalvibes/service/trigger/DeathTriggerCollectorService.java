@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
@@ -33,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedControllerSacrificesCreatureOnLeaveEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -64,6 +66,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -86,6 +90,7 @@ public class DeathTriggerCollectorService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
 
     // ── ON_DEATH (dying card's own death triggers) ─────────────────────
 
@@ -264,7 +269,15 @@ public class DeathTriggerCollectorService {
     boolean handleDeathMayPayMana(TriggerMatchContext match,
             MayPayManaEffect mayPay, TriggerContext ctx) {
         TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
-        match.gameData().queueMayAbility(sd.dyingCard(), sd.controllerId(), mayPay, null);
+        // CR 603.3d: a targeted "you may pay" death trigger needs its target chosen when stacking;
+        // the payment choice then happens at resolution (CR 603.5). Insidious Bookworms.
+        if (mayPay.targetSpec().category().includesPermanents() || mayPay.targetSpec().category().includesPlayers()) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+                    sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(mayPay))
+            ));
+        } else {
+            match.gameData().queueMayAbility(sd.dyingCard(), sd.controllerId(), mayPay, null);
+        }
         return true;
     }
 
@@ -331,12 +344,18 @@ public class DeathTriggerCollectorService {
                     sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(effect))
             ));
         } else {
+            // A ConditionalEffect's intervening-"if" may be about the dying permanent itself
+            // (Fyndhorn Druid's "if it was blocked this turn"), so carry its id even though the
+            // permanent has already left the battlefield — turn-scoped trackers are keyed by id.
+            UUID sourcePermanentId = effect instanceof ConditionalEffect ? match.permanent().getId() : null;
             match.gameData().stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     sd.dyingCard(),
                     sd.controllerId(),
                     sd.dyingCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect))
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    sourcePermanentId
             ));
         }
         return true;
@@ -1240,6 +1259,30 @@ public class DeathTriggerCollectorService {
                 sl.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new SacrificeEnchantedCreatureOnLeaveEffect(enchantedId)))
+        ));
+        logSelfLeaves(match);
+        return true;
+    }
+
+    /**
+     * "When this permanent leaves the battlefield, target player creates an X/X token, where X is
+     * [something about this permanent]." The source is already gone by the time the trigger resolves,
+     * so the blueprint's dynamic power/toughness is evaluated here against the leaving permanent and
+     * frozen into the queued effect; the target choice then runs through the ordinary self-leaves
+     * queue. Phantasmal Sphere.
+     */
+    @CollectsTrigger(value = CreateTokenForTargetPlayerEffect.class, slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handleSelfLeavesCreateTokenForTargetPlayer(TriggerMatchContext match,
+            CreateTokenForTargetPlayerEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        CreateTokenEffect blueprint = effect.tokenEffect();
+        AmountContext amountContext = new AmountContext(sl.controllerId(), match.permanent(), null, 0, 0, false);
+        CreateTokenEffect frozen = blueprint.withPowerToughness(
+                amountEvaluationService.evaluate(match.gameData(), blueprint.power(), amountContext),
+                amountEvaluationService.evaluate(match.gameData(), blueprint.toughness(), amountContext));
+        match.gameData().queueInteraction(new PermanentChoiceContext.SelfLeavesTriggerTarget(
+                match.permanent().getCard(), sl.controllerId(),
+                new ArrayList<>(List.of(new CreateTokenForTargetPlayerEffect(frozen)))
         ));
         logSelfLeaves(match);
         return true;

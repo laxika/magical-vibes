@@ -1112,7 +1112,7 @@ public abstract class AiDecisionEngine {
         if (!gameActions.canActivateAbility(gameData, permanent, abilityIndex, virtualPool)) {
             return false;
         }
-        return acceptsAbilityCosts(gameData, ability);
+        return acceptsAbilityCosts(gameData, permanent, ability);
     }
 
     protected boolean canActivateAbility(
@@ -1122,14 +1122,20 @@ public abstract class AiDecisionEngine {
                 gameData, permanent, abilityIndex, virtualPool, targetId, targetIds)) {
             return false;
         }
-        return acceptsAbilityCosts(gameData, ability);
+        return acceptsAbilityCosts(gameData, permanent, ability);
     }
 
-    private boolean acceptsAbilityCosts(GameData gameData, ActivatedAbility ability) {
+    private boolean acceptsAbilityCosts(GameData gameData, Permanent permanent, ActivatedAbility ability) {
+        int life = gameData.getLife(aiPlayer.getId());
         for (CardEffect effect : ability.getEffects()) {
-            if (effect instanceof PayLifeCost lifeCost
-                    && gameData.getLife(aiPlayer.getId()) <= lifeCost.effectiveAmount(gameData.getLife(aiPlayer.getId()))) {
-                return false;
+            if (effect instanceof PayLifeCost lifeCost) {
+                int counters = lifeCost.perSourceCounter() == null
+                        ? 0
+                        : permanent.getCounterCount(lifeCost.perSourceCounter());
+                int amount = lifeCost.effectiveAmount(life, counters);
+                if (amount > 0 && life <= amount) {
+                    return false;
+                }
             }
             if (effect instanceof TapXPermanentsCost) {
                 return false;

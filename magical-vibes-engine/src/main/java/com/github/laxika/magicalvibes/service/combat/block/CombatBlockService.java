@@ -1375,13 +1375,14 @@ public class CombatBlockService {
     }
 
     /**
-     * Additional generic mana the blocker's controller must pay to declare this block, summed over every
+     * Additional generic mana the blocker's controller must pay to declare this block: every
      * {@link BlockCostEffect} the blocker carries against the attacker's effective power (e.g. Hipparion —
-     * {1} to block a creature with power 3 or greater).
+     * {1} to block a creature with power 3 or greater), plus any per-blocker tax the attacker itself
+     * imposes (e.g. Awesome Presence — {3} for each creature blocking the enchanted creature).
      */
     private int blockTaxFor(GameData gameData, Permanent blocker, Permanent attacker) {
         int attackerPower = gameQueryService.getEffectivePower(gameData, attacker);
-        int tax = 0;
+        int tax = gameQueryService.getEnchantedCreatureBlockTax(gameData, attacker);
         for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof BlockCostEffect blockCost) {
                 tax += blockCost.blockCost(attackerPower);
@@ -1475,10 +1476,14 @@ public class CombatBlockService {
      * blocked by a Zombie this turn, even after combat ends or the other creature leaves / changes types.
      * The opponent's ID is also recorded into {@link GameData#combatBlockOpponentIdsThisTurn} for
      * Venomous Breath's "destroy all creatures that blocked or were blocked by it this turn".
+     * <p>
+     * The attacker alone is additionally recorded into {@link GameData#creaturesBlockedThisTurn}, the
+     * one-directional "was blocked this turn" set that Fyndhorn Druid's dies trigger reads.
      */
     private void recordCombatBlockOpponentSubtypes(GameData gameData, Permanent blocker, Permanent attacker) {
         recordCombatOpponentSubtypes(gameData, blocker, attacker);
         recordCombatOpponentSubtypes(gameData, attacker, blocker);
+        gameData.creaturesBlockedThisTurn.add(attacker.getId());
     }
 
     private void recordCombatOpponentSubtypes(GameData gameData, Permanent creature, Permanent opponent) {

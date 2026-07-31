@@ -17,6 +17,8 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>{@link #TARGET_PLAYERS_OWNED} — every permanent the targeted player <em>owns</em> matching
  *       the filter, regardless of who controls it (owner-based, honours theft via
  *       {@code stolenCreatures}).</li>
+ *   <li>{@link #AURAS_ATTACHED_TO_TARGET} — every Aura attached to the targeted permanent,
+ *       regardless of who controls those Auras (Scarab of the Unseen).</li>
  * </ul>
  */
 public enum BounceScope {
@@ -25,5 +27,6 @@ public enum BounceScope {
     SELF_SPELL,
     ALL_MATCHING,
     TARGET_PLAYERS_PERMANENTS,
-    TARGET_PLAYERS_OWNED
+    TARGET_PLAYERS_OWNED,
+    AURAS_ATTACHED_TO_TARGET
 }

@@ -57,10 +57,12 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHandEmpty;
+import com.github.laxika.magicalvibes.model.condition.CardDirectlyAboveSelfInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.CardsAboveSelfInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
+import com.github.laxika.magicalvibes.model.condition.SourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
@@ -95,6 +97,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlIfSubtypesDealtCom
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawUpToNCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentDrawStepOnlyEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
@@ -257,6 +260,22 @@ public class StepTriggerService {
             List<DrawCardsAtNextUpkeep> pendingDraws = gameData.drainDelayedActions(DrawCardsAtNextUpkeep.class);
             for (DrawCardsAtNextUpkeep pending : pendingDraws) {
                 String playerName = gameData.playerIdToName.get(pending.controllerId());
+                if (pending.upTo()) {
+                    // Arcane Denial: "may draw up to two cards" — a delayed triggered ability that uses
+                    // the stack, controlled by the drawing player so they make the choice.
+                    StackEntry entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY, pending.sourceCard(), pending.controllerId(),
+                            pending.sourceCard().getName() + "'s delayed ability",
+                            new ArrayList<>(List.of(new DrawUpToNCardsEffect(pending.count()))),
+                            (UUID) null, (UUID) null);
+                    entry.setNonTargeting(true);
+                    gameData.stack.add(entry);
+                    gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                            "'s delayed ability triggers."));
+                    log.info("Game {} - {} may draw up to {} from delayed upkeep trigger ({})",
+                            gameData.id, playerName, pending.count(), pending.sourceCard().getName());
+                    continue;
+                }
                 for (int i = 0; i < pending.count(); i++) {
                     drawService.resolveDrawCard(gameData, pending.controllerId());
                 }
@@ -704,7 +723,8 @@ public class StepTriggerService {
                     if (innerEffect instanceof ConditionalEffect conditional
                             && (conditional.condition() instanceof Metalcraft
                                     || conditional.condition() instanceof AnOpponentHandEmpty
-                                    || conditional.condition() instanceof CardsAboveSelfInGraveyard)) {
+                                    || conditional.condition() instanceof CardsAboveSelfInGraveyard
+                                    || conditional.condition() instanceof CardDirectlyAboveSelfInGraveyard)) {
                         if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                                 new ConditionContext(activePlayerId, null, null, card, false, false, null, 0, null, null, false))) {
                             log.info("Game {} - {} graveyard upkeep ability skipped ({})",
@@ -1410,6 +1430,20 @@ public class StepTriggerService {
             String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips the draw (first turn).";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} skips draw on turn 1", gameData.id, gameData.playerIdToName.get(activePlayerId));
+            return;
+        }
+
+        // A one-shot skip queued earlier (e.g. Ivory Gargoyle's death trigger) consumes one draw step.
+        int queuedSkips = gameData.skipNextDrawStepCount.getOrDefault(activePlayerId, 0);
+        if (queuedSkips > 0) {
+            if (queuedSkips - 1 > 0) {
+                gameData.skipNextDrawStepCount.put(activePlayerId, queuedSkips - 1);
+            } else {
+                gameData.skipNextDrawStepCount.remove(activePlayerId);
+            }
+            String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips their draw step.";
+            gameLogService.append(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} skips draw step (queued skip)", gameData.id, gameData.playerIdToName.get(activePlayerId));
             return;
         }
 
@@ -2346,6 +2380,29 @@ public class StepTriggerService {
                                 GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
                         log.info("Game {} - {} end-step not-kicked trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else if (effect instanceof ConditionalEffect conditional
+                            && conditional.condition() instanceof SourceRegeneratedThisTurn) {
+                        // Intervening-if (CR 603.4): only trigger if the source regenerated this turn —
+                        // Spiny Starfish. Re-checked at resolution by the conditional effect handler.
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forPermanent(perm, playerId))) {
+                            log.info("Game {} - {} end-step trigger skipped (did not regenerate this turn)",
+                                    gameData.id, perm.getCard().getName());
+                            continue;
+                        }
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s end step ability",
+                                new ArrayList<>(List.of(effect)),
+                                null,
+                                perm.getId()
+                        ));
+                        gameLogService.append(gameData,
+                                GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
+                        log.info("Game {} - {} end-step regenerated-this-turn trigger pushed onto stack",
+                                gameData.id, perm.getCard().getName());
+                    } else if (effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof NoOtherPermanent) {
                         // Intervening-if: only trigger if controller has no other matching permanents (CR 603.4)
                         if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
@@ -2547,6 +2604,50 @@ public class StepTriggerService {
                         gameLogService.append(gameData,
                                 GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
                         log.info("Game {} - {} end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                    }
+                }
+            }
+        }
+
+        // GRAVEYARD_END_STEP_TRIGGERED: "At the beginning of the end step, if this card is in your
+        // graveyard …" — fires at every end step, from any player's graveyard, in APNAP order.
+        for (UUID playerId : triggerOrder) {
+            List<Card> playerGraveyard = gameData.playerGraveyards.get(playerId);
+            if (playerGraveyard == null) continue;
+
+            for (Card card : new ArrayList<>(playerGraveyard)) {
+                List<CardEffect> graveyardEndStepEffects = card.getEffects(EffectSlot.GRAVEYARD_END_STEP_TRIGGERED);
+                if (graveyardEndStepEffects == null || graveyardEndStepEffects.isEmpty()) continue;
+
+                for (CardEffect effect : graveyardEndStepEffects) {
+                    CardEffect innerEffect = effect;
+
+                    // Intervening-if (CR 603.4): the graveyard-position gate is checked at trigger
+                    // time before the ability is offered (Krovikan Horror's "with a creature card
+                    // directly above it").
+                    if (innerEffect instanceof ConditionalEffect conditional) {
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                new ConditionContext(playerId, null, null, card, false, false, null, 0, null, null, false))) {
+                            log.info("Game {} - {} graveyard end-step ability skipped ({})",
+                                    gameData.id, card.getName(), conditional.condition().conditionNotMetReason());
+                            continue;
+                        }
+                        innerEffect = conditional.wrapped();
+                    }
+
+                    if (innerEffect instanceof MayEffect may) {
+                        gameData.queueMayAbility(card, playerId, may);
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                card,
+                                playerId,
+                                card.getName() + "'s end step ability",
+                                new ArrayList<>(List.of(innerEffect))
+                        ));
+
+                        gameLogService.append(gameData, GameLog.cardThen(card, "'s end step ability triggers."));
+                        log.info("Game {} - {} graveyard end-step trigger pushed onto stack", gameData.id, card.getName());
                     }
                 }
             }

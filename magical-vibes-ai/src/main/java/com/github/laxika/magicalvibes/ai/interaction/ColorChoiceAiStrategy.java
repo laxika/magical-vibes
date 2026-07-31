@@ -273,6 +273,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             boolean badCounter = kind == CounterType.MINUS_ONE_MINUS_ONE
                     || kind == CounterType.MINUS_ZERO_MINUS_ONE
                     || kind == CounterType.MINUS_ZERO_MINUS_TWO
+                    || kind == CounterType.MINUS_TWO_MINUS_ONE
                     || kind == CounterType.STUN
                     || kind == CounterType.PARALYZATION;
             boolean ownTarget = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of()).stream()

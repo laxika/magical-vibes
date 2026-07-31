@@ -42,8 +42,10 @@ class CostEffectClassificationTest {
             "ExileCardFromHandCost",
             "ExileSelfCost",
             "ExileSelfFromGraveyardCost",
+            "ExileTopCardOfLibraryCost",
             "IncreaseActivationCostPerCounterEffect",
             "MillControllerCost",
+            "OpponentCreatesTokensCost",
             "PayManaCost",
             "PutCounterOnSourceCost",
             "ReduceActivationCostPerCounterEffect",
@@ -81,7 +83,8 @@ class CostEffectClassificationTest {
             "DiscardCardTypeCost",
             "DiscardCardOrPayManaCost",
             "EscalateDiscardCost",
-            "EscalateManaCost");
+            "EscalateManaCost",
+            "RepeatableAdditionalManaCost");
 
     private static final String EFFECT_PKG_PATH =
             "magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect";

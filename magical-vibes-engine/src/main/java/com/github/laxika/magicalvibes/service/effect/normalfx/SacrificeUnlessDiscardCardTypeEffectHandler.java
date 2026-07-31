@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SacrificeUnlessDiscardCardTypeEffectHandler implements NormalEffectHandlerBean {
 
+    private final DrawService drawService;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
@@ -77,6 +79,9 @@ public class SacrificeUnlessDiscardCardTypeEffectHandler implements NormalEffect
             } else {
                 // Permanent already gone and no valid cards — nothing to do
                 log.info("Game {} - {} is no longer on the battlefield and no {} to discard", gameData.id, sourceCard.getName(), typeName);
+            }
+            if (e.drawCardIfNotDiscarded()) {
+                drawService.resolveDrawCard(gameData, controllerId);
             }
             return;
         }

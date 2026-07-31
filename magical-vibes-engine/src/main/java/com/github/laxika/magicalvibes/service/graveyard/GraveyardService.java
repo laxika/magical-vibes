@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGraveyardEffect;
@@ -412,6 +413,7 @@ public class GraveyardService {
         if (perm.getRegenerationShield() > 0) {
             perm.setRegenerationShield(perm.getRegenerationShield() - 1);
             performRegeneration(gameData, perm);
+            spendOpponentDrawRegenerationShield(gameData, perm);
             return true;
         }
         return false;
@@ -435,7 +437,30 @@ public class GraveyardService {
         return false;
     }
 
+    /**
+     * Soldevi Sentry: a regeneration shield granted by its ability owes the opponent an optional draw
+     * once it is actually spent. Plain shields are consumed first — a rider shield is only spent when
+     * the remaining shields are all rider shields.
+     */
+    private void spendOpponentDrawRegenerationShield(GameData gameData, Permanent perm) {
+        if (perm.getOpponentDrawRegenerationShield() <= perm.getRegenerationShield()) {
+            return;
+        }
+        perm.setOpponentDrawRegenerationShield(perm.getOpponentDrawRegenerationShield() - 1);
+
+        UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
+        UUID opponentId = controllerId == null ? null : gameQueryService.getOpponentId(gameData, controllerId);
+        if (opponentId == null) {
+            return;
+        }
+
+        gameData.queueMayAbility(perm.getCard(), opponentId, new MayEffect(new DrawCardEffect(), "Draw a card?"));
+        gameLogService.append(gameData, GameLog.textCardText(
+                "", perm.getCard(), " offers " + gameData.playerIdToName.get(opponentId) + " a card."));
+    }
+
     private void performRegeneration(GameData gameData, Permanent perm) {
+        perm.setTimesRegeneratedThisTurn(perm.getTimesRegeneratedThisTurn() + 1);
         perm.tap();
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm);
         perm.setAttacking(false);

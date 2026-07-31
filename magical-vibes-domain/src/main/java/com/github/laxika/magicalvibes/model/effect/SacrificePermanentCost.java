@@ -12,15 +12,24 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                              snapshotted into the ability's xValue at payment, so a
  *                              companion effect can scale off it via {@code XValue}
  *                              (Freyalise Supplicant)
+ * @param trackSacrificedManaValue when true, the sacrificed permanent's mana value is
+ *                              snapshotted into the ability's xValue at payment
+ *                              (Soldevi Adnate)
  */
 public record SacrificePermanentCost(PermanentPredicate filter, String description, boolean excludeSource,
-                                     boolean trackSacrificedPower) implements CostEffect {
+                                     boolean trackSacrificedPower,
+                                     boolean trackSacrificedManaValue) implements CostEffect {
     public SacrificePermanentCost(PermanentPredicate filter, String description) {
-        this(filter, description, true, false);
+        this(filter, description, true, false, false);
     }
 
     public SacrificePermanentCost(PermanentPredicate filter, String description, boolean excludeSource) {
-        this(filter, description, excludeSource, false);
+        this(filter, description, excludeSource, false, false);
+    }
+
+    public SacrificePermanentCost(PermanentPredicate filter, String description, boolean excludeSource,
+                                  boolean trackSacrificedPower) {
+        this(filter, description, excludeSource, trackSacrificedPower, false);
     }
 
     @Override

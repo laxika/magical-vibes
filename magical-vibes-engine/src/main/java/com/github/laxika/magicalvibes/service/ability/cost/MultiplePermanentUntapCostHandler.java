@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -46,9 +47,7 @@ public class MultiplePermanentUntapCostHandler implements PermanentChoiceCostHan
 
     @Override
     public List<UUID> getValidChoiceIds(GameData gameData, UUID playerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return List.of();
-        return battlefield.stream()
+        return candidateBattlefields(gameData, playerId).stream()
                 .filter(Permanent::isTapped)
                 .filter(p -> !cost.excludeSource() || !p.getId().equals(sourcePermanentId))
                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
@@ -56,8 +55,31 @@ public class MultiplePermanentUntapCostHandler implements PermanentChoiceCostHan
                 .toList();
     }
 
+    /**
+     * The permanents the cost may be paid from: opponents' battlefields for an
+     * {@code opponentControlled} cost, otherwise the activating player's own.
+     */
+    private List<Permanent> candidateBattlefields(GameData gameData, UUID playerId) {
+        if (!cost.opponentControlled()) {
+            List<Permanent> own = gameData.playerBattlefields.get(playerId);
+            return own == null ? List.of() : own;
+        }
+        List<Permanent> candidates = new ArrayList<>();
+        for (UUID ownerId : gameData.orderedPlayerIds) {
+            if (ownerId.equals(playerId)) continue;
+            List<Permanent> battlefield = gameData.playerBattlefields.get(ownerId);
+            if (battlefield != null) {
+                candidates.addAll(battlefield);
+            }
+        }
+        return candidates;
+    }
+
     @Override
     public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
+        if (cost.opponentControlled() && !candidateBattlefields(gameData, player.getId()).contains(chosen)) {
+            throw new IllegalStateException("Must choose a permanent an opponent controls");
+        }
         if (!chosen.isTapped()) {
             throw new IllegalStateException("Permanent is not tapped");
         }

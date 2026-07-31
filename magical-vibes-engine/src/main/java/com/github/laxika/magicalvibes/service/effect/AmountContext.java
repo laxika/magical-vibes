@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -27,6 +28,10 @@ import java.util.UUID;
  * @param chosenPermanentId id of the permanent chosen while activating the ability behind this
  *                          entry (e.g. the creature tapped for a {@code TapCreatureCost}); read by
  *                          {@code ChosenPermanentPower}. {@code null} outside stack resolution
+ * @param repeatedAdditionalCosts the mana payments chosen for a
+ *                          {@code RepeatableAdditionalManaCost} as the spell was cast, one entry
+ *                          per repetition; read by {@code RepeatedAdditionalCostCount}. Empty
+ *                          outside stack resolution
  */
 public record AmountContext(
         UUID controllerId,
@@ -35,8 +40,16 @@ public record AmountContext(
         int xValue,
         int eventValue,
         boolean staticEvaluation,
-        UUID chosenPermanentId
+        UUID chosenPermanentId,
+        List<String> repeatedAdditionalCosts
 ) {
+
+    /** Convenience for the common case with no repeatable additional cost payments. */
+    public AmountContext(UUID controllerId, Permanent sourcePermanent, UUID targetPermanentId,
+                         int xValue, int eventValue, boolean staticEvaluation, UUID chosenPermanentId) {
+        this(controllerId, sourcePermanent, targetPermanentId, xValue, eventValue, staticEvaluation,
+                chosenPermanentId, List.of());
+    }
 
     /** Convenience for the common case with no chosen permanent (all non-stack-resolution sites). */
     public AmountContext(UUID controllerId, Permanent sourcePermanent, UUID targetPermanentId,
@@ -47,7 +60,8 @@ public record AmountContext(
     /** Context for resolving an effect on a stack entry (stack resolution time). */
     public static AmountContext forStackEntry(StackEntry entry, Permanent sourcePermanent) {
         return new AmountContext(entry.getControllerId(), sourcePermanent, entry.getTargetId(),
-                entry.getXValue(), entry.getEventValue(), false, entry.getChosenPermanentId());
+                entry.getXValue(), entry.getEventValue(), false, entry.getChosenPermanentId(),
+                entry.getRepeatedAdditionalCosts());
     }
 
     /** Context for static (continuous) effect computation from a source permanent. */
@@ -61,7 +75,15 @@ public record AmountContext(
      * (CR 605.3a), so there is no {@link StackEntry} to read.
      */
     public static AmountContext forManaAbility(Permanent source, UUID controllerId) {
-        return new AmountContext(controllerId, source, null, 0, 0, false, null);
+        return forManaAbility(source, controllerId, 0);
+    }
+
+    /**
+     * Mana-ability context that carries the activation-time {@code xValue}, for abilities whose
+     * cost snapshots a number the mana amount scales off (Soldevi Adnate's sacrificed mana value).
+     */
+    public static AmountContext forManaAbility(Permanent source, UUID controllerId, int xValue) {
+        return new AmountContext(controllerId, source, null, xValue, 0, false, null);
     }
 
     /** Source-less context for heuristic estimation (AI evaluation). */

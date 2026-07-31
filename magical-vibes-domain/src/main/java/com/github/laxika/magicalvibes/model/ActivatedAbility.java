@@ -92,6 +92,12 @@ public class ActivatedAbility {
      * {@link #withMaxActivationsPerGame(int)}.
      */
     private Integer maxActivationsPerGame;
+    /**
+     * When true this hand-activated ability's intrinsic cost exiles the source card instead of
+     * discarding it ("Exile this card from your hand: Add {G}" — Elvish Spirit Guide). No discard
+     * triggers fire. Set via {@link #withExilesSourceFromHand()}.
+     */
+    private boolean exilesSourceFromHand;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
@@ -228,6 +234,16 @@ public class ActivatedAbility {
      */
     public ActivatedAbility withMaxActivationsPerGame(int maxActivations) {
         this.maxActivationsPerGame = maxActivations;
+        return this;
+    }
+
+    /**
+     * Fluent setter marking a hand-activated ability whose intrinsic cost exiles the source card
+     * rather than discarding it ("Exile this card from your hand: Add {G}"). Returns this ability
+     * for chaining.
+     */
+    public ActivatedAbility withExilesSourceFromHand() {
+        this.exilesSourceFromHand = true;
         return this;
     }
 

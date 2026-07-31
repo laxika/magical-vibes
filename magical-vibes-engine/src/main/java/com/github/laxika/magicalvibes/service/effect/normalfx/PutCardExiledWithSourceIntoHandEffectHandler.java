@@ -40,7 +40,7 @@ public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffec
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        UUID sourcePermanentId = entry.getSourcePermanentId();
+        UUID sourcePermanentId = resolveSourcePermanentId(gameData, entry);
         String controllerName = gameData.playerIdToName.get(controllerId);
         String sourceName = entry.getCard().getName();
         if (sourcePermanentId == null) return;
@@ -76,5 +76,21 @@ public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffec
 
         log.info("Game {} - {} chooses from {} cards exiled with {}",
                 gameData.id, controllerName, matching.size(), sourceName);
+    }
+
+    /**
+     * An activated ability's stack entry carries no source permanent id (only triggered abilities
+     * do), so fall back to the battlefield permanent whose card is the ability's source card —
+     * Gustha's Scepter returns an exiled card with a {@code {T}} ability.
+     */
+    private UUID resolveSourcePermanentId(GameData gameData, StackEntry entry) {
+        if (entry.getSourcePermanentId() != null) return entry.getSourcePermanentId();
+        List<com.github.laxika.magicalvibes.model.Permanent> battlefield =
+                gameData.playerBattlefields.get(entry.getControllerId());
+        if (battlefield == null) return null;
+        for (var p : battlefield) {
+            if (p.getCard() == entry.getCard()) return p.getId();
+        }
+        return null;
     }
 }

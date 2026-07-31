@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingPortalPileSearch;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
@@ -843,6 +844,53 @@ public class GraveyardReturnSupport {
         handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
     }
 
+    /**
+     * Moves each pre-targeted card from whichever graveyard still holds it to the top of that
+     * graveyard owner's library, in target order (so the last processed card ends up on top).
+     * Used by "put target cards from an opponent's graveyard on top of their library"
+     * (Misinformation). Cards that already left the graveyard are silently skipped.
+     */
+    public void putTargetedCardsFromAnyGraveyardOnTopOfLibrary(GameData gameData, StackEntry entry) {
+        List<UUID> targetCardIds = entry.getTargetCardIds();
+        if (targetCardIds == null || targetCardIds.isEmpty()) {
+            return;
+        }
+
+        List<Card> movedCards = new ArrayList<>();
+        UUID ownerId = null;
+        graveyardService.beginGraveyardLeaveBatch(gameData);
+        try {
+            for (UUID cardId : targetCardIds) {
+                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                if (card == null) {
+                    continue;
+                }
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    List<Card> graveyard = gameData.playerGraveyards.get(pid);
+                    if (graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
+                        gameData.playerDecks.get(pid).addFirst(card);
+                        graveyardService.notifyCardsLeftGraveyard(gameData, pid);
+                        movedCards.add(card);
+                        ownerId = pid;
+                        break;
+                    }
+                }
+            }
+        } finally {
+            graveyardService.endGraveyardLeaveBatch(gameData);
+        }
+
+        if (!movedCards.isEmpty()) {
+            String playerName = gameData.playerIdToName.get(ownerId);
+            GameLog.Builder builder = GameLog.builder().text(playerName + " has ");
+            appendCardList(builder, movedCards);
+            builder.text(" put on top of their library from their graveyard.");
+            gameLogService.append(gameData, builder.build());
+            log.info("Game {} - {} card(s) put from {}'s graveyard on top of their library",
+                    gameData.id, movedCards.size(), playerName);
+        }
+    }
+
     public boolean exileCardFromAnyGraveyard(GameData gameData, UUID cardId, Card card) {
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(pid);
@@ -1330,20 +1378,33 @@ public class GraveyardReturnSupport {
         gameData.queueInteraction(new PendingPileSeparation(state.controllerId(), state.targetPlayerId(),
                 state.allPermanentIds(), state.cards(), state.cardOwners(), pile1, pile2, state.disposition()));
 
-        String pile1Desc = buildCardPileDescription(state.cards(), pile1);
-        String pile2Desc = buildCardPileDescription(state.cards(), pile2);
+        // Phyrexian Portal's piles are face down, so neither the log nor the controller's prompt may
+        // name their cards — both piles are identified by card count alone.
+        boolean faceDown = state.disposition() == CardPileDisposition.SEARCH_ONE_TO_HAND;
+        String pile1Desc = faceDown ? describePileSize(pile1) : buildCardPileDescription(state.cards(), pile1);
+        String pile2Desc = faceDown ? describePileSize(pile2) : buildCardPileDescription(state.cards(), pile2);
 
         UUID opponentId = state.targetPlayerId();
         String opponentName = gameData.playerIdToName.get(opponentId);
-        GameLog.Builder pileLog = GameLog.builder().text(opponentName + " separates cards into two piles. Pile 1: ");
-        appendCardPile(pileLog, state.cards(), pile1);
-        pileLog.text(". Pile 2: ");
-        appendCardPile(pileLog, state.cards(), pile2);
-        pileLog.text(".");
-        gameLogService.append(gameData, pileLog.build());
+        if (faceDown) {
+            gameLogService.append(gameData, GameLog.text(opponentName
+                    + " separates the cards into two face-down piles. Pile 1: " + pile1Desc
+                    + ". Pile 2: " + pile2Desc + "."));
+        } else {
+            GameLog.Builder pileLog = GameLog.builder().text(opponentName + " separates cards into two piles. Pile 1: ");
+            appendCardPile(pileLog, state.cards(), pile1);
+            pileLog.text(". Pile 2: ");
+            appendCardPile(pileLog, state.cards(), pile2);
+            pileLog.text(".");
+            gameLogService.append(gameData, pileLog.build());
+        }
 
         UUID controllerId = state.controllerId();
-        String destText = state.disposition() == CardPileDisposition.HAND ? "put into your hand" : "put onto the battlefield";
+        String destText = switch (state.disposition()) {
+            case HAND -> "put into your hand";
+            case SEARCH_ONE_TO_HAND -> "search (the other pile is exiled)";
+            default -> "put onto the battlefield";
+        };
         String prompt = "Choose a pile to " + destText + ". Yes = Pile 1 (" + pile1Desc + "), No = Pile 2 (" + pile2Desc + ").";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(null, controllerId, List.of(), prompt));
         playerInputService.processNextMayAbility(gameData);
@@ -1393,6 +1454,12 @@ public class GraveyardReturnSupport {
             return;
         }
 
+        if (state.disposition() == CardPileDisposition.SEARCH_ONE_TO_HAND) {
+            completePortalPileSearch(gameData, controllerId, controllerName, allCards,
+                    chosenPileCardIds, otherPileCardIds, cardOwners);
+            return;
+        }
+
         // Chosen pile → battlefield under controller's control
         for (UUID cardId : chosenPileCardIds) {
             Card card = allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
@@ -1422,6 +1489,45 @@ public class GraveyardReturnSupport {
         gameLogService.append(gameData, GameLog.textCardText(playerName + " puts " , card, " onto the battlefield."));
 
         handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
+    }
+
+    /**
+     * Phyrexian Portal step 2: the unchosen pile is exiled, then the controller searches the chosen
+     * pile for one card to put into their hand. The search is a {@code LibraryRevealChoice} marked
+     * by {@link PendingPortalPileSearch}; {@code LibraryChoiceHandlerService} shuffles the pile's
+     * leftovers back into the library once the pick lands. An empty chosen pile has nothing to
+     * search, so the effect simply finishes.
+     */
+    private void completePortalPileSearch(GameData gameData, UUID controllerId, String controllerName,
+                                          List<Card> allCards, List<UUID> chosenPileCardIds,
+                                          List<UUID> otherPileCardIds, Map<UUID, UUID> cardOwners) {
+        for (UUID cardId : otherPileCardIds) {
+            Card card = allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
+            if (card != null) {
+                exileService.exileCard(gameData, cardOwners.get(cardId), card);
+                gameLogService.append(gameData, GameLog.cardThen(card, " is exiled."));
+            }
+        }
+
+        List<Card> chosenPile = new ArrayList<>();
+        for (UUID cardId : chosenPileCardIds) {
+            allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().ifPresent(chosenPile::add);
+        }
+        if (chosenPile.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(controllerName + " has no cards to search."));
+            return;
+        }
+
+        gameData.queueInteraction(new PendingPortalPileSearch(controllerId));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
+                controllerId, chosenPile, chosenPile.stream().map(Card::getId).toList(),
+                false, true, false, false, false, 0, null, 1,
+                "Search this pile for a card to put into your hand. "
+                        + "The rest of the pile is shuffled into your library."));
+    }
+
+    private String describePileSize(List<UUID> cardIds) {
+        return cardIds.size() == 1 ? "1 card" : cardIds.size() + " cards";
     }
 
     private String buildCardPileDescription(List<Card> allCards, List<UUID> cardIds) {

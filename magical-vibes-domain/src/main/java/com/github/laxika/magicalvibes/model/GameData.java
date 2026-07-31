@@ -220,6 +220,12 @@ public class GameData {
     public final Map<UUID, Set<UUID>> seraphReturnedCreatures = new ConcurrentHashMap<>();
     /** Seraph: source Seraph permanent id → the player who last controlled it, watched for control-loss sacrifices. */
     public final Map<UUID, UUID> seraphControlWatch = new ConcurrentHashMap<>();
+    /**
+     * Gustha's Scepter: source permanent id → the player who last controlled it. When the
+     * controller changes or the permanent leaves the battlefield, every card exiled with it is put
+     * into its owner's graveyard ("When you lose control of this artifact, ...").
+     */
+    public final Map<UUID, UUID> exiledCardsToGraveyardOnControlLossWatch = new ConcurrentHashMap<>();
     /** Source permanent id → ids of the tokens created with it ("tokens created with this permanent"; Tetravus, Tombstone Stairwell). */
     public final Map<UUID, Set<UUID>> sourceCreatedTokens = new ConcurrentHashMap<>();
     /** Unified exile zone: every exiled card with its owner and optional source permanent. */
@@ -231,6 +237,8 @@ public class GameData {
     public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
     /** Player IDs → number of upcoming combat phases they must skip (Blinding Angel). Decremented as each is skipped. */
     public final Map<UUID, Integer> skipNextCombatPhaseCount = new ConcurrentHashMap<>();
+    /** Player IDs → number of upcoming draw steps they must skip (Ivory Gargoyle). Decremented as each is skipped. */
+    public final Map<UUID, Integer> skipNextDrawStepCount = new ConcurrentHashMap<>();
     public int globalDamagePreventionShield;
     public boolean preventAllCombatDamage;
     /** When true, all damage to all creatures (both players') is prevented this turn (Blinding Fog). */
@@ -450,6 +458,12 @@ public class GameData {
     public final Set<UUID> creaturesWithCombatDamagePrevented = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose combat damage is prevented this turn (Resistance Fighter). */
     public final Set<UUID> creaturesPreventedFromDealingCombatDamage = ConcurrentHashMap.newKeySet();
+    /**
+     * Players who play with their hand revealed for as long as a given source permanent remains on
+     * the battlefield (Stromgald Spy), keyed by that source permanent's id. Entries stay until the
+     * source leaves the battlefield; readers must check that the source is still there.
+     */
+    public final Map<UUID, Set<UUID>> handsRevealedWhileSourceOnBattlefield = new ConcurrentHashMap<>();
     /** When true, damage can't be prevented this turn (Impractical Joke). Cleared at turn cleanup. */
     public boolean damageCantBePreventedThisTurn = false;
     /**
@@ -472,6 +486,8 @@ public class GameData {
     public final List<CreatureDamageRedirectShield> creatureDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
     /** Saving Grace: redirect all damage this turn dealt to a protected player or their permanents onto a fixed creature (any source, unlimited). */
     public final List<TurnDamageRedirectToCreatureShield> turnDamageRedirectToCreatureShields = Collections.synchronizedList(new ArrayList<>());
+    /** Martyrdom: redirect the next N damage this turn dealt to a protected player onto a fixed permanent (any source). */
+    public final List<PlayerNextDamageRedirectShield> playerNextDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
     /** Queue for "each player returns up to N cards from graveyard to battlefield" choices. */
     public final List<PendingGraveyardReturnChoice> pendingGraveyardReturnQueue = Collections.synchronizedList(new ArrayList<>());
     /** APNAP-ordered queue of players still to choose for "each player may draw up to N" effects (Temporary Truce). Head player is the one currently prompted. */
@@ -734,6 +750,21 @@ public class GameData {
         damageDealtToPlayersThisTurn.merge(playerId, amount, Integer::sum);
     }
 
+    /** Tracks, per damaged player, the controller of the most recent red instant or sorcery spell that
+     *  dealt damage to them this turn. Maps damaged player UUID → that spell's controller UUID.
+     *  Used by Suffocation ("the controller of the last red instant or sorcery spell that dealt damage
+     *  to you this turn"). Cleared at turn cleanup. */
+    public final Map<UUID, UUID> lastRedSpellDamagerThisTurn = new ConcurrentHashMap<>();
+
+    /** Records that a red instant or sorcery spell controlled by {@code spellControllerId} dealt damage
+     *  to {@code damagedPlayerId} this turn, replacing any earlier such spell. */
+    public void recordRedSpellDamageToPlayer(UUID damagedPlayerId, UUID spellControllerId) {
+        if (damagedPlayerId == null || spellControllerId == null) {
+            return;
+        }
+        lastRedSpellDamagerThisTurn.put(damagedPlayerId, spellControllerId);
+    }
+
     /** Snapshot of how many untapped lands each player controlled at the beginning of their most recent
      *  turn (recorded as their upkeep begins, after the untap step). Locked so responses that tap lands
      *  don't change it. Read via {@code UntappedLandsAtTurnStart} for Power Surge. */
@@ -799,6 +830,12 @@ public class GameData {
      *  the current combat, so it still answers "all creatures that blocked or were blocked by it this turn"
      *  across multiple combat phases. Used by Venomous Breath. */
     public final Map<UUID, Set<UUID>> combatBlockOpponentIdsThisTurn = new ConcurrentHashMap<>();
+
+    /** Tracks the attacking creatures that became blocked this turn (recorded at declare-blockers time,
+     *  attacker direction only — blocking does not count). Turn-scoped and independent of the current
+     *  combat, and keyed by permanent ID so it still answers "if it was blocked this turn" after the
+     *  creature has left the battlefield. Used by Fyndhorn Druid's dies trigger. */
+    public final Set<UUID> creaturesBlockedThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Tracks which Leonin Arbiter permanent IDs each player has paid {2} for this turn. */
     public final Map<UUID, Set<UUID>> paidSearchTaxPermanentIds = new ConcurrentHashMap<>();
@@ -2040,12 +2077,18 @@ public class GameData {
         copy.allDamagePreventionPredicates.addAll(this.allDamagePreventionPredicates);
         copy.creaturesWithCombatDamagePrevented.addAll(this.creaturesWithCombatDamagePrevented);
         copy.creaturesPreventedFromDealingCombatDamage.addAll(this.creaturesPreventedFromDealingCombatDamage);
+        this.handsRevealedWhileSourceOnBattlefield.forEach((sourceId, playerIds) -> {
+            Set<UUID> copied = ConcurrentHashMap.newKeySet();
+            copied.addAll(playerIds);
+            copy.handsRevealedWhileSourceOnBattlefield.put(sourceId, copied);
+        });
         copy.damageCantBePreventedThisTurn = this.damageCantBePreventedThisTurn;
         copy.combatDamageToCreaturesDoublingsThisTurn = this.combatDamageToCreaturesDoublingsThisTurn;
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
         copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);
         copy.turnDamageRedirectToCreatureShields.addAll(this.turnDamageRedirectToCreatureShields);
+        copy.playerNextDamageRedirectShields.addAll(this.playerNextDamageRedirectShields);
         copy.targetSourceDamagePreventionShields.addAll(this.targetSourceDamagePreventionShields);
         copy.playerSourceNextDamageShields.addAll(this.playerSourceNextDamageShields);
         copy.sourceNextDamageToAnyTargetShields.addAll(this.sourceNextDamageToAnyTargetShields);
@@ -2103,6 +2146,7 @@ public class GameData {
                 copy.playersAttackedThisTurn.put(k, new HashSet<>(v)));
         copy.playersDealtDamageThisTurn.addAll(this.playersDealtDamageThisTurn);
         copy.damageDealtToPlayersThisTurn.putAll(this.damageDealtToPlayersThisTurn);
+        copy.lastRedSpellDamagerThisTurn.putAll(this.lastRedSpellDamagerThisTurn);
         copy.untappedLandsAtTurnStart.putAll(this.untappedLandsAtTurnStart);
         copy.permanentsDealtDamageThisTurn.addAll(this.permanentsDealtDamageThisTurn);
         copy.freeCastPermanentUsedThisTurn.addAll(this.freeCastPermanentUsedThisTurn);
@@ -2120,6 +2164,7 @@ public class GameData {
         this.combatBlockOpponentColorsThisTurn.forEach((k, v) ->
                 copy.combatBlockOpponentColorsThisTurn.put(k, new HashSet<>(v)));
         copy.creaturesInCombatWithChangelingThisTurn.addAll(this.creaturesInCombatWithChangelingThisTurn);
+        copy.creaturesBlockedThisTurn.addAll(this.creaturesBlockedThisTurn);
         this.combatBlockOpponentIdsThisTurn.forEach((k, v) ->
                 copy.combatBlockOpponentIdsThisTurn.put(k, new HashSet<>(v)));
 
@@ -2178,6 +2223,7 @@ public class GameData {
         this.seraphReturnedCreatures.forEach((k, v) ->
                 copy.seraphReturnedCreatures.put(k, new HashSet<>(v)));
         copy.seraphControlWatch.putAll(this.seraphControlWatch);
+        copy.exiledCardsToGraveyardOnControlLossWatch.putAll(this.exiledCardsToGraveyardOnControlLossWatch);
         this.sourceCreatedTokens.forEach((k, v) ->
                 copy.sourceCreatedTokens.put(k, new HashSet<>(v)));
 
@@ -2352,6 +2398,7 @@ public class GameData {
         // only reset at cleanup, so a copy taken mid-turn must carry them.
         copy.lifeLostThisTurn.putAll(this.lifeLostThisTurn);
         copy.skipNextCombatPhaseCount.putAll(this.skipNextCombatPhaseCount);
+        copy.skipNextDrawStepCount.putAll(this.skipNextDrawStepCount);
         copy.lastClashWonByController.putAll(this.lastClashWonByController);
         copy.manaAbilityResolutionDepth = this.manaAbilityResolutionDepth;
         this.permanentTypesCastFromGraveyardThisTurn.forEach((k, v) ->

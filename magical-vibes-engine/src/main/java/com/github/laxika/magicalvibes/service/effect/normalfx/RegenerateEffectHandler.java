@@ -42,6 +42,9 @@ public class RegenerateEffectHandler implements NormalEffectHandlerBean {
                     return;
                 }
                 perm.setRegenerationShield(perm.getRegenerationShield() + 1);
+                if (effect instanceof RegenerateEffect regenerate && regenerate.opponentMayDrawOnRegenerate()) {
+                    perm.setOpponentDrawRegenerationShield(perm.getOpponentDrawRegenerationShield() + 1);
+                }
 
                 gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " gains a regeneration shield."));
                 log.info("Game {} - {} gains a regeneration shield", gameData.id, perm.getCard().getName());

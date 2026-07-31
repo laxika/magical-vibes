@@ -70,7 +70,7 @@ class PutCardsFromHandOnLibraryAiStrategyTest {
 
         private PendingInteraction.PutCardsFromHandOnLibraryCardChoice choice(
                 UUID playerId, List<Card> cards, int maxCount) {
-            return new PendingInteraction.PutCardsFromHandOnLibraryCardChoice(
+            return PendingInteraction.PutCardsFromHandOnLibraryCardChoice.putOnLibrary(
                     playerId, cards.stream().map(Card::getId).toList(), cards, maxCount,
                     HandToLibraryPlacement.PLAYER_CHOICE);
         }
@@ -110,8 +110,9 @@ class PutCardsFromHandOnLibraryAiStrategyTest {
         void respectsValidCardIds() throws Exception {
             Card valid = spell("Valid", "{1}");
             Card invalid = spell("Invalid But Expensive", "{6}");
-            var interaction = new PendingInteraction.PutCardsFromHandOnLibraryCardChoice(
-                    aiPlayerId, List.of(valid.getId()), List.of(valid, invalid), 2, HandToLibraryPlacement.PLAYER_CHOICE);
+            var interaction = PendingInteraction.PutCardsFromHandOnLibraryCardChoice.putOnLibrary(
+                    aiPlayerId, List.of(valid.getId()), List.of(valid, invalid), 2,
+                    HandToLibraryPlacement.PLAYER_CHOICE);
 
             strategy.answer(interaction, context());
 

@@ -1098,4 +1098,64 @@ class StateBasedActionServiceTest {
             verify(legendRuleService, never()).checkLegendRule(any(), any());
         }
     }
+
+    @Nested
+    @DisplayName("Cards exiled with a permanent its controller lost control of — Gustha's Scepter")
+    class ExiledCardsOnControlLoss {
+
+        private Card exiledCard;
+        private UUID scepterId;
+
+        @BeforeEach
+        void setUpWatch() {
+            exiledCard = createCreatureCard("Grizzly Bears");
+            scepterId = UUID.randomUUID();
+            gd.addToExile(player1Id, exiledCard, scepterId, true);
+            gd.exiledCardsToGraveyardOnControlLossWatch.put(scepterId, player1Id);
+        }
+
+        @Test
+        @DisplayName("Exiled cards are put into their owner's graveyard when the source leaves the battlefield")
+        void sourceLeftBattlefield() {
+            sut.performStateBasedActions(gd);
+
+            verify(graveyardService).addCardToGraveyard(gd, player1Id, exiledCard);
+            assertThat(gd.exiledCards).isEmpty();
+            assertThat(gd.exiledCardsToGraveyardOnControlLossWatch).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Exiled cards are put into their owner's graveyard when another player gains control of the source")
+        void controllerChanged() {
+            Card artifact = new Card();
+            artifact.setName("Gustha's Scepter");
+            artifact.setType(CardType.ARTIFACT);
+            Permanent scepter = new Permanent(artifact);
+            gd.playerBattlefields.get(player2Id).add(scepter);
+            when(gameQueryService.findPermanentById(gd, scepterId)).thenReturn(scepter);
+
+            sut.performStateBasedActions(gd);
+
+            verify(graveyardService).addCardToGraveyard(gd, player1Id, exiledCard);
+            assertThat(gd.exiledCards).isEmpty();
+            assertThat(gd.exiledCardsToGraveyardOnControlLossWatch).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Exiled cards stay in exile while the same player still controls the source")
+        void controllerUnchanged() {
+            Card artifact = new Card();
+            artifact.setName("Gustha's Scepter");
+            artifact.setType(CardType.ARTIFACT);
+            Permanent scepter = new Permanent(artifact);
+            gd.playerBattlefields.get(player1Id).add(scepter);
+            when(gameQueryService.findPermanentById(gd, scepterId)).thenReturn(scepter);
+
+            sut.performStateBasedActions(gd);
+
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            assertThat(gd.exiledCards).hasSize(1);
+            assertThat(gd.exiledCardsToGraveyardOnControlLossWatch).containsEntry(scepterId, player1Id);
+        }
+    }
 }

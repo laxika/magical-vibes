@@ -584,6 +584,10 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   playCard(index: number): void {
+    if (this.choice.targeting.selectingAlternateCostHandCard) {
+      this.choice.targeting.selectAlternateCostHandCard(index);
+      return;
+    }
     this.choice.targeting.playCard(index, (i) => this.isCardPlayable(i));
   }
 
@@ -1553,7 +1557,7 @@ export class GameComponent implements OnInit, OnDestroy {
     if (t.choosingMode) { t.cancelModes(); return true; }
     if (t.choosingKicker) { t.cancelKicker(); return true; }
     if (t.choosingPhyrexianPayment) { t.cancelPhyrexianPayment(); return true; }
-    if (t.choosingAlternateCost || t.selectingAlternateCostCreatures) { t.cancelAlternateCost(); return true; }
+    if (t.choosingAlternateCost || t.selectingAlternateCostCreatures || t.selectingAlternateCostHandCard) { t.cancelAlternateCost(); return true; }
     if (t.choosingXValue) { t.cancelXValue(); return true; }
     if (t.convoking) { t.cancelConvoke(); return true; }
     if (t.targetingGraveyard) { t.cancelGraveyardTargeting(); return true; }
@@ -1577,6 +1581,7 @@ export class GameComponent implements OnInit, OnDestroy {
       || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking || t.payingForCast || t.payingForAbility
       || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker
       || t.choosingPhyrexianPayment || t.choosingAlternateCost || t.selectingAlternateCostCreatures
+      || t.selectingAlternateCostHandCard
       || t.targetingGraveyard;
   }
 

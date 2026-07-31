@@ -44,7 +44,8 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
             case NEXT_TO_CONTROLLER -> nextToController(gameData, entry, e);
             case NEXT_TO_SELF -> nextToSelf(gameData, entry, e);
             case NEXT_TO_ENCHANTED -> nextToEnchanted(gameData, entry, e);
-            case NEXT_TO_TARGET -> nextToTarget(gameData, entry, e);
+            case NEXT_TO_TARGET, NEXT_TO_TARGET_CREATURE, NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER ->
+                    nextToTarget(gameData, entry, e);
             case ALL_COMBAT -> {
                 gameData.preventAllCombatDamage = true;
                 gameLogService.append(gameData, GameLog.text("All combat damage will be prevented this turn."));

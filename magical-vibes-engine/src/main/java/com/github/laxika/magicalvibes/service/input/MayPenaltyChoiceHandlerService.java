@@ -2,6 +2,15 @@ package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -80,6 +89,7 @@ public class MayPenaltyChoiceHandlerService {
     private final StateBasedActionService stateBasedActionService;
     private final PermanentRemovalService permanentRemovalService;
     private final DestructionSupport destructionSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.LibraryExileSupport libraryExileSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DiscardHandUnlessPaysLifeEffectHandler discardHandUnlessPaysLifeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.StealDyingOpponentPermanentUnlessPaysLifeEffectHandler stealDyingOpponentPermanentUnlessPaysLifeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TapTargetCreatureUnlessControllerPaysLifeEffectHandler tapTargetCreatureUnlessControllerPaysLifeEffectHandler;
@@ -364,6 +374,10 @@ public class MayPenaltyChoiceHandlerService {
             String logEntry = player.getUsername() + " declines to discard.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} is no longer on the battlefield, decline is a no-op", gameData.id, sourceCard.getName());
+        }
+
+        if (effect.drawCardIfNotDiscarded()) {
+            drawService.resolveDrawCard(gameData, controllerId);
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -933,6 +947,103 @@ public class MayPenaltyChoiceHandlerService {
     }
 
     /**
+     * Misfortune: the opponent ({@code player}) chooses one of two modes for the spell's controller.
+     * Accept is "you put a +1/+1 counter on each creature you control and gain 4 life"; decline is
+     * "you put a -1/-1 counter on each creature that player controls and Misfortune deals 4 damage to
+     * that player". Both modes ride one stack entry controlled by the spell's controller, so the
+     * "each creature you control" / "your opponents' creatures" scopes resolve against them.
+     */
+    public void handleMisfortuneChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        UUID opponentId = ability.controllerId(); // opponent is the decision maker
+        UUID controllerId = null;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (!pid.equals(opponentId)) {
+                controllerId = pid;
+                break;
+            }
+        }
+        if (controllerId == null) {
+            throw new IllegalStateException("Cannot find Misfortune controller");
+        }
+
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String opponentName = gameData.playerIdToName.get(opponentId);
+
+        List<CardEffect> effects;
+        if (accepted) {
+            effects = List.of(
+                    new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1,
+                            new PermanentIsCreaturePredicate()),
+                    new GainLifeEffect(4));
+            gameLogService.append(gameData, GameLog.text(opponentName + " chooses: " + controllerName
+                    + " puts a +1/+1 counter on each creature they control and gains 4 life."));
+        } else {
+            effects = List.of(
+                    new PutCounterOnEachMatchingPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1,
+                            new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                    new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
+                            EachPermanentScope.ALL_PLAYERS),
+                    new DealDamageToPlayersEffect(4, DamageRecipient.EACH_OPPONENT));
+            gameLogService.append(gameData, GameLog.text(opponentName + " chooses: " + controllerName
+                    + " puts a -1/-1 counter on each creature " + opponentName
+                    + " controls and Misfortune deals 4 damage to them."));
+        }
+        log.info("Game {} - {} chooses {} for {} (Misfortune)", gameData.id, opponentName,
+                accepted ? "counters-and-life" : "shrink-and-burn", controllerName);
+
+        gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(),
+                controllerId, ability.sourceCard().getName(), new ArrayList<>(effects), 0));
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Fatal Lore: the opponent ({@code player}) chooses one of two modes for the spell's controller.
+     * Accept is "you draw three cards"; decline is "you destroy up to two creatures that player
+     * controls, they can't be regenerated, then that player draws up to three cards". The decline
+     * mode's two effects ride one stack entry controlled by the spell's controller, so the destroy
+     * choice resumes into the opponent's draw.
+     */
+    public void handleFatalLoreChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        UUID opponentId = ability.controllerId(); // opponent is the decision maker
+        UUID controllerId = null;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (!pid.equals(opponentId)) {
+                controllerId = pid;
+                break;
+            }
+        }
+        if (controllerId == null) {
+            throw new IllegalStateException("Cannot find Fatal Lore controller");
+        }
+
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String opponentName = gameData.playerIdToName.get(opponentId);
+
+        List<com.github.laxika.magicalvibes.model.effect.CardEffect> effects;
+        if (accepted) {
+            gameLogService.append(gameData, GameLog.text(opponentName + " chooses: " + controllerName
+                    + " draws three cards."));
+            effects = List.of(new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(3));
+        } else {
+            gameLogService.append(gameData, GameLog.text(opponentName + " chooses: " + controllerName
+                    + " destroys up to two creatures " + opponentName + " controls, then " + opponentName
+                    + " draws up to three cards."));
+            effects = List.of(
+                    new com.github.laxika.magicalvibes.model.effect.DestroyUpToNCreaturesOpponentControlsEffect(2, true),
+                    new com.github.laxika.magicalvibes.model.effect.DrawUpToNCardsEffect(3,
+                            com.github.laxika.magicalvibes.model.effect.DrawUpToRecipient.OPPONENT));
+        }
+        log.info("Game {} - {} chooses mode {} for {} (Fatal Lore)", gameData.id, opponentName,
+                accepted ? "draw-three" : "destroy", controllerName);
+
+        gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(),
+                controllerId, ability.sourceCard().getName(), new ArrayList<>(effects), 0));
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
      * Covenant of Minds: the targeted opponent ({@code player}) decides for the spell's controller.
      * The revealed cards are still on top of the controller's library. Accept puts those cards into
      * the controller's hand; decline puts them into the controller's graveyard and the controller
@@ -1164,6 +1275,26 @@ public class MayPenaltyChoiceHandlerService {
             if (effect.anyPlayerMayPay() && offerNextAnyPlayerPay(gameData, ability, effect)) {
                 return;
             }
+        }
+
+        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost exileCost) {
+            if (libraryExileSupport.hasAtLeast(gameData, sourceControllerId, exileCost.count())) {
+                libraryExileSupport.exileTopCards(gameData, sourceControllerId, exileCost.count());
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            // Accepted but the library ran short — fall through to the penalty.
+        }
+
+        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.OpponentCreatesTokensCost tokenCost) {
+            // Nothing can make this cost unpayable, so accepting always pays it in full.
+            UUID opponentId = gameQueryService.getOpponentId(gameData, sourceControllerId);
+            for (int i = 0; opponentId != null && i < tokenCost.count(); i++) {
+                destructionSupport.createTokenForPlayer(gameData, opponentId, tokenCost.tokenTemplate(),
+                        ability.sourceCard().getName(), null);
+            }
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
         }
 
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost multiCost) {

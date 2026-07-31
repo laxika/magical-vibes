@@ -48,6 +48,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsEnchantedPredicate,
         PermanentIsEnchantmentPredicate,
         PermanentIsHistoricPredicate,
+        PermanentIsHostOfSourceAuraPredicate,
         PermanentIsLandPredicate,
         PermanentIsUnblockedAttackingPredicate,
         PermanentIsMonocoloredPredicate,

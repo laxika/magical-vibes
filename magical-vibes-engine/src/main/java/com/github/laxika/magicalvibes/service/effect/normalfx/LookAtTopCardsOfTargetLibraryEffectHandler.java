@@ -46,6 +46,8 @@ import org.springframework.stereotype.Component;
  *       rest back on top in any order (Cruel Fate, Wu Spy).</li>
  *   <li>{@code MAY_PUT_TOP_ON_BOTTOM} — the single top card is shown in a may-ability prompt and,
  *       if accepted, moved to the bottom of that player's library (Coral Fighters).</li>
+ *   <li>{@code KEEP_ONE_ON_TOP_EXILE_REST} — the target player picks one card to put back on top of
+ *       their library and the rest are exiled (Ashnod's Cylix).</li>
  * </ul>
  */
 @Slf4j
@@ -104,6 +106,8 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
                     targetPlayerId, deck, actual, controllerName, targetName);
             case MAY_PUT_TOP_ON_BOTTOM -> resolveMayPutTopOnBottom(gameData, entry, controllerId,
                     targetPlayerId, deck, controllerName, targetName);
+            case KEEP_ONE_ON_TOP_EXILE_REST -> resolveKeepOneOnTopExileRest(gameData, entry,
+                    targetPlayerId, deck, actual, targetName);
         }
     }
 
@@ -216,6 +220,34 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
                 targetPlayerId));
         log.info("Game {} - {} looks at the top card of {}'s library ({})",
                 gameData.id, controllerName, targetName, sourceName);
+    }
+
+    /**
+     * Ashnod's Cylix: the <em>target player</em> looks at the cards and picks the one that goes back
+     * on top of their own library; everything else is exiled. The searching player is therefore the
+     * target player, not the ability's controller, and the pick is mandatory.
+     */
+    private void resolveKeepOneOnTopExileRest(GameData gameData, StackEntry entry,
+            UUID targetPlayerId, List<Card> deck, int actual, String targetName) {
+        List<Card> topCards = LibraryRevealSupport.takeTopCards(deck, actual);
+        gameLogService.append(gameData, GameLog.text(targetName + " looks at the top "
+                + LibraryRevealSupport.pluralCards(actual) + " of their library."));
+        List<Card> sourceCards = new ArrayList<>(topCards);
+        String prompt = "Put one of these cards back on top of your library. The rest will be exiled.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(targetPlayerId, topCards)
+                        .canFailToFind(false)
+                        .targetPlayerId(targetPlayerId)
+                        .sourceCards(sourceCards)
+                        .restToExile(true)
+                        .shuffleAfterSelection(false)
+                        .prompt(prompt)
+                        .destination(LibrarySearchDestination.TOP_OF_LIBRARY)
+                        .build(),
+                prompt,
+                false));
+        log.info("Game {} - {} looks at the top {} cards of their library ({})",
+                gameData.id, targetName, actual, entry.getCard().getName());
     }
 
     private void resolvePutOneIntoGraveyard(GameData gameData, StackEntry entry, UUID controllerId,

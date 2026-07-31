@@ -116,7 +116,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
-        int count = evaluateCount(gameData, entry, e);
+        int count = evaluateCount(gameData, entry, e, playerId);
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null || battlefield.isEmpty()) {
@@ -175,7 +175,6 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         // then each other player in turn order, then all chosen permanents are sacrificed at the
         // same time. Collect all IDs to sacrifice and defer actual sacrifice until all choices
         // are made.
-        int count = evaluateCount(gameData, entry, e);
         FilterContext filterContext = filterContextFor(gameData, entry);
         List<UUID> autoSacrificeIds = new ArrayList<>();
         List<PendingForcedSacrifice> choosers = new ArrayList<>();
@@ -190,6 +189,11 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
 
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null || battlefield.isEmpty()) {
+                continue;
+            }
+
+            int count = evaluateCount(gameData, entry, e, playerId);
+            if (count <= 0) {
                 continue;
             }
 
@@ -233,9 +237,20 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         return !gameQueryService.canEffectCauseSacrifice(gameData, playerId, entry.getControllerId());
     }
 
-    private int evaluateCount(GameData gameData, StackEntry entry, SacrificePermanentsEffect e) {
+    /**
+     * Evaluates the sacrifice count. With {@code countPerSacrificingPlayer} the amount is evaluated
+     * from {@code sacrificingPlayerId}'s perspective, so a {@code CountScope.CONTROLLER} amount
+     * counts that player's own permanents ("for each white permanent they control").
+     */
+    private int evaluateCount(GameData gameData, StackEntry entry, SacrificePermanentsEffect e,
+            UUID sacrificingPlayerId) {
         Permanent source = resolveSourcePermanent(gameData, entry);
-        return amountEvaluationService.evaluate(gameData, e.count(), AmountContext.forStackEntry(entry, source));
+        AmountContext context = AmountContext.forStackEntry(entry, source);
+        if (e.countPerSacrificingPlayer()) {
+            context = new AmountContext(sacrificingPlayerId, source, context.targetPermanentId(),
+                    context.xValue(), context.eventValue(), false, context.chosenPermanentId());
+        }
+        return amountEvaluationService.evaluate(gameData, e.count(), context);
     }
 
     /**

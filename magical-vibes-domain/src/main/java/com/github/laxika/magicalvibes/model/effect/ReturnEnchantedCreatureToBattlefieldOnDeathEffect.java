@@ -4,8 +4,9 @@ import java.util.UUID;
 
 /**
  * Death trigger for auras: when the enchanted creature dies, return that creature card from
- * its owner's graveyard to the battlefield. Used by Abduction (owner's control) and
- * Unhallowed Pact ({@code underAuraControllersControl} — the Aura's controller gets it).
+ * its owner's graveyard to the battlefield. Used by Abduction (owner's control) and by
+ * Unhallowed Pact / False Demise ({@code underAuraControllersControl} — the Aura's controller
+ * gets it).
  *
  * <p>The {@code dyingCreatureCardId} is baked in at trigger time by
  * {@code DeathTriggerCollectorService} — it captures the dying creature's card ID so the
@@ -17,7 +18,9 @@ import java.util.UUID;
  * @param dyingCreatureCardId          the card ID of the creature that just died; {@code null}
  *                                     in the card definition (baked in at trigger time)
  * @param underAuraControllersControl  {@code true} to put the creature onto the battlefield under
- *                                     the Aura controller's control, {@code false} for its owner's
+ *                                     the Aura controller's control, {@code false} for its owner's.
+ *                                     When the two differ the returned permanent is tracked as a
+ *                                     stolen creature so the control change persists.
  */
 public record ReturnEnchantedCreatureToBattlefieldOnDeathEffect(
         UUID dyingCreatureCardId,

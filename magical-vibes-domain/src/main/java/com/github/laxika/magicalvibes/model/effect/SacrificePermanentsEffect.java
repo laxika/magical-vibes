@@ -27,13 +27,24 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param count     number of permanents to sacrifice
  * @param filter    which permanents are eligible
  * @param recipient who sacrifices
+ * @param countPerSacrificingPlayer when {@code true} the count is evaluated once per sacrificing
+ *                                  player, with player-relative scopes ({@code CountScope.CONTROLLER})
+ *                                  reading that player's own permanents instead of the spell's
+ *                                  controller — "each player sacrifices … for each white permanent
+ *                                  <em>they</em> control" (Omen of Fire)
  */
 public record SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate filter,
-        SacrificeRecipient recipient) implements CardEffect {
+        SacrificeRecipient recipient, boolean countPerSacrificingPlayer) implements CardEffect {
+
+    /** Count evaluated once, from the spell's controller's perspective. */
+    public SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate filter,
+            SacrificeRecipient recipient) {
+        this(count, filter, recipient, false);
+    }
 
     /** Fixed count. */
     public SacrificePermanentsEffect(int count, PermanentPredicate filter, SacrificeRecipient recipient) {
-        this(new Fixed(count), filter, recipient);
+        this(new Fixed(count), filter, recipient, false);
     }
 
     @Override

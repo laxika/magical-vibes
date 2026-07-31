@@ -146,6 +146,7 @@ public class ExampleCard extends Card {
 
 - Alternate hand cast (non-mana alternate cost from hand):
   - `addCastingOption(new AlternateHandCast(List.of(new LifeCastingCost(N), new SacrificePermanentsCost(N, predicate))))`
+  - `addCastingOption(new AlternateHandCast(List.of(new ExileCardsFromHandCastingCost(new CardColorPredicate(COLOR), "label"))))` — exile a matching card from hand rather than pay mana (Scars of the Veteran). Paid via cast-request `discardHandCardIndex` (exiled, no discard triggers)
 - Emerge (sacrifice a creature; pay emerge mana cost reduced by its mana value):
   - `addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{cost}"), new SacrificePermanentsCost(1, PermanentIsCreaturePredicate())), true))` — trailing `true` = `reduceManaBySacrificedManaValue` (generic only)
   - Replaces normal mana cost; composed from `CastingCost` components (`LifeCastingCost`, `SacrificePermanentsCost`, `ManaCastingCost`, `TapUntappedPermanentsCost`, `ReturnPermanentsCost`)
@@ -548,6 +549,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new GraveyardCardThreshold(threshold, filter), wrapped)` | yes | yes | - |
 | `ConditionalEffect(new SourceCardInGraveyard(), wrapped)` | - | yes | yes (graveyard triggers) | intervening-if for abilities that trigger from a graveyard ("... if this card is in your graveyard, ..."): true while the source card object is still in its controller's graveyard. Vengeful Pharaoh |
 | `ConditionalEffect(new CardsAboveSelfInGraveyard(threshold, filter), wrapped)` | - | yes | yes (graveyard upkeep) | source's controller graveyard is ordered; counts filter-matching cards positioned *above* self (higher index). Nether Shadow: `(3, new CardTypePredicate(CardType.CREATURE))` |
+| `ConditionalEffect(new CardDirectlyAboveSelfInGraveyard(filter), wrapped)` | - | yes | yes (graveyard upkeep / graveyard end step) | like the above but matches only the single card *immediately* above self in the ordered graveyard. Krovikan Horror: `new CardTypePredicate(CardType.CREATURE)` |
 | `ConditionalEffect(new CardsInLibraryAtLeast(threshold), wrapped)` | - | yes | yes (upkeep) |
 | `ConditionalEffect(new CardsInHandAtLeast(threshold), wrapped)` | - | yes | yes (upkeep) |
 | `ConditionalEffect(new SourceIsTapped(), wrapped)` | - | yes | - | intervening-if "if this permanent is tapped" — reads `source.isTapped()`. Mana Vault's `DRAW_TRIGGERED` deals 1 damage to controller only while tapped |

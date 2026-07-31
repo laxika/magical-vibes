@@ -16,6 +16,14 @@ public enum PreventionScope {
     NEXT_TO_ENCHANTED,
     /** "Prevent the next N damage that would be dealt to any target" with a chosen target creature/player (Healing Salve). */
     NEXT_TO_TARGET,
+    /** "Prevent the next N damage that would be dealt to target creature this turn" (Soldevi Heretic).
+     *  Resolves exactly like {@link #NEXT_TO_TARGET}; the separate scope exists so the effect can
+     *  declare a creature-only {@code TargetSpec} and a player can never be chosen. */
+    NEXT_TO_TARGET_CREATURE,
+    /** "Prevent the next N damage that would be dealt to target player or planeswalker this turn" (Wandering Mage).
+     *  Resolves exactly like {@link #NEXT_TO_TARGET}; the separate scope exists so the effect can
+     *  declare a player-or-planeswalker {@code TargetSpec} and a creature can never be chosen. */
+    NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER,
     /** "Prevent all combat damage that would be dealt this turn" (Fog, Holy Day). */
     ALL_COMBAT,
     /** "Prevent all damage that would be dealt to creatures this turn" (Blinding Fog). */

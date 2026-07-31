@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseSacri
 import com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantBeBlockedUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
@@ -901,6 +902,7 @@ public class GameQueryService {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (!(effect instanceof DamageLifeFloorEffect lifeFloor)) continue;
                 boolean active = switch (lifeFloor.condition()) {
+                    case ALWAYS -> true;
                     case CONTROLS_A_CREATURE -> controlsCreature;
                     case LIFE_AT_LEAST_FLOOR -> currentLife >= lifeFloor.floor();
                 };
@@ -3299,6 +3301,26 @@ public class GameQueryService {
             for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof EnchantedCreatureCantAttackUnlessPaysEffect tax) {
                     total[0] += tax.amount();
+                }
+            }
+        });
+        return total[0];
+    }
+
+    /**
+     * Returns the additional generic mana the defending player must pay for each creature they declare as a
+     * blocker of this attacking creature, summed over every
+     * {@link EnchantedCreatureCantBeBlockedUnlessPaysEffect} aura attached to it (e.g. Awesome Presence — {3}).
+     */
+    public int getEnchantedCreatureBlockTax(GameData gameData, Permanent creature) {
+        int[] total = {0};
+        gameData.forEachPermanent((playerId, aura) -> {
+            if (!aura.isAttached() || !aura.getAttachedTo().equals(creature.getId())) {
+                return;
+            }
+            for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof EnchantedCreatureCantBeBlockedUnlessPaysEffect tax) {
+                    total[0] += tax.amountPerBlocker();
                 }
             }
         });

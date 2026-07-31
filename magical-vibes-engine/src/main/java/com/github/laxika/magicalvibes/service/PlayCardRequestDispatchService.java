@@ -56,7 +56,8 @@ public class PlayCardRequestDispatchService {
                 Boolean.TRUE.equals(request.kicked()), request.discardHandCardIndex(),
                 nullIfEmpty(request.discardHandCardIndices()),
                 nullIfEmpty(request.imposedSacrificePermanentIds()),
-                nullIfEmpty(request.additionalCostSacrificePermanentIds()));
+                nullIfEmpty(request.additionalCostSacrificePermanentIds()),
+                request.repeatedAdditionalCosts() != null ? request.repeatedAdditionalCosts() : List.of());
     }
 
     private static List<UUID> listOrEmpty(List<UUID> list) {

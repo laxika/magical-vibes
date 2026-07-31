@@ -140,6 +140,8 @@ public class MultiPermanentChoiceHandlerService {
             handleSacrificeAttackingCreature(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.ExileAttackingCreatures) {
             handleExileAttackingCreatures(gameData, playerId, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.DestroyCreaturesOpponentControls ctx) {
+            handleDestroyCreaturesOpponentControls(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ReturnTargetPermanentsToHand) {
             handleReturnTargetPermanentsToHand(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.CombatDamageBounce ctx) {
@@ -392,6 +394,24 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         // Resume resolving remaining effects on the same ability (e.g. the cycling draw)
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleDestroyCreaturesOpponentControls(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                                        MultiPermanentChoiceContext.DestroyCreaturesOpponentControls ctx) {
+        if (permanentIds.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(
+                    gameData.playerIdToName.get(playerId) + " chooses not to destroy any creatures."));
+        } else {
+            for (UUID permId : permanentIds) {
+                Permanent creature = gameQueryService.findPermanentById(gameData, permId);
+                if (creature != null) {
+                    destructionSupport.tryDestroyAndLog(gameData, creature, ctx.sourceName(), ctx.cannotBeRegenerated());
+                }
+            }
+        }
+
+        // Resume resolving remaining effects on the same entry (the chooser's "draws up to three cards")
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

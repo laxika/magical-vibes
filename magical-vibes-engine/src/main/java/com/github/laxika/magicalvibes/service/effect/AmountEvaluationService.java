@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.amount.HalfControllerLifeRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
 import com.github.laxika.magicalvibes.model.amount.CreaturesDevoured;
@@ -49,6 +50,7 @@ import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.HighestOpponentLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.IfSourceAttacking;
+import com.github.laxika.magicalvibes.model.amount.ImprintedCardManaValue;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreaturePower;
 import com.github.laxika.magicalvibes.model.amount.TotalPowerOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfCardsExiledWithSource;
@@ -63,6 +65,7 @@ import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.OtherAttackersSharingCreatureTypeWithTarget;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
+import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
@@ -120,6 +123,8 @@ public class AmountEvaluationService {
                     ctx.xValue();
             case EventValue ignored ->
                     ctx.eventValue();
+            case RepeatedAdditionalCostCount a ->
+                    (int) ctx.repeatedAdditionalCosts().stream().filter(a.manaCost()::equals).count();
             case Scaled s ->
                     s.factor() * evaluate(gameData, s.amount(), ctx);
             case Divided d ->
@@ -157,6 +162,8 @@ public class AmountEvaluationService {
                     countColorManaSymbolsInHand(gameData, c, ctx);
             case CountersOnSource c ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getCounterCount(c.counterType());
+            case TimesSourceRegeneratedThisTurn ignored ->
+                    ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getTimesRegeneratedThisTurn();
             case CreaturesDevoured ignored ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getDevouredCreatures().size();
             case DevouredCreaturesOfSubtype d ->
@@ -224,6 +231,8 @@ public class AmountEvaluationService {
                     totalPTOfCardsExiledWithSource(gameData, ctx, true);
             case TotalToughnessOfCardsExiledWithSource ignored ->
                     totalPTOfCardsExiledWithSource(gameData, ctx, false);
+            case ImprintedCardManaValue ignored ->
+                    imprintedCardManaValue(gameData, ctx);
             case ImprintedCreaturePower ignored ->
                     imprintedCreaturePT(gameData, ctx, true);
             case ImprintedCreatureToughness ignored ->
@@ -735,6 +744,12 @@ public class AmountEvaluationService {
             }
         }
         return total;
+    }
+
+    private int imprintedCardManaValue(GameData gameData, AmountContext ctx) {
+        if (ctx.sourcePermanent() == null) return 0;
+        Card imprinted = gameData.getImprintedCard(ctx.sourcePermanent().getCard());
+        return imprinted == null ? 0 : imprinted.getManaValue();
     }
 
     private int imprintedCreaturePT(GameData gameData, AmountContext ctx, boolean power) {

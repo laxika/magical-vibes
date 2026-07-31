@@ -78,6 +78,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final DamageSupport damageSupport;
     private final DestructionSupport destructionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MaySacrificeForCounterSupport maySacrificeForCounterSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.GargantuanGorillaUpkeepSupport gargantuanGorillaUpkeepSupport;
     private final LifeSupport lifeSupport;
     private final com.github.laxika.magicalvibes.service.DrawService drawService;
     private final LibrarySearchSupport librarySearchSupport;
@@ -417,6 +418,14 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleGargantuanGorillaSacrificeForest(GameData gameData, UUID permanentId,
+                                                       PermanentChoiceContext.GargantuanGorillaSacrificeForest context) {
+        gargantuanGorillaUpkeepSupport.sacrificeForest(
+                gameData, context.controllerId(), permanentId, context.sourcePermanentId());
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleSacrificeCreatureControllerGainsLifeEqualToToughness(GameData gameData, UUID permanentId,
                                                                             PermanentChoiceContext.SacrificeCreatureControllerGainsLifeEqualToToughness context) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
@@ -497,6 +506,30 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is sacrificed."));
         log.info("Game {} - {} sacrificed by sacrifice-or-sacrifice effect", gameData.id, target.getCard().getName());
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * "If this land would enter, sacrifice an untapped [land] instead. If you do, put it onto the
+     * battlefield. If you don't, put it into its owner's graveyard." (Balduvian Trading Post.)
+     * The controller's own player id is offered as the decline option.
+     */
+    public void handleSacrificePermanentToEnter(GameData gameData, UUID permanentId,
+                                                 PermanentChoiceContext.SacrificePermanentToEnter context) {
+        boolean declined = context.controllerId().equals(permanentId);
+        if (!declined) {
+            Permanent sacrifice = gameQueryService.findPermanentById(gameData, permanentId);
+            if (sacrifice == null) {
+                throw new IllegalStateException("Target permanent no longer exists");
+            }
+            permanentRemovalService.removePermanentToGraveyard(gameData, sacrifice);
+            permanentRemovalService.removeOrphanedAuras(gameData);
+            gameLogService.append(gameData, GameLog.cardThen(sacrifice.getCard(), " is sacrificed."));
+        }
+
+        battlefieldEntryService.completeSacrificePermanentToEnter(
+                gameData, context.controllerId(), context.enteringPermanent(), !declined);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

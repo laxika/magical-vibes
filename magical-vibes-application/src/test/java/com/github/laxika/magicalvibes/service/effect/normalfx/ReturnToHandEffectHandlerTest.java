@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -450,6 +451,65 @@ class ReturnToHandEffectHandlerTest {
 
             verify(permanentRemovalService).removePermanentToHand(gd, ownArtifact);
             verify(permanentRemovalService, never()).removePermanentToHand(gd, stolen);
+        }
+    }
+
+    @Nested
+    @DisplayName("AURAS_ATTACHED_TO_TARGET scope (Scarab of the Unseen)")
+    class AurasAttachedToTarget {
+
+        @Test
+        @DisplayName("Returns every Aura attached to the target, whoever controls it, and leaves the target alone")
+        void returnsAttachedAuras() {
+            Card card = createCard("Scarab of the Unseen");
+            Permanent host = createCreature("Grizzly Bears");
+            Permanent ownAura = createAura("Holy Strength", host.getId());
+            Permanent opponentAura = createAura("Giant Strength", host.getId());
+            Permanent elsewhereAura = createAura("Unholy Strength", UUID.randomUUID());
+            gd.playerBattlefields.get(player1Id).add(host);
+            gd.playerBattlefields.get(player1Id).add(ownAura);
+            gd.playerBattlefields.get(player2Id).add(opponentAura);
+            gd.playerBattlefields.get(player2Id).add(elsewhereAura);
+
+            ReturnToHandEffect effect = ReturnToHandEffect.aurasAttachedToTarget();
+            StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), host.getId());
+
+            when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
+            when(permanentRemovalService.removePermanentToHand(eq(gd), any())).thenReturn(true);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(permanentRemovalService).removePermanentToHand(gd, ownAura);
+            verify(permanentRemovalService).removePermanentToHand(gd, opponentAura);
+            verify(permanentRemovalService, never()).removePermanentToHand(gd, elsewhereAura);
+            verify(permanentRemovalService, never()).removePermanentToHand(gd, host);
+        }
+
+        @Test
+        @DisplayName("No-op when the targeted permanent has left the battlefield")
+        void noOpWhenTargetGone() {
+            Card card = createCard("Scarab of the Unseen");
+            UUID goneId = UUID.randomUUID();
+            Permanent orphanAura = createAura("Holy Strength", goneId);
+            gd.playerBattlefields.get(player1Id).add(orphanAura);
+
+            ReturnToHandEffect effect = ReturnToHandEffect.aurasAttachedToTarget();
+            StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), goneId);
+
+            when(gameQueryService.findPermanentById(gd, goneId)).thenReturn(null);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(permanentRemovalService, never()).removePermanentToHand(any(), any());
+        }
+
+        private Permanent createAura(String name, UUID attachedTo) {
+            Card card = createCard(name);
+            card.setType(CardType.ENCHANTMENT);
+            card.setSubtypes(List.of(CardSubtype.AURA));
+            Permanent permanent = new Permanent(card);
+            permanent.setAttachedTo(attachedTo);
+            return permanent;
         }
     }
 }

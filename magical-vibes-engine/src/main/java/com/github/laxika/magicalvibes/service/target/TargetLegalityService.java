@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -182,6 +183,10 @@ public class TargetLegalityService {
             throw new IllegalStateException("Must select graveyard targets");
         }
         for (CardEffect effect : effects) {
+            if (effect instanceof PutTargetCardsFromGraveyardOnTopOfLibraryEffect toTopEffect) {
+                validateGraveyardToTopOfLibraryTargets(gameData, playerId, toTopEffect, targetCardIds);
+                break;
+            }
             if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
                 for (UUID cardId : targetCardIds) {
                     Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
@@ -256,6 +261,53 @@ public class TargetLegalityService {
                     }
                 }
                 break;
+            }
+        }
+    }
+
+    /**
+     * "Put up to N target [type] cards from a player's graveyard on top of their library" activated
+     * from a permanent (Lodestone Bauble). No more than N distinct cards, each still in a graveyard
+     * and matching the filter, and — for the non-controller scopes — all in the same graveyard, since
+     * the wording picks a single player.
+     */
+    private void validateGraveyardToTopOfLibraryTargets(GameData gameData, UUID playerId,
+                                                        PutTargetCardsFromGraveyardOnTopOfLibraryEffect effect,
+                                                        List<UUID> targetCardIds) {
+        if (effect.maxTargets() != PutTargetCardsFromGraveyardOnTopOfLibraryEffect.ANY_NUMBER
+                && targetCardIds.size() > effect.maxTargets()) {
+            throw new IllegalStateException("Cannot target more than " + effect.maxTargets() + " cards");
+        }
+        if (new HashSet<>(targetCardIds).size() != targetCardIds.size()) {
+            throw new IllegalStateException("Cannot target the same card twice");
+        }
+
+        UUID sharedOwnerId = null;
+        for (UUID cardId : targetCardIds) {
+            Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+            if (card == null) {
+                throw new IllegalStateException("Target card not found in any graveyard");
+            }
+            if (effect.filter() != null
+                    && !predicateEvaluationService.matchesCardPredicate(card, effect.filter(), null)) {
+                throw new IllegalStateException("Target card must be a "
+                        + CardPredicateUtils.describeFilter(effect.filter()));
+            }
+            UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+            if (!effect.fromOtherGraveyards()) {
+                if (ownerId != null && !ownerId.equals(playerId)) {
+                    throw new IllegalStateException("Target must be in your graveyard");
+                }
+                continue;
+            }
+            if (effect.source() == GraveyardSearchScope.OPPONENT_GRAVEYARD
+                    && ownerId != null && ownerId.equals(playerId)) {
+                throw new IllegalStateException("Target must be in an opponent's graveyard");
+            }
+            if (sharedOwnerId == null) {
+                sharedOwnerId = ownerId;
+            } else if (!sharedOwnerId.equals(ownerId)) {
+                throw new IllegalStateException("All targets must be in a single graveyard");
             }
         }
     }

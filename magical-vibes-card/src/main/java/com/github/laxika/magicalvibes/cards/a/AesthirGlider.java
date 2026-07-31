@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "209")
+@CardRegistration(set = "ALL", collectorNumber = "116a")
+@CardRegistration(set = "ALL", collectorNumber = "116b")
 public class AesthirGlider extends Card {
 
     public AesthirGlider() {

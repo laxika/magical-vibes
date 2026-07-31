@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "302")
+@CardRegistration(set = "ALL", collectorNumber = "124")
 public class MysticCompass extends Card {
 
     public MysticCompass() {

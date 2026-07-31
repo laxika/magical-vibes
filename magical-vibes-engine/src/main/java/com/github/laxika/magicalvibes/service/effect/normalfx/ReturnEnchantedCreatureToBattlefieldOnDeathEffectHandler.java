@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToBattlefieldOnDeathEffect;
@@ -15,6 +16,14 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Resolves {@link ReturnEnchantedCreatureToBattlefieldOnDeathEffect}: returns the creature card
+ * that died while enchanted by the source Aura from its owner's graveyard to the battlefield.
+ *
+ * <p>With {@code underAuraControllersControl} the Aura's controller gets the permanent (False
+ * Demise, Unhallowed Pact); when that differs from the card's owner the permanent is tracked as a
+ * stolen creature so the control change sticks. Otherwise the owner gets it back (Abduction).</p>
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -52,6 +61,23 @@ public class ReturnEnchantedCreatureToBattlefieldOnDeathEffectHandler implements
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCreatureCardId);
         UUID controllerId = e.underAuraControllersControl() ? entry.getControllerId() : ownerId;
         permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCreatureCardId);
-        graveyardReturnSupport.putCardOntoBattlefield(gameData, controllerId, creatureCard);
+
+        if (controllerId == null || controllerId.equals(ownerId)) {
+            graveyardReturnSupport.putCardOntoBattlefield(gameData, ownerId, creatureCard);
+            return;
+        }
+
+        Permanent permanent = graveyardReturnSupport.putCardOntoBattlefield(gameData, controllerId, creatureCard,
+                null, null, false, false, null);
+        if (permanent == null) {
+            return;
+        }
+
+        // The Aura's controller keeps the creature (CR 613.1b — layer 2, control-changing effects),
+        // but the card is still owned by the player whose graveyard it came from. Record that owner
+        // so it goes back to their graveyard when it dies (CR 400.3) and so "enters from your
+        // graveyard" triggers fire for them rather than for the Aura's controller.
+        permanent.setEnteredFromGraveyardOwnerId(ownerId);
+        graveyardReturnSupport.trackStolenCreature(gameData, permanent.getId(), controllerId, ownerId);
     }
 }

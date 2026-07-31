@@ -390,7 +390,7 @@ public class CardChoiceHandlerService {
             log.warn("Game {} - {} sent invalid exile card index {}, re-prompting", gameData.id, player.getUsername(), cardIndex);
             playerInputService.beginExileFromHandChoice(gameData, player.getId(), exileChoice.sourcePermanentId(),
                     exileChoice.playPermissionControllerId(), exileChoice.remainingCount(),
-                    exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer());
+                    exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer(), exileChoice.faceDown());
             return;
         }
 
@@ -400,7 +400,9 @@ public class CardChoiceHandlerService {
         Card card = hand.remove(cardIndex);
 
         // Add to player's exile zone, tracked with source permanent if available (e.g. Karn Liberated)
-        if (sourcePermanentId != null) {
+        if (sourcePermanentId != null && exileChoice.faceDown()) {
+            exileService.exileCardFaceDown(gameData, playerId, card, sourcePermanentId);
+        } else if (sourcePermanentId != null) {
             exileService.exileCard(gameData, playerId, card, sourcePermanentId);
         } else {
             exileService.exileCard(gameData, playerId, card);
@@ -412,8 +414,14 @@ public class CardChoiceHandlerService {
             gameData.exilePlayPermissions.put(card.getId(), exileChoice.playPermissionControllerId());
         }
 
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " exiles ", card, " from hand."));
+        // A face-down exile must not name the card in the shared log (Gustha's Scepter).
+        if (exileChoice.faceDown()) {
+            gameLogService.append(gameData, GameLog.text(
+                    player.getUsername() + " exiles a card from hand face down."));
+        } else {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " exiles ", card, " from hand."));
+        }
         log.info("Game {} - {} exiles {} from hand", gameData.id, player.getUsername(), card.getName());
 
         int remainingExiles = Math.max(exileChoice.remainingCount() - 1, 0);
@@ -422,7 +430,7 @@ public class CardChoiceHandlerService {
             inputCompletionService.publishStateAfterInput(gameData);
             playerInputService.beginExileFromHandChoice(gameData, playerId, sourcePermanentId,
                     exileChoice.playPermissionControllerId(), remainingExiles,
-                    exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer());
+                    exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer(), exileChoice.faceDown());
         } else if (exileChoice.remainingChoosers() != null && !exileChoice.remainingChoosers().isEmpty()) {
             // Next opponent in the each-opponent exile queue (Nicol Bolas, God-Pharaoh +1).
             UUID next = exileChoice.remainingChoosers().getFirst();
@@ -432,7 +440,7 @@ public class CardChoiceHandlerService {
             inputCompletionService.publishStateAfterInput(gameData);
             playerInputService.beginExileFromHandChoice(gameData, next, sourcePermanentId,
                     exileChoice.playPermissionControllerId(), exileChoice.cardsPerPlayer(), rest,
-                    exileChoice.cardsPerPlayer());
+                    exileChoice.cardsPerPlayer(), exileChoice.faceDown());
         } else {
             gameData.interaction.clearAwaitingInput();
 

@@ -1695,18 +1695,19 @@ public class TriggerCollectionService {
                     }
                     resolved = conditional.wrapped();
                 }
+                // Leave targetId null for may-target tap triggers (Surgespanner). Bake the tapped
+                // permanent's controller only when damage needs TRIGGERING_PERMANENT_CONTROLLER
+                // (Royal Decree). triggeringPermanentId always carries "it" (Freyalise's Winds).
+                UUID bakedTargetId = bakeTriggeringPermanentControllerTarget(resolved, controllerId);
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         ownerId,
                         perm.getCard().getName() + "'s ability",
                         new ArrayList<>(List.of(resolved)),
-                        null,
+                        bakedTargetId,
                         perm.getId()
                 );
-                // "put a counter on it" — the tapped permanent is carried as a non-target reference
-                // so effects that act on it (Freyalise's Winds) can find it without disturbing
-                // genuinely targeted tap triggers (Surgespanner).
                 entry.setTriggeringPermanentId(tappedPermanent.getId());
                 gameData.enqueueTrigger(entry);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
@@ -1729,13 +1730,14 @@ public class TriggerCollectionService {
                     }
                     resolved = conditional.wrapped();
                 }
+                UUID bakedTargetId = bakeTriggeringPermanentControllerTarget(resolved, controllerId);
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         ownerId,
                         perm.getCard().getName() + "'s ability",
                         new ArrayList<>(List.of(resolved)),
-                        null,
+                        bakedTargetId,
                         perm.getId()
                 );
                 entry.setTriggeringPermanentId(tappedPermanent.getId());
@@ -1745,6 +1747,20 @@ public class TriggerCollectionService {
                         gameData.id, perm.getCard().getName(), tappedPermanent.getCard().getName());
             }
         });
+    }
+
+    /**
+     * For ally/opponent becomes-tapped slots: bake the tapped permanent's controller as
+     * {@code targetId} only when the resolved effect deals damage to
+     * {@link DamageRecipient#TRIGGERING_PERMANENT_CONTROLLER}. Other effects keep {@code null}
+     * so may-target tap triggers (Surgespanner) still choose at resolution.
+     */
+    private static UUID bakeTriggeringPermanentControllerTarget(CardEffect resolved, UUID tappedControllerId) {
+        if (resolved instanceof DealDamageToPlayersEffect damage
+                && damage.recipient() == DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER) {
+            return tappedControllerId;
+        }
+        return null;
     }
 
     // ── Becomes-untapped triggers ──────────────────────────────────────
@@ -3208,6 +3224,41 @@ public class TriggerCollectionService {
 
             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             log.info("Game {} - {} enchanted-player-creature-enters trigger queued", gameData.id, perm.getCard().getName());
+        });
+    }
+
+    /**
+     * "Whenever a player puts a permanent onto the battlefield" (ON_ANY_PERMANENT_ENTERS_BATTLEFIELD).
+     * Fires for every entering permanent regardless of type or controller; wrap the effect in a
+     * {@link TriggeringCardConditionalEffect} to restrict which permanents trigger it. The entering
+     * permanent's controller is baked in as the non-targeting {@code targetId} so player-directed
+     * effects act on "that player". Used by Nature's Wrath.
+     */
+    public void checkAnyPermanentEntersTriggers(GameData gameData, UUID enteringControllerId, Card enteringCard) {
+        gameData.forEachPermanent((playerId, perm) -> {
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD);
+            if (effects == null || effects.isEmpty()) return;
+
+            // Each effect in this slot is its own triggered ability (Nature's Wrath has two), so a
+            // card whose entry matches both conditions goes on the stack twice.
+            for (CardEffect effect : effects) {
+                CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCard, gameData, playerId);
+                if (resolved == null) continue;
+
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        playerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(resolved)),
+                        enteringControllerId,
+                        perm.getId());
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+
+                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                log.info("Game {} - {} any-permanent-enters trigger queued", gameData.id, perm.getCard().getName());
+            }
         });
     }
 
