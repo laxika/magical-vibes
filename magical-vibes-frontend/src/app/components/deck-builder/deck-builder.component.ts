@@ -76,28 +76,37 @@ export class DeckBuilderComponent implements OnInit, OnDestroy {
   });
 
   /**
-   * Splits the filtered list so planeswalker-deck exclusives sit under their own header when any
-   * are present. Ordinary sets keep a flat list (single unlabeled section).
+   * Splits the filtered list so numbered set extras (planeswalker-deck / set-extension) sit under
+   * their own headers when present. Ordinary sets keep a flat list (single unlabeled section).
    */
   cardSections = computed((): CardSection[] => {
     const cards = this.filteredCards();
     const main: BrowseCardInfo[] = [];
     const planeswalkerDeck: BrowseCardInfo[] = [];
+    const setExtension: BrowseCardInfo[] = [];
     for (const card of cards) {
-      if ((card.promoTypes ?? []).includes('planeswalkerdeck')) {
+      const types = card.promoTypes ?? [];
+      if (types.includes('planeswalkerdeck')) {
         planeswalkerDeck.push(card);
+      } else if (types.includes('setextension')) {
+        setExtension.push(card);
       } else {
         main.push(card);
       }
     }
-    if (planeswalkerDeck.length === 0) {
+    if (planeswalkerDeck.length === 0 && setExtension.length === 0) {
       return [{ id: 'main', label: null, cards: main }];
     }
     const sections: CardSection[] = [];
     if (main.length > 0) {
       sections.push({ id: 'main', label: 'Main Set', cards: main });
     }
-    sections.push({ id: 'planeswalkerdeck', label: 'Planeswalker Deck', cards: planeswalkerDeck });
+    if (planeswalkerDeck.length > 0) {
+      sections.push({ id: 'planeswalkerdeck', label: 'Planeswalker Deck', cards: planeswalkerDeck });
+    }
+    if (setExtension.length > 0) {
+      sections.push({ id: 'setextension', label: 'Set Extension', cards: setExtension });
+    }
     return sections;
   });
 

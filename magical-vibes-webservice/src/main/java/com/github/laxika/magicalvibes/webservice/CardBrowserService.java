@@ -34,9 +34,10 @@ public class CardBrowserService {
     /**
      * Scryfall promo tags that are still playable set printings (numbered above the base set) and
      * should appear in the deck editor / card browser. Everything else with {@code promo_types}
-     * stays filtered out (buy-a-box, prerelease, etc.).
+     * stays filtered out (buy-a-box, prerelease, etc.). Allowed printings may still carry showcase
+     * frames (ALA #250); those frame filters are skipped when an allowed promo type is present.
      */
-    private static final Set<String> ALLOWED_PROMO_TYPES = Set.of("planeswalkerdeck");
+    private static final Set<String> ALLOWED_PROMO_TYPES = Set.of("planeswalkerdeck", "setextension");
 
     private static final Map<String, String> COLOR_CODE_TO_NAME = Map.of(
             "W", "WHITE",
@@ -319,6 +320,12 @@ public class CardBrowserService {
     }
 
     private boolean isSpecialPrint(JsonNode card) {
+        List<String> promoTypes = readPromoTypes(card);
+        // Planeswalker-deck / set-extension printings are part of the set's numbered extras;
+        // keep them even when Scryfall also tags a showcase frame or boosterfun promo type.
+        if (promoTypes.stream().anyMatch(ALLOWED_PROMO_TYPES::contains)) {
+            return false;
+        }
         if (card.has("frame_effects") && card.get("frame_effects").isArray()) {
             for (JsonNode fe : card.get("frame_effects")) {
                 String effect = fe.asText();
@@ -330,8 +337,7 @@ public class CardBrowserService {
         if (card.has("border_color") && "borderless".equals(card.get("border_color").asText())) {
             return true;
         }
-        List<String> promoTypes = readPromoTypes(card);
-        if (!promoTypes.isEmpty() && promoTypes.stream().noneMatch(ALLOWED_PROMO_TYPES::contains)) {
+        if (!promoTypes.isEmpty()) {
             return true;
         }
         if (card.has("full_art") && card.get("full_art").asBoolean()) {

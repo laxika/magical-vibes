@@ -35,8 +35,9 @@ public record BrowseCardInfo(
          */
         BrowseCardInfo prepareSpell,
         /**
-         * Scryfall {@code promo_types} for this printing (e.g. {@code planeswalkerdeck}). Empty for
-         * ordinary base-set cards. Used by the deck editor to group exclusives under their own header.
+         * Scryfall {@code promo_types} for this printing (e.g. {@code planeswalkerdeck},
+         * {@code setextension}). Empty for ordinary base-set cards. Used by the deck editor to
+         * group exclusives under their own headers.
          */
         List<String> promoTypes
 ) {
