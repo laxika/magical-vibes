@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "44")
+@CardRegistration(set = "M14", collectorNumber = "44")
 public class ArmoredCancrix extends Card {
 }

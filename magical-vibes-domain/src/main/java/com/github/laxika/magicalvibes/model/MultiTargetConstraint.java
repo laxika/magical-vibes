@@ -14,5 +14,12 @@ public enum MultiTargetConstraint {
      * (e.g. Gauntlets of Chaos: the opponent's permanent must share one of those types with your
      * artifact/creature/land).
      */
-    SHARE_ARTIFACT_CREATURE_OR_LAND_TYPE
+    SHARE_ARTIFACT_CREATURE_OR_LAND_TYPE,
+    /**
+     * Every permanent chosen after the first target must be controlled by the first target — the
+     * first target itself when it is a player, otherwise the controller of the first target
+     * permanent (e.g. Chandra, Pyromaster's "up to one target creature that player or that
+     * planeswalker's controller controls").
+     */
+    CONTROLLED_BY_FIRST_TARGET
 }

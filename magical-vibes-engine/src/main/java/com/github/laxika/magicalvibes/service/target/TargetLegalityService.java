@@ -349,6 +349,15 @@ public class TargetLegalityService {
                 continue;
             }
 
+            // "Target player or planeswalker" position (Chandra, Pyromaster +1): the player side is
+            // checked against the filter's player predicate, the permanent side falls through below.
+            if (positionFilter instanceof AnyTargetPredicateTargetFilter anyFilter
+                    && gameData.playerIds.contains(targetId)) {
+                validatePlayerTargetable(gameData, targetId, playerId);
+                validatePlayerPredicate(gameData, playerId, targetId, anyFilter.playerPredicate(), anyFilter.errorMessage());
+                continue;
+            }
+
             // Permanent-targeting position
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) {
@@ -677,6 +686,10 @@ public class TargetLegalityService {
         if (constraint == null) {
             return;
         }
+        if (constraint == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET) {
+            validateControlledByFirstTarget(gameData, targetIds);
+            return;
+        }
         List<Permanent> targets = targetIds.stream()
                 .map(id -> gameQueryService.findPermanentById(gameData, id))
                 .filter(java.util.Objects::nonNull)
@@ -698,6 +711,28 @@ public class TargetLegalityService {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Every target after the first must be a permanent controlled by the first target — the first
+     * target itself when it is a player, otherwise the controller of that permanent
+     * (Chandra, Pyromaster +1).
+     */
+    private void validateControlledByFirstTarget(GameData gameData, List<UUID> targetIds) {
+        if (targetIds.size() < 2) {
+            return;
+        }
+        UUID firstTargetId = targetIds.getFirst();
+        UUID requiredControllerId = gameData.playerIds.contains(firstTargetId)
+                ? firstTargetId
+                : gameQueryService.findPermanentController(gameData, firstTargetId);
+        for (int i = 1; i < targetIds.size(); i++) {
+            UUID controllerOfTarget = gameQueryService.findPermanentController(gameData, targetIds.get(i));
+            if (!java.util.Objects.equals(requiredControllerId, controllerOfTarget)) {
+                throw new IllegalStateException(
+                        "Target must be controlled by the player or planeswalker's controller you targeted");
             }
         }
     }
@@ -1044,7 +1079,8 @@ public class TargetLegalityService {
         if (entryType == StackEntryType.TRIGGERED_ABILITY || entryType == StackEntryType.ACTIVATED_ABILITY) {
             return false;
         }
-        return gameQueryService.cantBeTargetedBySpellColor(gameData, targetPerm, entry.getCard().getColor())
+        return gameQueryService.cantBeTargetedBySpellColor(gameData, targetPerm, entry.getCard().getColor(),
+                        entry.getControllerId())
                 || gameQueryService.cantBeTargetedByAnySpell(gameData, targetPerm);
     }
 
@@ -1206,7 +1242,7 @@ public class TargetLegalityService {
         if (gameQueryService.hasProtectionFromSourceSubtypes(target, card)) {
             return target.getCard().getName() + " has protection from source's subtype";
         }
-        if (gameQueryService.cantBeTargetedBySpellColor(gameData, target, card.getColor())) {
+        if (gameQueryService.cantBeTargetedBySpellColor(gameData, target, card.getColor(), sourcePlayerId)) {
             return target.getCard().getName() + " can't be the target of " + card.getColor().name().toLowerCase() + " spells";
         }
         if (gameQueryService.cantBeTargetedByAnySpell(gameData, target)) {

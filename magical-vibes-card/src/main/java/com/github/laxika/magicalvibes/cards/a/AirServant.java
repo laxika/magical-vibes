@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "42")
+@CardRegistration(set = "M14", collectorNumber = "42")
 public class AirServant extends Card {
 
     public AirServant() {

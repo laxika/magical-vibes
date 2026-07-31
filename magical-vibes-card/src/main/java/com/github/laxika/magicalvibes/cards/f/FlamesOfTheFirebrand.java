@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 
 @CardRegistration(set = "M13", collectorNumber = "132")
+@CardRegistration(set = "M14", collectorNumber = "139")
 public class FlamesOfTheFirebrand extends Card {
 
     public FlamesOfTheFirebrand() {

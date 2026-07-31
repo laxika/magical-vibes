@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTokensCreatedWithSourc
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DistributeDyingSourceCountersAmongControlledCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerDiscardsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMayDrawCardEffect;
@@ -230,6 +231,32 @@ public class DeathTriggerCollectorService {
                 : baked;
         match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                 sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(queued))
+        ));
+        return true;
+    }
+
+    @CollectsTrigger(value = DistributeDyingSourceCountersAmongControlledCreaturesEffect.class,
+            slot = EffectSlot.ON_DEATH)
+    boolean handleDistributeDyingSourceCountersAmongControlledCreatures(TriggerMatchContext match,
+            DistributeDyingSourceCountersAmongControlledCreaturesEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
+        Permanent dyingPermanent = sd.dyingPermanent();
+        if (dyingPermanent == null) {
+            return false;
+        }
+        // Snapshot at death — the permanent is gone by resolution. Does not target; the "you may"
+        // and the division (pendingETBDamageAssignments) both happen when the trigger resolves.
+        int counters = dyingPermanent.getCounterCount(effect.counterType());
+        CardEffect baked = new DistributeDyingSourceCountersAmongControlledCreaturesEffect(
+                effect.counterType(), counters);
+        MayEffect may = new MayEffect(baked,
+                "distribute " + counters + " counter(s) among creatures you control?");
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sd.dyingCard(),
+                sd.controllerId(),
+                sd.dyingCard().getName() + "'s ability",
+                new ArrayList<>(List.of(may))
         ));
         return true;
     }

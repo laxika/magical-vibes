@@ -153,6 +153,16 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
+     * Tap each chosen untapped creature the controller controls, then the controller creates one
+     * {@code tokenTemplate} token per creature tapped this way (Devout Invocation). The template's
+     * own amount is ignored; {@code sourceSetCode} is the set code of the spell that created the
+     * tokens, used for the token's art.
+     */
+    record TapCreaturesCreateTokens(com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
+                                    String sourceSetCode) implements MultiPermanentChoiceContext {
+    }
+
+    /**
      * Sacrifice the chosen lands, then search the library for up to that many land cards and put
      * them onto the battlefield tapped, then shuffle (Scapeshift). The number of lands searched
      * for equals the number of lands sacrificed.

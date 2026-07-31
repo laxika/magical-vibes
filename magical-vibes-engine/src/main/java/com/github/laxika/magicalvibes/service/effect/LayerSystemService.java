@@ -552,6 +552,7 @@ public class LayerSystemService {
         h = hashEnums(h, p.getTransientSubtypes());
         h = hashEnums(h, p.getGrantedSubtypes());
         h = hashEnums(h, p.getUntilNextTurnSubtypes());
+        h = hashEnums(h, p.getTransientRemovedSubtypes());
         h = hashEnums(h, p.getGrantedCardTypes());
         h = hashEnums(h, p.getPersistentGrantedCardTypes());
         h = mix(h, enumOrdinal(p.getTransientLandTypeOverride()));
@@ -729,6 +730,10 @@ public class LayerSystemService {
             }
             if (permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
                 states.get(permanent.getId()).removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
+            }
+            if (!permanent.getTransientRemovedSubtypes().isEmpty()) {
+                states.get(permanent.getId()).removeSubtypesIf(
+                        permanent.getTransientRemovedSubtypes()::contains);
             }
             // "Target creature becomes a [creature type]" (Boldwyr Intimidator): strip all creature
             // subtypes and set the single override type. Applied after lose-all so the override wins.

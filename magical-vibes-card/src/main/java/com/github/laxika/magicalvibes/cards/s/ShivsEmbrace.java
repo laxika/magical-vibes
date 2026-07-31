@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "156")
+@CardRegistration(set = "M14", collectorNumber = "153")
 public class ShivsEmbrace extends Card {
 
     public ShivsEmbrace() {

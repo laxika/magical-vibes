@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "128")
+@CardRegistration(set = "M14", collectorNumber = "138")
 public class DragonHatchling extends Card {
 
     public DragonHatchling() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "M13", collectorNumber = "115")
+@CardRegistration(set = "M14", collectorNumber = "121")
 public class VileRebirth extends Card {
 
     public VileRebirth() {

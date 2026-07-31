@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "M10", collectorNumber = "187")
 @CardRegistration(set = "SHM", collectorNumber = "119")
+@CardRegistration(set = "M14", collectorNumber = "178")
 public class HowlOfTheNightPack extends Card {
 
     public HowlOfTheNightPack() {

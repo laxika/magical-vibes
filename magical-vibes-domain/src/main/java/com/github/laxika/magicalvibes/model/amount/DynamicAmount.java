@@ -54,6 +54,7 @@ public sealed interface DynamicAmount permits
         ImprintedCreaturePower,
         ImprintedCreatureToughness,
         LandsMatchingImprintedName,
+        LifeGainedThisTurn,
         LifeLostThisTurn,
         ManaSpentToCast,
         MatchingCardsInHand,

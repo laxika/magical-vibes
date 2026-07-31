@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "166")
 @CardRegistration(set = "M12", collectorNumber = "167")
+@CardRegistration(set = "M14", collectorNumber = "167")
 public class BrindleBoar extends Card {
 
     public BrindleBoar() {

@@ -2587,6 +2587,28 @@ public class StepTriggerService {
                         gameLogService.append(gameData,
                                 GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
                         log.info("Game {} - {} end-step conditional-may trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                    } else if (effect instanceof ConditionalEffect conditional
+                            && conditional.condition() instanceof GainedLifeThisTurn gainedLife) {
+                        // Intervening-if (CR 603.4): "at the beginning of each end step, if you gained
+                        // [N or more] life this turn" — the controller of the permanent is "you", not the
+                        // active player. The wrapper is pushed intact so resolution re-checks it.
+                        if (gameData.getLifeGainedThisTurn(playerId) < gainedLife.minimumAmount()) {
+                            log.info("Game {} - {} end-step trigger skipped ({})",
+                                    gameData.id, perm.getCard().getName(), conditional.conditionNotMetReason());
+                            continue;
+                        }
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s end step ability",
+                                new ArrayList<>(List.of(effect)),
+                                null,
+                                perm.getId()
+                        ));
+                        gameLogService.append(gameData,
+                                GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
+                        log.info("Game {} - {} end-step life-gain trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else {
                         // EndStepPlayerTargetedEffect ("... that player ...") reads the end-step
                         // player off targetId; every other end-step effect gets a null target id.
@@ -2861,9 +2883,9 @@ public class StepTriggerService {
                                 new ArrayList<>(List.of(new GainControlOfTargetEffect(ControlDuration.PERMANENT))),
                                 perm.getId()));
                     } else if (effect instanceof ConditionalEffect conditional
-                            && conditional.condition() instanceof GainedLifeThisTurn) {
+                            && conditional.condition() instanceof GainedLifeThisTurn gainedLife) {
                         // Intervening-if: only trigger if the controller gained life this turn (CR 603.4)
-                        if (gameData.getLifeGainedThisTurn(activePlayerId) <= 0) {
+                        if (gameData.getLifeGainedThisTurn(activePlayerId) < gainedLife.minimumAmount()) {
                             log.info("Game {} - {} end-step trigger skipped (didn't gain life this turn)",
                                     gameData.id, perm.getCard().getName());
                             continue;

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 @CardRegistration(set = "6ED", collectorNumber = "215")
 @CardRegistration(set = "MIR", collectorNumber = "202")
 @CardRegistration(set = "M13", collectorNumber = "154")
+@CardRegistration(set = "M14", collectorNumber = "160")
 public class VolcanicGeyser extends Card {
 
     public VolcanicGeyser() {

@@ -64,6 +64,16 @@ public record TargetingRestrictionEffect(
                 TargetingSourceKind.SPELLS, false, colors, TargetColorMode.BLOCKED_COLORS);
     }
 
+    /**
+     * Can't be the target of spells of the given colors that an opponent controls; the permanent's
+     * own controller may still target it, and abilities of those colors are unaffected.
+     * Fiendslayer Paladin.
+     */
+    public static TargetingRestrictionEffect fromOpponentSpellColors(Set<CardColor> colors) {
+        return new TargetingRestrictionEffect(
+                TargetingSourceKind.SPELLS, true, colors, TargetColorMode.BLOCKED_COLORS);
+    }
+
     /** Hexproof from the given colors — opponents' colored spells/abilities can't target. Knight of Grace/Malice. */
     public static TargetingRestrictionEffect hexproofFromColors(Set<CardColor> colors) {
         return new TargetingRestrictionEffect(

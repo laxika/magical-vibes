@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "M13", collectorNumber = "157")
+@CardRegistration(set = "M14", collectorNumber = "161")
 public class WildGuess extends Card {
 
     public WildGuess() {

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MOR", collectorNumber = "148")
+@CardRegistration(set = "M14", collectorNumber = "228")
 public class Mutavault extends Card {
 
     public Mutavault() {

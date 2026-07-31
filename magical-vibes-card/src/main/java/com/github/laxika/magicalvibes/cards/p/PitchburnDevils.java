@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ISD", collectorNumber = "156")
+@CardRegistration(set = "M14", collectorNumber = "149")
 public class PitchburnDevils extends Card {
 
     public PitchburnDevils() {

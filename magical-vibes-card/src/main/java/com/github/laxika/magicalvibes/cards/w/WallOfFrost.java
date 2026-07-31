@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "M10", collectorNumber = "80")
 @CardRegistration(set = "M11", collectorNumber = "79")
+@CardRegistration(set = "M14", collectorNumber = "78")
 public class WallOfFrost extends Card {
 
     public WallOfFrost() {

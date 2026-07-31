@@ -57,6 +57,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.KnowledgePoolCastChoice.class, this::projectKnowledgePoolCastChoice);
         register(PendingInteraction.ImprovisationCapstoneCastChoice.class,
                 this::projectImprovisationCapstoneCastChoice);
+        register(PendingInteraction.ExiledSpellCopyChoice.class, this::projectExiledSpellCopyChoice);
         register(PendingInteraction.BrilliantUltimatumPileSeparationChoice.class,
                 this::projectBrilliantUltimatumPileSeparationChoice);
         register(PendingInteraction.BrilliantUltimatumPileChoice.class,
@@ -216,6 +217,16 @@ public class InteractionPromptProjectionRegistry {
                 interaction.maxCount(),
                 "You may cast any number of spells from among the exiled cards without paying "
                         + "their mana costs.");
+    }
+
+    private InteractionPromptMessage projectExiledSpellCopyChoice(
+            GameData gameData, PendingInteraction.ExiledSpellCopyChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                1,
+                "Choose an instant or sorcery card exiled this way to copy "
+                        + interaction.copies() + " times.");
     }
 
     private InteractionPromptMessage projectBrilliantUltimatumPileSeparationChoice(

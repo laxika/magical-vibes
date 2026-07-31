@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 import java.util.List;
 
+@CardRegistration(set = "M14", collectorNumber = "192")
 @CardRegistration(set = "10E", collectorNumber = "293")
 @CardRegistration(set = "9ED", collectorNumber = "268")
 public class Rootwalla extends Card {

@@ -504,6 +504,8 @@ public class CastingPermissionService {
 
     private boolean hasFlashGrantForCard(GameData gameData, UUID playerId, Card card) {
         if (gameData.playersWithFlashUntilEndOfTurn.contains(playerId)) return true;
+        // Quicken: an unconsumed grant for the next spell of a given type this turn.
+        if (gameData.hasNextSpellFlashGrant(playerId, card)) return true;
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {

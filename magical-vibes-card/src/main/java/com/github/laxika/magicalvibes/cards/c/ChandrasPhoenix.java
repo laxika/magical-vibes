@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 
 @CardRegistration(set = "M12", collectorNumber = "126")
+@CardRegistration(set = "M14", collectorNumber = "134")
 public class ChandrasPhoenix extends Card {
 
     public ChandrasPhoenix() {

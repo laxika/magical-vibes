@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -67,6 +68,17 @@ public class GraveyardTargetValidators {
             UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
             if (controllerId != null && graveyardOwnerId != null && !graveyardOwnerId.equals(controllerId)) {
                 throw new IllegalStateException("Target must be in your graveyard");
+            }
+        }
+        if (effect.targetPutIntoGraveyardFromBattlefieldThisTurn()) {
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
+            boolean tracked = graveyardOwnerId != null
+                    && ctx.gameData().creatureCardsPutIntoGraveyardFromBattlefieldThisTurn
+                    .getOrDefault(graveyardOwnerId, Set.of())
+                    .contains(ctx.targetId());
+            if (!tracked) {
+                throw new IllegalStateException(
+                        "Target must be a creature card put into a graveyard from the battlefield this turn");
             }
         }
         if (effect.requiresManaValueEqualsX() && graveyardCard.getManaValue() != ctx.xValue()) {

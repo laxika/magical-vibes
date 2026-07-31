@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "41")
+@CardRegistration(set = "M14", collectorNumber = "43")
 public class Archaeomancer extends Card {
 
     public Archaeomancer() {

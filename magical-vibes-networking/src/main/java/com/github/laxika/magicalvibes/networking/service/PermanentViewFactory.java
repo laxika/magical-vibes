@@ -127,7 +127,8 @@ public class PermanentViewFactory {
 
     private CardView applyGrantedSubtypes(CardView cardView, Permanent p) {
         if (p.getTransientSubtypes().isEmpty() && p.getGrantedSubtypes().isEmpty()
-                && p.getUntilNextTurnSubtypes().isEmpty()) {
+                && p.getUntilNextTurnSubtypes().isEmpty()
+                && p.getTransientRemovedSubtypes().isEmpty()) {
             return cardView;
         }
         List<CardSubtype> mergedSubtypes = new ArrayList<>(cardView.subtypes());
@@ -146,6 +147,7 @@ public class PermanentViewFactory {
                 mergedSubtypes.add(subtype);
             }
         }
+        mergedSubtypes.removeAll(p.getTransientRemovedSubtypes());
         return cardView.toBuilder().subtypes(mergedSubtypes).build();
     }
 

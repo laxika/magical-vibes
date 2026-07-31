@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "199")
+@CardRegistration(set = "M14", collectorNumber = "197")
 public class Trollhide extends Card {
 
     public Trollhide() {

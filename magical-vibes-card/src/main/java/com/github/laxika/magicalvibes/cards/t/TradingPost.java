@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M13", collectorNumber = "220")
+@CardRegistration(set = "M14", collectorNumber = "225")
 public class TradingPost extends Card {
 
     public TradingPost() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DKA", collectorNumber = "108")
+@CardRegistration(set = "M14", collectorNumber = "166")
 public class BriarpackAlpha extends Card {
 
     public BriarpackAlpha() {

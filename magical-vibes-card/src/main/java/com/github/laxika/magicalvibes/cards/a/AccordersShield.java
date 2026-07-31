@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SOM", collectorNumber = "136")
+@CardRegistration(set = "M14", collectorNumber = "204")
 public class AccordersShield extends Card {
 
     public AccordersShield() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "M12", collectorNumber = "118")
+@CardRegistration(set = "M14", collectorNumber = "122")
 public class WringFlesh extends Card {
 
     public WringFlesh() {

@@ -140,9 +140,18 @@ public class AuraAttachmentService {
             while (it.hasNext()) {
                 Permanent p = it.next();
                 if (!p.isAttached()) continue;
-                boolean isAura = p.getCard().getSubtypes().contains(CardSubtype.AURA);
-                boolean isEquipment = p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT);
-                if (!isAura && !isEquipment) continue;
+                boolean isAura = GameQueryService.permanentHasSubtype(p, CardSubtype.AURA);
+                boolean isEquipment = GameQueryService.permanentHasSubtype(p, CardSubtype.EQUIPMENT);
+                if (!isAura && !isEquipment) {
+                    // CR 704.5p — neither Aura, Equipment, nor Fortification may stay attached
+                    p.setAttachedTo(null);
+                    gameData.expireFloatingEffectsForUnattachedSource(p.getId());
+                    anyUnattached = true;
+                    gameLogService.append(gameData, GameLog.builder().card(p.getCard())
+                            .text(" becomes unattached (it is no longer an Aura or Equipment).").build());
+                    log.info("Game {} - {} unattached (no longer Aura/Equipment)", gameData.id, p.getCard().getName());
+                    continue;
+                }
 
                 String reason = illegalAttachmentReason(gameData, p, playerId, isAura);
                 if (reason == null) continue;
@@ -226,6 +235,10 @@ public class AuraAttachmentService {
         }
 
         if (!isAura) {
+            // CR 301.5c — an Equipment that's also a creature can't equip a creature
+            if (gameQueryService.isCreature(gameData, attachment)) {
+                return "it is a creature";
+            }
             if (!gameQueryService.isCreature(gameData, host)) {
                 return "equipped permanent is no longer a creature";
             }

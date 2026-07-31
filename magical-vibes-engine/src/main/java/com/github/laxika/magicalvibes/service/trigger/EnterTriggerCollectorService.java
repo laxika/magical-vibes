@@ -11,8 +11,12 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetCreat
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.effect.BoostEnteringCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -410,6 +414,42 @@ public class EnterTriggerCollectorService {
         log.info("Game {} - {} triggers for {} entering ({} put {} +1/+1 counter(s) on it)",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(),
                 effect.optional() ? "may" : "mandatory", effect.count());
+        return true;
+    }
+
+    /**
+     * "Whenever another creature you control enters, that creature gets +X/+Y and gains [keywords]
+     * until end of turn" (Ogre Battledriver). Resolves the entering permanent and bakes a mandatory
+     * boost (plus keyword grant) onto the stack with that creature as {@code targetId}.
+     */
+    @CollectsTrigger(value = BoostEnteringCreatureEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAllyBoostEntering(TriggerMatchContext match,
+            BoostEnteringCreatureEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        Card sourceCard = match.permanent().getCard();
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (enteringPermanentId == null) {
+            // The creature already left the battlefield; nothing to boost.
+            return true;
+        }
+        List<CardEffect> effects = new ArrayList<>();
+        effects.add(new BoostTargetCreatureEffect(effect.powerBoost(), effect.toughnessBoost()));
+        if (!effect.keywords().isEmpty()) {
+            effects.add(new GrantKeywordEffect(effect.keywords(), GrantScope.TARGET));
+        }
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                effects,
+                enteringPermanentId,
+                match.permanent().getId()));
+        logTriggered(match);
+        log.info("Game {} - {} triggers for {} entering (+{}/+{}, gains {})",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(),
+                effect.powerBoost(), effect.toughnessBoost(), effect.keywords());
         return true;
     }
 

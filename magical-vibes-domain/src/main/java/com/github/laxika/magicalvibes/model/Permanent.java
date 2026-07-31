@@ -342,6 +342,10 @@ public class Permanent {
      *  All creature subtypes (base, transient, granted) are treated as absent, and the Changeling keyword
      *  no longer grants any creature types. Cleared by {@link #resetModifiers()}. */
     @Setter private boolean losesAllCreatureTypesUntilEndOfTurn;
+    /** Subtypes this permanent has lost until end of turn (e.g. Haunted Plate Mail "no longer an
+     *  Equipment"). Honoured by every subtype query and the layered pass; cleared by
+     *  {@link #resetModifiers()}. */
+    private final Set<CardSubtype> transientRemovedSubtypes = EnumSet.noneOf(CardSubtype.class);
     /** Whether this permanent was kicked when cast (tracked for "if wasn't kicked" triggers). */
     @Setter private boolean kicked;
     /** Whether this permanent was cast for its evoke cost (gates the evoke sacrifice ETB trigger). */
@@ -552,6 +556,7 @@ public class Permanent {
         this.transformed = source.transformed;
         this.losesAllAbilitiesUntilEndOfTurn = source.losesAllAbilitiesUntilEndOfTurn;
         this.losesAllCreatureTypesUntilEndOfTurn = source.losesAllCreatureTypesUntilEndOfTurn;
+        this.transientRemovedSubtypes.addAll(source.transientRemovedSubtypes);
         this.kicked = source.kicked;
         this.evoked = source.evoked;
         this.prowl = source.prowl;
@@ -975,6 +980,7 @@ public class Permanent {
         this.mustBlockIds.clear();
         this.losesAllAbilitiesUntilEndOfTurn = false;
         this.losesAllCreatureTypesUntilEndOfTurn = false;
+        this.transientRemovedSubtypes.clear();
         this.temporaryActivatedAbilities.clear();
     }
 

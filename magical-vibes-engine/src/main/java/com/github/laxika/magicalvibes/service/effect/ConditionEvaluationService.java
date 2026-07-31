@@ -201,8 +201,9 @@ public class ConditionEvaluationService {
                     ctx.targetId() != null
                             && gameData.getSpellsCastThisTurn(ctx.targetId()).stream()
                                     .noneMatch(spell -> spell.hasType(CardType.CREATURE));
-            case GainedLifeThisTurn ignored ->
-                    ctx.controllerId() != null && gameData.hasGainedLifeThisTurn(ctx.controllerId());
+            case GainedLifeThisTurn gainedLife ->
+                    ctx.controllerId() != null
+                            && gameData.getLifeGainedThisTurn(ctx.controllerId()) >= gainedLife.minimumAmount();
             case DidntGainLifeThisTurn ignored ->
                     ctx.controllerId() != null && !gameData.hasGainedLifeThisTurn(ctx.controllerId());
             case ControlsPermanent c ->

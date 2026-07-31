@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "ALA", collectorNumber = "107")
+@CardRegistration(set = "M14", collectorNumber = "144")
 public class LightningTalons extends Card {
 
     public LightningTalons() {

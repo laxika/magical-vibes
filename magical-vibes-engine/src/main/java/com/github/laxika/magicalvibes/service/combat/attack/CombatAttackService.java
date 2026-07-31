@@ -92,6 +92,7 @@ public class CombatAttackService {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.effect.AttackSacrificeCostService attackSacrificeCostService;
     private final GraveyardTargetingService graveyardTargetingService;
+    private final com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
 
     /**
      * Returns the battlefield indices of creatures the given player can legally declare as attackers.
@@ -368,8 +369,14 @@ public class CombatAttackService {
             Permanent attacker = battlefield.get(idx);
             List<CardEffect> nativeAttackEffects = attacker.getCard().getEffects(EffectSlot.ON_ATTACK);
             List<CardEffect> temporaryAttackEffects = attacker.getTemporaryTriggeredEffects(EffectSlot.ON_ATTACK);
-            if (!nativeAttackEffects.isEmpty() || !temporaryAttackEffects.isEmpty()) {
+            // Continuously granted ON_ATTACK abilities (Thorncaster Sliver giving every Sliver
+            // "Whenever this creature attacks, it deals 1 damage to any target").
+            List<CardEffect> grantedAttackEffects = grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, attacker, EffectSlot.ON_ATTACK);
+            if (!nativeAttackEffects.isEmpty() || !temporaryAttackEffects.isEmpty()
+                    || !grantedAttackEffects.isEmpty()) {
                 List<CardEffect> allEffects = new ArrayList<>(nativeAttackEffects);
+                allEffects.addAll(grantedAttackEffects);
                 // Temporarily granted ON_ATTACK abilities (e.g. Tower Above's "target creature blocks
                 // it this turn if able"). MustBlockSourceEffect's source is snapshotted to the attacker.
                 for (CardEffect temp : temporaryAttackEffects) {
@@ -792,6 +799,13 @@ public class CombatAttackService {
                                     gameData, attacker, damageEffect.attackerCondition())) {
                         continue;
                     }
+                    // Intervening "if" (e.g. Guardian of the Ages — "if this creature has defender"):
+                    // only triggers when the condition is met at declaration; re-checked on resolution.
+                    if (attackedEffect instanceof ConditionalEffect conditional
+                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                    ConditionContext.forPermanent(perm, attackedPlayerId))) {
+                        continue;
+                    }
                     attackedTriggerEffects.add(attackedEffect);
                 }
                 if (attackedTriggerEffects.isEmpty()) continue;
@@ -818,6 +832,8 @@ public class CombatAttackService {
         // per attacking creature, on every permanent with this slot across all battlefields, regardless
         // of who controls the attacker or whom it attacks (e.g. Caltrops pings every attacker). The
         // attacking creature is stored as a non-targeting targetId so the effect can act on "it".
+        // Supports TriggeringPermanentConditionalEffect to restrict which attackers trigger the
+        // ability (e.g. Windreader Sphinx — "whenever a creature with flying attacks").
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             for (Map.Entry<UUID, List<Permanent>> bf : gameData.playerBattlefields.entrySet()) {
@@ -826,12 +842,25 @@ public class CombatAttackService {
                     List<CardEffect> anyAttackEffects = perm.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_ATTACKS);
                     if (anyAttackEffects.isEmpty()) continue;
 
+                    List<CardEffect> matchingAnyAttackEffects = new ArrayList<>();
+                    for (CardEffect effect : anyAttackEffects) {
+                        if (effect instanceof TriggeringPermanentConditionalEffect permConditional) {
+                            if (predicateEvaluationService.matchesPermanentPredicate(gameData, attacker,
+                                    permConditional.predicate())) {
+                                matchingAnyAttackEffects.add(permConditional.wrapped());
+                            }
+                        } else {
+                            matchingAnyAttackEffects.add(effect);
+                        }
+                    }
+                    if (matchingAnyAttackEffects.isEmpty()) continue;
+
                     StackEntry anyAttackTrigger = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             perm.getCard(),
                             permController,
                             perm.getCard().getName() + "'s trigger",
-                            new ArrayList<>(anyAttackEffects),
+                            matchingAnyAttackEffects,
                             attacker.getId(),
                             perm.getId()
                     );

@@ -24,6 +24,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.LibraryReorder,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.ImprovisationCapstoneCastChoice,
+        PendingInteraction.ExiledSpellCopyChoice,
         PendingInteraction.BrilliantUltimatumPileSeparationChoice,
         PendingInteraction.BrilliantUltimatumPileChoice,
         PendingInteraction.BrilliantUltimatumPlayChoice,
@@ -249,6 +250,29 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
+        }
+    }
+
+    /**
+     * Chandra, Pyromaster's ultimate: choose exactly one instant or sorcery card among the cards
+     * exiled this way; it is then copied {@code copies} times and the copies are offered for a
+     * free cast.
+     */
+    record ExiledSpellCopyChoice(UUID playerId, java.util.List<UUID> validCardIds, int copies)
+            implements PendingInteraction {
+
+        public ExiledSpellCopyChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
         }
     }
 

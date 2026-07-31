@@ -568,6 +568,21 @@ public class GameData {
      *  Refuge, Vedalken Orrery-style one-shot grants). Cleared at end of turn. */
     public final Set<UUID> playersWithFlashUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
+    /** Pending "the next spell of this type you cast this turn can be cast as though it had flash"
+     *  grants (Quicken), keyed by player. Each list element is one unconsumed grant; a grant is
+     *  consumed by {@link #recordSpellCast} when a matching spell is cast. Cleared at end of turn. */
+    public final Map<UUID, List<CardType>> nextSpellFlashGrantsThisTurn = new ConcurrentHashMap<>();
+
+    /** Pending "the next creature spell you cast this turn ..." grants (Savage Summoning), keyed by
+     *  player. Every unconsumed grant applies to the same next creature spell and is consumed by
+     *  {@link #recordSpellCast}. Cleared at end of turn. */
+    public final Map<UUID, List<CreatureSpellEmpowerment>> nextCreatureSpellEmpowermentsThisTurn = new ConcurrentHashMap<>();
+
+    /** Extra +1/+1 counters a spell's permanent enters the battlefield with, keyed by card id
+     *  (Savage Summoning). Consumed as an as-enters replacement by {@code BattlefieldEntryService}
+     *  and cleared at end of turn. */
+    public final Map<UUID, Integer> spellAdditionalEnterCounters = new ConcurrentHashMap<>();
+
     /** Player IDs that may tap lands they don't control for mana until end of turn (Piracy). The
      *  mana produced this way may only be spent to cast spells. Cleared at end of turn. */
     public final Set<UUID> mayTapLandsForSpellsUntilEndOfTurn = ConcurrentHashMap.newKeySet();
@@ -1531,6 +1546,73 @@ public class GameData {
         spellCastOrderThisTurn.add(card.getId());
         spellNameCastCountsThisGame.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>())
                 .merge(card.getName(), 1, Integer::sum);
+        consumeNextSpellFlashGrant(playerId, card);
+        consumeNextCreatureSpellEmpowerments(playerId, card);
+    }
+
+    /**
+     * Adds a pending "the next creature spell you cast this turn ..." grant for the player
+     * (Savage Summoning).
+     */
+    public void addNextCreatureSpellEmpowerment(UUID playerId, CreatureSpellEmpowerment empowerment) {
+        nextCreatureSpellEmpowermentsThisTurn
+                .computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>()))
+                .add(empowerment);
+    }
+
+    /**
+     * Applies every pending creature-spell empowerment to the creature spell just cast. All pending
+     * grants refer to the same "next creature spell", so they all apply and are all consumed.
+     */
+    private void consumeNextCreatureSpellEmpowerments(UUID playerId, Card card) {
+        if (!card.hasType(CardType.CREATURE)) return;
+        List<CreatureSpellEmpowerment> grants = nextCreatureSpellEmpowermentsThisTurn.get(playerId);
+        if (grants == null) return;
+        List<CreatureSpellEmpowerment> consumed;
+        synchronized (grants) {
+            if (grants.isEmpty()) return;
+            consumed = new ArrayList<>(grants);
+            grants.clear();
+        }
+        for (CreatureSpellEmpowerment grant : consumed) {
+            if (grant.uncounterable()) {
+                spellsMadeUncounterable.add(card.getId());
+            }
+            if (grant.additionalPlusOneCounters() > 0) {
+                spellAdditionalEnterCounters.merge(card.getId(), grant.additionalPlusOneCounters(), Integer::sum);
+            }
+        }
+    }
+
+    /**
+     * Adds a pending "the next spell of this type you cast this turn can be cast as though it had
+     * flash" grant for the player (Quicken).
+     */
+    public void addNextSpellFlashGrant(UUID playerId, CardType cardType) {
+        nextSpellFlashGrantsThisTurn
+                .computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>()))
+                .add(cardType);
+    }
+
+    /**
+     * Returns true if the player holds an unconsumed next-spell flash grant matching this card's types.
+     */
+    public boolean hasNextSpellFlashGrant(UUID playerId, Card card) {
+        List<CardType> grants = nextSpellFlashGrantsThisTurn.get(playerId);
+        if (grants == null) return false;
+        synchronized (grants) {
+            return grants.stream().anyMatch(card::hasType);
+        }
+    }
+
+    private void consumeNextSpellFlashGrant(UUID playerId, Card card) {
+        List<CardType> grants = nextSpellFlashGrantsThisTurn.get(playerId);
+        if (grants == null) return;
+        synchronized (grants) {
+            // Every pending grant names the same "next spell of this type", so one matching spell
+            // consumes them all rather than only the oldest.
+            grants.removeIf(card::hasType);
+        }
     }
 
     /**
@@ -2416,6 +2498,11 @@ public class GameData {
         // --- Until-end-of-turn casting permissions ---
         copy.cardsGrantedFlashbackUntilEndOfTurn.addAll(this.cardsGrantedFlashbackUntilEndOfTurn);
         copy.playersWithFlashUntilEndOfTurn.addAll(this.playersWithFlashUntilEndOfTurn);
+        this.nextSpellFlashGrantsThisTurn.forEach((k, v) ->
+                copy.nextSpellFlashGrantsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
+        this.nextCreatureSpellEmpowermentsThisTurn.forEach((k, v) ->
+                copy.nextCreatureSpellEmpowermentsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
+        copy.spellAdditionalEnterCounters.putAll(this.spellAdditionalEnterCounters);
         copy.mayTapLandsForSpellsUntilEndOfTurn.addAll(this.mayTapLandsForSpellsUntilEndOfTurn);
         copy.mayPayLifeForColorlessManaUntilEndOfTurn.addAll(this.mayPayLifeForColorlessManaUntilEndOfTurn);
         copy.graveyardCreatureCastPermissionsUntilEndOfTurn.putAll(this.graveyardCreatureCastPermissionsUntilEndOfTurn);

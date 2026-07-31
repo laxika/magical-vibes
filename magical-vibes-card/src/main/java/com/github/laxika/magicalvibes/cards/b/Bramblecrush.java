@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "ISD", collectorNumber = "172")
+@CardRegistration(set = "M14", collectorNumber = "165")
 public class Bramblecrush extends Card {
 
     public Bramblecrush() {

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCount
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
@@ -1809,6 +1810,90 @@ class GameQueryServiceTest {
                     "Giant Growth", new ArrayList<>(), null);
 
             assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, entry, false)).isEqualTo(2);
+        }
+    }
+
+    @Nested
+    @DisplayName("getControllerDamageBonus")
+    class ControllerDamageBonus {
+
+        @Test
+        @DisplayName("returns 0 by default")
+        void returnsZeroByDefault() {
+            Card redSpell = new Card();
+            redSpell.setName("Shock");
+            redSpell.setColors(List.of(CardColor.RED));
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, redSpell, player1Id,
+                    "Shock", new ArrayList<>(), null);
+
+            assertThat(gqs.getControllerDamageBonus(gd, entry)).isZero();
+        }
+
+        @Test
+        @DisplayName("returns amount when filter matches")
+        void returnsAmountWhenFilterMatches() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Gauntlet", 0, 0, CardColor.RED,
+                    new AdditionalControllerDamageEffect(2,
+                            new StackEntryAllOfPredicate(List.of(
+                                    new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
+                                    new StackEntryColorInPredicate(Set.of(CardColor.RED))
+                            )))));
+
+            Card redSpell = new Card();
+            redSpell.setName("Shock");
+            redSpell.setColors(List.of(CardColor.RED));
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, redSpell, player1Id,
+                    "Shock", new ArrayList<>(), null);
+
+            assertThat(gqs.getControllerDamageBonus(gd, entry)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("returns 0 when filter does not match")
+        void returnsZeroWhenFilterDoesNotMatch() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Gauntlet", 0, 0, CardColor.RED,
+                    new AdditionalControllerDamageEffect(2,
+                            new StackEntryColorInPredicate(Set.of(CardColor.RED)))));
+
+            Card greenSpell = new Card();
+            greenSpell.setName("Giant Growth");
+            greenSpell.setColors(List.of(CardColor.GREEN));
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, greenSpell, player1Id,
+                    "Giant Growth", new ArrayList<>(), null);
+
+            assertThat(gqs.getControllerDamageBonus(gd, entry)).isZero();
+        }
+
+        @Test
+        @DisplayName("does not affect opponent")
+        void doesNotAffectOpponent() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Gauntlet", 0, 0, CardColor.RED,
+                    new AdditionalControllerDamageEffect(2, null)));
+
+            Card redSpell = new Card();
+            redSpell.setName("Shock");
+            redSpell.setColors(List.of(CardColor.RED));
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, redSpell, player2Id,
+                    "Shock", new ArrayList<>(), null);
+
+            assertThat(gqs.getControllerDamageBonus(gd, entry)).isZero();
+        }
+
+        @Test
+        @DisplayName("two effects stack additively")
+        void twoEffectsStackAdditively() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Gauntlet", 0, 0, CardColor.RED,
+                    new AdditionalControllerDamageEffect(2, null)));
+            addPermanent(player1Id, createCreatureWithStaticEffect("Gauntlet", 0, 0, CardColor.RED,
+                    new AdditionalControllerDamageEffect(2, null)));
+
+            Card redSpell = new Card();
+            redSpell.setName("Shock");
+            redSpell.setColors(List.of(CardColor.RED));
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, redSpell, player1Id,
+                    "Shock", new ArrayList<>(), null);
+
+            assertThat(gqs.getControllerDamageBonus(gd, entry)).isEqualTo(4);
         }
     }
 

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -154,6 +154,13 @@ public class AnimationSupport {
         self.getTransientSubtypes().addAll(effect.grantedSubtypes());
         self.getGrantedKeywords().addAll(effect.grantedKeywords());
         self.getGrantedCardTypes().addAll(effect.grantedCardTypes());
+
+        // CR 301.5c — Equipment that's also a creature can't stay attached
+        if (self.isAttached() && self.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+            self.setAttachedTo(null);
+            gameData.expireFloatingEffectsForUnattachedSource(self.getId());
+            gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " becomes unattached."));
+        }
 
         String durationText = untilEndOfCombat ? "until end of combat" : "until end of turn";
         gameLogService.append(gameData, GameLog.cardThen(self.getCard(),
@@ -479,7 +486,7 @@ public class AnimationSupport {
                 gameData.queueMayAbility(triggerCard, controllerId, may, null, self.getId());
                 gameLogService.append(gameData, GameLog.cardThen(triggerCard, "'s transform ability triggers."));
                 log.info("Game {} - {} transform trigger queued (may ability)", gameData.id, triggerCard.getName());
-            } else if (e instanceof DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect) {
+            } else if (e instanceof DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect) {
                 gameData.interaction.setPermanentChoiceContext(
                         new PermanentChoiceContext.TransformOpponentThenCreatureTarget(
                                 triggerCard, controllerId, effects, self.getId()));

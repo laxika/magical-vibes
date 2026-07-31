@@ -339,15 +339,27 @@ public class AttackLegalityService {
 
     /**
      * Counts the "attacks each combat if able" requirements the given creature carries (CR 508.1d):
-     * its own static and transient ones, those granted by Auras attached to it or cursing its
-     * controller, the taunt forced by an attackable taunter, and board-wide requirements matching it.
+     * its own static and transient ones (including a {@link ConditionalEffect}-wrapped self
+     * requirement, e.g. Marauding Maulhorn's "unless you control …"), those granted by Auras attached
+     * to it or cursing its controller, the taunt forced by an attackable taunter, and board-wide
+     * requirements matching it.
      * The count — not a boolean — is what lets a declaration be checked for satisfying as many
      * requirements as possible.
      */
     public int getMustAttackRequirementCount(GameData gameData, Permanent creature) {
-        int[] count = {(int) creature.getCard().getEffects(EffectSlot.STATIC).stream()
-                .filter(MustAttackEffect.class::isInstance)
-                .count()};
+        int[] count = {0};
+        UUID selfControllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof MustAttackEffect) {
+                count[0]++;
+            } else if (effect instanceof ConditionalEffect conditional
+                    && conditional.wrapped() instanceof MustAttackEffect
+                    && selfControllerId != null
+                    && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forPermanent(creature, selfControllerId))) {
+                count[0]++;
+            }
+        }
 
         // Check for transient "must attack this turn" flag (e.g. Alluring Siren)
         if (creature.isMustAttackThisTurn()) {

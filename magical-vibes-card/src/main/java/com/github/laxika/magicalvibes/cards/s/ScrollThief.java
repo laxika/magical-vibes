@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "72")
 @CardRegistration(set = "M13", collectorNumber = "66")
+@CardRegistration(set = "M14", collectorNumber = "69")
 public class ScrollThief extends Card {
 
     public ScrollThief() {

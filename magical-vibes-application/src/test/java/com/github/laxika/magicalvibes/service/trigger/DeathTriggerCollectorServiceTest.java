@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.DistributeDyingSourceCountersAmongControlledCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -206,6 +207,44 @@ class DeathTriggerCollectorServiceTest {
             var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
 
             assertThat(svc.handleDealDamageToBlockedAttackers(match(perm, PLAYER1_ID, deathDmg), deathDmg, ctx)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("handleDistributeDyingSourceCountersAmongControlledCreatures")
+    class DistributeDyingSourceCounters {
+
+        @Test
+        @DisplayName("Snapshots counter count and stacks a MayEffect")
+        void snapshotsAndStacksMay() {
+            Card card = createCreature("Hydra", 0, 0);
+            var effect = new DistributeDyingSourceCountersAmongControlledCreaturesEffect(
+                    CounterType.PLUS_ONE_PLUS_ONE);
+            Permanent perm = new Permanent(card);
+            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
+
+            assertThat(svc.handleDistributeDyingSourceCountersAmongControlledCreatures(
+                    match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            MayEffect may = (MayEffect) gd.stack.get(0).getEffectsToResolve().get(0);
+            var baked = (DistributeDyingSourceCountersAmongControlledCreaturesEffect) may.wrapped();
+            assertThat(baked.count()).isEqualTo(3);
+            assertThat(baked.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
+        }
+
+        @Test
+        @DisplayName("Does not trigger when dying permanent is null")
+        void noPermanent() {
+            Card card = createCreature("Hydra", 0, 0);
+            var effect = new DistributeDyingSourceCountersAmongControlledCreaturesEffect(
+                    CounterType.PLUS_ONE_PLUS_ONE);
+            Permanent perm = new Permanent(card);
+            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, null);
+
+            assertThat(svc.handleDistributeDyingSourceCountersAmongControlledCreatures(
+                    match(perm, PLAYER1_ID, effect), effect, ctx)).isFalse();
+            assertThat(gd.stack).isEmpty();
         }
     }
 

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -44,6 +45,14 @@ public class EquipEffectHandler implements NormalEffectHandlerBean {
             String logEntry = entry.getCard().getName() + "'s equip ability fizzles (equipment no longer on the battlefield).";
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s equip ability fizzles (equipment no longer on the battlefield)."));
             log.info("Game {} - Equip fizzles, equipment left battlefield", gameData.id);
+            return;
+        }
+
+        // Ruling (Haunted Plate Mail): equip while not an Equipment has no effect.
+        if (!GameQueryService.permanentHasSubtype(equipment, CardSubtype.EQUIPMENT)) {
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                    "'s equip ability has no effect (it is not an Equipment)."));
+            log.info("Game {} - Equip has no effect, {} is not Equipment", gameData.id, entry.getCard().getName());
             return;
         }
 

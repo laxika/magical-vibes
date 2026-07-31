@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M12", collectorNumber = "54")
+@CardRegistration(set = "M14", collectorNumber = "56")
 public class FrostBreath extends Card {
 
     public FrostBreath() {

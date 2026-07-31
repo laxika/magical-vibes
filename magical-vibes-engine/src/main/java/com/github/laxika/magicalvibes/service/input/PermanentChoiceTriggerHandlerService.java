@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -418,9 +418,9 @@ public class PermanentChoiceTriggerHandlerService {
 
     private int maxTransformCreatureTargets(List<CardEffect> effects) {
         return effects.stream()
-                .filter(DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect.class::isInstance)
-                .map(DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect.class::cast)
-                .mapToInt(DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect::maxCreatureTargets)
+                .filter(DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect.class::isInstance)
+                .map(DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect.class::cast)
+                .mapToInt(DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect::maxCreatureTargets)
                 .findFirst()
                 .orElse(1);
     }

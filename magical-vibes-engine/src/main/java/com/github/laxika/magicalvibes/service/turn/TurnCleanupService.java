@@ -230,6 +230,9 @@ public class TurnCleanupService {
         gameData.senControlledPlayerId = null;
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
         gameData.playersWithFlashUntilEndOfTurn.clear();
+        gameData.nextSpellFlashGrantsThisTurn.clear();
+        gameData.nextCreatureSpellEmpowermentsThisTurn.clear();
+        gameData.spellAdditionalEnterCounters.clear();
         gameData.mayTapLandsForSpellsUntilEndOfTurn.clear();
         gameData.mayPayLifeForColorlessManaUntilEndOfTurn.clear();
         gameData.graveyardCreatureCastPermissionsUntilEndOfTurn.clear();

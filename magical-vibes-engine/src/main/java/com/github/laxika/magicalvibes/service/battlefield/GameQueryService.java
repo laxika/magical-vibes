@@ -86,6 +86,7 @@ import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTrig
 import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ETBDoubleTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
@@ -2807,16 +2808,27 @@ public class GameQueryService {
      * other permanents.
      */
     public boolean cantBeTargetedBySpellColor(GameData gameData, Permanent target, CardColor spellColor) {
+        return cantBeTargetedBySpellColor(gameData, target, spellColor, null);
+    }
+
+    /**
+     * Overload that also honours opponent-gated spell-color restrictions ("can't be the target of
+     * [color] spells your opponents control", Fiendslayer Paladin) by comparing the spell's
+     * controller with the target's controller. Passing {@code null} skips those restrictions.
+     */
+    public boolean cantBeTargetedBySpellColor(GameData gameData, Permanent target, CardColor spellColor,
+                                              UUID spellControllerId) {
         if (spellColor == null) {
             return false;
         }
+        boolean opponentControlled = isOpponentControlledSpell(gameData, target, spellControllerId);
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            if (isSpellColorRestriction(effect, spellColor)) {
+            if (isSpellColorRestriction(effect, spellColor, opponentControlled)) {
                 return true;
             }
         }
         for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
-            if (isSpellColorRestriction(effect, spellColor)) {
+            if (isSpellColorRestriction(effect, spellColor, opponentControlled)) {
                 return true;
             }
         }
@@ -2874,14 +2886,26 @@ public class GameQueryService {
     }
 
     /**
-     * Matches the "can't be the target of spells of [color]" restriction (Karplusan Strider) — spells
-     * only, no controller gating — for the given spell color.
+     * Matches the "can't be the target of spells of [color]" restriction (Karplusan Strider) for the
+     * given spell color. Opponent-gated variants (Fiendslayer Paladin) only match when the spell is
+     * known to be opponent-controlled.
      */
-    private static boolean isSpellColorRestriction(CardEffect effect, CardColor spellColor) {
+    private static boolean isSpellColorRestriction(CardEffect effect, CardColor spellColor,
+                                                   boolean opponentControlled) {
         return effect instanceof TargetingRestrictionEffect r
                 && r.kind() == TargetingSourceKind.SPELLS
                 && r.mode() == TargetColorMode.BLOCKED_COLORS
-                && r.colors().contains(spellColor);
+                && r.colors().contains(spellColor)
+                && (!r.opponentOnly() || opponentControlled);
+    }
+
+    /** Whether {@code spellControllerId} is a player other than the target permanent's controller. */
+    private boolean isOpponentControlledSpell(GameData gameData, Permanent target, UUID spellControllerId) {
+        if (spellControllerId == null) {
+            return false;
+        }
+        UUID targetController = findPermanentController(gameData, target.getId());
+        return targetController != null && !targetController.equals(spellControllerId);
     }
 
     /**
@@ -3350,6 +3374,9 @@ public class GameQueryService {
         if (permanent.isLosesAllCreatureTypesUntilEndOfTurn() && !NON_CREATURE_SUBTYPES.contains(subtype)) {
             return false;
         }
+        if (permanent.getTransientRemovedSubtypes().contains(subtype)) {
+            return false;
+        }
         return permanent.getCard().getSubtypes().contains(subtype)
                 || permanent.getTransientSubtypes().contains(subtype)
                 || permanent.getGrantedSubtypes().contains(subtype)
@@ -3644,12 +3671,40 @@ public class GameQueryService {
      * @return the damage after applying all multipliers
      */
     public int applyDamageMultiplier(GameData gameData, int damage, StackEntry entry) {
-        int bonus = (damage > 0 && entry != null)
-                ? getColorSourceDamageBonus(gameData, entry.getControllerId(), entry.getCard().getColors())
-                : 0;
+        int bonus = 0;
+        if (damage > 0 && entry != null) {
+            bonus = getColorSourceDamageBonus(gameData, entry.getControllerId(), entry.getCard().getColors())
+                    + getControllerDamageBonus(gameData, entry);
+        }
         UUID controllerId = entry != null ? entry.getControllerId() : null;
         return (damage + bonus) * getDamageMultiplier(gameData)
                 * getControllerDamageMultiplier(gameData, controllerId, entry, false);
+    }
+
+    /**
+     * Returns the additive damage bonus from {@link AdditionalControllerDamageEffect} permanents
+     * controlled by the stack entry's controller (e.g. Pyromancer's Gauntlet). Each matching
+     * effect contributes its {@code amount}; multiple instances stack additively. Returns 0 when
+     * the entry is null or no matching effect applies.
+     */
+    int getControllerDamageBonus(GameData gameData, StackEntry entry) {
+        if (entry == null) return 0;
+        UUID controllerId = entry.getControllerId();
+        if (controllerId == null) return 0;
+
+        int[] bonus = {0};
+        gameData.forEachPermanent((playerId, p) -> {
+            if (!playerId.equals(controllerId)) return;
+            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AdditionalControllerDamageEffect acde) {
+                    if (acde.stackFilter() == null
+                            || predicateEvaluationService.matchesStackEntryPredicate(entry, acde.stackFilter(), null)) {
+                        bonus[0] += acde.amount();
+                    }
+                }
+            }
+        });
+        return bonus[0];
     }
 
     /**

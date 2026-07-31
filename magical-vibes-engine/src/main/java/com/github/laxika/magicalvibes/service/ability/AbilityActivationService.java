@@ -63,7 +63,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingP
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ImprintedCardXCostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -2444,16 +2444,17 @@ public class AbilityActivationService {
     }
 
     /**
-     * Validates X for Prototype Portal-style abilities. Per ruling: "You may not activate the
+     * Validates X for imprinted-card X-cost abilities (Prototype Portal, Elite Arcanist). Per ruling: "You may not activate the
      * second ability if no card has been exiled with Prototype Portal." X is defined by the exiled
      * card's mana value (not chosen freely), so no imprint = can't activate.
      */
     private void validateImprintedCopyXValue(GameData gameData, Permanent permanent, List<CardEffect> abilityEffects, int effectiveXValue) {
-        CreateTokenCopyOfImprintedCardEffect imprintedCopyEffect = abilityEffects.stream()
-                .filter(CreateTokenCopyOfImprintedCardEffect.class::isInstance)
-                .map(CreateTokenCopyOfImprintedCardEffect.class::cast)
+        ImprintedCardXCostEffect imprintedCopyEffect = abilityEffects.stream()
+                .filter(ImprintedCardXCostEffect.class::isInstance)
+                .map(ImprintedCardXCostEffect.class::cast)
+                .filter(ImprintedCardXCostEffect::requiresImprintedXCost)
                 .findFirst().orElse(null);
-        if (imprintedCopyEffect != null && !imprintedCopyEffect.exileAtEndStep()) {
+        if (imprintedCopyEffect != null) {
             Card imprintedCard = gameData.getImprintedCard(permanent.getCard());
             if (imprintedCard == null) {
                 throw new IllegalStateException("No card has been exiled with " + permanent.getCard().getName());

@@ -528,13 +528,22 @@ class AiTargetSelector {
         chosenSoFar.addAll(chosen);
         for (UUID chosenId : chosenSoFar) {
             Permanent other = gameQueryService.findPermanentById(gameData, chosenId);
+            UUID candidateControllerId = gameQueryService.findPermanentController(gameData, candidate.getId());
             if (other == null) {
-                continue; // A chosen player target imposes no permanent-to-permanent restriction
+                // A chosen player target imposes no permanent-to-permanent restriction, except for
+                // "controlled by the first target", where that player is the required controller.
+                if (constraint == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET
+                        && !chosenId.equals(candidateControllerId)) {
+                    return false;
+                }
+                continue;
             }
             boolean compatible = switch (constraint) {
                 case SHARE_NO_CREATURE_TYPES -> !gameQueryService.shareCreatureType(gameData, other, candidate);
                 case SHARE_ARTIFACT_CREATURE_OR_LAND_TYPE ->
                         gameQueryService.sharesArtifactCreatureOrLandType(other, candidate);
+                case CONTROLLED_BY_FIRST_TARGET -> java.util.Objects.equals(candidateControllerId,
+                        gameQueryService.findPermanentController(gameData, other.getId()));
             };
             if (!compatible) {
                 return false;

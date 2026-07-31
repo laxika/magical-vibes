@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect
 import java.util.Set;
 
 @CardRegistration(set = "M12", collectorNumber = "176")
+@CardRegistration(set = "M14", collectorNumber = "173")
 public class GarruksHorde extends Card {
 
     public GarruksHorde() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -56,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfByCastSpellManaValue
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastDamageToCasterEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastLifeDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
@@ -872,6 +874,34 @@ public class SpellCastTriggerCollectorService {
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 drainEffects
+        );
+        entry.setTargetId(sc.castingPlayerId());
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
+        return true;
+    }
+
+    @CollectsTrigger(value = SpellCastDamageToCasterEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    private boolean handleOpponentSpellCastDamage(TriggerMatchContext match,
+            SpellCastDamageToCasterEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (trigger.spellFilter() != null
+                && !predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
+                        match.gameData(), sc.castingPlayerId())) {
+            return false;
+        }
+        // "This creature deals N damage to that player" — carry the casting opponent on targetId so the
+        // TARGET_PLAYER damage lands on them (the casting player is not a chosen target), and the source
+        // permanent id so the damage is attributed to this permanent.
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.<CardEffect>of(
+                        new DealDamageToPlayersEffect(trigger.damage(), DamageRecipient.TARGET_PLAYER))),
+                null,
+                match.permanent().getId()
         );
         entry.setTargetId(sc.castingPlayerId());
         entry.setNonTargeting(true);

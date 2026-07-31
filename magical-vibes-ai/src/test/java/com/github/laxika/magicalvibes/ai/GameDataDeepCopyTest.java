@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CreatureSpellEmpowerment;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -304,5 +305,37 @@ class GameDataDeepCopyTest {
         copy.playersWithFlashUntilEndOfTurn.clear();
         assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(cardId);
         assertThat(gd.playersWithFlashUntilEndOfTurn).contains(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Deep copy preserves next-spell flash grants independently")
+    void deepCopyPreservesNextSpellFlashGrants() {
+        gd.addNextSpellFlashGrant(player1.getId(), CardType.SORCERY);
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.nextSpellFlashGrantsThisTurn.get(player1.getId())).containsExactly(CardType.SORCERY);
+
+        copy.nextSpellFlashGrantsThisTurn.get(player1.getId()).clear();
+        assertThat(gd.nextSpellFlashGrantsThisTurn.get(player1.getId())).containsExactly(CardType.SORCERY);
+    }
+
+    @Test
+    @DisplayName("Deep copy preserves next-creature-spell empowerments independently")
+    void deepCopyPreservesNextCreatureSpellEmpowerments() {
+        CreatureSpellEmpowerment empowerment = new CreatureSpellEmpowerment(true, 1);
+        gd.addNextCreatureSpellEmpowerment(player1.getId(), empowerment);
+        UUID spellId = UUID.randomUUID();
+        gd.spellAdditionalEnterCounters.put(spellId, 2);
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.nextCreatureSpellEmpowermentsThisTurn.get(player1.getId())).containsExactly(empowerment);
+        assertThat(copy.spellAdditionalEnterCounters).containsEntry(spellId, 2);
+
+        copy.nextCreatureSpellEmpowermentsThisTurn.get(player1.getId()).clear();
+        copy.spellAdditionalEnterCounters.clear();
+        assertThat(gd.nextCreatureSpellEmpowermentsThisTurn.get(player1.getId())).containsExactly(empowerment);
+        assertThat(gd.spellAdditionalEnterCounters).containsEntry(spellId, 2);
     }
 }

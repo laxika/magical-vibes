@@ -80,7 +80,13 @@ public class GraveyardService {
     }
 
 
-    public void resolveMillPlayer(GameData gameData, UUID targetPlayerId, int count) {
+    /**
+     * Mills {@code count} cards from the target player's library, returning the cards that actually
+     * reached the graveyard (a replacement effect can divert one). Callers that need to act on the
+     * milled cards — e.g. Jace's Mindseeker's "cast an instant or sorcery from among them" — use the
+     * returned list; everyone else ignores it.
+     */
+    public List<Card> resolveMillPlayer(GameData gameData, UUID targetPlayerId, int count) {
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         int cardsToMill = Math.min(count, deck.size());
         List<Card> milledCards = new ArrayList<>(deck.subList(0, cardsToMill));
@@ -123,6 +129,7 @@ public class GraveyardService {
                 }
             }
         }
+        return cardsEnteredGraveyard;
     }
 
     /**

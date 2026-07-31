@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBySelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -200,6 +201,9 @@ public class DamagePreventionService {
             // Fog Bank: "Prevent all combat damage that would be dealt to and dealt by this creature."
             if (isCombatDamage && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(PreventAllCombatDamageToAndBySelfEffect.class::isInstance)) return 0;
+            // Seraph of the Sword: "Prevent all combat damage that would be dealt to this creature."
+            if (isCombatDamage && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(PreventAllCombatDamageToSelfEffect.class::isInstance)) return 0;
             // Dolmen Gate: "Prevent all combat damage that would be dealt to attacking creatures you control."
             if (isCombatDamage && permanent.isAttacking() && hasAttackingCreatureCombatDamagePreventionSource(gameData, permanent)) return 0;
             // Mark of Asylum: "Prevent all noncombat damage that would be dealt to creatures you control."

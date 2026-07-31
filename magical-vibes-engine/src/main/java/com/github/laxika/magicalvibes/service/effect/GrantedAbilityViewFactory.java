@@ -201,7 +201,9 @@ public class GrantedAbilityViewFactory {
         String colors = enumPhrase(restriction.colors());
         if (restriction.mode() == TargetColorMode.BLOCKED_COLORS) {
             if (restriction.opponentOnly()) {
-                return "Hexproof from " + colors;
+                return restriction.kind() == TargetingSourceKind.SPELLS
+                        ? "Can't be the target of " + colors + " spells your opponents control"
+                        : "Hexproof from " + colors;
             }
             return "Can't be the target of " + colors + " "
                     + (restriction.kind() == TargetingSourceKind.SPELLS

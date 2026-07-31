@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "48")
+@CardRegistration(set = "M14", collectorNumber = "46")
 public class Claustrophobia extends Card {
 
     public Claustrophobia() {

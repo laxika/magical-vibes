@@ -428,7 +428,7 @@ public class MayMiscHandlerService {
             }
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " puts ", topCard, " onto the battlefield."));
-            log.info("Game {} - {} puts {} onto the battlefield (Nissa)",
+            log.info("Game {} - {} puts {} onto the battlefield from the top of their library",
                     gameData.id, player.getUsername(), topCard.getName());
         } else {
             gameLogService.append(gameData, GameLog.text(

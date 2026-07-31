@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "80")
+@CardRegistration(set = "M14", collectorNumber = "80")
 public class WaterServant extends Card {
 
     public WaterServant() {

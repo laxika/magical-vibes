@@ -25,6 +25,7 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
 
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
+    private final PermanentCounterSupport permanentCounterSupport;
     private final GameLogService gameLogService;
     private final LifeSupport lifeSupport;
     private final ExileService exileService;
@@ -57,10 +58,17 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
 
         boolean isCreatureCard = targetCard.hasType(CardType.CREATURE);
         if (isCreatureCard) {
-            // Creature card exiled: gain life
+            // Creature card exiled: put +1/+1 counters on the source, then gain life
+            UUID sourcePermanentId = entry.getSourcePermanentId();
+            if (e.creatureCountersOnSource() > 0 && sourcePermanentId != null) {
+                Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                if (source != null) {
+                    permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, entry, source, e.creatureCountersOnSource());
+                }
+            }
             lifeSupport.applyGainLife(gameData, controllerId, e.creatureLifeGain(),
                     entry.getCard().getName(), entry.getCard(), entry.getEntryType());
-        } else {
+        } else if (e.noncreaturePowerBoost() != 0 || e.noncreatureToughnessBoost() != 0) {
             // Noncreature card exiled: boost source permanent
             UUID sourcePermanentId = entry.getSourcePermanentId();
             if (sourcePermanentId != null) {

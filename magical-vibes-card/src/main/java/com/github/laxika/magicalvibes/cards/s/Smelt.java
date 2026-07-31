@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M13", collectorNumber = "149")
+@CardRegistration(set = "M14", collectorNumber = "156")
 public class Smelt extends Card {
 
     public Smelt() {

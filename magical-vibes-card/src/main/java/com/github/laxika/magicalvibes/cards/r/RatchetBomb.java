@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "196")
+@CardRegistration(set = "M14", collectorNumber = "215")
 public class RatchetBomb extends Card {
 
     public RatchetBomb() {

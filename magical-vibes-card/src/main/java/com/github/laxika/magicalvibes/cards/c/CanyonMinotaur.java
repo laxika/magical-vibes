@@ -7,5 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "M11", collectorNumber = "126")
 @CardRegistration(set = "CON", collectorNumber = "60")
 @CardRegistration(set = "M13", collectorNumber = "122")
+@CardRegistration(set = "M14", collectorNumber = "131")
 public class CanyonMinotaur extends Card {
 }

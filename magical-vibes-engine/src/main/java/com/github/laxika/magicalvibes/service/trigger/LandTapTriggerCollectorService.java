@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
@@ -55,6 +56,7 @@ public class LandTapTriggerCollectorService {
     private final LifeSupport lifeSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final AmountEvaluationService amountEvaluationService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @CollectsTrigger(value = DealDamageOnLandTapEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleDealDamageOnLandTap(TriggerMatchContext match,
@@ -62,6 +64,13 @@ public class LandTapTriggerCollectorService {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
         var gameData = match.gameData();
         var tappingPlayerId = lt.tappingPlayerId();
+        if (trigger.landFilter() != null) {
+            Permanent tappedLand = gameQueryService.findPermanentById(gameData, lt.tappedLandId());
+            if (tappedLand == null
+                    || !predicateEvaluationService.matchesPermanentPredicate(gameData, tappedLand, trigger.landFilter())) {
+                return false;
+            }
+        }
         var sourceCard = match.permanent().getCard();
         String cardName = sourceCard.getName();
         int damage = gameQueryService.applyDamageMultiplier(gameData, trigger.damage());

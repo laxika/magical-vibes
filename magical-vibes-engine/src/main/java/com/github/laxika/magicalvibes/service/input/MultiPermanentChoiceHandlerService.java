@@ -67,6 +67,7 @@ public class MultiPermanentChoiceHandlerService {
     private final PermanentCounterSupport permanentCounterSupport;
     private final AnimationSupport animationSupport;
     private final LifeSupport lifeSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport tapUntapSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
@@ -166,6 +167,8 @@ public class MultiPermanentChoiceHandlerService {
             handleChooseCreatureRestCantBlock(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapCreaturesGainLife ctx) {
             handleTapCreaturesGainLife(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.TapCreaturesCreateTokens ctx) {
+            handleTapCreaturesCreateTokens(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeLandsSearchLandsToBattlefieldTapped) {
             handleSacrificeLandsSearchLandsToBattlefieldTapped(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsDrawPerSacrificed) {
@@ -993,6 +996,33 @@ public class MultiPermanentChoiceHandlerService {
                             + " taps " + tappedCount + " creature" + (tappedCount == 1 ? "" : "s") + ": "), tappedCards)
                             .text(".").build());
             lifeSupport.applyGainLife(gameData, playerId, context.lifePerCreature() * tappedCount);
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleTapCreaturesCreateTokens(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                                MultiPermanentChoiceContext.TapCreaturesCreateTokens context) {
+        List<Card> tappedCards = new ArrayList<>();
+        for (UUID permId : permanentIds) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+            if (perm != null && !perm.isTapped()) {
+                perm.tap();
+                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm);
+                tappedCards.add(perm.getCard());
+            }
+        }
+
+        int tappedCount = tappedCards.size();
+        if (tappedCount == 0) {
+            gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " taps no creatures."));
+        } else {
+            gameLogService.append(gameData,
+                    appendCards(GameLog.builder().text(gameData.playerIdToName.get(playerId)
+                            + " taps " + tappedCount + " creature" + (tappedCount == 1 ? "" : "s") + ": "), tappedCards)
+                            .text(".").build());
+            permanentControlSupport.applyCreateToken(gameData, playerId, context.tokenTemplate(), tappedCount,
+                    context.sourceSetCode());
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);

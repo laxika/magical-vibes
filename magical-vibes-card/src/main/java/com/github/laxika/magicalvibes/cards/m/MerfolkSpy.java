@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPla
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "66")
+@CardRegistration(set = "M14", collectorNumber = "62")
 public class MerfolkSpy extends Card {
 
     public MerfolkSpy() {

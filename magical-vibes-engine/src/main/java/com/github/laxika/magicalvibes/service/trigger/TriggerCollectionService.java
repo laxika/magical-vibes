@@ -58,10 +58,15 @@ import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.model.effect.CounterOpponentFirstSpellEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToManaSpentToCastToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.effect.SearchCreatureToBattlefieldOnControllerCastsCreatureSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncrementTriggerEffect;
@@ -103,6 +108,7 @@ public class TriggerCollectionService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final GameLogService gameLogService;
     private final ETBTokenTargetService etbTokenTargetService;
+    private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
 
     // ── Spell-cast triggers ────────────────────────────────────────────
 
@@ -224,6 +230,26 @@ public class TriggerCollectionService {
                             GameLog.text(desc + " triggers — counter that spell."));
                     log.info("Game {} - {} counters opponent's first spell this turn",
                             gameData.id, desc);
+                } else if (effect instanceof SearchCreatureToBattlefieldOnControllerCastsCreatureSpellEffect) {
+                    // Garruk, Caller of Beasts' emblem — fires on the controller's own creature spells.
+                    if (!emblem.controllerId().equals(castingPlayerId)) continue;
+                    if (!spellCard.hasType(CardType.CREATURE)) continue;
+                    Card source = emblem.sourceCard();
+                    String desc = (source != null ? source.getName() : "Garruk, Caller of Beasts")
+                            + "'s emblem";
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            source != null ? source : spellCard,
+                            emblem.controllerId(),
+                            desc,
+                            new ArrayList<>(List.of(new MayEffect(
+                                    new SearchLibraryEffect(
+                                            new CardTypePredicate(CardType.CREATURE),
+                                            LibrarySearchDestination.BATTLEFIELD),
+                                    "Search your library for a creature card and put it onto the battlefield?")))
+                    ));
+                    gameLogService.append(gameData, GameLog.text(desc + " triggers."));
+                    log.info("Game {} - {} creature-spell search trigger queued", gameData.id, desc);
                 } else if (effect instanceof DealDamageEqualToManaSpentToCastToAnyTargetEffect damageTrigger) {
                     if (!emblem.controllerId().equals(castingPlayerId)) continue;
                     if (damageTrigger.spellFilter() != null
@@ -1239,6 +1265,10 @@ public class TriggerCollectionService {
             GameData gameData, Permanent source, UUID controllerId, StackEntry triggeringEntry) {
         List<CardEffect> effects = new ArrayList<>(
                 source.getCard().getEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY));
+        // Dismiss into Dream continuously grants "When this creature becomes the target of a spell
+        // or ability, sacrifice it" to each creature its controller's opponents control.
+        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                gameData, source, EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY));
         // Makeshift Mannequin: while a permanent has a mannequin counter, it has "When this creature
         // becomes the target of a spell or ability, sacrifice it."
         if (source.getCounterCount(CounterType.MANNEQUIN) > 0) {
@@ -3477,7 +3507,19 @@ public class TriggerCollectionService {
                 CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCard, gameData, controllerId);
                 if (resolved == null) continue;
 
-                gameData.stack.add(new StackEntry(
+                // A permanent-targeting effect (Oath of the Ancient Wood's "+1/+1 counter on target
+                // creature") can't go on the stack without a target — queue the choice instead
+                // (CR 603.3d: targets are chosen as the ability is put on the stack).
+                if (resolved.targetSpec().category().includesPermanents()) {
+                    gameData.queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                            perm.getCard(), controllerId, new ArrayList<>(List.of(resolved)), perm.getId()));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} triggers for {} entering (ally enchantment entered, awaiting target)",
+                            gameData.id, perm.getCard().getName(), enteringCard.getName());
+                    continue;
+                }
+
+                StackEntry triggered = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         controllerId,
@@ -3485,7 +3527,11 @@ public class TriggerCollectionService {
                         new ArrayList<>(List.of(resolved)),
                         null,
                         perm.getId()
-                ));
+                );
+                // Ajani's Chosen needs the entering enchantment itself at resolution ("if that
+                // enchantment is an Aura, you may attach it to the token").
+                triggered.setTriggeringCardId(enteringCard.getId());
+                gameData.stack.add(triggered);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} triggers for {} entering (ally enchantment entered)",
                         gameData.id, perm.getCard().getName(), enteringCard.getName());

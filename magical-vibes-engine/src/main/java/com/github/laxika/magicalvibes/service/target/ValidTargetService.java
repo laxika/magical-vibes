@@ -275,6 +275,22 @@ public class ValidTargetService {
                         validPlayerIds.add(playerId);
                     }
                 }
+            } else if (positionFilter instanceof AnyTargetPredicateTargetFilter anyFilter) {
+                // "Target player or planeswalker" position (Chandra, Pyromaster +1): players
+                // matching the filter's player predicate alongside permanents matching its
+                // permanent predicate.
+                for (UUID playerId : gameData.playerIds) {
+                    if (excludeIds.contains(playerId)) continue;
+                    if (isValidPlayerTarget(gameData, anyFilter, playerId, controllerId)) {
+                        validPlayerIds.add(playerId);
+                    }
+                }
+                gameData.forEachPermanent((playerId, perm) -> {
+                    if (excludeIds.contains(perm.getId())) return;
+                    if (isValidAbilityPermanentTarget(gameData, sourceCard, ability, perm, controllerId, false, permanentIndex, positionFilter)) {
+                        validPermanentIds.add(perm.getId());
+                    }
+                });
             } else {
                 // "Each of up to N targets" (Chandra, the Firebrand −6): an unfiltered position whose
                 // effects target both players and permanents is an "any target" slot, so it offers
@@ -298,6 +314,17 @@ public class ValidTargetService {
                         validPermanentIds.add(perm.getId());
                     }
                 });
+            }
+
+            // Cross-target restriction (Chandra, Pyromaster +1): later positions may only choose
+            // permanents controlled by the first target.
+            if (ability.getMultiTargetConstraint() == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET
+                    && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()) {
+                UUID requiredControllerId = controllerOfFirstTarget(gameData, alreadySelectedIds.getFirst());
+                validPlayerIds.clear();
+                validPermanentIds.removeIf(id ->
+                        !java.util.Objects.equals(requiredControllerId,
+                                gameQueryService.findPermanentController(gameData, id)));
             }
 
             String prompt = "Select targets for " + sourceCard.getName() + " ability";
@@ -493,6 +520,17 @@ public class ValidTargetService {
             }
         }
         return result;
+    }
+
+    /**
+     * The player a {@link MultiTargetConstraint#CONTROLLED_BY_FIRST_TARGET} group is anchored to:
+     * the first target itself when it is a player, else that permanent's controller.
+     */
+    private UUID controllerOfFirstTarget(GameData gameData, UUID firstTargetId) {
+        if (gameData.playerIds.contains(firstTargetId)) {
+            return firstTargetId;
+        }
+        return gameQueryService.findPermanentController(gameData, firstTargetId);
     }
 
     private boolean isValidPlayerTarget(GameData gameData, TargetFilter targetFilter, UUID playerId, UUID controllerId) {
@@ -727,6 +765,11 @@ public class ValidTargetService {
                             continue;
                         }
                         if (rge.requiresManaValueEqualsX() && c.getManaValue() != effectiveXValue) {
+                            continue;
+                        }
+                        if (rge.targetPutIntoGraveyardFromBattlefieldThisTurn()
+                                && !gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn
+                                .getOrDefault(playerId, Set.of()).contains(c.getId())) {
                             continue;
                         }
                         validIds.add(c.getId());

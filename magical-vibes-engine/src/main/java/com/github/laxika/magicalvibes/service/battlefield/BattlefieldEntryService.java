@@ -656,6 +656,22 @@ public class BattlefieldEntryService {
         }
 
         applyGrantedBloodthirst(gameData, controllerId, permanent);
+        applySpellAdditionalEnterCounters(gameData, permanent);
+    }
+
+    /**
+     * Extra +1/+1 counters granted to the creature spell before it was cast (Savage Summoning's
+     * "That creature enters with an additional +1/+1 counter on it"). The grant is keyed by card id
+     * and consumed here, so it applies only to the permanent that spell becomes.
+     */
+    private void applySpellAdditionalEnterCounters(GameData gameData, Permanent permanent) {
+        Integer granted = gameData.spellAdditionalEnterCounters.remove(permanent.getCard().getId());
+        if (granted == null || granted <= 0) return;
+
+        permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + granted);
+        log.info("Game {} - {} enters with {} additional +1/+1 counter(s) granted to its spell",
+                gameData.id, permanent.getCard().getName(), granted);
     }
 
     /**

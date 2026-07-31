@@ -143,6 +143,7 @@ public enum CardSubtype {
     SPLINTER("Splinter"),
     SURVIVOR("Survivor"),
     SNAKE("Snake"),
+    SLIVER("Sliver"),
     GERM("Germ"),
     LOCUS("Locus"),
     MYR("Myr"),

@@ -316,6 +316,9 @@ public class PredicateEvaluationService {
                 if (creatureSubtype && permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
                     yield false;
                 }
+                if (permanent.getTransientRemovedSubtypes().contains(hasSubtypePredicate.subtype())) {
+                    yield false;
+                }
                 // "Becomes a [creature type]" (Boldwyr Intimidator) replaces every creature subtype
                 // with the single override, overwriting base/transient/granted types and Changeling.
                 if (creatureSubtype && permanent.getTransientCreatureTypeOverride() != null) {
@@ -338,6 +341,11 @@ public class PredicateEvaluationService {
                                 .filter(st -> !gameQueryService.isCreatureSubtype(st))
                                 .collect(java.util.stream.Collectors.toSet())
                         : hasAnySubtypePredicate.subtypes();
+                if (!permanent.getTransientRemovedSubtypes().isEmpty()) {
+                    wanted = wanted.stream()
+                            .filter(st -> !permanent.getTransientRemovedSubtypes().contains(st))
+                            .collect(java.util.stream.Collectors.toSet());
+                }
                 boolean hasSubtype = permanent.getCard().getSubtypes().stream().anyMatch(wanted::contains)
                         || permanent.getTransientSubtypes().stream().anyMatch(wanted::contains)
                         || permanent.getGrantedSubtypes().stream().anyMatch(wanted::contains);
