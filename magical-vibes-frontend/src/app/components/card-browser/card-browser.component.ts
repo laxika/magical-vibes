@@ -8,6 +8,12 @@ import { browseInfoToCard } from '../../utils/browse-card-utils';
 import { manaSymbolHtml } from '../../utils/mana-symbols';
 import { Subscription } from 'rxjs';
 
+interface CardSection {
+  id: string;
+  label: string | null;
+  cards: BrowseCardInfo[];
+}
+
 @Component({
   selector: 'app-card-browser',
   standalone: true,
@@ -56,6 +62,32 @@ export class CardBrowserComponent implements OnInit, OnDestroy {
     }
 
     return result;
+  });
+
+  /**
+   * Splits the filtered list so planeswalker-deck exclusives sit under their own header when any
+   * are present. Ordinary sets keep a flat list (single unlabeled section).
+   */
+  cardSections = computed((): CardSection[] => {
+    const cards = this.filteredCards();
+    const main: BrowseCardInfo[] = [];
+    const planeswalkerDeck: BrowseCardInfo[] = [];
+    for (const card of cards) {
+      if ((card.promoTypes ?? []).includes('planeswalkerdeck')) {
+        planeswalkerDeck.push(card);
+      } else {
+        main.push(card);
+      }
+    }
+    if (planeswalkerDeck.length === 0) {
+      return [{ id: 'main', label: null, cards: main }];
+    }
+    const sections: CardSection[] = [];
+    if (main.length > 0) {
+      sections.push({ id: 'main', label: 'Main Set', cards: main });
+    }
+    sections.push({ id: 'planeswalkerdeck', label: 'Planeswalker Deck', cards: planeswalkerDeck });
+    return sections;
   });
 
   totalCount = computed(() => this.cards().length);

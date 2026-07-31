@@ -316,6 +316,28 @@ h1 {
   opacity: 0.6;
 }
 
+.card-section-header {
+  flex-shrink: 0;
+  margin-top: 8px;
+  padding: 6px 10px 4px;
+  color: var(--color-text-brown);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--color-border-tan);
+}
+
+.card-section-header:first-child {
+  margin-top: 0;
+}
+
+.card-section-header-grid {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+}
+
 .cell-number {
   color: var(--color-text-muted);
   font-size: 12px;

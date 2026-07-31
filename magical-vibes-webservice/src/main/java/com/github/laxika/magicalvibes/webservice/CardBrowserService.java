@@ -31,6 +31,13 @@ public class CardBrowserService {
     /** Digits, optionally followed by an art-variant letter used by older expansions. */
     private static final Pattern BASE_COLLECTOR_NUMBER = Pattern.compile("\\d+[a-d]?");
 
+    /**
+     * Scryfall promo tags that are still playable set printings (numbered above the base set) and
+     * should appear in the deck editor / card browser. Everything else with {@code promo_types}
+     * stays filtered out (buy-a-box, prerelease, etc.).
+     */
+    private static final Set<String> ALLOWED_PROMO_TYPES = Set.of("planeswalkerdeck");
+
     private static final Map<String, String> COLOR_CODE_TO_NAME = Map.of(
             "W", "WHITE",
             "U", "BLUE",
@@ -128,6 +135,7 @@ public class CardBrowserService {
                 }
 
                 boolean implemented = implementedNumbers.contains(collectorNumber);
+                List<String> promoTypes = readPromoTypes(card);
 
                 // For multi-face cards the face-specific fields (mana cost, oracle
                 // text, P/T, loyalty, colors) live in card_faces, not at the top level.
@@ -138,7 +146,7 @@ public class CardBrowserService {
                 BrowseCardInfo secondFace = null;
                 if (multiFaced) {
                     secondFace = buildFaceInfo(faces.get(1), collectorNumber, setCode,
-                            rarity, keywords, watermark, implemented, null, null);
+                            rarity, keywords, watermark, implemented, null, null, promoTypes);
                 }
                 // A prepare card's second face is the spell printed inset on its front, not a
                 // face you turn the card over to see. Handing it back as a back face is what
@@ -148,7 +156,7 @@ public class CardBrowserService {
                 JsonNode front = multiFaced ? faces.get(0) : card;
                 cards.add(buildFaceInfo(front, collectorNumber, setCode,
                         rarity, keywords, watermark, implemented,
-                        prepare ? null : secondFace, prepare ? secondFace : null));
+                        prepare ? null : secondFace, prepare ? secondFace : null, promoTypes));
             }
 
             return cards;
@@ -161,7 +169,8 @@ public class CardBrowserService {
     private BrowseCardInfo buildFaceInfo(JsonNode node, String collectorNumber, String setCode,
                                          String rarity, List<String> keywords, String watermark,
                                          boolean implemented,
-                                         BrowseCardInfo backFace, BrowseCardInfo prepareSpell) {
+                                         BrowseCardInfo backFace, BrowseCardInfo prepareSpell,
+                                         List<String> promoTypes) {
         String name = node.get("name").asText();
         if (name.contains(" // ")) {
             name = name.substring(0, name.indexOf(" // "));
@@ -218,7 +227,7 @@ public class CardBrowserService {
                 name, collectorNumber, setCode, manaCost, typeLine,
                 rarity, power, toughness, color, colors, implemented,
                 cardText, keywords, type, additionalTypes, supertypes, subtypes, loyalty,
-                watermark, backFace, prepareSpell
+                watermark, backFace, prepareSpell, promoTypes
         );
     }
 
@@ -321,13 +330,25 @@ public class CardBrowserService {
         if (card.has("border_color") && "borderless".equals(card.get("border_color").asText())) {
             return true;
         }
-        if (card.has("promo_types") && card.get("promo_types").isArray() && !card.get("promo_types").isEmpty()) {
+        List<String> promoTypes = readPromoTypes(card);
+        if (!promoTypes.isEmpty() && promoTypes.stream().noneMatch(ALLOWED_PROMO_TYPES::contains)) {
             return true;
         }
         if (card.has("full_art") && card.get("full_art").asBoolean()) {
             return true;
         }
         return false;
+    }
+
+    private static List<String> readPromoTypes(JsonNode card) {
+        if (!card.has("promo_types") || !card.get("promo_types").isArray()) {
+            return List.of();
+        }
+        List<String> types = new ArrayList<>();
+        for (JsonNode type : card.get("promo_types")) {
+            types.add(type.asText());
+        }
+        return types;
     }
 
     private CardSet findCardSet(String setCode) {

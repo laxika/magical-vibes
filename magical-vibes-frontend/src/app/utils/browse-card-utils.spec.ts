@@ -26,6 +26,7 @@ function info(overrides: Partial<BrowseCardInfo> = {}): BrowseCardInfo {
     watermark: null,
     backFace: null,
     prepareSpell: null,
+    promoTypes: [],
     ...overrides,
   };
 }

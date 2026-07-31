@@ -588,6 +588,8 @@ export interface BrowseCardInfo {
   backFace: BrowseCardInfo | null;
   /** The spell printed inset on a prepare card's front face; never set together with backFace. */
   prepareSpell: BrowseCardInfo | null;
+  /** Scryfall promo_types for this printing (e.g. planeswalkerdeck); empty for ordinary cards. */
+  promoTypes: string[];
 }
 
 export interface CardListResponse {

@@ -33,6 +33,11 @@ public record BrowseCardInfo(
          * {@code backFace}: a prepare card's second face is drawn alongside the front, not
          * flipped to, so it must not be offered as a back face.
          */
-        BrowseCardInfo prepareSpell
+        BrowseCardInfo prepareSpell,
+        /**
+         * Scryfall {@code promo_types} for this printing (e.g. {@code planeswalkerdeck}). Empty for
+         * ordinary base-set cards. Used by the deck editor to group exclusives under their own header.
+         */
+        List<String> promoTypes
 ) {
 }

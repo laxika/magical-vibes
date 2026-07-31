@@ -73,48 +73,58 @@
           <span class="sortable" (click)="toggleSort('implemented')">Implemented{{ sortIndicator('implemented') }}</span>
         </div>
         <div class="cards-table-body">
-          @for (card of filteredCards(); track card.collectorNumber) {
-            <div
-              class="card-row"
-              [class.not-implemented]="!card.implemented"
-              [class.clickable]="card.implemented"
-              (click)="addCardToDeck(card)"
-            >
-              <span class="cell-number">#{{ card.collectorNumber }}</span>
-              <span class="cell-name">{{ card.name }}</span>
-              <span class="cell-cost" [innerHTML]="renderManaCost(card.manaCost)"></span>
-              <span class="cell-type">{{ card.typeLine }}</span>
-              <span class="cell-status">
-                <span class="status-gem" [class.open]="card.implemented"></span>
-                @if (card.implemented) {
-                  Yes
-                } @else {
-                  No
-                }
-              </span>
-            </div>
+          @for (section of cardSections(); track section.id) {
+            @if (section.label) {
+              <div class="card-section-header">{{ section.label }}</div>
+            }
+            @for (card of section.cards; track card.collectorNumber) {
+              <div
+                class="card-row"
+                [class.not-implemented]="!card.implemented"
+                [class.clickable]="card.implemented"
+                (click)="addCardToDeck(card)"
+              >
+                <span class="cell-number">#{{ card.collectorNumber }}</span>
+                <span class="cell-name">{{ card.name }}</span>
+                <span class="cell-cost" [innerHTML]="renderManaCost(card.manaCost)"></span>
+                <span class="cell-type">{{ card.typeLine }}</span>
+                <span class="cell-status">
+                  <span class="status-gem" [class.open]="card.implemented"></span>
+                  @if (card.implemented) {
+                    Yes
+                  } @else {
+                    No
+                  }
+                </span>
+              </div>
+            }
           }
         </div>
       </div>
     } @else {
       <div class="card-view">
-        @for (card of filteredCards(); track card.collectorNumber) {
-          <div
-            class="card-item"
-            [class.not-implemented-card]="!card.implemented"
-            [class.clickable-card]="card.implemented"
-            (click)="addCardToDeck(card)"
-          >
-            <app-card-display [card]="toCard(displayInfo(card))" [artFace]="isFlipped(card) ? 'back' : 'front'" [preview]="true" />
-            @if (card.backFace) {
-              <button class="flip-face-btn" (click)="toggleFlip(card, $event)" title="Switch face">&#10561;</button>
-            }
-            @if (!card.implemented) {
-              <div class="not-implemented-overlay">
-                <span>Not Implemented</span>
-              </div>
-            }
-          </div>
+        @for (section of cardSections(); track section.id) {
+          @if (section.label) {
+            <div class="card-section-header card-section-header-grid">{{ section.label }}</div>
+          }
+          @for (card of section.cards; track card.collectorNumber) {
+            <div
+              class="card-item"
+              [class.not-implemented-card]="!card.implemented"
+              [class.clickable-card]="card.implemented"
+              (click)="addCardToDeck(card)"
+            >
+              <app-card-display [card]="toCard(displayInfo(card))" [artFace]="isFlipped(card) ? 'back' : 'front'" [preview]="true" />
+              @if (card.backFace) {
+                <button class="flip-face-btn" (click)="toggleFlip(card, $event)" title="Switch face">&#10561;</button>
+              }
+              @if (!card.implemented) {
+                <div class="not-implemented-overlay">
+                  <span>Not Implemented</span>
+                </div>
+              }
+            </div>
+          }
         }
       </div>
     }
