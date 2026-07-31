@@ -20,12 +20,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
 public class CardBrowserService {
 
     private static final ObjectMapper MAPPER = JsonMapper.builder().build();
+
+    /** Digits, optionally followed by an art-variant letter used by older expansions. */
+    private static final Pattern BASE_COLLECTOR_NUMBER = Pattern.compile("\\d+[a-d]?");
 
     private static final Map<String, String> COLOR_CODE_TO_NAME = Map.of(
             "W", "WHITE",
@@ -92,8 +96,9 @@ public class CardBrowserService {
             for (JsonNode card : array) {
                 String collectorNumber = card.get("collector_number").asText();
 
-                // Skip special prints (star variants, promo suffixes, etc.)
-                if (!collectorNumber.chars().allMatch(Character::isDigit)) {
+                // Keep base printings and multi-art lettered variants (Homelands/Alliances
+                // 10a/10b, Fallen Empires a–d). Skip foil/promo/star suffixes (139s, 278★, …).
+                if (!BASE_COLLECTOR_NUMBER.matcher(collectorNumber).matches()) {
                     continue;
                 }
 
