@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
+@CardRegistration(set = "VIS", collectorNumber = "123")
 @CardRegistration(set = "6ED", collectorNumber = "260")
 public class UktabiOrangutan extends Card {
 

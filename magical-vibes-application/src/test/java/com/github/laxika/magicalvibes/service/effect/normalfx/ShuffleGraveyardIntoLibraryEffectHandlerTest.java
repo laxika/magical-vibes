@@ -45,6 +45,8 @@ class ShuffleGraveyardIntoLibraryEffectHandlerTest {
     private TriggerCollectionService triggerCollectionService;
     @Mock
     private PredicateEvaluationService predicateEvaluationService;
+    @Mock
+    private PermanentCounterSupport permanentCounterSupport;
     private GameData gd;
     private UUID player1Id;
     private UUID player2Id;
@@ -73,7 +75,8 @@ player1Id = UUID.randomUUID();
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
         GraveyardService graveyardService = new GraveyardService(
-                gameQueryService, gameLogService, exileService, predicateEvaluationService, triggerCollectionService);
+                gameQueryService, gameLogService, exileService, predicateEvaluationService,
+                permanentCounterSupport, triggerCollectionService);
         shuffleGraveyardIntoLibraryEffectHandler =
                 new ShuffleGraveyardIntoLibraryEffectHandler(gameLogService, graveyardService);
 

@@ -57,7 +57,9 @@ class SanctumGuardianTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
 
-        assertThat(gd.sourceNextDamageToAnyTargetShields).containsExactly(source.getId());
+        assertThat(gd.sourceNextDamageToAnyTargetShields)
+                .extracting(s -> s.sourceId())
+                .containsExactly(source.getId());
     }
 
     // ===== Noncombat damage =====
@@ -114,7 +116,9 @@ class SanctumGuardianTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).containsExactly(decoy.getId());
+        assertThat(gd.sourceNextDamageToAnyTargetShields)
+                .extracting(s -> s.sourceId())
+                .containsExactly(decoy.getId());
     }
 
     // ===== Combat damage =====

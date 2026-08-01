@@ -46,7 +46,7 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),
                 payer,
-                List.of(e.wrapped()),
+                e.wrapped() == null ? List.of() : List.of(e.wrapped()),
                 entry.getCard().getName() + " - " + e.prompt(),
                 entry.getTargetId(),
                 e.manaCost(),

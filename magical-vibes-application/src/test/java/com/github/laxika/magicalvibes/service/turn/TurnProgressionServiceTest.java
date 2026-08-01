@@ -575,6 +575,38 @@ class TurnProgressionServiceTest {
         }
 
         @Test
+        @DisplayName("Skips a queued next turn and advances to the following player")
+        void skipsQueuedNextTurn() {
+            gd.activePlayerId = player1Id;
+            gd.skipNextTurnCount.put(player2Id, 1);
+            gd.turnsTakenByPlayer.put(player1Id, 1);
+            gd.turnsTakenByPlayer.put(player2Id, 1);
+            int turnBefore = gd.turnNumber;
+
+            turnProgressionService.advanceTurn(gd);
+
+            assertThat(gd.activePlayerId).isEqualTo(player1Id);
+            assertThat(gd.skipNextTurnCount.getOrDefault(player2Id, 0)).isEqualTo(0);
+            assertThat(gd.turnsTakenByPlayer.get(player2Id)).isEqualTo(1);
+            assertThat(gd.turnsTakenByPlayer.get(player1Id)).isEqualTo(2);
+            assertThat(gd.turnNumber).isEqualTo(turnBefore + 1);
+        }
+
+        @Test
+        @DisplayName("Pending Mindslaver waits past a skipped turn")
+        void pendingMindslaverWaitsPastSkippedTurn() {
+            gd.activePlayerId = player1Id;
+            gd.skipNextTurnCount.put(player2Id, 1);
+            gd.pendingTurnControl.put(player2Id, player1Id);
+
+            turnProgressionService.advanceTurn(gd);
+
+            assertThat(gd.activePlayerId).isEqualTo(player1Id);
+            assertThat(gd.pendingTurnControl).containsEntry(player2Id, player1Id);
+            assertThat(gd.mindControlledPlayerId).isNull();
+        }
+
+        @Test
         @DisplayName("Resets current step to UNTAP")
         void resetsCurrentStep() {
             gd.currentStep = TurnStep.CLEANUP;

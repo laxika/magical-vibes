@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -21,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import lombok.RequiredArgsConstructor;
@@ -345,7 +347,7 @@ public class TriggeredAbilityQueueService {
         List<UUID> result = new ArrayList<>();
         for (Permanent permanent : battlefield) {
             if (gameQueryService.isCreature(gameData, permanent)
-                    && targetLegalityService.checkSpellPermanentTargetableReason(
+                    && targetLegalityService.checkTriggeredPermanentTargetableReason(
                             gameData, permanent, sourceCard, choosingPlayerId).isEmpty()) {
                 result.add(permanent.getId());
             }
@@ -787,13 +789,21 @@ public class TriggeredAbilityQueueService {
             PermanentChoiceContext.SpellGraveyardTargetTrigger pending =
                     gameData.peekPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
 
-            // Find the graveyard-targeting effect to extract its filter
+            // Find the graveyard-targeting effect to extract its filter and search scope
             CardPredicate filter = null;
             boolean lifeGainedCap = false;
+            boolean anyGraveyard = false;
             for (CardEffect effect : pending.effects()) {
                 if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
                     filter = returnEffect.filter();
                     lifeGainedCap = returnEffect.maxManaValueEqualsLifeGainedThisTurn();
+                    anyGraveyard = returnEffect.source() == GraveyardSearchScope.ALL_GRAVEYARDS;
+                    break;
+                }
+                if (effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD) {
+                    // BecomeAuraReanimateFromGraveyardEffect (Necromancy): creature card from any graveyard
+                    filter = new CardTypePredicate(CardType.CREATURE);
+                    anyGraveyard = true;
                     break;
                 }
             }
@@ -802,10 +812,16 @@ public class TriggeredAbilityQueueService {
             int maxManaValue = lifeGainedCap
                     ? gameData.getLifeGainedThisTurn(pending.controllerId()) : Integer.MAX_VALUE;
 
-            // Collect valid graveyard targets from the controller's graveyard
+            List<UUID> searchPlayerIds = anyGraveyard
+                    ? gameData.orderedPlayerIds
+                    : List.of(pending.controllerId());
+
             List<Card> matchingCards = new ArrayList<>();
-            List<Card> graveyard = gameData.playerGraveyards.get(pending.controllerId());
-            if (graveyard != null) {
+            for (UUID playerId : searchPlayerIds) {
+                List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+                if (graveyard == null) {
+                    continue;
+                }
                 for (Card graveyardCard : graveyard) {
                     if (graveyardCard.getManaValue() > maxManaValue) {
                         continue;
@@ -828,10 +844,22 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.card = pending.sourceCard();
             gameData.graveyardTargetOperation.controllerId = pending.controllerId();
             gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
+            // ETB source permanent (for intervening-if / attach); find by card id on the controller's BF
+            List<Permanent> bf = gameData.playerBattlefields.get(pending.controllerId());
+            if (bf != null) {
+                for (Permanent p : bf) {
+                    if (p.getCard().getId().equals(pending.sourceCard().getId())) {
+                        gameData.graveyardTargetOperation.sourcePermanentId = p.getId();
+                        break;
+                    }
+                }
+            }
 
             String filterLabel = CardPredicateUtils.describeFilter(filter);
+            String zoneLabel = anyGraveyard ? "a graveyard" : "your graveyard";
             playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, 1,
-                    pending.sourceCard().getName() + "'s ability — Choose target " + filterLabel + " from your graveyard.");
+                    pending.sourceCard().getName() + "'s ability — Choose target " + filterLabel
+                            + " from " + zoneLabel + ".");
 
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s triggered ability triggers — choose a graveyard target."));

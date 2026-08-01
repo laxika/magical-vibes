@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.graveyard;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -35,6 +36,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -55,6 +57,7 @@ public class GraveyardService {
     private final GameLogService gameLogService;
     private final ExileService exileService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final PermanentCounterSupport permanentCounterSupport;
     // @Lazy to break indirect circular dependency:
     // GraveyardService → TriggerCollectionService → PermanentRemovalService → GraveyardService
     private TriggerCollectionService triggerCollectionService;
@@ -63,11 +66,13 @@ public class GraveyardService {
                             GameLogService gameLogService,
                             ExileService exileService,
                             PredicateEvaluationService predicateEvaluationService,
+                            PermanentCounterSupport permanentCounterSupport,
                             @Lazy TriggerCollectionService triggerCollectionService) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.exileService = exileService;
         this.predicateEvaluationService = predicateEvaluationService;
+        this.permanentCounterSupport = permanentCounterSupport;
         this.triggerCollectionService = triggerCollectionService;
     }
 
@@ -421,6 +426,7 @@ public class GraveyardService {
             perm.setRegenerationShield(perm.getRegenerationShield() - 1);
             performRegeneration(gameData, perm);
             spendOpponentDrawRegenerationShield(gameData, perm);
+            spendMinusOneCounterRegenerationShield(gameData, perm);
             return true;
         }
         return false;
@@ -464,6 +470,36 @@ public class GraveyardService {
         gameData.queueMayAbility(perm.getCard(), opponentId, new MayEffect(new DrawCardEffect(), "Draw a card?"));
         gameLogService.append(gameData, GameLog.textCardText(
                 "", perm.getCard(), " offers " + gameData.playerIdToName.get(opponentId) + " a card."));
+    }
+
+    /**
+     * Matopi Golem: a regeneration shield granted by its ability puts a -1/-1 counter on the
+     * permanent once it is actually spent. Plain shields are consumed first — a rider shield is
+     * only spent when the remaining shields are all rider shields.
+     */
+    private void spendMinusOneCounterRegenerationShield(GameData gameData, Permanent perm) {
+        if (perm.getMinusOneCounterRegenerationShield() <= perm.getRegenerationShield()) {
+            return;
+        }
+        perm.setMinusOneCounterRegenerationShield(perm.getMinusOneCounterRegenerationShield() - 1);
+
+        if (gameQueryService.cantHaveCounters(gameData, perm)
+                || gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, perm)) {
+            return;
+        }
+        int amount = gameQueryService.reduceMinusOneMinusOneCounters(gameData, perm, 1);
+        if (amount <= 0) {
+            return;
+        }
+        perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE,
+                perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + amount);
+        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " gets a -1/-1 counter."));
+        log.info("Game {} - {} gets a -1/-1 counter (Matopi Golem regenerate rider)",
+                gameData.id, perm.getCard().getName());
+
+        UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
+        permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(
+                gameData, perm, amount, controllerId);
     }
 
     private void performRegeneration(GameData gameData, Permanent perm) {

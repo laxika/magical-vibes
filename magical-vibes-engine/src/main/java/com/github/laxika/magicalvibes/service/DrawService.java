@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenDealDamageTo
 import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ZursWeirdingDrawReplacementEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -63,17 +64,21 @@ public class DrawService {
     // @Lazy to break the constructor cycle DrawService → InteractionHandlerRegistry →
     // (graveyard/card choice handlers) → DrawService.
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    // @Lazy: handler → InputCompletionService → … can reach back into draw/resolution paths.
+    private final BreathstealersCryptDrawReplacementHandler breathstealersCryptDrawReplacementHandler;
 
     public DrawService(GameQueryService gameQueryService,
                        GameLogService gameLogService,
                        GameOutcomeService gameOutcomeService,
                        TriggeredAbilityQueueService triggeredAbilityQueueService,
-                       @Lazy InteractionHandlerRegistry interactionHandlerRegistry) {
+                       @Lazy InteractionHandlerRegistry interactionHandlerRegistry,
+                       @Lazy BreathstealersCryptDrawReplacementHandler breathstealersCryptDrawReplacementHandler) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.gameOutcomeService = gameOutcomeService;
         this.triggeredAbilityQueueService = triggeredAbilityQueueService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
+        this.breathstealersCryptDrawReplacementHandler = breathstealersCryptDrawReplacementHandler;
     }
 
     public void resolveDrawCard(GameData gameData, UUID playerId) {
@@ -589,6 +594,7 @@ public class DrawService {
         checkOpponentDrawTriggers(gameData, playerId);
         checkBoobyTraps(gameData, playerId, drawn);
         checkRevealFirstDrawTriggers(gameData, playerId, drawn);
+        breathstealersCryptDrawReplacementHandler.afterDraw(gameData, playerId, drawn);
         checkMiracleReveal(gameData, playerId, drawn);
     }
 

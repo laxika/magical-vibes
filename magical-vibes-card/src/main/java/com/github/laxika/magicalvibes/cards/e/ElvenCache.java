@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 
 @CardRegistration(set = "POR", collectorNumber = "164")
 @CardRegistration(set = "6ED", collectorNumber = "224")
+@CardRegistration(set = "VIS", collectorNumber = "105")
 public class ElvenCache extends Card {
 
     public ElvenCache() {

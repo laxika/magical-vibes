@@ -3,6 +3,7 @@ import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerPowerDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDamagedByWatchedCreature;
@@ -215,6 +216,24 @@ public class TurnProgressionService {
             UUID currentActive = gameData.activePlayerId;
             nextActive = ids.get(0).equals(currentActive) ? ids.get(1) : ids.get(0);
         }
+
+        // Chronatog: skip the turn entirely (CR 500.11 / 614.10). Pending Mindslaver waits (CR 723.1b).
+        int queuedTurnSkips = gameData.skipNextTurnCount.getOrDefault(nextActive, 0);
+        if (queuedTurnSkips > 0) {
+            if (queuedTurnSkips == 1) {
+                gameData.skipNextTurnCount.remove(nextActive);
+            } else {
+                gameData.skipNextTurnCount.put(nextActive, queuedTurnSkips - 1);
+            }
+            String skippedName = gameData.playerIdToName.get(nextActive);
+            gameLogService.append(gameData, GameLog.text(skippedName + " skips their turn."));
+            log.info("Game {} - {} skips their turn", gameData.id, skippedName);
+            // Advance turn order past the skipped player so the next selection is correct.
+            gameData.activePlayerId = nextActive;
+            advanceTurn(gameData);
+            return;
+        }
+
         String nextActiveName = gameData.playerIdToName.get(nextActive);
 
         gameData.activePlayerId = nextActive;
@@ -256,6 +275,7 @@ public class TurnProgressionService {
         gameData.interaction.clearAwaitingInput();
         gameData.priorityPassedBy.clear();
         gameData.landsPlayedThisTurn.clear();
+        gameData.playersWhoTappedLandForManaThisTurn.clear();
         gameData.additionalLandsThisTurn.clear();
         gameData.permanentsEnteredBattlefieldThisTurn.clear();
         gameData.snapshotSpellCountsAndClear(gameData.spellsCastLastTurn);
@@ -283,6 +303,7 @@ public class TurnProgressionService {
         // Conduit of Storms: "next main phase this turn" — drop any that never fired.
         gameData.clearDelayedActions(AddManaAtNextMainPhase.class, AddManaAtNextMainPhase::thisTurnOnly);
         gameData.clearDelayedActions(DelayedBlockerBoost.class);
+        gameData.clearDelayedActions(DelayedAttackerBoost.class);
         gameData.clearDelayedActions(DelayedControllerSpellCastTrigger.class);
         gameData.clearDelayedActions(DelayedUnblockedAttackerPowerDamage.class);
         gameData.clearDelayedActions(DelayedDestroyCreatureDamagedByWatchedCreature.class);
@@ -316,6 +337,9 @@ public class TurnProgressionService {
         gameData.cleanupDiscardPending = false;
         gameData.paidSearchTaxPermanentIds.clear();
         gameData.otherCreaturesCantAttackExemptCreatureIds.clear();
+        if (gameData.peaceTalksTurnsRemaining > 0) {
+            gameData.peaceTalksTurnsRemaining--;
+        }
 
         turnCleanupService.drainManaPools(gameData);
 
@@ -357,9 +381,10 @@ public class TurnProgressionService {
             }
         }
 
-        if (skipUntapStep) {
-            // Savor the Moment: this extra turn skips its untap step (nothing untaps, no Storage
-            // Matrix choice), but summoning sickness still clears.
+        // Savor the Moment (extra-turn flag) or Sands of Time (global static): skip the entire
+        // untap step — no phasing, no Storage Matrix / Static Orb choice — but summoning sickness
+        // still clears.
+        if (skipUntapStep || untapStepService.playersSkipUntapStepApplies(gameData)) {
             untapStepService.untapPermanents(gameData, nextActive, null, true);
         } else {
             // Storage Matrix: pause the untap step so the active player chooses artifact/creature/land
@@ -492,6 +517,10 @@ public class TurnProgressionService {
 
     public void processNextUpkeepPermanentTarget(GameData gameData) {
         stepTriggerService.processNextUpkeepPermanentTarget(gameData);
+    }
+
+    public void processNextPhasesInTriggerTarget(GameData gameData) {
+        stepTriggerService.processNextPhasesInTriggerTarget(gameData);
     }
 
     public void processNextUpkeepPlayerTarget(GameData gameData) {

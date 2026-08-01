@@ -6,11 +6,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -28,7 +31,7 @@ public class GrantProtectionFromColorUntilEndOfTurnEffectHandler implements Norm
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantProtectionFromColorUntilEndOfTurnEffect) effect;
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        Permanent target = resolveRecipient(gameData, entry, e);
         if (target == null) {
             return;
         }
@@ -42,5 +45,16 @@ public class GrantProtectionFromColorUntilEndOfTurnEffectHandler implements Norm
                 .build());
 
         log.info("Game {} - {} gains protection from {} until end of turn", gameData.id, target.getCard().getName(), colorName);
+    }
+
+    private Permanent resolveRecipient(GameData gameData, StackEntry entry,
+                                       GrantProtectionFromColorUntilEndOfTurnEffect e) {
+        if (e.scope() == GrantScope.SELF) {
+            UUID selfId = entry.getSourcePermanentId() != null
+                    ? entry.getSourcePermanentId()
+                    : entry.getTargetId();
+            return selfId != null ? gameQueryService.findPermanentById(gameData, selfId) : null;
+        }
+        return gameQueryService.findPermanentById(gameData, entry.getTargetId());
     }
 }

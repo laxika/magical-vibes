@@ -61,6 +61,8 @@ class ExileGraveyardCardsEffectHandlerTest {
     private GraveyardReturnSupport graveyardReturnSupport;
     @Mock
     private TriggerCollectionService triggerCollectionService;
+    @Mock
+    private PermanentCounterSupport permanentCounterSupport;
 
     private GameData gd;
     private UUID player1Id;
@@ -82,7 +84,8 @@ class ExileGraveyardCardsEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
 
         GraveyardService graveyardService = new GraveyardService(
-                gameQueryService, gameLogService, exileService, predicateEvaluationService, triggerCollectionService);
+                gameQueryService, gameLogService, exileService, predicateEvaluationService,
+                permanentCounterSupport, triggerCollectionService);
         handler = new ExileGraveyardCardsEffectHandler(gameQueryService, gameLogService, exileService,
                 permanentRemovalService, predicateEvaluationService, graveyardReturnSupport, graveyardService);
     }

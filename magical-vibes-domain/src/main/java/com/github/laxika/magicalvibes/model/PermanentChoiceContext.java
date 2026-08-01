@@ -152,8 +152,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                              boolean exileFromLibrary) implements PermanentChoiceContext {}
 
     /** "The next time a source of your choice would deal damage to any target this turn, prevent that
-     *  damage." (Sanctum Guardian). Protects any recipient, not just the controller. */
-    record PreventNextDamageFromSourceToAnyTargetChoice(UUID controllerId) implements PermanentChoiceContext {}
+     *  damage." (Sanctum Guardian). Protects any recipient, not just the controller. When
+     *  {@code damageRedSourceController} is true, prevented red damage is dealt back to the source's
+     *  controller by {@code passageCard} (Honorable Passage). */
+    record PreventNextDamageFromSourceToAnyTargetChoice(UUID controllerId, boolean damageRedSourceController,
+                                                        Card passageCard) implements PermanentChoiceContext {
+        /** Sanctum Guardian / Circle of Despair: prevention only. */
+        public PreventNextDamageFromSourceToAnyTargetChoice(UUID controllerId) {
+            this(controllerId, false, null);
+        }
+    }
 
     /** "The next time a source of your choice would deal damage to you and/or creatures you control
      *  this turn, prevent that damage. If damage from a black source is prevented this way, you gain
@@ -254,6 +262,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record UpkeepAnyTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
     record UpkeepPermanentTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+
+    /** "Whenever this permanent phases in, target …" — queued from {@code ON_SELF_PHASES_IN} during
+     *  the untap-step phasing action; drained at the start of upkeep when the trigger is put on the
+     *  stack. Mirrors {@link UpkeepPermanentTargetTrigger}'s permanent-target flow. */
+    record PhasesInTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
     record UpkeepSecondPlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId, UUID firstTargetPlayerId) implements PermanentChoiceContext {}
 

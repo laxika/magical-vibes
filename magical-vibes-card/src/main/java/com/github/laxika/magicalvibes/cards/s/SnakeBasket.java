@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "6ED", collectorNumber = "312")
+@CardRegistration(set = "VIS", collectorNumber = "155")
 public class SnakeBasket extends Card {
 
     public SnakeBasket() {

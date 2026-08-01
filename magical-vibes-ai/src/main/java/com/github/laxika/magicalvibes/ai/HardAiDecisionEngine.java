@@ -2491,17 +2491,23 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     }
 
     /**
-     * Filters blocker assignments to only include mandatory blocks: those blocking
-     * attackers with lure ("must be blocked by all creatures") or "must be blocked
-     * if able" effects. Used when winning the race to avoid unnecessary blocking.
+     * Filters blocker assignments to only include mandatory blocks: lure-required
+     * blockers (per {@link GameQueryService#isRequiredToBlockByLure}, which respects
+     * optional blocker filters such as Talruum Piper's flying) or "must be blocked
+     * if able" attackers. Used when winning the race to avoid unnecessary blocking.
      */
     private List<int[]> filterToMandatoryBlocks(GameData gameData, List<int[]> assignments,
                                                  List<Permanent> opponentBattlefield) {
+        List<Permanent> aiBattlefield = gameData.playerBattlefields.get(
+                activeDecisionPlayerId(gameData));
         List<int[]> mandatory = new ArrayList<>();
         for (int[] assignment : assignments) {
+            int blockerIdx = assignment[0];
             int attackerIdx = assignment[1];
+            Permanent blocker = aiBattlefield.get(blockerIdx);
             Permanent attacker = opponentBattlefield.get(attackerIdx);
-            if (hasMandatoryBlockRequirement(gameData, attacker)) {
+            if (gameQueryService.isRequiredToBlockByLure(gameData, attacker, blocker)
+                    || hasMustBeBlockedIfAbleRequirement(gameData, attacker)) {
                 mandatory.add(assignment);
             }
         }
@@ -2509,19 +2515,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     }
 
     /**
-     * Returns true if the attacker has a lure or must-be-blocked-if-able effect.
+     * Returns true if the attacker has a must-be-blocked-if-able effect.
      */
-    private boolean hasMandatoryBlockRequirement(GameData gameData, Permanent attacker) {
-        // Check for "must be blocked by all creatures" (Lure effects)
-        if (attacker.isMustBeBlockedByAllThisTurn()) return true;
-        boolean hasLure = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect.class::isInstance);
-        if (hasLure) return true;
-        if (gameQueryService.hasAuraWithEffect(gameData, attacker,
-                com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect.class)) {
-            return true;
-        }
-        // Check for "must be blocked if able"
+    private boolean hasMustBeBlockedIfAbleRequirement(GameData gameData, Permanent attacker) {
         if (attacker.isMustBeBlockedThisTurn()) return true;
         boolean hasMustBlock = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect.class::isInstance);
@@ -3237,7 +3233,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         if (colorChoice.context() instanceof ChoiceContext.BasicLandTypeChoice
                 || colorChoice.context() instanceof ChoiceContext.AddBasicLandTypeChoice
-                || colorChoice.context() instanceof ChoiceContext.OwnLandsBecomeBasicTypeChoice) {
+                || colorChoice.context() instanceof ChoiceContext.OwnLandsBecomeBasicTypeChoice
+                || colorChoice.context() instanceof ChoiceContext.LandsOfTypeBecomeBasicTypeChoice) {
             String bestLandType = findMostNeededBasicLandType(gameData);
             log.info("AI (Hard): Choosing basic land type {} in game {}", bestLandType, gameId);
             final String landType = bestLandType;

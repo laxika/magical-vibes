@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "105")
 @CardRegistration(set = "6ED", collectorNumber = "150")
+@CardRegistration(set = "VIS", collectorNumber = "68")
 public class Python extends Card {
 }

@@ -37,7 +37,6 @@ class CostEffectClassificationTest {
      */
     private static final Set<String> ABILITY_ONLY_COST_TYPES = Set.of(
             "CrewCost",
-            "DiscardHandCost",
             "DiscardRandomCardCost",
             "ExileCardFromHandCost",
             "ExileSelfCost",
@@ -75,6 +74,7 @@ class CostEffectClassificationTest {
      */
     private static final Set<String> NON_PERMANENT_SPELL_COST_TYPES = Set.of(
             "SacrificeAllCreaturesYouControlCost",
+            "SacrificeAllPermanentsYouControlCost",
             "PayXLifeCost",
             "PayLifeCost",
             "ExileCardFromGraveyardCost",
@@ -82,6 +82,7 @@ class CostEffectClassificationTest {
             "ExileNCardsFromGraveyardCost",
             "DiscardCardTypeCost",
             "DiscardCardOrPayManaCost",
+            "DiscardHandCost",
             "EscalateDiscardCost",
             "EscalateManaCost",
             "RepeatableAdditionalManaCost");

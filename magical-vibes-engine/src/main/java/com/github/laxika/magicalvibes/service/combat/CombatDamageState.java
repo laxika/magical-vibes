@@ -31,6 +31,11 @@ class CombatDamageState {
     final Map<Integer, Integer> atkDamageTaken = new HashMap<>();
     final Map<Integer, Integer> defDamageTaken = new HashMap<>();
 
+    // Per-source contributions to the above (index -> source permanent id -> damage), for
+    // CantBeDestroyedByLethalDamageUnlessSingleSourceEffect tracking through combat prevention.
+    final Map<Integer, Map<UUID, Integer>> atkDamageTakenBySource = new HashMap<>();
+    final Map<Integer, Map<UUID, Integer>> defDamageTakenBySource = new HashMap<>();
+
     // The part of the above dealt by sources whose damage can't be prevented (Malignus): a per-index
     // floor the creature prevention shields may never reduce that step's damage below.
     final Map<Integer, Integer> unpreventableAtkDamageTaken = new HashMap<>();

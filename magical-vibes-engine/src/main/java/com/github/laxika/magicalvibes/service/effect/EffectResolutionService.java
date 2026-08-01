@@ -164,18 +164,19 @@ public class EffectResolutionService {
             if (effectToResolve instanceof MayPayManaEffect mayPay && gameData.resolvedMayAccepted != null) {
                 boolean accepted = gameData.resolvedMayAccepted;
                 gameData.resolvedMayAccepted = null;
-                if (accepted) {
+                if (accepted && mayPay.wrapped() != null) {
                     effectToResolve = mayPay.wrapped();
                     log.info("Game {} - Player accepted may-pay ability from {} — resolving inner effect",
                             gameData.id, entry.getCard().getName());
-                } else if (mayPay.elseEffect() != null) {
+                } else if (!accepted && mayPay.elseEffect() != null) {
                     // "If you don't, [effect]" — the decline half of a punisher choice.
                     effectToResolve = mayPay.elseEffect();
                     log.info("Game {} - Player declined may-pay ability from {} — resolving else effect",
                             gameData.id, entry.getCard().getName());
                 } else {
-                    log.info("Game {} - Player declined may-pay ability from {} — skipping",
-                            gameData.id, entry.getCard().getName());
+                    // Accepted with null wrapped (pay-to-avoid), or declined with no elseEffect.
+                    log.info("Game {} - Player {} may-pay ability from {} — nothing to resolve",
+                            gameData.id, accepted ? "accepted" : "declined", entry.getCard().getName());
                     continue;
                 }
             }

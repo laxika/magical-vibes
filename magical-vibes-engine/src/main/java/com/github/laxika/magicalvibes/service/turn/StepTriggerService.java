@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefield
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldUnderControl;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
 import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
+import com.github.laxika.magicalvibes.model.action.DelayedLoseLifeAndReturnFromGraveyard;
 import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
 import com.github.laxika.magicalvibes.model.action.DamageAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.PoisonAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
+import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNextUpkeep;
@@ -50,6 +52,7 @@ import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
@@ -105,6 +108,9 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
@@ -434,20 +440,28 @@ public class StepTriggerService {
                 continue;
             }
 
-            // If any effect targets a player, group all effects into a player-targeted trigger
-            boolean hasPlayerTarget = upkeepEffects.stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
-            if (hasPlayerTarget) {
-                int maxPlayerTargets = upkeepEffects.stream()
+            // If any effect targets a player (and is not also an any-target), queue only the
+            // player-targeting abilities as one UpkeepPlayerTargetTrigger. Non-targeting upkeep
+            // abilities on the same permanent (e.g. Cumulative upkeep alongside Corrosion's rust
+            // trigger) stay separate triggered abilities and fall through to the per-effect loop.
+            List<CardEffect> playerTargetEffects = upkeepEffects.stream()
+                    .filter(e -> e.targetSpec().category().includesPlayers()
+                            && !e.targetSpec().category().includesPermanents())
+                    .toList();
+            if (!playerTargetEffects.isEmpty()) {
+                int maxPlayerTargets = playerTargetEffects.stream()
                         .mapToInt(e -> e.targetSpec().playerTargetCount())
                         .max().orElse(1);
                 if (maxPlayerTargets >= 2) {
                     gameData.queueInteraction(new PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger(
-                            perm.getCard(), activePlayerId, new ArrayList<>(upkeepEffects), perm.getId()));
+                            perm.getCard(), activePlayerId, new ArrayList<>(playerTargetEffects), perm.getId()));
                 } else {
                     gameData.queueInteraction(new PermanentChoiceContext.UpkeepPlayerTargetTrigger(
-                            perm.getCard(), activePlayerId, new ArrayList<>(upkeepEffects), perm.getId()));
+                            perm.getCard(), activePlayerId, new ArrayList<>(playerTargetEffects), perm.getId()));
                 }
-                continue;
+                upkeepEffects.removeIf(e -> e.targetSpec().category().includesPlayers()
+                        && !e.targetSpec().category().includesPermanents());
+                if (upkeepEffects.isEmpty()) continue;
             }
 
             // Puca's Mischief: two interdependent nonland-permanent targets chosen at trigger time
@@ -561,6 +575,26 @@ public class StepTriggerService {
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: {} matching permanents >= {})",
                                 gameData.id, perm.getCard().getName(), matchCount, countCheck.minCount());
+                    }
+                } else if (effect instanceof ConditionalEffect conditional
+                        && conditional.condition() instanceof ControlsPermanentCountAtMost atMostCheck) {
+                    // Intervening-if: only trigger if controller has few enough matching permanents
+                    // (Sheltered Valley "three or fewer lands"; Kookus "don't control a Keeper of Kookus")
+                    if (conditionEvaluationService.isMet(gameData, atMostCheck,
+                            ConditionContext.forPermanent(perm, activePlayerId))) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                activePlayerId,
+                                perm.getCard().getName() + "'s upkeep ability",
+                                new ArrayList<>(List.of(effect)),
+                                (UUID) null,
+                                perm.getId()
+                        ));
+
+                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
+                        log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: {} or fewer matching permanents)",
+                                gameData.id, perm.getCard().getName(), atMostCheck.maxCount());
                     }
                 } else if (effect instanceof ConditionalEffect conditional
                         && conditional.condition() instanceof CardsInHandAtLeast handCheck) {
@@ -929,6 +963,13 @@ public class StepTriggerService {
             }
         }
 
+        // Phase-in targeted triggers were queued during the untap-step phasing action; choose targets
+        // now as they go on the stack (before upkeep's own targeted triggers).
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.PhasesInTriggerTarget.class)) {
+            processNextPhasesInTriggerTarget(gameData);
+            return;
+        }
+
         // Process upkeep any-target triggers first (e.g. Form of the Dragon, CR 603.3d)
         if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepAnyTargetTrigger.class)) {
             processNextUpkeepAnyTargetTrigger(gameData);
@@ -1118,6 +1159,75 @@ public class StepTriggerService {
         gameLogService.append(gameData,
                 GameLog.cardThen(trigger.sourceCard(), "'s upkeep trigger — choose " + targetDescription + "."));
         log.info("Game {} - {} upkeep any-target trigger awaiting target selection",
+                gameData.id, trigger.sourceCard().getName());
+    }
+
+    /**
+     * Processes the next pending {@code ON_SELF_PHASES_IN} permanent-target trigger (e.g. Shimmering
+     * Efreet's "target creature phases out"). Queued during the untap-step phasing action; drained
+     * here at upkeep start so the target is chosen as the ability is put on the stack.
+     *
+     * @param gameData the current game state to modify
+     */
+    public void processNextPhasesInTriggerTarget(GameData gameData) {
+        if (!gameData.hasPendingInteraction(PermanentChoiceContext.PhasesInTriggerTarget.class)) {
+            if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepAnyTargetTrigger.class)) {
+                processNextUpkeepAnyTargetTrigger(gameData);
+            } else if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger.class)) {
+                processNextUpkeepMultiPlayerTarget(gameData);
+            } else if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class)) {
+                processNextUpkeepPlayerTarget(gameData);
+            } else if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepCopyTriggerTarget.class)) {
+                processNextUpkeepCopyTarget(gameData);
+            } else if (gameData.hasPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class)) {
+                processNextCapriciousEfreetTarget(gameData);
+            } else if (gameData.hasPendingInteraction(PermanentChoiceContext.PucasMischiefOwnTarget.class)) {
+                processNextPucasMischiefTarget(gameData);
+            } else if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPermanentTargetTrigger.class)) {
+                processNextUpkeepPermanentTarget(gameData);
+            } else {
+                playerInputService.processNextMayAbility(gameData);
+            }
+            return;
+        }
+
+        PermanentChoiceContext.PhasesInTriggerTarget trigger =
+                gameData.pollPendingInteraction(PermanentChoiceContext.PhasesInTriggerTarget.class);
+
+        TargetFilter targetFilter = trigger.sourceCard().getTargetFilter();
+        TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                gameData,
+                trigger.effects(),
+                targetFilter,
+                trigger.controllerId(),
+                trigger.sourceCard(),
+                TriggerTargetCollector.Options.END_STEP);
+        List<UUID> validTargets = result.validTargets();
+
+        if (validTargets.isEmpty()) {
+            gameLogService.append(gameData,
+                    GameLog.cardThen(trigger.sourceCard(), "'s phase-in trigger has no valid targets."));
+            log.info("Game {} - {} phase-in trigger skipped (no valid targets)",
+                    gameData.id, trigger.sourceCard().getName());
+            processNextPhasesInTriggerTarget(gameData);
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(trigger);
+
+        String targetDescription;
+        if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
+            targetDescription = ppf.errorMessage().replace("Target must be ", "").replace("an ", "").replace("a ", "");
+        } else {
+            targetDescription = "target permanent";
+        }
+
+        playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validTargets,
+                trigger.sourceCard().getName() + "'s ability — Choose " + targetDescription + ".");
+
+        gameLogService.append(gameData,
+                GameLog.cardThen(trigger.sourceCard(), "'s phase-in trigger — choose " + targetDescription + "."));
+        log.info("Game {} - {} phase-in trigger awaiting target selection",
                 gameData.id, trigger.sourceCard().getName());
     }
 
@@ -1882,6 +1992,28 @@ public class StepTriggerService {
      * @param gameData the current game state to modify
      */
     public void handleEndStepTriggers(GameData gameData) {
+        // Elkin Lair: "At the beginning of the next end step, if the player hasn't played the card,
+        // they put it into their graveyard." Chronological next end step — no active-player filter.
+        if (gameData.hasDelayedAction(ExileToOwnerGraveyardAtNextEndStep.class)) {
+            List<ExileToOwnerGraveyardAtNextEndStep> pending =
+                    gameData.drainDelayedActions(ExileToOwnerGraveyardAtNextEndStep.class);
+            for (ExileToOwnerGraveyardAtNextEndStep action : pending) {
+                gameData.exilePlayPermissions.remove(action.cardId());
+                gameData.exilePlayPermissionsExpireEndOfTurn.remove(action.cardId());
+                var exiled = gameData.findExiledCard(action.cardId());
+                if (exiled == null) {
+                    continue;
+                }
+                gameData.removeFromExile(action.cardId());
+                graveyardService.addCardToGraveyard(gameData, action.ownerId(), exiled.card());
+                String sourceName = action.sourceCard() != null ? action.sourceCard().getName() : "an effect";
+                gameLogService.append(gameData, GameLog.text(
+                        "The card exiled with " + sourceName + " is put into its owner's graveyard."));
+                log.info("Game {} - unplayed card exiled with {} put into owner's graveyard at end step",
+                        gameData.id, sourceName);
+            }
+        }
+
         // Perform the scheduled end-step zone changes: token exiles (e.g. Mimic Vat), nontoken
         // exiles (e.g. Dark Maze), sacrifices (e.g. Choreographed Sparks' creature-copy token) and
         // destructions (e.g. Stone Giant).
@@ -2067,6 +2199,36 @@ public class StepTriggerService {
                 gameLogService.append(gameData,
                         GameLog.cardThen(pending.sourceCard(), "'s delayed trigger — create token."));
                 log.info("Game {} - {} delayed token creation trigger pushed onto stack",
+                        gameData.id, pending.sourceCard().getName());
+            }
+        }
+
+        // Process delayed lose-life-and-return (e.g. Brood of Cockroaches). Both instructions are
+        // one triggered ability — life loss still happens if the card left the graveyard.
+        if (gameData.hasDelayedAction(DelayedLoseLifeAndReturnFromGraveyard.class)) {
+            List<DelayedLoseLifeAndReturnFromGraveyard> pendingReturns =
+                    gameData.drainDelayedActions(DelayedLoseLifeAndReturnFromGraveyard.class);
+            for (DelayedLoseLifeAndReturnFromGraveyard pending : pendingReturns) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pending.sourceCard(),
+                        pending.controllerId(),
+                        pending.sourceCard().getName()
+                                + "'s delayed trigger — lose " + pending.lifeLoss()
+                                + " life and return to hand",
+                        new ArrayList<>(List.of(
+                                new LoseLifeEffect(pending.lifeLoss()),
+                                ReturnCardFromGraveyardEffect.builder()
+                                        .destination(GraveyardChoiceDestination.HAND)
+                                        .filter(new CardIsSelfPredicate())
+                                        .returnAll(true)
+                                        .build()
+                        ))
+                ));
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                        "'s delayed trigger — lose " + pending.lifeLoss()
+                                + " life and return to hand."));
+                log.info("Game {} - {} delayed lose-life-and-return trigger pushed onto stack",
                         gameData.id, pending.sourceCard().getName());
             }
         }

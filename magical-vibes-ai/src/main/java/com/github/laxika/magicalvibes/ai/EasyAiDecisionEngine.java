@@ -569,8 +569,14 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
             List<Integer> chosen;
             if (lure) {
-                // Every able blocker must block this attacker.
-                chosen = new ArrayList<>(candidates);
+                // Every matching able blocker must block this attacker (filter may narrow).
+                chosen = new ArrayList<>();
+                for (int blockerIdx : candidates) {
+                    if (gameQueryService.isRequiredToBlockByLure(
+                            gameData, attackingPerm, battlefield.get(blockerIdx))) {
+                        chosen.add(blockerIdx);
+                    }
+                }
             } else if (minimumBlockers > 1) {
                 List<Integer> favorablePair = selectBestFavorablePair(gameData, battlefield, candidates, attackerPower, attackerToughness);
                 if (minimumBlockers == 2 && favorablePair != null) {

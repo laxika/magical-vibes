@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNam
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
@@ -40,11 +41,14 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerGr
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDuringYourTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCanCastAndActivateOnlyDuringOwnTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
+import com.github.laxika.magicalvibes.model.effect.AttackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantBeBlockedUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.GlobalBlockLifeCostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
@@ -81,6 +85,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrifice
 import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
@@ -3060,6 +3065,15 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if Peace Talks is active: creatures can't attack, and players and
+     * permanents can't be the targets of spells or activated abilities (triggered abilities are
+     * unaffected). Active while {@link GameData#peaceTalksTurnsRemaining} {@code > 0}.
+     */
+    public boolean isPeaceTalksActive(GameData gameData) {
+        return gameData.peaceTalksTurnsRemaining > 0;
+    }
+
+    /**
      * Returns {@code true} if the player has shroud (cannot be the target of spells or
      * abilities), granted by a permanent they control with {@link GrantControllerShroudEffect}.
      */
@@ -3327,6 +3341,52 @@ public class GameQueryService {
     }
 
     /**
+     * Whether {@code blocker} is required to block {@code attacker} by a Lure-style effect:
+     * the attacker's this-turn flag, a static {@link MustBeBlockedByAllCreaturesEffect} on the
+     * attacker (optionally filtered), or such an effect on an aura attached to the attacker.
+     * A {@code null} {@code blockerFilter} forces every able creature; a non-null filter forces
+     * only matching blockers (Talruum Piper: creatures with flying).
+     */
+    public boolean isRequiredToBlockByLure(GameData gameData, Permanent attacker, Permanent blocker) {
+        if (attacker.isMustBeBlockedByAllThisTurn()) {
+            return true;
+        }
+        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (matchesLureBlockerFilter(gameData, blocker, effect)) {
+                return true;
+            }
+        }
+        return gameData.anyPermanentMatches(aura ->
+                aura.isAttached() && attacker.getId().equals(aura.getAttachedTo())
+                        && aura.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> matchesLureBlockerFilter(gameData, blocker, e)));
+    }
+
+    private boolean matchesLureBlockerFilter(GameData gameData, Permanent blocker, CardEffect effect) {
+        if (!(effect instanceof MustBeBlockedByAllCreaturesEffect lure)) {
+            return false;
+        }
+        return lure.blockerFilter() == null
+                || predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, lure.blockerFilter());
+    }
+
+    /**
+     * Returns the total additional generic mana the controller must pay to declare this creature as an
+     * attacker: every {@link EnchantedCreatureCantAttackUnlessPaysEffect} aura attached to it (e.g.
+     * Brainwash — {3}) plus every {@link AttackCostEffect} on the creature itself (e.g. Phyrexian
+     * Marauder — {1} per +1/+1 counter).
+     */
+    public int getCreatureAttackTax(GameData gameData, Permanent creature) {
+        int total = getEnchantedCreatureAttackTax(gameData, creature);
+        for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof AttackCostEffect attackCost) {
+                total += attackCost.attackCost(creature);
+            }
+        }
+        return total;
+    }
+
+    /**
      * Returns the total additional generic mana the controller must pay to declare this creature as an
      * attacker, summed over every {@link EnchantedCreatureCantAttackUnlessPaysEffect} aura attached to it
      * (e.g. Brainwash — {3}).
@@ -3360,6 +3420,31 @@ public class GameQueryService {
             for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof EnchantedCreatureCantBeBlockedUnlessPaysEffect tax) {
                     total[0] += tax.amountPerBlocker();
+                }
+            }
+        });
+        return total[0];
+    }
+
+    /**
+     * Life the defending player must pay for this blocker to block this attacker under every
+     * board-wide {@link GlobalBlockLifeCostEffect} (Heat Wave). Summed over matching sources;
+     * charge once per unique blocker in {@code CombatBlockService.declareBlockers}.
+     */
+    public int getGlobalBlockLifeTax(GameData gameData, Permanent blocker, Permanent attacker) {
+        int[] total = {0};
+        gameData.forEachPermanent((playerId, source) -> {
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof GlobalBlockLifeCostEffect tax) {
+                    FilterContext ctx = FilterContext.of(gameData)
+                            .withSourceControllerId(playerId)
+                            .withSourceCardId(source.getOriginalCard().getId());
+                    if (predicateEvaluationService.matchesPermanentPredicate(
+                            blocker, tax.lifeCostBlockerMatcher(), ctx)
+                            && predicateEvaluationService.matchesPermanentPredicate(
+                            attacker, tax.lifeCostAttackerMatcher(), ctx)) {
+                        total[0] += tax.lifePerBlocker();
+                    }
                 }
             }
         });
@@ -3645,6 +3730,17 @@ public class GameQueryService {
         if (battlefield == null) return false;
         return battlefield.stream().anyMatch(p -> p.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(OpponentsCantCastOrActivateDuringYourTurnEffect.class::isInstance));
+    }
+
+    /**
+     * True if {@code playerId} cannot cast spells or activate abilities because a
+     * {@link PlayersCanCastAndActivateOnlyDuringOwnTurnEffect} (City of Solitude) is on the
+     * battlefield and it is not currently that player's turn. Mana abilities are included.
+     */
+    public boolean isLockedOutByOwnTurnOnlyRestriction(GameData gameData, UUID playerId) {
+        UUID activePlayerId = gameData.activePlayerId;
+        if (activePlayerId == null || activePlayerId.equals(playerId)) return false;
+        return anyBattlefieldHasStaticEffect(gameData, PlayersCanCastAndActivateOnlyDuringOwnTurnEffect.class);
     }
 
     /**
@@ -4026,6 +4122,12 @@ public class GameQueryService {
     public boolean canActivateManaAbility(GameData gameData, Permanent permanent) {
         String cardName = permanent.getCard().getName();
 
+        // City of Solitude: mana abilities can only be activated on the controller's turn.
+        UUID controllerId = findPermanentController(gameData, permanent.getId());
+        if (controllerId != null && isLockedOutByOwnTurnOnlyRestriction(gameData, controllerId)) {
+            return false;
+        }
+
         // Check temporary ability loss (e.g. Merfolk Trickster)
         if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
             return false;
@@ -4048,7 +4150,7 @@ public class GameQueryService {
         if (hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
             return false;
         }
-        if (hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateTapAbilitiesEffect.class)) {
+        if (isLockedFromActivatingTapAbilities(gameData, permanent)) {
             return false;
         }
 
@@ -4075,6 +4177,28 @@ public class GameQueryService {
             }
         }
         return true;
+    }
+
+    /**
+     * Returns {@code true} if the permanent's activated abilities with {T} in their costs are
+     * locked (Serra Bestiary aura, or a board-wide matching-predicate lock such as Katabatic Winds).
+     */
+    public boolean isLockedFromActivatingTapAbilities(GameData gameData, Permanent permanent) {
+        if (hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateTapAbilitiesEffect.class)) {
+            return true;
+        }
+        for (UUID pid : gameData.playerIds) {
+            for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
+                for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof MatchingPermanentsCantActivateTapAbilitiesEffect lock
+                            && predicateEvaluationService.matchesPermanentPredicate(
+                                    gameData, permanent, lock.affectedPredicate())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**

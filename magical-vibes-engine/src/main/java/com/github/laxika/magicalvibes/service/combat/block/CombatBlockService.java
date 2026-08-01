@@ -49,7 +49,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnCombatOpponentAtEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
@@ -238,6 +237,7 @@ public class CombatBlockService {
 
         // Validate assignments
         int blockTaxTotal = 0;
+        Map<UUID, Integer> blockLifeTaxByBlocker = new HashMap<>();
         Map<Integer, Integer> blockerUsageCount = new HashMap<>();
         Set<String> blockerAttackerPairs = new HashSet<>();
         Map<Integer, Integer> blockersPerAttacker = new HashMap<>();
@@ -268,8 +268,15 @@ public class CombatBlockService {
             // Additional cost to declare this block (e.g. Hipparion — {1} to block power 3+).
             blockTaxTotal += blockTaxFor(gameData, blocker, attacker);
 
+            // Board-wide life tax (Heat Wave): once per unique qualifying blocker.
+            int lifeTax = gameQueryService.getGlobalBlockLifeTax(gameData, blocker, attacker);
+            if (lifeTax > 0) {
+                blockLifeTaxByBlocker.merge(blocker.getId(), lifeTax, Math::max);
+            }
+
             blockersPerAttacker.merge(attackerIdx, 1, Integer::sum);
         }
+        int blockLifeTaxTotal = blockLifeTaxByBlocker.values().stream().mapToInt(Integer::intValue).sum();
 
         // Team-wide "each creature you control can't be blocked by more than N creatures" (Yuan Shao).
         // All attackers belong to the active player, so scan that player's battlefield once.
@@ -335,12 +342,28 @@ public class CombatBlockService {
                 throw new IllegalStateException("Not enough mana to pay block cost (" + blockTaxTotal + " required)");
             }
         }
+        if (blockLifeTaxTotal > 0) {
+            if (!gameQueryService.canPlayerLifeChange(gameData, defenderId)) {
+                throw new IllegalStateException("Life total can't change to pay block life cost");
+            }
+            int currentLife = gameData.playerLifeTotals.getOrDefault(defenderId, 0);
+            if (currentLife < blockLifeTaxTotal) {
+                throw new IllegalStateException("Not enough life to pay block cost ("
+                        + blockLifeTaxTotal + " required)");
+            }
+        }
 
         gameData.interaction.clearAwaitingInput();
 
         // Pay the block tax now that all validation has passed.
         if (blockTaxTotal > 0) {
             combatAttackService.payGenericMana(gameData.playerManaPools.get(defenderId), blockTaxTotal);
+        }
+        if (blockLifeTaxTotal > 0) {
+            int currentLife = gameData.playerLifeTotals.get(defenderId);
+            gameData.playerLifeTotals.put(defenderId, currentLife - blockLifeTaxTotal);
+            gameLogService.append(gameData, GameLog.text(
+                    player.getUsername() + " pays " + blockLifeTaxTotal + " life to declare blockers."));
         }
 
         // Mark creatures as blocking, and record turn-scoped combat-block opponent subtypes so
@@ -864,21 +887,44 @@ public class CombatBlockService {
                         attacker.getCard(), effects, attacker.getId(), defenderId, graveyardChoice);
                 pushed++;
             } else if (!effects.isEmpty()) {
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        attacker.getCard(),
-                        activeId,
-                        attacker.getCard().getName() + "'s unblocked-attack trigger",
-                        new ArrayList<>(effects),
-                        defenderId,
-                        attacker.getId());
-                // "Defending player" is determined by the combat, not chosen — the trigger can't fizzle.
-                trigger.setNonTargeting(true);
-                gameData.stack.add(trigger);
-                gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
-                        "'s unblocked-attack ability triggers."));
-                log.info("Game {} - {} unblocked-attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
-                pushed++;
+                // Permanent-targeting "you may" (Dwarven Vigilantes / Gaze of Pain shape): the may's
+                // creature target is chosen at resolution after accepting. Push via queueMayAbility
+                // with null targetId so the defender baked into other unblocked-attack triggers does
+                // not look like an already-chosen creature target. Non-targeting mays (Stromgald Spy)
+                // and mandatory effects keep the defending player as targetId.
+                List<CardEffect> targetingMayEffects = effects.stream()
+                        .filter(e -> e instanceof MayEffect
+                                && e.targetSpec().category().includesPermanents())
+                        .toList();
+                List<CardEffect> otherEffects = effects.stream()
+                        .filter(e -> !targetingMayEffects.contains(e))
+                        .toList();
+                for (CardEffect effect : targetingMayEffects) {
+                    gameData.queueMayAbility(attacker.getCard(), activeId, (MayEffect) effect,
+                            null, attacker.getId());
+                    gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
+                            "'s unblocked-attack ability triggers."));
+                    log.info("Game {} - {} unblocked-attack targeting-may trigger pushed onto stack",
+                            gameData.id, attacker.getCard().getName());
+                    pushed++;
+                }
+                if (!otherEffects.isEmpty()) {
+                    StackEntry trigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            attacker.getCard(),
+                            activeId,
+                            attacker.getCard().getName() + "'s unblocked-attack trigger",
+                            new ArrayList<>(otherEffects),
+                            defenderId,
+                            attacker.getId());
+                    // "Defending player" is determined by the combat, not chosen — the trigger can't fizzle.
+                    trigger.setNonTargeting(true);
+                    gameData.stack.add(trigger);
+                    gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
+                            "'s unblocked-attack ability triggers."));
+                    log.info("Game {} - {} unblocked-attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+                    pushed++;
+                }
             }
             // "Whenever enchanted creature attacks and isn't blocked" (aura) triggers on this attacker.
             pushed += collectEnchantedCreatureUnblockedTriggers(gameData, defenderId, attacker);
@@ -1199,40 +1245,37 @@ public class CombatBlockService {
                                                    List<Permanent> defenderBattlefield,
                                                    List<Integer> blockable,
                                                    List<BlockerAssignment> blockerAssignments) {
-        Set<Integer> lureAttackerIndices = new HashSet<>();
-        for (int i = 0; i < attackerBattlefield.size(); i++) {
-            Permanent attacker = attackerBattlefield.get(i);
-            if (!attacker.isAttacking()) continue;
-            boolean hasRequirement = attacker.isMustBeBlockedByAllThisTurn()
-                    || attacker.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(MustBeBlockedByAllCreaturesEffect.class::isInstance)
-                    || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedByAllCreaturesEffect.class);
-            if (hasRequirement) {
-                lureAttackerIndices.add(i);
-            }
-        }
-        if (lureAttackerIndices.isEmpty()) {
-            return;
-        }
-
         for (int blockerIdx : blockable) {
             Permanent blocker = defenderBattlefield.get(blockerIdx);
+
+            Set<Integer> requiredAttackerIndices = new HashSet<>();
+            for (int i = 0; i < attackerBattlefield.size(); i++) {
+                Permanent attacker = attackerBattlefield.get(i);
+                if (!attacker.isAttacking()) {
+                    continue;
+                }
+                if (!gameQueryService.isRequiredToBlockByLure(gameData, attacker, blocker)) {
+                    continue;
+                }
+                if (blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)) {
+                    requiredAttackerIndices.add(i);
+                }
+            }
+            if (requiredAttackerIndices.isEmpty()) {
+                continue;
+            }
+
             int currentLureBlocks = 0;
             for (BlockerAssignment assignment : blockerAssignments) {
-                if (assignment.blockerIndex() == blockerIdx && lureAttackerIndices.contains(assignment.attackerIndex())) {
+                if (assignment.blockerIndex() == blockerIdx
+                        && requiredAttackerIndices.contains(assignment.attackerIndex())) {
                     currentLureBlocks++;
                 }
             }
 
-            int possibleLureBlocks = 0;
-            for (int attackerIdx : lureAttackerIndices) {
-                Permanent attacker = attackerBattlefield.get(attackerIdx);
-                if (blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)) {
-                    possibleLureBlocks++;
-                }
-            }
-
-            int maxSatisfiable = Math.min(getMaxBlocksForCreature(gameData, blocker, defenderBattlefield), possibleLureBlocks);
+            int maxSatisfiable = Math.min(
+                    getMaxBlocksForCreature(gameData, blocker, defenderBattlefield),
+                    requiredAttackerIndices.size());
             if (currentLureBlocks < maxSatisfiable) {
                 throw new IllegalStateException(blocker.getCard().getName() + " must block enchanted creature if able");
             }

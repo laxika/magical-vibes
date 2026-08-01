@@ -273,6 +273,42 @@ public class DestructionSupport {
     }
 
     /**
+     * A single player returns {@code count} permanents matching {@code filter} to their owners'
+     * hands: if they control more than {@code count} they choose which (multi-select), otherwise
+     * all matching are bounced. Callers must ensure at least {@code count} matching permanents exist.
+     */
+    public void returnPlayerMatchingPermanents(GameData gameData, UUID playerId, int count,
+            com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null || battlefield.isEmpty()) {
+            return;
+        }
+        List<Permanent> matching = battlefield.stream()
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter))
+                .toList();
+        if (matching.size() <= count) {
+            List<Card> bouncedCards = new ArrayList<>();
+            for (Permanent perm : matching) {
+                if (permanentRemovalService.removePermanentToHand(gameData, perm)) {
+                    bouncedCards.add(perm.getCard());
+                }
+            }
+            if (!bouncedCards.isEmpty()) {
+                permanentRemovalService.removeOrphanedAuras(gameData);
+                gameLogService.append(gameData,
+                        GameLog.text(gameData.playerIdToName.get(playerId) + " returns "
+                                + bouncedCards.stream().map(Card::getName).collect(java.util.stream.Collectors.joining(", "))
+                                + (bouncedCards.size() == 1 ? " to its owner's hand." : " to their owners' hands.")));
+            }
+        } else {
+            List<UUID> matchingIds = matching.stream().map(Permanent::getId).toList();
+            playerInputService.beginMultiPermanentChoice(gameData, playerId, matchingIds, count,
+                    new MultiPermanentChoiceContext.ForcedReturnToHand(playerId),
+                    "Choose " + count + " permanent" + (count > 1 ? "s" : "") + " to return to hand.");
+        }
+    }
+
+    /**
      * A single player destroys {@code count} permanents matching {@code filter} that they control:
      * if they control more than {@code count} they choose which (multi-select via
      * {@link MultiPermanentChoiceContext.ForcedDestroy}), otherwise all matching are destroyed with
@@ -437,10 +473,14 @@ public class DestructionSupport {
                     null,
                     context.sourcePermanentId());
             resolveForcedCostElseEffects(gameData, syntheticEntry, context.effect());
+            gameData.forcedCostOrElseSourceControllerId = null;
+            gameData.forcedCostOrElseRemainingPlayers.clear();
             return;
         }
 
         sacrificeAndLog(gameData, target, context.controllerId());
+        gameData.forcedCostOrElseSourceControllerId = null;
+        gameData.forcedCostOrElseRemainingPlayers.clear();
     }
 
     public void resolveForcedCostElseEffects(GameData gameData, StackEntry entry, ForcedCostOrElseEffect effect) {
@@ -481,6 +521,15 @@ public class DestructionSupport {
                 // (CR 118.2) — never routed through damage plumbing.
                 lifeSupport.applyLifeLoss(gameData, entry.getControllerId(), lifeAmount.value(), entry.getCard().getName());
                 gameOutcomeService.checkWinCondition(gameData);
+            } else if (elseEffect instanceof LoseLifeEffect loseLife
+                    && loseLife.recipient() == LoseLifeRecipient.TARGET_PLAYER
+                    && loseLife.amount() instanceof Fixed lifeAmount) {
+                // "that player loses N life" (Pillar Tombs of Aku) — targetId is the acting player.
+                UUID victim = entry.getTargetId();
+                if (victim != null) {
+                    lifeSupport.applyLifeLoss(gameData, victim, lifeAmount.value(), entry.getCard().getName());
+                    gameOutcomeService.checkWinCondition(gameData);
+                }
             } else if (elseEffect instanceof GivePoisonCountersEffect poison
                     && poison.recipient() == PoisonRecipient.CONTROLLER) {
                 // "unless they pay {2}, they get another poison counter" (Sabertooth Cobra) — the

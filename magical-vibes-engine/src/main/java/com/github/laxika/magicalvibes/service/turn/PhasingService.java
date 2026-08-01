@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -74,6 +76,45 @@ public class PhasingService {
         movePhasedOut(gameData, phasingOut);
 
         logPhasing(gameData, activePlayerId, phasingIn.keySet(), phasingOut);
+    }
+
+    /**
+     * Time and Tide: simultaneously, all phased-out creatures phase in and all creatures with
+     * phasing phase out, regardless of controller. Both halves are collected before anything moves,
+     * so a creature that phases in does not also phase out from the same resolution. Attachments
+     * follow their hosts (CR 702.26g); phased-out noncreatures and noncreature permanents with
+     * phasing are left alone.
+     *
+     * @param gameData the current game state to modify
+     */
+    public void applyTimeAndTide(GameData gameData) {
+        Map<Permanent, UUID> phasingIn = collectAllPhasedOutCreaturesPhasingIn(gameData);
+        Set<Permanent> phasingOut = collectAllCreaturesWithPhasingPhasingOut(gameData);
+        if (phasingIn.isEmpty() && phasingOut.isEmpty()) {
+            return;
+        }
+
+        phasingIn.forEach((permanent, controllerId) -> {
+            phasedOutList(gameData, controllerId).remove(permanent);
+            permanent.setPhasedOutIndirectly(false);
+            gameData.playerBattlefields
+                    .computeIfAbsent(controllerId, id -> gameData.newBattlefieldList())
+                    .add(permanent);
+            triggerCollectionService.checkPhasesInTriggers(gameData, permanent, controllerId);
+        });
+
+        movePhasedOut(gameData, phasingOut);
+
+        if (!phasingOut.isEmpty()) {
+            String names = names(phasingOut);
+            gameLogService.append(gameData, GameLog.text(names + " phases out."));
+            log.info("Game {} - {} phases out (Time and Tide)", gameData.id, names);
+        }
+        if (!phasingIn.isEmpty()) {
+            String names = names(phasingIn.keySet());
+            gameLogService.append(gameData, GameLog.text(names + " phases in."));
+            log.info("Game {} - {} phases in (Time and Tide)", gameData.id, names);
+        }
     }
 
     /**
@@ -180,6 +221,70 @@ public class PhasingService {
 
         expandAttachments(gameData, pending, phasingOut);
         return phasingOut;
+    }
+
+    /**
+     * Every directly phased-out creature under any controller, plus attachments that phased out
+     * with them (CR 702.26g). Continuous effects do not apply to phased-out permanents
+     * (CR 702.26b), so creature-hood is judged from the permanent's own types and animation flags.
+     */
+    private Map<Permanent, UUID> collectAllPhasedOutCreaturesPhasingIn(GameData gameData) {
+        Map<Permanent, UUID> phasingIn = new LinkedHashMap<>();
+        Deque<Permanent> pending = new ArrayDeque<>();
+        gameData.phasedOutPermanents.forEach((controllerId, permanents) -> List.copyOf(permanents).stream()
+                .filter(permanent -> !permanent.isPhasedOutIndirectly())
+                .filter(permanent -> isPhasedOutCreature(permanent))
+                .forEach(permanent -> {
+                    phasingIn.put(permanent, controllerId);
+                    pending.add(permanent);
+                }));
+
+        while (!pending.isEmpty()) {
+            Permanent host = pending.poll();
+            gameData.phasedOutPermanents.forEach((controllerId, permanents) -> permanents.stream()
+                    .filter(permanent -> host.getId().equals(permanent.getAttachedTo()))
+                    .filter(permanent -> !phasingIn.containsKey(permanent))
+                    .forEach(permanent -> {
+                        phasingIn.put(permanent, controllerId);
+                        pending.add(permanent);
+                    }));
+        }
+        return phasingIn;
+    }
+
+    /**
+     * Every phased-in creature with phasing on any battlefield, plus attachments (CR 702.26g).
+     */
+    private Set<Permanent> collectAllCreaturesWithPhasingPhasingOut(GameData gameData) {
+        Set<Permanent> phasingOut = new LinkedHashSet<>();
+        Deque<Permanent> pending = new ArrayDeque<>();
+        gameData.forEachBattlefield((controllerId, battlefield) -> List.copyOf(battlefield).stream()
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> gameQueryService.hasKeyword(gameData, permanent, Keyword.PHASING))
+                .filter(PhasingService::canPhaseOut)
+                .forEach(permanent -> {
+                    permanent.setPhasedOutIndirectly(false);
+                    phasingOut.add(permanent);
+                    pending.add(permanent);
+                }));
+
+        expandAttachments(gameData, pending, phasingOut);
+        return phasingOut;
+    }
+
+    /**
+     * Creature check for a phased-out permanent: continuous effects cannot touch it (CR 702.26b/e),
+     * so only the object's own types and animation/awakening state count.
+     */
+    private static boolean isPhasedOutCreature(Permanent permanent) {
+        if (permanent.getCard().hasType(CardType.CREATURE)) {
+            return true;
+        }
+        return permanent.isAnimatedUntilEndOfTurn()
+                || permanent.isAnimatedUntilEndOfCombat()
+                || permanent.isAnimatedUntilNextTurn()
+                || permanent.isPermanentlyAnimated()
+                || permanent.getCounterCount(CounterType.AWAKENING) > 0;
     }
 
     /**

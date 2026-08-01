@@ -127,9 +127,13 @@ public sealed interface TriggerContext {
 
     /**
      * Context for ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD triggers.
+     * {@code dyingCreaturePower} / {@code dyingCreatureToughness} are last-known effective P/T
+     * (Death Watch uses power for life loss and toughness for life gain; Banewasp Affliction /
+     * Creature Bond use toughness).
      */
     record EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
-                                   UUID dyingCreatureCardId, int dyingCreatureToughness) implements TriggerContext {}
+                                   UUID dyingCreatureCardId, int dyingCreaturePower,
+                                   int dyingCreatureToughness) implements TriggerContext {}
 
     /**
      * Context for ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD triggers.
@@ -151,6 +155,13 @@ public sealed interface TriggerContext {
      */
     record AnyLandGraveyard(UUID graveyardOwnerId,
                             UUID landControllerId) implements TriggerContext {}
+
+    /**
+     * Context for ON_ANY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers
+     * (Femeref Enchantress).
+     */
+    record EnchantmentGraveyard(UUID graveyardOwnerId,
+                                UUID enchantmentControllerId) implements TriggerContext {}
 
     /**
      * Context for ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE triggers (Compost).

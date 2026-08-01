@@ -193,6 +193,11 @@ public class AutoPassService {
             stepTriggerService.processNextEndStepTriggerTarget(gameData);
         }
 
+        // Process any pending phase-in targeted triggers (queued during untap-step phasing)
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.PhasesInTriggerTarget.class)) {
+            stepTriggerService.processNextPhasesInTriggerTarget(gameData);
+        }
+
         for (int safety = 0; safety < 100; safety++) {
             if (gameData.interaction.isAwaitingInput()) {
                 invalidateForAllPlayers(gameData);

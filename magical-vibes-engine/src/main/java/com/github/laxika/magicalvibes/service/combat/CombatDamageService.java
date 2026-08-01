@@ -719,7 +719,7 @@ public class CombatDamageService {
                             blockerRemainingDamage.put(blkIdx, blkRemaining - assignedDmg);
                         }
                         int actualDmg = gameQueryService.applyCombatDamageMultiplier(gameData, assignedDmg, blk, atk);
-                        applyCombatCreatureDamage(gameData, blk, blkStats, atk, atkIdx, actualDmg, state.atkDamageTaken, state.unpreventableAtkDamageTaken, state.deathtouchDamagedAttackerIndices);
+                        applyCombatCreatureDamage(gameData, blk, blkStats, atk, atkIdx, actualDmg, state.atkDamageTaken, state.unpreventableAtkDamageTaken, state.deathtouchDamagedAttackerIndices, state.atkDamageTakenBySource);
                         state.combatDamageDealt.merge(blk, actualDmg, Integer::sum);
                         recordCombatDamageToCreature(gameData, state, blk, defenderId, atk, actualDmg);
                     }
@@ -830,7 +830,7 @@ public class CombatDamageService {
             if (!(damagePreventableFrom(gameData, snap.damagePreventable(), atk)
                     && snap.isBlockerProtectedFromAttacker(atkIdx, blkIdx))) {
                 int actualDmg = gameQueryService.applyCombatDamageMultiplier(gameData, dmg, atk, blk);
-                applyCombatCreatureDamage(gameData, atk, atkStats, blk, blkIdx, actualDmg, state.defDamageTaken, state.unpreventableDefDamageTaken, state.deathtouchDamagedDefenderIndices);
+                applyCombatCreatureDamage(gameData, atk, atkStats, blk, blkIdx, actualDmg, state.defDamageTaken, state.unpreventableDefDamageTaken, state.deathtouchDamagedDefenderIndices, state.defDamageTakenBySource);
                 state.combatDamageDealt.merge(atk, actualDmg, Integer::sum);
                 recordCombatDamageToCreature(gameData, state, atk, activeId, blk, actualDmg);
             }
@@ -872,7 +872,7 @@ public class CombatDamageService {
                     Permanent blk = defBf.get(targetIdx);
                     if (!(damagePreventable && gameQueryService.hasProtectionFromDamageSource(gameData, blk, atk))) {
                         int actualDmg = gameQueryService.applyCombatDamageMultiplier(gameData, dmg, atk, blk);
-                        applyCombatCreatureDamage(gameData, atk, atkStats, blk, targetIdx, actualDmg, state.defDamageTaken, state.unpreventableDefDamageTaken, state.deathtouchDamagedDefenderIndices);
+                        applyCombatCreatureDamage(gameData, atk, atkStats, blk, targetIdx, actualDmg, state.defDamageTaken, state.unpreventableDefDamageTaken, state.deathtouchDamagedDefenderIndices, state.defDamageTakenBySource);
                         state.combatDamageDealt.merge(atk, actualDmg, Integer::sum);
                         recordCombatDamageToCreature(gameData, state, atk, activeId, blk, actualDmg);
                     }
@@ -898,7 +898,7 @@ public class CombatDamageService {
                 // Redirected combat damage is still damage dealt to the guard (CR 120.3d): record
                 // it as marked damage plus the CR 704.5h deathtouch memory — the state-based
                 // action check at the end of the damage step performs any destruction.
-                redirectTarget.setMarkedDamage(redirectTarget.getMarkedDamage() + state.damageRedirectedToGuard);
+                redirectTarget.addMarkedDamage(null, state.damageRedirectedToGuard);
                 gameData.permanentsDealtDamageThisTurn.add(redirectTarget.getId());
                 if (state.deathtouchDamageRedirectedToGuard) {
                     redirectTarget.setDamagedByDeathtouch(true);
@@ -1719,9 +1719,11 @@ public class CombatDamageService {
     private void updateMarkedDamageFromCombat(GameData gameData, List<Permanent> atkBf, List<Permanent> defBf,
                                                CombatDamageState state) {
         applyStepDamageToPermanents(gameData, atkBf, state.atkDamageTaken,
-                state.unpreventableAtkDamageTaken, state.deathtouchDamagedAttackerIndices);
+                state.unpreventableAtkDamageTaken, state.deathtouchDamagedAttackerIndices,
+                state.atkDamageTakenBySource);
         applyStepDamageToPermanents(gameData, defBf, state.defDamageTaken,
-                state.unpreventableDefDamageTaken, state.deathtouchDamagedDefenderIndices);
+                state.unpreventableDefDamageTaken, state.deathtouchDamagedDefenderIndices,
+                state.defDamageTakenBySource);
     }
 
     /**
@@ -1732,7 +1734,8 @@ public class CombatDamageService {
     private void applyStepDamageToPermanents(GameData gameData, List<Permanent> battlefield,
                                               Map<Integer, Integer> damageTaken,
                                               Map<Integer, Integer> unpreventableDamageTaken,
-                                              Set<Integer> deathtouchIndices) {
+                                              Set<Integer> deathtouchIndices,
+                                              Map<Integer, Map<UUID, Integer>> damageTakenBySource) {
         for (var entry : damageTaken.entrySet()) {
             int idx = entry.getKey();
             if (idx >= battlefield.size()) continue;
@@ -1746,7 +1749,7 @@ public class CombatDamageService {
             // some of that damage and queued it to be dealt on to the shield's own target.
             processPendingRedirectDamage(gameData);
             if (dmg > 0) {
-                perm.setMarkedDamage(perm.getMarkedDamage() + dmg);
+                recordCombatMarkedDamage(perm, dmg, damageTakenBySource.getOrDefault(idx, Map.of()));
                 gameData.permanentsDealtDamageThisTurn.add(perm.getId());
                 // CR 702.2b — the deathtouch memory only sticks when damage was actually dealt,
                 // not when a prevention shield consumed the whole step's damage.
@@ -1754,6 +1757,42 @@ public class CombatDamageService {
                     perm.setDamagedByDeathtouch(true);
                 }
             }
+        }
+    }
+
+    /**
+     * Marks {@code dmg} on {@code perm}, attributing it across {@code bySource} (scaled when a
+     * prevention shield reduced the step total below the sum of per-source contributions).
+     */
+    private static void recordCombatMarkedDamage(Permanent perm, int dmg, Map<UUID, Integer> bySource) {
+        if (bySource.isEmpty()) {
+            perm.addMarkedDamage(null, dmg);
+            return;
+        }
+        int sourceSum = bySource.values().stream().mapToInt(Integer::intValue).sum();
+        if (sourceSum <= 0) {
+            perm.addMarkedDamage(null, dmg);
+            return;
+        }
+        if (sourceSum == dmg) {
+            bySource.forEach(perm::addMarkedDamage);
+            return;
+        }
+        int remaining = dmg;
+        List<Map.Entry<UUID, Integer>> entries = new ArrayList<>(bySource.entrySet());
+        for (int i = 0; i < entries.size(); i++) {
+            Map.Entry<UUID, Integer> e = entries.get(i);
+            int portion = (i == entries.size() - 1)
+                    ? remaining
+                    : (int) Math.round((double) e.getValue() * dmg / sourceSum);
+            portion = Math.max(0, Math.min(portion, remaining));
+            if (portion > 0) {
+                perm.addMarkedDamage(e.getKey(), portion);
+                remaining -= portion;
+            }
+        }
+        if (remaining > 0) {
+            perm.addMarkedDamage(null, remaining);
         }
     }
 
@@ -1937,7 +1976,7 @@ public class CombatDamageService {
                 if (effectiveDamage > 0) {
                     // Record only — the state-based action check (CR 704.5g) performs any
                     // destruction once the current damage event finishes.
-                    targetPerm.setMarkedDamage(targetPerm.getMarkedDamage() + effectiveDamage);
+                    targetPerm.addMarkedDamage(redirect.damageSourceId(), effectiveDamage);
                     gameData.permanentsDealtDamageThisTurn.add(targetPerm.getId());
                 }
             }
@@ -2003,8 +2042,9 @@ public class CombatDamageService {
             // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
             damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, atk.getId(), damage);
             processEyeForAnEyeReflections(gameData);
-            // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
+            // Apply one-shot Sanctum Guardian / Honorable Passage shields (prevent the next damage from the chosen source to any target)
             damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage);
+            processEyeForAnEyeReflections(gameData);
             // Djeru, With Eyes Open: prevent N combat damage per attacker to a planeswalker you control.
             damage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, pwControllerId, damage);
             state.damageToPlaneswalkers.merge(attackTarget, damage, Integer::sum);
@@ -2071,8 +2111,9 @@ public class CombatDamageService {
                 processEyeForAnEyeReflections(gameData);
                 // Apply one-shot Circle-of-Protection shields (prevent the next damage event from the chosen source)
                 damage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, defenderId, atk.getId(), damage);
-                // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
+                // Apply one-shot Sanctum Guardian / Honorable Passage shields
                 damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage);
+                processEyeForAnEyeReflections(gameData);
                 // Battletide Alchemist: the defending player prevents up to (Clerics they control) of this attacker's damage.
                 int battletidePrevented = damagePreventionService.applyControllerPerClericDamagePrevention(gameData, defenderId, damage);
                 if (battletidePrevented > 0) {
@@ -2156,17 +2197,19 @@ public class CombatDamageService {
                                            Permanent target, int targetIdx, int damage,
                                            Map<Integer, Integer> damageTakenMap,
                                            Map<Integer, Integer> unpreventableDamageTakenMap,
-                                           Set<Integer> deathtouchDamagedSet) {
+                                           Set<Integer> deathtouchDamagedSet,
+                                           Map<Integer, Map<UUID, Integer>> damageTakenBySourceMap) {
         withSourceUnpreventableDamage(gameData, source, () -> applyCombatCreatureDamageInternal(
                 gameData, source, sourceStats, target, targetIdx, damage, damageTakenMap,
-                unpreventableDamageTakenMap, deathtouchDamagedSet));
+                unpreventableDamageTakenMap, deathtouchDamagedSet, damageTakenBySourceMap));
     }
 
     private void applyCombatCreatureDamageInternal(GameData gameData, Permanent source, CombatantStats sourceStats,
                                                    Permanent target, int targetIdx, int damage,
                                                    Map<Integer, Integer> damageTakenMap,
                                                    Map<Integer, Integer> unpreventableDamageTakenMap,
-                                                   Set<Integer> deathtouchDamagedSet) {
+                                                   Set<Integer> deathtouchDamagedSet,
+                                                   Map<Integer, Map<UUID, Integer>> damageTakenBySourceMap) {
         // Apply source-specific redirect shields (e.g. Harm's Way) per-source for creature targets
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         if (targetControllerId != null) {
@@ -2184,8 +2227,9 @@ public class CombatDamageService {
         processSourceRedirectDamage(gameData);
         // Apply target+source-specific prevention shields (e.g. Healing Grace) before generic creature prevention
         damage = damagePreventionService.applyTargetSourcePreventionShield(gameData, target.getId(), source.getId(), damage);
-        // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
+        // Apply one-shot Sanctum Guardian / Honorable Passage shields (prevent the next damage from the chosen source to any target)
         damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, source.getId(), damage);
+        processEyeForAnEyeReflections(gameData);
         // Shadowbane: the chosen source's next combat damage to the protected player's creatures.
         damage = damagePreventionService.applyControllerCreaturesNextSourceDamageShield(
                 gameData, targetControllerId, source.getId(), damage);
@@ -2230,6 +2274,9 @@ public class CombatDamageService {
             }
         } else {
             damageTakenMap.merge(targetIdx, damage, Integer::sum);
+            damageTakenBySourceMap
+                    .computeIfAbsent(targetIdx, ignored -> new HashMap<>())
+                    .merge(source.getId(), damage, Integer::sum);
             if (gameQueryService.damageCantBePreventedFromSource(gameData, source)) {
                 unpreventableDamageTakenMap.merge(targetIdx, damage, Integer::sum);
             }

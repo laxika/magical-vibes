@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellAndGainControlIfA
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "6ED", collectorNumber = "64")
+@CardRegistration(set = "VIS", collectorNumber = "30")
 public class Desertion extends Card {
 
     public Desertion() {

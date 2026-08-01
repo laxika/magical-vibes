@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
@@ -114,6 +115,11 @@ public final class EffectResolution {
             // the spell's own targets gate casting). The trigger still resolves its own
             // targeting after entry, doing nothing when there are no legal targets.
             if (e instanceof MayEffect) continue;
+            // "You may pay {X}. If you don't, [targeted effect]" (Knight of the Mists) — and the
+            // "if you do" MayPayMana shape — choose targets as the trigger goes on the stack
+            // after the permanent enters (CR 603.3d), never at cast time. Cast-time targeting
+            // would miss the entering permanent itself as a legal target.
+            if (e instanceof MayPayManaEffect) continue;
             // A gate-conditional ETB ("Metalcraft — When ~ enters, ... target player loses
             // 4 life") is an intervening-if trigger (CR 603.4): whether it triggers at all
             // depends on game state as the permanent enters, so the target can't be a

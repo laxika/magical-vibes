@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.List;
@@ -20,6 +21,7 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
 
     private final CounterSupport counterSupport;
     private final AmountEvaluationService amountEvaluationService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,8 +47,12 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
         UUID targetControllerId = targetEntry.getControllerId();
         ManaPool pool = gameData.playerManaPools.get(targetControllerId);
         ManaCost cost = new ManaCost("{" + payAmount + "}");
+        int lifeCost = e.lifeCost();
+        boolean canPayLife = lifeCost <= 0
+                || (gameQueryService.canPlayerLifeChange(gameData, targetControllerId)
+                        && gameData.getLife(targetControllerId) >= lifeCost);
 
-        if (!cost.canPay(pool)) {
+        if (!cost.canPay(pool) || !canPayLife) {
             if (e.exileIfCountered()) {
                 counterSupport.counterSpellAndExile(gameData, entry, targetEntry);
             } else {
@@ -55,10 +61,13 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
             // Not paid (couldn't afford): resolve any rider against the spell's controller (Power Sink).
             counterSupport.resolveNotPaidRider(gameData, entry.getCard(), targetControllerId, e.onNotPaidEffects());
         } else {
-            String prompt = "Pay {" + payAmount + "} to prevent " + targetEntry.getCard().getName() + " from being countered?";
+            String lifeSuffix = lifeCost > 0 ? " and " + lifeCost + " life" : "";
+            String prompt = "Pay {" + payAmount + "}" + lifeSuffix + " to prevent "
+                    + targetEntry.getCard().getName() + " from being countered?";
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     entry.getCard(), targetControllerId,
-                    List.of(new CounterUnlessPaysEffect(payAmount, false, e.exileIfCountered(), e.onNotPaidEffects())),
+                    List.of(new CounterUnlessPaysEffect(payAmount, false, e.exileIfCountered(),
+                            null, e.onNotPaidEffects(), lifeCost)),
                     prompt, targetCardId
             ));
         }

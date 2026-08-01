@@ -896,6 +896,10 @@ public class TriggerCollectionService {
     // ── Land-tap triggers ──────────────────────────────────────────────
 
     public void checkLandTapTriggers(GameData gameData, UUID tappingPlayerId, UUID tappedLandId) {
+        // Desolation et al.: track who tapped a land for mana this turn even if no land-tap
+        // trigger permanent is currently on the battlefield (2004-10-04 ruling).
+        gameData.playersWhoTappedLandForManaThisTurn.add(tappingPlayerId);
+
         boolean[] anyTriggered = {false};
         var ctx = new TriggerContext.LandTap(tappingPlayerId, tappedLandId);
 
@@ -1887,6 +1891,17 @@ public class TriggerCollectionService {
     private void enqueuePhasingTriggers(GameData gameData, Permanent permanent, UUID controllerId,
                                         EffectSlot slot, String direction) {
         for (CardEffect effect : permanent.getCard().getEffects(slot)) {
+            // Targeted phase-in (Shimmering Efreet): choose the target when the ability is put on the
+            // stack. Queued here during the untap-step phasing action and drained at upkeep start.
+            if (slot == EffectSlot.ON_SELF_PHASES_IN
+                    && effect.targetSpec().category().includesPermanents()) {
+                gameData.queueInteraction(new PermanentChoiceContext.PhasesInTriggerTarget(
+                        permanent.getCard(), controllerId, new ArrayList<>(List.of(effect)), permanent.getId()));
+                gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
+                log.info("Game {} - {} triggers on phasing {} (awaiting target)",
+                        gameData.id, permanent.getCard().getName(), direction);
+                continue;
+            }
             gameData.enqueueTrigger(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     permanent.getCard(),
@@ -2596,18 +2611,18 @@ public class TriggerCollectionService {
     }
 
     public void checkEnchantedPermanentDeathTriggers(GameData gameData, UUID dyingPermanentId) {
-        checkEnchantedPermanentDeathTriggers(gameData, dyingPermanentId, null, null, 0);
+        checkEnchantedPermanentDeathTriggers(gameData, dyingPermanentId, null, null, 0, 0);
     }
 
     public void checkEnchantedPermanentDeathTriggers(GameData gameData, UUID dyingPermanentId, UUID dyingPermanentControllerId) {
-        checkEnchantedPermanentDeathTriggers(gameData, dyingPermanentId, dyingPermanentControllerId, null, 0);
+        checkEnchantedPermanentDeathTriggers(gameData, dyingPermanentId, dyingPermanentControllerId, null, 0, 0);
     }
 
     public void checkEnchantedPermanentDeathTriggers(GameData gameData, UUID dyingPermanentId,
                                                       UUID dyingPermanentControllerId, UUID dyingCreatureCardId,
-                                                      int dyingCreatureToughness) {
+                                                      int dyingCreaturePower, int dyingCreatureToughness) {
         var ctx = new TriggerContext.EnchantedPermanentDeath(dyingPermanentId, dyingPermanentControllerId,
-                dyingCreatureCardId, dyingCreatureToughness);
+                dyingCreatureCardId, dyingCreaturePower, dyingCreatureToughness);
 
         gameData.forEachPermanent((playerId, perm) -> {
             if (!dyingPermanentId.equals(perm.getAttachedTo())) return;
@@ -2657,6 +2672,13 @@ public class TriggerCollectionService {
 
         gameData.forEachPermanent((playerId, perm) ->
                 dispatchSlot(gameData, perm, playerId, EffectSlot.ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, ctx));
+    }
+
+    public void checkAnyEnchantmentPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID graveyardOwnerId, UUID enchantmentControllerId) {
+        var ctx = new TriggerContext.EnchantmentGraveyard(graveyardOwnerId, enchantmentControllerId);
+
+        gameData.forEachPermanent((playerId, perm) ->
+                dispatchSlot(gameData, perm, playerId, EffectSlot.ON_ANY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, ctx));
     }
 
     /**
@@ -3262,9 +3284,23 @@ public class TriggerCollectionService {
      * Fires for every entering permanent regardless of type or controller; wrap the effect in a
      * {@link TriggeringCardConditionalEffect} to restrict which permanents trigger it. The entering
      * permanent's controller is baked in as the non-targeting {@code targetId} so player-directed
-     * effects act on "that player". Used by Nature's Wrath.
+     * effects act on "that player". The entering permanent's id is stamped on
+     * {@code triggeringPermanentId} (and its card id on {@code triggeringCardId}) so effects can act
+     * on "that permanent" / its name (Eye of Singularity). Used by Nature's Wrath.
      */
     public void checkAnyPermanentEntersTriggers(GameData gameData, UUID enteringControllerId, Card enteringCard) {
+        UUID enteringPermanentId = null;
+        List<Permanent> enteringBattlefield = gameData.playerBattlefields.get(enteringControllerId);
+        if (enteringBattlefield != null) {
+            for (Permanent p : enteringBattlefield) {
+                if (p.getCard() == enteringCard) {
+                    enteringPermanentId = p.getId();
+                    break;
+                }
+            }
+        }
+        final UUID resolvedEnteringPermanentId = enteringPermanentId;
+
         gameData.forEachPermanent((playerId, perm) -> {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD);
             if (effects == null || effects.isEmpty()) return;
@@ -3284,6 +3320,8 @@ public class TriggerCollectionService {
                         enteringControllerId,
                         perm.getId());
                 entry.setNonTargeting(true);
+                entry.setTriggeringPermanentId(resolvedEnteringPermanentId);
+                entry.setTriggeringCardId(enteringCard.getId());
                 gameData.stack.add(entry);
 
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
@@ -3536,6 +3574,33 @@ public class TriggerCollectionService {
                 log.info("Game {} - {} triggers for {} entering (ally enchantment entered)",
                         gameData.id, perm.getCard().getName(), enteringCard.getName());
             }
+        }
+    }
+
+    /**
+     * "When you play a land" ({@link EffectSlot#ON_CONTROLLER_PLAYS_LAND}). Unlike landfall, this
+     * fires only on a land <em>play</em> (the special action), not when a land is put onto the
+     * battlefield by an effect. Pair with {@link EffectSlot#ON_CONTROLLER_CASTS_SPELL} for
+     * "When you play a card" (cast a spell or play a land).
+     */
+    public void checkControllerPlaysLandTriggers(GameData gameData, UUID landControllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(landControllerId);
+        if (battlefield == null) return;
+        for (Permanent perm : battlefield) {
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_PLAYS_LAND);
+            if (effects == null || effects.isEmpty()) continue;
+
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    perm.getCard(),
+                    landControllerId,
+                    perm.getCard().getName() + "'s ability",
+                    new ArrayList<>(effects),
+                    null,
+                    perm.getId()
+            ));
+            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+            log.info("Game {} - {} triggers on controller playing a land", gameData.id, perm.getCard().getName());
         }
     }
 

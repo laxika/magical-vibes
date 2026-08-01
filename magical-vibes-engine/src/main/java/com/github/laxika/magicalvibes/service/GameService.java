@@ -106,14 +106,18 @@ public class GameService {
     }
 
     /**
-     * Sen Triplets: a player locked out this turn can't activate any ability, including mana and
-     * sacrifice abilities. The standard activated-ability path is gated in
+     * Sen Triplets / City of Solitude: a player locked out can't activate any ability, including mana
+     * and sacrifice abilities. The standard activated-ability path is gated in
      * {@code AbilityActivationService.validateActivationLegality}; this guards the special-action entry
      * points (mana taps, sacrifice, graveyard/hand abilities) that bypass that check.
      */
     private void requireCanActivateAbilities(GameData gameData, Player player) {
         if (gameData.playersCantActivateAbilitiesThisTurn.contains(player.getId())) {
             throw new IllegalStateException("You can't activate abilities this turn");
+        }
+        if (gameQueryService.isLockedOutByOwnTurnOnlyRestriction(gameData, player.getId())) {
+            throw new IllegalStateException(
+                    "You can only cast spells and activate abilities during your own turn");
         }
     }
 

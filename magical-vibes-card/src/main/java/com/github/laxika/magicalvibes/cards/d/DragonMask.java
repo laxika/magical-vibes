@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "283")
+@CardRegistration(set = "VIS", collectorNumber = "144")
 public class DragonMask extends Card {
 
     public DragonMask() {

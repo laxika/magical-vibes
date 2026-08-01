@@ -126,16 +126,28 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost returnCost) {
+            resolveMultiplePermanentReturnToHand(gameData, entry, e, returnCost);
+            return;
+        }
+
         if (!(e.forcedCost() instanceof SacrificePermanentCost sacrificePermanent)) {
                     log.warn("Game {} - Unsupported forced cost: {}", gameData.id, e.forcedCost().getClass().getSimpleName());
                     destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
                     return;
                 }
 
-                UUID controllerId = entry.getControllerId();
+                // payerIsEnchantedController: "that player may sacrifice …" — stack targetId is the
+                // payer (enchanted controller / EACH_UPKEEP active player), not the source controller.
+                UUID sourceControllerId = entry.getControllerId();
+                UUID payerId = e.payerIsEnchantedController() ? entry.getTargetId() : sourceControllerId;
+                if (payerId == null) {
+                    destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                    return;
+                }
                 UUID sourcePermanentId = entry.getSourcePermanentId();
 
-                List<UUID> matchingPermanentIds = destructionSupport.collectPermanentIds(gameData, controllerId,
+                List<UUID> matchingPermanentIds = destructionSupport.collectPermanentIds(gameData, payerId,
                         p -> (!sacrificePermanent.excludeSource() || !p.getId().equals(sourcePermanentId))
                                 && predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacrificePermanent.filter()));
 
@@ -145,19 +157,22 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                 }
 
                 if (e.optional()) {
-                    // "You may sacrifice ..." — ask the controller. Declining (handled in
+                    // "You may sacrifice ..." — ask the payer. Declining (handled in
                     // MayPenaltyChoiceHandlerService) resolves the fallback effects.
+                    if (e.payerIsEnchantedController()) {
+                        gameData.forcedCostOrElseSourceControllerId = sourceControllerId;
+                    }
                     gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
-                            entry.getCard(), controllerId, List.of(e),
+                            entry.getCard(), payerId, List.of(e),
                             entry.getCard().getName() + " - " + sacrificePermanent.description() + "?",
-                            null, null, entry.getSourcePermanentId()));
+                            entry.getTargetId(), null, entry.getSourcePermanentId()));
                     return;
                 }
 
                 if (matchingPermanentIds.size() == 1) {
                     Permanent permanent = gameQueryService.findPermanentById(gameData, matchingPermanentIds.getFirst());
                     if (permanent != null) {
-                        destructionSupport.sacrificeAndLog(gameData, permanent, controllerId);
+                        destructionSupport.sacrificeAndLog(gameData, permanent, payerId);
                     } else {
                         destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
                     }
@@ -166,8 +181,8 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
 
                 gameData.interaction.setPermanentChoiceContext(
                         new PermanentChoiceContext.ForcedCostOrElse(
-                                controllerId, entry.getSourcePermanentId(), entry.getCard(), e));
-                playerInputService.beginPermanentChoice(gameData, controllerId, matchingPermanentIds,
+                                payerId, entry.getSourcePermanentId(), entry.getCard(), e));
+                playerInputService.beginPermanentChoice(gameData, payerId, matchingPermanentIds,
                         "Choose a permanent to sacrifice (" + sacrificePermanent.description() + ").");
     }
 
@@ -248,5 +263,33 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
         }
 
         destructionSupport.sacrificePlayerMatchingPermanents(gameData, controllerId, multiCost.count(), multiCost.filter());
+    }
+
+    /**
+     * "Sacrifice [source] unless you return N matching permanents to their owner's hand"
+     * (e.g. Ovinomancer). Same may/can't-pay shape as {@link #resolveMultiplePermanentSacrifice}.
+     */
+    private void resolveMultiplePermanentReturnToHand(GameData gameData, StackEntry entry,
+            ForcedCostOrElseEffect e,
+            com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost returnCost) {
+        UUID controllerId = entry.getControllerId();
+        List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, controllerId,
+                p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, returnCost.filter()));
+
+        if (matchingIds.size() < returnCost.count()) {
+            destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+            return;
+        }
+
+        if (e.optional()) {
+            gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                    entry.getCard(), controllerId, List.of(e),
+                    entry.getCard().getName() + " - Return " + returnCost.count()
+                            + " permanent(s) to their owner's hand?",
+                    null, null, entry.getSourcePermanentId()));
+            return;
+        }
+
+        destructionSupport.returnPlayerMatchingPermanents(gameData, controllerId, returnCost.count(), returnCost.filter());
     }
 }

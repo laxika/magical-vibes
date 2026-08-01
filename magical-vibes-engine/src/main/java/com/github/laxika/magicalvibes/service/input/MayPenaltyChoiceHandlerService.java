@@ -146,9 +146,11 @@ public class MayPenaltyChoiceHandlerService {
                 .map(e -> (CounterUnlessPaysEffect) e)
                 .findFirst().orElseThrow();
         int amount = effect.amount();
+        int lifeCost = effect.lifeCost();
         boolean exileIfCountered = effect.exileIfCountered();
         List<CardEffect> onNotPaidEffects = effect.onNotPaidEffects();
         UUID targetCardId = ability.targetCardId();
+        String costText = "{" + amount + "}" + (lifeCost > 0 ? " and " + lifeCost + " life" : "");
 
         StackEntry targetEntry = null;
         for (StackEntry se : gameData.stack) {
@@ -181,23 +183,29 @@ public class MayPenaltyChoiceHandlerService {
         if (accepted) {
             ManaCost cost = new ManaCost("{" + amount + "}");
             ManaPool pool = gameData.playerManaPools.get(player.getId());
-            if (cost.canPay(pool)) {
+            boolean canPayLife = lifeCost <= 0
+                    || (gameQueryService.canPlayerLifeChange(gameData, player.getId())
+                            && gameData.getLife(player.getId()) >= lifeCost);
+            if (cost.canPay(pool) && canPayLife) {
                 cost.pay(pool);
+                if (lifeCost > 0) {
+                    gameData.playerLifeTotals.put(player.getId(), gameData.getLife(player.getId()) - lifeCost);
+                }
                 gameLogService.append(gameData, GameLog.textCardText(
-                        player.getUsername() + " pays {" + amount + "}. ", targetEntry.getCard(), " is not countered."));
-                log.info("Game {} - {} pays {} to avoid counter", gameData.id, player.getUsername(), amount);
+                        player.getUsername() + " pays " + costText + ". ", targetEntry.getCard(), " is not countered."));
+                log.info("Game {} - {} pays {} to avoid counter", gameData.id, player.getUsername(), costText);
             } else {
-                counterSpell(gameData, player, ability.sourceCard(), targetEntry, amount, exileIfCountered, onNotPaidEffects);
+                counterSpell(gameData, player, ability.sourceCard(), targetEntry, costText, exileIfCountered, onNotPaidEffects);
             }
         } else {
-            counterSpell(gameData, player, ability.sourceCard(), targetEntry, amount, exileIfCountered, onNotPaidEffects);
+            counterSpell(gameData, player, ability.sourceCard(), targetEntry, costText, exileIfCountered, onNotPaidEffects);
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     private void counterSpell(GameData gameData, Player player, Card sourceCard, StackEntry targetEntry,
-                              int amount, boolean exileIfCountered, List<CardEffect> onNotPaidEffects) {
+                              String costText, boolean exileIfCountered, List<CardEffect> onNotPaidEffects) {
         UUID counteredControllerId = targetEntry.getControllerId();
         gameData.stack.remove(targetEntry);
 
@@ -215,7 +223,7 @@ public class MayPenaltyChoiceHandlerService {
 
         String suffix = exileIfCountered ? " is countered and exiled." : " is countered.";
         gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " declines to pay {" + amount + "}. ", targetEntry.getCard(), suffix));
+                player.getUsername() + " declines to pay " + costText + ". ", targetEntry.getCard(), suffix));
         log.info("Game {} - {} — spell countered{}", gameData.id, player.getUsername(), exileIfCountered ? " and exiled" : "");
 
         // Not paid: resolve any rider against the countered spell's controller (Power Sink).
@@ -1230,9 +1238,11 @@ public class MayPenaltyChoiceHandlerService {
                 .findFirst().orElseThrow();
 
         // For normal ForcedCostOrElse the deciding player is the source controller. For
-        // anyPlayerMayPay, ability.controllerId is whoever is currently being asked.
+        // anyPlayerMayPay / payerIsEnchantedController, ability.controllerId is the payer being
+        // asked and forcedCostOrElseSourceControllerId holds the real source controller.
         UUID decidingPlayerId = ability.controllerId();
-        UUID sourceControllerId = effect.anyPlayerMayPay() && gameData.forcedCostOrElseSourceControllerId != null
+        UUID sourceControllerId = (effect.anyPlayerMayPay() || effect.payerIsEnchantedController())
+                && gameData.forcedCostOrElseSourceControllerId != null
                 ? gameData.forcedCostOrElseSourceControllerId
                 : decidingPlayerId;
 
@@ -1313,24 +1323,41 @@ public class MayPenaltyChoiceHandlerService {
             // Accepted but no longer enough to sacrifice — fall through to the penalty.
         }
 
-        if (accepted && effect.forcedCost() instanceof SacrificePermanentCost sacrificeCost) {
-            UUID sourcePermanentId = ability.sourcePermanentId();
+        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost returnCost) {
             List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, sourceControllerId,
+                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, returnCost.filter()));
+            if (matchingIds.size() >= returnCost.count()) {
+                destructionSupport.returnPlayerMatchingPermanents(gameData, sourceControllerId, returnCost.count(), returnCost.filter());
+                if (matchingIds.size() == returnCost.count()) {
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                }
+                return;
+            }
+            // Accepted but no longer enough to return — fall through to the penalty.
+        }
+
+        if (accepted && effect.forcedCost() instanceof SacrificePermanentCost sacrificeCost) {
+            // payerIsEnchantedController: deciding player is the stack-target payer, not the source
+            // controller (Pillar Tombs of Aku / Mind Whip-shaped each-upkeep sacrifice).
+            UUID sacrificingPlayerId = effect.payerIsEnchantedController() ? decidingPlayerId : sourceControllerId;
+            UUID sourcePermanentId = ability.sourcePermanentId();
+            List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, sacrificingPlayerId,
                     p -> (!sacrificeCost.excludeSource() || !p.getId().equals(sourcePermanentId))
                             && predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacrificeCost.filter()));
 
             if (matchingIds.size() == 1) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, matchingIds.getFirst());
                 if (perm != null) {
-                    destructionSupport.sacrificeAndLog(gameData, perm, sourceControllerId);
+                    destructionSupport.sacrificeAndLog(gameData, perm, sacrificingPlayerId);
+                    clearAnyPlayerPayState(gameData);
                     inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                     return;
                 }
             } else if (matchingIds.size() > 1) {
                 gameData.interaction.setPermanentChoiceContext(
-                        new PermanentChoiceContext.ForcedCostOrElse(sourceControllerId, ability.sourcePermanentId(),
+                        new PermanentChoiceContext.ForcedCostOrElse(sacrificingPlayerId, ability.sourcePermanentId(),
                                 ability.sourceCard(), effect));
-                playerInputService.beginPermanentChoice(gameData, sourceControllerId, matchingIds,
+                playerInputService.beginPermanentChoice(gameData, sacrificingPlayerId, matchingIds,
                         "Choose a permanent to sacrifice (" + sacrificeCost.description() + ").");
                 return;
             }

@@ -245,6 +245,21 @@ public sealed interface ChoiceContext {
     }
 
     /**
+     * Vision Charm land mode: choose a land type, then a basic land type; each land of the first
+     * type becomes the second until end of turn (rule 305.7). When {@code fromType} is null this
+     * is the first pick; after answering, a second pick is begun with {@code fromType} set.
+     *
+     * @param controllerId the resolving controller making both picks
+     * @param fromType     null while choosing the land type; the chosen land type while choosing
+     *                     the destination basic land type
+     */
+    record LandsOfTypeBecomeBasicTypeChoice(UUID controllerId, CardSubtype fromType) implements ChoiceContext {
+        public LandsOfTypeBecomeBasicTypeChoice(UUID controllerId) {
+            this(controllerId, null);
+        }
+    }
+
+    /**
      * Tracks the sequential "each player names a card" flow for Conundrum Sphinx etc.
      * Players name in APNAP order. After all have named, top cards are revealed and
      * moved to hand (match) or bottom of library (no match).
@@ -267,6 +282,12 @@ public sealed interface ChoiceContext {
      * milled card matches the chosen name, the controller gains life equal to its mana value.
      */
     record NameCardMillGainLifeChoice(UUID controllerId, UUID targetPlayerId) implements ChoiceContext {}
+
+    /**
+     * Foreshadow: the controller names a card, then the target player mills one card. If the milled
+     * card matches the chosen name, the controller draws a card.
+     */
+    record NameCardMillDrawChoice(UUID controllerId, UUID targetPlayerId) implements ChoiceContext {}
 
     /**
      * Demonic Consultation: the controller names a card, then exiles the top {@code topExileCount}
@@ -354,6 +375,15 @@ public sealed interface ChoiceContext {
     record StorageMatrixUntapChoice(UUID playerId) implements ChoiceContext {}
 
     /**
+     * Teferi's Realm: {@code playerId} (the player whose upkeep it is) chooses artifact, creature,
+     * land, or non-Aura enchantment; all nontoken permanents of that type then phase out.
+     *
+     * @param playerId   the choosing (active) player
+     * @param sourceCard the Teferi's Realm permanent's card (for logging / phase-out source)
+     */
+    record TeferisRealmTypeChoice(UUID playerId, Card sourceCard) implements ChoiceContext {}
+
+    /**
      * Controller chooses one or more colors for {@code targetId}, which then becomes those colors
      * for {@code duration} (until end of turn for Prismwake Merrow / Scuttlemutt; indefinitely for
      * Shyft). Colors are picked one at a time (with a "DONE" option once at least one is chosen);
@@ -432,6 +462,20 @@ public sealed interface ChoiceContext {
     record TormentPenaltyChoice(UUID affectedPlayerId, String sourceCardName) implements ChoiceContext {
 
         public static final String SACRIFICE = "Sacrifice a nonland permanent";
+        public static final String DISCARD = "Discard a card";
+    }
+
+    /**
+     * Forbidden Ritual: the targeted opponent chooses one of "sacrifice a permanent", "discard a
+     * card", or "lose N life" for one cycle. Offered options are pruned to what the player can do
+     * (life is always offered); lands are legal sacrifices (unlike {@link TormentPenaltyChoice}).
+     * The "lose life" label is dynamic ({@code "Lose N life"}), so a chosen value that is neither
+     * {@link #SACRIFICE} nor {@link #DISCARD} means the life-loss outcome. Answered via
+     * {@code handleListChoice}.
+     */
+    record ForbiddenRitualPenaltyChoice(UUID affectedPlayerId, String sourceCardName) implements ChoiceContext {
+
+        public static final String SACRIFICE = "Sacrifice a permanent";
         public static final String DISCARD = "Discard a card";
     }
 

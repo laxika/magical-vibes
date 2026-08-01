@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "10E", collectorNumber = "300")
+@CardRegistration(set = "VIS", collectorNumber = "121")
 public class StampedingWildebeests extends Card {
 
     public StampedingWildebeests() {

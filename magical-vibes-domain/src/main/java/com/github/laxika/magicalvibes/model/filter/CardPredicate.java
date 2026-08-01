@@ -31,6 +31,7 @@ public sealed interface CardPredicate permits
         CardSharesNameWithAPermanentPredicate,
         CardSubtypePredicate,
         CardSupertypePredicate,
+        CardTruePredicate,
         CardTypePredicate,
         PhyrexianManaPredicate {
 }

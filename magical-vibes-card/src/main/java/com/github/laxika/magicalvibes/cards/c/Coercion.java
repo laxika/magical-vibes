@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "PTK", collectorNumber = "70")
 @CardRegistration(set = "8ED", collectorNumber = "122")
 @CardRegistration(set = "6ED", collectorNumber = "119")
+@CardRegistration(set = "VIS", collectorNumber = "54")
 public class Coercion extends Card {
 
     public Coercion() {

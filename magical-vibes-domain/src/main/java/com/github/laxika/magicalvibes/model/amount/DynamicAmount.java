@@ -45,6 +45,7 @@ public sealed interface DynamicAmount permits
         FixedIfControlledCreaturesTotalToughnessAtLeast,
         FixedIfControlsAllNamed,
         FixedIfTargetMatches,
+        FixedIfTargetPlayerControlsMoreLands,
         GreatestPowerAmongControlled,
         HalvedRoundedUp,
         HalfControllerLifeRoundedUp,

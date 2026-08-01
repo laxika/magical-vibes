@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "6ED", collectorNumber = "14")
+@CardRegistration(set = "VIS", collectorNumber = "2")
 public class DarajaGriffin extends Card {
 
     public DarajaGriffin() {

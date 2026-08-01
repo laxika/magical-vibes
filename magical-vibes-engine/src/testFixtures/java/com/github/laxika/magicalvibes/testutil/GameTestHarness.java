@@ -450,6 +450,14 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, alternateCostPermanentIds);
     }
 
+    /** Cast a targeted instant using its alternate hand cost (e.g. Fireblast sacrificing two Mountains). */
+    public void castInstantWithAlternateCost(Player player, int cardIndex, UUID targetId,
+                                             List<UUID> alternateCostPermanentIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null,
+                alternateCostPermanentIds);
+    }
+
     public void castCreatureWithEvoke(Player player, int cardIndex, UUID targetId) {
         ensurePriority(player);
         gameService.playCardWithEvoke(gameData, player, cardIndex, 0, targetId, null, List.of());
@@ -579,6 +587,20 @@ public class GameTestHarness {
     public void castSorceryTappingPermanents(Player player, int cardIndex, UUID targetId,
                                              List<UUID> tapPermanentIds) {
         castSorceryWithSacrifices(player, cardIndex, targetId, tapPermanentIds);
+    }
+
+    /**
+     * Cast a divided-damage sorcery paying a "return any number of permanents you control to hand"
+     * additional cast cost (Infernal Harvest). Returned ids ride on
+     * {@code additionalCostSacrificePermanentIds}; the count becomes X and must match the damage
+     * assignment total.
+     */
+    public void castSorceryReturningPermanents(Player player, int cardIndex,
+                                               Map<UUID, Integer> damageAssignments,
+                                               List<UUID> returnPermanentIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, damageAssignments, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, null, returnPermanentIds);
     }
 
     public void castSorceryWithDiscard(Player player, int cardIndex, int discardHandCardIndex) {

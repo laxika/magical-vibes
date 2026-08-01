@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.AllMatchingCreaturesAttack;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
@@ -36,7 +37,9 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackerBoost;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
@@ -237,11 +240,12 @@ public class CombatAttackService {
         attackSacrificeCostService.validateGlobalSacrificeAttackCosts(gameData, playerId, attackerIndices);
 
         // Validate attack tax (e.g. Windborn Muse / Ghostly Prison — uniform per-attacker tax from the
-        // defender's side; plus per-attacker aura taxes scoped to a single creature, e.g. Brainwash {3})
+        // defender's side; plus per-attacker taxes scoped to a single creature: aura taxes like Brainwash
+        // {3}, and self AttackCostEffect taxes like Phyrexian Marauder {1} per +1/+1 counter)
         int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, playerId);
         int selfTaxTotal = 0;
         for (int idx : attackerIndices) {
-            selfTaxTotal += gameQueryService.getEnchantedCreatureAttackTax(gameData, battlefield.get(idx));
+            selfTaxTotal += gameQueryService.getCreatureAttackTax(gameData, battlefield.get(idx));
         }
         int totalTax = taxPerCreature * attackerIndices.size() + selfTaxTotal;
         List<ManaColor> phyrexianPayments = castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId);
@@ -607,7 +611,9 @@ public class CombatAttackService {
             List<CardEffect> allyAttackEffects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK);
             if (allyAttackEffects.isEmpty()) continue;
 
-            // Pre-filter attacker-group conditional effects — skip if no matching attacker exists.
+            // Pre-filter attacker-group conditional effects — skip if no matching attacker exists,
+            // or if not every matching creature is attacking (Mob Mentality). AllMatching is
+            // unwrapped onto the stack: the trigger event already happened (not intervening-if).
             List<CardEffect> filteredEffects = new ArrayList<>();
             for (CardEffect effect : allyAttackEffects) {
                 if (effect instanceof ConditionalEffect ce && ce.condition() instanceof HasAttacker) {
@@ -618,8 +624,20 @@ public class CombatAttackService {
                                 gameData.id, perm.getCard().getName());
                         continue;
                     }
+                    filteredEffects.add(effect);
+                } else if (effect instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AllMatchingCreaturesAttack) {
+                    boolean allMatch = conditionEvaluationService.isMet(gameData, ce.condition(),
+                            ConditionContext.forPermanent(perm, playerId));
+                    if (!allMatch) {
+                        log.info("Game {} - {} attack trigger skipped (not all matching creatures attack)",
+                                gameData.id, perm.getCard().getName());
+                        continue;
+                    }
+                    filteredEffects.add(ce.wrapped());
+                } else {
+                    filteredEffects.add(effect);
                 }
-                filteredEffects.add(effect);
             }
             if (filteredEffects.isEmpty()) continue;
 
@@ -903,6 +921,8 @@ public class CombatAttackService {
             }
         }
 
+        processDelayedAttackerBoostTriggers(gameData, battlefield, attackerIndices);
+
         // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeAttackTriggers, playerId);
 
@@ -944,6 +964,37 @@ public class CombatAttackService {
         return indices;
     }
 
+
+    /**
+     * Song of Blood-style delayed triggers: whenever a creature attacks this turn, it gets
+     * +power/+toughness until end of turn. One stack entry per attacker per registered boost.
+     */
+    private void processDelayedAttackerBoostTriggers(GameData gameData, List<Permanent> battlefield,
+                                                     List<Integer> attackerIndices) {
+        if (attackerIndices.isEmpty() || !gameData.hasDelayedAction(DelayedAttackerBoost.class)) {
+            return;
+        }
+        for (DelayedAttackerBoost boost : gameData.getDelayedActions(DelayedAttackerBoost.class)) {
+            for (int idx : attackerIndices) {
+                Permanent attacker = battlefield.get(idx);
+                StackEntry se = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        boost.sourceCard(),
+                        boost.controllerId(),
+                        boost.sourceCard().getName() + "'s delayed trigger",
+                        List.of(new BoostSelfEffect(boost.power(), boost.toughness())),
+                        attacker.getId(),
+                        attacker.getId());
+                se.setNonTargeting(true);
+                gameData.stack.add(se);
+                gameLogService.append(gameData, GameLog.cardTextCard(
+                        boost.sourceCard(), " — ", attacker.getCard(),
+                        " gets +" + boost.power() + "/+" + boost.toughness() + " until end of turn."));
+                log.info("Game {} - {} delayed attacker boost fires for {}",
+                        gameData.id, boost.sourceCard().getName(), attacker.getCard().getName());
+            }
+        }
+    }
 
     /**
      * Whether a condition is evaluated against the defending player, and so can be resolved at

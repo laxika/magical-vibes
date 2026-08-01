@@ -1,0 +1,110 @@
+package com.github.laxika.magicalvibes.cards.i;
+
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+class InfernalHarvestTest extends BaseCardTest {
+
+    private void prepare() {
+        harness.setHand(player1, List.of(new InfernalHarvest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+    }
+
+    @Test
+    @DisplayName("Returns Swamps and divides that much damage among target creatures")
+    void returnsSwampsAndDividesDamage() {
+        Permanent swamp1 = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent swamp2 = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepare();
+
+        harness.castSorceryReturningPermanents(player1, 0,
+                Map.of(first.getId(), 2),
+                List.of(swamp1.getId(), swamp2.getId()));
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(second);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(c -> c.getName())
+                .contains("Swamp", "Swamp");
+        assertThat(second.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Returning zero Swamps deals no damage")
+    void returningZeroSwampsDealsNoDamage() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepare();
+
+        harness.castSorceryReturningPermanents(player1, 0, Map.of(), List.of());
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playerBattlefields.get(player2.getId())).containsExactly(bears);
+        assertThat(bears.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot return a non-Swamp permanent")
+    void cannotReturnNonSwamp() {
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepare();
+
+        assertThatThrownBy(() -> harness.castSorceryReturningPermanents(player1, 0,
+                Map.of(bears.getId(), 1), List.of(plains.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(harness.getGameData().playerBattlefields.get(player1.getId())).contains(plains);
+    }
+
+    @Test
+    @DisplayName("Cannot return an opponent's Swamp")
+    void cannotReturnOpponentSwamp() {
+        Permanent opponentSwamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepare();
+
+        assertThatThrownBy(() -> harness.castSorceryReturningPermanents(player1, 0,
+                Map.of(bears.getId(), 1), List.of(opponentSwamp.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(harness.getGameData().playerBattlefields.get(player2.getId())).contains(opponentSwamp);
+    }
+
+    @Test
+    @DisplayName("Damage assignments must sum to the number of Swamps returned")
+    void assignmentsMustSumToReturnedCount() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepare();
+
+        assertThatThrownBy(() -> harness.castSorceryReturningPermanents(player1, 0,
+                Map.of(bears.getId(), 2), List.of(swamp.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Players can't be assigned damage")
+    void cannotTargetPlayers() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        prepare();
+
+        assertThatThrownBy(() -> harness.castSorceryReturningPermanents(player1, 0,
+                Map.of(player2.getId(), 1), List.of(swamp.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+}

@@ -335,6 +335,10 @@ public class TargetLegalityService {
             // "Any target" position (Chandra, the Firebrand −6): players are legal alongside
             // creatures and planeswalkers, and no other permanent type is.
             if (positionFilter == null && anyTarget && gameData.playerIds.contains(targetId)) {
+                String peaceTalks = peaceTalksUntargetableReason(gameData);
+                if (peaceTalks != null) {
+                    throw new IllegalStateException(peaceTalks);
+                }
                 validatePlayerTargetable(gameData, targetId, playerId);
                 continue;
             }
@@ -343,6 +347,10 @@ public class TargetLegalityService {
             if (positionFilter instanceof PlayerPredicateTargetFilter playerFilter) {
                 if (!gameData.playerIds.contains(targetId)) {
                     throw new IllegalStateException("Invalid player target");
+                }
+                String peaceTalks = peaceTalksUntargetableReason(gameData);
+                if (peaceTalks != null) {
+                    throw new IllegalStateException(peaceTalks);
                 }
                 validatePlayerTargetable(gameData, targetId, playerId);
                 validatePlayerPredicate(gameData, playerId, targetId, playerFilter.predicate(), playerFilter.errorMessage());
@@ -364,6 +372,10 @@ public class TargetLegalityService {
                 throw new IllegalStateException("Invalid target");
             }
 
+            String peaceTalks = peaceTalksUntargetableReason(gameData);
+            if (peaceTalks != null) {
+                throw new IllegalStateException(peaceTalks);
+            }
             validatePermanentTargetable(gameData, target, playerId);
             if (positionFilter == null && anyTarget
                     && !gameQueryService.isCreature(gameData, target)
@@ -419,6 +431,14 @@ public class TargetLegalityService {
         }
 
         validateTargetable(gameData, targetId, playerId);
+
+        if (targetId != null && (gameQueryService.findPermanentById(gameData, targetId) != null
+                || gameData.playerIds.contains(targetId))) {
+            String peaceTalks = peaceTalksUntargetableReason(gameData);
+            if (peaceTalks != null) {
+                throw new IllegalStateException(peaceTalks);
+            }
+        }
 
         // Can't be the target of opponents' abilities (e.g. Shanna, Sisay's Legacy)
         if (targetId != null) {
@@ -503,6 +523,8 @@ public class TargetLegalityService {
         }
 
         if (target == null && needsTarget && gameData.playerIds.contains(targetId)) {
+            String peaceTalks = peaceTalksUntargetableReason(gameData);
+            if (peaceTalks != null) return Optional.of(peaceTalks);
             String playerReason = checkPlayerUntargetableReason(gameData, targetId, controllerId);
             if (playerReason != null) return Optional.of(playerReason);
             if (card != null && card.getColor() != null
@@ -887,6 +909,9 @@ public class TargetLegalityService {
                     targetFizzled = true;
                 } else if (targetPerm == null && gameData.playerIds.contains(entry.getTargetId())) {
                     // Player target: check hexproof/shroud at resolution time
+                    if (isBlockedByPeaceTalksForEntry(gameData, entry)) {
+                        targetFizzled = true;
+                    } else {
                     String playerReason = checkPlayerUntargetableReason(gameData, entry.getTargetId(), entry.getControllerId());
                     if (playerReason != null) {
                         targetFizzled = true;
@@ -899,8 +924,12 @@ public class TargetLegalityService {
                                     entry.getCard().getName())) {
                         targetFizzled = true;
                     }
+                    }
                 } else if (targetPerm != null) {
                     targetFizzled = untargetableReason(gameData, targetPerm, entry.getControllerId()) != null;
+                    if (!targetFizzled && isBlockedByPeaceTalksForEntry(gameData, entry)) {
+                        targetFizzled = true;
+                    }
                     if (!targetFizzled
                             && (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)) {
                         targetFizzled = isBlockedByOpponentAbilityRestriction(gameData, targetPerm, entry.getControllerId());
@@ -1002,6 +1031,9 @@ public class TargetLegalityService {
             if (!gameData.playerIds.contains(targetId)) {
                 return false;
             }
+            if (isBlockedByPeaceTalksForEntry(gameData, entry)) {
+                return false;
+            }
             if (checkPlayerUntargetableReason(gameData, targetId, entry.getControllerId()) != null) {
                 return false;
             }
@@ -1024,6 +1056,9 @@ public class TargetLegalityService {
         }
 
         if (untargetableReason(gameData, target, entry.getControllerId()) != null) {
+            return false;
+        }
+        if (isBlockedByPeaceTalksForEntry(gameData, entry)) {
             return false;
         }
         if ((entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
@@ -1275,6 +1310,10 @@ public class TargetLegalityService {
      * (filters via list/position bookkeeping; validators as the shared type-narrowing mechanism).
      */
     public Optional<String> checkSpellPermanentTargetableReason(GameData gameData, Permanent target, Card card, UUID controllerId) {
+        String peaceTalks = peaceTalksUntargetableReason(gameData);
+        if (peaceTalks != null) {
+            return Optional.of(peaceTalks);
+        }
         String protectionReason = checkSpellProtection(gameData, target, card, controllerId);
         if (protectionReason != null) {
             return Optional.of(protectionReason);
@@ -1284,6 +1323,39 @@ public class TargetLegalityService {
             return Optional.of(untargetable);
         }
         return Optional.empty();
+    }
+
+    /**
+     * Permanent-target structural check for triggered abilities — same as
+     * {@link #checkSpellPermanentTargetableReason} but ignores Peace Talks, which only blocks
+     * spells and activated abilities.
+     */
+    public Optional<String> checkTriggeredPermanentTargetableReason(GameData gameData, Permanent target, Card card, UUID controllerId) {
+        String protectionReason = checkSpellProtection(gameData, target, card, controllerId);
+        if (protectionReason != null) {
+            return Optional.of(protectionReason);
+        }
+        String untargetable = untargetableReason(gameData, target, controllerId);
+        if (untargetable != null) {
+            return Optional.of(untargetable);
+        }
+        return Optional.empty();
+    }
+
+    private String peaceTalksUntargetableReason(GameData gameData) {
+        if (gameQueryService.isPeaceTalksActive(gameData)) {
+            return "Players and permanents can't be the targets of spells or activated abilities";
+        }
+        return null;
+    }
+
+    /** Peace Talks only blocks spells and activated abilities — not triggered abilities. */
+    private boolean isBlockedByPeaceTalksForEntry(GameData gameData, StackEntry entry) {
+        if (!gameQueryService.isPeaceTalksActive(gameData)) {
+            return false;
+        }
+        StackEntryType type = entry.getEntryType();
+        return type != StackEntryType.TRIGGERED_ABILITY;
     }
 
     private String checkSpellProtection(GameData gameData, Permanent target, Card card, UUID sourcePlayerId) {

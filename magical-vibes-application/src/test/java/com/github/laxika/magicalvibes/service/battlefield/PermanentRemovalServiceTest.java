@@ -122,6 +122,14 @@ class PermanentRemovalServiceTest {
         return card;
     }
 
+    private static Card createEnchantment(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.ENCHANTMENT);
+        card.setManaCost("{1}{W}");
+        return card;
+    }
+
     private static Card createEquipmentWithSacrificeOnUnattach(String name) {
         Card card = new Card();
         card.setName(name);
@@ -402,6 +410,20 @@ class PermanentRemovalServiceTest {
             prs.removePermanentToGraveyard(gd, artifact);
 
             verify(triggerCollectionService).checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gd, player1Id, player1Id);
+        }
+
+        @Test
+        @DisplayName("Fires enchantment graveyard trigger for enchantments sent to graveyard")
+        void firesEnchantmentGraveyardTrigger() {
+            Permanent enchantment = addPermanent(player1Id, createEnchantment("Pacifism"));
+            when(gameQueryService.isCreature(gd, enchantment)).thenReturn(false);
+            when(gameQueryService.isArtifact(enchantment)).thenReturn(false);
+            when(gameQueryService.isEnchantment(gd, enchantment)).thenReturn(true);
+            when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class), eq(Zone.BATTLEFIELD))).thenReturn(true);
+
+            prs.removePermanentToGraveyard(gd, enchantment);
+
+            verify(triggerCollectionService).checkAnyEnchantmentPutIntoGraveyardFromBattlefieldTriggers(gd, player1Id, player1Id);
         }
 
         @Test

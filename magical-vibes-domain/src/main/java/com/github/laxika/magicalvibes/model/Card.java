@@ -401,6 +401,9 @@ public class Card {
      * able to look up the group by the effect instance it actually receives.
      */
     public void registerEffectTargetIndex(CardEffect effect, int targetIndex) {
+        if (effect == null) {
+            return;
+        }
         assertMutable();
         effectTargetIndexMap.put(effect, targetIndex);
         switch (effect) {
@@ -410,8 +413,14 @@ public class Card {
                 registerEffectTargetIndex(e.upgradedEffect(), targetIndex);
             }
             case MayEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
-            case MayPayManaEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
-            case MayPayTapPermanentsEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            case MayPayManaEffect e -> {
+                if (e.wrapped() != null) registerEffectTargetIndex(e.wrapped(), targetIndex);
+                if (e.elseEffect() != null) registerEffectTargetIndex(e.elseEffect(), targetIndex);
+            }
+            case MayPayTapPermanentsEffect e -> {
+                if (e.wrapped() != null) registerEffectTargetIndex(e.wrapped(), targetIndex);
+                if (e.elseEffect() != null) registerEffectTargetIndex(e.elseEffect(), targetIndex);
+            }
             // Triggering conditionals (e.g. Diregraf Captain's "whenever another Zombie you control
             // dies") are unwrapped to their inner effect when the trigger is serviced, so the inner
             // effect must resolve to the same declared target group — otherwise the card-level target

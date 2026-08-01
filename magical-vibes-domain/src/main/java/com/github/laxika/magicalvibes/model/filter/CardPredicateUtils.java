@@ -25,6 +25,9 @@ public final class CardPredicateUtils {
 
     public static String describeFilter(CardPredicate predicate) {
         if (predicate == null) return "card";
+        if (predicate instanceof CardTruePredicate) {
+            return "card";
+        }
         if (predicate instanceof CardTypePredicate p) {
             return p.cardType().name().toLowerCase() + " card";
         }

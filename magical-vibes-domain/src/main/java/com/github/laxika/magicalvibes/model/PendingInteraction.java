@@ -50,6 +50,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.LibrarySearch,
         PendingInteraction.PermanentChoice,
         PendingInteraction.AdNauseamRepeatChoice,
+        PendingInteraction.ForbiddenRitualRepeatChoice,
         PendingInteraction.ExiledPermanentPutOntoBattlefieldChoice,
         PendingInteraction.LimDulsVaultRepeatChoice,
         PendingInteraction.LimDulsVaultOrderChoice,
@@ -1355,6 +1356,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * the resolution. Answered via the shared may-ability accept/decline wire payload.
      */
     record AdNauseamRepeatChoice(UUID playerId, String sourceName) implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.ACCEPT_DECLINE;
+        }
+    }
+
+    /**
+     * Forbidden Ritual: after each completed cycle (controller sacrificed a nontoken permanent and
+     * the targeted opponent answered the three-way penalty), {@code playerId} decides whether to
+     * sacrifice another nontoken permanent and repeat against the same opponent. Accepting starts
+     * the next controller-sacrifice step while nontoken permanents remain; declining ends the
+     * resolution. Answered via the shared may-ability accept/decline wire payload.
+     */
+    record ForbiddenRitualRepeatChoice(UUID playerId, String sourceName) implements PendingInteraction {
 
         @Override
         public UUID decidingPlayerId() {

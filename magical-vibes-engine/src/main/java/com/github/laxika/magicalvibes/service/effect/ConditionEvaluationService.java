@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.ActivationCount;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
+import com.github.laxika.magicalvibes.model.condition.AllMatchingCreaturesAttack;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.AnyGraveyardAtLeast;
@@ -285,6 +286,8 @@ public class ConditionEvaluationService {
                     enchantedPermanentMatches(gameData, ctx, c.filter());
             case AttacksAlone ignored ->
                     countAttackingCreatures(gameData, ctx.controllerId()) == 1;
+            case AllMatchingCreaturesAttack c ->
+                    allMatchingCreaturesAttack(gameData, ctx, c.filter());
             case FirstCombatPhase ignored ->
                     gameData.combatPhasesThisTurn == 1;
             case MinimumAttackers c ->
@@ -923,6 +926,18 @@ public class ConditionEvaluationService {
         return battlefield.stream()
                 .filter(Permanent::isAttacking)
                 .anyMatch(p -> matchesPermanent(gameData, p, predicate, ctx));
+    }
+
+    /**
+     * True when every controlled permanent matching {@code filter} is attacking (vacuous if none match).
+     */
+    private boolean allMatchingCreaturesAttack(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
+        if (ctx.controllerId() == null) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return true;
+        return battlefield.stream()
+                .filter(p -> matchesPermanent(gameData, p, filter, ctx))
+                .allMatch(Permanent::isAttacking);
     }
 
     private boolean noPlayerHasCardsInHand(GameData gameData) {

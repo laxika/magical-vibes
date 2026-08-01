@@ -284,6 +284,53 @@ class ReturnToHandEffectHandlerTest {
     }
 
     @Nested
+    @DisplayName("ENCHANTED scope")
+    class Enchanted {
+
+        @Test
+        @DisplayName("Returns the permanent the source Aura is attached to")
+        void returnsEnchantedPermanent() {
+            Card auraCard = createCard("Sun Clasp");
+            Permanent aura = createEnchantment("Sun Clasp");
+            Permanent host = createCreature("Grizzly Bears");
+            aura.setAttachedTo(host.getId());
+            gd.playerBattlefields.get(player1Id).add(host);
+            gd.playerBattlefields.get(player1Id).add(aura);
+
+            ReturnToHandEffect effect = ReturnToHandEffect.enchanted();
+            StackEntry entry = entryWithSource(auraCard, player1Id, List.of(effect), aura.getId());
+
+            when(gameQueryService.findPermanentById(gd, aura.getId())).thenReturn(aura);
+            when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
+            when(permanentRemovalService.removePermanentToHand(gd, host)).thenReturn(true);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(permanentRemovalService).removePermanentToHand(gd, host);
+            verify(permanentRemovalService).removeOrphanedAuras(gd);
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) ->
+                    e.plainText().equals("Grizzly Bears is returned to its owner's hand.")));
+        }
+
+        @Test
+        @DisplayName("Does nothing when the Aura is unattached")
+        void doesNothingWhenUnattached() {
+            Card auraCard = createCard("Sun Clasp");
+            Permanent aura = createEnchantment("Sun Clasp");
+            gd.playerBattlefields.get(player1Id).add(aura);
+
+            ReturnToHandEffect effect = ReturnToHandEffect.enchanted();
+            StackEntry entry = entryWithSource(auraCard, player1Id, List.of(effect), aura.getId());
+
+            when(gameQueryService.findPermanentById(gd, aura.getId())).thenReturn(aura);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(permanentRemovalService, never()).removePermanentToHand(any(), any());
+        }
+    }
+
+    @Nested
     @DisplayName("ALL_MATCHING scope")
     class AllMatching {
 

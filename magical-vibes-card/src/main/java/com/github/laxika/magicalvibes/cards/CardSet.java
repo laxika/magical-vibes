@@ -41,6 +41,7 @@ public enum CardSet {
     SET_ICE("ICE"),
     SET_ALL("ALL"),
     SET_MIR("MIR"),
+    SET_VIS("VIS"),
     SET_HML("HML"),
     SET_ALA("ALA"),
     SET_CON("CON"),

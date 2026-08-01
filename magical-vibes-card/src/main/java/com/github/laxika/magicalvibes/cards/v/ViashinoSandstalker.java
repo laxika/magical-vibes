@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "225")
 @CardRegistration(set = "8ED", collectorNumber = "230")
+@CardRegistration(set = "VIS", collectorNumber = "100")
 public class ViashinoSandstalker extends Card {
 
     public ViashinoSandstalker() {

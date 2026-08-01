@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.effect.CantBeDestroyedByLethalDamageUnlessSingleSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -193,8 +194,7 @@ public class StateBasedActionService {
             if (gameQueryService.isCreature(gameData, p) && gameQueryService.getEffectiveToughness(gameData, p) <= 0) {
                 toDie.add(new DeathEntry(p, DeathReason.ZERO_TOUGHNESS));
             } else if (gameQueryService.isCreature(gameData, p)
-                    && (p.getMarkedDamage() >= gameQueryService.getEffectiveToughness(gameData, p)
-                            || p.isDamagedByDeathtouch())
+                    && isDestroyedByLethalDamage(gameData, p)
                     && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)
                     && !graveyardService.tryRegenerate(gameData, p)) {
                 // CR 704.5g — creature with damage >= toughness is destroyed, and
@@ -450,5 +450,30 @@ public class StateBasedActionService {
                 gameOutcomeService.declareWinner(gameData, winnerId);
             }
         }
+    }
+
+    /**
+     * CR 704.5g/h lethal-damage destruction, including Ogre Enforcer's single-source restriction:
+     * total marked damage (or deathtouch) is lethal only when a single source has marked lethal
+     * damage — or when deathtouch damage from a source was recorded — on creatures with
+     * {@link CantBeDestroyedByLethalDamageUnlessSingleSourceEffect}.
+     */
+    private boolean isDestroyedByLethalDamage(GameData gameData, Permanent p) {
+        int toughness = gameQueryService.getEffectiveToughness(gameData, p);
+        boolean totalLethal = p.getMarkedDamage() >= toughness || p.isDamagedByDeathtouch();
+        if (!totalLethal) {
+            return false;
+        }
+        if (p.isLosesAllAbilitiesUntilEndOfTurn()
+                || gameQueryService.computeStaticBonus(gameData, p).losesAllAbilities()) {
+            return true;
+        }
+        boolean requiresSingleSource = p.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantBeDestroyedByLethalDamageUnlessSingleSourceEffect.class::isInstance);
+        if (!requiresSingleSource) {
+            return true;
+        }
+        // Deathtouch from any single source is lethal damage from that source (CR 704.5h).
+        return p.isDamagedByDeathtouch() || p.hasLethalDamageFromSingleSource(toughness);
     }
 }

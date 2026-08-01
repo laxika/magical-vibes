@@ -225,18 +225,21 @@ public class GraveyardReturnSupport {
 
     /**
      * Applies optional battlefield-entry riders from a {@link ReturnCardFromGraveyardEffect}
-     * (mannequin counter, exile-if-leaves replacement, granted cumulative upkeep, subtype-conditional
-     * +1/+1 counters).
+     * (mannequin counter, generic enter-with counter, exile-if-leaves replacement, granted cumulative
+     * upkeep, +1/+1 counters — unconditional when {@code plusOneCountersIfSubtype} is null, else
+     * subtype-gated).
      */
     private void applyBattlefieldReturnRiders(GameData gameData, UUID controllerId, Card card,
                                               ReturnCardFromGraveyardEffect effect) {
-        boolean subtypeCounters = effect.plusOneCountersIfSubtype() != null
-                && effect.plusOneCounterCount() > 0
-                && card.getSubtypes() != null
-                && card.getSubtypes().contains(effect.plusOneCountersIfSubtype());
+        boolean plusOneCounters = effect.plusOneCounterCount() > 0
+                && (effect.plusOneCountersIfSubtype() == null
+                || (card.getSubtypes() != null
+                && card.getSubtypes().contains(effect.plusOneCountersIfSubtype())));
+        boolean enterWithCounter = effect.enterWithCounter() != null && effect.enterWithCounterCount() > 0;
         if (!effect.enterWithMannequinCounter()
+                && !enterWithCounter
                 && !effect.exileIfLeavesBattlefield()
-                && !subtypeCounters
+                && !plusOneCounters
                 && (effect.grantCumulativeUpkeepCost() == null || effect.grantCumulativeUpkeepCost().isBlank())) {
             return;
         }
@@ -251,10 +254,14 @@ public class GraveyardReturnSupport {
             if (effect.enterWithMannequinCounter()) {
                 p.setCounterCount(CounterType.MANNEQUIN, 1);
             }
+            if (enterWithCounter) {
+                p.setCounterCount(effect.enterWithCounter(),
+                        p.getCounterCount(effect.enterWithCounter()) + effect.enterWithCounterCount());
+            }
             if (effect.exileIfLeavesBattlefield()) {
                 p.setExileIfLeavesBattlefield(true);
             }
-            if (subtypeCounters) {
+            if (plusOneCounters) {
                 permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, p, effect.plusOneCounterCount());
             }
             if (effect.grantCumulativeUpkeepCost() != null && !effect.grantCumulativeUpkeepCost().isBlank()) {
@@ -378,9 +385,11 @@ public class GraveyardReturnSupport {
                     } else if (effect.grantHaste() || effect.exileAtEndStep()) {
                         putCardOntoBattlefieldWithHasteAndExile(gameData, targetPlayerId, card,
                                 effect.grantHaste(), effect.exileAtEndStep(), effect.exileIfLeavesBattlefield());
+                        applyBattlefieldReturnRiders(gameData, targetPlayerId, card, effect);
                     } else {
                         putCardOntoBattlefield(gameData, targetPlayerId, card, effect.grantColor(), effect.grantSubtype(),
                                 effect.enterTapped(), effect.enterAttacking());
+                        applyBattlefieldReturnRiders(gameData, targetPlayerId, card, effect);
                     }
                     returnedCards.add(card);
                 }

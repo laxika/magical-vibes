@@ -11,6 +11,7 @@ public sealed interface Condition permits
         ActivePlayerHandEmpty,
         ActivationCount,
         AllConditions,
+        AllMatchingCreaturesAttack,
         AllOf,
         AnOpponentHandEmpty,
         AnOpponentHasMoreLifeThanController,

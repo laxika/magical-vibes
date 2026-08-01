@@ -958,8 +958,14 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
             List<Integer> chosen;
             if (lure) {
-                // Every able blocker must block this attacker.
-                chosen = new ArrayList<>(candidates);
+                // Matching able blockers must block this attacker (filter may narrow).
+                chosen = new ArrayList<>();
+                for (int blockerIdx : candidates) {
+                    if (gameQueryService.isRequiredToBlockByLure(
+                            gameData, attacker, battlefield.get(blockerIdx))) {
+                        chosen.add(blockerIdx);
+                    }
+                }
             } else if (!provoked.isEmpty()) {
                 // Provoked blockers must block; add enough partners to make the block legal.
                 List<Integer> provokedUnused = new ArrayList<>();

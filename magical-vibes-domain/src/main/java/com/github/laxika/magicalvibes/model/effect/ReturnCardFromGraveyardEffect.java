@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -139,13 +140,21 @@ import lombok.Builder;
  *                             battlefield, exile it instead of putting it anywhere else"; also Unearth's
  *                             CR 702.100 rider, where it pairs with {@link #exileAtEndStep})
  * @param plusOneCountersIfSubtype when non-null, {@link #plusOneCounterCount} +1/+1 counters are put on
- *                             the returned permanent if the returned card has this subtype (e.g. Defy
- *                             Death — "If it's an Angel, put two +1/+1 counters on it"); only meaningful
- *                             for {@code BATTLEFIELD}
- * @param plusOneCounterCount  number of +1/+1 counters placed by {@link #plusOneCountersIfSubtype}
+ *                             the returned permanent only if the returned card has this subtype (e.g. Defy
+ *                             Death — "If it's an Angel, put two +1/+1 counters on it"); when null,
+ *                             {@link #plusOneCounterCount} alone is an unconditional rider (e.g.
+ *                             Miraculous Recovery — "Put a +1/+1 counter on it"); only meaningful for
+ *                             {@code BATTLEFIELD}
+ * @param plusOneCounterCount  number of +1/+1 counters placed after the return; gated by
+ *                             {@link #plusOneCountersIfSubtype} when that field is non-null
  * @param grantCumulativeUpkeepCost when non-null, the returned permanent gains that cumulative upkeep
  *                             cost as a persistent {@code UPKEEP_TRIGGERED} ability (e.g. Dreams of the
  *                             Dead — "That creature gains Cumulative upkeep {2}.")
+ * @param enterWithCounter     when non-null, put {@link #enterWithCounterCount} counters of that type on
+ *                             the returned permanent after it enters (e.g. Bogardan Phoenix death counter);
+ *                             only meaningful for {@code BATTLEFIELD}
+ * @param enterWithCounterCount number of {@link #enterWithCounter} counters to place; ignored when
+ *                             {@code enterWithCounter} is null (defaults to {@code 0})
  */
 @Builder
 public record ReturnCardFromGraveyardEffect(
@@ -184,7 +193,9 @@ public record ReturnCardFromGraveyardEffect(
         boolean exileIfLeavesBattlefield,
         String grantCumulativeUpkeepCost,
         CardSubtype plusOneCountersIfSubtype,
-        int plusOneCounterCount
+        int plusOneCounterCount,
+        CounterType enterWithCounter,
+        int enterWithCounterCount
 ) implements CardEffect {
 
     /**

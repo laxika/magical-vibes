@@ -16,11 +16,12 @@ import java.util.List;
  * sequence, and only if every player declines (or can't pay) do the fallback effects resolve.
  * Currently only meaningful with an optional {@link PayManaCost}.
  *
- * <p>When {@code payerIsEnchantedController} is true (Mind Whip: "that player may pay {3}. If
- * they don't, ..."), the prompt goes to the enchanted permanent's controller — the player carried
- * on the stack entry's {@code targetId} by an
- * {@code ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED} trigger — instead of the Aura's
- * controller. Mutually exclusive with {@code anyPlayerMayPay}.
+ * <p>When {@code payerIsEnchantedController} is true, the prompt goes to the player on the stack
+ * entry's {@code targetId} instead of the source's controller. That covers both the enchanted
+ * permanent's controller under {@code ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED} (Mind Whip:
+ * "that player may pay {3}") and the active player under {@code EACH_UPKEEP_TRIGGERED} (Pillar
+ * Tombs of Aku: "that player may sacrifice a creature"). Mutually exclusive with
+ * {@code anyPlayerMayPay}.
  */
 public record ForcedCostOrElseEffect(
         CostEffect forcedCost,
@@ -43,8 +44,9 @@ public record ForcedCostOrElseEffect(
     }
 
     /**
-     * "That player may pay {cost}. If they don't, [penalty]" where "that player" is the enchanted
-     * permanent's controller (Mind Whip).
+     * "That player may pay {cost}. If they don't, [penalty]" where "that player" is the stack
+     * entry's {@code targetId} (enchanted permanent's controller for Mind Whip; active player for
+     * each-upkeep triggers like Pillar Tombs of Aku).
      */
     public static ForcedCostOrElseEffect enchantedControllerMayPay(CostEffect forcedCost,
                                                                    List<CardEffect> elseEffects) {

@@ -1370,6 +1370,49 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handlePhasesInTriggerTarget(GameData gameData, UUID chosenId,
+            PermanentChoiceContext.PhasesInTriggerTarget pit) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                pit.sourceCard(),
+                pit.controllerId(),
+                pit.sourceCard().getName() + "'s ability",
+                new ArrayList<>(pit.effects()),
+                chosenId,
+                pit.sourcePermanentId()
+        );
+        gameData.stack.add(entry);
+
+        String targetName = getTargetDisplayName(gameData, chosenId);
+        gameLogService.append(gameData, GameLog.builder().card(pit.sourceCard())
+                .text("'s ability targets " + targetName + ".").build());
+        log.info("Game {} - {} phase-in trigger targets {}",
+                gameData.id, pit.sourceCard().getName(), targetName);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.PhasesInTriggerTarget.class)) {
+            turnProgressionService.processNextPhasesInTriggerTarget(gameData);
+            return;
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepAnyTargetTrigger.class)
+                || gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger.class)
+                || gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class)
+                || gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepCopyTriggerTarget.class)
+                || gameData.hasPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class)
+                || gameData.hasPendingInteraction(PermanentChoiceContext.PucasMischiefOwnTarget.class)
+                || gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPermanentTargetTrigger.class)) {
+            turnProgressionService.processNextPhasesInTriggerTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleUpkeepAnyTargetTrigger(GameData gameData, UUID chosenId,
             PermanentChoiceContext.UpkeepAnyTargetTrigger uat) {
         StackEntry entry = new StackEntry(

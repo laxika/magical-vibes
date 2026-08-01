@@ -19,6 +19,8 @@ package com.github.laxika.magicalvibes.model.effect;
  *       {@code stolenCreatures}).</li>
  *   <li>{@link #AURAS_ATTACHED_TO_TARGET} — every Aura attached to the targeted permanent,
  *       regardless of who controls those Auras (Scarab of the Unseen).</li>
+ *   <li>{@link #ENCHANTED} — the permanent the source Aura is attached to (Sun Clasp —
+ *       "return enchanted creature to its owner's hand").</li>
  * </ul>
  */
 public enum BounceScope {
@@ -28,5 +30,6 @@ public enum BounceScope {
     ALL_MATCHING,
     TARGET_PLAYERS_PERMANENTS,
     TARGET_PLAYERS_OWNED,
-    AURAS_ATTACHED_TO_TARGET
+    AURAS_ATTACHED_TO_TARGET,
+    ENCHANTED
 }

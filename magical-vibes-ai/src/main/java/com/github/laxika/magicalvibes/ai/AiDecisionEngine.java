@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
@@ -789,6 +790,13 @@ public abstract class AiDecisionEngine {
             if (!(effect instanceof CostEffect cost)) {
                 continue;
             }
+            // Multi-permanent costs ride on additionalCostSacrificePermanentIds — see
+            // selectMultiPermanentCostIds.
+            if (effect instanceof SacrificeMultiplePermanentsCost
+                    || effect instanceof TapAnyNumberOfPermanentsCost
+                    || effect instanceof ReturnAnyNumberOfPermanentsToHandCost) {
+                continue;
+            }
             // "Sacrifice a creature" — pick the weakest (lowest effective power + toughness).
             if (cost.sacrificesChosenCreature()) {
                 return battlefield.stream()
@@ -816,8 +824,9 @@ public abstract class AiDecisionEngine {
      * ride on {@code PlayCardRequest.additionalCostSacrificePermanentIds}. A multi-permanent
      * sacrifice (Phyrexian Tribute's "sacrifice two creatures") gives up the weakest matching
      * permanents; a "tap any number of permanents you control" cost (Burn at the Stake) taps every
-     * untapped matching permanent, since the count it feeds is the payoff. Returns an empty list
-     * when the card has no such cost or too few matching permanents.
+     * untapped matching permanent, and a "return any number" cost (Infernal Harvest) returns every
+     * matching permanent, since the count feeds the payoff. Returns an empty list when the card has
+     * no such cost or too few matching permanents.
      */
     protected List<UUID> selectMultiPermanentCostIds(GameData gameData, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
@@ -835,6 +844,12 @@ public abstract class AiDecisionEngine {
             if (effect instanceof TapAnyNumberOfPermanentsCost cost) {
                 return battlefield.stream()
                         .filter(p -> !p.isTapped())
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                        .map(Permanent::getId)
+                        .toList();
+            }
+            if (effect instanceof ReturnAnyNumberOfPermanentsToHandCost cost) {
+                return battlefield.stream()
                         .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
                         .map(Permanent::getId)
                         .toList();

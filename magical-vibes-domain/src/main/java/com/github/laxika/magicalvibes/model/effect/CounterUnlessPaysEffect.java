@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import java.util.List;
 
 /**
- * Counter target spell unless its controller pays a mana amount.
+ * Counter target spell unless its controller pays a mana amount (and optionally life).
  *
  * @param amount            the generic mana amount to pay (ignored when {@code useXValue} or
  *                          {@code dynamicAmount} is set, except in the PendingMayAbility where it
@@ -16,23 +16,31 @@ import java.util.List;
  * @param onNotPaidEffects  effects resolved against the countered spell's controller when they do not
  *                          pay (their target id is set to that player), e.g. Power Sink's "they tap all
  *                          lands with mana abilities they control and lose all unspent mana"
+ * @param lifeCost          additional life that must be paid together with the mana (Mundungu:
+ *                          "{1} and 1 life"); {@code 0} means mana only
  */
 public record CounterUnlessPaysEffect(int amount, boolean useXValue, boolean exileIfCountered,
-                                      DynamicAmount dynamicAmount, List<CardEffect> onNotPaidEffects)
+                                      DynamicAmount dynamicAmount, List<CardEffect> onNotPaidEffects,
+                                      int lifeCost)
         implements CounterSpellingEffect, CounterUnlessEffect {
 
     /** Fixed-amount counter-unless-pays (e.g. Mana Leak). */
     public CounterUnlessPaysEffect(int amount) {
-        this(amount, false, false, null, List.of());
+        this(amount, false, false, null, List.of(), 0);
+    }
+
+    /** Counter unless pays {@code amount} mana and {@code lifeCost} life (Mundungu). */
+    public CounterUnlessPaysEffect(int amount, int lifeCost) {
+        this(amount, false, false, null, List.of(), lifeCost);
     }
 
     public CounterUnlessPaysEffect(int amount, boolean useXValue, boolean exileIfCountered) {
-        this(amount, useXValue, exileIfCountered, null, List.of());
+        this(amount, useXValue, exileIfCountered, null, List.of(), 0);
     }
 
     /** Dynamic-amount counter-unless-pays ("{1} for each …", Spell Syphon). */
     public CounterUnlessPaysEffect(DynamicAmount dynamicAmount) {
-        this(0, false, false, dynamicAmount, List.of());
+        this(0, false, false, dynamicAmount, List.of(), 0);
     }
 
     /**
@@ -41,7 +49,7 @@ public record CounterUnlessPaysEffect(int amount, boolean useXValue, boolean exi
      */
     public CounterUnlessPaysEffect(int amount, boolean useXValue, boolean exileIfCountered,
                                    List<CardEffect> onNotPaidEffects) {
-        this(amount, useXValue, exileIfCountered, null, onNotPaidEffects);
+        this(amount, useXValue, exileIfCountered, null, onNotPaidEffects, 0);
     }
 
     @Override

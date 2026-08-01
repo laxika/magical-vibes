@@ -37,9 +37,11 @@ import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -847,6 +849,8 @@ public class GameSimulator {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade(kgc.options().getFirst().name()));
                 } else if (ccCtx.context() instanceof ChoiceContext.StorageMatrixUntapChoice) {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade("LAND"));
+                } else if (ccCtx.context() instanceof ChoiceContext.TeferisRealmTypeChoice) {
+                    gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade("CREATURE"));
                 } else if (ccCtx.context() instanceof ChoiceContext.ChooseModeChoice) {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade(ccCtx.options().getFirst()));
                 } else {
@@ -1150,7 +1154,12 @@ public class GameSimulator {
     private UUID computeSacrificeTarget(GameData gd, UUID playerId, Card card) {
         List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof CostEffect cost && !(effect instanceof SacrificeMultiplePermanentsCost)) {
+            if (effect instanceof SacrificeMultiplePermanentsCost
+                    || effect instanceof TapAnyNumberOfPermanentsCost
+                    || effect instanceof ReturnAnyNumberOfPermanentsToHandCost) {
+                continue;
+            }
+            if (effect instanceof CostEffect cost) {
                 PermanentPredicate filter = cost.consumedPermanentFilter();
                 if (filter != null) {
                     return battlefield.stream()
@@ -1163,23 +1172,36 @@ public class GameSimulator {
     }
 
     /**
-     * Finds the permanents to pay a multi-permanent sacrifice cast cost (Phyrexian Tribute's
-     * "sacrifice two creatures"). Returns an empty list when the card has no such cost or too few
-     * matching permanents — the engine rejects the cast unless exactly {@code count} ids arrive,
+     * Finds the permanents to pay a multi-permanent additional cast cost (Phyrexian Tribute's
+     * "sacrifice two creatures", Burn at the Stake's "tap any number", Infernal Harvest's
+     * "return any number"). Returns an empty list when the card has no such cost or too few
+     * matching permanents — the engine rejects the cast unless the required count of ids arrive,
      * and enumeration already filters unpayable casts via {@code canPayAdditionalSpellCosts}.
      */
     private List<UUID> computeMultiSacrificeTargets(GameData gd, UUID playerId, Card card) {
         List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (!(effect instanceof SacrificeMultiplePermanentsCost cost)) {
-                continue;
+            if (effect instanceof SacrificeMultiplePermanentsCost cost) {
+                List<UUID> chosen = battlefield.stream()
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gd, p, cost.filter()))
+                        .limit(cost.count())
+                        .map(Permanent::getId)
+                        .toList();
+                return chosen.size() == cost.count() ? chosen : List.of();
             }
-            List<UUID> chosen = battlefield.stream()
-                    .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gd, p, cost.filter()))
-                    .limit(cost.count())
-                    .map(Permanent::getId)
-                    .toList();
-            return chosen.size() == cost.count() ? chosen : List.of();
+            if (effect instanceof TapAnyNumberOfPermanentsCost cost) {
+                return battlefield.stream()
+                        .filter(p -> !p.isTapped())
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gd, p, cost.filter()))
+                        .map(Permanent::getId)
+                        .toList();
+            }
+            if (effect instanceof ReturnAnyNumberOfPermanentsToHandCost cost) {
+                return battlefield.stream()
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gd, p, cost.filter()))
+                        .map(Permanent::getId)
+                        .toList();
+            }
         }
         return List.of();
     }

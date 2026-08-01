@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControl
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentsWithSameNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEffect;
@@ -1231,7 +1232,16 @@ public class BattlefieldEntryService {
                     .anyMatch(e -> e instanceof ConditionalEffect ce && ce.condition().isEtbTriggerGate()
                             && (ce.targetSpec().category().includesPlayers() || ce.targetSpec().category().includesPermanents()));
 
+            // MayPayManaEffect ETBs never take a cast-time target (see EffectResolution), so a
+            // targeting pay/else ability (Knight of the Mists) must choose as the trigger goes
+            // on the stack — including the just-entered permanent as a legal choice.
+            boolean mayPayManaNeedsTarget = otherEffects.stream()
+                    .anyMatch(e -> e instanceof MayPayManaEffect
+                            && (e.targetSpec().category().includesPlayers()
+                            || e.targetSpec().category().includesPermanents()));
+
             if (gateConditionalNeedsTarget
+                    || mayPayManaNeedsTarget
                     || (cardNeedsTarget && !hasTarget && choosesTargetAtTriggerTime)) {
                 // CR 603.3: no target was chosen at cast time — the ETB target is gated behind
                 // an intervening-if, or the permanent wasn't cast (token copy, or returned from

@@ -104,6 +104,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_NONTOKEN_CREATURE_DIES,
     ON_ANY_NONTOKEN_CREATURE_DIES,
     ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers whenever an enchantment (any player's) is put into a graveyard from the battlefield.
+     *  Fires for destroy, sacrifice, etc. Checked in {@code PermanentRemovalService} via
+     *  {@code TriggerCollectionService.checkAnyEnchantmentPutIntoGraveyardFromBattlefieldTriggers}.
+     *  Used by Femeref Enchantress (pair with {@code DrawCardEffect}). */
+    ON_ANY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
     ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD,
     /** Triggers whenever a permanent (of any type) an opponent of the controller controls is put into
      *  a graveyard from the battlefield. Fires on permanents controlled by an opponent of the dying
@@ -206,6 +211,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever a land the controller controls enters the battlefield.
      *  Checked in {@code BattlefieldEntryService.checkAllyLandEntersTriggers}. */
     ON_ALLY_LAND_ENTERS_BATTLEFIELD,
+    /** Triggers when the controller plays a land (land play special action — not every land ETB).
+     *  Checked in {@code TriggerCollectionService.checkControllerPlaysLandTriggers}, fired from every
+     *  path that increments {@code landsPlayedThisTurn}. Used with {@code ON_CONTROLLER_CASTS_SPELL}
+     *  for "When you play a card, …" (Juju Bubble). */
+    ON_CONTROLLER_PLAYS_LAND,
     ON_OPPONENT_CREATURE_DIES,
     ON_DEALT_DAMAGE,
     ON_OPENING_HAND_REVEAL,
@@ -255,8 +265,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkAnyPermanentEntersTriggers}. The entering permanent's
      *  controller is baked in as the non-targeting {@code targetId}, so a player-directed effect
      *  (e.g. {@code SacrificePermanentsEffect(…, SacrificeRecipient.TARGET_PLAYER)}) acts on "that
-     *  player". Filter which permanents trigger it with a {@code TriggeringCardConditionalEffect}
-     *  wrapper. Used by Nature's Wrath. */
+     *  player". The entering permanent's id / card id are stamped on {@code triggeringPermanentId} /
+     *  {@code triggeringCardId} for effects that act on "that permanent" or its name (Eye of
+     *  Singularity). Filter which permanents trigger it with a {@code TriggeringCardConditionalEffect}
+     *  wrapper. Used by Nature's Wrath / Eye of Singularity. */
     ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_GAINS_LIFE,
     ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE,

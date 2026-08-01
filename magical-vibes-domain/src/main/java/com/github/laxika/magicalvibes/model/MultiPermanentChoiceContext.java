@@ -90,6 +90,21 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
+     * Desolation-style forced sacrifice: same APNAP simultaneous pick as {@link ForcedSacrifice},
+     * then after all sacrifices the source deals {@code damageAmount} to each player who
+     * sacrificed a permanent matching {@code subtype} this way. {@code damageEntry} is the
+     * resolving stack entry (snapshotted for attribution after the interaction parks).
+     */
+    record ForcedSacrificeThenDamageIfSubtype(UUID sacrificingPlayerId,
+                                              java.util.List<PendingForcedSacrifice> remainingChoosers,
+                                              java.util.List<UUID> accumulatedSacrificeIds,
+                                              CardSubtype subtype,
+                                              int damageAmount,
+                                              StackEntry damageEntry)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /**
      * "Each player chooses a creature to keep, the rest are destroyed" (destroy-rest flow).
      * {@code remainingChoosers} and {@code protectedIds} advance across re-begins exactly as
      * in {@link ForcedSacrifice}; after the last chooser, every creature not in
@@ -108,6 +123,13 @@ public sealed interface MultiPermanentChoiceContext {
      */
     record ForcedDestroy(UUID destroyingPlayerId, String sourceName)
             implements MultiPermanentChoiceContext {
+    }
+
+    /**
+     * Forced return-to-hand pick ("sacrifice [source] unless you return N matching permanents to
+     * their owner's hand"). Direct single-player flow — chosen permanents bounce immediately.
+     */
+    record ForcedReturnToHand(UUID returningPlayerId) implements MultiPermanentChoiceContext {
     }
 
     /** Return the chosen permanents {@code targetPlayerId} controls to their owner's hand. */
@@ -249,6 +271,15 @@ public sealed interface MultiPermanentChoiceContext {
     record KillingWaveKeep(UUID choosingPlayerId, int xValue, String sourceName,
                            java.util.List<UUID> remainingPlayerIds,
                            java.util.List<UUID> accumulatedKeepIds)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /**
+     * Equipoise: the controller chose permanents of {@code phase} that {@code targetPlayerId}
+     * controls to phase out (one pass of land / artifact / creature). Completion phases them out
+     * then advances to the next pass via {@code EquipoiseSupport}.
+     */
+    record EquipoisePhaseOut(Card sourceCard, UUID controllerId, UUID targetPlayerId, EquipoisePhase phase)
             implements MultiPermanentChoiceContext {
     }
 }

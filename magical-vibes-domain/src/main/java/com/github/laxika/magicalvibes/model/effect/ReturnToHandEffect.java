@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *       target player controls matching the filter (River's Rebuke).</li>
  *   <li>{@link #permanentsTargetPlayerOwns(PermanentPredicate)} — bounce every permanent the target
  *       player owns matching the filter, regardless of controller (Hurkyl's Recall).</li>
+ *   <li>{@link #enchanted()} — bounce the permanent the source Aura is attached to (Sun Clasp).</li>
  * </ul>
  */
 public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect {
@@ -79,6 +80,14 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect 
      */
     public static ReturnToHandEffect aurasAttachedToTarget() {
         return new ReturnToHandEffect(BounceScope.AURAS_ATTACHED_TO_TARGET, null, 0, 0);
+    }
+
+    /**
+     * Returns the permanent the source Aura is attached to to its owner's hand (Sun Clasp).
+     * Non-targeting; re-derives the host from the Aura's {@code attachedTo} at resolution.
+     */
+    public static ReturnToHandEffect enchanted() {
+        return new ReturnToHandEffect(BounceScope.ENCHANTED, null, 0, 0);
     }
 
     public BounceScope scope() {

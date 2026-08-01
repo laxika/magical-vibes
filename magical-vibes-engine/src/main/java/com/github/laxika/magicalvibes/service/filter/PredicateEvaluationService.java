@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -68,6 +69,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
@@ -94,6 +96,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostOwnCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicate;
@@ -263,6 +266,8 @@ public class PredicateEvaluationService {
                     p.predicates().stream().anyMatch(sub -> matchesCardPredicate(card, sub, sourceCardId, gameData, cardOwnerId));
             case CardControllerDoesNotOwnPredicate ignored ->
                     card.getOwnerId() != null && cardOwnerId != null && !card.getOwnerId().equals(cardOwnerId);
+            case CardTruePredicate ignored ->
+                    true;
         };
     }
 
@@ -399,10 +404,13 @@ public class PredicateEvaluationService {
                 yield sourcePermanent != null && permanent.getAttachedTo().equals(sourcePermanent.getId());
             }
             case PermanentIsHostOfSourceAuraPredicate ignored -> {
-                if (gameData == null || sourceCardId == null) {
-                    yield false;
+                Permanent sourceAura = null;
+                if (gameData != null && sourceCardId != null) {
+                    sourceAura = findPermanentByOriginalCardId(gameData, sourceCardId);
                 }
-                Permanent sourceAura = findPermanentByOriginalCardId(gameData, sourceCardId);
+                if (sourceAura == null && filterContext != null) {
+                    sourceAura = filterContext.sourcePermanentSnapshot();
+                }
                 yield sourceAura != null && sourceAura.isAttached()
                         && sourceAura.getAttachedTo().equals(permanent.getId());
             }
@@ -443,7 +451,12 @@ public class PredicateEvaluationService {
             case PermanentIsBlockedPredicate ignored ->
                     gameData != null && permanent.isAttacking() && isBlocked(gameData, permanent);
             case PermanentIsUnblockedAttackingPredicate ignored ->
-                    gameData != null && permanent.isAttacking() && !isBlocked(gameData, permanent);
+                    // "Unblocked" only after blockers are declared (Gatherer: Gossamer Chains).
+                    gameData != null
+                            && gameData.currentStep != null
+                            && !gameData.currentStep.isBeforeBlockersDeclared()
+                            && permanent.isAttacking()
+                            && !isBlocked(gameData, permanent);
             case PermanentBlockedOrWasBlockedBySubtypeThisTurnPredicate p -> {
                 if (gameData == null) {
                     yield false;
@@ -497,6 +510,9 @@ public class PredicateEvaluationService {
                     permanent.getCard().getManaValue() <= maxManaValuePredicate.maxManaValue();
             case PermanentMinManaValuePredicate minManaValuePredicate ->
                     permanent.getCard().getManaValue() >= minManaValuePredicate.minManaValue();
+            case PermanentManaValueAtMostOwnCountersPredicate atMostOwnCounters ->
+                    permanent.getCard().getManaValue()
+                            <= permanent.getCounterCount(atMostOwnCounters.counterType());
             case PermanentPowerAtLeastPredicate powerAtLeastPredicate -> {
                 if (gameData == null) {
                     yield gameQueryService.powerForStaticFilter(permanent) >= powerAtLeastPredicate.minPower();
@@ -757,6 +773,24 @@ public class PredicateEvaluationService {
                 }
                 yield permanent.getCard().getName().equals(sourcePermanent.getCard().getName());
             }
+            case PermanentSharesNameWithAnotherPermanentPredicate ignored -> {
+                if (gameData == null) {
+                    yield false;
+                }
+                String name = permanent.getCard().getName();
+                boolean[] foundOther = {false};
+                gameData.forEachBattlefield((playerId, battlefield) -> {
+                    if (foundOther[0]) return;
+                    for (Permanent other : battlefield) {
+                        if (!other.getId().equals(permanent.getId())
+                                && name.equals(other.getCard().getName())) {
+                            foundOther[0] = true;
+                            return;
+                        }
+                    }
+                });
+                yield foundOther[0];
+            }
             case PermanentHasSourceChosenSubtypePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
                     yield false;
@@ -770,38 +804,20 @@ public class PredicateEvaluationService {
                     permanent.getCard().getName().equals(namedPredicate.cardName());
             case PermanentNameInPredicate nameInPredicate ->
                     nameInPredicate.cardNames().contains(permanent.getCard().getName());
-            case PermanentHasCountersPredicate hasCountersPredicate ->
-                    switch (hasCountersPredicate.counterType()) {
-                        case PLUS_ONE_PLUS_ONE -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0;
-                        case MINUS_ONE_MINUS_ONE -> permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0;
-                        case CHARGE -> permanent.getCounterCount(CounterType.CHARGE) > 0;
-                        case LOYALTY -> permanent.getCounterCount(CounterType.LOYALTY) > 0;
-                        case HATCHLING -> permanent.getCounterCount(CounterType.HATCHLING) > 0;
-                        case SLIME -> permanent.getCounterCount(CounterType.SLIME) > 0;
-                        case STUDY -> permanent.getCounterCount(CounterType.STUDY) > 0;
-                        case WISH -> permanent.getCounterCount(CounterType.WISH) > 0;
-                        case LORE -> permanent.getCounterCount(CounterType.LORE) > 0;
-                        case AIM -> permanent.getCounterCount(CounterType.AIM) > 0;
-                        case BRIBERY -> permanent.getCounterCount(CounterType.BRIBERY) > 0;
-                        case FEATHER -> permanent.getCounterCount(CounterType.FEATHER) > 0;
-                        case MUSIC -> permanent.getCounterCount(CounterType.MUSIC) > 0;
-                        case PARALYZATION -> permanent.getCounterCount(CounterType.PARALYZATION) > 0;
-                        case ANY -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0
-                                || permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
-                                || permanent.getCounterCount(CounterType.CHARGE) > 0
-                                || permanent.getCounterCount(CounterType.LOYALTY) > 0
-                                || permanent.getCounterCount(CounterType.HATCHLING) > 0
-                                || permanent.getCounterCount(CounterType.SLIME) > 0
-                                || permanent.getCounterCount(CounterType.STUDY) > 0
-                                || permanent.getCounterCount(CounterType.WISH) > 0
-                                || permanent.getCounterCount(CounterType.LORE) > 0
-                                || permanent.getCounterCount(CounterType.AIM) > 0
-                                || permanent.getCounterCount(CounterType.BRIBERY) > 0
-                                || permanent.getCounterCount(CounterType.FEATHER) > 0
-                                || permanent.getCounterCount(CounterType.MUSIC) > 0
-                                || permanent.getCounterCount(CounterType.PARALYZATION) > 0;
-                        default -> false;
-                    };
+            case PermanentHasCountersPredicate hasCountersPredicate -> {
+                if (hasCountersPredicate.counterType() == CounterType.ANY) {
+                    boolean any = false;
+                    for (CounterType type : CounterType.values()) {
+                        if (type == CounterType.ANY || type == CounterType.SILVER) continue;
+                        if (permanent.getCounterCount(type) > 0) {
+                            any = true;
+                            break;
+                        }
+                    }
+                    yield any;
+                }
+                yield permanent.getCounterCount(hasCountersPredicate.counterType()) > 0;
+            }
             case PermanentHasCumulativeUpkeepPredicate ignored -> permanent.hasCumulativeUpkeep();
             case PermanentDealtDamageThisTurnPredicate ignored ->
                     gameData != null && gameData.permanentsDealtDamageThisTurn.contains(permanent.getId());

@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.amount.FixedIfControlMoreCreaturesTh
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlledCreaturesTotalToughnessAtLeast;
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlsAllNamed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetMatches;
+import com.github.laxika.magicalvibes.model.amount.FixedIfTargetPlayerControlsMoreLands;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.HighestOpponentLifeTotal;
@@ -118,6 +119,8 @@ public class AmountEvaluationService {
                     controlsAllNamed(gameData, a, ctx) ? a.amount() : a.otherwise();
             case FixedIfTargetMatches a ->
                     targetMatches(gameData, a, ctx) ? a.amount() : a.otherwise();
+            case FixedIfTargetPlayerControlsMoreLands a ->
+                    targetPlayerControlsMoreLands(gameData, ctx) ? a.amount() : a.otherwise();
             case XValue ignored ->
                     ctx.xValue();
             case ManaSpentToCast ignored ->
@@ -368,8 +371,12 @@ public class AmountEvaluationService {
         filterContext = filterContext.withSourceControllerId(ctx.controllerId());
         // Source-relative predicates (e.g. PermanentHasSameNameAsSourcePredicate on
         // Powerstone Shard's "for each artifact you control named ~") need the source card.
+        // PermanentIsHostOfSourceAuraPredicate also needs the live source permanent when
+        // staticEvaluation nulls GameData (Vampirism: "+1/+1 for each other creature you control").
         if (ctx.sourcePermanent() != null) {
-            filterContext = filterContext.withSourceCardId(ctx.sourcePermanent().getCard().getId());
+            filterContext = filterContext
+                    .withSourceCardId(ctx.sourcePermanent().getCard().getId())
+                    .withSourcePermanentSnapshot(ctx.sourcePermanent());
         }
         int matches = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -578,6 +585,26 @@ public class AmountEvaluationService {
             }
         }
         return true;
+    }
+
+    private boolean targetPlayerControlsMoreLands(GameData gameData, AmountContext ctx) {
+        UUID targetId = targetPlayerId(gameData, ctx);
+        if (targetId == null || ctx.controllerId() == null) {
+            return false;
+        }
+        return countLandsControlledBy(gameData, targetId) > countLandsControlledBy(gameData, ctx.controllerId());
+    }
+
+    private int countLandsControlledBy(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return 0;
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (permanent.getCard().hasType(CardType.LAND)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private int countCreaturesControlledBy(GameData gameData, UUID playerId) {

@@ -25,8 +25,9 @@ import org.springframework.stereotype.Component;
  * permanent(s), with the optional controller-life-loss rider), {@code SELF} (the source),
  * {@code SELF_SPELL} (the resolving spell returns itself to hand off the stack),
  * {@code ALL_MATCHING} (every permanent matching the filter across all battlefields),
- * {@code TARGET_PLAYERS_PERMANENTS} (the target player's matching permanents), and
- * {@code TARGET_PLAYERS_OWNED} (permanents the target player owns, any controller).
+ * {@code TARGET_PLAYERS_PERMANENTS} (the target player's matching permanents),
+ * {@code TARGET_PLAYERS_OWNED} (permanents the target player owns, any controller),
+ * {@code AURAS_ATTACHED_TO_TARGET}, and {@code ENCHANTED} (the permanent the source Aura is on).
  */
 @Slf4j
 @Component
@@ -57,7 +58,20 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
             case TARGET_PLAYERS_OWNED -> resolveTargetPlayersOwned(gameData, entry, e);
             case AURAS_ATTACHED_TO_TARGET -> resolveAurasAttachedToTarget(gameData, entry);
+            case ENCHANTED -> resolveEnchanted(gameData, entry);
         }
+    }
+
+    private void resolveEnchanted(GameData gameData, StackEntry entry) {
+        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (aura == null || !aura.isAttached()) {
+            return;
+        }
+        Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        if (enchanted == null) {
+            return;
+        }
+        bounceAll(gameData, entry, List.of(enchanted));
     }
 
     private void resolveTarget(GameData gameData, StackEntry entry, ReturnToHandEffect e) {

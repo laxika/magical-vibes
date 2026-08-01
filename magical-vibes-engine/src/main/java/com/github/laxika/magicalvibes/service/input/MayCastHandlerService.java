@@ -169,6 +169,7 @@ public class MayCastHandlerService {
             deck.removeFirst();
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), new Permanent(cardToPlay));
             gameData.landsPlayedThisTurn.merge(player.getId(), 1, Integer::sum);
+            triggerCollectionService.checkControllerPlaysLandTriggers(gameData, player.getId());
 
             gameLogService.append(gameData,
                     GameLog.playerPlays(playerName, cardToPlay, " without paying its mana cost."));
@@ -442,6 +443,7 @@ public class MayCastHandlerService {
         if (cardToPlay.hasType(CardType.LAND)) {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), new Permanent(cardToPlay));
             gameData.landsPlayedThisTurn.merge(player.getId(), 1, Integer::sum);
+            triggerCollectionService.checkControllerPlaysLandTriggers(gameData, player.getId());
 
             gameLogService.append(gameData, GameLog.playerPlays(playerName, cardToPlay,
                     " from their graveyard without paying its mana cost."));
@@ -550,6 +552,7 @@ public class MayCastHandlerService {
             gameData.removeFromExile(cardToPlay.getId());
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), new Permanent(cardToPlay));
             gameData.landsPlayedThisTurn.merge(player.getId(), 1, Integer::sum);
+            triggerCollectionService.checkControllerPlaysLandTriggers(gameData, player.getId());
             gameLogService.append(gameData,
                     GameLog.playerPlays(playerName, cardToPlay, " without paying its mana cost."));
             battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), cardToPlay, null, false);

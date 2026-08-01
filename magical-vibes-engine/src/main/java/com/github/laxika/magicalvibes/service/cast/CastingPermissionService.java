@@ -131,6 +131,9 @@ public class CastingPermissionService {
         // Grand Abolisher: during its controller's turn their opponents can't cast spells.
         if (gameQueryService.isLockedOutByOpponentsTurnRestriction(gameData, playerId)) return true;
 
+        // City of Solitude: players can cast spells only during their own turns.
+        if (gameQueryService.isLockedOutByOwnTurnOnlyRestriction(gameData, playerId)) return true;
+
         if (!gameData.playersDeclaredAttackersThisTurn.contains(playerId)) return false;
 
         for (UUID pid : gameData.orderedPlayerIds) {

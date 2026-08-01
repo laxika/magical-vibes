@@ -19,9 +19,11 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedControllerSacrificesCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -512,7 +514,7 @@ class DeathTriggerCollectorServiceTest {
             Card aura = createEnchantment("Necrotic Plague");
             var effect = new ReturnSourceAuraToOpponentCreatureOnDeathEffect();
             Permanent perm = new Permanent(aura);
-            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), PLAYER1_ID, null, 0);
+            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), PLAYER1_ID, null, 0, 0);
 
             svc.handleReturnSourceAura(match(perm, PLAYER2_ID, effect), effect, ctx);
 
@@ -526,7 +528,7 @@ class DeathTriggerCollectorServiceTest {
             Card aura = createEnchantment("Necrotic Plague");
             var effect = new ReturnSourceAuraToOpponentCreatureOnDeathEffect();
             Permanent perm = new Permanent(aura);
-            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), null, null, 0);
+            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), null, null, 0, 0);
 
             svc.handleReturnSourceAura(match(perm, PLAYER2_ID, effect), effect, ctx);
 
@@ -546,7 +548,7 @@ class DeathTriggerCollectorServiceTest {
             var effect = new ReturnEnchantedCreatureToOwnerHandOnDeathEffect();
             Permanent perm = new Permanent(aura);
             UUID creatureCardId = UUID.randomUUID();
-            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), PLAYER1_ID, creatureCardId, 0);
+            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), PLAYER1_ID, creatureCardId, 0, 0);
 
             svc.handleReturnEnchantedCreature(match(perm, PLAYER1_ID, effect), effect, ctx);
 
@@ -560,7 +562,7 @@ class DeathTriggerCollectorServiceTest {
             Card aura = createEnchantment("Demonic Vigor");
             var effect = new ReturnEnchantedCreatureToOwnerHandOnDeathEffect();
             Permanent perm = new Permanent(aura);
-            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), PLAYER1_ID, null, 0);
+            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), PLAYER1_ID, null, 0, 0);
 
             svc.handleReturnEnchantedCreature(match(perm, PLAYER1_ID, effect), effect, ctx);
 
@@ -579,7 +581,7 @@ class DeathTriggerCollectorServiceTest {
             Card aura = createEnchantment("Death Aura");
             var effect = new DrawCardEffect(1);
             Permanent perm = new Permanent(aura);
-            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), null, null, 0);
+            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), null, null, 0, 0);
 
             svc.handleEnchantedPermanentDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
@@ -599,7 +601,7 @@ class DeathTriggerCollectorServiceTest {
             Card aura = createEnchantment("Banewasp Affliction");
             var effect = new EnchantedCreatureControllerLosesLifeEffect(0);
             Permanent perm = new Permanent(aura);
-            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), PLAYER2_ID, null, 4);
+            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), PLAYER2_ID, null, 0, 4);
 
             svc.handleEnchantedCreatureControllerLosesLife(match(perm, PLAYER1_ID, effect), effect, ctx);
 
@@ -614,12 +616,54 @@ class DeathTriggerCollectorServiceTest {
             Card aura = createEnchantment("Banewasp Affliction");
             var effect = new EnchantedCreatureControllerLosesLifeEffect(0);
             Permanent perm = new Permanent(aura);
-            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), PLAYER2_ID, null, -1);
+            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), PLAYER2_ID, null, 0, -1);
 
             svc.handleEnchantedCreatureControllerLosesLife(match(perm, PLAYER1_ID, effect), effect, ctx);
 
             var resolved = (EnchantedCreatureControllerLosesLifeEffect) gd.stack.get(0).getEffectsToResolve().get(0);
             assertThat(resolved.amount()).isZero();
+        }
+    }
+
+    @Nested
+    @DisplayName("handleEnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughness")
+    class EnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughness {
+
+        @Test
+        @DisplayName("Bakes power loss and toughness gain onto one stack entry")
+        void bakesPowerLossAndToughnessGain() {
+            Card aura = createEnchantment("Death Watch");
+            var effect = new EnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughnessEffect();
+            Permanent perm = new Permanent(aura);
+            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), PLAYER2_ID, null, 2, 4);
+
+            svc.handleEnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughness(
+                    match(perm, PLAYER1_ID, effect), effect, ctx);
+
+            assertThat(gd.stack).hasSize(1);
+            var effects = gd.stack.get(0).getEffectsToResolve();
+            assertThat(effects).hasSize(2);
+            var loss = (EnchantedCreatureControllerLosesLifeEffect) effects.get(0);
+            assertThat(loss.amount()).isEqualTo(2);
+            assertThat(loss.affectedPlayerId()).isEqualTo(PLAYER2_ID);
+            var gain = (GainLifeEffect) effects.get(1);
+            assertThat(gain.amount()).isEqualTo(new Fixed(4));
+        }
+
+        @Test
+        @DisplayName("Clamps negative power and toughness to zero")
+        void clampsNegatives() {
+            Card aura = createEnchantment("Death Watch");
+            var effect = new EnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughnessEffect();
+            Permanent perm = new Permanent(aura);
+            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), PLAYER2_ID, null, -3, -1);
+
+            svc.handleEnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughness(
+                    match(perm, PLAYER1_ID, effect), effect, ctx);
+
+            var effects = gd.stack.get(0).getEffectsToResolve();
+            assertThat(((EnchantedCreatureControllerLosesLifeEffect) effects.get(0)).amount()).isZero();
+            assertThat(((GainLifeEffect) effects.get(1)).amount()).isEqualTo(new Fixed(0));
         }
     }
 
@@ -763,6 +807,25 @@ class DeathTriggerCollectorServiceTest {
             var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER1_ID);
 
             svc.handleArtifactGraveyardDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+
+            assertThat(gd.stack.get(0).getTargetId()).isNull();
+            assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+    }
+
+    @Nested
+    @DisplayName("Enchantment graveyard handlers")
+    class EnchantmentGraveyardHandlers {
+
+        @Test
+        @DisplayName("Default effect has null targetId and sets sourcePermanentId")
+        void defaultSetsSourcePermanentId() {
+            Card watcher = createCreature("Femeref Enchantress", 1, 2);
+            var effect = new DrawCardEffect(1);
+            Permanent perm = new Permanent(watcher);
+            var ctx = new TriggerContext.EnchantmentGraveyard(PLAYER1_ID, PLAYER1_ID);
+
+            svc.handleEnchantmentGraveyardDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
             assertThat(gd.stack.get(0).getTargetId()).isNull();
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());

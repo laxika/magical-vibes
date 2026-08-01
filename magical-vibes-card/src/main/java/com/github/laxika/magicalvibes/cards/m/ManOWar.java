@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "POR", collectorNumber = "59")
+@CardRegistration(set = "VIS", collectorNumber = "37")
 public class ManOWar extends Card {
 
     public ManOWar() {

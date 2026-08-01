@@ -123,6 +123,19 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
+        if (context instanceof ChoiceContext.NameCardMillGainLifeChoice
+                || context instanceof ChoiceContext.NameCardMillDrawChoice) {
+            // Guess the top card of the milled player's library for the name-match reward.
+            UUID targetId = context instanceof ChoiceContext.NameCardMillGainLifeChoice g
+                    ? g.targetPlayerId()
+                    : ((ChoiceContext.NameCardMillDrawChoice) context).targetPlayerId();
+            List<Card> targetDeck = gameData.playerDecks.getOrDefault(targetId, List.of());
+            String chosenName = targetDeck.isEmpty() ? "Island" : targetDeck.getFirst().getName();
+            log.info("AI: Choosing card name \"{}\" for name/mill match in game {}", chosenName, gameId);
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenName));
+            return;
+        }
+
         if (context instanceof ChoiceContext.ChooseNameExileTopRevealUntilNamedChoice dig) {
             // Demonic Consultation: name a card past the initial exile window so the dig can find it.
             List<Card> aiDeck = gameData.playerDecks.getOrDefault(aiPlayerId, List.of());
@@ -220,6 +233,16 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
+        if (context instanceof ChoiceContext.LandsOfTypeBecomeBasicTypeChoice landTypeCtx) {
+            // First pick: a land type currently on the board (prefer opponent's); second: Island.
+            String chosenType = landTypeCtx.fromType() == null
+                    ? findCommonLandTypeOnBoard(gameData, interaction.options())
+                    : "ISLAND";
+            log.info("AI: Choosing {} for lands-of-type become in game {}", chosenType, gameId);
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenType));
+            return;
+        }
+
         if (context instanceof ChoiceContext.SphinxAmbassadorNameChoice) {
             // AI names the best creature card from its own library to try to guess what was picked
             List<Card> ownDeck = gameData.playerDecks.getOrDefault(aiPlayerId, List.of());
@@ -265,6 +288,41 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
                 chosenType = "ARTIFACT";
             }
             log.info("AI: Choosing {} for Storage Matrix untap in game {}", chosenType, gameId);
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenType));
+            return;
+        }
+
+        if (context instanceof ChoiceContext.TeferisRealmTypeChoice) {
+            // Phase out the type the opponent has the most of (excluding our own board preference
+            // toward keeping our lands); prefer creature when tied.
+            Map<String, Long> opponentCounts = new HashMap<>();
+            for (var e : gameData.playerBattlefields.entrySet()) {
+                if (e.getKey().equals(aiPlayerId)) {
+                    continue;
+                }
+                for (Permanent p : e.getValue()) {
+                    if (p.getCard().isToken()) {
+                        continue;
+                    }
+                    if (p.getCard().hasType(CardType.CREATURE)) {
+                        opponentCounts.merge("CREATURE", 1L, Long::sum);
+                    }
+                    if (p.getCard().hasType(CardType.ARTIFACT)) {
+                        opponentCounts.merge("ARTIFACT", 1L, Long::sum);
+                    }
+                    if (p.getCard().hasType(CardType.LAND)) {
+                        opponentCounts.merge("LAND", 1L, Long::sum);
+                    }
+                    if (p.getCard().hasType(CardType.ENCHANTMENT) && !p.getCard().isAura()) {
+                        opponentCounts.merge("NON_AURA_ENCHANTMENT", 1L, Long::sum);
+                    }
+                }
+            }
+            String chosenType = opponentCounts.entrySet().stream()
+                    .max(Map.Entry.comparingByValue())
+                    .map(Map.Entry::getKey)
+                    .orElse("CREATURE");
+            log.info("AI: Choosing {} for Teferi's Realm in game {}", chosenType, gameId);
             ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenType));
             return;
         }
@@ -340,6 +398,29 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
                 chosen = loseLife;
             }
             log.info("AI: Choosing \"{}\" for Torment of Hailfire in game {}", chosen, gameId);
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosen));
+            return;
+        }
+
+        if (context instanceof ChoiceContext.ForbiddenRitualPenaltyChoice) {
+            // Same victim heuristics as Torment of Hailfire (any permanent, not only nonland).
+            List<String> options = interaction.options();
+            String loseLife = options.stream()
+                    .filter(o -> !o.equals(ChoiceContext.ForbiddenRitualPenaltyChoice.SACRIFICE)
+                            && !o.equals(ChoiceContext.ForbiddenRitualPenaltyChoice.DISCARD))
+                    .findFirst()
+                    .orElse(options.getLast());
+            String chosen;
+            if (gameData.getLife(aiPlayerId) > 6) {
+                chosen = loseLife;
+            } else if (options.contains(ChoiceContext.ForbiddenRitualPenaltyChoice.DISCARD)) {
+                chosen = ChoiceContext.ForbiddenRitualPenaltyChoice.DISCARD;
+            } else if (options.contains(ChoiceContext.ForbiddenRitualPenaltyChoice.SACRIFICE)) {
+                chosen = ChoiceContext.ForbiddenRitualPenaltyChoice.SACRIFICE;
+            } else {
+                chosen = loseLife;
+            }
+            log.info("AI: Choosing \"{}\" for Forbidden Ritual in game {}", chosen, gameId);
             ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosen));
             return;
         }
@@ -442,6 +523,34 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             }
         }
         return options.isEmpty() ? "ISLAND" : options.getFirst();
+    }
+
+    /**
+     * Picks the offered land type that appears most often among lands on the battlefield,
+     * so Vision Charm's conversion hits something. Falls back to the first option.
+     */
+    private static String findCommonLandTypeOnBoard(GameData gameData, List<String> options) {
+        Map<String, Long> counts = new HashMap<>();
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                Card card = permanent.getCard();
+                if (!card.hasType(CardType.LAND)) {
+                    continue;
+                }
+                for (String option : options) {
+                    if (card.getSubtypes().contains(CardSubtype.valueOf(option))) {
+                        counts.merge(option, 1L, Long::sum);
+                    }
+                }
+            }
+        }
+        return counts.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(options.isEmpty() ? "ISLAND" : options.getFirst());
     }
 
     private static UUID getOpponentId(GameData gameData, UUID playerId) {

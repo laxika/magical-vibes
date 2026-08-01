@@ -338,6 +338,25 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    private boolean handleEnchantedPermanentTapDraw(TriggerMatchContext match,
+            DrawCardEffect e, TriggerContext ctx) {
+        // Betrayal: controller draws. DrawCardEffect resolves for the stack entry's controller.
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s triggered ability",
+                new ArrayList<>(List.of(e)),
+                null,
+                match.permanent().getId()
+        ));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers to draw on enchanted permanent tap",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
     // ── ON_OPPONENT_LOSES_LIFE ─────────────────────────────────────────
 
     @CollectsTrigger(value = MillOpponentOnLifeLossEffect.class, slot = EffectSlot.ON_OPPONENT_LOSES_LIFE)

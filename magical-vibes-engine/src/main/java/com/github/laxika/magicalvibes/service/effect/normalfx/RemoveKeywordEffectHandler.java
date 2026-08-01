@@ -8,9 +8,11 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -24,6 +26,7 @@ import java.util.UUID;
 public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
 
     @Override
@@ -36,8 +39,12 @@ public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
         var remove = (RemoveKeywordEffect) effect;
 
         // OPPONENT_CREATURES / ALL_CREATURES: mass one-shot removal (floats a per-permanent
-        // layer-6 removal). Invert the Skies = opponents; Hour of Devastation = all creatures.
+        // layer-6 removal). Invert the Skies = opponents; Hour of Devastation = all creatures;
+        // Wind Shear = ALL_CREATURES filtered to attacking creatures with flying.
         if (remove.scope() == GrantScope.OPPONENT_CREATURES || remove.scope() == GrantScope.ALL_CREATURES) {
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                    .withSourceControllerId(entry.getControllerId());
             for (UUID playerId : gameData.playerIds) {
                 if (remove.scope() == GrantScope.OPPONENT_CREATURES
                         && playerId.equals(entry.getControllerId())) {
@@ -48,9 +55,15 @@ public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
                     continue;
                 }
                 for (Permanent p : battlefield) {
-                    if (gameQueryService.isCreature(gameData, p)) {
-                        removeFrom(gameData, entry, remove, p);
+                    if (!gameQueryService.isCreature(gameData, p)) {
+                        continue;
                     }
+                    if (remove.filter() != null
+                            && !predicateEvaluationService.matchesPermanentPredicate(
+                                    p, remove.filter(), filterContext)) {
+                        continue;
+                    }
+                    removeFrom(gameData, entry, remove, p);
                 }
             }
             return;

@@ -390,6 +390,9 @@ public class PotentialManaService {
      */
     public boolean canTapForManaNow(ActivatedAbility ability, Permanent permanent,
                                     GameData gameData, UUID playerId) {
+        if (gameData != null && gameQueryService.isLockedOutByOwnTurnOnlyRestriction(gameData, playerId)) {
+            return false;
+        }
         return isFreeTapManaAbility(ability)
                 && canPaySourceCounterCosts(ability, permanent)
                 && meetsRequiredSourceCounters(ability, permanent)

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "74")
 @CardRegistration(set = "M11", collectorNumber = "50")
+@CardRegistration(set = "VIS", collectorNumber = "29")
 public class CloudElemental extends Card {
 
     public CloudElemental() {

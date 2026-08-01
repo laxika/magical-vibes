@@ -497,8 +497,13 @@ public class CombatSimulator {
 
             List<CreatureInfo> chosen;
             if (lure) {
-                // Every creature able to block must block — assign all candidates.
-                chosen = new ArrayList<>(candidates);
+                // Every matching creature able to block must block (filter may narrow, e.g. flying-only).
+                chosen = new ArrayList<>();
+                for (CreatureInfo candidate : candidates) {
+                    if (gameQueryService.isRequiredToBlockByLure(gameData, attacker.perm, candidate.perm)) {
+                        chosen.add(candidate);
+                    }
+                }
             } else if (mustBlock) {
                 chosen = minimumBlockers == 1
                         ? List.of(pickBestSingleBlocker(attacker, candidates))
@@ -684,13 +689,14 @@ public class CombatSimulator {
                 AiUtils.minimumBlockersRequiredToBlock(gameData, gameQueryService, attackerInfos.get(b).perm),
                 AiUtils.minimumBlockersRequiredToBlock(gameData, gameQueryService, attackerInfos.get(a).perm)));
 
-        // Phase 1: Lure — every blocker able to block a lure attacker must do so.
+        // Phase 1: Lure — every matching blocker able to block a lure attacker must do so.
         for (int ai : lureAttackerOrder) {
             CreatureInfo lureAttacker = attackerInfos.get(ai);
             List<CreatureInfo> candidates = new ArrayList<>();
             for (CreatureInfo blocker : blockerInfos) {
                 if (blockerUsed[blocker.index]) continue;
                 if (!canBlock(blockContext, blocker, lureAttacker)) continue;
+                if (!gameQueryService.isRequiredToBlockByLure(gameData, lureAttacker.perm, blocker.perm)) continue;
                 candidates.add(blocker);
             }
             int minimumBlockers = AiUtils.minimumBlockersRequiredToBlock(

@@ -566,6 +566,31 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a basic land type for their lands", gameData.id, playerName);
     }
 
+    /**
+     * Vision Charm: prompt for a land type first ({@code fromType == null}); after that pick,
+     * call again with the chosen {@code fromType} to prompt for the destination basic land type.
+     */
+    public void beginLandsOfTypeBecomeBasicTypeChoice(GameData gameData, UUID playerId) {
+        beginLandsOfTypeBecomeBasicTypeChoice(gameData, playerId, null);
+    }
+
+    public void beginLandsOfTypeBecomeBasicTypeChoice(GameData gameData, UUID playerId, CardSubtype fromType) {
+        ChoiceContext.LandsOfTypeBecomeBasicTypeChoice choiceContext =
+                new ChoiceContext.LandsOfTypeBecomeBasicTypeChoice(playerId, fromType);
+
+        List<String> basicLandTypes = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
+        boolean choosingFrom = fromType == null;
+        String prompt = choosingFrom
+                ? "Choose a land type."
+                : "Choose a basic land type.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, basicLandTypes, prompt));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose {} for lands-of-type become (from={})",
+                gameData.id, playerName, choosingFrom ? "a land type" : "a basic land type", fromType);
+    }
+
     public void beginStorageMatrixUntapChoice(GameData gameData, UUID playerId) {
         ChoiceContext.StorageMatrixUntapChoice choiceContext = new ChoiceContext.StorageMatrixUntapChoice(playerId);
 
@@ -575,6 +600,23 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a permanent type to untap (Storage Matrix)", gameData.id, playerName);
+    }
+
+    /**
+     * Teferi's Realm: {@code playerId} chooses artifact, creature, land, or non-Aura enchantment;
+     * completing the choice phases out all nontoken permanents of that type.
+     */
+    public void beginTeferisRealmTypeChoice(GameData gameData, UUID playerId, Card sourceCard) {
+        ChoiceContext.TeferisRealmTypeChoice choiceContext =
+                new ChoiceContext.TeferisRealmTypeChoice(playerId, sourceCard);
+
+        List<String> options = List.of("ARTIFACT", "CREATURE", "LAND", "NON_AURA_ENCHANTMENT");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options,
+                "Choose artifact, creature, land, or non-Aura enchantment."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a permanent type (Teferi's Realm)", gameData.id, playerName);
     }
 
     public void beginStaticOrbUntapChoice(GameData gameData, UUID playerId, List<UUID> candidateIds,

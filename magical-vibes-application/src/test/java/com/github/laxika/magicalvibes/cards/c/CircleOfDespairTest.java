@@ -49,7 +49,9 @@ class CircleOfDespairTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
         harness.handlePermanentChosen(player1, source.getId());
 
-        assertThat(gd.sourceNextDamageToAnyTargetShields).containsExactly(source.getId());
+        assertThat(gd.sourceNextDamageToAnyTargetShields)
+                .extracting(s -> s.sourceId())
+                .containsExactly(source.getId());
     }
 
     @Test
@@ -115,7 +117,9 @@ class CircleOfDespairTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(victim.getMarkedDamage()).isEqualTo(1);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).containsExactly(decoy.getId());
+        assertThat(gd.sourceNextDamageToAnyTargetShields)
+                .extracting(s -> s.sourceId())
+                .containsExactly(decoy.getId());
     }
 
     @Test

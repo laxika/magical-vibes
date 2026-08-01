@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "315")
+@CardRegistration(set = "VIS", collectorNumber = "154")
 public class SisaysRing extends Card {
 
     public SisaysRing() {

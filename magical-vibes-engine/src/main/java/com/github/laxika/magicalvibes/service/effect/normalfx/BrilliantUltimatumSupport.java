@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -35,6 +36,7 @@ public class BrilliantUltimatumSupport {
 
     private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final TriggerCollectionService triggerCollectionService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
     private final InputCompletionService inputCompletionService;
@@ -43,12 +45,14 @@ public class BrilliantUltimatumSupport {
     // @Lazy mirrors ExileFreeCastSupport: breaks cycles through the interaction registry / input services.
     public BrilliantUltimatumSupport(GameLogService gameLogService,
                                      BattlefieldEntryService battlefieldEntryService,
+                                     TriggerCollectionService triggerCollectionService,
                                      InteractionHandlerRegistry interactionHandlerRegistry,
                                      @Lazy ExileFreeCastQueueSupport exileFreeCastQueueSupport,
                                      @Lazy InputCompletionService inputCompletionService,
                                      com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator) {
         this.gameLogService = gameLogService;
         this.battlefieldEntryService = battlefieldEntryService;
+        this.triggerCollectionService = triggerCollectionService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
         this.exileFreeCastQueueSupport = exileFreeCastQueueSupport;
         this.inputCompletionService = inputCompletionService;
@@ -166,6 +170,7 @@ public class BrilliantUltimatumSupport {
         gameData.removeFromExile(card.getId());
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
         gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
+        triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId);
         gameLogService.append(gameData, GameLog.playerPlays(playerName, card, " without paying its mana cost."));
         log.info("Game {} - {} plays land {} from exile (Brilliant Ultimatum)", gameData.id, playerName, card.getName());
         battlefieldEntryService.processCreatureETBEffects(gameData, playerId, card, null, false);

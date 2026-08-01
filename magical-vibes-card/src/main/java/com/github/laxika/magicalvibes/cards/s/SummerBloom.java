@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayAdditionalLandsEffect;
 @CardRegistration(set = "9ED", collectorNumber = "273")
 @CardRegistration(set = "POR", collectorNumber = "187")
 @CardRegistration(set = "6ED", collectorNumber = "255")
+@CardRegistration(set = "VIS", collectorNumber = "122")
 public class SummerBloom extends Card {
 
     public SummerBloom() {

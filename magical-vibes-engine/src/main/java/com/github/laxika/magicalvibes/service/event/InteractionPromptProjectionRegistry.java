@@ -105,6 +105,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
         register(PendingInteraction.PermanentChoice.class, this::projectPermanentChoice);
         register(PendingInteraction.AdNauseamRepeatChoice.class, this::projectAdNauseamRepeatChoice);
+        register(PendingInteraction.ForbiddenRitualRepeatChoice.class, this::projectForbiddenRitualRepeatChoice);
         register(PendingInteraction.ExiledPermanentPutOntoBattlefieldChoice.class,
                 this::projectExiledPermanentPutOntoBattlefieldChoice);
         register(PendingInteraction.LimDulsVaultRepeatChoice.class, this::projectLimDulsVaultRepeatChoice);
@@ -550,6 +551,15 @@ public class InteractionPromptProjectionRegistry {
                 null);
     }
 
+    private InteractionPromptMessage projectForbiddenRitualRepeatChoice(
+            GameData gameData, PendingInteraction.ForbiddenRitualRepeatChoice interaction) {
+        return InteractionPromptMessage.acceptDecline(
+                "Sacrifice another nontoken permanent and repeat? ("
+                        + interaction.sourceName() + ")",
+                true,
+                null);
+    }
+
     private InteractionPromptMessage projectExiledPermanentPutOntoBattlefieldChoice(
             GameData gameData, PendingInteraction.ExiledPermanentPutOntoBattlefieldChoice interaction) {
         return InteractionPromptMessage.acceptDecline(
@@ -697,6 +707,7 @@ public class InteractionPromptProjectionRegistry {
                 || context instanceof ChoiceContext.EachPlayerCardNameRevealChoice
                 || context instanceof ChoiceContext.NameCardMillGainLifeChoice
                 || context instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice
+                || context instanceof ChoiceContext.NameCardMillDrawChoice
                 || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice;
     }
 

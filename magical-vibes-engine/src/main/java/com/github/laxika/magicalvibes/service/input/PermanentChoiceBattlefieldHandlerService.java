@@ -847,12 +847,18 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen permanent no longer exists");
         }
 
-        gameData.sourceNextDamageToAnyTargetShields.add(permanentId);
+        gameData.sourceNextDamageToAnyTargetShields.add(ctx.damageRedSourceController()
+                ? new com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield(
+                        permanentId, true, ctx.passageCard(), ctx.controllerId())
+                : new com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield(permanentId));
 
         String sourceName = chosenPermanent.getCard().getName();
-        String logEntry = "The next time " + sourceName + " would deal damage to any target this turn, it is prevented.";
+        String logEntry = ctx.damageRedSourceController()
+                ? "The next time " + sourceName + " would deal damage to any target this turn, it is prevented."
+                        + " If it is red, Honorable Passage deals that much damage to its controller."
+                : "The next time " + sourceName + " would deal damage to any target this turn, it is prevented.";
         gameLogService.append(gameData, GameLog.text(logEntry));
-        log.info("Game {} - {} chose {} as Sanctum Guardian next-damage prevention source", gameData.id,
+        log.info("Game {} - {} chose {} as next-damage-to-any-target prevention source", gameData.id,
                 gameData.playerIdToName.get(ctx.controllerId()), sourceName);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

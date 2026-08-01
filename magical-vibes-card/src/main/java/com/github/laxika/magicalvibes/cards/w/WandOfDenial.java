@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTargetPlayerTopCardMayG
 
 import java.util.List;
 
+@CardRegistration(set = "VIS", collectorNumber = "159")
 @CardRegistration(set = "6ED", collectorNumber = "317")
 public class WandOfDenial extends Card {
 

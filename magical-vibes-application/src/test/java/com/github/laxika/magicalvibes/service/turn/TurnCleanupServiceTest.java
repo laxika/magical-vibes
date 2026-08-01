@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEffect;
@@ -808,6 +809,17 @@ class TurnCleanupServiceTest {
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             assertThat(sut.hasNoMaximumHandSize(gd, player1Id)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Returns true for both players when any battlefield has PlayersHaveNoMaximumHandSizeEffect")
+        void playersHaveNoMaximumHandSizeAffectsEveryone() {
+            Card card = createCardWithName("Anvil of Bogardan");
+            card.addEffect(EffectSlot.STATIC, new PlayersHaveNoMaximumHandSizeEffect());
+            gd.playerBattlefields.get(player2Id).add(new Permanent(card));
+
+            assertThat(sut.hasNoMaximumHandSize(gd, player1Id)).isTrue();
+            assertThat(sut.hasNoMaximumHandSize(gd, player2Id)).isTrue();
         }
     }
 }

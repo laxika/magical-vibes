@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "125")
+@CardRegistration(set = "VIS", collectorNumber = "55")
 public class CryptRats extends Card {
 
     public CryptRats() {

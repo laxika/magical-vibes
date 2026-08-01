@@ -81,6 +81,7 @@ public class AttackLegalityService {
         if (creature.isTapped()) return false;
         if (creature.isCantAttackThisTurn()) return false;
         if (gameQueryService.isLockedFromAttacking(gameData, creature.getId())) return false;
+        if (gameQueryService.isPeaceTalksActive(gameData)) return false;
         if (isRestrictedByOtherCreaturesCantAttack(gameData, creature)) return false;
         if (creature.isSummoningSick() && !gameQueryService.hasKeyword(gameData, creature, Keyword.HASTE)
                 && !gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCanAttackAsThoughHasteEffect.class)

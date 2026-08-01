@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForSubtypeCardsToTopEffect;
 
 @CardRegistration(set = "6ED", collectorNumber = "186")
+@CardRegistration(set = "VIS", collectorNumber = "80")
 public class GoblinRecruiter extends Card {
 
     public GoblinRecruiter() {

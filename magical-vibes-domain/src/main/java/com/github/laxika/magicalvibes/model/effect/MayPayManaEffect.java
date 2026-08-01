@@ -26,11 +26,22 @@ public record MayPayManaEffect(String manaCost, CardEffect wrapped, String promp
     /**
      * Delegates to the wrapped effect, like {@link MayEffect}: the target of "you may pay {X}. If
      * you do, [targeted effect]" is chosen when the ability goes on the stack (CR 603.3d), while
-     * the payment choice happens at resolution (CR 603.5).
+     * the payment choice happens at resolution (CR 603.5). When {@code wrapped} is null (pay-to-
+     * avoid / punisher shape) or itself non-targeting, falls back to {@code elseEffect}'s spec —
+     * "you may pay {X}. If you don't, destroy target …" (Knight of the Mists).
      */
     @Override
     public TargetSpec targetSpec() {
-        return wrapped.targetSpec();
+        if (wrapped != null) {
+            TargetSpec wrappedSpec = wrapped.targetSpec();
+            if (wrappedSpec != TargetSpec.NONE) {
+                return wrappedSpec;
+            }
+        }
+        if (elseEffect != null) {
+            return elseEffect.targetSpec();
+        }
+        return TargetSpec.NONE;
     }
 
     public MayPayManaEffect(String manaCost, CardEffect wrapped, String prompt) {

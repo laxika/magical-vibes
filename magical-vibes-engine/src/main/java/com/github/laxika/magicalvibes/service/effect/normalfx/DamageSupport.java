@@ -144,8 +144,10 @@ public class DamageSupport {
         // Apply target+source-specific prevention shields (e.g. Healing Grace)
         if (sourcePermId != null) {
             rawDamage = damagePreventionService.applyTargetSourcePreventionShield(gameData, target.getId(), sourcePermId, rawDamage);
-            // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
+            // Apply one-shot Sanctum Guardian / Honorable Passage shields (prevent the next damage from
+            // the chosen source to any target; red rider queues reflected damage)
             rawDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, sourcePermId, rawDamage);
+            processEyeForAnEyeReflections(gameData);
             // Shadowbane: the chosen source's next damage to the protected player's creatures.
             rawDamage = damagePreventionService.applyControllerCreaturesNextSourceDamageShield(
                     gameData, targetControllerId, sourcePermId, rawDamage);
@@ -308,7 +310,7 @@ public class DamageSupport {
 
         // Record only — the state-based action check (CR 704.5g/704.5h) is the single place
         // creatures die from damage; it runs after the current resolution completes.
-        target.setMarkedDamage(target.getMarkedDamage() + damage);
+        target.addMarkedDamage(damageSourceKey(entry, damageSource), damage);
         if (sourceHasDeathtouch) {
             target.setDamagedByDeathtouch(true);
         }
@@ -366,7 +368,7 @@ public class DamageSupport {
 
         // Record only (CR 704.5g — unpreventable damage still accumulates as marked damage);
         // the state-based action check performs any resulting destruction.
-        target.setMarkedDamage(target.getMarkedDamage() + damage);
+        target.addMarkedDamage(damageSourceKey(entry, null), damage);
         if (damage > 0 && gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.DEATHTOUCH)) {
             target.setDamagedByDeathtouch(true);
         }
@@ -612,8 +614,9 @@ public class DamageSupport {
                 damagePreventionService.applyEyeForAnEyeReflection(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
                 // Apply one-shot Circle-of-Protection shields (prevent the next damage event from the chosen source)
                 rawDamage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
-                // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
+                // Apply one-shot Sanctum Guardian / Honorable Passage shields
                 rawDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, entry.getSourcePermanentId(), rawDamage);
+                processEyeForAnEyeReflections(gameData);
             }
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             processPendingRedirectDamage(gameData);
@@ -882,9 +885,25 @@ public class DamageSupport {
 
                 int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, damage);
                 if (effectiveDamage > 0) {
-                    // Record only — the state-based action check (CR 704.5g) performs any
-                    // destruction once the current damage event finishes.
-                    targetPerm.setMarkedDamage(targetPerm.getMarkedDamage() + effectiveDamage);
+                    // Planeswalker / battle destinations lose loyalty / defense (CR 120.3c); a
+                    // permanent that is also a creature additionally gets marked damage (CR 120.3e).
+                    if (targetPerm.getCard().hasType(CardType.PLANESWALKER)) {
+                        targetPerm.setCounterCount(CounterType.LOYALTY,
+                                targetPerm.getCounterCount(CounterType.LOYALTY) - effectiveDamage);
+                    }
+                    if (targetPerm.getCard().hasType(CardType.BATTLE)) {
+                        targetPerm.setCounterCount(CounterType.DEFENSE,
+                                targetPerm.getCounterCount(CounterType.DEFENSE) - effectiveDamage);
+                        battleDefeatSupport.checkAfterDefenseRemoved(gameData, targetPerm);
+                    }
+                    boolean isCreature = gameQueryService.isCreature(gameData, targetPerm);
+                    if (isCreature
+                            || (!targetPerm.getCard().hasType(CardType.PLANESWALKER)
+                            && !targetPerm.getCard().hasType(CardType.BATTLE))) {
+                        // Record only — the state-based action check (CR 704.5g) performs any
+                        // destruction once the current damage event finishes.
+                        targetPerm.addMarkedDamage(redirect.damageSourceId(), effectiveDamage);
+                    }
                     gameData.permanentsDealtDamageThisTurn.add(targetPerm.getId());
                 }
             }
@@ -1089,5 +1108,18 @@ public class DamageSupport {
         return count[0];
     }
 
+    /**
+     * Object id used for per-source marked-damage tracking: the dealing permanent when known,
+     * otherwise the spell/ability card instance (each cast is a distinct source).
+     */
+    private static UUID damageSourceKey(StackEntry entry, Permanent damageSource) {
+        if (damageSource != null) {
+            return damageSource.getId();
+        }
+        if (entry.getSourcePermanentId() != null) {
+            return entry.getSourcePermanentId();
+        }
+        return entry.getCard().getId();
+    }
 
 }

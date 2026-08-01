@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersSkipUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersInsteadOfUntappingEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticOrbEffect;
 import com.github.laxika.magicalvibes.model.effect.StorageMatrixEffect;
@@ -224,6 +225,10 @@ public class UntapStepService {
             });
         }
 
+        // Undiscovered Paradise: return flagged permanents to hand as the active player untaps
+        // (even if some effect prevented that permanent from untapping).
+        returnPermanentsFlaggedForUntap(gameData, activePlayerId);
+
         String untapLog = activePlayerName + " untaps their permanents.";
         gameLogService.append(gameData, GameLog.text(untapLog));
         log.info("Game {} - {} untaps their permanents", gameData.id, activePlayerName);
@@ -266,6 +271,17 @@ public class UntapStepService {
                 log.info("Game {} - {} untaps filtered permanents during opponent's untap step", gameData.id, playerName);
             }
         });
+    }
+
+    /**
+     * Returns {@code true} if any permanent (any controller) carries a
+     * {@link PlayersSkipUntapStepEffect}. While true, each player's untap step is skipped entirely
+     * (no phasing, no untapping) — see {@link #untapPermanents} with {@code skipUntapStep=true}.
+     */
+    public boolean playersSkipUntapStepApplies(GameData gameData) {
+        return gameData.anyPermanentMatches(p ->
+                p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof PlayersSkipUntapStepEffect));
     }
 
     /**
@@ -437,5 +453,28 @@ public class UntapStepService {
             }
         }
         return result;
+    }
+
+    /**
+     * Returns every permanent the active player controls that carries a "return this to its owner's
+     * hand during your next untap step" rider (Undiscovered Paradise). Happens as that player
+     * untaps their permanents — including when the permanent itself did not untap.
+     */
+    private void returnPermanentsFlaggedForUntap(GameData gameData, UUID activePlayerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
+        if (battlefield == null || battlefield.isEmpty()) {
+            return;
+        }
+        List<Permanent> returning = battlefield.stream()
+                .filter(Permanent::isReturnToHandAtNextUntap)
+                .toList();
+        if (returning.isEmpty()) {
+            return;
+        }
+        for (Permanent permanent : returning) {
+            permanent.setReturnToHandAtNextUntap(false);
+            permanentRemovalService.removePermanentToHand(gameData, permanent);
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 }

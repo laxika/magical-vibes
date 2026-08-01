@@ -125,6 +125,7 @@ public class ValidTargetService {
                     ? card.getMultiTargetFilters().get(positionIndex)
                     : modeFilter;
 
+            if (!gameQueryService.isPeaceTalksActive(gameData)) {
             List<CardEffect> effectiveSpellEffects = spellEffects;
             gameData.forEachPermanent((playerId, perm) -> {
                 if (excludeIds.contains(perm.getId())) return;
@@ -146,6 +147,7 @@ public class ValidTargetService {
                             .anyMatch(sel -> gameQueryService.shareCreatureType(gameData, sel, perm));
                 });
             }
+            }
         }
 
         if (allowedTargets.contains(TargetType.PLAYER)) {
@@ -156,7 +158,7 @@ public class ValidTargetService {
                 positionAllowsPlayers = card.doesPositionAllowPlayerTargets(positionIndex);
             }
 
-            if (positionAllowsPlayers) {
+            if (positionAllowsPlayers && !gameQueryService.isPeaceTalksActive(gameData)) {
                 for (UUID playerId : gameData.playerIds) {
                     if (excludeIds.contains(playerId)) continue;
                     if (isValidPlayerTarget(gameData, modeFilter != null ? modeFilter : card.getTargetFilter(), playerId, controllerId)) {
@@ -269,34 +271,40 @@ public class ValidTargetService {
 
             if (positionFilter instanceof PlayerPredicateTargetFilter) {
                 // Player-targeting position: add valid players
+                if (!gameQueryService.isPeaceTalksActive(gameData)) {
                 for (UUID playerId : gameData.playerIds) {
                     if (excludeIds.contains(playerId)) continue;
                     if (isValidPlayerTarget(gameData, ability.getTargetFilter(), playerId, controllerId)) {
                         validPlayerIds.add(playerId);
                     }
                 }
+                }
             } else if (positionFilter instanceof AnyTargetPredicateTargetFilter anyFilter) {
                 // "Target player or planeswalker" position (Chandra, Pyromaster +1): players
                 // matching the filter's player predicate alongside permanents matching its
                 // permanent predicate.
+                if (!gameQueryService.isPeaceTalksActive(gameData)) {
                 for (UUID playerId : gameData.playerIds) {
                     if (excludeIds.contains(playerId)) continue;
                     if (isValidPlayerTarget(gameData, anyFilter, playerId, controllerId)) {
                         validPlayerIds.add(playerId);
                     }
                 }
+                }
+                if (!gameQueryService.isPeaceTalksActive(gameData)) {
                 gameData.forEachPermanent((playerId, perm) -> {
                     if (excludeIds.contains(perm.getId())) return;
                     if (isValidAbilityPermanentTarget(gameData, sourceCard, ability, perm, controllerId, false, permanentIndex, positionFilter)) {
                         validPermanentIds.add(perm.getId());
                     }
                 });
+                }
             } else {
                 // "Each of up to N targets" (Chandra, the Firebrand −6): an unfiltered position whose
                 // effects target both players and permanents is an "any target" slot, so it offers
                 // players alongside creatures and planeswalkers — never other permanent types.
                 boolean anyTargetPosition = positionFilter == null && isAnyTargetAbility(ability);
-                if (anyTargetPosition) {
+                if (anyTargetPosition && !gameQueryService.isPeaceTalksActive(gameData)) {
                     for (UUID playerId : gameData.playerIds) {
                         if (excludeIds.contains(playerId)) continue;
                         if (isValidPlayerTarget(gameData, ability.getTargetFilter(), playerId, controllerId)) {
@@ -304,6 +312,7 @@ public class ValidTargetService {
                         }
                     }
                 }
+                if (!gameQueryService.isPeaceTalksActive(gameData)) {
                 gameData.forEachPermanent((playerId, perm) -> {
                     if (excludeIds.contains(perm.getId())) return;
                     if (anyTargetPosition
@@ -314,6 +323,7 @@ public class ValidTargetService {
                         validPermanentIds.add(perm.getId());
                     }
                 });
+                }
             }
 
             // Cross-target restriction (Chandra, Pyromaster +1): later positions may only choose
@@ -356,7 +366,7 @@ public class ValidTargetService {
             });
         }
 
-        if (targetsPlayer) {
+        if (targetsPlayer && !gameQueryService.isPeaceTalksActive(gameData)) {
             for (UUID playerId : gameData.playerIds) {
                 if (isValidPlayerTarget(gameData, ability.getTargetFilter(), playerId, controllerId)) {
                     validPlayerIds.add(playerId);
@@ -585,6 +595,9 @@ public class ValidTargetService {
                                                    Permanent perm, UUID controllerId,
                                                    boolean targetsBlockingThis, int sourcePermanentIndex,
                                                    TargetFilter positionFilter) {
+        if (gameQueryService.isPeaceTalksActive(gameData)) {
+            return false;
+        }
         // Special case: targeting blocking creature
         if (targetsBlockingThis) {
             if (!gameQueryService.isCreature(gameData, perm) || !perm.isBlocking()) {

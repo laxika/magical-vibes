@@ -1,31 +1,18 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrainTargetPlayersLandManaEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
-import com.github.laxika.magicalvibes.service.effect.AmountContext;
-import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -42,9 +29,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DrainTargetPlayersLandManaEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
-    private final AmountEvaluationService amountEvaluationService;
-    private final TapUntapSupport tapUntapSupport;
+    private final LandManaDrainSupport landManaDrainSupport;
     private final GameLogService gameLogService;
 
     @Override
@@ -64,24 +49,7 @@ public class DrainTargetPlayersLandManaEffectHandler implements NormalEffectHand
             return;
         }
 
-        int multiplier = gameQueryService.manaProductionMultiplier(gameData, targetPlayerId);
-
-        // Activate a mana ability of each land the target player controls; the mana goes into
-        // their own pool first (CR: they then lose all unspent mana).
-        var battlefield = gameData.playerBattlefields.get(targetPlayerId);
-        if (battlefield != null) {
-            for (Permanent perm : new ArrayList<>(battlefield)) {
-                if (!perm.getCard().hasType(CardType.LAND) || perm.isTapped()) {
-                    continue;
-                }
-                if (!gameQueryService.canActivateManaAbility(gameData, perm)) {
-                    continue;
-                }
-                if (produceLandMana(gameData, targetPlayerId, targetPool, perm, multiplier)) {
-                    tapUntapSupport.tapPermanent(gameData, perm);
-                }
-            }
-        }
+        landManaDrainSupport.activateManaAbilityOfEachLand(gameData, targetPlayerId);
 
         // The target player loses all unspent mana; the controller adds the mana lost this way.
         Map<String, Integer> lostByCode = targetPool.toMap();
@@ -96,100 +64,7 @@ public class DrainTargetPlayersLandManaEffectHandler implements NormalEffectHand
         targetPool.clear();
         targetPool.clearPersistentMana();
 
-        String logMsg = entry.getCard().getName() + " drains " + totalTransferred + " mana.";
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" drains " + totalTransferred + " mana.").build());
         log.info("Game {} - {} drains {} mana from target player", gameData.id, entry.getCard().getName(), totalTransferred);
-    }
-
-    /**
-     * Adds the mana one untapped land would produce to {@code pool}. Returns true if a mana ability
-     * was found (so the land should be tapped). A land override (e.g. Evil Presence) and fixed
-     * {@code AwardManaEffect} outputs are exact; any-color producers contribute colorless.
-     */
-    private boolean produceLandMana(GameData gameData, UUID playerId, ManaPool pool, Permanent perm, int multiplier) {
-        ManaColor fixedLandColor = gameQueryService.fixedLandManaColor(gameData, perm);
-        if (fixedLandColor != null) {
-            int amount = 0;
-            ManaColor overridden = gameQueryService.getOverriddenLandManaColor(gameData, perm);
-            if (overridden != null) {
-                amount = multiplier;
-            } else if (PotentialManaService.hasOnTapManaEffects(perm.getCard())) {
-                for (CardEffect e : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
-                    if (e instanceof AwardManaEffect award) {
-                        amount += amountEvaluationService.evaluate(gameData, award.amount(),
-                                AmountContext.forManaAbility(perm, playerId)) * multiplier;
-                    } else if (e instanceof AwardAnyColorManaEffect aace) {
-                        amount += aace.amount() * multiplier;
-                    }
-                }
-            } else {
-                for (ActivatedAbility ability : perm.getCard().getActivatedAbilities()) {
-                    if (!PotentialManaService.isFreeTapManaAbility(ability)) {
-                        continue;
-                    }
-                    for (CardEffect e : ability.getEffects()) {
-                        if (e instanceof AwardManaEffect award) {
-                            amount += amountEvaluationService.evaluate(gameData, award.amount(),
-                                    AmountContext.forManaAbility(perm, playerId)) * multiplier;
-                        } else if (e instanceof AwardAnyColorManaEffect aace) {
-                            amount += aace.amount() * multiplier;
-                        }
-                    }
-                    break;
-                }
-            }
-            if (amount > 0) {
-                pool.add(fixedLandColor, amount);
-                return true;
-            }
-            return false;
-        }
-        Set<ManaColor> twisted = gameQueryService.twistedLandManaColors(gameData, perm);
-        if (!twisted.isEmpty()) {
-            // Multi-type: pick one deterministically for this non-interactive drain path.
-            ManaColor color = twisted.iterator().next();
-            pool.add(color, multiplier);
-            return true;
-        }
-        ManaColor overridden = gameQueryService.getOverriddenLandManaColor(gameData, perm);
-        List<ManaColor> overriddenColors = gameQueryService.getOverriddenLandManaColors(gameData, perm);
-        if (overridden != null) {
-            pool.add(overridden, multiplier);
-            return true;
-        }
-        if (overriddenColors.size() > 1) {
-            // Multi-type: pick one deterministically for this non-interactive drain path.
-            pool.add(overriddenColors.getFirst(), multiplier);
-            return true;
-        }
-        if (PotentialManaService.hasOnTapManaEffects(perm.getCard())) {
-            for (CardEffect e : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
-                if (e instanceof AwardManaEffect award) {
-                    int amount = amountEvaluationService.evaluate(gameData, award.amount(),
-                            AmountContext.forManaAbility(perm, playerId)) * multiplier;
-                    pool.add(award.color(), amount);
-                } else if (e instanceof AwardAnyColorManaEffect aace) {
-                    pool.add(ManaColor.COLORLESS, aace.amount() * multiplier);
-                }
-            }
-            return true;
-        }
-        // Dual/utility lands: activate the first free tap-for-mana ability.
-        for (ActivatedAbility ability : perm.getCard().getActivatedAbilities()) {
-            if (!PotentialManaService.isFreeTapManaAbility(ability)) {
-                continue;
-            }
-            for (CardEffect e : ability.getEffects()) {
-                if (e instanceof AwardManaEffect award) {
-                    int amount = amountEvaluationService.evaluate(gameData, award.amount(),
-                            AmountContext.forManaAbility(perm, playerId)) * multiplier;
-                    pool.add(award.color(), amount);
-                } else if (e instanceof AwardAnyColorManaEffect aace) {
-                    pool.add(ManaColor.COLORLESS, aace.amount() * multiplier);
-                }
-            }
-            return true;
-        }
-        return false;
     }
 }

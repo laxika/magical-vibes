@@ -62,10 +62,10 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNam
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeSacrificedLandCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintedCardXCostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FreeCyclingEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -202,11 +202,12 @@ public class AbilityActivationService {
         if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
             throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
         }
-        // Serra Bestiary: tapping for mana is a {T} ability, so it is locked too.
-        if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateTapAbilitiesEffect.class)) {
-            throw new IllegalStateException("Tap abilities of " + permanent.getCard().getName() + " can't be activated (Serra Bestiary)");
+        // Serra Bestiary / Katabatic Winds: tapping for mana is a {T} ability, so it is locked too.
+        if (gameQueryService.isLockedFromActivatingTapAbilities(gameData, permanent)) {
+            throw new IllegalStateException("Tap abilities of " + permanent.getCard().getName() + " can't be activated");
         }
         validateNotBlockedByStaticAbilityLock(gameData, permanent);
+        validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
         validateNotBlockedByOpponentsTurnRestriction(gameData, playerId, permanent);
 
         permanent.tap();
@@ -623,6 +624,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
         }
         validateNotBlockedByStaticAbilityLock(gameData, permanent);
+        validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
         validateNotBlockedByOpponentsTurnRestriction(gameData, playerId, permanent);
         // Overwhelming Splendor: sacrifice abilities are never mana / loyalty abilities
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, null);
@@ -748,6 +750,8 @@ public class AbilityActivationService {
         }
 
         UUID playerId = player.getId();
+        validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
+
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         if (graveyard == null || graveyardCardIndex < 0 || graveyardCardIndex >= graveyard.size()) {
             throw new IllegalStateException("Invalid graveyard card index");
@@ -1044,6 +1048,8 @@ public class AbilityActivationService {
             throw new IllegalStateException("Card has no hand-activated ability");
         }
 
+        validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
+
         int idx = abilityIndex != null ? abilityIndex : 0;
         if (idx < 0 || idx >= abilities.size()) {
             throw new IllegalStateException("Invalid ability index");
@@ -1214,6 +1220,8 @@ public class AbilityActivationService {
         if (abilities.isEmpty()) {
             throw new IllegalStateException("Card has no hand-activated ability");
         }
+
+        validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
 
         int idx = abilityIndex != null ? abilityIndex : 0;
         if (idx < 0 || idx >= abilities.size()) {
@@ -1921,6 +1929,29 @@ public class AbilityActivationService {
         }
     }
 
+    /**
+     * Remembers the land sacrificed to pay a {@link SacrificePermanentCost} when the ability adds
+     * mana of a type that land could produce (Squandered Resources). The land's card is stored on
+     * the source so the mana effect can still scan its abilities after the land has left the
+     * battlefield.
+     */
+    private void recordSacrificedLandCard(CardEffect costEffect, Permanent source, int abilityIndex,
+                                          Permanent sacrificed) {
+        if (!(costEffect instanceof SacrificePermanentCost)
+                || sacrificed == null
+                || !sacrificed.getCard().hasType(CardType.LAND)) {
+            return;
+        }
+        List<ActivatedAbility> abilities = source.getCard().getActivatedAbilities();
+        if (abilityIndex < 0 || abilityIndex >= abilities.size()) {
+            return;
+        }
+        if (abilities.get(abilityIndex).getEffects().stream()
+                .anyMatch(e -> e instanceof AwardManaOfTypeSacrificedLandCouldProduceEffect)) {
+            source.setChosenCard(sacrificed.getCard());
+        }
+    }
+
     private boolean handlePermanentChoiceCost(GameData gameData, Player player, Permanent source,
                                                int abilityIndex, int xValue, UUID targetId, Zone targetZone,
                                                PermanentChoiceCostHandler handler) {
@@ -1932,6 +1963,7 @@ public class AbilityActivationService {
             for (UUID id : validIds) {
                 Permanent chosen = gameQueryService.findPermanentById(gameData, id);
                 if (chosen != null) {
+                    recordSacrificedLandCard(handler.costEffect(), source, abilityIndex, chosen);
                     handler.validateAndPay(gameData, player, chosen);
                     recordUntappedCostPermanent(handler.costEffect(), source, chosen.getId());
                 }
@@ -2014,13 +2046,14 @@ public class AbilityActivationService {
             }
         }
 
-        handler.validateAndPay(gameData, player, chosen);
-
         // Remember the tapped creature so ChosenPermanentPower reads its power at resolution (Impelled Giant).
         if (context.costEffect() instanceof TapCreatureCost tapCost && tapCost.trackTappedCreaturePower()) {
             sourcePermanent.setChosenPermanentId(chosenPermanentId);
         }
         recordUntappedCostPermanent(context.costEffect(), sourcePermanent, chosenPermanentId);
+        recordSacrificedLandCard(context.costEffect(), sourcePermanent, effectiveIndex, chosen);
+
+        handler.validateAndPay(gameData, player, chosen);
 
         int remaining = context.remaining() - handler.lastPaymentWeight();
         // Costs whose valid choices depend on prior picks (e.g. tap two creatures sharing a type)
@@ -2222,6 +2255,9 @@ public class AbilityActivationService {
             throw new IllegalStateException("You can't activate abilities this turn");
         }
 
+        // City of Solitude: players can activate abilities only during their own turns.
+        validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
+
         // Pithing Needle check: block non-mana activated abilities of the chosen name
         validateNotBlockedByPithingNeedle(gameData, permanent, ability);
 
@@ -2246,9 +2282,9 @@ public class AbilityActivationService {
 
         // Tap requirement
         if (ability.isRequiresTap()) {
-            // Serra Bestiary: only activated abilities with {T} in their costs are locked.
-            if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateTapAbilitiesEffect.class)) {
-                throw new IllegalStateException("Tap abilities of " + permanent.getCard().getName() + " can't be activated (Serra Bestiary)");
+            // Serra Bestiary / Katabatic Winds: only activated abilities with {T} in their costs are locked.
+            if (gameQueryService.isLockedFromActivatingTapAbilities(gameData, permanent)) {
+                throw new IllegalStateException("Tap abilities of " + permanent.getCard().getName() + " can't be activated");
             }
             if (permanent.isTapped()) {
                 throw new IllegalStateException("Permanent is already tapped");
@@ -3292,6 +3328,17 @@ public class AbilityActivationService {
         if (gameQueryService.playerCantActivateNonManaOrLoyaltyAbilities(gameData, playerId)) {
             throw new IllegalStateException(
                     "You can only activate mana abilities and loyalty abilities (Overwhelming Splendor)");
+        }
+    }
+
+    /**
+     * City of Solitude: players can cast spells and activate abilities only during their own turns
+     * (mana abilities included; all zones).
+     */
+    private void validateNotBlockedByOwnTurnOnlyRestriction(GameData gameData, UUID playerId) {
+        if (gameQueryService.isLockedOutByOwnTurnOnlyRestriction(gameData, playerId)) {
+            throw new IllegalStateException(
+                    "You can only cast spells and activate abilities during your own turn");
         }
     }
 

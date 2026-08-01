@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -80,6 +81,10 @@ public class Permanent {
      *  consumed first, so a rider shield is only spent once it is all that is left. Reset at turn
      *  cleanup alongside {@link #regenerationShield}. */
     @Setter private int opponentDrawRegenerationShield;
+    /** How many of this permanent's {@link #regenerationShield}s carry Matopi Golem's rider — when
+     *  such a shield is actually used, put a -1/-1 counter on this permanent. Plain shields are
+     *  consumed first. Reset at turn cleanup alongside {@link #regenerationShield}. */
+    @Setter private int minusOneCounterRegenerationShield;
     /** How many times this permanent has regenerated this turn (CR 701.15). Incremented every time a
      *  regeneration shield is actually applied; reset at turn cleanup. Read by
      *  {@code TimesSourceRegeneratedThisTurn} for Spiny Starfish. */
@@ -106,6 +111,12 @@ public class Permanent {
     @Setter private int chosenNumber;
     @Setter private ManaValueParity chosenManaValueParity;
     @Setter private UUID chosenPermanentId;
+    /**
+     * Card of the permanent last chosen/sacrificed as payment for an ability that needs its printed
+     * characteristics after that permanent has left the battlefield (Squandered Resources: the land
+     * sacrificed for "add one mana of any type that land could produce").
+     */
+    @Setter private Card chosenCard;
     @Setter private boolean cantBeBlocked;
     @Setter private boolean cantBlockThisTurn;
     /** Extra creatures this permanent may block this turn beyond the base one, granted by a one-shot
@@ -142,6 +153,11 @@ public class Permanent {
      *  {@link #sacrificeAtNextCleanup} the sweep runs before {@link #resetModifiers()}, so the flag
      *  deliberately survives that reset. */
     @Setter private boolean returnToHandAtNextCleanup;
+    /** If true, this permanent is returned to its owner's hand during its controller's next untap step
+     *  as that player untaps their permanents ({@code ReturnSourceToHandAtNextUntapEffect},
+     *  Undiscovered Paradise). Swept by {@code UntapStepService} (not during a skipped untap step).
+     *  Survives {@link #resetModifiers()}. */
+    @Setter private boolean returnToHandAtNextUntap;
     /** Secrets of Strixhaven "Prepared": true while this permanent is prepared (CR-style designation). While
      *  prepared, a copy of its prepare spell sits in exile (see {@link #preparedSpellCardId}) and the controller
      *  may cast it; casting it unprepares this permanent. */
@@ -306,7 +322,14 @@ public class Permanent {
      *  Used by Vorinclex, Voice of Hunger's opponent-land lock. */
     @Setter private int skipUntapCount;
     /** Accumulated damage marked on this creature (CR 704.5g). Reset during cleanup step. */
-    @Setter private int markedDamage;
+    private int markedDamage;
+    /**
+     * Damage marked on this creature broken down by damage-source object id (permanent id, or the
+     * dealing spell/ability card id when there is no permanent source). Used by
+     * {@link com.github.laxika.magicalvibes.model.effect.CantBeDestroyedByLethalDamageUnlessSingleSourceEffect}
+     * so lethal damage from multiple sources cannot be combined. Cleared with {@link #markedDamage}.
+     */
+    private final Map<UUID, Integer> markedDamageBySource = new HashMap<>();
     /** Dealt damage by a source with deathtouch since the last state-based action check (CR 704.5h).
      *  Consumed by each SBA check; also cleared by regeneration and during the cleanup step. */
     @Setter private boolean damagedByDeathtouch;
@@ -469,6 +492,7 @@ public class Permanent {
         this.damageToCounterPreventionShield = source.damageToCounterPreventionShield;
         this.regenerationShield = source.regenerationShield;
         this.opponentDrawRegenerationShield = source.opponentDrawRegenerationShield;
+        this.minusOneCounterRegenerationShield = source.minusOneCounterRegenerationShield;
         this.timesRegeneratedThisTurn = source.timesRegeneratedThisTurn;
         this.attachedTo = source.attachedTo;
         this.pairedWithId = source.pairedWithId;
@@ -480,6 +504,7 @@ public class Permanent {
         this.chosenNumber = source.chosenNumber;
         this.chosenManaValueParity = source.chosenManaValueParity;
         this.chosenPermanentId = source.chosenPermanentId;
+        this.chosenCard = source.chosenCard;
         this.cantBeBlocked = source.cantBeBlocked;
         this.cantBlockThisTurn = source.cantBlockThisTurn;
         this.additionalBlocksUntilEndOfTurn = source.additionalBlocksUntilEndOfTurn;
@@ -502,6 +527,7 @@ public class Permanent {
                 this.persistentTriggeredEffects.put(slot, new ArrayList<>(effects)));
         this.sacrificeAtNextCleanup = source.sacrificeAtNextCleanup;
         this.returnToHandAtNextCleanup = source.returnToHandAtNextCleanup;
+        this.returnToHandAtNextUntap = source.returnToHandAtNextUntap;
         this.basePowerToughnessOverriddenUntilEndOfTurn = source.basePowerToughnessOverriddenUntilEndOfTurn;
         this.basePowerOverride = source.basePowerOverride;
         this.baseToughnessOverride = source.baseToughnessOverride;
@@ -544,6 +570,7 @@ public class Permanent {
         this.forestedLandIds.addAll(source.forestedLandIds);
         this.skipUntapCount = source.skipUntapCount;
         this.markedDamage = source.markedDamage;
+        this.markedDamageBySource.putAll(source.markedDamageBySource);
         this.damagedByDeathtouch = source.damagedByDeathtouch;
         this.grantedColors.addAll(source.grantedColors);
         this.grantedSubtypes.addAll(source.grantedSubtypes);
@@ -587,6 +614,45 @@ public class Permanent {
 
     public void setCard(Card card) {
         this.card = card;
+    }
+
+    /**
+     * Sets total marked damage. Setting to 0 clears per-source tracking (cleanup / regeneration).
+     * Non-zero assignments used by tests leave {@link #markedDamageBySource} empty — fine for
+     * creatures without single-source lethal restrictions.
+     */
+    public void setMarkedDamage(int markedDamage) {
+        this.markedDamage = markedDamage;
+        if (markedDamage == 0) {
+            this.markedDamageBySource.clear();
+        }
+    }
+
+    /**
+     * Records damage dealt by a specific source object and updates the total. {@code sourceId} may
+     * be null when the source is unknown (total still increases; per-source map is unchanged).
+     */
+    public void addMarkedDamage(UUID sourceId, int amount) {
+        if (amount <= 0) {
+            return;
+        }
+        this.markedDamage += amount;
+        if (sourceId != null) {
+            this.markedDamageBySource.merge(sourceId, amount, Integer::sum);
+        }
+    }
+
+    /** True when at least one source has marked damage greater than or equal to {@code toughness}. */
+    public boolean hasLethalDamageFromSingleSource(int toughness) {
+        if (toughness <= 0) {
+            return false;
+        }
+        for (int amount : markedDamageBySource.values()) {
+            if (amount >= toughness) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void tap() {

@@ -239,6 +239,8 @@ public class GameData {
     public final Map<UUID, Integer> skipNextCombatPhaseCount = new ConcurrentHashMap<>();
     /** Player IDs → number of upcoming draw steps they must skip (Ivory Gargoyle). Decremented as each is skipped. */
     public final Map<UUID, Integer> skipNextDrawStepCount = new ConcurrentHashMap<>();
+    /** Player IDs → number of upcoming turns they must skip (Chronatog). Decremented as each is skipped. */
+    public final Map<UUID, Integer> skipNextTurnCount = new ConcurrentHashMap<>();
     public int globalDamagePreventionShield;
     public boolean preventAllCombatDamage;
     /** When true, all damage to all creatures (both players') is prevented this turn (Blinding Fog). */
@@ -330,6 +332,8 @@ public class GameData {
     public final IllicitAuctionState illicitAuction = new IllicitAuctionState();
     /** Progress state for Torment of Hailfire's "repeat X times: each opponent loses life unless…" flow. */
     public final TormentState torment = new TormentState();
+    /** Progress state for Forbidden Ritual's "sacrifice nontoken; opponent loses life unless…" loop. */
+    public final ForbiddenRitualState forbiddenRitual = new ForbiddenRitualState();
     /** Progress state for Winter's Chill's per-target "may pay {1} or {2}" flow. */
     public final WintersChillState wintersChill = new WintersChillState();
     /** Progress state for Forgotten Lore's "opponent chooses a card; you may pay {G} to repeat" flow. */
@@ -416,9 +420,10 @@ public class GameData {
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionIds = new ConcurrentHashMap<>();
     /** One-shot shields (Circle of Protection cycle): prevent the next damage event from a chosen source to a player. */
     public final List<PlayerSourceNextDamageShield> playerSourceNextDamageShields = Collections.synchronizedList(new ArrayList<>());
-    /** One-shot shields (Sanctum Guardian): prevent the next damage event from a chosen source to ANY target
-     *  (player, planeswalker, or creature). Each entry is a chosen source permanent ID, consumed on first use. */
-    public final List<UUID> sourceNextDamageToAnyTargetShields = Collections.synchronizedList(new ArrayList<>());
+    /** One-shot shields (Sanctum Guardian / Honorable Passage): prevent the next damage event from a
+     *  chosen source to ANY target (player, planeswalker, or creature). Consumed on first use. */
+    public final List<SourceNextDamageToAnyTargetShield> sourceNextDamageToAnyTargetShields =
+            Collections.synchronizedList(new ArrayList<>());
     /** One-shot reflection shields (Eye for an Eye): the next damage the chosen source deals to the
      *  protected player is also dealt back at that source's controller by Eye for an Eye. */
     public final List<EyeForAnEyeShield> eyeForAnEyeShields = Collections.synchronizedList(new ArrayList<>());
@@ -557,6 +562,12 @@ public class GameData {
      *  chosen by the player whose upkeep it is). Amount is unchanged. Null when inactive; cleared at
      *  end of turn. */
     public volatile ManaColor allLandsFixedManaColorThisTurn;
+
+    /**
+     * Players who tapped a land for mana this turn (Desolation). Recorded whenever a land is tapped
+     * for mana, regardless of whether Desolation is on the battlefield. Cleared at turn start.
+     */
+    public final Set<UUID> playersWhoTappedLandForManaThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Players who can't play lands this turn (e.g. Moonhold). Cleared at end of turn. */
     public final Set<UUID> playersCantPlayLandsThisTurn = ConcurrentHashMap.newKeySet();
@@ -896,6 +907,14 @@ public class GameData {
      *  that enter later this turn. Cleared at each turn transition. */
     public final List<UUID> otherCreaturesCantAttackExemptCreatureIds =
             Collections.synchronizedList(new ArrayList<>());
+
+    /**
+     * Peace Talks — "This turn and next turn, creatures can't attack, and players and permanents
+     * can't be the targets of spells or activated abilities." Set to {@code 2} on resolution
+     * (current + next); decremented at each turn advance. Active while {@code > 0}. Triggered
+     * abilities are unaffected. Enforced in {@code AttackLegalityService} and targeting services.
+     */
+    public int peaceTalksTurnsRemaining = 0;
 
     /** Stores context for a pending Leonin Arbiter search tax MayAbility choice. */
     public PendingSearchContext pendingSearchContext;
@@ -2128,6 +2147,10 @@ public class GameData {
         copy.torment.remaining.addAll(this.torment.remaining);
         copy.torment.currentOpponentId = this.torment.currentOpponentId;
         copy.torment.chosenMode = this.torment.chosenMode;
+        copy.forbiddenRitual.active = this.forbiddenRitual.active;
+        copy.forbiddenRitual.controllerSacrificed = this.forbiddenRitual.controllerSacrificed;
+        copy.forbiddenRitual.lifeLoss = this.forbiddenRitual.lifeLoss;
+        copy.forbiddenRitual.chosenMode = this.forbiddenRitual.chosenMode;
         copy.wintersChill.active = this.wintersChill.active;
         copy.wintersChill.remainingTargetIds.addAll(this.wintersChill.remainingTargetIds);
         copy.wintersChill.currentTargetId = this.wintersChill.currentTargetId;
@@ -2436,6 +2459,7 @@ public class GameData {
         copy.extraManaOnLandSubtypeTapThisTurn.putAll(this.extraManaOnLandSubtypeTapThisTurn);
         copy.landSubtypeFixedManaColorThisTurn.putAll(this.landSubtypeFixedManaColorThisTurn);
         copy.allLandsFixedManaColorThisTurn = this.allLandsFixedManaColorThisTurn;
+        copy.playersWhoTappedLandForManaThisTurn.addAll(this.playersWhoTappedLandForManaThisTurn);
         copy.playersCantPlayLandsThisTurn.addAll(this.playersCantPlayLandsThisTurn);
         copy.playersCantCastCreatureSpellsThisTurn.addAll(this.playersCantCastCreatureSpellsThisTurn);
         copy.playersCantActivateAbilitiesThisTurn.addAll(this.playersCantActivateAbilitiesThisTurn);
@@ -2478,6 +2502,7 @@ public class GameData {
         copy.tauntedNextTurn.putAll(this.tauntedNextTurn);
         copy.tauntedThisTurn.putAll(this.tauntedThisTurn);
         copy.otherCreaturesCantAttackExemptCreatureIds.addAll(this.otherCreaturesCantAttackExemptCreatureIds);
+        copy.peaceTalksTurnsRemaining = this.peaceTalksTurnsRemaining;
         copy.currentlyResolvingControllerId = this.currentlyResolvingControllerId;
 
         // --- Opening hand reveal triggers (Chancellor cycle) ---
@@ -2499,6 +2524,7 @@ public class GameData {
         copy.lifeLostThisTurn.putAll(this.lifeLostThisTurn);
         copy.skipNextCombatPhaseCount.putAll(this.skipNextCombatPhaseCount);
         copy.skipNextDrawStepCount.putAll(this.skipNextDrawStepCount);
+        copy.skipNextTurnCount.putAll(this.skipNextTurnCount);
         copy.lastClashWonByController.putAll(this.lastClashWonByController);
         copy.manaAbilityResolutionDepth = this.manaAbilityResolutionDepth;
         this.permanentTypesCastFromGraveyardThisTurn.forEach((k, v) ->

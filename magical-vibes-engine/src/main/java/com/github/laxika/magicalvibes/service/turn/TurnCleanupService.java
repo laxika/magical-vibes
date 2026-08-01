@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
@@ -32,7 +33,8 @@ import java.util.UUID;
  *   <li>Draining all mana pools between phases (unless prevented by e.g. Upwelling).</li>
  *   <li>Computing each player's effective maximum hand size, accounting for
  *       effects that reduce it ({@link ReduceOpponentMaxHandSizeEffect}) or
- *       remove it entirely ({@link NoMaximumHandSizeEffect}).</li>
+ *       remove it entirely ({@link NoMaximumHandSizeEffect} /
+ *       {@link PlayersHaveNoMaximumHandSizeEffect}).</li>
  *   <li>Reconciling control at end of turn via {@link CreatureControlService} — expired
  *       until-end-of-turn control effects fall back to the next most recent still-active
  *       control effect, or to the owner (CR 613.7).</li>
@@ -178,6 +180,7 @@ public class TurnCleanupService {
             p.setDamageToCounterPreventionShield(0);
             p.setRegenerationShield(0);
             p.setOpponentDrawRegenerationShield(0);
+            p.setMinusOneCounterRegenerationShield(0);
         });
 
         gameData.playerDamagePreventionShields.clear();
@@ -356,8 +359,10 @@ public class TurnCleanupService {
 
     /**
      * Checks whether the given player's hand size is unlimited, either via
-     * the {@code playersWithNoMaximumHandSize} set on {@link GameData} or by
-     * controlling a permanent with {@link NoMaximumHandSizeEffect} (e.g. Spellbook).
+     * the {@code playersWithNoMaximumHandSize} set on {@link GameData}, by
+     * controlling a permanent with {@link NoMaximumHandSizeEffect} (e.g. Spellbook),
+     * or by any player controlling a permanent with
+     * {@link PlayersHaveNoMaximumHandSizeEffect} (e.g. Anvil of Bogardan).
      *
      * @param gameData the current game state
      * @param playerId the player to check
@@ -368,11 +373,23 @@ public class TurnCleanupService {
             return true;
         }
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null) return false;
-        for (Permanent perm : bf) {
-            if (perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(NoMaximumHandSizeEffect.class::isInstance)) {
-                return true;
+        if (bf != null) {
+            for (Permanent perm : bf) {
+                if (perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(NoMaximumHandSizeEffect.class::isInstance)) {
+                    return true;
+                }
+            }
+        }
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent perm : battlefield) {
+                if (perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(PlayersHaveNoMaximumHandSizeEffect.class::isInstance)) {
+                    return true;
+                }
             }
         }
         return false;

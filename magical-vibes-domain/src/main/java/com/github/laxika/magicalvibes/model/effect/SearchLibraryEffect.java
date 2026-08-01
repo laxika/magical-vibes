@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.FixedIfTargetPlayerControlsMoreLands;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -86,5 +87,13 @@ public record SearchLibraryEffect(
     public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination,
                                boolean grantHaste, boolean exileAtEndStep) {
         this(new Fixed(1), filter, destination, null, 1, false, grantHaste, exileAtEndStep);
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        // Tithe: count scales off whether the targeted opponent controls more lands.
+        return count instanceof FixedIfTargetPlayerControlsMoreLands
+                ? TargetSpec.benign(TargetCategory.PLAYER)
+                : TargetSpec.NONE;
     }
 }

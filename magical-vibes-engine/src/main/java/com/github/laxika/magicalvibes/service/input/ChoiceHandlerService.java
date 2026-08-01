@@ -79,9 +79,11 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport lifeSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.PhaseOutChosenTypeSupport phaseOutChosenTypeSupport;
 
     public void handleListChoice(GameData gameData, Player player, String colorName) {
         if (gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class) == null) {
@@ -215,6 +217,10 @@ public class ChoiceHandlerService {
             handleOwnLandsBecomeBasicTypeChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.LandsOfTypeBecomeBasicTypeChoice ctx) {
+            handleLandsOfTypeBecomeBasicTypeChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.PermanentTypeChoice ctx) {
             handlePermanentTypeChoice(gameData, player, colorName, ctx);
             return;
@@ -231,6 +237,10 @@ public class ChoiceHandlerService {
             handleStorageMatrixUntapChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.TeferisRealmTypeChoice ctx) {
+            handleTeferisRealmTypeChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.BecomeChosenColorsChoice ctx) {
             handleBecomeChosenColorsChoice(gameData, player, colorName, ctx);
             return;
@@ -241,6 +251,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice ctx) {
             handleOpponentsCantCastNamedSpellsUntilNextTurnChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.NameCardMillDrawChoice ctx) {
+            handleNameCardMillDrawChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseNameExileTopRevealUntilNamedChoice ctx) {
@@ -269,6 +283,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.TormentPenaltyChoice ctx) {
             handleTormentPenaltyChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ForbiddenRitualPenaltyChoice ctx) {
+            handleForbiddenRitualPenaltyChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.OathOfLimDulPenaltyChoice ctx) {
@@ -1243,6 +1261,29 @@ public class ChoiceHandlerService {
     }
 
     /**
+     * Forbidden Ritual: the targeted opponent picked one of the pruned penalty options. Record the
+     * choice on {@link GameData#forbiddenRitual} and resume the paused spell, which re-runs
+     * {@code ForbiddenRitualEffectHandler} to apply the choice.
+     */
+    private void handleForbiddenRitualPenaltyChoice(GameData gameData, Player player, String chosen,
+            ChoiceContext.ForbiddenRitualPenaltyChoice ctx) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active == null || !active.options().contains(chosen)) {
+            throw new IllegalArgumentException("Invalid Forbidden Ritual choice: " + chosen);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.forbiddenRitual.chosenMode = chosen;
+
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
+        log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), chosen, ctx.sourceCardName());
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
      * Oath of Lim-Dûl: the controller picked sacrifice-another-permanent or discard for one life
      * point. Record the choice on {@link GameData#torment} and resume so the effect handler applies
      * it and advances to the next life point.
@@ -1575,6 +1616,44 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    private void handleLandsOfTypeBecomeBasicTypeChoice(GameData gameData, Player player, String subtypeName,
+                                                        ChoiceContext.LandsOfTypeBecomeBasicTypeChoice ctx) {
+        CardSubtype subtype = CardSubtype.valueOf(subtypeName);
+
+        gameData.interaction.clearAwaitingInput();
+
+        if (ctx.fromType() == null) {
+            playerInputService.beginLandsOfTypeBecomeBasicTypeChoice(gameData, player.getId(), subtype);
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
+
+        CardSubtype fromType = ctx.fromType();
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (!permanent.getCard().hasType(CardType.LAND)) {
+                    continue;
+                }
+                if (!gameQueryService.effectiveBasicLandTypes(gameData, permanent).contains(fromType)) {
+                    continue;
+                }
+                GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(
+                        permanent, subtype, EffectDuration.UNTIL_END_OF_TURN, true);
+            }
+        }
+
+        String logEntry = "Each land of type " + fromType.getDisplayName() + " becomes a "
+                + subtype.getDisplayName() + " until end of turn.";
+        gameLogService.append(gameData, GameLog.text(logEntry));
+        log.info("Game {} - Each land of type {} becomes a {} until end of turn",
+                gameData.id, fromType, subtype);
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     private void handlePermanentTypeChoice(GameData gameData, Player player, String typeName, ChoiceContext.PermanentTypeChoice ctx) {
         CardType chosenType = CardType.valueOf(typeName);
         if (!chosenType.isPermanentType()) {
@@ -1645,6 +1724,20 @@ public class ChoiceHandlerService {
         log.info("Game {} - {} chooses {} for Storage Matrix untap", gameData.id, playerName, typeName);
 
         turnProgressionService.resumeStorageMatrixUntap(gameData, ctx.playerId(), restrict);
+    }
+
+    private void handleTeferisRealmTypeChoice(GameData gameData, Player player, String typeName,
+                                              ChoiceContext.TeferisRealmTypeChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        String display = "NON_AURA_ENCHANTMENT".equals(typeName) ? "non-Aura enchantment" : typeName.toLowerCase();
+        String playerName = gameData.playerIdToName.get(ctx.playerId());
+        gameLogService.append(gameData, GameLog.text(playerName + " chooses " + display + "."));
+        log.info("Game {} - {} chooses {} for Teferi's Realm", gameData.id, playerName, typeName);
+
+        phaseOutChosenTypeSupport.phaseOutChosenType(gameData, ctx.sourceCard(), typeName);
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleEachPlayerCardNameRevealChoice(GameData gameData, Player player, String cardName,
@@ -1725,31 +1818,63 @@ public class ChoiceHandlerService {
         log.info("Game {} - {} chooses card name \"{}\" (name/mill/gain life)",
                 gameData.id, player.getUsername(), cardName);
 
-        // Peek the card that is about to be milled so we can inspect it after the mill resolves.
-        List<Card> deck = gameData.playerDecks.get(ctx.targetPlayerId());
+        Card matched = millAndMatchingNamedCard(gameData, ctx.targetPlayerId(), cardName);
+        if (matched != null) {
+            int manaValue = matched.getManaValue();
+            lifeSupport.applyGainLife(gameData, ctx.controllerId(), manaValue);
+            String controllerName = gameData.playerIdToName.get(ctx.controllerId());
+            String lifeLog = controllerName + " gains " + manaValue + " life.";
+            gameLogService.append(gameData, GameLog.text(lifeLog));
+            log.info("Game {} - {} milled the named card {}, {} gains {} life",
+                    gameData.id, gameData.playerIdToName.get(ctx.targetPlayerId()),
+                    matched.getName(), controllerName, manaValue);
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleNameCardMillDrawChoice(GameData gameData, Player player, String cardName,
+                                              ChoiceContext.NameCardMillDrawChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        String choiceLog = player.getUsername() + " chooses \"" + cardName + "\".";
+        gameLogService.append(gameData, GameLog.text(choiceLog));
+        log.info("Game {} - {} chooses card name \"{}\" (name/mill/draw)",
+                gameData.id, player.getUsername(), cardName);
+
+        Card matched = millAndMatchingNamedCard(gameData, ctx.targetPlayerId(), cardName);
+        if (matched != null) {
+            playerInteractionSupport.applyDrawCards(gameData, ctx.controllerId(), 1);
+            String controllerName = gameData.playerIdToName.get(ctx.controllerId());
+            log.info("Game {} - {} milled the named card {}, {} draws a card",
+                    gameData.id, gameData.playerIdToName.get(ctx.targetPlayerId()),
+                    matched.getName(), controllerName);
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Mills one card from {@code targetPlayerId}. Returns the milled card if its name matches
+     * {@code cardName} and it actually reached the graveyard; otherwise {@code null}.
+     */
+    private Card millAndMatchingNamedCard(GameData gameData, UUID targetPlayerId, String cardName) {
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         Card topCard = (deck != null && !deck.isEmpty()) ? deck.getFirst() : null;
 
-        graveyardService.resolveMillPlayer(gameData, ctx.targetPlayerId(), 1);
+        graveyardService.resolveMillPlayer(gameData, targetPlayerId, 1);
 
         // "If a card with the chosen name was milled this way" — the card must have both matched the
         // chosen name and actually reached the graveyard (a replacement effect could redirect it).
         if (topCard != null && topCard.getName().equals(cardName)) {
-            List<Card> graveyard = gameData.playerGraveyards.get(ctx.targetPlayerId());
+            List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
             boolean reachedGraveyard = graveyard != null
                     && graveyard.stream().anyMatch(c -> c.getId().equals(topCard.getId()));
             if (reachedGraveyard) {
-                int manaValue = topCard.getManaValue();
-                lifeSupport.applyGainLife(gameData, ctx.controllerId(), manaValue);
-                String controllerName = gameData.playerIdToName.get(ctx.controllerId());
-                String lifeLog = controllerName + " gains " + manaValue + " life.";
-                gameLogService.append(gameData, GameLog.text(lifeLog));
-                log.info("Game {} - {} milled the named card {}, {} gains {} life",
-                        gameData.id, gameData.playerIdToName.get(ctx.targetPlayerId()),
-                        topCard.getName(), controllerName, manaValue);
+                return topCard;
             }
         }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        return null;
     }
 
     private void handleOpponentsCantCastNamedSpellsUntilNextTurnChoice(GameData gameData, Player player,

@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardXAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsAmongControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsLandsCouldProduceEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeSacrificedLandCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeUntappedLandCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardOneManaOfEachColorAmongControlledEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -55,6 +56,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToContr
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSourceToHandAtNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
@@ -752,6 +754,26 @@ public class ActivatedAbilityExecutionService {
                             .text(" but produces no mana (the untapped land could produce none).")
                             .build());
                 }
+            } else if (effect instanceof AwardManaOfTypeSacrificedLandCouldProduceEffect) {
+                Set<ManaColor> availableTypes = collectManaTypesSacrificedLandCouldProduce(permanent);
+                if (availableTypes.size() == 1) {
+                    ManaColor onlyType = availableTypes.iterator().next();
+                    gameData.playerManaPools.get(playerId).add(onlyType);
+                    gameLogService.append(gameData, GameLog.textCardText(
+                            player.getUsername() + " adds {" + onlyType.getCode() + "} from ", permanent.getCard(), "."));
+                } else if (availableTypes.size() > 1) {
+                    ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource);
+                    List<String> types = availableTypes.stream().map(Enum::name).sorted().toList();
+                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                            playerId, null, null, choiceContext, types, "Choose a type of mana to add."));
+                    log.info("Game {} - Awaiting {} to choose a mana type from the sacrificed land", gameData.id, player.getUsername());
+                } else {
+                    gameLogService.append(gameData, GameLog.builder()
+                            .text(player.getUsername() + " activates ")
+                            .card(permanent.getCard())
+                            .text(" but produces no mana (the sacrificed land could produce none).")
+                            .build());
+                }
             } else if (effect instanceof GainLifeEffect gain) {
                 int amount = amountEvaluationService.evaluate(gameData, gain.amount(),
                         new AmountContext(playerId, permanent, null, xValue, 0));
@@ -837,6 +859,13 @@ public class ActivatedAbilityExecutionService {
                 permanent.setSkipUntapCount(permanent.getSkipUntapCount() + 1);
                 gameLogService.append(gameData, GameLog.cardThen(
                         permanent.getCard(), " won't untap during its controller's next untap step."));
+            } else if (effect instanceof ReturnSourceToHandAtNextUntapEffect) {
+                // "Add one mana of any color. During your next untap step, … return this land to
+                // its owner's hand" (Undiscovered Paradise). Mana abilities resolve without the
+                // stack, so the bounce flag is set inline rather than through the normal handler.
+                permanent.setReturnToHandAtNextUntap(true);
+                gameLogService.append(gameData, GameLog.cardThen(
+                        permanent.getCard(), " will return to its owner's hand during its controller's next untap step."));
             }
         }
         stateBasedActionService.performStateBasedActions(gameData);
@@ -950,6 +979,10 @@ public class ActivatedAbilityExecutionService {
                 }
             } else if (effect instanceof AwardManaOfTypeUntappedLandCouldProduceEffect) {
                 if (!collectManaTypesUntappedLandCouldProduce(gameData, permanent).isEmpty()) {
+                    total += 1;
+                }
+            } else if (effect instanceof AwardManaOfTypeSacrificedLandCouldProduceEffect) {
+                if (!collectManaTypesSacrificedLandCouldProduce(permanent).isEmpty()) {
                     total += 1;
                 }
             } else if (effect instanceof AddNotedManaForLastExiledCardEffect) {
@@ -1098,6 +1131,24 @@ public class ActivatedAbilityExecutionService {
         }
         collectManaTypesFromEffects(land.getCard().getEffects(EffectSlot.ON_TAP), types);
         for (ActivatedAbility ability : land.getCard().getActivatedAbilities()) {
+            collectManaTypesFromEffects(ability.getEffects(), types);
+        }
+        return types;
+    }
+
+    /**
+     * The mana types the land sacrificed to pay this ability's cost could produce, colorless
+     * included (Squandered Resources). Reads the card recorded on the source at payment time,
+     * because the permanent itself is already gone.
+     */
+    private Set<ManaColor> collectManaTypesSacrificedLandCouldProduce(Permanent source) {
+        Card landCard = source.getChosenCard();
+        Set<ManaColor> types = EnumSet.noneOf(ManaColor.class);
+        if (landCard == null || !landCard.hasType(CardType.LAND)) {
+            return types;
+        }
+        collectManaTypesFromEffects(landCard.getEffects(EffectSlot.ON_TAP), types);
+        for (ActivatedAbility ability : landCard.getActivatedAbilities()) {
             collectManaTypesFromEffects(ability.getEffects(), types);
         }
         return types;

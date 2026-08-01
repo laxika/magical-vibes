@@ -534,17 +534,37 @@ public class DamagePreventionService {
     }
 
     /**
-     * Applies one-shot Sanctum Guardian shields: if a shield matches this source, the entire next
-     * damage event it would deal to any target (player, planeswalker, or creature) is prevented and
-     * the shield is consumed. Returns the remaining damage.
+     * Applies one-shot Sanctum Guardian / Honorable Passage shields: if a shield matches this source,
+     * the entire next damage event it would deal to any target (player, planeswalker, or creature) is
+     * prevented and the shield is consumed. When the shield carries Honorable Passage's rider and the
+     * source is red, schedules that much damage at the source's controller via
+     * {@link GameData#pendingEyeForAnEyeReflections}. Returns the remaining damage.
      */
     public int applyChosenSourceNextDamageToAnyTargetShield(GameData gameData, UUID sourcePermanentId, int damage) {
         if (!gameQueryService.isDamagePreventable(gameData)) return damage;
         if (damage <= 0 || sourcePermanentId == null || gameData.sourceNextDamageToAnyTargetShields.isEmpty()) {
             return damage;
         }
-        // List.remove(Object) removes the first matching entry — a single shield is consumed per event.
-        return gameData.sourceNextDamageToAnyTargetShields.remove(sourcePermanentId) ? 0 : damage;
+        var it = gameData.sourceNextDamageToAnyTargetShields.iterator();
+        while (it.hasNext()) {
+            var shield = it.next();
+            if (!shield.sourceId().equals(sourcePermanentId)) {
+                continue;
+            }
+            it.remove();
+            if (shield.damageRedSourceController()) {
+                Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                UUID sourceControllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
+                if (source != null && sourceControllerId != null
+                        && gameQueryService.getEffectiveColors(gameData, source).contains(CardColor.RED)
+                        && shield.passageCard() != null && shield.passageControllerId() != null) {
+                    gameData.pendingEyeForAnEyeReflections.add(new EyeForAnEyeReflection(
+                            sourceControllerId, damage, shield.passageCard(), shield.passageControllerId()));
+                }
+            }
+            return 0;
+        }
+        return damage;
     }
 
     /**

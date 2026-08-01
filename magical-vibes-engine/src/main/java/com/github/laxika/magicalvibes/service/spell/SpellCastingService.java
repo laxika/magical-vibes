@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
@@ -94,7 +95,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantConspireToSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSourceActivatedAbilitiesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import lombok.RequiredArgsConstructor;
@@ -723,6 +723,7 @@ public class SpellCastingService {
             gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(graveyardCard.getId());
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(graveyardCard));
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
+            triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId);
 
             gameLogService.append(gameData,
                     GameLog.playerPlays(player.getUsername(), graveyardCard, " from graveyard."));
@@ -1284,6 +1285,7 @@ public class SpellCastingService {
             // Lands bypass the stack — go directly onto battlefield
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
+            triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId);
 
             gameLogService.append(gameData, GameLog.playerPlays(player.getUsername(), card));
 
@@ -1727,9 +1729,11 @@ public class SpellCastingService {
                         filteredSpellEffects, resolvedXValue, null, counterAssignments
                 ));
             } else if (EffectResolution.needsDamageDistribution(card)) {
-                // Validate damage assignments for damage distribution spells
-                if (damageAssignments == null || damageAssignments.isEmpty()) {
-                    throw new IllegalStateException("Damage assignments required");
+                // Validate damage assignments for damage distribution spells. Empty assignments are
+                // legal only when the total damage/prevention is 0 (X=0) — sum checks below reject
+                // empty when the total is positive.
+                if (damageAssignments == null) {
+                    damageAssignments = Map.of();
                 }
 
                 PreventDividedDamageEffect preventDivided = filteredSpellEffects.stream()
@@ -1823,20 +1827,21 @@ public class SpellCastingService {
                             }
                         }
                     } else {
-                        // X-damage divided among target creatures — attacking creatures only for
-                        // Hail of Arrows, any creature for Fire Covenant.
-                        boolean requireAttacking = dividedEffect == null
-                                || dividedEffect.targetRestriction() instanceof PermanentIsAttackingPredicate;
+                        // X-damage divided among target creatures — restriction comes from
+                        // DealDividedDamageEffect.targetRestriction (Hail of Arrows: attacking;
+                        // Fire Covenant: any creature; Rock Slide: attacking/blocking without flying).
                         if (totalDamage != resolvedXValue) {
                             throw new IllegalStateException("Damage assignments must sum to X (" + resolvedXValue + ")");
                         }
                         for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
                             Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
-                            if (target == null || !gameQueryService.isCreature(gameData, target)
-                                    || (requireAttacking && !target.isAttacking())) {
-                                throw new IllegalStateException(requireAttacking
-                                        ? "All targets must be attacking creatures"
-                                        : "All targets must be creatures");
+                            if (target == null || !gameQueryService.isCreature(gameData, target)) {
+                                throw new IllegalStateException("All targets must be creatures");
+                            }
+                            if (dividedEffect != null && dividedEffect.targetRestriction() != null
+                                    && !predicateEvaluationService.matchesPermanentPredicate(
+                                            gameData, target, dividedEffect.targetRestriction())) {
+                                throw new IllegalStateException("Illegal target for divided damage");
                             }
                             if (assignment.getValue() <= 0) {
                                 throw new IllegalStateException("Each damage assignment must be positive");
@@ -1979,6 +1984,10 @@ public class SpellCastingService {
             resolvedXValue = payTapAnyNumberOfPermanentsCost(gameData, player, card, costs.tapAnyNumberCost(),
                     selection.sacrificePermanentIds());
         }
+        if (costs.returnAnyNumberCost() != null) {
+            resolvedXValue = payReturnAnyNumberOfPermanentsToHandCost(gameData, player, card,
+                    costs.returnAnyNumberCost(), selection.sacrificePermanentIds());
+        }
         paySacrificeCreatureOrPayManaCost(gameData, player, card, costs.sacrificeCreatureOrPayManaCost(),
                 selection.sacrificePermanentId(), preManaPaymentPool);
         if (costs.returnCreatureToHand()) {
@@ -1991,6 +2000,9 @@ public class SpellCastingService {
         payDiscardCardOrPayManaCost(gameData, player, card, costs.discardCardOrPayManaCost(),
                 selection.discardHandCardIndex(), selection.spellCardIndex(), preManaPaymentPool);
         payDiscardCost(gameData, player, card, costs.discardCost(), selection.discardHandCardIndex(), selection.spellCardIndex());
+        if (costs.discardHand()) {
+            payDiscardHandCost(gameData, player, card);
+        }
         payEscalateDiscardCost(gameData, player, card, costs.escalateDiscardCost(),
                 selection.escalateModeCount(), selection.discardHandCardIndices(), selection.spellCardIndex());
         return resolvedXValue;
@@ -2109,6 +2121,9 @@ public class SpellCastingService {
         if (costs.sacrificeAllCreatures()) {
             resolvedXValue = paySacrificeAllCreaturesYouControlCost(gameData, player, card);
         }
+        if (costs.sacrificeAllPermanents()) {
+            paySacrificeAllPermanentsYouControlCost(gameData, player, card);
+        }
         return resolvedXValue;
     }
 
@@ -2151,6 +2166,31 @@ public class SpellCastingService {
                     .build());
         }
         return toTap.size();
+    }
+
+    /**
+     * Pays the "return any number of permanents you control to their owner's hand" additional cast
+     * cost (Infernal Harvest) and returns the number returned, which becomes the spell's X value so
+     * a companion effect can scale with it. Legality is checked by
+     * {@code AdditionalSpellCostService.validateReturnAnyNumberOfPermanentsToHandCost} before any
+     * cost is consumed.
+     */
+    private int payReturnAnyNumberOfPermanentsToHandCost(GameData gameData, Player player, Card card,
+                                                         ReturnAnyNumberOfPermanentsToHandCost cost,
+                                                         List<UUID> returnPermanentIds) {
+        List<Permanent> toReturn = additionalSpellCostService.validateReturnAnyNumberOfPermanentsToHandCost(
+                gameData, player, card, cost, returnPermanentIds);
+        for (Permanent permanent : toReturn) {
+            permanentRemovalService.removePermanentToHand(gameData, permanent);
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(player.getUsername() + " returns ")
+                    .card(permanent.getCard())
+                    .text(" to hand to cast ")
+                    .card(card)
+                    .text(".")
+                    .build());
+        }
+        return toReturn.size();
     }
 
     private record SacrificedCreatureStats(int manaValue, int power, int toughness) {}
@@ -2201,6 +2241,43 @@ public class SpellCastingService {
             }
         }
         return Math.max(0, totalPower);
+    }
+
+    private void paySacrificeAllPermanentsYouControlCost(GameData gameData, Player player, Card sourceCard) {
+        UUID playerId = player.getId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        List<Permanent> toSacrifice = List.copyOf(battlefield);
+        for (Permanent permanent : toSacrifice) {
+            if (permanentRemovalService.removePermanentToGraveyard(gameData, permanent)) {
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(player.getUsername() + " sacrifices ")
+                        .card(permanent.getCard())
+                        .text(" for ")
+                        .card(sourceCard)
+                        .text(".")
+                        .build());
+                triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, permanent.getCard());
+            }
+        }
+    }
+
+    private void payDiscardHandCost(GameData gameData, Player player, Card sourceCard) {
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        if (hand == null || hand.isEmpty()) {
+            return;
+        }
+        List<Card> discarded = new ArrayList<>(hand);
+        hand.clear();
+        gameData.discardCausedByOpponent = false;
+        for (Card discardedCard : discarded) {
+            graveyardService.addCardToGraveyard(gameData, playerId, discardedCard);
+            triggerCollectionService.checkDiscardTriggers(gameData, playerId, discardedCard);
+        }
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " discards their hand (" + discarded.size()
+                        + " card" + (discarded.size() != 1 ? "s" : "") + ") to cast "
+                        + sourceCard.getName() + "."));
     }
 
     /**
@@ -2580,12 +2657,13 @@ public class SpellCastingService {
         AdditionalSpellCostService.ExtractedCosts additionalCosts = additionalSpellCostService.extractAndRemove(spellEffects);
         ExileNCardsFromGraveyardCost exileNCost = additionalCosts.exileNCardsCost();
         boolean hasUnsupportedAdditionalCost = additionalCosts.sacrificeAllCreatures()
-                || additionalCosts.sacrificeCreatureOrPayManaCost() != null
+                || additionalCosts.sacrificeAllPermanents()
+                || additionalCosts.sacrificeCreature() || additionalCosts.sacrificeCreatureOrPayManaCost() != null
                 || additionalCosts.sacrificeArtifact()
                 || additionalCosts.sacrificePermanentCost() != null || additionalCosts.returnCreatureToHand()
                 || additionalCosts.putCounterCost() != null || additionalCosts.exileGraveyardCost() != null
                 || additionalCosts.exileXCardsCost() != null || additionalCosts.discardCost() != null
-                || additionalCosts.discardCardOrPayManaCost() != null
+                || additionalCosts.discardCardOrPayManaCost() != null || additionalCosts.discardHand()
                 || additionalCosts.escalateDiscardCost() != null
                 || additionalCosts.escalateManaCost() != null;
         if (hasUnsupportedAdditionalCost) {
@@ -2949,6 +3027,7 @@ public class SpellCastingService {
         if (card.hasType(CardType.LAND)) {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
+            triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId);
 
             gameLogService.append(gameData,
                     GameLog.playerPlays(player.getUsername(), card, " from exile."));

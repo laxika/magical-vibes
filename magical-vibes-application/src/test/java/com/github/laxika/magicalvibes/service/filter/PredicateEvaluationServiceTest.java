@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -25,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -48,6 +50,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -240,6 +243,14 @@ class PredicateEvaluationServiceTest {
             Card card = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
 
             assertThat(evaluator.matchesCardPredicate(card, null, null)).isTrue();
+        }
+
+        @Test
+        @DisplayName("CardTruePredicate always returns true")
+        void cardTruePredicateAlwaysMatches() {
+            Card card = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
+
+            assertThat(evaluator.matchesCardPredicate(card, new CardTruePredicate(), null)).isTrue();
         }
 
         @Test
@@ -564,6 +575,26 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsAttackingPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentIsUnblockedAttackingPredicate matches after blockers are declared")
+        void unblockedAttackingMatchesAfterBlockers() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            perm.setAttacking(true);
+            gd.currentStep = TurnStep.DECLARE_BLOCKERS;
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsUnblockedAttackingPredicate())).isTrue();
+        }
+
+        @Test
+        @DisplayName("PermanentIsUnblockedAttackingPredicate rejects before blockers are declared")
+        void unblockedAttackingRejectsBeforeBlockers() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            perm.setAttacking(true);
+            gd.currentStep = TurnStep.DECLARE_ATTACKERS;
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsUnblockedAttackingPredicate())).isFalse();
         }
 
         @Test

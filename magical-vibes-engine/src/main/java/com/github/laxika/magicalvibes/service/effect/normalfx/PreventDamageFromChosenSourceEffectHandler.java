@@ -83,8 +83,14 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
                         + rider;
             }
             case NEXT_DAMAGE_TO_ANY_TARGET -> {
-                context = new PermanentChoiceContext.PreventNextDamageFromSourceToAnyTargetChoice(controllerId);
-                prompt = "Choose a source. The next time it would deal damage to any target this turn, prevent that damage.";
+                context = e.damageRedSourceController()
+                        ? new PermanentChoiceContext.PreventNextDamageFromSourceToAnyTargetChoice(
+                                controllerId, true, entry.getCard())
+                        : new PermanentChoiceContext.PreventNextDamageFromSourceToAnyTargetChoice(controllerId);
+                prompt = e.damageRedSourceController()
+                        ? "Choose a source. The next time it would deal damage to any target this turn, prevent that damage."
+                                + " If it is red, Honorable Passage deals that much damage to its controller."
+                        : "Choose a source. The next time it would deal damage to any target this turn, prevent that damage.";
             }
             case NEXT_DAMAGE_TO_CONTROLLER_AND_CREATURES -> {
                 context = new PermanentChoiceContext.PreventNextDamageFromSourceToYouAndYourCreaturesChoice(controllerId);
