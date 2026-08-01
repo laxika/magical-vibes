@@ -52,6 +52,29 @@ public class PlayedCardNameTriggerCollectorService {
     }
 
     /**
+     * Default for {@link EffectSlot#ON_CONTROLLER_PLAYS_LAND}: put bare effects on the stack
+     * (e.g. Juju Bubble's {@code SacrificeSelfEffect}). Name-match triggers above take precedence
+     * via exact-class registration.
+     */
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
+    private boolean handleControllerPlaysLandDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        Card sourceCard = match.permanent().getCard();
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on controller playing a land",
+                match.gameData().id, sourceCard.getName());
+        return true;
+    }
+
+    /**
      * Fires only when a card exiled with this permanent shares the played card's name. The queued
      * ability is the optional "put one of those cards with that name into its owner's hand" followed
      * by the intervening-if "then if there are no cards exiled with this enchantment, sacrifice it.

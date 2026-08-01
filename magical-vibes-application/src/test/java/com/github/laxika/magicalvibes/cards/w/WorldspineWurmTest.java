@@ -46,7 +46,8 @@ class WorldspineWurmTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Worldspine Wurm");
         harness.assertInGraveyard(player1, "Worldspine Wurm");
 
-        harness.passBothPriorities();
+        // Death creates tokens and the from-anywhere shuffle both trigger; resolve both.
+        resolveAllTriggers();
 
         harness.assertNotInGraveyard(player1, "Worldspine Wurm");
         assertThat(gd.playerDecks.get(player1.getId()))

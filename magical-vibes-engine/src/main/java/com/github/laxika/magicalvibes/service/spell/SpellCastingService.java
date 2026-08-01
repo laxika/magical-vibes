@@ -756,7 +756,6 @@ public class SpellCastingService {
             gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(graveyardCard.getId());
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(graveyardCard));
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
-            triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId);
 
             gameLogService.append(gameData,
                     GameLog.playerPlays(player.getUsername(), graveyardCard, " from graveyard."));
@@ -1328,7 +1327,6 @@ public class SpellCastingService {
             // Lands bypass the stack — go directly onto battlefield
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
-            triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId);
 
             gameLogService.append(gameData, GameLog.playerPlays(player.getUsername(), card));
 
@@ -2715,9 +2713,10 @@ public class SpellCastingService {
         List<CardEffect> spellEffects = new ArrayList<>(castHalf.getEffects(EffectSlot.SPELL));
         AdditionalSpellCostService.ExtractedCosts additionalCosts = additionalSpellCostService.extractAndRemove(spellEffects);
         ExileNCardsFromGraveyardCost exileNCost = additionalCosts.exileNCardsCost();
+        // sacrificeCreature is supported below (Finish / aftermath); leave it out of this reject list.
         boolean hasUnsupportedAdditionalCost = additionalCosts.sacrificeAllCreatures()
                 || additionalCosts.sacrificeAllPermanents()
-                || additionalCosts.sacrificeCreature() || additionalCosts.sacrificeCreatureOrPayManaCost() != null
+                || additionalCosts.sacrificeCreatureOrPayManaCost() != null
                 || additionalCosts.sacrificeArtifact()
                 || additionalCosts.sacrificePermanentCost() != null || additionalCosts.returnCreatureToHand()
                 || additionalCosts.putCounterCost() != null || additionalCosts.exileGraveyardCost() != null
@@ -3086,7 +3085,6 @@ public class SpellCastingService {
         if (card.hasType(CardType.LAND)) {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
-            triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId);
 
             gameLogService.append(gameData,
                     GameLog.playerPlays(player.getUsername(), card, " from exile."));

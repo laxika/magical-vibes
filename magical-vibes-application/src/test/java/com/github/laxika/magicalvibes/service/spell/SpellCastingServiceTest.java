@@ -332,7 +332,7 @@ class SpellCastingServiceTest {
 
             assertThat(gd.landsPlayedThisTurn.get(player1Id)).isEqualTo(beforeCount + 1);
             // Land-play special action fires "when you play a land" triggers, not spell-cast ones
-            verify(triggerCollectionService).checkControllerPlaysLandTriggers(gd, player1Id);
+            verify(triggerCollectionService).checkControllerPlaysLandTriggers(eq(gd), eq(player1Id), any());
             verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any());
             verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any(), anyBoolean());
         }
@@ -1126,7 +1126,7 @@ class SpellCastingServiceTest {
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(turnProgressionService).resolveAutoPass(gd);
             // Land-play special action from exile fires land-play triggers, not spell-cast ones
-            verify(triggerCollectionService).checkControllerPlaysLandTriggers(gd, player1Id);
+            verify(triggerCollectionService).checkControllerPlaysLandTriggers(eq(gd), eq(player1Id), any());
             verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any());
             verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any(), anyBoolean());
         }

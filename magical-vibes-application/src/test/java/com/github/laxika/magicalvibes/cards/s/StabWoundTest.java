@@ -19,6 +19,9 @@ class StabWoundTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
+        // A legal creature target must exist so the aura is playable; the cast then fails on the
+        // illegal artifact target.
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new FountainOfYouth());
         Permanent artifact = findPermanent(player1, "Fountain of Youth");
 

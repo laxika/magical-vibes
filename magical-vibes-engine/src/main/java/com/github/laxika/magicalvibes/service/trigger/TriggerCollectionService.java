@@ -3675,35 +3675,10 @@ public class TriggerCollectionService {
     }
 
     /**
-     * "When you play a land" ({@link EffectSlot#ON_CONTROLLER_PLAYS_LAND}). Unlike landfall, this
-     * fires only on a land <em>play</em> (the special action), not when a land is put onto the
-     * battlefield by an effect. Pair with {@link EffectSlot#ON_CONTROLLER_CASTS_SPELL} for
-     * "When you play a card" (cast a spell or play a land).
-     */
-    public void checkControllerPlaysLandTriggers(GameData gameData, UUID landControllerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(landControllerId);
-        if (battlefield == null) return;
-        for (Permanent perm : battlefield) {
-            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_PLAYS_LAND);
-            if (effects == null || effects.isEmpty()) continue;
-
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    perm.getCard(),
-                    landControllerId,
-                    perm.getCard().getName() + "'s ability",
-                    new ArrayList<>(effects),
-                    null,
-                    perm.getId()
-            ));
-            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-            log.info("Game {} - {} triggers on controller playing a land", gameData.id, perm.getCard().getName());
-        }
-    }
-
-    /**
-     * "Whenever you play a land" (ON_CONTROLLER_PLAYS_LAND, e.g. Search the City). Called from the
-     * land-play sites only, so a land put onto the battlefield by an effect does not trigger it.
+     * "Whenever you play a land" (ON_CONTROLLER_PLAYS_LAND, e.g. Search the City, Juju Bubble).
+     * Called from the land-play sites only, so a land put onto the battlefield by an effect does
+     * not trigger it. Dispatches through the collector registry so name-match gates (Search the
+     * City) and bare effects (Juju Bubble) both resolve correctly.
      */
     public void checkControllerPlaysLandTriggers(GameData gameData, UUID playingPlayerId, Card landCard) {
         var ctx = new TriggerContext.LandPlayed(playingPlayerId, landCard);

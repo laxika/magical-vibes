@@ -71,6 +71,7 @@ class CrosstownCourierTest extends BaseCardTest {
 
     private void resolveCombatAndTrigger() {
         resolveCombat();
-        harness.passBothPriorities();
+        // Resolve the mill trigger without advancing the turn (opponent would draw).
+        resolveAllTriggers();
     }
 }

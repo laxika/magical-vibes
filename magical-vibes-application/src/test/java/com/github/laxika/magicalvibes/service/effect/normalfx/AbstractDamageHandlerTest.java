@@ -76,6 +76,11 @@ abstract class AbstractDamageHandlerTest {
         // controlled creatures) by dealCreatureDamage; the second UUID is null on the player path, so match with any().
         lenient().when(damagePreventionService.applyTurnDamageRedirectToCreature(eq(gd), any(), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));
+        // Palisade Giant / RedirectPlayerDamageToSelfEffect (includeOtherPermanents): pass-through when no
+        // absorbing permanent is set up. Called unconditionally for creature damage once the controller is known.
+        lenient().when(damagePreventionService.applyStaticPermanentDamageRedirectToSelf(
+                        eq(gd), any(), any(), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
         // Martyrdom redirect is likewise a pass-through — dealDamageToPlayer calls it unconditionally.
         lenient().when(damagePreventionService.applyPlayerNextDamageRedirectShields(eq(gd), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(2));
