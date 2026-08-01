@@ -933,6 +933,13 @@ public class PredicateEvaluationService {
             case PermanentIsCreaturePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsEnchantmentPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsHistoricPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsHostOfSourceAuraPredicate ignored -> {
+                // Recursion-safe: attachment state is stored on the source snapshot, not derived
+                // through computeStaticBonus. Used by Vampirism-style "other than enchanted creature".
+                Permanent sourceAura = context == null ? null : context.sourcePermanentSnapshot();
+                yield sourceAura != null && sourceAura.isAttached()
+                        && sourceAura.getAttachedTo().equals(permanent.getId());
+            }
             case PermanentIsLandPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsMulticoloredPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsPlaneswalkerPredicate ignored -> matchesStaticLeaf(permanent, predicate);

@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttacking
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
@@ -1277,6 +1278,25 @@ class PredicateEvaluationServiceTest {
             PermanentIsEnchantedPredicate isEnchanted = new PermanentIsEnchantedPredicate();
             assertThat(evaluator.matchesStaticFilter(enchanted, isEnchanted, ctx())).isTrue();
             assertThat(evaluator.matchesStaticFilter(bare, isEnchanted, ctx())).isFalse();
+        }
+
+        @Test
+        @DisplayName("host-of-source-aura matches the attachment host from the source snapshot")
+        void hostOfSourceAuraReadsAttachmentFromSnapshot() {
+            Permanent host = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            Permanent other = addPermanent(player1Id, createCreature("Runeclaw Bear", 2, 2, CardColor.GREEN));
+            Permanent aura = addPermanent(player1Id,
+                    createAura("Heart of Light", new PreventAllDamageToAndByEnchantedCreatureEffect()));
+            aura.setAttachedTo(host.getId());
+
+            FilterContext withAura = ctx().withSourcePermanentSnapshot(aura);
+            PermanentIsHostOfSourceAuraPredicate isHost = new PermanentIsHostOfSourceAuraPredicate();
+            assertThat(evaluator.matchesStaticFilter(host, isHost, withAura)).isTrue();
+            assertThat(evaluator.matchesStaticFilter(other, isHost, withAura)).isFalse();
+            assertThat(evaluator.matchesStaticFilter(host,
+                    new PermanentNotPredicate(isHost), withAura)).isFalse();
+            assertThat(evaluator.matchesStaticFilter(other,
+                    new PermanentNotPredicate(isHost), withAura)).isTrue();
         }
 
         @Test

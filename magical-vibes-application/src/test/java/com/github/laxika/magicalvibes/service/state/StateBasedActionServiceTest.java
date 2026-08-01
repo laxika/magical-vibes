@@ -44,14 +44,21 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
 
 @ExtendWith(MockitoExtension.class)
 class StateBasedActionServiceTest {
+
+    private static final GameQueryService.StaticBonus EMPTY_BONUS = new GameQueryService.StaticBonus(
+            0, 0, java.util.Set.of(), java.util.Set.of(), false, List.of(), List.of(), java.util.Set.of(),
+            List.of(), java.util.Set.of(), java.util.Set.of(), false, false, false, false, java.util.Set.of(),
+            false, 0, 0, false, false);
 
     @Mock
     private GameOutcomeService gameOutcomeService;
@@ -67,6 +74,8 @@ class StateBasedActionServiceTest {
     private StateTriggerService stateTriggerService;
     @Mock
     private LegendRuleService legendRuleService;
+    @Mock
+    private BattleDefeatSupport battleDefeatSupport;
 
     @InjectMocks
     private StateBasedActionService sut;
@@ -92,6 +101,8 @@ class StateBasedActionServiceTest {
         gd.playerBattlefields.put(player2Id, new ArrayList<>());
         gd.playerManaPools.put(player1Id, new ManaPool());
         gd.playerManaPools.put(player2Id, new ManaPool());
+        // Lethal-damage SBA reads losesAllAbilities via computeStaticBonus (Ogre Enforcer path).
+        lenient().when(gameQueryService.computeStaticBonus(any(), any())).thenReturn(EMPTY_BONUS);
     }
 
     private static Card createCreatureCard(String name) {

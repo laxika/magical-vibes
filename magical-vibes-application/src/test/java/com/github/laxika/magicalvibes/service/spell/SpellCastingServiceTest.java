@@ -64,6 +64,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -330,8 +331,10 @@ class SpellCastingServiceTest {
             svc.playCard(gd, player1, 0, null, null, null, null, null, false, null);
 
             assertThat(gd.landsPlayedThisTurn.get(player1Id)).isEqualTo(beforeCount + 1);
-            // Lands don't trigger spell cast triggers
-            verifyNoInteractions(triggerCollectionService);
+            // Land-play special action fires "when you play a land" triggers, not spell-cast ones
+            verify(triggerCollectionService).checkControllerPlaysLandTriggers(gd, player1Id);
+            verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any());
+            verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any(), anyBoolean());
         }
     }
 
@@ -1122,8 +1125,10 @@ class SpellCastingServiceTest {
             verify(battlefieldEntryService).processCreatureETBEffects(eq(gd), eq(player1Id), eq(land), any(), anyBoolean());
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(turnProgressionService).resolveAutoPass(gd);
-            // Lands from exile don't trigger spell cast triggers
-            verifyNoInteractions(triggerCollectionService);
+            // Land-play special action from exile fires land-play triggers, not spell-cast ones
+            verify(triggerCollectionService).checkControllerPlaysLandTriggers(gd, player1Id);
+            verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any());
+            verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any(), anyBoolean());
         }
 
         @Test
