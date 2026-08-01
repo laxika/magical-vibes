@@ -62,7 +62,7 @@ abstract class AbstractPlayerInteractionHandlerTest {
 
         support = new PlayerInteractionSupport(drawService, graveyardService, gameQueryService, predicateEvaluationService,
                 gameLogService, playerInputService, cardRevealService,
-                permanentRemovalService, battlefieldEntryService, triggerCollectionService, interactionHandlerRegistry);
+                triggerCollectionService, interactionHandlerRegistry);
         registry = new EffectHandlerRegistry();
         String handlerName = getClass().getSimpleName().replace("Test", "");
         NormalEffectHandlerBean handler = PlayerInteractionHandlerTestSupport.createHandler(

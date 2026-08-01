@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
-import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
@@ -54,7 +53,6 @@ class LibraryChoiceHandlerServiceTest {
     @Mock private SessionManager sessionManager;
     @Mock private GameQueryService gameQueryService;
     @Mock private GraveyardService graveyardService;
-    @Mock private WarpWorldService warpWorldService;
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private LegendRuleService legendRuleService;
     @Mock private StateBasedActionService stateBasedActionService;
@@ -82,7 +80,7 @@ class LibraryChoiceHandlerServiceTest {
                 mock(LibraryChoiceHandlerService.class)));
         service = new LibraryChoiceHandlerService(gameQueryService,
                 mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
-                graveyardService, warpWorldService, battlefieldEntryService, legendRuleService,
+                graveyardService, battlefieldEntryService, legendRuleService,
                 stateBasedActionService, gameLogService, inputCompletionService,
                 playerInputService, effectResolutionService, exileService, registry,
                 mock(com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class),

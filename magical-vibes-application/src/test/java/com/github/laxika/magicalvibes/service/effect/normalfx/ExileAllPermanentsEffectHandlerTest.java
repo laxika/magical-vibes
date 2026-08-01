@@ -84,7 +84,7 @@ class ExileAllPermanentsEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        exileAllPermanentsHandler = new ExileAllPermanentsEffectHandler(gameQueryService, predicateEvaluationService, gameLogService, permanentRemovalService);
+        exileAllPermanentsHandler = new ExileAllPermanentsEffectHandler(predicateEvaluationService, gameLogService, permanentRemovalService);
 
     }
 

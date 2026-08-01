@@ -125,7 +125,7 @@ public class MiscTriggerCollectorService {
     // ── ON_ANY_CREATURE_SACRIFICED ─────────────────────────────────────
 
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ANY_CREATURE_SACRIFICED)
-    private boolean handleAnyCreatureSacrificedMay(TriggerMatchContext match, MayEffect may) {
+    private boolean handleAnyCreatureSacrificedMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         // "Whenever a player sacrifices a creature, you may put a +1/+1 counter on this creature"
         // (Thraximundar). The wrapped PutCountersOnSourceEffect resolves onto the source permanent,
         // and the "you may" is offered to the source's controller (not the sacrificing player).
@@ -198,7 +198,7 @@ public class MiscTriggerCollectorService {
 
     @CollectsTrigger(value = DestroyEnchantedPermanentEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapDestroy(TriggerMatchContext match,
-            DestroyEnchantedPermanentEffect e) {
+            DestroyEnchantedPermanentEffect e, TriggerContext ctx) {
         match.gameData().enqueueTrigger(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
@@ -217,7 +217,7 @@ public class MiscTriggerCollectorService {
     @CollectsTrigger(value = RemoveCounterFromSourceThenDestroyEnchantedAtZeroEffect.class,
             slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapRemoveCounter(TriggerMatchContext match,
-            RemoveCounterFromSourceThenDestroyEnchantedAtZeroEffect e) {
+            RemoveCounterFromSourceThenDestroyEnchantedAtZeroEffect e, TriggerContext ctx) {
         // The effect re-derives the enchanted permanent from the source Aura at resolution, so the
         // trigger only needs to carry the Aura as its source permanent (like the destroy variant).
         match.gameData().enqueueTrigger(new StackEntry(
@@ -237,7 +237,7 @@ public class MiscTriggerCollectorService {
 
     @CollectsTrigger(value = PutCounterOnEnchantedCreatureEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapCounter(TriggerMatchContext match,
-            PutCounterOnEnchantedCreatureEffect e) {
+            PutCounterOnEnchantedCreatureEffect e, TriggerContext ctx) {
         // The effect re-derives the enchanted creature from the source Aura at resolution, so the
         // trigger only needs to carry the Aura as its source permanent (like the destroy variant).
         match.gameData().enqueueTrigger(new StackEntry(
@@ -341,7 +341,7 @@ public class MiscTriggerCollectorService {
 
     @CollectsTrigger(value = RelicBindTapEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapRelicBind(TriggerMatchContext match,
-            RelicBindTapEffect e) {
+            RelicBindTapEffect e, TriggerContext ctx) {
         // Modal, targeted ability — the mode and target are chosen when the ability resolves
         // (RelicBindTapEffectHandler). The trigger goes on the stack non-targeting; targets are
         // free (any player / planeswalker), so the tapped permanent's controller is not needed here.
@@ -362,7 +362,7 @@ public class MiscTriggerCollectorService {
 
     @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapDraw(TriggerMatchContext match,
-            DrawCardEffect e) {
+            DrawCardEffect e, TriggerContext ctx) {
         // Betrayal: controller draws. DrawCardEffect resolves for the stack entry's controller.
         match.gameData().enqueueTrigger(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -382,7 +382,8 @@ public class MiscTriggerCollectorService {
     // ── ON_OPPONENT_LOSES_LIFE ─────────────────────────────────────────
 
     @CollectsTrigger(value = MillOpponentOnLifeLossEffect.class, slot = EffectSlot.ON_OPPONENT_LOSES_LIFE)
-    private boolean handleMillOnLifeLoss(TriggerMatchContext match, TriggerContext ctx) {
+    private boolean handleMillOnLifeLoss(TriggerMatchContext match,
+            MillOpponentOnLifeLossEffect trigger, TriggerContext ctx) {
         TriggerContext.LifeLoss ll = (TriggerContext.LifeLoss) ctx;
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
@@ -433,7 +434,7 @@ public class MiscTriggerCollectorService {
 
     @CollectsTrigger(value = PutCountersOnSourceEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainPutCounters(TriggerMatchContext match,
-            PutCountersOnSourceEffect effect) {
+            PutCountersOnSourceEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
 
@@ -454,7 +455,7 @@ public class MiscTriggerCollectorService {
 
     @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainPutCountersOnSelf(TriggerMatchContext match,
-            PutCountersOnSelfEffect effect) {
+            PutCountersOnSelfEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
 
@@ -475,7 +476,7 @@ public class MiscTriggerCollectorService {
 
     @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
     private boolean handleLandPutIntoGraveyardPutCountersOnSelf(TriggerMatchContext match,
-            PutCountersOnSelfEffect effect) {
+            PutCountersOnSelfEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
 
@@ -496,7 +497,7 @@ public class MiscTriggerCollectorService {
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
     private boolean handleCreatureCardPutIntoGraveyardDefault(TriggerMatchContext match,
-            CardEffect effect) {
+            CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
 
@@ -517,7 +518,7 @@ public class MiscTriggerCollectorService {
 
     @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainDrawCard(TriggerMatchContext match,
-            DrawCardEffect effect) {
+            DrawCardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
 
@@ -539,7 +540,7 @@ public class MiscTriggerCollectorService {
     @CollectsTrigger(value = PutCounterOnEachControlledPermanentEffect.class,
             slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainPutCountersOnMatching(TriggerMatchContext match,
-            PutCounterOnEachControlledPermanentEffect effect) {
+            PutCounterOnEachControlledPermanentEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
 
@@ -690,7 +691,7 @@ public class MiscTriggerCollectorService {
 
     @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
     private boolean handleNoncombatDamageBoostSelf(TriggerMatchContext match,
-            BoostSelfEffect effect) {
+            BoostSelfEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
 
@@ -712,7 +713,8 @@ public class MiscTriggerCollectorService {
     // ── ON_CONTROLLER_GAINS_LIFE (draw cards equal to life gained) ────
 
     @CollectsTrigger(value = DrawCardsEqualToLifeGainedEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
-    private boolean handleDrawCardsEqualToLifeGained(TriggerMatchContext match, TriggerContext ctx) {
+    private boolean handleDrawCardsEqualToLifeGained(TriggerMatchContext match,
+            DrawCardsEqualToLifeGainedEffect effect, TriggerContext ctx) {
         TriggerContext.LifeGain lg = (TriggerContext.LifeGain) ctx;
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
@@ -762,7 +764,8 @@ public class MiscTriggerCollectorService {
     // ── ON_CONTROLLER_LOSES_LIFE (exile for each life lost) ──────────
 
     @CollectsTrigger(value = ExileForEachLifeLostEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
-    private boolean handleExileForEachLifeLost(TriggerMatchContext match, TriggerContext ctx) {
+    private boolean handleExileForEachLifeLost(TriggerMatchContext match,
+            ExileForEachLifeLostEffect effect, TriggerContext ctx) {
         TriggerContext.LifeLoss ll = (TriggerContext.LifeLoss) ctx;
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();

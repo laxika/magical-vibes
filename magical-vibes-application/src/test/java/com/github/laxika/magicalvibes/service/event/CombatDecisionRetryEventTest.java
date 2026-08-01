@@ -9,16 +9,13 @@ import com.github.laxika.magicalvibes.model.event.GameEventBatch;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
 import com.github.laxika.magicalvibes.service.interaction.AttackerDeclarationInteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.BlockerDeclarationInteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.CombatDamageAssignmentInteractionHandler;
@@ -81,7 +78,6 @@ class CombatDecisionRetryEventTest {
                 turnProgression));
 
         gameService = new GameService(
-                mock(GameRegistry.class),
                 mock(GameQueryService.class),
                 mock(GameLogService.class),
                 combatService,
@@ -91,7 +87,6 @@ class CombatDecisionRetryEventTest {
                 mock(StackResolutionService.class),
                 mock(AbilityActivationService.class),
                 mock(MulliganService.class),
-                mock(ExileSupport.class),
                 mock(GameOutcomeService.class),
                 coordinator);
     }

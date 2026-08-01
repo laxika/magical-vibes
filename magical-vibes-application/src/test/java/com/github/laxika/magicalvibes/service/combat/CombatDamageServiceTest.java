@@ -109,7 +109,7 @@ class CombatDamageServiceTest {
         combatDamageService = new CombatDamageService(gameQueryService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService.class),
-                gameLogService, gameOutcomeService, damagePreventionService, graveyardService,
+                gameLogService, damagePreventionService, graveyardService,
                 permanentRemovalService, playerInputService, registry, triggerCollectionService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class),
                 lifeSupport, combatAttackService, combatTriggerService,

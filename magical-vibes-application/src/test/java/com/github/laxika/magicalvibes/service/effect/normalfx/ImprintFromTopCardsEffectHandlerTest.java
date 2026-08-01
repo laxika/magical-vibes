@@ -78,7 +78,7 @@ class ImprintFromTopCardsEffectHandlerTest {
 
         libraryRevealSupport = new LibraryRevealSupport(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
-        imprintFromTopCardsEffectHandler = new ImprintFromTopCardsEffectHandler(gameQueryService, gameLogService, exileService, libraryRevealSupport,
+        imprintFromTopCardsEffectHandler = new ImprintFromTopCardsEffectHandler(gameLogService, exileService, libraryRevealSupport,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
 
     }

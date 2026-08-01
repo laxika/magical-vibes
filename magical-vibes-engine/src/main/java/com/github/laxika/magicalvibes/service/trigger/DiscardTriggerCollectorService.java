@@ -45,7 +45,7 @@ public class DiscardTriggerCollectorService {
     private final PermanentRemovalService permanentRemovalService;
 
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
-    private boolean handleDiscardMay(TriggerMatchContext match, MayEffect may) {
+    private boolean handleDiscardMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on discard (may ability)", match.gameData().id, match.permanent().getCard().getName());
@@ -97,7 +97,8 @@ public class DiscardTriggerCollectorService {
     }
 
     @CollectsTrigger(value = ExileDiscardedCardFromGraveyardEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
-    private boolean handleExileDiscardedFromGraveyard(TriggerMatchContext match, TriggerContext ctx) {
+    private boolean handleExileDiscardedFromGraveyard(TriggerMatchContext match,
+            ExileDiscardedCardFromGraveyardEffect trigger, TriggerContext ctx) {
         TriggerContext.Discard dc = (TriggerContext.Discard) ctx;
         var gameData = match.gameData();
         Card discarded = dc.discardedCard();
@@ -123,7 +124,7 @@ public class DiscardTriggerCollectorService {
     }
 
     @CollectsTrigger(value = ScryEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
-    private boolean handleScryOnDiscard(TriggerMatchContext match, ScryEffect trigger) {
+    private boolean handleScryOnDiscard(TriggerMatchContext match, ScryEffect trigger, TriggerContext ctx) {
         // "Whenever you cycle or discard another card, scry N." Cycling discards the card (CR 702.29e),
         // so this single controller-discard trigger fires for both. Queue it as a proper triggered
         // ability so it uses the stack (and, when cycling, resolves above the cycling draw).
@@ -143,7 +144,7 @@ public class DiscardTriggerCollectorService {
     }
 
     @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
-    private boolean handleSelfBoostOnDiscard(TriggerMatchContext match, BoostSelfEffect trigger) {
+    private boolean handleSelfBoostOnDiscard(TriggerMatchContext match, BoostSelfEffect trigger, TriggerContext ctx) {
         // "Whenever you cycle or discard a card, this creature gets +X/+Y until end of turn." Cycling
         // discards the card (CR 702.29e), so this single controller-discard trigger fires for both. Queue
         // it as a proper triggered ability carrying the source permanent id so the self-boost lands on it.
@@ -164,7 +165,7 @@ public class DiscardTriggerCollectorService {
     }
 
     @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
-    private boolean handleSequenceOnDiscard(TriggerMatchContext match, SequenceEffect trigger) {
+    private boolean handleSequenceOnDiscard(TriggerMatchContext match, SequenceEffect trigger, TriggerContext ctx) {
         // "Whenever you cycle or discard a card, this creature gets +X/+Y until end of turn and can't be
         // blocked this turn" (and similar mandatory multi-step self-triggers). Cycling discards the card
         // (CR 702.29e), so this single controller-discard trigger fires for both. The steps must stay ONE
@@ -186,7 +187,7 @@ public class DiscardTriggerCollectorService {
     }
 
     @CollectsTrigger(value = GrantKeywordEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
-    private boolean handleGrantKeywordOnDiscard(TriggerMatchContext match, GrantKeywordEffect trigger) {
+    private boolean handleGrantKeywordOnDiscard(TriggerMatchContext match, GrantKeywordEffect trigger, TriggerContext ctx) {
         // "Whenever you cycle or discard a card, target creature gains [keyword] until end of turn."
         // Cycling discards the card (CR 702.29e), so this single controller-discard trigger fires for
         // both. (Zenith Seeker)
@@ -215,7 +216,7 @@ public class DiscardTriggerCollectorService {
     }
 
     @CollectsTrigger(value = BoostTargetCreatureEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
-    private boolean handleBoostTargetCreatureOnDiscard(TriggerMatchContext match, BoostTargetCreatureEffect trigger) {
+    private boolean handleBoostTargetCreatureOnDiscard(TriggerMatchContext match, BoostTargetCreatureEffect trigger, TriggerContext ctx) {
         // "Whenever you cycle or discard a card, target creature an opponent controls gets -X/-Y until
         // end of turn." Cycling discards the card (CR 702.29e), so this single controller-discard
         // trigger fires for both. The effect's targetSpec predicate (a "creature an opponent controls"
@@ -232,7 +233,7 @@ public class DiscardTriggerCollectorService {
 
     @CollectsTrigger(value = PutCounterOnEachMatchingPermanentEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
     private boolean handlePutCountersOnDiscard(TriggerMatchContext match,
-            PutCounterOnEachMatchingPermanentEffect trigger) {
+            PutCounterOnEachMatchingPermanentEffect trigger, TriggerContext ctx) {
         // "Whenever you cycle or discard another card, put a -1/-1 counter on each creature your
         // opponents control." Cycling discards the card (CR 702.29e), so this single controller-discard
         // trigger fires for both. Queue it as a proper triggered ability carrying the source permanent id
@@ -253,7 +254,7 @@ public class DiscardTriggerCollectorService {
     }
 
     @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
-    private boolean handleMayPayManaOnDiscard(TriggerMatchContext match, MayPayManaEffect trigger) {
+    private boolean handleMayPayManaOnDiscard(TriggerMatchContext match, MayPayManaEffect trigger, TriggerContext ctx) {
         // "Whenever you cycle or discard a card, you may pay {N}. If you do, ..." Cycling discards the card
         // (CR 702.29e), so this single controller-discard trigger fires for both. Queue it as a proper
         // triggered ability so it uses the stack (and, when cycling, resolves above the cycling draw); its

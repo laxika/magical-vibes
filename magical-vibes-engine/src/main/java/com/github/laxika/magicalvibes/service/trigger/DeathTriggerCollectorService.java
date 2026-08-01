@@ -95,6 +95,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DeathTriggerCollectorService {
 
+    private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
