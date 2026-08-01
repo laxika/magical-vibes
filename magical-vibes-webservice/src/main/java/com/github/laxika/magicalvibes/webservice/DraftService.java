@@ -898,7 +898,7 @@ public class DraftService {
                     if (activeGameId != null) {
                         GameData gameData = gameRegistry.get(activeGameId);
                         if (gameData != null && gameData.status != GameStatus.FINISHED) {
-                            String opponentName = getOpponentName(draftData, playerId, activeGameId);
+                            String opponentName = getOpponentName(draftData, playerId);
                             sessionManager.sendToPlayer(playerId, new TournamentGameReadyMessage(gameData.id, opponentName));
                             gameResyncProjectionService.sendCurrentState(
                                     gameData, playerId, MessageType.GAME_JOINED);
@@ -940,7 +940,7 @@ public class DraftService {
         sessionManager.sendToPlayer(playerId, msg);
     }
 
-    private String getOpponentName(DraftData draftData, UUID playerId, UUID gameId) {
+    private String getOpponentName(DraftData draftData, UUID playerId) {
         for (List<UUID> pairing : draftData.tournamentRounds.get(draftData.currentRound)) {
             if (pairing.contains(playerId)) {
                 UUID opponentId = pairing.get(0).equals(playerId) ? pairing.get(1) : pairing.get(0);
