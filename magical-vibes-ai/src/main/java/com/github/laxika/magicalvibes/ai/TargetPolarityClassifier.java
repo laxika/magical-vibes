@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
@@ -102,6 +103,17 @@ public class TargetPolarityClassifier {
         }
         if (effect instanceof MayEffect may) {
             return classify(gameData, may.wrapped(), aiPlayerId);
+        }
+        // "You may pay {X}. If you do / don't, …" — classify whichever branch targets a permanent
+        // (Knight of the Mists: wrapped null, elseEffect destroys; Spellbomb: wrapped does work).
+        if (effect instanceof MayPayManaEffect mayPay) {
+            TargetPolarity paid = mayPay.wrapped() == null
+                    ? null
+                    : classify(gameData, mayPay.wrapped(), aiPlayerId);
+            TargetPolarity declined = mayPay.elseEffect() == null
+                    ? null
+                    : classify(gameData, mayPay.elseEffect(), aiPlayerId);
+            return higherPriority(paid, declined);
         }
         if (effect instanceof ConditionalReplacementEffect replacement) {
             return classify(gameData, replacement.baseEffect(), aiPlayerId);
@@ -264,6 +276,8 @@ public class TargetPolarityClassifier {
             entry("PutTargetOnBottomOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PutTargetOnTopOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
+            // Commit // Memory: library tuck of a spell or nonland permanent.
+            entry("PutTargetSpellOrPermanentIntoLibraryNFromTopEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ReturnTargetPermanentToHandOrLibraryTopByPredicateEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ReturnTargetPermanentToHandThenEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("SacrificeTargetCreatureThenCreateTokensEqualToPowerEffect", TargetPolarity.HARMFUL_REMOVAL),

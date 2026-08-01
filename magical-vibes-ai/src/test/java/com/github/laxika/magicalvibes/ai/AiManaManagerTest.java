@@ -181,7 +181,7 @@ class AiManaManagerTest {
         gd.playerBattlefields.get(player1Id).add(perm);
         lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
         lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-        lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+        lenient().when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
         return perm;
     }
 
@@ -201,7 +201,7 @@ class AiManaManagerTest {
         gd.playerBattlefields.get(player1Id).add(perm);
         lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
         lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-        lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+        lenient().when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
         return perm;
     }
 
@@ -225,7 +225,7 @@ class AiManaManagerTest {
         gd.playerBattlefields.get(player1Id).add(perm);
         lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
         lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-        lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+        lenient().when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
         return perm;
     }
 
@@ -243,7 +243,7 @@ class AiManaManagerTest {
         gd.playerBattlefields.get(player1Id).add(perm);
         lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
         lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-        lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+        lenient().when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
         return perm;
     }
 
@@ -268,7 +268,7 @@ class AiManaManagerTest {
         gd.playerBattlefields.get(player1Id).add(perm);
         lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
         lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-        lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+        lenient().when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
         return perm;
     }
 
@@ -296,7 +296,7 @@ class AiManaManagerTest {
         gd.playerBattlefields.get(player1Id).add(perm);
         lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
         lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-        lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+        lenient().when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
         return perm;
     }
 
@@ -318,7 +318,7 @@ class AiManaManagerTest {
         gd.playerBattlefields.get(player1Id).add(perm);
         lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
         lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-        lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+        lenient().when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
         return perm;
     }
 
@@ -329,7 +329,7 @@ class AiManaManagerTest {
         gd.playerBattlefields.get(player1Id).add(perm);
         lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
         lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-        lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+        lenient().when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
         return perm;
     }
 
@@ -397,7 +397,7 @@ class AiManaManagerTest {
             when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
             when(gameQueryService.hasKeyword(gd, perm, Keyword.HASTE)).thenReturn(true);
             when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-            when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+            when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1);
@@ -454,7 +454,7 @@ class AiManaManagerTest {
             when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
             when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
             // Evil Presence changed Plains to produce Black
-            when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(ManaColor.BLACK);
+            when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of(ManaColor.BLACK));
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.get(ManaColor.BLACK)).isEqualTo(1);
@@ -490,7 +490,7 @@ class AiManaManagerTest {
             gd.playerBattlefields.get(player1Id).add(perm);
             when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
             when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-            when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+            when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
@@ -508,7 +508,7 @@ class AiManaManagerTest {
             gd.playerBattlefields.get(player1Id).add(perm);
             when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
             when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-            when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+            when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
@@ -557,7 +557,7 @@ class AiManaManagerTest {
             gd.playerBattlefields.get(player1Id).add(perm);
             when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
             when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-            when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+            when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
 
             VirtualManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             // 3 abilities, so flexible overcount = 3 - 1 = 2
@@ -622,7 +622,7 @@ class AiManaManagerTest {
             gd.playerBattlefields.get(player1Id).add(perm);
             lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
             lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-            lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+            lenient().when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
 
             VirtualManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.getPerColorOvercount(ManaColor.RED)).isEqualTo(1);
@@ -653,7 +653,7 @@ class AiManaManagerTest {
             gd.playerBattlefields.get(player1Id).add(perm);
             when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
             when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-            when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(ManaColor.BLACK);
+            when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of(ManaColor.BLACK));
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.get(ManaColor.BLACK)).isEqualTo(1);
@@ -671,7 +671,7 @@ class AiManaManagerTest {
             gd.playerBattlefields.get(player1Id).add(perm);
             when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
             when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-            when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+            when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
@@ -702,7 +702,7 @@ class AiManaManagerTest {
             gd.playerBattlefields.get(player1Id).add(perm);
             when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
             when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-            when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+            when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
@@ -719,7 +719,7 @@ class AiManaManagerTest {
             gd.playerBattlefields.get(player1Id).add(perm);
             when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
             when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-            when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+            when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
@@ -737,7 +737,7 @@ class AiManaManagerTest {
             gd.playerBattlefields.get(player1Id).add(perm);
             when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
             when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-            when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+            when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.get(ManaColor.RED)).isEqualTo(2);
@@ -896,7 +896,7 @@ class AiManaManagerTest {
             gd.playerBattlefields.get(player1Id).add(perm);
             lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
             lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-            lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+            lenient().when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
             when(gameQueryService.isMorbidMet(gd)).thenReturn(false);
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
@@ -918,7 +918,7 @@ class AiManaManagerTest {
             gd.playerBattlefields.get(player1Id).add(perm);
             lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
             lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-            lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+            lenient().when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
             when(gameQueryService.isMorbidMet(gd)).thenReturn(true);
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
@@ -941,7 +941,7 @@ class AiManaManagerTest {
             gd.playerBattlefields.get(player1Id).add(perm);
             lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
             lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-            lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+            lenient().when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
             gd.activePlayerId = opponentId;
             gd.currentStep = TurnStep.PRECOMBAT_MAIN;
 
@@ -964,7 +964,7 @@ class AiManaManagerTest {
             gd.playerBattlefields.get(player1Id).add(perm);
             lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
             lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
-            lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+            lenient().when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
             gd.activePlayerId = player1Id;
             gd.currentStep = TurnStep.PRECOMBAT_MAIN;
 
@@ -1104,8 +1104,8 @@ class AiManaManagerTest {
             void temporaryBasicLandTypeDrivesThePlan() {
                 Permanent olderPlains = addUntappedLand("Plains", ManaColor.WHITE);
                 addUntappedLand("Plains", ManaColor.WHITE);
-                when(gameQueryService.getOverriddenLandManaColor(gd, olderPlains))
-                        .thenReturn(ManaColor.BLUE);
+                when(gameQueryService.getOverriddenLandManaColors(gd, olderPlains))
+                        .thenReturn(List.of(ManaColor.BLUE));
 
                 AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
                 manager.tapLandsForCost(gd, player1Id, "{W}", 0, action);
@@ -1127,8 +1127,8 @@ class AiManaManagerTest {
                 gd.playerBattlefields.get(player1Id).add(changedLand);
                 lenient().when(gameQueryService.isCreature(gd, changedLand)).thenReturn(false);
                 lenient().when(gameQueryService.canActivateManaAbility(gd, changedLand)).thenReturn(true);
-                when(gameQueryService.getOverriddenLandManaColor(gd, changedLand))
-                        .thenReturn(ManaColor.BLUE);
+                when(gameQueryService.getOverriddenLandManaColors(gd, changedLand))
+                        .thenReturn(List.of(ManaColor.BLUE));
                 addUntappedLand("Island", ManaColor.BLUE);
 
                 AiManaManager.ManaTapAction action = (permanentIndex, abilityIndex) ->
