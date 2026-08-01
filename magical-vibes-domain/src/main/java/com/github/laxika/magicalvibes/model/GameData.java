@@ -671,7 +671,7 @@ public class GameData {
     /**
      * Cards exiled by a free-cast process that should go to their owners' graveyards when casting
      * finishes (Epic Experiment). Empty when unused. Cleared by
-     * {@code ImprovisationCapstoneCastSupport.putRemainderIntoOwnersGraveyards}.
+     * {@code ExileFreeCastQueueSupport.putRemainderIntoOwnersGraveyards}.
      */
     public final List<UUID> pendingExileFreeCastRemainderToGraveyard = new ArrayList<>();
 
@@ -2524,7 +2524,6 @@ public class GameData {
         });
         copy.pendingFreeCastQueue.addAll(this.pendingFreeCastQueue);
         copy.pendingFreeCastAsCopyIds.addAll(this.pendingFreeCastAsCopyIds);
-        copy.pendingImprovisationCapstoneCastQueue.addAll(this.pendingImprovisationCapstoneCastQueue);
         copy.pendingExileFreeCastRemainderToGraveyard.addAll(this.pendingExileFreeCastRemainderToGraveyard);
 
         // --- Turn-scoped counters ---

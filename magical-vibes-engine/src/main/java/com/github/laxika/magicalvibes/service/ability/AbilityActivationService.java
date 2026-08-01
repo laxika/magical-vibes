@@ -1874,15 +1874,11 @@ public class AbilityActivationService {
                         if (sacPermCost.trackSacrificedPower()) {
                             effectiveXValue = gameQueryService.getEffectivePower(gameData, autoTarget);
                         }
-                        if (sacPermCost.trackSacrificedPower()) {
-                            effectiveXValue = gameQueryService.getEffectivePower(gameData, autoTarget);
-                        }
                         if (sacPermCost.trackSacrificedManaValue()) {
                             effectiveXValue = autoTarget.getCard().getManaValue();
                         }
                         if (sacPermCost.trackSacrificedToughness()) {
                             effectiveXValue = gameQueryService.getEffectiveToughness(gameData, autoTarget);
-                        }
                         }
                     }
                 }
@@ -2077,7 +2073,6 @@ public class AbilityActivationService {
             }
             if (sacPermCost.trackSacrificedToughness()) {
                 updatedXValue = gameQueryService.getEffectiveToughness(gameData, chosen);
-            }
             }
         }
 

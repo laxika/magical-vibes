@@ -6,7 +6,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * cards exiled this way that weren't cast into your graveyard.
  *
  * <p>Reuses the Improvisation Capstone cast machinery
- * ({@code ImprovisationCapstoneCastChoice} / {@code ImprovisationCapstoneCastSupport}). Remainder
+ * ({@code ImprovisationCapstoneCastChoice} / {@code ExileFreeCastQueueSupport}). Remainder
  * cards still in exile after the cast queue drains are moved via
  * {@code GameData.pendingExileFreeCastRemainderToGraveyard}.</p>
  */

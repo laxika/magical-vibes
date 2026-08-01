@@ -218,11 +218,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever a land the controller controls enters the battlefield.
      *  Checked in {@code BattlefieldEntryService.checkAllyLandEntersTriggers}. */
     ON_ALLY_LAND_ENTERS_BATTLEFIELD,
-    /** Triggers when the controller plays a land (land play special action — not every land ETB).
-     *  Checked in {@code TriggerCollectionService.checkControllerPlaysLandTriggers}, fired from every
-     *  path that increments {@code landsPlayedThisTurn}. Used with {@code ON_CONTROLLER_CASTS_SPELL}
-     *  for "When you play a card, …" (Juju Bubble). */
-    ON_CONTROLLER_PLAYS_LAND,
     ON_OPPONENT_CREATURE_DIES,
     ON_DEALT_DAMAGE,
     ON_OPENING_HAND_REVEAL,

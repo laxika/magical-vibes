@@ -24,7 +24,7 @@ public class EpicExperimentEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport;
+    private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -61,7 +61,7 @@ public class EpicExperimentEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (castableSpellIds.isEmpty()) {
-            improvisationCapstoneCastSupport.putRemainderIntoOwnersGraveyards(gameData);
+            exileFreeCastQueueSupport.putRemainderIntoOwnersGraveyards(gameData);
             log.info("Game {} - {} found no castable instants/sorceries (mana value {} or less); remainder to graveyard",
                     gameData.id, sourceName, x);
             return;

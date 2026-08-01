@@ -2860,7 +2860,7 @@ public class StepTriggerService {
                     // directly above it").
                     if (innerEffect instanceof ConditionalEffect conditional) {
                         if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                new ConditionContext(playerId, null, null, card, false, false, false, null, 0, null, null))) {
+                                ConditionContext.forCard(card, playerId))) {
                             log.info("Game {} - {} graveyard end-step ability skipped ({})",
                                     gameData.id, card.getName(), conditional.condition().conditionNotMetReason());
                             continue;

@@ -671,7 +671,7 @@ public class BattlefieldEntryService {
             }
 
             int count = amountEvaluationService.evaluate(gameData, enterWith.count(),
-                    new AmountContext(controllerId, permanent, null, xValue, 0, false));
+                    new AmountContext(controllerId, permanent, null, xValue, 0));
             // Vizier of Remedies / Corpsejack Menace also replace "enters with N counters" (both are
             // replacement effects). The permanent isn't on the battlefield yet, so use its entering
             // controller.
