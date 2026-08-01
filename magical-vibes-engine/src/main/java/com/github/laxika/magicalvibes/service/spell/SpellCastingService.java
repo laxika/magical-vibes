@@ -2680,8 +2680,8 @@ public class SpellCastingService {
             // Validate only the sacrifice slice so an exile-N cost (validated above with
             // the spell's GY index excluded) is not re-checked against a null selection.
             AdditionalSpellCostService.ExtractedCosts sacOnly = new AdditionalSpellCostService.ExtractedCosts(
-                    false, true, null, false, null, null, null, false, null, false, null,
-                    null, null, null, null, null, null, null, null);
+                    false, false, true, null, false, null, null, null, null, false, null,
+                    false, null, null, null, null, null, null, false, null, null, null);
             AdditionalSpellCostService.CostSelection sacSelection = new AdditionalSpellCostService.CostSelection(
                     sacrificePermanentId, null, null, null, null, 0, -1, null);
             additionalSpellCostService.validateAll(gameData, player, castHalf, sacOnly, sacSelection);
