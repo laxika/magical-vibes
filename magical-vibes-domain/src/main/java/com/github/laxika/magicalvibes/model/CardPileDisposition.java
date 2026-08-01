@@ -16,5 +16,7 @@ public enum CardPileDisposition {
      * hand (the rest of that pile is shuffled into their library); the other pile is exiled. The
      * piles stay face down to the controller while they pick, so both are described by card count.
      */
-    SEARCH_ONE_TO_HAND
+    SEARCH_ONE_TO_HAND,
+    /** Jace, Architect of Thought −2: chosen pile → controller's hand; other pile → the bottom of their library in any order. */
+    HAND_AND_BOTTOM
 }

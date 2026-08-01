@@ -97,6 +97,10 @@ public class PermanentCounterSupport {
         if (counters <= 0 || gameQueryService.cantHaveCounters(gameData, target)) {
             return;
         }
+        counters = gameQueryService.doublePlusOnePlusOneCounters(gameData, target, counters);
+        if (counters <= 0) {
+            return;
+        }
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
 
         String counterText = counters == 1 ? "a +1/+1 counter" : counters + " +1/+1 counters";
@@ -185,6 +189,10 @@ public class PermanentCounterSupport {
             case LOYALTY -> { target.setCounterCount(CounterType.LOYALTY, target.getCounterCount(CounterType.LOYALTY) + count); yield "loyalty"; }
             case PLUS_ONE_PLUS_ONE -> {
                 if (count <= 0 || gameQueryService.cantHaveCounters(gameData, target)) {
+                    yield null;
+                }
+                count = gameQueryService.doublePlusOnePlusOneCounters(gameData, target, count);
+                if (count <= 0) {
                     yield null;
                 }
                 target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + count);

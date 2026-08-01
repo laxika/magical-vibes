@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtLeast;
+import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
@@ -467,9 +468,11 @@ public class StepTriggerService {
             // Puca's Mischief: two interdependent nonland-permanent targets chosen at trigger time
             // (one you control, one an opponent controls with equal or lesser mana value). The
             // MayEffect wrapper is carried through so the "you may" is honoured at resolution.
-            boolean isExchangeControl = upkeepEffects.stream().anyMatch(e ->
-                    e instanceof ExchangeControlOfTargetPermanentsEffect
-                            || (e instanceof MayEffect m && m.wrapped() instanceof ExchangeControlOfTargetPermanentsEffect));
+            // Source-mode exchanges (Conjured Currency) declare a single ordinary permanent target
+            // and are handled by the generic may/targeted-trigger paths below instead.
+            boolean isExchangeControl = upkeepEffects.stream()
+                    .map(e -> e instanceof MayEffect m ? m.wrapped() : e)
+                    .anyMatch(e -> e instanceof ExchangeControlOfTargetPermanentsEffect x && !x.sourceIsFirstTarget());
             if (isExchangeControl) {
                 gameData.queueInteraction(new PermanentChoiceContext.PucasMischiefOwnTarget(
                         perm.getCard(), activePlayerId, new ArrayList<>(upkeepEffects), perm.getId()));
@@ -760,7 +763,7 @@ public class StepTriggerService {
                                     || conditional.condition() instanceof CardsAboveSelfInGraveyard
                                     || conditional.condition() instanceof CardDirectlyAboveSelfInGraveyard)) {
                         if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                new ConditionContext(activePlayerId, null, null, card, false, false, false, null, 0, null, null))) {
+                                new ConditionContext(activePlayerId, null, null, card, false, false, false, false, null, 0, null, null, false))) {
                             log.info("Game {} - {} graveyard upkeep ability skipped ({})",
                                     gameData.id, card.getName(), conditional.condition().conditionNotMetReason());
                             continue;
@@ -845,7 +848,8 @@ public class StepTriggerService {
                     // five or more cards in hand"
                     if (effect instanceof ConditionalEffect conditional
                             && (conditional.condition() instanceof ActivePlayerHandEmpty
-                                    || conditional.condition() instanceof ActivePlayerHandAtLeast)
+                                    || conditional.condition() instanceof ActivePlayerHandAtLeast
+                                    || conditional.condition() instanceof ActivePlayerHandAtMost)
                             && !conditionEvaluationService.isMet(gameData, conditional.condition(),
                                     ConditionContext.forPermanent(perm, playerId))) {
                         continue;
@@ -1680,6 +1684,36 @@ public class StepTriggerService {
             }
         }
 
+        // Auras: ENCHANTED_PERMANENT_CONTROLLER_DRAW_TRIGGERED fires on the enchanted permanent's
+        // controller's draw step (e.g. Righteous Authority), baking that player as targetId.
+        gameData.forEachPermanent((auraOwnerId, perm) -> {
+            List<CardEffect> enchantedControllerDrawEffects =
+                    perm.getCard().getEffects(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_DRAW_TRIGGERED);
+            if (enchantedControllerDrawEffects == null || enchantedControllerDrawEffects.isEmpty()) return;
+            if (!perm.isAttached()) return;
+
+            UUID enchantedPermanentControllerId =
+                    gameQueryService.findPermanentController(gameData, perm.getAttachedTo());
+            if (enchantedPermanentControllerId == null) return;
+            if (!enchantedPermanentControllerId.equals(activePlayerId)) return;
+
+            for (CardEffect effect : enchantedControllerDrawEffects) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        auraOwnerId,
+                        perm.getCard().getName() + "'s draw step ability",
+                        new ArrayList<>(List.of(effect)),
+                        enchantedPermanentControllerId,
+                        perm.getId()
+                ));
+
+                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s draw step ability triggers."));
+                log.info("Game {} - {} enchanted-permanent-controller draw trigger pushed onto stack",
+                        gameData.id, perm.getCard().getName());
+            }
+        });
+
         // Check all battlefields for EACH_DRAW_TRIGGERED effects (all players' draw steps)
         gameData.forEachPermanent((playerId, perm) -> {
             List<CardEffect> drawEffects = perm.getCard().getEffects(EffectSlot.EACH_DRAW_TRIGGERED);
@@ -2375,7 +2409,7 @@ public class StepTriggerService {
             }
         }
 
-        // Process delayed graveyard-to-battlefield-under-control returns (Seraph)
+        // Process delayed graveyard-to-battlefield-under-control returns (Seraph, Grave Betrayal)
         if (gameData.hasDelayedAction(DelayedGraveyardToBattlefieldUnderControl.class)) {
             List<DelayedGraveyardToBattlefieldUnderControl> pendingReturns =
                     gameData.drainDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class);
@@ -2395,8 +2429,9 @@ public class StepTriggerService {
                     if (cardToReturn != null) break;
                 }
                 if (cardToReturn == null) {
-                    // No longer in a graveyard (moved/exiled/reanimated already) — you don't get it back.
-                    log.info("Game {} - Seraph delayed return for card {} skipped (no longer in a graveyard)",
+                    // No longer in a graveyard (moved/exiled/reanimated already, or it was a token) —
+                    // you don't get it back.
+                    log.info("Game {} - Delayed return under control for card {} skipped (no longer in a graveyard)",
                             gameData.id, pending.cardId());
                     continue;
                 }
@@ -2406,9 +2441,23 @@ public class StepTriggerService {
                     continue;
                 }
 
+                Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+                String sourceName = sourcePermanent != null ? sourcePermanent.getCard().getName() : "Delayed return";
+
                 permanentRemovalService.removeCardFromGraveyardById(gameData, cardToReturn.getId());
                 Permanent permanent = new Permanent(cardToReturn);
                 permanent.setEnteredFromGraveyardOwnerId(ownerId);
+                // "with an additional +1/+1 counter on it" / "is a black Zombie in addition to its
+                // other colors and types" (Grave Betrayal) — applied before the permanent enters.
+                if (pending.counterType() != null && pending.counterAmount() > 0) {
+                    permanent.setCounterCount(pending.counterType(), pending.counterAmount());
+                }
+                if (pending.grantColor() != null) {
+                    permanent.getGrantedColors().add(pending.grantColor());
+                }
+                if (pending.grantSubtype() != null && !permanent.getGrantedSubtypes().contains(pending.grantSubtype())) {
+                    permanent.getGrantedSubtypes().add(pending.grantSubtype());
+                }
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, pending.controllerId(), permanent);
 
                 // When the returned card belongs to another player, the controller keeps it via a
@@ -2418,22 +2467,22 @@ public class StepTriggerService {
                     gameData.stolenCreatures.put(permanent.getId(), ownerId);
                     creatureControlService.applyControlEffect(gameData, pending.controllerId(), permanent,
                             new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                            ControlDuration.PERMANENT.toEffectDuration(), null, "Seraph");
+                            ControlDuration.PERMANENT.toEffectDuration(), null, sourceName);
                 }
 
                 String playerName = gameData.playerIdToName.get(pending.controllerId());
                 gameLogService.append(gameData, GameLog.cardThen(cardToReturn,
-                        " returns to the battlefield under " + playerName + "'s control (Seraph)."));
-                log.info("Game {} - {} returns under {}'s control (Seraph)", gameData.id, cardToReturn.getName(), playerName);
+                        " returns to the battlefield under " + playerName + "'s control (" + sourceName + ")."));
+                log.info("Game {} - {} returns under {}'s control ({})", gameData.id, cardToReturn.getName(), playerName, sourceName);
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, pending.controllerId(), cardToReturn, null, false);
 
                 // Link to the Seraph for the control-loss sacrifice, but only if it is still on the
                 // battlefield — if it already left, you never have to sacrifice the returned creature.
-                if (gameQueryService.findPermanentById(gameData, pending.seraphPermanentId()) != null) {
+                if (pending.sacrificeOnSourceControlLoss() && sourcePermanent != null) {
                     gameData.seraphReturnedCreatures
-                            .computeIfAbsent(pending.seraphPermanentId(), k -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                            .computeIfAbsent(pending.sourcePermanentId(), k -> java.util.concurrent.ConcurrentHashMap.newKeySet())
                             .add(permanent.getId());
-                    gameData.seraphControlWatch.putIfAbsent(pending.seraphPermanentId(), pending.controllerId());
+                    gameData.seraphControlWatch.putIfAbsent(pending.sourcePermanentId(), pending.controllerId());
                 }
             }
         }

@@ -66,18 +66,24 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
             if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE
                     && gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, p)) continue;
 
-            p.setCounterCount(e.counterType(), p.getCounterCount(e.counterType()) + amount);
+            int placed = amount;
+            if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+                // Per-permanent: only creatures get Corpsejack's doubling.
+                placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, p, amount);
+                if (placed <= 0) continue;
+            }
+
+            p.setCounterCount(e.counterType(), p.getCounterCount(e.counterType()) + placed);
             count++;
-            if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE && amount > 0) {
+            if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE && placed > 0) {
                 plusOneTargets.add(p);
-            } else if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE && amount > 0) {
+            } else if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE && placed > 0) {
                 minusOneTargets.add(p);
             }
         }
 
         String counterName = permanentCounterSupport.counterTypeName(e.counterType());
         String counterText = amount == 1 ? "a " + counterName + " counter" : amount + " " + counterName + " counters";
-        String logEntry = entry.getCard().getName() + " puts " + counterText + " on " + count + " permanent(s) you control.";
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" puts " + counterText + " on " + count + " permanent(s) you control.").build());
         log.info("Game {} - {} puts {} {} counter(s) on {} controlled permanent(s)", gameData.id,
                 entry.getCard().getName(), amount, counterName, count);

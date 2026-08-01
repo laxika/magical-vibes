@@ -59,7 +59,8 @@ public class UndyingReturnEffectHandler implements NormalEffectHandlerBean {
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
-        permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        int undyingCounters = gameQueryService.doublePlusOnePlusOneCounters(gameData, ownerId, 1);
+        permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, undyingCounters);
         permanent.setEnteredFromGraveyardOwnerId(ownerId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent, enterTappedTypes);
 

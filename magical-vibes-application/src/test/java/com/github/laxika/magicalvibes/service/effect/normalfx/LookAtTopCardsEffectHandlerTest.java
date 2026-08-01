@@ -405,6 +405,46 @@ class LookAtTopCardsEffectHandlerTest {
         }
 
         @Test
+        @DisplayName("Public may-reveal one to hand rest to graveyard enters LIBRARY_SEARCH with restToGraveyard")
+        void mayRevealOneRestToGraveyard() {
+            stubCardViewFactory();
+            Card bears = createCard("Grizzly Bears");
+            gd.playerDecks.get(player1Id).add(bears);
+            gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt"));
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                    .thenAnswer(inv -> inv.getArgument(0) == bears);
+
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayRevealOneToHandRestToGraveyard(
+                    5, new CardTypePredicate(CardType.CREATURE));
+            handler.resolve(gd, entryFor("Grisly Salvage", effect), effect);
+
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+            PendingInteraction.LibrarySearch search =
+                    gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+            assertThat(search.params().canFailToFind()).isTrue();
+            assertThat(search.params().restToGraveyard()).isTrue();
+            assertThat(search.params().reorderRemainingToBottom()).isFalse();
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("reveals")));
+        }
+
+        @Test
+        @DisplayName("Public may-reveal with no matches bins everything to the graveyard")
+        void mayRevealOneRestToGraveyardNoMatches() {
+            gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt"));
+            gd.playerDecks.get(player1Id).add(createCard("Giant Growth"));
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenReturn(false);
+
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayRevealOneToHandRestToGraveyard(
+                    5, new CardTypePredicate(CardType.CREATURE));
+            handler.resolve(gd, entryFor("Grisly Salvage", effect), effect);
+
+            assertThat(gd.interaction.activeInteraction()).isNull();
+            assertThat(gd.playerGraveyards.get(player1Id)).hasSize(2);
+            assertThat(gd.playerDecks.get(player1Id)).isEmpty();
+        }
+
+        @Test
         @DisplayName("Any-number 'may reveal' enters LIBRARY_REVEAL_CHOICE")
         void anyNumberEntersRevealChoice() {
             stubCardViewFactory();

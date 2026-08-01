@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -57,6 +58,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
@@ -96,6 +98,7 @@ public class CombatAttackService {
     private final com.github.laxika.magicalvibes.service.effect.AttackSacrificeCostService attackSacrificeCostService;
     private final GraveyardTargetingService graveyardTargetingService;
     private final com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
+    private final ETBTokenTargetService etbTokenTargetService;
 
     /**
      * Returns the battlefield indices of creatures the given player can legally declare as attackers.
@@ -504,9 +507,20 @@ public class CombatAttackService {
                                         attacker.getId(), defendingPlayerId);
                             }
                         } else if (needsTarget) {
-                            gameData.queueInteraction(
-                                    new PermanentChoiceContext.AttackTriggerTarget(
-                                            attacker.getCard(), playerId, otherEffects, attacker.getId()));
+                            // Multi-target / "up to N" attack triggers (Archon of the Triumvirate):
+                            // reuse the ETB slot-by-slot picker — AttackTriggerTarget collects only one.
+                            Card attackCard = attacker.getCard();
+                            if (attackCard.getSpellTargets().size() > 1
+                                    || etbTokenTargetService.needsSlotBySlotTargetSelection(attackCard)) {
+                                gameData.queueInteraction(
+                                        new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                                attackCard, playerId, otherEffects, attacker.getId(),
+                                                List.of(), 0, 0));
+                            } else {
+                                gameData.queueInteraction(
+                                        new PermanentChoiceContext.AttackTriggerTarget(
+                                                attackCard, playerId, otherEffects, attacker.getId()));
+                            }
                         } else {
                             // Capture the attacked player/planeswalker so non-targeting attack
                             // triggers that act on the defending player (e.g. Nemesis of Reason's
@@ -763,7 +777,7 @@ public class CombatAttackService {
                     if (innerEffect instanceof ConditionalEffect ce
                             && ce.condition() instanceof MinimumAttackers mac) {
                         ConditionContext ctx = new ConditionContext(playerId, null, null, card,
-                                false, false, false, null, attackerIndices.size(), null, null);
+                                false, false, false, false, null, attackerIndices.size(), null, null, false);
                         if (!conditionEvaluationService.isMet(gameData, mac, ctx)) {
                             log.info("Game {} - {} graveyard attack trigger skipped ({} attackers, need {})",
                                     gameData.id, card.getName(), attackerIndices.size(), mac.minimumAttackers());
@@ -889,6 +903,33 @@ public class CombatAttackService {
                     log.info("Game {} - {} ON_ANY_CREATURE_ATTACKS trigger for {} attacking",
                             gameData.id, perm.getCard().getName(), attacker.getCard().getName());
                 }
+            }
+        }
+
+        // Fire delayed "until your next turn, whenever a creature an opponent controls attacks, it
+        // gets X/Y until end of turn" triggers (Jace, Architect of Thought's +1). The attacking
+        // player is always the attackers' controller here, so a single controller comparison per
+        // registered action decides whether it applies to this whole declaration.
+        for (DelayedOpponentAttackerBoost boost : gameData.getDelayedActions(DelayedOpponentAttackerBoost.class)) {
+            if (boost.controllerId().equals(playerId)) continue;
+            for (int idx : attackerIndices) {
+                Permanent attacker = battlefield.get(idx);
+                StackEntry boostTrigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        boost.sourceCard(),
+                        boost.controllerId(),
+                        boost.sourceCard().getName() + "'s delayed trigger",
+                        List.of(new BoostSelfEffect(boost.power(), boost.toughness())),
+                        attacker.getId(),
+                        attacker.getId());
+                boostTrigger.setNonTargeting(true);
+                gameData.stack.add(boostTrigger);
+                gameLogService.append(gameData, GameLog.cardTextCard(
+                        boost.sourceCard(), " — ", attacker.getCard(),
+                        " gets " + formatBoostPair(boost.power(), boost.toughness())
+                                + " until end of turn."));
+                log.info("Game {} - {} delayed opponent-attacker boost fires for {}",
+                        gameData.id, boost.sourceCard().getName(), attacker.getCard().getName());
             }
         }
 
@@ -1312,5 +1353,14 @@ public class CombatAttackService {
             }
         }
         return lifeCost;
+    }
+
+    /**
+     * Renders a boost the way Magic writes it — "+1/+1", "-1/-0". A zero component takes the sign of
+     * the non-zero one, so a -1/-0 debuff never reads as "-1/+0".
+     */
+    private static String formatBoostPair(int power, int toughness) {
+        String sign = (power < 0 || toughness < 0) ? "-" : "+";
+        return sign + Math.abs(power) + "/" + sign + Math.abs(toughness);
     }
 }

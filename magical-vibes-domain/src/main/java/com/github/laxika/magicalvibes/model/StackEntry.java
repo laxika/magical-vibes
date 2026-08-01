@@ -88,6 +88,9 @@ public class StackEntry {
     /** Whether this spell was cast for its prowl cost — carried to the entering permanent so its
      *  "if its prowl cost was paid" ETB trigger can gate on it (CR 702.75). */
     @Setter private boolean prowl;
+    /** Whether this spell was cast for its overload cost (CR 702.96a): every "target" in its text
+     *  reads "each", and per CR 702.96b the spell has no targets at all. */
+    @Setter private boolean overloaded;
     @Setter private Card damageSourceCard;
     @Setter private int stateTriggerEffectIndex = -1;
     @Setter private UUID attackedTargetId;
@@ -385,6 +388,7 @@ public class StackEntry {
         this.castWhenSorceryCouldNotBeCast = source.castWhenSorceryCouldNotBeCast;
         this.evoked = source.evoked;
         this.prowl = source.prowl;
+        this.overloaded = source.overloaded;
         this.damageSourceCard = source.damageSourceCard;
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;

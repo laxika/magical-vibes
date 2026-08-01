@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
+import com.github.laxika.magicalvibes.model.PendingEachPlayerLibraryExile;
+import com.github.laxika.magicalvibes.model.PendingGuildFeud;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
@@ -82,6 +84,7 @@ public class LibraryChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
     private final DrawService drawService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.NaturalBalanceSupport naturalBalanceSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport guildFeudSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler returnCardExiledWithSourceToBattlefieldEffectHandler;
 
 
@@ -368,7 +371,9 @@ public class LibraryChoiceHandlerService {
             // Per ruling: if you find only one basic land with Cultivate, it must go to
             // the battlefield tapped — skipping the battlefield pick means finding zero,
             // so drop the pending hand search and shuffle.
-            if (followUp.basicLandToHand()) {
+            // Same for hand-then-graveyard (Jarad's Orders): declining the hand pick finds zero,
+            // so drop the pending graveyard pick and shuffle.
+            if (followUp.basicLandToHand() || followUp.cardToGraveyard() != null) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
                 String shuffleLog = player.getUsername() + "'s library is shuffled.";
                 gameLogService.append(gameData, GameLog.text(shuffleLog));
@@ -378,6 +383,7 @@ public class LibraryChoiceHandlerService {
             if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
             if (librarySearchSupport.startNextToHandPick(gameData, playerId, followUp)) return;
+            if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
             if (naturalBalanceSupport.advance(gameData, followUp)) return;
             finishSearchAndResume(gameData);
             return;
@@ -469,6 +475,29 @@ public class LibraryChoiceHandlerService {
                 return;
             }
             castCardWithoutPaying(gameData, player, chosenCard);
+            return;
+        }
+
+        if (destination == LibrarySearchDestination.EXILE_FOR_FREE_CAST) {
+            // Jace, Architect of Thought −8: the found nonland card is exiled face up (it may be cast
+            // later), its owner shuffles, and the queue moves on to the next player's library. The
+            // exiled cards are only offered for casting once every library has been searched.
+            gameData.addToExile(deckOwnerId, chosenCard);
+            LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+            String exileOwnerName = gameData.playerIdToName.get(deckOwnerId);
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " exiles ", chosenCard,
+                    " from " + exileOwnerName + "'s library. Library is shuffled."));
+
+            PendingEachPlayerLibraryExile state =
+                    gameData.pollPendingInteraction(PendingEachPlayerLibraryExile.class);
+            if (state != null) {
+                List<UUID> exiled = new ArrayList<>(state.exiledCardIds());
+                exiled.add(chosenCard.getId());
+                gameData.queueInteraction(new PendingEachPlayerLibraryExile(
+                        state.searcherId(), state.remainingPlayerIds(), exiled));
+                if (librarySearchSupport.advanceEachPlayerNonlandExile(gameData)) return;
+            }
+            finishSearchAndResume(gameData);
             return;
         }
 
@@ -858,6 +887,7 @@ public class LibraryChoiceHandlerService {
                 case GRAVEYARD -> "into their graveyard";
                 case SPHINX_AMBASSADOR -> throw new IllegalStateException("SPHINX_AMBASSADOR should be handled earlier");
                 case CAST_WITHOUT_PAYING -> throw new IllegalStateException("CAST_WITHOUT_PAYING should be handled earlier");
+                case EXILE_FOR_FREE_CAST -> throw new IllegalStateException("EXILE_FOR_FREE_CAST should be handled earlier");
                 case BATTLEFIELD_UNDER_SEARCHER -> throw new IllegalStateException("BATTLEFIELD_UNDER_SEARCHER should be handled earlier");
                 case DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM -> throw new IllegalStateException("DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM should be handled earlier");
             };
@@ -893,6 +923,7 @@ public class LibraryChoiceHandlerService {
         if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
         if (librarySearchSupport.startNextToHandPick(gameData, playerId, followUp)) return;
+        if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
         if (naturalBalanceSupport.advance(gameData, followUp)) return;
         finishSearchAndResume(gameData);
     }
@@ -1053,11 +1084,12 @@ public class LibraryChoiceHandlerService {
     }
 
     /**
-     * If a pending unrestricted card-to-graveyard search is queued (e.g. Final Parting second pick),
+     * If a pending card-to-graveyard search is queued (Final Parting / Jarad's Orders second pick),
      * starts the follow-up library search and returns true. Otherwise returns false.
      */
     private boolean startPendingCardToGraveyardSearch(GameData gameData, UUID playerId, LibrarySearchFollowUp followUp) {
-        if (!followUp.cardToGraveyard()) return false;
+        LibrarySearchFollowUp.CardToGraveyardPick pick = followUp.cardToGraveyard();
+        if (pick == null) return false;
 
         List<Card> deck = gameData.playerDecks.get(playerId);
         String playerName = gameData.playerIdToName.get(playerId);
@@ -1069,15 +1101,34 @@ public class LibraryChoiceHandlerService {
             return false;
         }
 
-        String prompt = "Search your library for a card to put into your graveyard.";
-        LibrarySearchParams params = LibrarySearchParams.builder(playerId, new ArrayList<>(deck))
-                .reveals(false)
-                .canFailToFind(false)
+        List<Card> candidates;
+        if (pick.filter() == null) {
+            candidates = new ArrayList<>(deck);
+        } else {
+            candidates = deck.stream()
+                    .filter(c -> predicateEvaluationService.matchesCardPredicate(c, pick.filter(), null, gameData, playerId))
+                    .toList();
+        }
+
+        if (candidates.isEmpty()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+            String logMsg = playerName + " finds no more matching cards. Library is shuffled.";
+            gameLogService.append(gameData, GameLog.text(logMsg));
+            return false;
+        }
+
+        String prompt = pick.filter() == null
+                ? "Search your library for a card to put into your graveyard."
+                : "Search your library for a creature card to put into your graveyard.";
+        LibrarySearchParams params = LibrarySearchParams.builder(playerId, candidates)
+                .reveals(pick.reveals())
+                .canFailToFind(pick.canFailToFind())
                 .destination(LibrarySearchDestination.GRAVEYARD)
+                .filterPredicate(pick.filter())
                 .followUp(followUp.clearCardToGraveyard())
                 .build();
 
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, false));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, pick.canFailToFind()));
         return true;
     }
 
@@ -1296,6 +1347,14 @@ public class LibraryChoiceHandlerService {
         log.info("Game {} - {} resolves library reveal choice, {} cards to battlefield", gameData.id, playerName, selectedCards.size());
 
         stateBasedActionService.performStateBasedActions(gameData);
+
+        // Guild Feud: this was one of the two sequential reveals — hand back to the flow, which
+        // either begins the second reveal or resolves the closing fight.
+        if (gameData.hasPendingInteraction(PendingGuildFeud.class)
+                && guildFeudSupport.onRevealAnswered(gameData, selectedCards)) {
+            return;
+        }
+
         finishSearchAndResume(gameData);
     }
 

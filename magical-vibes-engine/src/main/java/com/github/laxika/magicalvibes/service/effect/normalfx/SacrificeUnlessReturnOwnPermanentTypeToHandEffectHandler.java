@@ -54,7 +54,8 @@ public class SacrificeUnlessReturnOwnPermanentTypeToHandEffectHandler implements
         boolean hasValidPermanent = false;
         if (battlefield != null) {
             for (Permanent p : battlefield) {
-                if (p.getCard().hasType(e.permanentType())) {
+                if (p.getCard().hasType(e.permanentType())
+                        && !(e.excludeSource() && p.getCard().getId().equals(sourceCard.getId()))) {
                     hasValidPermanent = true;
                     break;
                 }

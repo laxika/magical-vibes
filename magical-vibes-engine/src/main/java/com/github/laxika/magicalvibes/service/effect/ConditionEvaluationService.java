@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtLeast;
+import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.ActivationCount;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
@@ -35,6 +36,7 @@ import com.github.laxika.magicalvibes.model.condition.ChosenColorStrictlyMostCom
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
+import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreLifeThanController;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreLifeThanAnOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
@@ -84,6 +86,7 @@ import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
+import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreCreatures;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreLands;
@@ -192,6 +195,8 @@ public class ConditionEvaluationService {
                     ctx.buyback();
             case CastForProwlCost ignored ->
                     ctx.prowl();
+            case Overloaded ignored ->
+                    ctx.overloaded();
             case Raid ignored ->
                     ctx.controllerId() != null
                             && gameData.playersDeclaredAttackersThisTurn.contains(ctx.controllerId());
@@ -268,8 +273,14 @@ public class ConditionEvaluationService {
                     countCardsInHand(gameData, ctx.controllerId()) <= c.threshold();
             case ActivePlayerHandAtLeast c ->
                     countCardsInHand(gameData, gameData.activePlayerId) >= c.threshold();
+            case ActivePlayerHandAtMost c ->
+                    countCardsInHand(gameData, gameData.activePlayerId) <= c.threshold();
             case ActivePlayerHandEmpty ignored ->
                     countCardsInHand(gameData, gameData.activePlayerId) == 0;
+            case NoCardsExiledWithSource ignored ->
+                    ctx.sourcePermanentId() != null
+                            && gameData.exiledCards.stream()
+                                    .noneMatch(e -> ctx.sourcePermanentId().equals(e.sourcePermanentId()));
             case ControllerHandEmpty ignored ->
                     countCardsInHand(gameData, ctx.controllerId()) == 0;
             case CastFromZone c ->

@@ -606,6 +606,18 @@ public class GameService {
         }
     }
 
+    /** Casts a card for its overload cost (CR 702.96a). Overloaded spells never take targets (CR 702.96b). */
+    public void playCardWithOverload(GameData gameData, Player player, int cardIndex, Integer xValue) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCardWithOverload(gameData, actionPlayer, cardIndex, xValue))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playCardWithOverload(gameData, player, cardIndex, xValue);
+        }
+    }
+
     public void playCardWithConspire(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
                                      Map<UUID, Integer> damageAssignments, List<UUID> targetIds, List<UUID> conspireCreatureIds) {
         Player actionPlayer = player;

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOr
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOM", collectorNumber = "2")
+@CardRegistration(set = "RTR", collectorNumber = "3")
 public class Arrest extends Card {
 
     public Arrest() {

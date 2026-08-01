@@ -106,7 +106,7 @@ combat damage step is processed.
 | `ON_ALLY_CREATURE_DIES` (targeting variants) | `TriggerCollectionService.checkAllyCreatureDeathTriggers` | Death |
 | `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` (targeting branches) | `DeathTriggerCollectorService.addEnchantedPermanentDeathEntry` | Death |
 | `ON_ATTACK` (attached-permanent flavour) | `CombatTriggerService` aura/equipment flow | Attack |
-| `ON_ATTACK` / `ON_ALLY_CREATURE_ATTACKS` | `CombatAttackService.declareAttackers` (per-attacker mandatory triggers store the triggering attacker as a non-targeting `targetId`, and the attacked player/planeswalker as `attackedTargetId` — so effects can act on "that creature", e.g. Shared Animosity's boost) | Attack |
+| `ON_ATTACK` / `ON_ALLY_CREATURE_ATTACKS` | `CombatAttackService.declareAttackers` (per-attacker mandatory triggers store the triggering attacker as a non-targeting `targetId`, and the attacked player/planeswalker as `attackedTargetId` — so effects can act on "that creature", e.g. Shared Animosity's boost). Single permanent/player targets use `AttackTriggerTarget`; multi-target / "up to N" (`needsSlotBySlotTargetSelection`) reuses `ETBTokenMultiTargetTrigger` (Archon of the Triumvirate) | Attack |
 | `ON_ATTACKS_UNBLOCKED` (graveyard-targeting) | `CombatBlockService.collectUnblockedAttackTriggers` routes effects implementing `GraveyardCardChoosingEffect` (Rysorian Badger's `ExileCardsFromGraveyardEffect`) to `GraveyardTargetingService.handleUnblockedAttackGraveyardChoiceTargeting` — an up-to-N multi-select over the defending player's graveyard, filtered by `graveyardChoiceFilter()`, as the trigger goes on the stack. The attacker rides along as `sourcePermanentId` (for "if you do, it assigns no combat damage"); no matching cards ⇒ the trigger is still pushed with 0 targets | Declare blockers |
 | `ON_ATTACKS_UNBLOCKED` (permanent-targeting may) | Same collector routes `MayEffect`s whose `targetSpec()` includes permanents (Dwarven Vigilantes) via `queueMayAbility(..., null, attackerId)` — CR 603.5 may at resolution, then creature target; non-targeting mays / mandatory effects still bake the defending player as `targetId` | Declare blockers |
 | `ON_ATTACK` (graveyard-targeting) | `CombatAttackService.declareAttackers` routes effects whose `targetSpec().category().isGraveyard()` (e.g. Graven Abomination's `ExileGraveyardCardsEffect(TARGET_CARDS_OPPONENT_GRAVEYARD)`) to `GraveyardTargetingService.handleAttackGraveyardTargeting` — chooses from the defending player's graveyard (from the attacker's `attackTarget`) as the trigger goes on the stack. No legal target ⇒ trigger skipped (CR 603.3c). Exception: a `CastTargetInstantOrSorceryFromGraveyardEffect` (The Dawning Archaic) routes to `handleAttackGraveyardCastTargeting` instead, which picks the graveyards from the effect's own `GraveyardSearchScope` | Attack |
@@ -347,6 +347,13 @@ Note that the death pipeline defaults to `creaturesOnly = true`, **but** an expl
 permanents are legal (e.g. Fire Snake's "destroy target land"). A death trigger with **no** target
 filter (or a `ControlledPermanentPredicateTargetFilter`) still narrows to creatures. End-step has no
 such restriction.
+
+**Death-event value (`ON_ALLY_CREATURE_DIES`):** a targeted ally-death trigger is queued with the dying
+creature's last-known effective power (clamped at 0) in `PermanentChoiceContext.DeathTriggerTarget.eventValue`;
+`PermanentChoiceTriggerHandlerService.handleDeathTrigger` copies it onto the stack entry. An effect whose
+amount is `new EventValue()` therefore resolves to that power — Death's Presence, "put X +1/+1 counters on
+target creature you control, where X is the power of the creature that died". No dedicated effect record is
+needed for that shape.
 
 ### `ControlledPermanentPredicateTargetFilter(PermanentPredicate)`
 

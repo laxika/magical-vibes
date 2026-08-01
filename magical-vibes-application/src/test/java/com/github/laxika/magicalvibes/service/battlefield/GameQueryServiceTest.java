@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -946,6 +947,52 @@ class GameQueryServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
 
             assertThat(gqs.cantHaveMinusOneMinusOneCounters(gd, perm)).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("doublePlusOnePlusOneCounters")
+    class DoublePlusOnePlusOneCountersTest {
+
+        @Test
+        @DisplayName("returns count unchanged with no markers")
+        void unchangedWithoutMarkers() {
+            assertThat(gqs.doublePlusOnePlusOneCounters(gd, player1Id, 3)).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("doubles once per marker the controller controls")
+        void doublesPerMarker() {
+            Card corpsejack = createCreature("Corpsejack Menace", 4, 4, CardColor.GREEN);
+            corpsejack.addEffect(EffectSlot.STATIC, new DoublePlusOnePlusOneCountersEffect());
+            addPermanent(player1Id, corpsejack);
+
+            assertThat(gqs.doublePlusOnePlusOneCounters(gd, player1Id, 1)).isEqualTo(2);
+            assertThat(gqs.doublePlusOnePlusOneCounters(gd, player1Id, 3)).isEqualTo(6);
+        }
+
+        @Test
+        @DisplayName("two markers multiply by four")
+        void twoMarkersMultiplyByFour() {
+            Card a = createCreature("Corpsejack Menace", 4, 4, CardColor.GREEN);
+            a.addEffect(EffectSlot.STATIC, new DoublePlusOnePlusOneCountersEffect());
+            addPermanent(player1Id, a);
+            Card b = createCreature("Corpsejack Menace", 4, 4, CardColor.GREEN);
+            b.addEffect(EffectSlot.STATIC, new DoublePlusOnePlusOneCountersEffect());
+            addPermanent(player1Id, b);
+
+            assertThat(gqs.doublePlusOnePlusOneCounters(gd, player1Id, 2)).isEqualTo(8);
+        }
+
+        @Test
+        @DisplayName("permanent overload skips non-creatures")
+        void skipsNonCreatures() {
+            Card corpsejack = createCreature("Corpsejack Menace", 4, 4, CardColor.GREEN);
+            corpsejack.addEffect(EffectSlot.STATIC, new DoublePlusOnePlusOneCountersEffect());
+            addPermanent(player1Id, corpsejack);
+            Permanent artifact = addPermanent(player1Id, createArtifact("Sol Ring"));
+
+            assertThat(gqs.doublePlusOnePlusOneCounters(gd, artifact, 1)).isEqualTo(1);
         }
     }
 

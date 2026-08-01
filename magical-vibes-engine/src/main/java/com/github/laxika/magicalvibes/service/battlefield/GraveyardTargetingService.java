@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
@@ -54,6 +56,71 @@ public class GraveyardTargetingService {
         }
         return gameData.playerGraveyards.get(playerId);
     }
+
+    /**
+     * ETB targeting for "you may exile up to N other target creatures from the battlefield and/or
+     * creature cards from graveyards" (Angel of Serenity). The battlefield and graveyard halves are
+     * offered as one card pool so the controller spends the N picks freely across both zones, which
+     * is what the oracle's "and/or" means; the chosen ids land on the triggered ability's
+     * {@code targetCardIds} and the effect handler exiles each from whichever zone it is in. The
+     * source permanent is excluded ("other"). "Up to N" allows choosing zero, which covers the
+     * "you may". With no legal target the trigger is still pushed onto the stack with no targets.
+     */
+    public void handleBattlefieldAndGraveyardExileETBTargeting(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, UUID sourcePermanentId,
+            BattlefieldAndGraveyardCardChoosingEffect choosingEffect) {
+        List<Card> pool = new ArrayList<>();
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            for (Permanent permanent : battlefield) {
+                if (permanent.getId().equals(sourcePermanentId)) continue;
+                if (gameQueryService.isCreature(gameData, permanent)) {
+                    pool.add(permanent.getCard());
+                }
+            }
+        });
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card graveyardCard : graveyard) {
+                if (graveyardCard.hasType(CardType.CREATURE)) {
+                    pool.add(graveyardCard);
+                }
+            }
+        }
+
+        if (pool.isEmpty()) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    controllerId,
+                    card.getName() + "'s ETB ability",
+                    new ArrayList<>(effects),
+                    0,
+                    null,
+                    sourcePermanentId,
+                    Map.of(),
+                    null,
+                    List.of(),
+                    List.of()
+            ));
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
+            log.info("Game {} - {} ETB mixed-zone exile pushed onto stack with 0 targets (no creatures anywhere)",
+                    gameData.id, card.getName());
+            return;
+        }
+
+        int maxTargets = Math.min(choosingEffect.mixedZoneMaxTargets(), pool.size());
+        gameData.graveyardTargetOperation.card = card;
+        gameData.graveyardTargetOperation.controllerId = controllerId;
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
+        gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
+        gameData.graveyardTargetOperation.anyNumber = true;
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, pool, maxTargets,
+                card.getName() + "'s ability — Choose up to " + maxTargets + " target creature"
+                        + (maxTargets != 1 ? "s" : "") + " on the battlefield and/or creature card"
+                        + (maxTargets != 1 ? "s" : "") + " in graveyards to exile.");
+    }
+
 
     public void handleGraveyardExileETBTargeting(GameData gameData, UUID controllerId, Card card,
                                                   List<CardEffect> allEffects, ExileCardsFromGraveyardEffect exile) {

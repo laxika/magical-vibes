@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetPlayerPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.DuringControllerTurn;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.EnchantedPermanentManaValue;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlMoreCreaturesThanEachOtherPlayer;
@@ -69,12 +70,14 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.amount.SourceCardPower;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellPower;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -245,6 +248,9 @@ public class AmountEvaluationService {
                     imprintedCreaturePT(gameData, ctx, false);
             case LandsMatchingImprintedName ignored ->
                     countLandsMatchingImprintedName(gameData, ctx);
+            case SourceCardPower ignored ->
+                    ctx.sourceCard() == null || ctx.sourceCard().getPower() == null ? 0
+                            : Math.max(0, ctx.sourceCard().getPower());
             case SourcePower ignored ->
                     ctx.sourcePermanent() == null ? 0
                             : Math.max(0, gameQueryService.getEffectivePower(gameData, ctx.sourcePermanent()));
@@ -257,8 +263,12 @@ public class AmountEvaluationService {
                     targetEffectivePower(gameData, ctx);
             case TargetManaValue ignored ->
                     targetManaValue(gameData, ctx);
+            case EnchantedPermanentManaValue ignored ->
+                    enchantedPermanentManaValue(gameData, ctx);
             case TargetSpellManaValue ignored ->
                     targetSpellManaValue(gameData, ctx);
+            case TargetSpellPower ignored ->
+                    targetSpellPower(gameData, ctx);
             case ChosenPermanentPower ignored ->
                     chosenPermanentEffectivePower(gameData, ctx);
             case ChosenNumberOnSource ignored ->
@@ -311,12 +321,32 @@ public class AmountEvaluationService {
         return target == null ? 0 : target.getCard().getManaValue();
     }
 
+    /** Mana value of the permanent the source Aura enchants (Soul Tithe); 0 if there is none. */
+    private int enchantedPermanentManaValue(GameData gameData, AmountContext ctx) {
+        Permanent source = ctx.sourcePermanent();
+        if (source == null || source.getAttachedTo() == null) return 0;
+        Permanent enchanted = gameQueryService.findPermanentById(gameData, source.getAttachedTo());
+        return enchanted == null ? 0 : enchanted.getCard().getManaValue();
+    }
+
     /** Mana value of the targeted spell on the stack (Refuse); 0 if it has already left. */
     private int targetSpellManaValue(GameData gameData, AmountContext ctx) {
         if (ctx.targetPermanentId() == null) return 0;
         for (StackEntry se : gameData.stack) {
             if (se.getCard().getId().equals(ctx.targetPermanentId())) {
                 return se.getCard().getManaValue() + se.getXValue();
+            }
+        }
+        return 0;
+    }
+
+    /** Printed power of the targeted creature spell on the stack (Essence Backlash); 0 if gone. */
+    private int targetSpellPower(GameData gameData, AmountContext ctx) {
+        if (ctx.targetPermanentId() == null) return 0;
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(ctx.targetPermanentId())) {
+                Integer power = se.getCard().getPower();
+                return power == null ? 0 : Math.max(0, power);
             }
         }
         return 0;
@@ -818,7 +848,20 @@ public class AmountEvaluationService {
             // The target channel carries the target player's id for player-targeting effects.
             case TARGET_PLAYER -> playerId.equals(targetPlayerId(gameData, ctx));
             case DEFENDING_PLAYER -> playerId.equals(defendingPlayerId(gameData, ctx));
+            case ATTACHED_CONTROLLER -> playerId.equals(attachedControllerId(gameData, ctx));
         };
+    }
+
+    /**
+     * The controller of the permanent the source Aura/Equipment is attached to, or {@code null}
+     * when the source is missing or unattached. See {@link CountScope#ATTACHED_CONTROLLER}.
+     */
+    private UUID attachedControllerId(GameData gameData, AmountContext ctx) {
+        Permanent source = ctx.sourcePermanent();
+        if (source == null || !source.isAttached()) {
+            return null;
+        }
+        return gameQueryService.findPermanentController(gameData, source.getAttachedTo());
     }
 
     /**

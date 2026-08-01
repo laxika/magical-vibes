@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp.SameNamePickQueue;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
+import com.github.laxika.magicalvibes.model.PendingEachPlayerLibraryExile;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
@@ -209,6 +210,71 @@ public class LibrarySearchSupport {
     }
 
     /**
+     * Advances the queued {@link PendingEachPlayerLibraryExile}: begins the controller's search of
+     * the next player's library for a nonland card to exile, skipping players whose library holds
+     * no nonland card (they still shuffle) and players nobody may search (Leonin Arbiter). Once
+     * every library has been searched the accumulated exiled cards are offered for free casting.
+     *
+     * <p>Returns {@code true} when a search or the free-cast choice was begun, {@code false} when
+     * nothing remains to do and the caller should finish the resolution itself.
+     */
+    public boolean advanceEachPlayerNonlandExile(GameData gameData) {
+        PendingEachPlayerLibraryExile state = gameData.pollPendingInteraction(PendingEachPlayerLibraryExile.class);
+        if (state == null) {
+            return false;
+        }
+
+        UUID searcherId = state.searcherId();
+        String searcherName = gameData.playerIdToName.get(searcherId);
+        List<UUID> remaining = new ArrayList<>(state.remainingPlayerIds());
+
+        while (!remaining.isEmpty()) {
+            UUID targetPlayerId = remaining.removeFirst();
+            String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+            if (isSearchPrevented(gameData, searcherId)) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
+                gameLogService.append(gameData, GameLog.text(targetName + "'s library is shuffled."));
+                continue;
+            }
+
+            List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+            List<Card> nonland = deck == null ? List.of()
+                    : deck.stream().filter(card -> !card.hasType(CardType.LAND)).toList();
+            if (nonland.isEmpty()) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
+                gameLogService.append(gameData, GameLog.text(searcherName + " finds no nonland card in "
+                        + targetName + "'s library. Library is shuffled."));
+                continue;
+            }
+
+            gameData.queueInteraction(new PendingEachPlayerLibraryExile(searcherId, remaining, state.exiledCardIds()));
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                    LibrarySearchParams.builder(searcherId, new ArrayList<>(nonland))
+                            .targetPlayerId(targetPlayerId)
+                            .destination(LibrarySearchDestination.EXILE_FOR_FREE_CAST)
+                            .shuffleAfterSelection(true)
+                            .build(),
+                    "Search " + targetName + "'s library for a nonland card to exile.", false));
+            gameLogService.append(gameData, GameLog.text(searcherName + " searches " + targetName + "'s library."));
+            return true;
+        }
+
+        List<UUID> castable = state.exiledCardIds().stream()
+                .filter(cardId -> {
+                    var exiled = gameData.findExiledCard(cardId);
+                    return exiled != null && !exiled.card().hasType(CardType.LAND);
+                })
+                .toList();
+        if (castable.isEmpty()) {
+            return false;
+        }
+        interactionHandlerRegistry.begin(gameData,
+                new PendingInteraction.ImprovisationCapstoneCastChoice(searcherId, castable, castable.size()));
+        return true;
+    }
+
+    /**
      * Starts the next "search for a card matching the queued descriptor, reveal it, put it into your
      * hand" pick from the follow-up's queue (a colour for Conflux, a subtype for Gem of Becoming, or
      * an exact card name for Nissa's Encouragement). Each queue entry is one descriptor, searched in
@@ -267,6 +333,55 @@ public class LibrarySearchSupport {
         return pick.color() != null
                 ? card.getColors().contains(pick.color())
                 : card.getSubtypes().contains(pick.subtype());
+    }
+
+    /**
+     * Starts the next "search for an instant card with the queued mana value, reveal it, put it into
+     * your hand" pick from the follow-up's mana-value queue (Firemind's Foresight). Each queue entry
+     * is one exact mana value, searched in order; values with no matching instant left in the library
+     * are skipped without shuffling. When the queue is exhausted the library is shuffled once and
+     * false is returned; returns true if a search was begun.
+     */
+    public boolean startNextInstantManaValueToHandPick(GameData gameData, UUID playerId,
+                                                       LibrarySearchFollowUp followUp) {
+        if (isSearchPrevented(gameData, playerId)) return false;
+
+        List<Integer> queue = followUp.remainingInstantManaValueToHandPicks();
+        if (queue == null) return false;
+
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+        List<Integer> remaining = new ArrayList<>(queue);
+        while (!remaining.isEmpty()) {
+            int manaValue = remaining.remove(0);
+            List<Card> matches = deck == null ? List.of()
+                    : deck.stream()
+                            .filter(card -> card.hasType(CardType.INSTANT))
+                            .filter(card -> card.getManaValue() == manaValue)
+                            .toList();
+            if (matches.isEmpty()) {
+                continue;
+            }
+            sendLibrarySearchToPlayer(gameData, playerId,
+                    LibrarySearchParams.builder(playerId, new ArrayList<>(matches))
+                            .reveals(true)
+                            .canFailToFind(true)
+                            .destination(LibrarySearchDestination.HAND)
+                            .shuffleAfterSelection(false)
+                            .followUp(followUp.withRemainingInstantManaValueToHandPicks(remaining))
+                            .build(),
+                    "Search your library for an instant card with mana value " + manaValue
+                            + " to reveal and put into your hand.", true,
+                    playerName + " searches their library for an instant card with mana value "
+                            + manaValue + ".");
+            return true;
+        }
+
+        if (deck != null) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+        }
+        gameLogService.append(gameData, GameLog.text(playerName + "'s library is shuffled."));
+        return false;
     }
 
     /**

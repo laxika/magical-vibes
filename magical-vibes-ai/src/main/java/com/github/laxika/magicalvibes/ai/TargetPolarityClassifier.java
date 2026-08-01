@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
+import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
@@ -167,6 +168,12 @@ public class TargetPolarityClassifier {
             return TargetPolarity.NEUTRAL;
         }
 
+        // Conjured Currency's source-mode exchange hands the source away but takes the target, so
+        // the target should be an opponent's permanent.
+        if (effect instanceof ExchangeControlOfTargetPermanentsEffect) {
+            return TargetPolarity.HARMFUL;
+        }
+
         if (effect instanceof MustAttackThisTurnEffect || effect instanceof GainControlOfTargetEffect) {
             return TargetPolarity.HARMFUL;
         }
@@ -249,6 +256,7 @@ public class TargetPolarityClassifier {
             entry("DestroyEachTargetPermanentEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("DestroyTargetPermanentThenEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetCreatureAndAllWithSameNameEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentAndImprintEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentMayPlayUntilNextTurnEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentThenEffect", TargetPolarity.HARMFUL_REMOVAL),
@@ -294,6 +302,7 @@ public class TargetPolarityClassifier {
             entry("SourceFightsTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("GainControlOfTargetAuraEffect", TargetPolarity.HARMFUL),
             entry("IllicitAuctionEffect", TargetPolarity.HARMFUL),
+            entry("LockTargetPermanentEffect", TargetPolarity.HARMFUL),
             entry("LoseAllCreatureTypesEffect", TargetPolarity.HARMFUL),
             entry("LosesAllAbilitiesEffect", TargetPolarity.HARMFUL),
             entry("EnchantedPermanentBecomesOnlyLandEffect", TargetPolarity.HARMFUL),

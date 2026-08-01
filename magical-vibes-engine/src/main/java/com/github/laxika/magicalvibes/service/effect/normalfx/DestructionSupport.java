@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromSelfEffe
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -83,6 +84,7 @@ public class DestructionSupport {
     private final PhasingService phasingService;
     private final ExileSelfEffectHandler exileSelfEffectHandler;
     private final LibraryExileSupport libraryExileSupport;
+    private final SacrificeEnchantedCreatureEffectHandler sacrificeEnchantedHandler;
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                            List<UUID> protectedIds, String sourceName) {
@@ -508,6 +510,10 @@ public class DestructionSupport {
                 }
             } else if (elseEffect instanceof SacrificeSelfEffect) {
                 sacrificeSource(gameData, entry);
+            } else if (elseEffect instanceof SacrificeEnchantedCreatureEffect sacrificeEnchanted) {
+                // "that player sacrifices it unless they pay {X}" (Soul Tithe) — the enchanted
+                // permanent, not the Aura, is sacrificed by its own controller.
+                sacrificeEnchantedHandler.resolve(gameData, entry, sacrificeEnchanted);
             } else if (elseEffect instanceof ExileSelfEffect exileSelf) {
                 // "exile this creature unless you sacrifice another creature" (Demonlord of Ashmouth).
                 exileSelfEffectHandler.resolve(gameData, entry, exileSelf);

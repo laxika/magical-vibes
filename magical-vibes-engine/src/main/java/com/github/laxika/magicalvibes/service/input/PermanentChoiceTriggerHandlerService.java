@@ -156,6 +156,11 @@ public class PermanentChoiceTriggerHandlerService {
                 new ArrayList<>(dtt.effects())
         );
         entry.setTargetId(permanentId);
+        // Carry the death event's numeric payload (e.g. the dying creature's last-known power) so an
+        // EventValue-based amount can be evaluated at resolution.
+        if (dtt.eventValue() != null) {
+            entry.setEventValue(dtt.eventValue());
+        }
         gameData.stack.add(entry);
 
         String targetName = getTargetDisplayName(gameData, permanentId);

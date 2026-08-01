@@ -22,14 +22,36 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * Mortality) and by Political Trickery's and Switcheroo's two-target spells. At resolution the
  * exchange only happens if both targets are still legal, and only if the two permanents have
  * different controllers (CR 701.12a, CR 701.12b).
+ *
+ * <p>When {@code sourceIsFirstTarget} is set, the ability's own source permanent takes the place of
+ * the first target and only a single target is declared — Conjured Currency's "exchange control of
+ * this enchantment and target permanent you neither own nor control". In that mode the effect
+ * declares a normal single-permanent {@code targetSpec()} narrowed by {@code targetPredicate}, so
+ * the ordinary targeted-trigger machinery picks the target; {@code targetPredicate} is then only
+ * checked against that one target, never against the source.
  */
 public record ExchangeControlOfTargetPermanentsEffect(
         PermanentPredicate targetPredicate,
         boolean requireOpponentManaValueNotGreater,
-        boolean requireFirstTargetControlledByController) implements CardEffect {
+        boolean requireFirstTargetControlledByController,
+        boolean sourceIsFirstTarget) implements CardEffect {
 
     public ExchangeControlOfTargetPermanentsEffect(
             PermanentPredicate targetPredicate, boolean requireOpponentManaValueNotGreater) {
-        this(targetPredicate, requireOpponentManaValueNotGreater, true);
+        this(targetPredicate, requireOpponentManaValueNotGreater, true, false);
+    }
+
+    public ExchangeControlOfTargetPermanentsEffect(
+            PermanentPredicate targetPredicate, boolean requireOpponentManaValueNotGreater,
+            boolean requireFirstTargetControlledByController) {
+        this(targetPredicate, requireOpponentManaValueNotGreater,
+                requireFirstTargetControlledByController, false);
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return sourceIsFirstTarget
+                ? TargetSpec.benign(TargetCategory.PERMANENT, targetPredicate)
+                : TargetSpec.NONE;
     }
 }

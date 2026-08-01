@@ -468,6 +468,17 @@ public class GameTestHarness {
         gameService.playCardWithProwl(gameData, player, cardIndex, 0, targetId, null, List.of());
     }
 
+    /** Casts a spell for its overload cost (CR 702.96a). Overloaded spells take no targets. */
+    public void castWithOverload(Player player, int cardIndex) {
+        castWithOverload(player, cardIndex, 0);
+    }
+
+    /** Overload cast of an {X} spell (e.g. Street Spasm's overload {X}{X}{R}{R}). */
+    public void castWithOverload(Player player, int cardIndex, int xValue) {
+        ensurePriority(player);
+        gameService.playCardWithOverload(gameData, player, cardIndex, xValue);
+    }
+
     public void castCreatureWithSacrificeForReduction(Player player, int cardIndex, UUID targetId, List<UUID> sacrificePermanentIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, sacrificePermanentIds);

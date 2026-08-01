@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.PendingKarnRestart;
 import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
+import com.github.laxika.magicalvibes.model.PendingEachPlayerLibraryExile;
+import com.github.laxika.magicalvibes.model.PendingGuildFeud;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.PendingPortalPileSearch;
 import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
@@ -51,7 +53,9 @@ class PendingInteractionContractTest {
             PendingPortalPileSearch.class,
             PendingKarnRestart.class,
             PendingKnowledgePoolCast.class,
-            PendingPileSeparation.class);
+            PendingPileSeparation.class,
+            PendingEachPlayerLibraryExile.class,
+            PendingGuildFeud.class);
     private static final Set<Class<?>> AI_DIRECT_PATHS = Set.of(
             PendingInteraction.HandCardChoice.class,
             PendingInteraction.TargetedHandCardChoice.class,

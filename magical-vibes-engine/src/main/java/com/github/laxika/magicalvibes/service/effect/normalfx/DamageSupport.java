@@ -135,6 +135,11 @@ public class DamageSupport {
             rawDamage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, targetControllerId, target.getId(), rawDamage);
             processSourceRedirectDamage(gameData);
         }
+        // Palisade Giant: damage to other permanents its controller controls is dealt to it instead.
+        if (targetControllerId != null) {
+            rawDamage = damagePreventionService.applyStaticPermanentDamageRedirectToSelf(gameData, targetControllerId, target.getId(), rawDamage);
+            processSourceRedirectDamage(gameData);
+        }
         // Apply creature-specific redirect shields (e.g. Oracle's Attendants): redirect all damage from
         // a chosen source to the protected creature onto another permanent.
         if (sourcePermId != null) {
@@ -733,6 +738,14 @@ public class DamageSupport {
                                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                                 : null,
                         effectiveDamage);
+                // Source's own ON_DAMAGE_TO_PLAYER (e.g. Niv-Mizzet, Dracogenius ping → may draw).
+                if (entry.getSourcePermanentId() != null) {
+                    Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+                    if (sourcePermanent != null) {
+                        triggerCollectionService.checkSourceDealsDamageToPlayerTriggers(gameData, sourcePermanent,
+                                entry.getControllerId(), playerId, effectiveDamage);
+                    }
+                }
                 triggerCollectionService.checkNoncombatDamageToOpponentTriggers(gameData, playerId);
                 triggerCollectionService.checkRedSpellOrPlaneswalkerDamageToOpponentTriggers(gameData, playerId, entry);
                 checkSpellLifelink(gameData, entry, effectiveDamage);

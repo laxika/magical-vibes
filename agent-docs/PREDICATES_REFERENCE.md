@@ -19,6 +19,8 @@ Reach for one before writing out a filter:
 | `TargetFilters.artifact()` | `PermanentPredicateTargetFilter` | "Target must be an artifact" |
 | `TargetFilters.enchantment()` | `PermanentPredicateTargetFilter` | "Target must be an enchantment" |
 | `TargetFilters.permanent()` / `permanentYouControl()` | permanent / controlled | "Target must be a permanent\[ you control\]" |
+| `TargetFilters.nonlandPermanent()` | nonland permanent | "Target must be a nonland permanent" (Soul Tithe) |
+| `TargetFilters.nonlandPermanentAnOpponentControls()` | nonland permanent an opponent controls | "Target must be a nonland permanent an opponent controls" (Archon of the Triumvirate) |
 
 The message is shown to a player who picks an illegal target, so it is part of the card's
 behaviour. If the card needs different wording — "First target must be a creature", "Second
@@ -110,6 +112,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentHasGreatestManaValueAmongAllCreaturesPredicate` | `()` | creatures with greatest mana value among all creatures on the battlefield across every player (ties allowed) | `gameData` |
 | `PermanentHasLeastPowerAmongAllCreaturesPredicate` | `()` | creatures with the least effective power among all creatures on the battlefield across every player (ties allowed). Wretched Banquet | `gameData` |
 | `PermanentDealtDamageThisTurnPredicate` | `()` | permanents dealt damage this turn (evaluated against `GameData.permanentsDealtDamageThisTurn`) | `gameData` |
+| `PermanentDealtDamageToAnythingThisTurnPredicate` | `()` | permanents that dealt damage — combat or noncombat, to any player or creature — this turn ("target creature that dealt damage this turn", Avenging Arrow). Checks `GameData.combatDamageToPlayersThisTurn` + `noncombatDamageToPlayersThisTurn` + `creatureCardsDamagedThisTurnBySourcePermanent`, keyed by the candidate permanent. Note the opposite direction from `PermanentDealtDamageThisTurnPredicate` (which means *was* dealt damage) | `gameData` |
 | `PermanentDealtDamageToSourceControllerThisTurnPredicate` | `()` | permanents that dealt damage — combat or noncombat — to the source's controller this turn ("target creature that dealt damage to you this turn", Giltspire Avenger). Checks `GameData.combatDamageToPlayersThisTurn` + `GameData.noncombatDamageToPlayersThisTurn` for `sourceControllerId` | `gameData` + `sourceControllerId` |
 | `PermanentAttackedSourceControllerThisTurnPredicate` | `()` | creatures declared as attackers against the source's controller this turn ("target creature that attacked you this turn", Jabari's Influence). Checks `GameData.playersAttackedThisTurn` (written in `CombatAttackService.declareAttackers`, cleared at turn cleanup) for `sourceControllerId`; attacking a planeswalker that player controls does not match | `gameData` + `sourceControllerId` |
 | `PermanentHasSameNameAsSourcePredicate` | `()` | permanents with same name as source (works with clones) | `gameData` + `sourceCardId` |
@@ -176,6 +179,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 |-----------|-------------|---------|
 | `PlayerRelationPredicate` | `(PlayerRelation)` | player by relation. `PlayerRelation`: `OPPONENT`, `SELF` |
 | `PlayerDealtDamageThisTurnPredicate` | `()` | players dealt damage this turn (evaluated against `GameData.playersDealtDamageThisTurn`). Player-side counterpart of `PermanentDealtDamageThisTurnPredicate`; pair them in an `AnyTargetPredicateTargetFilter` for "any target that was dealt damage this turn" |
+| `PlayerLostLifeThisTurnPredicate` | `()` | players that lost life this turn (evaluated against `GameData.lifeLostThisTurn`; damage counts). Used by Rix Maadi Guildmage's "target player who lost life this turn" |
 
 ## CardPredicate (spell/card filters)
 

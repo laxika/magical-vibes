@@ -89,6 +89,7 @@ class LibraryChoiceHandlerServiceTest {
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport.class),
                 mock(com.github.laxika.magicalvibes.service.DrawService.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.NaturalBalanceSupport.class),
+                mock(com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler.class));
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

@@ -8,6 +8,7 @@ package com.github.laxika.magicalvibes.model.condition;
  */
 public sealed interface Condition permits
         ActivePlayerHandAtLeast,
+        ActivePlayerHandAtMost,
         ActivePlayerHandEmpty,
         ActivationCount,
         AllConditions,
@@ -78,6 +79,7 @@ public sealed interface Condition permits
         Metalcraft,
         MinimumAttackers,
         Morbid,
+        NoCardsExiledWithSource,
         NoOtherPermanent,
         SourceRegeneratedThisTurn,
         NoPlayerHasCardsInHand,
@@ -85,6 +87,7 @@ public sealed interface Condition permits
         NotCondition,
         NotControllerTurn,
         NotKicked,
+        Overloaded,
         NthAbilityResolutionThisTurn,
         OpponentControlsMoreCreatures,
         OpponentControlsMoreLands,

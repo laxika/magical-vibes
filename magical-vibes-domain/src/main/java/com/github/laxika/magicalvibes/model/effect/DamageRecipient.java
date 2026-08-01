@@ -19,9 +19,14 @@ public enum DamageRecipient {
     /**
      * The controller of the targeted spell on the stack ({@code entry.getTargetId()} is that spell's
      * card id). Pair with {@code TargetSpellManaValue} for "damage equal to that spell's mana value"
-     * (Refuse).
+     * (Refuse), or {@code TargetSpellPower} for "damage equal to that spell's power" (Essence Backlash).
      */
     TARGET_SPELL_CONTROLLER,
     /** The controller of the permanent that caused the trigger ({@code entry.getTargetId()} baked at trigger time). */
-    TRIGGERING_PERMANENT_CONTROLLER
+    TRIGGERING_PERMANENT_CONTROLLER,
+    /**
+     * The player whose action caused the trigger — "that player" ({@code entry.getTargetId()} baked
+     * at trigger time, e.g. the caster of the triggering spell for Ash Zealot). Does not target.
+     */
+    TRIGGERING_PLAYER
 }

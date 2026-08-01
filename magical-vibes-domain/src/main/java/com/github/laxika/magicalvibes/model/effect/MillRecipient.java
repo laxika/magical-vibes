@@ -11,5 +11,11 @@ public enum MillRecipient {
      * spell ... that spell's controller mills N cards" effects such as Broken Ambitions. Not a
      * chosen player target, so it never contributes a player target.
      */
-    TARGET_SPELL_CONTROLLER
+    TARGET_SPELL_CONTROLLER,
+    /**
+     * The controller of the permanent targeted by this stack entry ({@code entry.getTargetId()} is a
+     * permanent). Used by "destroy target land, its controller reveals ..." effects such as Destroy
+     * the Evidence. Not a chosen player target, so it never contributes a player target.
+     */
+    TARGET_PERMANENT_CONTROLLER
 }

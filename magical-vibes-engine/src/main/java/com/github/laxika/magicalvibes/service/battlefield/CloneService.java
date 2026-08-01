@@ -191,10 +191,13 @@ public class CloneService {
         int count = amountEvaluationService.evaluate(gameData, amount,
                 new AmountContext(controllerId, perm, null, xValue, 0));
         if (count > 0) {
-            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
-                    perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + count);
-            log.info("Game {} - {} enters as copy with {} additional +1/+1 counter(s)",
-                    gameData.id, perm.getCard().getName(), count);
+            count = gameQueryService.doublePlusOnePlusOneCounters(gameData, controllerId, count);
+            if (count > 0) {
+                perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                        perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + count);
+                log.info("Game {} - {} enters as copy with {} additional +1/+1 counter(s)",
+                        gameData.id, perm.getCard().getName(), count);
+            }
         }
     }
 

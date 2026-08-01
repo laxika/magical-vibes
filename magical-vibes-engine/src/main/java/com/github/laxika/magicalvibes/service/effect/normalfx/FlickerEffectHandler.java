@@ -184,7 +184,11 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         boolean applyReturnCounters = e.plusOnePlusOneCountersOnReturn() > 0
                 && (e.bonusSubtype() == null || hadBonusSubtype);
         if (applyReturnCounters && !gameQueryService.cantHaveCounters(gameData, returned)) {
-            returned.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, e.plusOnePlusOneCountersOnReturn());
+            int returnCounters = gameQueryService.doublePlusOnePlusOneCounters(
+                    gameData, returnControllerId, e.plusOnePlusOneCountersOnReturn());
+            if (returnCounters > 0) {
+                returned.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, returnCounters);
+            }
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, returnControllerId, returned);
         if (e.returnUnderController() && !returnControllerId.equals(ownerId)) {

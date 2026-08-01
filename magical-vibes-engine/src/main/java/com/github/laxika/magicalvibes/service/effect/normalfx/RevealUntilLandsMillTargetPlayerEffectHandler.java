@@ -4,10 +4,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilLandsMillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +28,7 @@ public class RevealUntilLandsMillTargetPlayerEffectHandler implements NormalEffe
 
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,12 +37,14 @@ public class RevealUntilLandsMillTargetPlayerEffectHandler implements NormalEffe
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID targetPlayerId = entry.getTargetId();
+        RevealUntilLandsMillTargetPlayerEffect e = (RevealUntilLandsMillTargetPlayerEffect) effect;
+
+        UUID targetPlayerId = resolveRevealingPlayer(gameData, entry, e);
         if (targetPlayerId == null) {
             return;
         }
 
-        int landCount = ((RevealUntilLandsMillTargetPlayerEffect) effect).landCount();
+        int landCount = e.landCount();
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
         // Reveal cards from the top of the target player's library until landCount lands are revealed
@@ -70,5 +76,18 @@ public class RevealUntilLandsMillTargetPlayerEffectHandler implements NormalEffe
 
         log.info("Game {} - {} reveals {} cards ({} lands) to their graveyard from Mind Funeral-style mill",
                 gameData.id, targetName, revealedCards.size(), landsRevealed);
+    }
+
+    /**
+     * TARGET_PLAYER reveals for the entry's player target; TARGET_PERMANENT_CONTROLLER reveals for
+     * the controller of the targeted permanent (which must still be on the battlefield).
+     */
+    private UUID resolveRevealingPlayer(GameData gameData, StackEntry entry, RevealUntilLandsMillTargetPlayerEffect effect) {
+        if (effect.recipient() != MillRecipient.TARGET_PERMANENT_CONTROLLER) {
+            return entry.getTargetId();
+        }
+
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        return target == null ? null : gameQueryService.findPermanentController(gameData, target.getId());
     }
 }

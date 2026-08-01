@@ -66,8 +66,12 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
                     ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                     : null;
             if (source != null && !gameQueryService.cantHaveCounters(gameData, source)) {
-                source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + 1);
-                gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " gets a +1/+1 counter."));
+                int placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, source, 1);
+                if (placed > 0) {
+                    source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
+                    gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
+                            placed == 1 ? " gets a +1/+1 counter." : " gets " + placed + " +1/+1 counters."));
+                }
             }
 
             // Ask: put the revealed card into your graveyard?

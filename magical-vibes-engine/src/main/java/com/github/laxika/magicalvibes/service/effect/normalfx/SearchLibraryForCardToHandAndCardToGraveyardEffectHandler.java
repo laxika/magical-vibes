@@ -5,16 +5,20 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
+import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp.CardToGraveyardPick;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToHandAndCardToGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -24,6 +28,7 @@ public class SearchLibraryForCardToHandAndCardToGraveyardEffectHandler implement
 
     private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,7 +41,7 @@ public class SearchLibraryForCardToHandAndCardToGraveyardEffectHandler implement
     }
 
     private void doResolve(GameData gameData, StackEntry entry,
-                                                              SearchLibraryForCardToHandAndCardToGraveyardEffect effect) {
+                           SearchLibraryForCardToHandAndCardToGraveyardEffect effect) {
         UUID controllerId = entry.getControllerId();
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) return;
 
@@ -49,16 +54,38 @@ public class SearchLibraryForCardToHandAndCardToGraveyardEffectHandler implement
             return;
         }
 
-        // First pick: any card to hand (no shuffle yet); the follow-up graveyard search
-        // rides the search interaction
-        librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, new ArrayList<>(deck))
-                .reveals(false)
-                .canFailToFind(false)
-                .destination(LibrarySearchDestination.HAND)
-                .shuffleAfterSelection(false)
-                .followUp(LibrarySearchFollowUp.forCardToGraveyard())
-                .build(), "Search your library for a card to put into your hand.", false);
+        CardPredicate filter = effect.filter();
+        List<Card> candidates = filter == null
+                ? new ArrayList<>(deck)
+                : deck.stream()
+                        .filter(c -> predicateEvaluationService.matchesCardPredicate(c, filter, null, gameData, controllerId))
+                        .toList();
 
-        log.info("Game {} - {} searches library for Final Parting ({} cards)", gameData.id, playerName, deck.size());
+        if (candidates.isEmpty()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            String noMatch = filter == null ? "cards" : "matching cards";
+            String logMsg = playerName + " searches their library but finds no " + noMatch + ". Library is shuffled.";
+            gameLogService.append(gameData, GameLog.text(logMsg));
+            return;
+        }
+
+        String prompt = filter == null
+                ? "Search your library for a card to put into your hand."
+                : "Search your library for a creature card to put into your hand.";
+        CardToGraveyardPick graveyardPick = new CardToGraveyardPick(filter, effect.canFailToFind(), effect.reveals());
+
+        librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId,
+                LibrarySearchParams.builder(controllerId, candidates)
+                        .reveals(effect.reveals())
+                        .canFailToFind(effect.canFailToFind())
+                        .destination(LibrarySearchDestination.HAND)
+                        .shuffleAfterSelection(false)
+                        .filterPredicate(filter)
+                        .followUp(LibrarySearchFollowUp.forCardToGraveyard(graveyardPick))
+                        .build(),
+                prompt, effect.canFailToFind());
+
+        log.info("Game {} - {} searches library for card to hand then graveyard ({} candidates)",
+                gameData.id, playerName, candidates.size());
     }
 }

@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -313,6 +314,27 @@ public class MiscTriggerCollectorService {
         String triggerLog = match.permanent().getCard().getName() + "'s ability triggers.";
         gameLogService.append(match.gameData(), GameLog.text(triggerLog));
         log.info("Game {} - {} triggers, enchanted permanent's controller loses life",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = MillEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    private boolean handleEnchantedPermanentTapMill(TriggerMatchContext match,
+            MillEffect e, TriggerContext ctx) {
+        TriggerContext.EnchantedPermanentTap ept = (TriggerContext.EnchantedPermanentTap) ctx;
+        // Chronic Flooding: "its controller mills three cards". TARGET_PLAYER reads the entry's
+        // targetId, so bake the tapped permanent's controller — no target is chosen.
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s triggered ability",
+                new ArrayList<>(List.of(e)),
+                ept.tappedPermanentControllerId(),
+                match.permanent().getId()
+        ));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers, enchanted permanent's controller mills",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }

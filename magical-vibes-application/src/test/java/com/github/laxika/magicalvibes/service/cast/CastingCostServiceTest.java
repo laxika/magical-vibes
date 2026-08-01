@@ -78,7 +78,9 @@ class CastingCostServiceTest {
                 CostModificationTestRegistry.build(gameQueryService, predicateEvaluationService, support),
                 support, gameQueryService, predicateEvaluationService, conditionEvaluationService,
                 new com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService(
-                        gameQueryService, predicateEvaluationService));
+                        gameQueryService, predicateEvaluationService),
+                new com.github.laxika.magicalvibes.service.effect.AmountEvaluationService(
+                        predicateEvaluationService, gameQueryService));
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

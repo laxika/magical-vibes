@@ -7,6 +7,7 @@ All paths relative to `cards/`.
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Tap to damage any | `p/ProdigalPyromancer.java` | `(true, null, DealDamageToAnyTargetEffect, true)` |
+| Tap to damage target + all same name | `i/IzzetStaticaster.java` | `(true, null, DealDamageToTargetCreatureAndAllWithSameNameEffect(1))` — only one target; same-name (incl. hexproof) still hit |
 | Tap to damage player/PW (Desert-gated) | `w/WallOfForgottenPharaohs.java` | `DealDamageToTargetPlayerOrPlaneswalkerEffect(1)` + `.withActivationCondition(AnyOf(ControlsPermanent(DESERT), GraveyardCardThreshold(1, CardSubtypePredicate(DESERT))))` |
 | Mana + tap to damage | `r/RodOfRuin.java` | `(true, "{3}", DealDamageToAnyTargetEffect, true)` |
 | Damage + self-damage | `o/OrcishArtillery.java` | Two effects: damage target + DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER) |

@@ -20,10 +20,12 @@ import java.util.UUID;
  * @param kicked           whether the spell/permanent was kicked (from the stack entry or permanent)
  * @param buyback          whether the spell's buyback cost was paid (from the stack entry)
  * @param prowl            whether the spell/permanent was cast for its prowl cost (from the stack entry or permanent)
+ * @param overloaded       whether the spell was cast for its overload cost (CR 702.96a)
  * @param sourceZone       zone the spell was cast from, when known
  * @param xValue           snapshotted numeric context (attacker count, mana spent)
  * @param targetId         current target id, when resolving a targeted effect
  * @param triggeringCard   the entering/triggering card for enter-trigger conditions
+ * @param staticEvaluation whether this evaluation is for a static continuous effect
  */
 public record ConditionContext(
         UUID controllerId,
@@ -33,23 +35,26 @@ public record ConditionContext(
         boolean kicked,
         boolean buyback,
         boolean prowl,
+        boolean overloaded,
         Zone sourceZone,
         int xValue,
         UUID targetId,
-        Card triggeringCard
+        Card triggeringCard,
+        boolean staticEvaluation
 ) {
 
     /** Context for resolving an effect on a stack entry (stack resolution time). */
     public static ConditionContext forStackEntry(StackEntry entry) {
         return new ConditionContext(entry.getControllerId(), entry.getSourcePermanentId(), null,
-                entry.getCard(), entry.isKicked(), entry.isBuyback(), entry.isProwl(), entry.getSourceZone(),
-                entry.getXValue(), entry.getTargetId(), null);
+                entry.getCard(), entry.isKicked(), entry.isBuyback(), entry.isProwl(), entry.isOverloaded(),
+                entry.getSourceZone(), entry.getXValue(), entry.getTargetId(), null, false);
     }
 
     /** Context for trigger-time (intervening-if) checks against a battlefield permanent. */
     public static ConditionContext forPermanent(Permanent permanent, UUID controllerId) {
         return new ConditionContext(controllerId, permanent.getId(), permanent,
-                permanent.getCard(), permanent.isKicked(), false, permanent.isProwl(), null, 0, null, null);
+                permanent.getCard(), permanent.isKicked(), false, permanent.isProwl(), false, null, 0, null, null,
+                false);
     }
 
     /**
@@ -59,7 +64,8 @@ public record ConditionContext(
      * only because it says at the call site which kind of evaluation is being set up.
      */
     public static ConditionContext forStaticEffect(Permanent source, UUID controllerId) {
-        return forPermanent(source, controllerId);
+        return new ConditionContext(controllerId, source.getId(), source,
+                source.getCard(), source.isKicked(), false, source.isProwl(), false, null, 0, null, null, true);
     }
 
     /**
@@ -68,7 +74,8 @@ public record ConditionContext(
      * (metalcraft, controls-a-permanent, opponent creature counts) are meaningful here.
      */
     public static ConditionContext forCasting(UUID castingPlayerId) {
-        return new ConditionContext(castingPlayerId, null, null, null, false, false, false, null, 0, null, null);
+        return new ConditionContext(castingPlayerId, null, null, null, false, false, false, false, null, 0, null,
+                null, false);
     }
 
     /**
@@ -76,24 +83,27 @@ public record ConditionContext(
      * ability gates such as {@code CardsAboveSelfInGraveyard}).
      */
     public static ConditionContext forCard(Card card, UUID controllerId) {
-        return new ConditionContext(controllerId, null, null, card, false, false, false, null, 0, null, null);
+        return new ConditionContext(controllerId, null, null, card, false, false, false, false, null, 0, null, null,
+                false);
     }
 
     /** Returns a copy with the given snapshotted numeric value (attacker count, mana spent). */
     public ConditionContext withXValue(int newXValue) {
         return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
-                kicked, buyback, prowl, sourceZone, newXValue, targetId, triggeringCard);
+                kicked, buyback, prowl, overloaded, sourceZone, newXValue, targetId, triggeringCard,
+                staticEvaluation);
     }
 
     /** Returns a copy with the given target id (e.g. a multi-target group's chosen target). */
     public ConditionContext withTargetId(UUID newTargetId) {
         return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
-                kicked, buyback, prowl, sourceZone, xValue, newTargetId, triggeringCard);
+                kicked, buyback, prowl, overloaded, sourceZone, xValue, newTargetId, triggeringCard,
+                staticEvaluation);
     }
 
     /** Returns a copy with the given triggering (entering) card. */
     public ConditionContext withTriggeringCard(Card card) {
         return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
-                kicked, buyback, prowl, sourceZone, xValue, targetId, card);
+                kicked, buyback, prowl, overloaded, sourceZone, xValue, targetId, card, staticEvaluation);
     }
 }

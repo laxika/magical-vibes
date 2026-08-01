@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEf
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
@@ -1379,6 +1380,47 @@ public class GameQueryService {
      */
     public int reduceMinusOneMinusOneCounters(GameData gameData, Permanent permanent, int count) {
         return reduceMinusOneMinusOneCounters(gameData, findPermanentController(gameData, permanent.getId()), count);
+    }
+
+    /**
+     * Applies Corpsejack Menace-style replacement effects that double +1/+1 counters put on a
+     * creature its controller controls: "If one or more +1/+1 counters would be put on a creature
+     * you control, twice that many +1/+1 counters are put on it instead." For each permanent
+     * carrying {@link DoublePlusOnePlusOneCountersEffect} that {@code controllerId} controls, the
+     * count is multiplied by two (two copies → ×4, three → ×8, …). A {@code count} of zero or fewer
+     * is returned unchanged — no counters "would be put", so the replacement never applies. Callers
+     * that already know the recipient is a creature (e.g. as-enters) use this overload; the
+     * permanent overload also rejects non-creatures.
+     */
+    public int doublePlusOnePlusOneCounters(GameData gameData, UUID controllerId, int count) {
+        if (count <= 0 || controllerId == null) {
+            return count;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return count;
+        }
+        long doublers = battlefield.stream()
+                .filter(p -> p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(DoublePlusOnePlusOneCountersEffect.class::isInstance))
+                .count();
+        int result = count;
+        for (int i = 0; i < doublers; i++) {
+            result *= 2;
+        }
+        return result;
+    }
+
+    /**
+     * Convenience overload of {@link #doublePlusOnePlusOneCounters(GameData, UUID, int)} that
+     * resolves the affected permanent's controller from the battlefield. Non-creatures are
+     * unchanged — Corpsejack only replaces counters put on creatures.
+     */
+    public int doublePlusOnePlusOneCounters(GameData gameData, Permanent permanent, int count) {
+        if (permanent == null || !isCreature(gameData, permanent)) {
+            return count;
+        }
+        return doublePlusOnePlusOneCounters(gameData, findPermanentController(gameData, permanent.getId()), count);
     }
 
     /**

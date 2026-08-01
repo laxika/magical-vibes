@@ -39,6 +39,7 @@ public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        String requiredName = ((PutCardExiledWithSourceIntoHandEffect) effect).requiredName();
         UUID controllerId = entry.getControllerId();
         UUID sourcePermanentId = resolveSourcePermanentId(gameData, entry);
         String controllerName = gameData.playerIdToName.get(controllerId);
@@ -49,6 +50,7 @@ public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffec
                 .filter(e -> sourcePermanentId.equals(e.sourcePermanentId())
                         && controllerId.equals(e.ownerId()))
                 .map(com.github.laxika.magicalvibes.model.ExiledCardEntry::card)
+                .filter(c -> requiredName == null || requiredName.equals(c.getName()))
                 .toList();
 
         if (matching.isEmpty()) {
@@ -56,7 +58,9 @@ public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffec
             return;
         }
 
-        if (matching.size() == 1) {
+        // A name-filtered pool is homogeneous, so "choose one of those cards with that name" has no
+        // decision to make — take the first without prompting.
+        if (matching.size() == 1 || requiredName != null) {
             Card card = matching.getFirst();
             gameData.removeFromExile(card.getId());
             gameData.addCardToHand(controllerId, card);

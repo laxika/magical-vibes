@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -97,7 +98,8 @@ public class ETBTokenTargetService {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
-                        if (matchesPermanentTargetFilter(gameData, p, pending.targetFilter(), pending.effects())) {
+                        if (matchesPermanentTargetFilter(gameData, p, pending.targetFilter(), pending.effects(),
+                                pending.controllerId(), pending.sourceCard())) {
                             validPermanentTargets.add(p.getId());
                         }
                     }
@@ -182,7 +184,8 @@ public class ETBTokenTargetService {
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
                         if (pending.chosenTargetsSoFar().contains(p.getId())) continue;
-                        if (matchesPermanentTargetFilter(gameData, p, group.getFilter(), groupEffects)) {
+                        if (matchesPermanentTargetFilter(gameData, p, group.getFilter(), groupEffects,
+                                pending.controllerId(), card)) {
                             validPermanentTargets.add(p.getId());
                         }
                     }
@@ -229,9 +232,8 @@ public class ETBTokenTargetService {
     private void pushMultiTargetETBStackEntry(GameData gameData,
                                                PermanentChoiceContext.ETBTokenMultiTargetTrigger pending) {
         Card card = pending.sourceCard();
-        String abilityLabel = pending.sourcePermanentId() == null
-                ? card.getName() + "'s ability"
-                : card.getName() + "'s ETB ability";
+        // Shared by ETB token copies, ON_SELF_CAST, and multi-target ON_ATTACK — keep the label generic.
+        String abilityLabel = card.getName() + "'s ability";
         StackEntry etbEntry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 card,
@@ -247,13 +249,9 @@ public class ETBTokenTargetService {
                 new ArrayList<>(pending.chosenTargetsSoFar())
         );
         gameData.stack.add(etbEntry);
-        if (pending.sourcePermanentId() == null) {
-            gameLogService.append(gameData, GameLog.cardThen(card, "'s ability triggers."));
-            log.info("Game {} - {} cast multi-target ability pushed onto stack", gameData.id, card.getName());
-        } else {
-            gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
-            log.info("Game {} - {} ETB multi-target ability pushed onto stack", gameData.id, card.getName());
-        }
+        gameLogService.append(gameData, GameLog.cardThen(card, "'s ability triggers."));
+        log.info("Game {} - {} multi-target ability pushed onto stack ({} targets)",
+                gameData.id, card.getName(), pending.chosenTargetsSoFar().size());
     }
 
     public boolean hasGroupWithMaxTargetsGreaterThanOne(Card card) {
@@ -296,13 +294,16 @@ public class ETBTokenTargetService {
     }
 
     private boolean matchesPermanentTargetFilter(GameData gameData, Permanent permanent,
-                                                  TargetFilter targetFilter, List<CardEffect> effects) {
+                                                  TargetFilter targetFilter, List<CardEffect> effects,
+                                                  UUID controllerId, Card sourceCard) {
         if (targetFilter == null) {
             return gameQueryService.isCreature(gameData, permanent);
         }
         if (targetFilter instanceof PlayerPredicateTargetFilter) {
             return false;
         }
-        return predicateEvaluationService.checkTargetFilter(targetFilter, permanent).isEmpty();
+        FilterContext filterContext = new FilterContext(
+                gameData, sourceCard.getId(), controllerId, null, null);
+        return predicateEvaluationService.checkTargetFilter(targetFilter, permanent, filterContext).isEmpty();
     }
 }

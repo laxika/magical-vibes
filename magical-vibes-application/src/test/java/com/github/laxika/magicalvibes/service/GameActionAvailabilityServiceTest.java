@@ -77,7 +77,9 @@ class GameActionAvailabilityServiceTest {
                 CostModificationTestRegistry.build(gameQueryService, predicateEvaluationService, support),
                 support, gameQueryService, predicateEvaluationService, conditionEvaluationService,
                 new com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService(
-                        gameQueryService, predicateEvaluationService));
+                        gameQueryService, predicateEvaluationService),
+                new com.github.laxika.magicalvibes.service.effect.AmountEvaluationService(
+                        predicateEvaluationService, gameQueryService));
         CastingPermissionService castingPermissionService =
                 new CastingPermissionService(gameQueryService, predicateEvaluationService, conditionEvaluationService);
         svc = new GameActionAvailabilityService(

@@ -220,20 +220,39 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 false));
     }
 
-    // ===== you may reveal matching cards and put them into your hand, rest on the bottom =====
-    // (Commune with Nature single pick; Lead the Stampede / Follow the Lumarets multi pick)
-
     private void resolveMayRevealToHand(GameData gameData, StackEntry entry,
             LookAtTopCardsEffect e, int lookCount, int chooseCount) {
         LibraryRevealSupport.TopCardsResult result =
-                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
+                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, false);
         if (result == null) return;
         UUID controllerId = result.controllerId();
         List<Card> topCards = result.topCards();
+        String playerName = result.playerName();
+        boolean toGraveyard = e.restDestination() == LookDestination.GRAVEYARD;
+
+        if (e.reveal()) {
+            GameLog.Builder revealBuilder = GameLog.builder().text(playerName + " reveals ");
+            appendCardList(revealBuilder, topCards);
+            revealBuilder.text(" from the top of their library with ").card(entry.getCard()).text(".");
+            gameLogService.append(gameData, revealBuilder.build());
+        } else {
+            gameLogService.append(gameData, GameLog.text(playerName + " looks at the top "
+                    + LibraryRevealSupport.pluralCards(topCards.size()) + " of their library."));
+        }
 
         List<Card> matchingCards = filterEligibleCards(topCards, e.choosePredicate(), gameData, controllerId);
         if (matchingCards.isEmpty()) {
-            libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, topCards);
+            if (toGraveyard) {
+                for (Card card : topCards) {
+                    gameData.playerGraveyards.get(controllerId).add(card);
+                }
+                GameLog.Builder restBuilder = GameLog.builder().text(playerName + " puts ");
+                appendCardList(restBuilder, topCards);
+                restBuilder.text(" into their graveyard.");
+                gameLogService.append(gameData, restBuilder.build());
+            } else {
+                libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, topCards);
+            }
             return;
         }
 
@@ -241,22 +260,29 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         if (chooseCount > 1) {
             List<UUID> cardIds = matchingCards.stream().map(Card::getId).toList();
             int max = Math.min(chooseCount, matchingCards.size());
-            String revealPrompt = chooseCount >= Integer.MAX_VALUE
-                    ? "You may reveal any number of " + description + "s and put them into your hand."
-                    : "You may reveal up to " + max + " " + description + "s and put them into your hand.";
+            String revealPrompt = e.reveal()
+                    ? (chooseCount >= Integer.MAX_VALUE
+                            ? "You may put any number of " + description + "s into your hand."
+                            : "You may put up to " + max + " " + description + "s into your hand.")
+                    : (chooseCount >= Integer.MAX_VALUE
+                            ? "You may reveal any number of " + description + "s and put them into your hand."
+                            : "You may reveal up to " + max + " " + description + "s and put them into your hand.");
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
-                    controllerId, topCards, cardIds, false, true, true, false, false, 0, null,
+                    controllerId, topCards, cardIds, toGraveyard, true, !toGraveyard, false, false, 0, null,
                     max, revealPrompt));
             return;
         }
 
-        String prompt = "You may reveal a " + description + " from among them and put it into your hand.";
+        String prompt = e.reveal()
+                ? "You may put a " + description + " from among them into your hand."
+                : "You may reveal a " + description + " from among them and put it into your hand.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
                 LibrarySearchParams.builder(controllerId, matchingCards)
                         .reveals(true)
                         .canFailToFind(true)
                         .sourceCards(topCards)
-                        .reorderRemainingToBottom(true)
+                        .reorderRemainingToBottom(!toGraveyard)
+                        .restToGraveyard(toGraveyard)
                         .shuffleAfterSelection(false)
                         .prompt(prompt)
                         .build(),

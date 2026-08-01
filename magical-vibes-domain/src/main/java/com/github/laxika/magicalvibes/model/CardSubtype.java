@@ -42,6 +42,7 @@ public enum CardSubtype {
     CLERIC("Cleric"),
     BIRD("Bird"),
     CAT("Cat"),
+    CENTAUR("Centaur"),
     SOLDIER("Soldier"),
     REBEL("Rebel"),
     KNIGHT("Knight"),
@@ -197,7 +198,8 @@ public enum CardSubtype {
     JACKAL("Jackal"),
     SALAMANDER("Salamander"),
     SAMUT("Samut"),
-    ARCANE("Arcane");
+    ARCANE("Arcane"),
+    GATE("Gate");
 
     @Getter
     private final String displayName;

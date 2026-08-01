@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -55,9 +56,27 @@ public final class EffectResolution {
      * @return the resolved effect list containing only the effects that will fire
      */
     public static List<CardEffect> resolveEffects(List<CardEffect> rawEffects, Boolean kicked, Integer modeIndex) {
+        return resolveEffects(rawEffects, kicked, null, modeIndex);
+    }
+
+    /**
+     * As {@link #resolveEffects(List, Boolean, Integer)}, but also unwraps the overload text change
+     * (CR 702.96a): an {@code Overloaded} {@link ConditionalReplacementEffect} resolves to its
+     * upgraded ("each") branch when the spell was cast for its overload cost and to the printed
+     * ("target") branch otherwise. Because the two branches differ in target shape — CR 702.96b says
+     * an overloaded spell has no targets — the cast path must resolve with this flag before asking
+     * whether a target is required.
+     *
+     * @param overloaded whether the spell is being cast for its overload cost (null if unknown)
+     */
+    public static List<CardEffect> resolveEffects(List<CardEffect> rawEffects, Boolean kicked,
+                                                  Boolean overloaded, Integer modeIndex) {
         List<CardEffect> resolved = new ArrayList<>(rawEffects.size());
         for (CardEffect effect : rawEffects) {
             if (effect instanceof ConditionalReplacementEffect cre
+                    && cre.condition() instanceof Overloaded && overloaded != null) {
+                resolved.add(overloaded ? cre.upgradedEffect() : cre.baseEffect());
+            } else if (effect instanceof ConditionalReplacementEffect cre
                     && cre.condition() instanceof Kicked && kicked != null) {
                 resolved.add(kicked ? cre.upgradedEffect() : cre.baseEffect());
             } else if (effect instanceof ChooseOneEffect coe && modeIndex != null) {

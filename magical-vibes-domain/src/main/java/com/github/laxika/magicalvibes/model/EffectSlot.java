@@ -30,6 +30,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     OPPONENT_UPKEEP_TRIGGERED,
     ON_ANY_PLAYER_CASTS_SPELL,
     ON_CONTROLLER_CASTS_SPELL,
+    /**
+     * "Whenever you play a land" — fired at the actual land-play sites (from hand, from graveyard,
+     * from exile, and the may-cast/free-play paths), NOT when a land merely enters the battlefield.
+     * Use {@link #ON_ALLY_LAND_ENTERS_BATTLEFIELD} for landfall, which also sees lands put onto the
+     * battlefield by an effect.
+     */
+    ON_CONTROLLER_PLAYS_LAND,
     ON_OPPONENT_CASTS_SPELL,
     ON_DEATH,
     ON_ALLY_CREATURE_DIES,
@@ -222,6 +229,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_OPPONENT_LOSES_LIFE,
     ON_OPPONENT_SHUFFLES_LIBRARY,
     ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
+    /** Triggers during the draw step of the enchanted permanent's controller ("At the beginning of
+     *  the draw step of enchanted creature's controller, that player draws an additional card").
+     *  Checked in {@code StepTriggerService.handleDrawStepTriggers}; bakes that player as
+     *  {@code targetId}. Used by Righteous Authority. */
+    ENCHANTED_PERMANENT_CONTROLLER_DRAW_TRIGGERED,
     /** Triggers during the end step of the enchanted permanent's controller ("At the beginning of
      *  your end step" on an ability granted to the enchanted permanent). Checked in
      *  {@code StepTriggerService.handleEndStepTriggers}. Used by Nettlevine Blight. */

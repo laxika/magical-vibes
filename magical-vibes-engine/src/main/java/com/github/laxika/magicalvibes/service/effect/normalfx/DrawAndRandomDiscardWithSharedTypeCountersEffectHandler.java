@@ -78,14 +78,17 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
             if (sourcePermanentId != null) {
                 Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
                 if (source != null && !gameQueryService.cantHaveCounters(gameData, source)) {
-                    source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + e.counterAmount());
-                    gameLogService.append(gameData, GameLog.builder()
-                            .card(source.getCard())
-                            .text(" gets " + e.counterAmount()
-                                    + " +1/+1 counter" + (e.counterAmount() != 1 ? "s" : "")
-                                    + " (discarded cards share a card type).")
-                            .build());
-                    log.info("Game {} - {} gets {} +1/+1 counters (shared card type)", gameData.id, sourceName, e.counterAmount());
+                    int placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, source, e.counterAmount());
+                    if (placed > 0) {
+                        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
+                        gameLogService.append(gameData, GameLog.builder()
+                                .card(source.getCard())
+                                .text(" gets " + placed
+                                        + " +1/+1 counter" + (placed != 1 ? "s" : "")
+                                        + " (discarded cards share a card type).")
+                                .build());
+                        log.info("Game {} - {} gets {} +1/+1 counters (shared card type)", gameData.id, sourceName, placed);
+                    }
                 }
             }
         } else if (discardedCards.size() >= 2) {

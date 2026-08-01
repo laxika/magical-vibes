@@ -39,6 +39,14 @@ public record ConditionalReplacementEffect(
 
     @Override
     public TargetSpec targetSpec() {
+        // Overload is the one condition whose branches differ in target shape (CR 702.96b: an
+        // overloaded spell has no targets at all), so the upgraded branch cannot describe the pair.
+        // Report the printed, non-overloaded targeting here; a cast that actually pays the overload
+        // cost resolves the wrapper away first via
+        // EffectResolution.resolveEffects(effects, kicked, overloaded, modeIndex).
+        if (condition instanceof com.github.laxika.magicalvibes.model.condition.Overloaded && baseEffect != null) {
+            return baseEffect.targetSpec();
+        }
         return upgradedEffect.targetSpec();
     }
 }

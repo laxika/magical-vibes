@@ -246,12 +246,7 @@ public class PermanentChoiceSpellHandlerService {
      * selection, so resume casting the remainder of the queue before yielding priority.
      */
     private void resumeAfterExileCast(GameData gameData, UUID controllerId) {
-        if (!gameData.pendingFreeCastQueue.isEmpty()) {
-            exileFreeCastQueueSupport.castNextFromQueue(gameData, controllerId);
-            return;
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        exileFreeCastQueueSupport.castNextFromQueue(gameData, controllerId);
     }
 
     public void handleGraveyardCastSpellTarget(GameData gameData, UUID permanentId, PermanentChoiceContext.GraveyardCastSpellTarget gct) {

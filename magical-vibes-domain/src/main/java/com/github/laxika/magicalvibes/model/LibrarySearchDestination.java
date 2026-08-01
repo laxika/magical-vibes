@@ -27,6 +27,9 @@ public enum LibrarySearchDestination {
     BATTLEFIELD_ATTACHED_TO_PERMANENT,
     SPHINX_AMBASSADOR,
     CAST_WITHOUT_PAYING,
+    /** Exile the chosen card face up and hold it for a later free cast, then continue the
+     *  {@code PendingEachPlayerLibraryExile} queue (Jace, Architect of Thought's −8). */
+    EXILE_FOR_FREE_CAST,
     /** Put the chosen card onto the battlefield under the searching player's control (Bribery). */
     BATTLEFIELD_UNDER_SEARCHER,
     /** Aladdin's Lamp — put the chosen looked-at card back on top of the library and the rest on the

@@ -31,6 +31,9 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *       {@link #mayRevealUpToToHandRestOnBottom(int, CardPredicate, int)} — optional ("may")
  *       reveal-matching-to-hand picks, rest on the bottom (Commune with Nature, Lead the Stampede,
  *       Follow the Lumarets, ...). The look is private; the chosen cards are revealed.</li>
+ *   <li>{@link #mayRevealOneToHandRestToGraveyard(int, CardPredicate)} — optional public reveal of
+ *       the top N, you may put one matching card into your hand, rest into the graveyard
+ *       (Grisly Salvage).</li>
  *   <li>{@link #mayPutMatchingOntoBattlefield(int, CardPredicate)} — you may put one matching card
  *       onto the battlefield, rest on the bottom (Mayael the Anima; Mitotic Manipulation via
  *       {@code CardSharesNameWithAPermanentPredicate}).</li>
@@ -132,6 +135,16 @@ public record LookAtTopCardsEffect(
             int lookCount, CardPredicate choosePredicate, int maxReveal) {
         return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(maxReveal), choosePredicate,
                 LookDestination.BOTTOM_OF_LIBRARY, false, LibrarySearchDestination.HAND, true);
+    }
+
+    /**
+     * Reveal the top {@code lookCount} cards publicly; you may put one matching card into your
+     * hand; the rest go into your graveyard (Grisly Salvage).
+     */
+    public static LookAtTopCardsEffect mayRevealOneToHandRestToGraveyard(
+            int lookCount, CardPredicate choosePredicate) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), choosePredicate,
+                LookDestination.GRAVEYARD, true, LibrarySearchDestination.HAND, true);
     }
 
     /** You may put one matching card onto the battlefield; the rest go to the bottom. */

@@ -11,7 +11,15 @@ import java.util.UUID;
  * than by graveyard index.
  *
  * @param remainingDiscards how many discard choices are still owed (decrements after each pick)
+ * @param discardCostRequiredName the name every remaining discard must match for a same-name discard
+ *                                cost, fixed by the first card chosen; {@code null} otherwise
  */
 public record PendingGraveyardAbilityActivation(UUID playerId, Card card, ActivatedAbility ability,
-                                                int xValue, UUID targetId, int remainingDiscards) {
+                                                int xValue, UUID targetId, int remainingDiscards,
+                                                String discardCostRequiredName) {
+
+    public PendingGraveyardAbilityActivation(UUID playerId, Card card, ActivatedAbility ability,
+                                             int xValue, UUID targetId, int remainingDiscards) {
+        this(playerId, card, ability, xValue, targetId, remainingDiscards, null);
+    }
 }

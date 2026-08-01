@@ -668,6 +668,13 @@ public class GameData {
      */
     public final Set<UUID> pendingFreeCastAsCopyIds = ConcurrentHashMap.newKeySet();
 
+    /**
+     * Cards exiled by a free-cast process that should go to their owners' graveyards when casting
+     * finishes (Epic Experiment). Empty when unused. Cleared by
+     * {@code ImprovisationCapstoneCastSupport.putRemainderIntoOwnersGraveyards}.
+     */
+    public final List<UUID> pendingExileFreeCastRemainderToGraveyard = new ArrayList<>();
+
     /** Delayed triggers from Chancellor-style opening hand reveals.
      *  Fires once per opponent when they cast their first spell of the game. */
     public final List<OpeningHandRevealTrigger> openingHandRevealTriggers = Collections.synchronizedList(new ArrayList<>());
@@ -2517,6 +2524,8 @@ public class GameData {
         });
         copy.pendingFreeCastQueue.addAll(this.pendingFreeCastQueue);
         copy.pendingFreeCastAsCopyIds.addAll(this.pendingFreeCastAsCopyIds);
+        copy.pendingImprovisationCapstoneCastQueue.addAll(this.pendingImprovisationCapstoneCastQueue);
+        copy.pendingExileFreeCastRemainderToGraveyard.addAll(this.pendingExileFreeCastRemainderToGraveyard);
 
         // --- Turn-scoped counters ---
         // Read by ConditionEvaluationService / AmountEvaluationService / TurnProgressionService and

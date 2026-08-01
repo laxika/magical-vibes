@@ -33,6 +33,8 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
@@ -65,6 +67,7 @@ public class CastingCostService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final AdditionalSpellCostService additionalSpellCostService;
+    private final AmountEvaluationService amountEvaluationService;
 
     /**
      * All cost-modifying static effects currently on the battlefield that could affect spells
@@ -585,7 +588,8 @@ public class CastingCostService {
         for (Permanent perm : defenderBattlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof RequirePaymentToAttackEffect tax) {
-                    totalTax += tax.amountPerAttacker();
+                    totalTax += amountEvaluationService.evaluate(gameData, tax.amountPerAttacker(),
+                            AmountContext.forStaticEffect(perm, defenderId));
                 }
             }
         }

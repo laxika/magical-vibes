@@ -90,6 +90,22 @@ public final class TargetFilters {
                 new PermanentTruePredicate(), "Target must be a permanent");
     }
 
+    /** "Target must be a nonland permanent" */
+    public static PermanentPredicateTargetFilter nonlandPermanent() {
+        return new PermanentPredicateTargetFilter(
+                new PermanentNotPredicate(new PermanentIsLandPredicate()),
+                "Target must be a nonland permanent");
+    }
+
+    /** "Target must be a nonland permanent an opponent controls" */
+    public static PermanentPredicateTargetFilter nonlandPermanentAnOpponentControls() {
+        return new PermanentPredicateTargetFilter(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentNotPredicate(new PermanentIsLandPredicate()),
+                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
+                "Target must be a nonland permanent an opponent controls");
+    }
+
     /** "Target must be a permanent you control" */
     public static ControlledPermanentPredicateTargetFilter permanentYouControl() {
         return new ControlledPermanentPredicateTargetFilter(

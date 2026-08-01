@@ -77,7 +77,7 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
         }
 
         gameData.queueInteraction(new PendingPileSeparation(controllerId, opponentId,
-                List.of(), revealedCards, cardOwners, List.of(), List.of(), CardPileDisposition.HAND));
+                List.of(), revealedCards, cardOwners, List.of(), List.of(), e.disposition()));
 
         playerInputService.beginMultiGraveyardChoice(gameData, opponentId, revealedCards, revealedCards.size(),
                 "Separate the revealed cards into two piles. Select cards for Pile 1 (unselected form Pile 2).");

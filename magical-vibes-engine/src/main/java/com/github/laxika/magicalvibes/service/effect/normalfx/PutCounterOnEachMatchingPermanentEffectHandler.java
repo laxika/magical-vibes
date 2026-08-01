@@ -83,11 +83,14 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
                 if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, p)) continue;
                 placed = gameQueryService.reduceMinusOneMinusOneCounters(gameData, p, amount);
                 if (placed <= 0) continue;
+            } else if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+                placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, p, amount);
+                if (placed <= 0) continue;
             }
 
             p.setCounterCount(e.counterType(), p.getCounterCount(e.counterType()) + placed);
             count++;
-            if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE && amount > 0) {
+            if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE && placed > 0) {
                 plusOneTargets.add(p);
             } else if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
                 minusOneTargets.put(p, placed);

@@ -69,16 +69,21 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
         List<String> exiledNames = new ArrayList<>();
         for (int i = 0; i < toExile; i++) {
             Card card = deck.removeFirst();
-            exileService.exileCardFaceDown(gameData, controllerId, card, sourcePermanentId);
+            if (e.faceDown()) {
+                exileService.exileCardFaceDown(gameData, controllerId, card, sourcePermanentId);
+            } else {
+                exileService.exileCard(gameData, controllerId, card, sourcePermanentId);
+            }
             exiledNames.add(card.getName());
         }
 
         if (!exiledNames.isEmpty()) {
             String playerName = gameData.playerIdToName.get(controllerId);
-            String logEntry = playerName + " exiles the top " + toExile + " card"
-                    + (toExile != 1 ? "s" : "") + " of their library face down ("
-                    + sourcePermanent.getCard().getName() + ").";
-            gameLogService.append(gameData, GameLog.builder().text(playerName + " exiles the top " + toExile + " card" + (toExile != 1 ? "s" : "") + " of their library face down (").card(sourcePermanent.getCard()).text(").").build());
+            String visibility = e.faceDown() ? " face down (" : " (";
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(playerName + " exiles the top " + toExile + " card"
+                            + (toExile != 1 ? "s" : "") + " of their library" + visibility)
+                    .card(sourcePermanent.getCard()).text(").").build());
             log.info("Game {} - {} exiles {} cards from library to {}",
                     gameData.id, playerName, toExile, sourcePermanent.getCard().getName());
         }

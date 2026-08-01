@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.SourceCardPower;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -757,6 +760,24 @@ public class Card {
                         + "that's a copy of it, except it's a 4/4 black Zombie " + creatureTypes
                         + " with no mana cost. Eternalize only as a sorcery.)",
                 ActivationTimingRestriction.SORCERY_SPEED));
+    }
+
+    /**
+     * Adds scavenge for {@code cost} (CR 702.97a): "{@code Cost}, Exile this card from your
+     * graveyard: Put a number of +1/+1 counters equal to the power of the card you exiled on target
+     * creature. Activate only as a sorcery."
+     *
+     * <p>The count is {@link SourceCardPower} rather than {@code SourcePower} because the scavenged
+     * card is exiled as an activation cost and never was a permanent — the number comes from the
+     * card itself.
+     */
+    public void addScavenge(String cost) {
+        addGraveyardActivatedAbility(new ActivatedAbility(false, cost,
+                List.of(new ExileSelfFromGraveyardCost(),
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new SourceCardPower())),
+                "Scavenge " + cost + " (" + cost + ", Exile this card from your graveyard: Put a number of "
+                        + "+1/+1 counters equal to this card's power on target creature. Scavenge only as a sorcery.)",
+                TargetFilters.creature(), null, null, ActivationTimingRestriction.SORCERY_SPEED));
     }
 
     public String getBackFaceClassName() {

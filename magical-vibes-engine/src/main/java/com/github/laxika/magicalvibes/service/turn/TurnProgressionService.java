@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackerBoost;
+import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerPowerDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDamagedByWatchedCreature;
@@ -365,6 +366,11 @@ public class TurnProgressionService {
         gameData.permanentsPreventedFromDealingDamageUntilNextTurn.values().removeIf(nextActive::equals);
         // Comply: "until your next turn, your opponents can't cast spells with the chosen name".
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.remove(nextActive);
+        // Jace, Architect of Thought +1: the delayed "whenever a creature an opponent controls
+        // attacks" trigger lasts until its controller's next turn, so it expires here rather than at
+        // turn cleanup like the other delayed families.
+        gameData.clearDelayedActions(DelayedOpponentAttackerBoost.class,
+                boost -> boost.controllerId().equals(nextActive));
         // "Until your next turn" floating continuous effects controlled by the player whose turn
         // is beginning wear off now. An expiring layer-1 copy effect (e.g. Shapesharer) reverts
         // the copied permanent's card — which may sit on any player's battlefield. A newer copy

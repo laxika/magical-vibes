@@ -119,6 +119,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 /**
  * Handles activation and cost payment for activated abilities and tap/sacrifice abilities on permanents.
@@ -907,9 +908,10 @@ public class AbilityActivationService {
         int required = handler.requiredCount();
         if (required <= 0) return false;
         UUID playerId = player.getId();
-        List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
-        if (validIds.size() <= required) {
-            // Auto-pay: exactly enough permanents
+        // Mirror battlefield handlePermanentChoiceCost: sequence costs expose only the current
+        // slot's candidates via getValidChoiceIds, so size<=required is not a safe auto-pay gate.
+        if (handler.shouldAutoPayAll(gameData, playerId, required)) {
+            List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
             for (UUID id : validIds) {
                 Permanent chosen = gameQueryService.findPermanentById(gameData, id);
                 if (chosen != null) {
@@ -918,7 +920,7 @@ public class AbilityActivationService {
             }
             return false;
         }
-        // Interactive choice: more valid permanents than required
+        List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.GraveyardAbilityCostChoice(
                 playerId, card, graveyardCardIndex, abilityIndex, handler.costEffect(), required));
         playerInputService.beginPermanentChoice(gameData, playerId, validIds,
@@ -939,7 +941,8 @@ public class AbilityActivationService {
         int idx = context.abilityIndex() != null ? context.abilityIndex() : 0;
         ActivatedAbility ability = effectiveGraveyardAbilities(gameData, card, playerId).get(idx);
 
-        PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(context.costEffect(), null, 0);
+        PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(
+                context.costEffect(), null, 0, context.chosenSoFar());
         if (handler == null) {
             throw new IllegalStateException("Unknown cost effect type");
         }
@@ -955,6 +958,10 @@ public class AbilityActivationService {
 
         handler.validateAndPay(gameData, player, chosen);
 
+        List<UUID> chosenSoFar = new ArrayList<>(context.chosenSoFar());
+        chosenSoFar.add(chosenPermanentId);
+        handler = toPermanentChoiceCostHandler(context.costEffect(), null, 0, chosenSoFar);
+
         int remaining = context.remaining() - handler.lastPaymentWeight();
         if (remaining > 0) {
             if (!handler.canPayRemaining(gameData, playerId, remaining)) {
@@ -969,11 +976,10 @@ public class AbilityActivationService {
                     }
                 }
             } else {
-                // Re-prompt for next choice
                 List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
                 gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.GraveyardAbilityCostChoice(
                         playerId, card, context.graveyardCardIndex(), context.abilityIndex(),
-                        context.costEffect(), remaining));
+                        context.costEffect(), remaining, chosenSoFar));
                 playerInputService.beginPermanentChoice(gameData, playerId, validIds,
                         handler.getPromptMessage(remaining));
                 mutationCoordinator.invalidateAllPlayerViews(gameData);
@@ -1335,12 +1341,17 @@ public class AbilityActivationService {
                 .orElseThrow();
 
         gameData.interaction.clearAwaitingInput();
-        payDiscardCost(gameData, player, discardCost, cardIndex, pending.xValue());
+        PaidHandCard paid = payDiscardCost(gameData, player, discardCost, cardIndex, pending.xValue(),
+                pending.discardCostRequiredName());
+        String requiredName = discardCost.sameName()
+                ? (pending.discardCostRequiredName() != null ? pending.discardCostRequiredName() : paid.name())
+                : null;
+        int xForActivation = discardCost.trackManaValue() ? paid.manaValue() : pending.xValue();
 
         int remaining = pending.remainingDiscards() - 1;
         if (remaining > 0) {
             List<Integer> validDiscardIndices = collectDiscardIndices(
-                    gameData.playerHands.get(player.getId()), discardCost, pending.xValue());
+                    gameData.playerHands.get(player.getId()), discardCost, pending.xValue(), requiredName);
             if (validDiscardIndices.size() < remaining) {
                 clearPendingAbilityActivation(gameData);
                 throw new IllegalStateException("No valid card to discard for the activation cost");
@@ -1352,7 +1363,8 @@ public class AbilityActivationService {
                     pending.targetId(),
                     pending.targetZone(),
                     pending.discardCostLabel(),
-                    remaining
+                    remaining,
+                    requiredName
             );
             String labelText = pending.discardCostLabel() != null ? pending.discardCostLabel() + " " : "";
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.DiscardCostChoice(
@@ -1371,7 +1383,7 @@ public class AbilityActivationService {
                 player,
                 -1,
                 pending.abilityIndex(),
-                pending.xValue(),
+                xForActivation,
                 pending.targetId(),
                 pending.targetZone(),
                 -1,
@@ -1405,18 +1417,23 @@ public class AbilityActivationService {
         }
 
         gameData.interaction.clearAwaitingInput();
-        payDiscardCost(gameData, player, discardCost, cardIndex, pending.xValue());
+        PaidHandCard paid = payDiscardCost(gameData, player, discardCost, cardIndex, pending.xValue(),
+                pending.discardCostRequiredName());
+        String requiredName = discardCost.sameName()
+                ? (pending.discardCostRequiredName() != null ? pending.discardCostRequiredName() : paid.name())
+                : null;
+        int xForActivation = discardCost.trackManaValue() ? paid.manaValue() : pending.xValue();
 
         int remaining = pending.remainingDiscards() - 1;
         if (remaining > 0) {
             List<Integer> validDiscardIndices = collectDiscardIndices(
-                    gameData.playerHands.get(player.getId()), discardCost, pending.xValue());
+                    gameData.playerHands.get(player.getId()), discardCost, pending.xValue(), requiredName);
             if (validDiscardIndices.size() < remaining) {
                 gameData.pendingGraveyardAbilityActivation = null;
                 throw new IllegalStateException("No valid card to discard for the activation cost");
             }
             gameData.pendingGraveyardAbilityActivation = new PendingGraveyardAbilityActivation(
-                    pending.playerId(), card, ability, pending.xValue(), pending.targetId(), remaining);
+                    pending.playerId(), card, ability, pending.xValue(), pending.targetId(), remaining, requiredName);
             String labelText = discardCost.label() != null ? discardCost.label() + " " : "";
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.DiscardCostChoice(
                     pending.playerId(), validDiscardIndices,
@@ -1426,7 +1443,7 @@ public class AbilityActivationService {
         }
 
         gameData.pendingGraveyardAbilityActivation = null;
-        completeGraveyardAbilityActivation(gameData, player, card, ability, pending.xValue(), pending.targetId());
+        completeGraveyardAbilityActivation(gameData, player, card, ability, xForActivation, pending.targetId());
     }
 
     public void handleActivatedAbilityGraveyardExileCostChosen(GameData gameData, Player player, int cardIndex) {
@@ -1666,7 +1683,10 @@ public class AbilityActivationService {
 
         // discardCardIndex < 0 means the interactive path already paid all required discards.
         if (discardCardTypeCost != null && discardCardIndex != null && discardCardIndex >= 0) {
-            payDiscardCost(gameData, player, discardCardTypeCost, discardCardIndex, effectiveXValue);
+            PaidHandCard paid = payDiscardCost(gameData, player, discardCardTypeCost, discardCardIndex, effectiveXValue);
+            if (discardCardTypeCost.trackManaValue()) {
+                effectiveXValue = paid.manaValue();
+            }
         }
 
         if (exileGraveyardCost != null) {
@@ -1756,8 +1776,11 @@ public class AbilityActivationService {
             int placedCount = c.count();
             boolean placed = false;
             if (c.powerModifier() > 0) {
-                permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placedCount);
-                placed = true;
+                placedCount = gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, placedCount);
+                if (placedCount > 0) {
+                    permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placedCount);
+                    placed = true;
+                }
             } else if (c.powerModifier() == 0 && c.toughnessModifier() < 0) {
                 // -0/-1 counters (Wall of Roots) are a different kind from -1/-1, so -1/-1 replacement effects do not apply.
                 permanent.setCounterCount(CounterType.MINUS_ZERO_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE) + placedCount);
@@ -1842,7 +1865,8 @@ public class AbilityActivationService {
             }
             // Same for a predicate-based sacrifice cost that scales off the sacrificed permanent
             if (handler.costEffect() instanceof SacrificePermanentCost sacPermCost
-                    && (sacPermCost.trackSacrificedPower() || sacPermCost.trackSacrificedManaValue())) {
+                    && (sacPermCost.trackSacrificedPower() || sacPermCost.trackSacrificedManaValue()
+                            || sacPermCost.trackSacrificedToughness())) {
                 List<UUID> autoPayIds = handler.getValidChoiceIds(gameData, playerId);
                 if (autoPayIds.size() <= handler.requiredCount() && !autoPayIds.isEmpty()) {
                     Permanent autoTarget = gameQueryService.findPermanentById(gameData, autoPayIds.getFirst());
@@ -1850,8 +1874,15 @@ public class AbilityActivationService {
                         if (sacPermCost.trackSacrificedPower()) {
                             effectiveXValue = gameQueryService.getEffectivePower(gameData, autoTarget);
                         }
+                        if (sacPermCost.trackSacrificedPower()) {
+                            effectiveXValue = gameQueryService.getEffectivePower(gameData, autoTarget);
+                        }
                         if (sacPermCost.trackSacrificedManaValue()) {
                             effectiveXValue = autoTarget.getCard().getManaValue();
+                        }
+                        if (sacPermCost.trackSacrificedToughness()) {
+                            effectiveXValue = gameQueryService.getEffectiveToughness(gameData, autoTarget);
+                        }
                         }
                     }
                 }
@@ -2043,6 +2074,10 @@ public class AbilityActivationService {
             }
             if (sacPermCost.trackSacrificedManaValue()) {
                 updatedXValue = chosen.getCard().getManaValue();
+            }
+            if (sacPermCost.trackSacrificedToughness()) {
+                updatedXValue = gameQueryService.getEffectiveToughness(gameData, chosen);
+            }
             }
         }
 
@@ -3014,6 +3049,18 @@ public class AbilityActivationService {
     }
 
     private List<Integer> collectDiscardIndices(List<Card> hand, HandCardCost cost, int xValue) {
+        return collectDiscardIndices(hand, cost, xValue, null);
+    }
+
+    /**
+     * Hand indices that may legally pay {@code cost} right now.
+     *
+     * <p>For a same-name cost (Sphinx of the Chimes) the first pick is narrowed to cards whose name
+     * appears at least {@link HandCardCost#count()} times among the otherwise-legal cards, so a lone
+     * copy can never be chosen and strand the activation; once the first card is chosen,
+     * {@code requiredName} pins every remaining pick to that name.
+     */
+    private List<Integer> collectDiscardIndices(List<Card> hand, HandCardCost cost, int xValue, String requiredName) {
         List<Integer> validIndices = new ArrayList<>();
         if (hand == null) {
             return validIndices;
@@ -3023,9 +3070,17 @@ public class AbilityActivationService {
             if (cost.manaValueEqualsX() && card.getManaValue() != xValue) {
                 continue;
             }
+            if (requiredName != null && !requiredName.equals(card.getName())) {
+                continue;
+            }
             if (cost.predicate() == null || predicateEvaluationService.matchesCardPredicate(card, cost.predicate(), null)) {
                 validIndices.add(i);
             }
+        }
+        if (cost.sameName() && requiredName == null && cost.count() > 1) {
+            Map<String, Long> countsByName = validIndices.stream()
+                    .collect(Collectors.groupingBy(i -> hand.get(i).getName(), Collectors.counting()));
+            validIndices.removeIf(i -> countsByName.get(hand.get(i).getName()) < cost.count());
         }
         return validIndices;
     }
@@ -3051,13 +3106,23 @@ public class AbilityActivationService {
                 playerId, validDiscardIndices, prompt));
     }
 
-    private void payDiscardCost(GameData gameData, Player player, HandCardCost cost, Integer discardCardIndex, int xValue) {
+    private PaidHandCard payDiscardCost(GameData gameData, Player player, HandCardCost cost, Integer discardCardIndex,
+                                        int xValue) {
+        return payDiscardCost(gameData, player, cost, discardCardIndex, xValue, null);
+    }
+
+    /**
+     * Pays one card of a hand-card cost and returns the paid card's name and mana value, so a
+     * same-name cost can pin its remaining picks and a trackManaValue cost can snapshot into xValue.
+     */
+    private PaidHandCard payDiscardCost(GameData gameData, Player player, HandCardCost cost, Integer discardCardIndex,
+                                        int xValue, String requiredName) {
         if (discardCardIndex == null) {
             throw new IllegalStateException("Must choose a card to " + cost.payVerb());
         }
 
         List<Card> hand = gameData.playerHands.get(player.getId());
-        List<Integer> validDiscardIndices = collectDiscardIndices(hand, cost, xValue);
+        List<Integer> validDiscardIndices = collectDiscardIndices(hand, cost, xValue, requiredName);
         Set<Integer> validSet = new HashSet<>(validDiscardIndices);
         if (!validSet.contains(discardCardIndex)) {
             String costLabel = cost.label() != null ? cost.label() + " " : "";
@@ -3065,12 +3130,13 @@ public class AbilityActivationService {
         }
 
         Card paid = hand.remove((int) discardCardIndex);
+        int manaValue = paid.getManaValue();
         if (cost.exilesPaidCards()) {
             exileService.exileCard(gameData, player.getId(), paid);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " exiles ", paid, " from their hand as an activation cost."));
             log.info("Game {} - {} exiles {} from hand as activation cost", gameData.id, player.getUsername(), paid.getName());
-            return;
+            return new PaidHandCard(paid.getName(), manaValue);
         }
 
         graveyardService.addCardToGraveyard(gameData, player.getId(), paid);
@@ -3079,6 +3145,10 @@ public class AbilityActivationService {
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " discards " , paid, " as an activation cost."));
         log.info("Game {} - {} discards {} as activation cost", gameData.id, player.getUsername(), paid.getName());
+        return new PaidHandCard(paid.getName(), manaValue);
+    }
+
+    private record PaidHandCard(String name, int manaValue) {
     }
 
     private void payExileTopOfLibraryCost(GameData gameData, UUID playerId, Permanent permanent,

@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerDealtDamageThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerLostLifeThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -1794,6 +1795,8 @@ public class TargetLegalityService {
             };
             case PlayerDealtDamageThisTurnPredicate ignored ->
                     gameData.playersDealtDamageThisTurn.contains(targetPlayerId);
+            case PlayerLostLifeThisTurnPredicate ignored ->
+                    gameData.lifeLostThisTurn.getOrDefault(targetPlayerId, 0) > 0;
         };
     }
 }

@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -1211,9 +1212,12 @@ public class CombatDamageService {
                 }
                 // Wire the combat damage dealt as the event value so "discards that many cards"
                 // (DiscardEffect with an EventValue amount, e.g. Needle Specter) or "draw that many
-                // cards" (DrawCardEffect with an EventValue amount, e.g. Hunter's Insight) reads it.
+                // cards" (DrawCardEffect with an EventValue amount, e.g. Hunter's Insight) or "mills
+                // that many cards" (MillEffect with an EventValue amount, e.g. Crosstown Courier)
+                // reads it.
                 if (effect instanceof DiscardEffect
-                        || (effect instanceof DrawCardEffect draw && draw.amount() instanceof EventValue)) {
+                        || (effect instanceof DrawCardEffect draw && draw.amount() instanceof EventValue)
+                        || (effect instanceof MillEffect mill && mill.count() instanceof EventValue)) {
                     se.setEventValue(damageDealt);
                 }
                 se.setNonTargeting(true);
@@ -1232,7 +1236,7 @@ public class CombatDamageService {
 
             checkAttachedCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId);
             checkPlayerAttachedCurseCombatDamageTriggers(gameData, creature, attackerId, defenderId);
-            checkAllyCreatureCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId);
+            checkAllyCreatureCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt);
         }
     }
 
@@ -1315,7 +1319,7 @@ public class CombatDamageService {
      * combat damage to a player. E.g. Rakish Heir: "Whenever a Vampire you control deals
      * combat damage to a player, put a +1/+1 counter on it."
      */
-    private void checkAllyCreatureCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId, UUID defenderId) {
+    private void checkAllyCreatureCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId, UUID defenderId, int damageDealt) {
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(attackerId);
         if (attackerBattlefield == null) return;
 
@@ -1338,6 +1342,9 @@ public class CombatDamageService {
                             defenderId,
                             trigger.bindSourceToDealer() ? creature.getId() : perm.getId()
                     );
+                    // The combat damage dealt is this trigger's event value, so "put that many
+                    // +1/+1 counters on it" (Necropolis Regent) can read it back at resolution.
+                    se.setEventValue(damageDealt);
                     se.setNonTargeting(true);
                     gameData.stack.add(se);
                     gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
@@ -2217,6 +2224,9 @@ public class CombatDamageService {
             processSourceRedirectDamage(gameData);
             // Saving Grace: redirect all combat damage this turn to a permanent you control onto the enchanted creature.
             damage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, targetControllerId, target.getId(), damage);
+            processSourceRedirectDamage(gameData);
+            // Palisade Giant: combat damage to other permanents its controller controls is dealt to it instead.
+            damage = damagePreventionService.applyStaticPermanentDamageRedirectToSelf(gameData, targetControllerId, target.getId(), damage);
             processSourceRedirectDamage(gameData);
         }
         // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.

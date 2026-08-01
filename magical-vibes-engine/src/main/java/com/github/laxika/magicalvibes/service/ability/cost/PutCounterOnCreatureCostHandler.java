@@ -59,11 +59,20 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
             throw new IllegalStateException("Must choose a creature");
         }
         CounterType type = cost.counterType();
-        chosen.setCounterCount(type, chosen.getCounterCount(type) + cost.count());
+        int count = cost.count();
+        if (type == CounterType.PLUS_ONE_PLUS_ONE) {
+            count = gameQueryService.doublePlusOnePlusOneCounters(gameData, chosen, count);
+        } else if (type == CounterType.MINUS_ONE_MINUS_ONE) {
+            count = gameQueryService.reduceMinusOneMinusOneCounters(gameData, chosen, count);
+        }
+        if (count <= 0) {
+            return;
+        }
+        chosen.setCounterCount(type, chosen.getCounterCount(type) + count);
 
-        String counterWord = cost.count() == 1
+        String counterWord = count == 1
                 ? "a " + counterLabel() + " counter"
-                : cost.count() + " " + counterLabel() + " counters";
+                : count + " " + counterLabel() + " counters";
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " puts " + counterWord + " on " , chosen.getCard(), "."));
     }
 

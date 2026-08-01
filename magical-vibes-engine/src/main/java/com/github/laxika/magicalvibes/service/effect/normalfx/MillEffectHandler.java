@@ -57,6 +57,12 @@ public class MillEffectHandler implements NormalEffectHandlerBean {
                     graveyardService.resolveMillPlayer(gameData, spellControllerId, count);
                 }
             }
+            case TARGET_PERMANENT_CONTROLLER -> {
+                Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+                if (target != null) {
+                    graveyardService.resolveMillPlayer(gameData, gameQueryService.findPermanentController(gameData, target.getId()), count);
+                }
+            }
         }
     }
 

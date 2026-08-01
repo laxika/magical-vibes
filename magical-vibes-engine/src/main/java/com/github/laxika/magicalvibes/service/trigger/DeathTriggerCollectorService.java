@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyin
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToDyingPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
@@ -332,9 +333,11 @@ public class DeathTriggerCollectorService {
     boolean handleDeathMayPayMana(TriggerMatchContext match,
             MayPayManaEffect mayPay, TriggerContext ctx) {
         TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
-        // CR 603.3d: a targeted "you may pay" death trigger needs its target chosen when stacking;
-        // the payment choice then happens at resolution (CR 603.5). Insidious Bookworms.
-        if (mayPay.targetSpec().category().includesPermanents() || mayPay.targetSpec().category().includesPlayers()) {
+        // CR 603.3d: the ability's target is chosen as the trigger goes on the stack even though
+        // the "you may pay" happens on resolution (Drainpipe Vermin). Untargeted may-pay death
+        // triggers (the Spellbomb cycle) skip the stack and prompt directly.
+        var wrappedSpec = mayPay.wrapped().targetSpec();
+        if (wrappedSpec.category().includesPermanents() || wrappedSpec.category().includesPlayers()) {
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(mayPay))
             ));
@@ -1228,6 +1231,31 @@ public class DeathTriggerCollectorService {
                 new ReturnDyingOpponentCreatureUnderYourControlEffect(dyingCard.getId()),
                 "return " + dyingCard.getName() + " to the battlefield under your control?");
         gameData.queueMayAbility(match.permanent().getCard(), match.controllerId(), may);
+        logOpponentCreatureDeath(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = RegisterDelayedReturnDyingCreatureUnderControlEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)
+    boolean handleOpponentCreatureDelayedReturnUnderControl(TriggerMatchContext match,
+            RegisterDelayedReturnDyingCreatureUnderControlEffect effect, TriggerContext ctx) {
+        // Grave Betrayal: the delayed return is registered when this trigger resolves, and the
+        // handler reads the dying card id from the entry — the slot's default collector does not
+        // stamp it, so bake it in here.
+        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
+        if (cd.dyingCard() == null) {
+            return false;
+        }
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        );
+        entry.setTriggeringCardId(cd.dyingCard().getId());
+        match.gameData().stack.add(entry);
         logOpponentCreatureDeath(match);
         return true;
     }

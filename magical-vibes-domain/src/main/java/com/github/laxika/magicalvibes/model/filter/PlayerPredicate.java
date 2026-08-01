@@ -6,5 +6,6 @@ package com.github.laxika.magicalvibes.model.filter;
  */
 public sealed interface PlayerPredicate permits
         PlayerDealtDamageThisTurnPredicate,
+        PlayerLostLifeThisTurnPredicate,
         PlayerRelationPredicate {
 }

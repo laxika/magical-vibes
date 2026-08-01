@@ -53,6 +53,7 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
@@ -1410,7 +1411,7 @@ public class GraveyardReturnSupport {
 
         UUID controllerId = state.controllerId();
         String destText = switch (state.disposition()) {
-            case HAND -> "put into your hand";
+            case HAND, HAND_AND_BOTTOM -> "put into your hand";
             case SEARCH_ONE_TO_HAND -> "search (the other pile is exiled)";
             default -> "put onto the battlefield";
         };
@@ -1443,6 +1444,35 @@ public class GraveyardReturnSupport {
         String otherDesc = buildCardPileDescription(allCards, otherPileCardIds);
 
         gameLogService.append(gameData, GameLog.text(controllerName + " chooses " + chosenPileName + "."));
+
+        if (state.disposition() == CardPileDisposition.HAND_AND_BOTTOM) {
+            // Jace, Architect of Thought −2: chosen pile → controller's hand; other pile → the bottom
+            // of their library in an order they choose (an async LibraryReorder when two or more).
+            for (UUID cardId : chosenPileCardIds) {
+                Card card = allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
+                if (card != null) {
+                    gameData.addCardToHand(controllerId, card);
+                    gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", card, " into their hand."));
+                }
+            }
+            List<Card> toBottom = otherPileCardIds.stream()
+                    .map(cardId -> allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toCollection(ArrayList::new));
+            if (toBottom.isEmpty()) {
+                return;
+            }
+            if (toBottom.size() == 1) {
+                gameData.playerDecks.get(controllerId).add(toBottom.getFirst());
+                gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", toBottom.getFirst(),
+                        " on the bottom of their library."));
+                return;
+            }
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                    controllerId, toBottom, true, controllerId,
+                    "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."));
+            return;
+        }
 
         if (state.disposition() == CardPileDisposition.HAND) {
             // Fact-or-Fiction (Unesh): chosen pile → controller's hand; other pile → controller's graveyard.

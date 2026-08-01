@@ -40,10 +40,12 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceE
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
@@ -213,6 +215,32 @@ public class BattlefieldEntryService {
         // "As this enters, you may reveal a [subtype] card from your hand; if you don't, it enters
         // tapped." Must run after the permanent is on the battlefield so we can reference/tap it.
         applyRevealSubtypeOrEntersTapped(gameData, controllerId, permanent);
+        applyUnleash(gameData, controllerId, permanent);
+    }
+
+    /**
+     * Unleash, as-enters half (CR 702.98a): "You may have this permanent enter with an additional
+     * +1/+1 counter on it." The choice needs a player answer, so — like the Lorwyn reveal above —
+     * it runs through the pending-may-ability pipeline once the permanent is on the battlefield;
+     * {@code UnleashHandler} puts the counter on when the controller accepts. Skipped entirely when
+     * the permanent can't have counters (Solemnity), since accepting could do nothing.
+     */
+    private void applyUnleash(GameData gameData, UUID controllerId, Permanent permanent) {
+        boolean unleash = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof UnleashEffect);
+        if (!unleash || gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) {
+            return;
+        }
+        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                permanent.getCard(),
+                controllerId,
+                List.of(new UnleashEffect()),
+                permanent.getCard().getName() + " — Unleash: have it enter with a +1/+1 counter?"
+                        + " (It can't block as long as it has one.)",
+                null,
+                null,
+                permanent.getId()));
+        playerInputService.processNextMayAbility(gameData);
     }
 
     /**
@@ -633,7 +661,7 @@ public class BattlefieldEntryService {
             } else if (effect instanceof ConditionalEffect conditional
                     && conditional.wrapped() instanceof EnterWithCountersEffect wrapped) {
                 ConditionContext conditionContext = new ConditionContext(controllerId, null, permanent,
-                        card, kicked, false, false, permanent.getCastFromZone(), xValue, null, null);
+                        card, kicked, false, false, false, permanent.getCastFromZone(), xValue, null, null, false);
                 if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
                     continue;
                 }
@@ -643,11 +671,15 @@ public class BattlefieldEntryService {
             }
 
             int count = amountEvaluationService.evaluate(gameData, enterWith.count(),
-                    new AmountContext(controllerId, permanent, null, xValue, 0));
-            // Vizier of Remedies also replaces "enters with N -1/-1 counters" (both are replacement
-            // effects). The permanent isn't on the battlefield yet, so use its entering controller.
+                    new AmountContext(controllerId, permanent, null, xValue, 0, false));
+            // Vizier of Remedies / Corpsejack Menace also replace "enters with N counters" (both are
+            // replacement effects). The permanent isn't on the battlefield yet, so use its entering
+            // controller.
             if (enterWith.type() == CounterType.MINUS_ONE_MINUS_ONE) {
                 count = gameQueryService.reduceMinusOneMinusOneCounters(gameData, controllerId, count);
+            } else if (enterWith.type() == CounterType.PLUS_ONE_PLUS_ONE
+                    && permanent.getCard().hasType(CardType.CREATURE)) {
+                count = gameQueryService.doublePlusOnePlusOneCounters(gameData, controllerId, count);
             }
             if (count > 0) {
                 permanent.setCounterCount(enterWith.type(), permanent.getCounterCount(enterWith.type()) + count);
@@ -686,11 +718,12 @@ public class BattlefieldEntryService {
         if (granted <= 0) return;
 
         ConditionContext conditionContext = new ConditionContext(controllerId, null, permanent,
-                permanent.getCard(), false, false, false, permanent.getCastFromZone(), 0, null, null);
+                permanent.getCard(), false, false, false, false, permanent.getCastFromZone(), 0, null, null, false);
         if (!conditionEvaluationService.isMet(gameData, new OpponentDealtDamageThisTurn(1), conditionContext)) {
             return;
         }
 
+        granted = gameQueryService.doublePlusOnePlusOneCounters(gameData, controllerId, granted);
         permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                 permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + granted);
         log.info("Game {} - {} enters with {} +1/+1 counter(s) from granted bloodthirst",
@@ -825,6 +858,7 @@ public class BattlefieldEntryService {
                 .sum();
 
         if (additionalCounters > 0) {
+            additionalCounters = gameQueryService.doublePlusOnePlusOneCounters(gameData, controllerId, additionalCounters);
             permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + additionalCounters);
             log.info("Game {} - {} enters with {} additional +1/+1 counter(s) from graveyard effect(s)",
                     gameData.id, permanent.getCard().getName(), additionalCounters);
@@ -862,6 +896,7 @@ public class BattlefieldEntryService {
                 .sum();
 
         if (additionalCounters > 0) {
+            additionalCounters = gameQueryService.doublePlusOnePlusOneCounters(gameData, controllerId, additionalCounters);
             permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + additionalCounters);
             log.info("Game {} - {} enters with {} additional +1/+1 counter(s) from battlefield static effect(s)",
                     gameData.id, permanent.getCard().getName(), additionalCounters);
@@ -1153,6 +1188,11 @@ public class BattlefieldEntryService {
         List<CardEffect> graveyardCardsExileEffects = mandatoryEffects.stream()
                 .filter(e -> e instanceof ExileGraveyardCardsEffect ege && ege.targetSpec().category().isGraveyard())
                 .toList();
+        // Separate mixed-zone exile effects (Angel of Serenity: "up to three other target creatures
+        // from the battlefield and/or creature cards from graveyards"): one card pool spanning both
+        // zones, chosen at trigger time.
+        List<CardEffect> mixedZoneChoiceEffects = mandatoryEffects.stream()
+                .filter(e -> e instanceof BattlefieldAndGraveyardCardChoosingEffect).toList();
         // Separate graveyard cast effects (need single-target selection at trigger time)
         List<CardEffect> graveyardCastEffects = mandatoryEffects.stream()
                 .filter(e -> e instanceof CastTargetInstantOrSorceryFromGraveyardEffect).toList();
@@ -1197,6 +1237,7 @@ public class BattlefieldEntryService {
                 .filter(e -> !(e instanceof ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect))
                 .filter(e -> !graveyardTargetReturnEffects.contains(e))
                 .filter(e -> !graveyardCardsExileEffects.contains(e))
+                .filter(e -> !mixedZoneChoiceEffects.contains(e))
                 .filter(e -> !EffectResolution.targetsSpellOnStack(e)).toList();
         // Separate spell-targeting effects (need stack-target selection at trigger time)
         List<CardEffect> spellTargetEffects = mandatoryEffects.stream()
@@ -1347,6 +1388,19 @@ public class BattlefieldEntryService {
             ExileGraveyardCardsEffect exile = (ExileGraveyardCardsEffect) effect;
             for (int t = 0; t < 1 + extraWizardTriggers; t++) {
                 graveyardTargetingService.handleGraveyardCardsExileETBTargeting(gameData, controllerId, card, List.of(effect), exile);
+            }
+        }
+
+        // Handle mixed-zone exile effects: one selection across battlefield creatures and graveyard
+        // creature cards, chosen as the trigger goes on the stack.
+        for (CardEffect effect : mixedZoneChoiceEffects) {
+            List<Permanent> mixedZoneBf = gameData.playerBattlefields.get(controllerId);
+            UUID mixedZoneSourceId = mixedZoneBf != null && !mixedZoneBf.isEmpty()
+                    ? mixedZoneBf.getLast().getId() : null;
+            for (int t = 0; t < 1 + extraWizardTriggers; t++) {
+                graveyardTargetingService.handleBattlefieldAndGraveyardExileETBTargeting(gameData, controllerId,
+                        card, List.of(effect), mixedZoneSourceId,
+                        (BattlefieldAndGraveyardCardChoosingEffect) effect);
             }
         }
 

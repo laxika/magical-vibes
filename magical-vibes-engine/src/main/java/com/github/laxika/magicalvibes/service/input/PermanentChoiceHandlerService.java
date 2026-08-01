@@ -95,6 +95,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleSacrificePermanentToEnter(gameData, permanentId, sacToEnter);
         } else if (context instanceof PermanentChoiceContext.ChampionCreature championCreature) {
             battlefieldHandler.handleChampionCreature(gameData, permanentId, championCreature);
+        } else if (context instanceof PermanentChoiceContext.Populate populate) {
+            battlefieldHandler.handlePopulate(gameData, permanentId, populate);
         } else if (context instanceof PermanentChoiceContext.PutControlledCreatureOnTopOfLibrary putOnTop) {
             battlefieldHandler.handlePutControlledCreatureOnTopOfLibrary(gameData, permanentId, putOnTop);
         } else if (context instanceof PermanentChoiceContext.SoulbondChoosePartner soulbondChoose) {
@@ -137,6 +139,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleMaySacrificeForCounterOnSource(gameData, permanentId, msfc);
         } else if (context instanceof PermanentChoiceContext.GargantuanGorillaSacrificeForest ggsf) {
             battlefieldHandler.handleGargantuanGorillaSacrificeForest(gameData, permanentId, ggsf);
+        } else if (context instanceof PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndCounter aosc) {
+            battlefieldHandler.handleAnyOpponentSacrificeCreatureForTapAndCounter(gameData, permanentId, aosc);
         } else if (context instanceof PermanentChoiceContext.SacrificePermanentThen spt) {
             battlefieldHandler.handleSacrificePermanentThen(gameData, permanentId, spt);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreatureCreateTokensEqualToToughness scct) {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 
@@ -22,6 +23,7 @@ import java.util.UUID;
  * @param xValue            snapshotted cast-time context from the stack entry (mana spent, X paid)
  * @param eventValue        snapshotted trigger-event / prior-resolution context from the stack entry
  *                          (life gained, damage dealt, excess damage); read by {@code EventValue}
+ * @param staticEvaluation  whether this evaluation is for a static continuous effect
  * @param chosenPermanentId id of the permanent chosen while activating the ability behind this
  *                          entry (e.g. the creature tapped for a {@code TapCreatureCost}); read by
  *                          {@code ChosenPermanentPower}. {@code null} outside stack resolution
@@ -29,6 +31,10 @@ import java.util.UUID;
  *                          {@code RepeatableAdditionalManaCost} as the spell was cast, one entry
  *                          per repetition; read by {@code RepeatedAdditionalCostCount}. Empty
  *                          outside stack resolution
+ * @param sourceCard        the card behind the spell or ability, when one exists. Read by
+ *                          {@code SourceCardPower} for abilities that have no source permanent at
+ *                          all (scavenge activates from the graveyard). {@code null} outside stack
+ *                          resolution
  */
 public record AmountContext(
         UUID controllerId,
@@ -36,15 +42,17 @@ public record AmountContext(
         UUID targetPermanentId,
         int xValue,
         int eventValue,
+        boolean staticEvaluation,
         UUID chosenPermanentId,
-        List<String> repeatedAdditionalCosts
+        List<String> repeatedAdditionalCosts,
+        Card sourceCard
 ) {
 
     /** Convenience for the common case with no repeatable additional cost payments. */
     public AmountContext(UUID controllerId, Permanent sourcePermanent, UUID targetPermanentId,
                          int xValue, int eventValue, UUID chosenPermanentId) {
-        this(controllerId, sourcePermanent, targetPermanentId, xValue, eventValue,
-                chosenPermanentId, List.of());
+        this(controllerId, sourcePermanent, targetPermanentId, xValue, eventValue, false,
+                chosenPermanentId, List.of(), null);
     }
 
     /** Convenience for the common case with no chosen permanent (all non-stack-resolution sites). */
@@ -53,11 +61,18 @@ public record AmountContext(
         this(controllerId, sourcePermanent, targetPermanentId, xValue, eventValue, null);
     }
 
+    /** Convenience for sites that know the chosen permanent but have no separate source card. */
+    public AmountContext(UUID controllerId, Permanent sourcePermanent, UUID targetPermanentId,
+                         int xValue, int eventValue, boolean staticEvaluation, UUID chosenPermanentId) {
+        this(controllerId, sourcePermanent, targetPermanentId, xValue, eventValue, staticEvaluation,
+                chosenPermanentId, List.of(), null);
+    }
+
     /** Context for resolving an effect on a stack entry (stack resolution time). */
     public static AmountContext forStackEntry(StackEntry entry, Permanent sourcePermanent) {
         return new AmountContext(entry.getControllerId(), sourcePermanent, entry.getTargetId(),
-                entry.getXValue(), entry.getEventValue(), entry.getChosenPermanentId(),
-                entry.getRepeatedAdditionalCosts());
+                entry.getXValue(), entry.getEventValue(), false, entry.getChosenPermanentId(),
+                entry.getRepeatedAdditionalCosts(), entry.getCard());
     }
 
     /**
@@ -67,7 +82,7 @@ public record AmountContext(
      * source-and-controller context, kept for what it says at the call site.
      */
     public static AmountContext forStaticEffect(Permanent source, UUID controllerId) {
-        return new AmountContext(controllerId, source, null, 0, 0);
+        return new AmountContext(controllerId, source, null, 0, 0, true, null, List.of(), null);
     }
 
     /**

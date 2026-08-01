@@ -39,6 +39,10 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilit
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
@@ -710,6 +714,94 @@ public class TriggerCollectionService {
                 }
             }
         }
+    }
+
+    // ── Source deals damage to a player (noncombat) ────────────────────
+
+    /**
+     * Queues {@link EffectSlot#ON_DAMAGE_TO_PLAYER} triggers when a permanent deals noncombat
+     * damage to a player (e.g. Niv-Mizzet, Dracogenius's ping). Combat damage uses the richer
+     * collector in {@code CombatDamageService} instead — do not call this from the combat path.
+     */
+    public void checkSourceDealsDamageToPlayerTriggers(GameData gameData, Permanent source,
+                                                       UUID controllerId, UUID damagedPlayerId,
+                                                       int damageDealt) {
+        if (source == null || controllerId == null || damagedPlayerId == null || damageDealt <= 0) {
+            return;
+        }
+
+        List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+        for (CardEffect effect : effects) {
+            queueNoncombatDamageToPlayerEffect(gameData, source, controllerId, damagedPlayerId, damageDealt, effect);
+        }
+
+        // Auras/Equipment attached to the source with ON_DAMAGE_TO_PLAYER (e.g. Curiosity).
+        gameData.forEachPermanent((ownerId, perm) -> {
+            if (!perm.isAttached() || perm.getAttachedTo() == null
+                    || !perm.getAttachedTo().equals(source.getId())) {
+                return;
+            }
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER)) {
+                // Attached triggers are controlled by the Aura/Equipment's controller.
+                UUID attachedControllerId = gameData.findControllerOf(perm);
+                if (attachedControllerId == null) continue;
+                queueNoncombatDamageToPlayerEffect(gameData, perm, attachedControllerId, damagedPlayerId,
+                        damageDealt, effect);
+            }
+        });
+    }
+
+    private void queueNoncombatDamageToPlayerEffect(GameData gameData, Permanent source, UUID controllerId,
+                                                    UUID damagedPlayerId, int damageDealt, CardEffect effect) {
+        CardEffect toQueue = effect;
+        if (toQueue instanceof ConditionalEffect conditional) {
+            if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    ConditionContext.forPermanent(source, controllerId))) {
+                return;
+            }
+            toQueue = conditional.wrapped();
+        }
+
+        if (toQueue instanceof MayEffect may) {
+            int mayEventValue = may.wrapped() instanceof DrawCardEffect draw
+                    && draw.amount() instanceof com.github.laxika.magicalvibes.model.amount.EventValue
+                    ? damageDealt : 0;
+            UUID mayTargetId = may.wrapped().targetSpec().category().includesPermanents()
+                    ? null : damagedPlayerId;
+            gameData.queueMayAbility(source.getCard(), controllerId, may, mayTargetId, source.getId(), mayEventValue);
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s damage trigger fires."));
+            return;
+        }
+
+        String desc = source.getCard().getName() + "'s triggered ability";
+        StackEntry se;
+        CombatDamageTriggerContextEffect.TriggerContext triggerContext =
+                toQueue instanceof CombatDamageTriggerContextEffect contextEffect
+                        ? contextEffect.combatDamageTriggerContext()
+                        : null;
+        if (triggerContext == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER_WITH_DAMAGE_AMOUNT) {
+            se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), controllerId,
+                    desc, List.of(toQueue), damageDealt, damagedPlayerId, null);
+        } else if (triggerContext == CombatDamageTriggerContextEffect.TriggerContext.SOURCE_SELF) {
+            se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), controllerId,
+                    desc, List.of(toQueue), null, source.getId());
+        } else if (triggerContext == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER) {
+            se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), controllerId,
+                    desc, List.of(toQueue), damagedPlayerId, source.getId());
+        } else {
+            se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), controllerId,
+                    desc, List.of(toQueue));
+        }
+        if (toQueue instanceof DiscardEffect
+                || (toQueue instanceof DrawCardEffect draw
+                        && draw.amount() instanceof com.github.laxika.magicalvibes.model.amount.EventValue)
+                || (toQueue instanceof MillEffect mill
+                        && mill.count() instanceof com.github.laxika.magicalvibes.model.amount.EventValue)) {
+            se.setEventValue(damageDealt);
+        }
+        se.setNonTargeting(true);
+        gameData.stack.add(se);
+        gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s damage trigger goes on the stack."));
     }
 
     // ── Damage-dealt-to-controller triggers ────────────────────────────
@@ -2553,8 +2645,13 @@ public class TriggerCollectionService {
                     // route through the death target pipeline so the controller picks a target as the
                     // ability is put on the stack (CR 603.3d). The source card here is the watching
                     // permanent, so its own target filter (e.g. opponent-only) is honoured.
+                    // The dying creature's last-known power rides along as the event value, so an
+                    // amount declared as EventValue resolves to it (Death's Presence — "put X +1/+1
+                    // counters on target creature you control, where X is the power of the creature
+                    // that died").
                     gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                            perm.getCard(), dyingCreatureControllerId, new ArrayList<>(List.of(resolvedEffect))
+                            perm.getCard(), dyingCreatureControllerId, new ArrayList<>(List.of(resolvedEffect)),
+                            Math.max(0, dyingPermanent.getEffectivePower())
                     ));
                     anyEffectFired = true;
                 } else {
@@ -3605,6 +3702,18 @@ public class TriggerCollectionService {
     }
 
     /**
+     * "Whenever you play a land" (ON_CONTROLLER_PLAYS_LAND, e.g. Search the City). Called from the
+     * land-play sites only, so a land put onto the battlefield by an effect does not trigger it.
+     */
+    public void checkControllerPlaysLandTriggers(GameData gameData, UUID playingPlayerId, Card landCard) {
+        var ctx = new TriggerContext.LandPlayed(playingPlayerId, landCard);
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (!playerId.equals(playingPlayerId)) return;
+            dispatchSlot(gameData, perm, playerId, EffectSlot.ON_CONTROLLER_PLAYS_LAND, ctx);
+        });
+    }
+
+    /**
      * "Whenever a land enters under your control" (ON_ALLY_LAND_ENTERS_BATTLEFIELD, e.g. Landfall).
      * Bundles all of a permanent's effects into a single stack entry (one landfall trigger).
      */
@@ -3853,7 +3962,7 @@ public class TriggerCollectionService {
         if (effect instanceof ConditionalEffect conditional
                 && conditional.condition() instanceof PermanentEnteredThisTurn) {
             ConditionContext ctx = new ConditionContext(affectedPlayerId, null, null, null,
-                    false, false, false, null, 0, null, null);
+                    false, false, false, false, null, 0, null, null, false);
             if (!conditionEvaluationService.isMet(gameData, conditional.condition(), ctx)) {
                 return null;
             }

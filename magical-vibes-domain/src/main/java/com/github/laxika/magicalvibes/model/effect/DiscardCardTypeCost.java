@@ -10,14 +10,32 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param manaValueEqualsX when true, the discarded card's mana value must equal the ability's chosen X
  *                         (e.g. Knollspine Invocation "Discard a card with mana value X")
  * @param count            number of cards that must be discarded (default 1; Haunted Dead = 2)
+ * @param sameName         when true, all discarded cards must share the same name
+ *                         (e.g. Sphinx of the Chimes "Discard two nonland cards with the same name")
+ * @param trackManaValue   when true, snapshot the discarded card's mana value into the stack entry's
+ *                         {@code xValue} at payment (Mercurial Chemister)
  */
-public record DiscardCardTypeCost(CardPredicate predicate, String label, boolean manaValueEqualsX, int count)
+public record DiscardCardTypeCost(CardPredicate predicate, String label, boolean manaValueEqualsX, int count,
+                                  boolean sameName, boolean trackManaValue)
         implements HandCardCost {
 
     public DiscardCardTypeCost {
         if (count < 1) {
             throw new IllegalArgumentException("discard count must be >= 1");
         }
+    }
+
+    public DiscardCardTypeCost(CardPredicate predicate, String label, boolean manaValueEqualsX, int count,
+                               boolean sameName) {
+        this(predicate, label, manaValueEqualsX, count, sameName, false);
+    }
+
+    public DiscardCardTypeCost(CardPredicate predicate, String label, boolean manaValueEqualsX, int count) {
+        this(predicate, label, manaValueEqualsX, count, false);
+    }
+
+    public DiscardCardTypeCost(CardPredicate predicate, String label, int count, boolean sameName) {
+        this(predicate, label, false, count, sameName);
     }
 
     public DiscardCardTypeCost(CardPredicate predicate, String label) {

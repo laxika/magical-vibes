@@ -271,6 +271,40 @@ public class UntapStepService {
                 log.info("Game {} - {} untaps filtered permanents during opponent's untap step", gameData.id, playerName);
             }
         });
+
+        untapEnchantedPermanentsDuringOtherPlayersStep(gameData, activePlayerId);
+    }
+
+    /**
+     * Untaps every permanent a non-active player controls that is enchanted by an aura granting
+     * "Untap this permanent during each other player's untap step" (Urban Burgeoning). The grant
+     * lives on the enchanted permanent, so it is the host's controller — not the aura's — that
+     * decides whether this untap step counts as "each other player's".
+     */
+    private void untapEnchantedPermanentsDuringOtherPlayersStep(GameData gameData, UUID activePlayerId) {
+        gameData.forEachBattlefield((playerId, playerBattlefield) -> {
+            if (playerId.equals(activePlayerId)) return;
+
+            for (Permanent p : playerBattlefield) {
+                if (!p.isTapped() || !hasEnchantedCrossPlayerUntap(gameData, p)) continue;
+
+                tapUntapSupport.untapPermanent(gameData, p);
+                String logLine = gameData.playerIdToName.get(playerId) + " untaps " + p.getCard().getName()
+                        + " during another player's untap step.";
+                gameLogService.append(gameData, GameLog.text(logLine));
+                log.info("Game {} - {} untaps enchanted permanent {} during another player's untap step",
+                        gameData.id, playerId, p.getCard().getName());
+            }
+        });
+    }
+
+    private boolean hasEnchantedCrossPlayerUntap(GameData gameData, Permanent host) {
+        return gameData.anyPermanentMatches(aura -> aura.isAttached()
+                && aura.getAttachedTo().equals(host.getId())
+                && aura.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect untap
+                                && untap.scope() == TapUntapScope.ENCHANTED
+                                && untap.step() == TurnStep.UNTAP));
     }
 
     /**
@@ -447,7 +481,8 @@ public class UntapStepService {
         for (Permanent permanent : battlefield) {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect configuredEffect
-                        && configuredEffect.step() == step) {
+                        && configuredEffect.step() == step
+                        && configuredEffect.scope() == TapUntapScope.CONTROLLED) {
                     result.add(configuredEffect);
                 }
             }

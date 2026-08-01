@@ -47,6 +47,8 @@ public class PutCountersOnSourceEffectHandler implements NormalEffectHandlerBean
         boolean plusZeroPlusOne = e.powerModifier() == 0 && e.toughnessModifier() > 0;
         int amount = e.amount();
         if (e.powerModifier() > 0) {
+            amount = gameQueryService.doublePlusOnePlusOneCounters(gameData, source, amount);
+            if (amount <= 0) return;
             source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + amount);
         } else if (plusZeroPlusOne) {
             source.setCounterCount(CounterType.PLUS_ZERO_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE) + amount);

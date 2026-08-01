@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
@@ -44,14 +45,28 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<UUID> targetIds = entry.getTargetIds();
-        if (targetIds == null || targetIds.size() < 2) {
-            return;
-        }
+        ExchangeControlOfTargetPermanentsEffect exchange = (ExchangeControlOfTargetPermanentsEffect) effect;
 
+        // In source-mode (Conjured Currency) the ability's own permanent stands in for the first
+        // target, so only a single target is declared — it may arrive as the lone targetId.
+        List<UUID> targetIds = entry.getTargetIds();
         UUID controllerId = entry.getControllerId();
-        Permanent ownTarget = gameQueryService.findPermanentById(gameData, targetIds.get(0));
-        Permanent opponentTarget = gameQueryService.findPermanentById(gameData, targetIds.get(1));
+        Permanent ownTarget;
+        UUID opponentTargetId;
+        if (exchange.sourceIsFirstTarget()) {
+            opponentTargetId = targetIds != null && !targetIds.isEmpty() ? targetIds.getFirst() : entry.getTargetId();
+            if (opponentTargetId == null) {
+                return;
+            }
+            ownTarget = resolveSourcePermanent(gameData, entry);
+        } else {
+            if (targetIds == null || targetIds.size() < 2) {
+                return;
+            }
+            opponentTargetId = targetIds.get(1);
+            ownTarget = gameQueryService.findPermanentById(gameData, targetIds.getFirst());
+        }
+        Permanent opponentTarget = gameQueryService.findPermanentById(gameData, opponentTargetId);
         if (ownTarget == null || opponentTarget == null) {
             logFizzle(gameData, entry);
             return;
@@ -68,15 +83,17 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
         // controlled by different players (CR 701.12b - if the same player controls both, the
         // exchange does nothing). Cards whose wording pins the first target to the ability's
         // controller ("target land you control and target land an opponent controls") additionally
-        // require that split; plus, for Puca's Mischief, equal or lesser mana value.
-        ExchangeControlOfTargetPermanentsEffect exchange = (ExchangeControlOfTargetPermanentsEffect) effect;
+        // require that split; source-mode exchanges (Conjured Currency) skip the first-target
+        // predicate because the source permanent stands in for that half.
+        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(controllerId);
         boolean controllersDiffer = !ownController.equals(opponentController);
         boolean ownershipSplitOk = !exchange.requireFirstTargetControlledByController()
                 || (ownController.equals(controllerId) && !opponentController.equals(controllerId));
         boolean stillLegal = controllersDiffer
                 && ownershipSplitOk
-                && predicateEvaluationService.matchesPermanentPredicate(gameData, ownTarget, exchange.targetPredicate())
-                && predicateEvaluationService.matchesPermanentPredicate(gameData, opponentTarget, exchange.targetPredicate())
+                && (exchange.sourceIsFirstTarget()
+                        || predicateEvaluationService.matchesPermanentPredicate(ownTarget, exchange.targetPredicate(), filterContext))
+                && predicateEvaluationService.matchesPermanentPredicate(opponentTarget, exchange.targetPredicate(), filterContext)
                 && (!exchange.requireOpponentManaValueNotGreater()
                         || opponentTarget.getCard().getManaValue() <= ownTarget.getCard().getManaValue());
         if (!stillLegal) {
@@ -94,6 +111,34 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(": ").card(ownTarget.getCard()).text(" and ").card(opponentTarget.getCard()).text(" exchange controllers.").build());
         log.info("Game {} - {} exchanges control of {} and {}", gameData.id, entry.getCard().getName(),
                 ownTarget.getCard().getName(), opponentTarget.getCard().getName());
+    }
+
+    /**
+     * Finds the permanent the ability came from. Trigger paths that route through the may-ability
+     * target selection drop {@code sourcePermanentId}, so fall back to matching the entry's card.
+     */
+    private Permanent resolveSourcePermanent(GameData gameData, StackEntry entry) {
+        if (entry.getSourcePermanentId() != null) {
+            Permanent byId = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (byId != null) {
+                return byId;
+            }
+        }
+        if (entry.getCard() == null) {
+            return null;
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getId().equals(entry.getCard().getId())) {
+                    return permanent;
+                }
+            }
+        }
+        return null;
     }
 
     private void logFizzle(GameData gameData, StackEntry entry) {

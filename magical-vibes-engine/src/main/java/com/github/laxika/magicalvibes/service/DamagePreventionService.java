@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToSelfAndE
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.PreventSpellDamageToOpponentAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceToAttachedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -238,7 +239,10 @@ public class DamagePreventionService {
             // lives on a different permanent (Vigor) controlled by this creature's controller.
             if (damage > 0 && hasOtherCreatureDamagePreventionSource(gameData, permanent)) {
                 if (!gameQueryService.cantHaveCounters(gameData, permanent)) {
-                    permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + damage);
+                    int counters = gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, damage);
+                    if (counters > 0) {
+                        permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
+                    }
                 }
                 return 0;
             }
@@ -789,6 +793,41 @@ public class DamagePreventionService {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null || !gameQueryService.isCreature(gameData, target)) continue;
             gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(protectedPlayerId, null, damage, targetId));
+            return 0;
+        }
+        return damage;
+    }
+
+    /**
+     * Palisade Giant: a permanent with a static {@link RedirectPlayerDamageToSelfEffect} whose
+     * {@code includeOtherPermanents} flag is set also absorbs damage that would be dealt to the
+     * other permanents its controller controls. The player half of that effect lives in
+     * {@code PermanentRemovalService.redirectPlayerDamageToEnchantedCreature}; this is the
+     * permanent half, called from the creature-damage entry points. This is a redirection
+     * (replacement) effect, so it applies even when damage can't be prevented. Damage dealt to the
+     * absorbing permanent itself is left alone. Redirected damage is queued in
+     * {@link GameData#pendingSourceRedirectDamage} for the caller's
+     * {@code processSourceRedirectDamage}.
+     *
+     * @param protectedPlayerId  the controller of the damaged permanent
+     * @param damagedPermanentId the permanent being damaged
+     * @param damage             the raw damage amount
+     * @return the remaining damage after redirection (0 if redirected)
+     */
+    public int applyStaticPermanentDamageRedirectToSelf(GameData gameData, UUID protectedPlayerId,
+                                                        UUID damagedPermanentId, int damage) {
+        if (damage <= 0 || protectedPlayerId == null || damagedPermanentId == null) return damage;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(protectedPlayerId);
+        if (battlefield == null) return damage;
+
+        for (Permanent permanent : List.copyOf(battlefield)) {
+            // "other permanents you control" — the absorbing permanent takes its own damage normally.
+            if (permanent.getId().equals(damagedPermanentId)) continue;
+            boolean absorbs = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof RedirectPlayerDamageToSelfEffect e && e.includeOtherPermanents());
+            if (!absorbs) continue;
+            gameData.pendingSourceRedirectDamage.add(
+                    new SourceDamageRedirectShield(protectedPlayerId, null, damage, permanent.getId()));
             return 0;
         }
         return damage;

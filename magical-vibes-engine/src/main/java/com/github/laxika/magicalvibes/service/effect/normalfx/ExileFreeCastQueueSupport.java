@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -39,18 +40,21 @@ public class ExileFreeCastQueueSupport {
     private final TriggerCollectionService triggerCollectionService;
     private final ExileCastTargetSupport exileCastTargetSupport;
     private final InputCompletionService inputCompletionService;
+    private final GraveyardService graveyardService;
 
     // @Lazy mirrors ExileFreeCastSupport: breaks the cycle back through the input services.
     public ExileFreeCastQueueSupport(GameLogService gameLogService,
                                             PlayerInputService playerInputService,
                                             TriggerCollectionService triggerCollectionService,
                                             ExileCastTargetSupport exileCastTargetSupport,
-                                            @Lazy InputCompletionService inputCompletionService) {
+                                            @Lazy InputCompletionService inputCompletionService,
+                                            GraveyardService graveyardService) {
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.triggerCollectionService = triggerCollectionService;
         this.exileCastTargetSupport = exileCastTargetSupport;
         this.inputCompletionService = inputCompletionService;
+        this.graveyardService = graveyardService;
     }
 
     public void castChosenSpellsWithoutPaying(GameData gameData, Player player, List<UUID> cardIds) {
@@ -59,7 +63,7 @@ public class ExileFreeCastQueueSupport {
         if (cardIds == null || cardIds.isEmpty()) {
             String logEntry = player.getUsername() + " casts no spells from Improvisation Capstone.";
             gameLogService.append(gameData, GameLog.text(logEntry));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            finishFreeCastProcess(gameData);
             return;
         }
 
@@ -79,6 +83,26 @@ public class ExileFreeCastQueueSupport {
     }
 
     /**
+     * Moves every still-exiled card tracked in
+     * {@link GameData#pendingExileFreeCastRemainderToGraveyard} to its owner's graveyard, then
+     * clears the list. No-op when the list is empty (Improvisation Capstone / Hazoret's Undying Fury).
+     */
+    public void putRemainderIntoOwnersGraveyards(GameData gameData) {
+        List<UUID> remainder = new ArrayList<>(gameData.pendingExileFreeCastRemainderToGraveyard);
+        gameData.pendingExileFreeCastRemainderToGraveyard.clear();
+        for (UUID cardId : remainder) {
+            ExiledCardEntry entry = gameData.findExiledCard(cardId);
+            if (entry == null) {
+                continue;
+            }
+            gameData.removeFromExile(cardId);
+            graveyardService.addCardToGraveyard(gameData, entry.ownerId(), entry.card());
+            gameLogService.append(gameData, GameLog.cardThen(entry.card(), " is put into its owner's graveyard."));
+        }
+    }
+
+
+    /**
      * Casts the next queued exiled spell. When a spell requires a target this pauses for a target
      * choice and returns; the shared target handler resumes the queue via {@link #castNextFromQueue}
      * once the target is chosen.
@@ -90,7 +114,7 @@ public class ExileFreeCastQueueSupport {
      */
     public void castNextFromQueue(GameData gameData, UUID playerId) {
         if (gameData.pendingFreeCastQueue.isEmpty()) {
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            finishFreeCastProcess(gameData);
             return;
         }
 
@@ -117,11 +141,16 @@ public class ExileFreeCastQueueSupport {
 
             if (!hasLegalTargets) {
                 // A real card was never cast and nothing moves it elsewhere: it stays exiled. A copy
-                // that can't be legally cast simply ceases to exist (CR 707.10a).
+                // that can't be legally cast simply ceases to exist (CR 707.10a). Epic Experiment's
+                // remainder list moves uncaught cards to the graveyard when the free-cast process finishes.
                 if (asCopy) {
                     gameData.removeFromExile(cardId);
                 }
-                gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets."));
+                boolean willGoToGraveyard = gameData.pendingExileFreeCastRemainderToGraveyard.contains(cardId);
+                gameLogService.append(gameData, GameLog.cardThen(card, willGoToGraveyard
+                        ? " has no valid targets and will be put into the graveyard."
+                        : asCopy ? " has no valid targets."
+                        : " has no valid targets and stays exiled."));
                 castNextFromQueue(gameData, playerId);
                 return;
             }
@@ -148,5 +177,10 @@ public class ExileFreeCastQueueSupport {
         gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ", card, " without paying its mana cost."));
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, false);
         castNextFromQueue(gameData, playerId);
+    }
+
+    private void finishFreeCastProcess(GameData gameData) {
+        putRemainderIntoOwnersGraveyards(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

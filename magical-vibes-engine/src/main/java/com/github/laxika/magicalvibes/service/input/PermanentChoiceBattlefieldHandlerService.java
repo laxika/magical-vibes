@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PopulateSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SoulbondSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler;
 
@@ -74,6 +75,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final TriggerCollectionService triggerCollectionService;
     private final TriggerTargetCollector triggerTargetCollector;
     private final CreatureControlService creatureControlService;
+    private final PopulateSupport populateSupport;
     private final TurnProgressionService turnProgressionService;
     private final DamageSupport damageSupport;
     private final DestructionSupport destructionSupport;
@@ -89,6 +91,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.JuxtaposeSupport juxtaposeSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureYouGainControlEffectHandler eachOpponentChoosesCreatureYouGainControlEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler anyOpponentSacrificeForTapAndCounterHandler;
 
     /**
      * Retribution: the creatures' controller has picked which of the two targets to sacrifice; the
@@ -439,6 +442,16 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    /** Desecration Demon: the accepting opponent picked which creature to sacrifice. */
+    public void handleAnyOpponentSacrificeCreatureForTapAndCounter(GameData gameData, UUID permanentId,
+                                                                   PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndCounter context) {
+        anyOpponentSacrificeForTapAndCounterHandler.sacrifice(gameData, context.sacrificingPlayerId(), permanentId);
+        anyOpponentSacrificeForTapAndCounterHandler.advance(
+                gameData, context.sourceCard(), context.effect(), context.sacrificingPlayerId(), true);
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleSacrificeCreatureControllerGainsLifeEqualToToughness(GameData gameData, UUID permanentId,
                                                                             PermanentChoiceContext.SacrificeCreatureControllerGainsLifeEqualToToughness context) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
@@ -580,6 +593,17 @@ public class PermanentChoiceBattlefieldHandlerService {
             return;
         }
 
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Populate (CR 701.36a): the chosen creature token is copied. */
+    public void handlePopulate(GameData gameData, UUID chosenPermanentId, PermanentChoiceContext.Populate context) {
+        Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);
+        if (chosen == null) {
+            throw new IllegalStateException("Chosen creature token no longer exists");
+        }
+
+        populateSupport.createCopy(gameData, context.controllerId(), chosen);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

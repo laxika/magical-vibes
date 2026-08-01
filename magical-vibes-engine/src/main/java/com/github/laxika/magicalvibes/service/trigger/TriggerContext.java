@@ -18,6 +18,12 @@ public sealed interface TriggerContext {
     record SpellCast(Card spellCard, UUID castingPlayerId, boolean castFromHand) implements TriggerContext {}
 
     /**
+     * Context for land-play triggers (ON_CONTROLLER_PLAYS_LAND). Fired only when a land is actually
+     * <em>played</em>, unlike the landfall path which also sees lands put onto the battlefield.
+     */
+    record LandPlayed(UUID playingPlayerId, Card landCard) implements TriggerContext {}
+
+    /**
      * Context for discard triggers (ON_OPPONENT_DISCARDS).
      */
     record Discard(UUID discardingPlayerId, Card discardedCard) implements TriggerContext {}

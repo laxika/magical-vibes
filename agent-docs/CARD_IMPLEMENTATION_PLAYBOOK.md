@@ -160,6 +160,14 @@ public class ExampleCard extends Card {
   - "When this creature enters, if its prowl cost was paid, [effect]": wrap the ETB effect in `ConditionalEffect(new CastForProwlCost(), innerEffect)` on `ON_ENTER_BATTLEFIELD` (Latchkey Faerie = `DrawCardEffect`). The prowl flag is stamped on the `StackEntry`/`Permanent` at cast/resolution and gated by `EtbEffectResolver` (unwrap when paid, drop otherwise — CR 603.4).
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/k/KnowledgeExploitation.java`
 
+- Overload ("Overload {cost}" — CR 702.96, RTR/GTC/GRN, e.g. Blustersquall, Vandalblast, Cyclonic Rift):
+  - Two halves. The **cost** is a plain pure-mana alternate hand cast: `addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{cost}"))))` — same shape as evoke/prowl, so it replaces the mana cost and is forced through a dedicated entry point (`GameService.playCardWithOverload` / harness `castWithOverload(player, cardIndex)`; no target argument).
+  - The **text change** ("replace all instances of 'target' with 'each'", CR 702.96a) is a `ConditionalReplacementEffect(new Overloaded(), printedTargetedEffect, massEffect)` in `EffectSlot.SPELL`. Declare the printed targeting normally with `target(...)`; per CR 702.96b an overloaded spell chooses **no** targets, so the upgraded branch must be a non-targeting mass effect.
+    - Blustersquall = `ConditionalReplacementEffect(new Overloaded(), new TapPermanentsEffect(TapUntapScope.TARGET), new TapPermanentsEffect(TapUntapScope.ALL_CREATURES, new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))` + `target(TargetFilters.creatureAnOpponentControls())`.
+  - `Overloaded` is the one `ConditionalReplacementEffect` condition whose branches differ in **target shape**, so `ConditionalReplacementEffect.targetSpec()` special-cases it and reports the *base* (printed) spec. The overload cast path instead resolves the wrapper away up front via `EffectResolution.resolveEffects(effects, kicked, overloaded, modeIndex)` before deciding whether a target is required, and stamps `StackEntry.overloaded` so the same swap happens again at resolution (`ConditionContext.overloaded()` → `ConditionEvaluationService`).
+  - Like evoke and prowl, overload has **no websocket/UI path yet** — it is reachable from the engine and tests only. The AI never overloads.
+  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/b/Blustersquall.java`
+
 - Graveyard cast ("You may cast this card from your graveyard"):
   - `addCastingOption(new GraveyardCast())` — uses the card's normal mana cost, no exile after resolution (unlike flashback)
   - Card goes to graveyard normally if it dies, allowing repeated graveyard casts

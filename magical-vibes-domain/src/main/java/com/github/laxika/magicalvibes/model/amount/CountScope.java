@@ -17,5 +17,12 @@ public enum CountScope {
      * the source is not attacking. Used by combat characteristic-defining abilities that count what
      * "defending player controls" (Gaea's Liege).
      */
-    DEFENDING_PLAYER
+    DEFENDING_PLAYER,
+    /**
+     * The controller of the permanent the source Aura/Equipment is attached to ("its controller").
+     * Distinct from {@link #CONTROLLER}, which is the Aura/Equipment's own controller (CR 109.5
+     * "you"). Evaluates to nothing when the source is unattached. Used by Righteous Authority
+     * ("+1/+1 for each card in its controller's hand").
+     */
+    ATTACHED_CONTROLLER
 }

@@ -5,6 +5,14 @@ package com.github.laxika.magicalvibes.model.effect;
  * to this permanent instead (e.g. Empyrial Archangel). Unlike
  * {@link RedirectPlayerDamageToEnchantedCreatureEffect}, the redirect target is the source
  * permanent itself rather than an enchanted creature.
+ *
+ * <p>When {@code includeOtherPermanents} is set, damage that would be dealt to the other
+ * permanents that player controls is redirected as well (e.g. Palisade Giant). Damage that would
+ * be dealt to this permanent itself is never redirected.
  */
-public record RedirectPlayerDamageToSelfEffect() implements CardEffect {
+public record RedirectPlayerDamageToSelfEffect(boolean includeOtherPermanents) implements CardEffect {
+
+    public RedirectPlayerDamageToSelfEffect() {
+        this(false);
+    }
 }

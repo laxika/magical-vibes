@@ -92,6 +92,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record GargantuanGorillaSacrificeForest(UUID controllerId, UUID sourcePermanentId, Card sourceCard)
             implements PermanentChoiceContext {}
 
+    /**
+     * Desecration Demon: {@code sacrificingPlayerId} accepted the "any opponent may sacrifice a
+     * creature" combat trigger and is picking which of their creatures to sacrifice. {@code effect}
+     * carries the remaining-opponent queue so the prompt chain resumes after the choice.
+     */
+    record AnyOpponentSacrificeCreatureForTapAndCounter(
+            UUID sacrificingPlayerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffect effect)
+            implements PermanentChoiceContext {}
+
     record ForcedCostOrElse(UUID controllerId, UUID sourcePermanentId, Card sourceCard,
                             com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect effect) implements PermanentChoiceContext {}
 
@@ -116,7 +126,21 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    record DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
+    /**
+     * Targeted death trigger awaiting its target choice (CR 603.3d).
+     *
+     * @param eventValue numeric payload of the death event, snapshotted onto the stack entry so an
+     *                   effect whose amount is an {@code EventValue} can read it at resolution
+     *                   (Death's Presence — "X is the power of the creature that died"). {@code null}
+     *                   when the trigger carries no such value.
+     */
+    record DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
+                              Integer eventValue) implements PermanentChoiceContext {
+
+        public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects) {
+            this(dyingCard, controllerId, effects, null);
+        }
+    }
 
     /** Targeted "when this permanent leaves the battlefield" trigger ({@code EffectSlot.ON_SELF_LEAVES_BATTLEFIELD}),
      *  e.g. Meadowboon — "put a +1/+1 counter on each creature target player controls." */
@@ -240,6 +264,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** "Put a creature you control on top of its owner's library." The controller chooses one of their
      *  creatures (the source itself is a legal choice) as the effect resolves. (Nulltread Gargantuan.) */
     record PutControlledCreatureOnTopOfLibrary(UUID controllerId) implements PermanentChoiceContext {}
+
+    /** Populate (CR 701.36a): the controller chooses which creature token they control is copied. */
+    record Populate(UUID controllerId) implements PermanentChoiceContext {}
+
     /** Soulbond self-enter: choose another unpaired creature you control to pair with the source. */
     record SoulbondChoosePartner(UUID sourcePermanentId, UUID controllerId) implements PermanentChoiceContext {}
 
@@ -418,7 +446,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                       int graveyardCardIndex,
                                       Integer abilityIndex,
                                       CardEffect costEffect,
-                                      int remaining) implements PermanentChoiceContext {}
+                                      int remaining,
+                                      List<UUID> chosenSoFar) implements PermanentChoiceContext {
+
+        /** Permanents already paid toward this cost, for sequential multi-slot costs
+         *  (e.g. "Sacrifice a Swamp and a Forest"). Empty for count-only costs. */
+        public GraveyardAbilityCostChoice(UUID activatingPlayerId, Card graveyardCard, int graveyardCardIndex,
+                                          Integer abilityIndex, CardEffect costEffect, int remaining) {
+            this(activatingPlayerId, graveyardCard, graveyardCardIndex, abilityIndex, costEffect, remaining, List.of());
+        }
+    }
 
     /** Tap-cost payment for a resolution-time may ability (e.g. Aziza, Mage Tower Captain). */
     record MayAbilityTapCostChoice(UUID playerId,

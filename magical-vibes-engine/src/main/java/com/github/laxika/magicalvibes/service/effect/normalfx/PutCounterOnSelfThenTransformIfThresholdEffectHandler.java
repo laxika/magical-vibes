@@ -53,7 +53,12 @@ public class PutCounterOnSelfThenTransformIfThresholdEffectHandler implements No
             case SLIME -> { self.setCounterCount(CounterType.SLIME, self.getCounterCount(CounterType.SLIME) + 1); yield "slime"; }
             case STUDY -> { self.setCounterCount(CounterType.STUDY, self.getCounterCount(CounterType.STUDY) + 1); yield "study"; }
             case WISH -> { self.setCounterCount(CounterType.WISH, self.getCounterCount(CounterType.WISH) + 1); yield "wish"; }
-            case PLUS_ONE_PLUS_ONE -> { self.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, self.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + 1); yield "+1/+1"; }
+            case PLUS_ONE_PLUS_ONE -> {
+                int placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, self, 1);
+                if (placed <= 0) { yield null; }
+                self.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, self.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
+                yield "+1/+1";
+            }
             case MINUS_ONE_MINUS_ONE -> {
                 if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, self)) { yield null; }
                 if (gameQueryService.reduceMinusOneMinusOneCounters(gameData, self, 1) <= 0) { yield null; }

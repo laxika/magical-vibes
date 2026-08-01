@@ -850,7 +850,10 @@ public class MultiPermanentChoiceHandlerService {
                 if (perm != null) {
                     if (!gameQueryService.cantHaveCounters(gameData, perm)) {
                         if (perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
-                            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + 1);
+                            int placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, perm, 1);
+                            if (placed > 0) {
+                                perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
+                            }
                         }
                         if (perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
                                 && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, perm)
@@ -1098,6 +1101,7 @@ public class MultiPermanentChoiceHandlerService {
         if (entering != null && devoured > 0) {
             if (!gameQueryService.cantHaveCounters(gameData, entering)) {
                 int added = context.multiplier() * devoured;
+                added = gameQueryService.doublePlusOnePlusOneCounters(gameData, playerId, added);
                 entering.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                         entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + added);
                 gameLogService.append(gameData, GameLog.cardThen(context.card(),

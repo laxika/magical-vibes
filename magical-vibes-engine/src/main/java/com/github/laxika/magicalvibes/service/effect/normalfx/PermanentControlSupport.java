@@ -89,8 +89,13 @@ public class PermanentControlSupport {
             Permanent tokenPermanent = new Permanent(tokenCard);
             if (token.initialPlusOnePlusOneCounters() > 0
                     && !gameQueryService.cantHaveCounters(gameData, tokenPermanent)) {
-                tokenPermanent.setCounterCount(
-                        CounterType.PLUS_ONE_PLUS_ONE, token.initialPlusOnePlusOneCounters());
+                int initial = token.initialPlusOnePlusOneCounters();
+                if (isCreature) {
+                    initial = gameQueryService.doublePlusOnePlusOneCounters(gameData, controllerId, initial);
+                }
+                if (initial > 0) {
+                    tokenPermanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, initial);
+                }
             }
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot, batch);

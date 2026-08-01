@@ -37,6 +37,22 @@ public interface HandCardCost extends CostEffect {
     }
 
     /**
+     * When true, snapshot the paid card's mana value into the stack entry's {@code xValue}
+     * (Mercurial Chemister "damage equal to the discarded card's mana value").
+     */
+    default boolean trackManaValue() {
+        return false;
+    }
+
+    /**
+     * When true, every card paid for this cost must share the same name (Sphinx of the Chimes).
+     * Only meaningful with {@link #count()} &gt; 1.
+     */
+    default boolean sameName() {
+        return false;
+    }
+
+    /**
      * True when paid cards are exiled rather than put into their owner's graveyard. Exiling is not
      * a discard, so it fires no discard triggers.
      */

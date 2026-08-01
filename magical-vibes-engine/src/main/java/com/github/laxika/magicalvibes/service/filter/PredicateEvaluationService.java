@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuous
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedSourceControllerThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToAnythingThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -821,6 +822,18 @@ public class PredicateEvaluationService {
             case PermanentHasCumulativeUpkeepPredicate ignored -> permanent.hasCumulativeUpkeep();
             case PermanentDealtDamageThisTurnPredicate ignored ->
                     gameData != null && gameData.permanentsDealtDamageThisTurn.contains(permanent.getId());
+            case PermanentDealtDamageToAnythingThisTurnPredicate ignored -> {
+                if (gameData == null) {
+                    yield false;
+                }
+                Set<UUID> combatVictims = gameData.combatDamageToPlayersThisTurn.get(permanent.getId());
+                Set<UUID> noncombatVictims = gameData.noncombatDamageToPlayersThisTurn.get(permanent.getId());
+                Set<UUID> damagedCreatures =
+                        gameData.creatureCardsDamagedThisTurnBySourcePermanent.get(permanent.getId());
+                yield (combatVictims != null && !combatVictims.isEmpty())
+                        || (noncombatVictims != null && !noncombatVictims.isEmpty())
+                        || (damagedCreatures != null && !damagedCreatures.isEmpty());
+            }
             case PermanentDealtDamageToSourceControllerThisTurnPredicate ignored -> {
                 if (sourceControllerId == null || gameData == null) {
                     yield false;

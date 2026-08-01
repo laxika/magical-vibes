@@ -34,7 +34,7 @@ public class SoldeviAdnate extends Card {
                                         new PermanentAnyOfPredicate(List.of(
                                                 new PermanentColorInPredicate(Set.of(CardColor.BLACK)),
                                                 new PermanentIsArtifactPredicate())))),
-                                "Sacrifice a black or artifact creature", false, false, true),
+                                "Sacrifice a black or artifact creature", false, false, true, false),
                         new AwardManaEffect(ManaColor.BLACK, new XValue())),
                 "{T}, Sacrifice a black or artifact creature: Add an amount of {B} equal to the sacrificed creature's mana value."
         ));

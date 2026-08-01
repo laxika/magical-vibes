@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -110,10 +111,10 @@ public class TriggerTargetCollector {
                           Options options) {
 
         boolean canTargetPlayers = effects.stream()
-                .map(e -> options.unwrapConditional() && e instanceof ConditionalEffect ce ? ce.wrapped() : e)
+                .map(e -> unwrap(e, options))
                 .anyMatch(e -> e.targetSpec().category().includesPlayers());
         boolean canTargetPermanents = effects.stream()
-                .map(e -> options.unwrapConditional() && e instanceof ConditionalEffect ce ? ce.wrapped() : e)
+                .map(e -> unwrap(e, options))
                 .anyMatch(e -> e.targetSpec().category().includesPermanents());
 
         boolean opponentOnly = targetFilter instanceof PlayerPredicateTargetFilter ppf
@@ -164,8 +165,7 @@ public class TriggerTargetCollector {
             // effects (Flameblast Dragon attack trigger, Form of the Dragon upkeep, etc.). An
             // explicit PermanentPredicateTargetFilter fully governs instead (e.g. destroy land).
             List<CardEffect> permanentEffects = effects.stream()
-                    .map(e -> options.unwrapConditional() && e instanceof ConditionalEffect ce
-                            ? ce.wrapped() : e)
+                    .map(e -> unwrap(e, options))
                     .filter(e -> e.targetSpec().category().includesPermanents())
                     .toList();
             boolean anyTargetPermanentsOnly = !(targetFilter instanceof PermanentPredicateTargetFilter)
@@ -206,5 +206,19 @@ public class TriggerTargetCollector {
         }
 
         return new Result(validTargets, canTargetPlayers, canTargetPermanents, opponentOnly);
+    }
+
+    /**
+     * Looks through the wrappers that hide an effect's own targeting from this collector.
+     *
+     * <p>A {@link MayPayManaEffect} keeps its wrapped effect's {@code targetSpec()} private (the
+     * payment is a resolution-time choice, CR 603.5), but the target of the ability as a whole is
+     * still chosen when the trigger is put on the stack (CR 603.3d) — Drainpipe Vermin's "you may
+     * pay {B}. If you do, target player discards a card". {@link ConditionalEffect} is unwrapped
+     * only for the slots whose {@link Options#unwrapConditional()} says so.
+     */
+    private static CardEffect unwrap(CardEffect effect, Options options) {
+        CardEffect unwrapped = effect instanceof MayPayManaEffect mayPay ? mayPay.wrapped() : effect;
+        return options.unwrapConditional() && unwrapped instanceof ConditionalEffect ce ? ce.wrapped() : unwrapped;
     }
 }
