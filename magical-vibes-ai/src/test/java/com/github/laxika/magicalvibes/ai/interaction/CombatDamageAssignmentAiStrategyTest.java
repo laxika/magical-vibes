@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedRequest;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.junit.jupiter.api.DisplayName;
@@ -38,8 +37,6 @@ class CombatDamageAssignmentAiStrategyTest {
     private GameData gameData;
     @Mock
     private AiGameActions gameActions;
-    @Mock
-    private Connection selfConnection;
 
     @Test
     @DisplayName("handledType is CombatDamageAssignment")

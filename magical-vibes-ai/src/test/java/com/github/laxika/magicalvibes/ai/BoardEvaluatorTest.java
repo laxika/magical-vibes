@@ -374,14 +374,10 @@ class BoardEvaluatorTest {
             airElemental.setSummoningSick(false);
             airElemental.setMarkedDamage(3);
 
-            Permanent bears = new Permanent(new GrizzlyBears());
-            bears.setSummoningSick(false);
-
             double damagedAeScore = evaluator.creatureScore(gd, airElemental, player1.getId(), player2.getId());
-            double bearsScore = evaluator.creatureScore(gd, bears, player1.getId(), player2.getId());
 
             // 4/4 with 3 damage → effective 4/1 + flying bonus
-            // Should still be comparable to a 2/2 (not dominating like a healthy 4/4)
+            // Should score lower than a healthy 4/4
             assertThat(damagedAeScore).isLessThan(
                     evaluator.creatureScore(gd, new Permanent(new AirElemental()) {{
                         setSummoningSick(false);

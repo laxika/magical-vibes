@@ -53,7 +53,6 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -2053,7 +2052,6 @@ class AiDecisionEngineTest {
         @Mock private GameQueryService mockGameQueryService;
         @Mock private BlockLegalityService mockBlockLegalityService;
         @Mock private CombatAttackService mockCombatAttackService;
-        @Mock private Connection mockConnection;
         @Mock private GameActionAvailabilityService mockGameActionAvailabilityService;
         @Mock private com.github.laxika.magicalvibes.service.cast.CastingCostService mockCastingCostService;
         @Mock private com.github.laxika.magicalvibes.service.cast.CastingPermissionService mockCastingPermissionService;

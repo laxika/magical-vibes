@@ -32,7 +32,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatur
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
@@ -82,7 +81,6 @@ class EasyAiDecisionEngineTest {
     @Mock private com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
     @Mock private com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService;
     @Mock private com.github.laxika.magicalvibes.service.effect.TargetValidationService targetValidationService;
-    @Mock private Connection selfConnection;
 
     private GameData gd;
     private Player aiPlayer;

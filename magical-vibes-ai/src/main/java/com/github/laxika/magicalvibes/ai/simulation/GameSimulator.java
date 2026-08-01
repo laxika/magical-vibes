@@ -451,7 +451,7 @@ public class GameSimulator {
             Player resolvePlayer = new Player(interactionPlayer, gd.playerIdToName.getOrDefault(interactionPlayer, "AI"));
 
             try {
-                resolveInteraction(gd, resolvePlayer, awaiting, mctsPlayerId);
+                resolveInteraction(gd, resolvePlayer, awaiting);
             } catch (Exception e) {
                 log.trace("Auto-resolve failed: {}", e.getMessage());
                 return;
@@ -810,7 +810,7 @@ public class GameSimulator {
         return true;
     }
 
-    private void resolveInteraction(GameData gd, Player player, PendingInteraction awaiting, UUID mctsPlayerId) {
+    private void resolveInteraction(GameData gd, Player player, PendingInteraction awaiting) {
         switch (awaiting) {
             case PendingInteraction.AttackerDeclaration ignored -> {
                 UUID pid = player.getId();

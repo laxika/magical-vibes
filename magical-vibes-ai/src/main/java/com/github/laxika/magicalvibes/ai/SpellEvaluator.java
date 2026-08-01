@@ -703,7 +703,7 @@ public class SpellEvaluator {
         double bonus = 0;
         bonus += sacrificeWithTokensBonus(gameData, card, aiBattlefield);
         bonus += equipmentWithEvasionBonus(gameData, card, aiBattlefield);
-        bonus += deathTriggerWithSacOutletBonus(gameData, card, aiBattlefield);
+        bonus += deathTriggerWithSacOutletBonus(card, aiBattlefield);
         bonus += anthemWithWideBoardBonus(gameData, card, aiBattlefield);
         bonus += tokenMakerWithDeathTriggersBonus(gameData, card, aiPlayerId, aiBattlefield);
         return bonus;
@@ -787,7 +787,7 @@ public class SpellEvaluator {
      * A creature with "whenever a creature dies" triggers is more valuable when the AI
      * already controls sacrifice outlets (activated abilities with SacrificeCreatureCost).
      */
-    private double deathTriggerWithSacOutletBonus(GameData gameData, Card card, List<Permanent> aiBattlefield) {
+    private double deathTriggerWithSacOutletBonus(Card card, List<Permanent> aiBattlefield) {
         boolean hasDeathTrigger = !card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).isEmpty()
                 || !card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).isEmpty()
                 || !card.getEffects(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES).isEmpty();
@@ -1288,7 +1288,7 @@ public class SpellEvaluator {
 
         // Lands: value depends on how many mana sources the AI already has
         if (card.hasType(CardType.LAND)) {
-            return evaluateLandForDiscard(gameData, card, hand, aiPlayerId, aiBattlefield);
+            return evaluateLandForDiscard(card, hand, aiBattlefield);
         }
 
         // Start with base spell value
@@ -1306,8 +1306,7 @@ public class SpellEvaluator {
         return value;
     }
 
-    private double evaluateLandForDiscard(GameData gameData, Card card, List<Card> hand,
-                                          UUID aiPlayerId, List<Permanent> aiBattlefield) {
+    private double evaluateLandForDiscard(Card card, List<Card> hand, List<Permanent> aiBattlefield) {
         long manaSourceCount = aiBattlefield.stream()
                 .filter(p -> p.getCard().hasType(CardType.LAND) || hasOnTapManaEffects(p.getCard()))
                 .count();

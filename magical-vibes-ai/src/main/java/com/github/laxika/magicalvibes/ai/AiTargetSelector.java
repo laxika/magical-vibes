@@ -315,7 +315,7 @@ class AiTargetSelector {
                 continue;
             }
             // Evaluate how valuable this spell is — higher mana value = bigger threat
-            double value = evaluateSpellOnStack(gameData, entry, aiPlayerId);
+            double value = evaluateSpellOnStack(entry);
             if (value > bestValue) {
                 bestValue = value;
                 bestTarget = entry;
@@ -330,7 +330,7 @@ class AiTargetSelector {
      * spell is most worth countering. Creatures are scored by their combat stats plus
      * mana value, non-creature spells by mana value as a proxy for impact.
      */
-    private double evaluateSpellOnStack(GameData gameData, StackEntry entry, UUID aiPlayerId) {
+    private double evaluateSpellOnStack(StackEntry entry) {
         Card card = entry.getCard();
         double manaValueScore = card.getManaValue() * 3.0;
 

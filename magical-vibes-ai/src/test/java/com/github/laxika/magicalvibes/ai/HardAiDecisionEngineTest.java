@@ -67,7 +67,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
-import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
@@ -555,7 +554,6 @@ class HardAiDecisionEngineTest {
         @Mock private GameQueryService mockGameQueryService;
         @Mock private BlockLegalityService mockBlockLegalityService;
         @Mock private CombatAttackService mockCombatAttackService;
-        @Mock private Connection mockConnection;
         @Mock private GameActionAvailabilityService mockGameActionAvailabilityService;
         @Mock private com.github.laxika.magicalvibes.service.cast.CastingCostService mockCastingCostService;
         @Mock private com.github.laxika.magicalvibes.service.cast.CastingPermissionService mockCastingPermissionService;
@@ -840,7 +838,6 @@ class HardAiDecisionEngineTest {
         @Mock private GameQueryService mockGameQueryService;
         @Mock private BlockLegalityService mockBlockLegalityService;
         @Mock private CombatAttackService mockCombatAttackService;
-        @Mock private Connection mockConnection;
         @Mock private GameActionAvailabilityService mockGameActionAvailabilityService;
         @Mock private com.github.laxika.magicalvibes.service.cast.CastingCostService mockCastingCostService;
         @Mock private com.github.laxika.magicalvibes.service.cast.CastingPermissionService mockCastingPermissionService;
@@ -4481,11 +4478,11 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = createHardAi(player1);
         giveAiPriority(player1);
 
-        // Garruk Wildspeaker with only 1 loyalty A?€�t can't afford -4 ultimate,
+        // Garruk Wildspeaker with 0 loyalty can't afford -4 ultimate,
         // +1 is multi-target (skipped), -1 needs at least 1 counter
         // The only non-multi-target abilities are -1 (needs 1 loyalty) and -4 (needs 4 loyalty)
         // With 0 loyalty counters, -1 can't be paid either
-        Permanent garruk = addPlaneswalkerToBattlefield(player1,
+        addPlaneswalkerToBattlefield(player1,
                 new com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker(), 0);
         harness.setHand(player1, List.of());
 

@@ -508,7 +508,7 @@ public class MCTSEngine {
             }
 
             // 5. ROLLOUT: Play out using softmax/epsilon-greedy heuristic policy
-            double reward = rollout(simState, aiPlayerId, node, deadline, iterationRng);
+            double reward = rollout(simState, aiPlayerId, deadline, iterationRng);
 
             // 6. BACKPROPAGATE: Update visit counts and rewards.
             //    Deadline-truncated rollouts (NaN) are discarded — their reward is
@@ -631,7 +631,7 @@ public class MCTSEngine {
      *         no payoff yet), which systematically scores casting worse than passing —
      *         so the caller must discard the reward instead of backpropagating it.
      */
-    private double rollout(GameData simState, UUID aiPlayerId, MCTSNode node, long deadline, Random rolloutRng) {
+    private double rollout(GameData simState, UUID aiPlayerId, long deadline, Random rolloutRng) {
         for (int depth = 0; depth < DEFAULT_ROLLOUT_DEPTH; depth++) {
             if (timeBudgetEnabled && System.currentTimeMillis() > deadline) return Double.NaN;
             if (simulator.isTerminal(simState)) break;

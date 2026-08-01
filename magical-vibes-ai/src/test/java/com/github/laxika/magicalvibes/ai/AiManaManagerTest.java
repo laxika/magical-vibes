@@ -170,8 +170,8 @@ class AiManaManagerTest {
         return card;
     }
 
-    private Permanent addUntappedLand(ManaColor color) {
-        return addUntappedLand("Land", color);
+    private void addUntappedLand(ManaColor color) {
+        addUntappedLand("Land", color);
     }
 
     private Permanent addUntappedLand(String name, ManaColor color) {
@@ -1179,7 +1179,7 @@ class AiManaManagerTest {
         @Test
         @DisplayName("taps lands until cost is met")
         void tapsLandsUntilCostMet() {
-            Permanent forest = addUntappedLand("Forest", ManaColor.GREEN);
+            addUntappedLand("Forest", ManaColor.GREEN);
 
             // Simulate mana being added after tap
             AiManaManager.ManaTapAction action = (permanentIndex, abilityIndex) -> {
@@ -1244,7 +1244,7 @@ class AiManaManagerTest {
         @DisplayName("never taps the excluded permanent (a {T}-ability's own source)")
         void excludedPermanentIsNeverTapped() {
             Permanent source = addUntappedLand("Conqueror's Foothold", ManaColor.COLORLESS);
-            Permanent forest = addUntappedLand("Forest", ManaColor.GREEN);
+            addUntappedLand("Forest", ManaColor.GREEN);
 
             AiManaManager.ManaTapAction action = (permanentIndex, abilityIndex) -> {
                 gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 1);
