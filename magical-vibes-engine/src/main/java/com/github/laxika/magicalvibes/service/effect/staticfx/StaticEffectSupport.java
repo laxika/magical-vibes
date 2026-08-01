@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.service.effect.staticfx;
+package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
