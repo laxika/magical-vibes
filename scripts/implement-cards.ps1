@@ -103,10 +103,10 @@ for ($cardId = $From; $cardId -le $To; $cardId++) {
         & agent -p --force --trust --model $Model "$prompt`n`n$systemPrompt"
     }
     elseif ($Runner -eq "codex") {
-        # codex exec writes progress to stderr and only the final agent message to
-        # stdout; silence stderr so the script prints just that end result.
+        # *>$null needs a non-Stop EAP on Windows PowerShell 5.1, or native stderr
+        # aborts/deadlocks under the script-level $ErrorActionPreference=Stop.
         $reasoningConfig = "model_reasoning_effort=`"$Effort`""
-        & codex --search --ask-for-approval never exec --model $Model --config $reasoningConfig --cd $repositoryRoot "$prompt`n`n$systemPrompt" 2>$null
+        & { $ErrorActionPreference = "Ignore"; & codex --search --ask-for-approval never exec --model $Model --config $reasoningConfig --cd $repositoryRoot "$prompt`n`n$systemPrompt" *>$null }
     }
     else {
         & claude --permission-mode auto --model $Model --effort $Effort -p $prompt --append-system-prompt $systemPrompt
