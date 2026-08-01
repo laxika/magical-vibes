@@ -635,6 +635,19 @@ public class TargetLegalityService {
                 if (!card.doesPositionAllowPlayerTargets(i)) {
                     throw new IllegalStateException("This spell cannot target players");
                 }
+                TargetFilter playerSlotFilter = getPositionFilter(perPositionFilters, i);
+                if (playerSlotFilter instanceof AnyTargetPredicateTargetFilter anyFilter) {
+                    validatePlayerTargetable(gameData, targetId, controllerId);
+                    validatePlayerPredicate(gameData, controllerId, targetId, anyFilter.playerPredicate(),
+                            anyFilter.errorMessage());
+                    continue;
+                }
+                if (playerSlotFilter instanceof PlayerPredicateTargetFilter playerFilter) {
+                    validatePlayerTargetable(gameData, targetId, controllerId);
+                    validatePlayerPredicate(gameData, controllerId, targetId, playerFilter.predicate(),
+                            playerFilter.errorMessage());
+                    continue;
+                }
                 if (EffectResolution.needsTarget(card)) {
                     validatePlayerTargetable(gameData, targetId, controllerId);
                 }

@@ -3394,17 +3394,26 @@ public class GameQueryService {
             return true;
         }
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (matchesLureBlockerFilter(gameData, blocker, effect)) {
+            if (matchesLureBlockerFilter(gameData, attacker, blocker, effect)) {
                 return true;
             }
         }
         return gameData.anyPermanentMatches(aura ->
                 aura.isAttached() && attacker.getId().equals(aura.getAttachedTo())
                         && aura.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> matchesLureBlockerFilter(gameData, blocker, e)));
+                        .anyMatch(e -> matchesLureBlockerFilter(gameData, attacker, blocker, e)));
     }
 
-    private boolean matchesLureBlockerFilter(GameData gameData, Permanent blocker, CardEffect effect) {
+    private boolean matchesLureBlockerFilter(GameData gameData, Permanent attacker, Permanent blocker,
+                                             CardEffect effect) {
+        // Gift of the Deity wraps lure in EnchantedPermanentConditionalEffect ("as long as enchanted
+        // is green") — same unwrap as hasAuraWithEffect / isActiveEffect.
+        if (effect instanceof EnchantedPermanentConditionalEffect cond) {
+            CardEffect active = predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, cond.filter())
+                    ? cond.ifMatch()
+                    : cond.ifNotMatch();
+            return active != null && matchesLureBlockerFilter(gameData, attacker, blocker, active);
+        }
         if (!(effect instanceof MustBeBlockedByAllCreaturesEffect lure)) {
             return false;
         }

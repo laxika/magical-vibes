@@ -10,7 +10,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,7 +39,8 @@ class AngelicProtectorTest extends BaseCardTest {
         Permanent protector = new Permanent(new AngelicProtector());
         protector.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(protector);
-        harness.addToBattlefield(player2, new ProdigalPyromancer());
+        Permanent pyro = harness.addToBattlefieldAndReturn(player2, new ProdigalPyromancer());
+        pyro.setSummoningSick(false);
         harness.addMana(player2, ManaColor.RED, 0);
 
         harness.activateAbility(player2, 0, null, protector.getId());
@@ -58,7 +58,8 @@ class AngelicProtectorTest extends BaseCardTest {
         Permanent protector = new Permanent(new AngelicProtector());
         protector.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(protector);
-        harness.addToBattlefield(player2, new ProdigalPyromancer());
+        Permanent pyro = harness.addToBattlefieldAndReturn(player2, new ProdigalPyromancer());
+        pyro.setSummoningSick(false);
 
         harness.activateAbility(player2, 0, null, protector.getId());
         harness.passBothPriorities();

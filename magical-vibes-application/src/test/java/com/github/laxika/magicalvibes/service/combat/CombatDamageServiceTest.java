@@ -62,6 +62,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
 @ExtendWith(MockitoExtension.class)
 class CombatDamageServiceTest {
 
+    private static final GameQueryService.StaticBonus EMPTY_BONUS = new GameQueryService.StaticBonus(
+            0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(),
+            List.of(), Set.of(), Set.of(), false, false, false, false, Set.of(),
+            false, 0, 0, false, false);
+
     @Mock private GameQueryService gameQueryService;
     @Mock private GameLogService gameLogService;
     @Mock private GameOutcomeService gameOutcomeService;
@@ -172,6 +177,9 @@ class CombatDamageServiceTest {
         // each permanent is a creature; every test permanent with a toughness is one.
         lenient().when(gameQueryService.isCreature(eq(gameData), any(Permanent.class)))
                 .thenAnswer(inv -> ((Permanent) inv.getArgument(1)).getCard().getToughness() != null);
+        // Lethal-damage SBA reads losesAllAbilities via computeStaticBonus (Ogre Enforcer path).
+        lenient().when(gameQueryService.computeStaticBonus(eq(gameData), any(Permanent.class)))
+                .thenReturn(EMPTY_BONUS);
     }
 
     /**
@@ -219,6 +227,11 @@ class CombatDamageServiceTest {
         // damagedPermanentId is null on the player path, so match it with any() rather than any(UUID.class).
         lenient().when(damagePreventionService.applyTurnDamageRedirectToCreature(
                 eq(gameData), any(UUID.class), any(), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
+        // Palisade Giant / RedirectPlayerDamageToSelfEffect (includeOtherPermanents): pass-through when no
+        // absorbing permanent is set up. Called unconditionally for combat damage to creatures.
+        lenient().when(damagePreventionService.applyStaticPermanentDamageRedirectToSelf(
+                eq(gameData), any(), any(), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         // Martyrdom redirect is likewise a pass-through here — no player redirect shields are set up.
         lenient().when(damagePreventionService.applyPlayerNextDamageRedirectShields(

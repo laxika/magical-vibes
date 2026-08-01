@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.SourceCardPower;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -571,6 +573,10 @@ public class Card {
     /**
      * Returns true if the target group at the given expanded position allows player targets.
      * Used by the valid target service to determine per-position player targeting in multi-target spells.
+     *
+     * <p>Bound effects win when their {@code targetSpec()} includes players. Bare positional groups
+     * (no bound effect — e.g. Injury's creature + player/planeswalker slots feeding
+     * {@code DealDamageToEachTargetEffect}) fall back to the group's declared filter.
      */
     public boolean doesPositionAllowPlayerTargets(int expandedPosition) {
         if (spellTargets.isEmpty()) return false;
@@ -584,7 +590,9 @@ public class Card {
                         return true;
                     }
                 }
-                return false;
+                TargetFilter filter = st.getFilter();
+                return filter instanceof PlayerPredicateTargetFilter
+                        || filter instanceof AnyTargetPredicateTargetFilter;
             }
         }
         return false;
