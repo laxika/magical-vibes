@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards;
 
 import com.github.laxika.magicalvibes.model.Card;
+import io.github.classgraph.AnnotationInfo;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
@@ -35,6 +36,7 @@ public final class CardScanner {
                 .acceptPackages("com.github.laxika.magicalvibes.cards")
                 .enableClassInfo()
                 .enableAnnotationInfo()
+                .enableMethodInfo()
                 .scan()) {
 
             for (ClassInfo classInfo : scanResult.getClassesWithAnnotation(CardRegistration.class)) {
@@ -55,23 +57,27 @@ public final class CardScanner {
         return result;
     }
 
-    @SuppressWarnings("unchecked")
     private static void processClass(ClassInfo classInfo, Map<String, CardSet> codeToSet,
                                      Map<CardSet, List<CardPrinting>> result) {
-        Class<?> clazz = classInfo.loadClass();
-        if (!Card.class.isAssignableFrom(clazz)) {
+        if (!classInfo.extendsSuperclass(Card.class.getName())) {
             return;
         }
 
-        Supplier<Card> factory = createFactory((Class<? extends Card>) clazz);
+        String className = classInfo.getName();
+        String simpleClassName = classInfo.getSimpleName();
+        boolean hasBackFace = !classInfo.getDeclaredMethodInfo("getBackFaceClassName").isEmpty();
+        Supplier<Card> factory = createFactory(className);
 
-        for (CardRegistration reg : clazz.getAnnotationsByType(CardRegistration.class)) {
-            CardSet cardSet = codeToSet.get(reg.set());
+        for (AnnotationInfo registration : classInfo.getAnnotationInfoRepeatable(CardRegistration.class)) {
+            String setCode = (String) registration.getParameterValues().getValue("set");
+            String collectorNumber = (String) registration.getParameterValues().getValue("collectorNumber");
+            CardSet cardSet = codeToSet.get(setCode);
             if (cardSet == null) {
                 throw new IllegalStateException(
-                        "Unknown set code '" + reg.set() + "' on " + clazz.getSimpleName());
+                        "Unknown set code '" + setCode + "' on " + simpleClassName);
             }
-            result.get(cardSet).add(new CardPrinting(reg.set(), reg.collectorNumber(), factory));
+            result.get(cardSet).add(new CardPrinting(
+                    setCode, collectorNumber, className, simpleClassName, hasBackFace, factory));
         }
     }
 
@@ -105,19 +111,40 @@ public final class CardScanner {
         return Integer.parseInt(collectorNumber.substring(0, i));
     }
 
-    private static Supplier<Card> createFactory(Class<? extends Card> clazz) {
-        try {
-            Constructor<? extends Card> ctor = clazz.getDeclaredConstructor();
-            ctor.setAccessible(true);
-            return () -> {
+    private static Supplier<Card> createFactory(String className) {
+        return new Supplier<>() {
+            private volatile Constructor<? extends Card> constructor;
+
+            @Override
+            public Card get() {
+                Constructor<? extends Card> ctor = constructor;
+                if (ctor == null) {
+                    synchronized (this) {
+                        ctor = constructor;
+                        if (ctor == null) {
+                            ctor = loadConstructor(className);
+                            constructor = ctor;
+                        }
+                    }
+                }
                 try {
                     return ctor.newInstance();
                 } catch (Exception e) {
-                    throw new RuntimeException("Failed to instantiate " + clazz.getSimpleName(), e);
+                    throw new RuntimeException("Failed to instantiate " + className, e);
                 }
-            };
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException("No no-arg constructor on " + clazz.getSimpleName(), e);
+            }
+        };
+    }
+
+    private static Constructor<? extends Card> loadConstructor(String className) {
+        try {
+            Class<?> rawClass = Class.forName(className, true, CardScanner.class.getClassLoader());
+            Class<? extends Card> cardClass = rawClass.asSubclass(Card.class);
+            Constructor<? extends Card> constructor = cardClass.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            return constructor;
+        } catch (ReflectiveOperationException | ClassCastException e) {
+            throw new RuntimeException("No usable no-arg Card constructor on " + className, e);
         }
     }
 }

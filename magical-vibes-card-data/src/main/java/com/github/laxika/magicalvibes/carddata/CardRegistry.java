@@ -2,15 +2,25 @@ package com.github.laxika.magicalvibes.carddata;
 
 import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.CardScanner;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.OracleData;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
@@ -20,10 +30,10 @@ import java.util.stream.Collectors;
  * The single source of truth for what the game knows about each {@link CardSet}: the implemented
  * printings found by scanning the classpath, plus the set metadata the oracle data supplies.
  *
- * <p>Owns the startup sequence. It scans first, then hands itself to the {@link OracleLoader} to be
- * filled — the loader needs the printings to know which card classes to register oracle data for,
- * so the ordering is explicit here rather than emerging from whichever static happened to be
- * touched first.
+ * <p>Owns the loading sequence. It scans first, then either loads every set during startup or lets
+ * the test context request sets on demand. The loader needs the printings to know which card
+ * classes to parse oracle data for, so the ordering is explicit here rather than emerging from
+ * whichever static happened to be touched first.
  *
  * <p>Taking the loader as a required constructor dependency is also what makes a misconfigured
  * {@code oracle.data-provider} fail loudly: no loader bean means no registry bean, and Spring
@@ -36,29 +46,121 @@ public class CardRegistry implements CardCatalog {
     private static final Logger LOG = Logger.getLogger(CardRegistry.class.getName());
 
     private final OracleLoader loader;
+    private final OracleLoadMode loadMode;
+    private final Card.OracleDataResolver oracleDataResolver = this::resolveMissingOracleData;
+    private final ThreadLocal<Boolean> suppressOracleResolution = ThreadLocal.withInitial(() -> false);
 
     private final Map<String, String> setNames = new ConcurrentHashMap<>();
     private final Map<String, Integer> setCardTotals = new ConcurrentHashMap<>();
+    private final Set<CardSet> loadedSets = EnumSet.noneOf(CardSet.class);
     private volatile Map<CardSet, List<CardPrinting>> printings = Map.of();
+    private volatile Map<Class<? extends Card>, CardSet> backFaceSets = Map.of();
 
     public CardRegistry(OracleLoader loader) {
+        this(loader, OracleLoadMode.EAGER);
+    }
+
+    @Autowired
+    public CardRegistry(
+            OracleLoader loader,
+            @Value("${oracle.data-load-mode:EAGER}") OracleLoadMode loadMode) {
         this.loader = loader;
+        this.loadMode = loadMode;
     }
 
     @PostConstruct
     void load() {
         printings = CardScanner.scan();
 
-        for (CardSet cardSet : CardSet.values()) {
-            List<CardPrinting> setPrintings = getPrintings(cardSet);
-            Set<String> implemented = setPrintings.stream()
-                    .map(CardPrinting::collectorNumber)
-                    .collect(Collectors.toSet());
-
-            register(cardSet, setPrintings, loader.loadSet(cardSet.getCode(), implemented));
+        if (loadMode == OracleLoadMode.ON_DEMAND) {
+            indexBackFaces();
+            Card.installOracleDataResolver(oracleDataResolver);
+            LOG.info("Card registry ready for on-demand oracle loading");
+            return;
         }
 
+        for (CardSet cardSet : CardSet.values()) {
+            ensureSetLoaded(cardSet);
+        }
         LOG.info("Oracle registry populated for all card sets");
+    }
+
+    @PreDestroy
+    void close() {
+        Card.uninstallOracleDataResolver(oracleDataResolver);
+    }
+
+    /** Loads and registers one set at most once. A failed load remains retryable. */
+    public synchronized void ensureSetLoaded(CardSet cardSet) {
+        if (loadedSets.contains(cardSet)) {
+            return;
+        }
+
+        List<CardPrinting> setPrintings = getPrintings(cardSet);
+        Set<String> implemented = setPrintings.stream()
+                .map(CardPrinting::collectorNumber)
+                .collect(Collectors.toSet());
+        register(cardSet, setPrintings, loader.loadSet(cardSet.getCode(), implemented));
+        loadedSets.add(cardSet);
+    }
+
+    private void indexBackFaces() {
+        Map<Class<? extends Card>, CardSet> backFaces = new HashMap<>();
+        Set<String> inspectedFronts = new HashSet<>();
+
+        for (CardSet cardSet : CardSet.values()) {
+            for (CardPrinting printing : getPrintings(cardSet)) {
+                if (!printing.hasBackFace() || !inspectedFronts.add(printing.cardClassName())) {
+                    continue;
+                }
+                Card front = constructForRegistration(printing);
+                Card back = front.getBackFaceCard();
+                if (back != null) {
+                    // Matches registerOracleIfAbsent: a back-face-only class's first set wins.
+                    backFaces.putIfAbsent(back.getClass().asSubclass(Card.class), cardSet);
+                }
+            }
+        }
+
+        backFaceSets = Map.copyOf(backFaces);
+    }
+
+    private void resolveMissingOracleData(Class<? extends Card> cardClass) {
+        if (loadMode != OracleLoadMode.ON_DEMAND || suppressOracleResolution.get()) {
+            return;
+        }
+
+        CardSet cardSet = preferredSet(cardClass);
+        if (cardSet == null) {
+            cardSet = backFaceSets.get(cardClass);
+        }
+        if (cardSet == null) {
+            // Synthetic Card subclasses are common in engine tests and intentionally have no data.
+            return;
+        }
+        ensureSetLoaded(cardSet);
+    }
+
+    private static CardSet preferredSet(Class<? extends Card> cardClass) {
+        return Arrays.stream(cardClass.getAnnotationsByType(CardRegistration.class))
+                .map(registration -> CardSet.findByCode(registration.set()))
+                .filter(Objects::nonNull)
+                .max(Comparator.comparingInt(CardSet::ordinal))
+                .orElse(null);
+    }
+
+    private Card constructForRegistration(CardPrinting printing) {
+        boolean wasSuppressed = suppressOracleResolution.get();
+        suppressOracleResolution.set(true);
+        try {
+            return printing.factory().get();
+        } finally {
+            if (wasSuppressed) {
+                suppressOracleResolution.set(true);
+            } else {
+                suppressOracleResolution.remove();
+            }
+        }
     }
 
     /**
@@ -81,15 +183,13 @@ public class CardRegistry implements CardCatalog {
                 continue;
             }
 
-            // A temp card supplies the class name the oracle data is keyed by, and whether this
-            // printing has a back face at all.
-            Card tempCard = printing.factory().get();
-            Card.registerOracle(tempCard.getClass().getSimpleName(), front);
+            Card.registerOracle(printing.simpleCardClassName(), front);
 
-            String backFaceClassName = tempCard.getBackFaceClassName();
-            if (backFaceClassName != null) {
+            if (loadMode == OracleLoadMode.EAGER || printing.hasBackFace()) {
+                Card tempCard = constructForRegistration(printing);
+                String backFaceClassName = tempCard.getBackFaceClassName();
                 OracleData back = data.backFaceByCollectorNumber().get(printing.collectorNumber());
-                if (back != null) {
+                if (backFaceClassName != null && back != null) {
                     // If-absent: the back face may name a standalone card class (prepare spells
                     // reuse the real spell class), whose own printing registers richer data that
                     // must win regardless of set load order.
@@ -110,20 +210,24 @@ public class CardRegistry implements CardCatalog {
 
     @Override
     public CardPrinting findByCollectorNumber(CardSet set, String collectorNumber) {
-        return getPrintings(set).stream()
-                .filter(printing -> printing.collectorNumber().equals(collectorNumber))
+        CardPrinting printing = getPrintings(set).stream()
+                .filter(candidate -> candidate.collectorNumber().equals(collectorNumber))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(
                         "No printing with collector number " + collectorNumber + " in set " + set.getCode()));
+        ensureSetLoaded(set);
+        return printing;
     }
 
     @Override
     public String getName(CardSet set) {
+        ensureSetLoaded(set);
         return setNames.getOrDefault(set.getCode(), set.getCode());
     }
 
     @Override
     public int getSetCardTotal(CardSet set) {
+        ensureSetLoaded(set);
         return setCardTotals.getOrDefault(set.getCode(), 0);
     }
 

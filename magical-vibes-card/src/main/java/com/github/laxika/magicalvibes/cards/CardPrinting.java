@@ -4,7 +4,13 @@ import com.github.laxika.magicalvibes.model.Card;
 
 import java.util.function.Supplier;
 
-public record CardPrinting(String setCode, String collectorNumber, Supplier<Card> factory) {
+public record CardPrinting(
+        String setCode,
+        String collectorNumber,
+        String cardClassName,
+        String simpleCardClassName,
+        boolean hasBackFace,
+        Supplier<Card> factory) {
 
     /**
      * Builds the card and stamps the printing identity on it.

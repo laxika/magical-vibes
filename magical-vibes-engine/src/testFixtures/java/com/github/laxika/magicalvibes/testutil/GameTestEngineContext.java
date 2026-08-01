@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.testutil;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.env.MapPropertySource;
+
+import java.util.Map;
 
 /**
  * Cached Spring test context shared by every card test via {@link GameTestHarness}.
- * One JVM fork → one context → one Scryfall load and one effect registration pass.
+ * One JVM fork → one context → each requested oracle set and the effect registry loaded once.
  */
 public final class GameTestEngineContext {
 
@@ -23,7 +26,12 @@ public final class GameTestEngineContext {
             if (existing != null) {
                 return existing;
             }
-            AnnotationConfigApplicationContext created = new AnnotationConfigApplicationContext(GameTestDoublesConfig.class);
+            AnnotationConfigApplicationContext created = new AnnotationConfigApplicationContext();
+            created.getEnvironment().getPropertySources().addFirst(new MapPropertySource(
+                    "game-test-oracle-loading",
+                    Map.of("oracle.data-load-mode", "ON_DEMAND")));
+            created.register(GameTestDoublesConfig.class);
+            created.refresh();
             context = created;
             return created;
         }

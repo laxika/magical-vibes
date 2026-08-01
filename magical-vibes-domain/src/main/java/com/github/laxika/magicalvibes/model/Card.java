@@ -39,6 +39,19 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Card {
 
     private static final Map<String, OracleData> oracleRegistry = new ConcurrentHashMap<>();
+    private static volatile OracleDataResolver oracleDataResolver;
+
+    /**
+     * Resolves oracle data for a card class whose data has not been registered yet.
+     *
+     * <p>Production startup eagerly registers every card and leaves this unset. The shared card-test
+     * context installs an on-demand resolver so a focused test only loads data for sets containing
+     * cards it actually constructs.
+     */
+    @FunctionalInterface
+    public interface OracleDataResolver {
+        void resolve(Class<? extends Card> cardClass);
+    }
 
     public static void registerOracle(String className, OracleData data) {
         oracleRegistry.put(className, data);
@@ -56,6 +69,16 @@ public class Card {
 
     public static void clearOracleRegistry() {
         oracleRegistry.clear();
+    }
+
+    public static void installOracleDataResolver(OracleDataResolver resolver) {
+        oracleDataResolver = resolver;
+    }
+
+    public static void uninstallOracleDataResolver(OracleDataResolver resolver) {
+        if (oracleDataResolver == resolver) {
+            oracleDataResolver = null;
+        }
     }
 
     private final UUID id;
@@ -183,7 +206,14 @@ public class Card {
 
     public Card() {
         this.id = UUID.randomUUID();
-        OracleData oracle = oracleRegistry.get(getClass().getSimpleName());
+        Class<? extends Card> cardClass = getClass().asSubclass(Card.class);
+        String className = cardClass.getSimpleName();
+        OracleData oracle = oracleRegistry.get(className);
+        OracleDataResolver resolver = oracleDataResolver;
+        if (oracle == null && resolver != null && cardClass != Card.class) {
+            resolver.resolve(cardClass);
+            oracle = oracleRegistry.get(className);
+        }
         if (oracle != null) {
             this.name = oracle.name();
             this.type = oracle.type();
