@@ -479,7 +479,7 @@ public class StackResolutionService {
                     List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                     Permanent justEntered = bf.get(bf.size() - 1);
                     playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), null,
-                            auraColorChoice.allowedColors());
+                            auraColorChoice);
                 }
 
                 // Process aura ETB effects (e.g., Volition Reins)
@@ -537,7 +537,7 @@ public class StackResolutionService {
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 Permanent justEntered = bf.get(bf.size() - 1);
                 playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), null,
-                        enchantmentColorChoice.allowedColors());
+                        enchantmentColorChoice);
             }
 
             // Check if enchantment has "as enters" basic land type choice (e.g. Illusionary Terrain)

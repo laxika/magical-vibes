@@ -173,6 +173,10 @@ public class ChoiceHandlerService {
             handleAllLandsProduceChosenColorChoice(gameData, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.ChooseTwoColorsOnEnterChoice ctx) {
+            handleChooseTwoColorsOnEnterChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.SubtypeChoice ctx) {
             handleSubtypeChoice(gameData, player, colorName, ctx);
             return;
@@ -1166,6 +1170,39 @@ public class ChoiceHandlerService {
                 + color.name().toLowerCase() + "; lands produce that color this turn."));
         log.info("Game {} - Hall of Gemstone: lands produce {} this turn", gameData.id, color);
 
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleChooseTwoColorsOnEnterChoice(GameData gameData, Player player, String chosenValue,
+            ChoiceContext.ChooseTwoColorsOnEnterChoice ctx) {
+        CardColor chosenColor = CardColor.valueOf(chosenValue);
+        if (ctx.chosen().contains(chosenColor)) {
+            throw new IllegalArgumentException("Color was already chosen");
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        List<CardColor> chosen = new ArrayList<>(ctx.chosen());
+        chosen.add(chosenColor);
+
+        if (chosen.size() < 2) {
+            playerInputService.beginTwoColorsOnEnterChoice(gameData, player.getId(), ctx.permanentId(),
+                    ctx.etbTargetId(), chosen);
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
+
+        Permanent permanent = gameQueryService.findPermanentById(gameData, ctx.permanentId());
+        if (permanent != null) {
+            permanent.getChosenColors().clear();
+            permanent.getChosenColors().addAll(chosen);
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses "
+                    + chosen.getFirst().name().toLowerCase() + " and "
+                    + chosen.getLast().name().toLowerCase() + " for ", permanent.getCard(), "."));
+            battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), permanent.getCard(),
+                    ctx.etbTargetId(), false);
+        }
+
+        stateBasedActionService.performStateBasedActions(gameData);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

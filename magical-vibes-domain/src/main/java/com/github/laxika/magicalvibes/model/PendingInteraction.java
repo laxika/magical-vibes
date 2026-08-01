@@ -26,6 +26,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.ImprovisationCapstoneCastChoice,
         PendingInteraction.ExiledSpellCopyChoice,
+        PendingInteraction.ExileInstantOrSorcerySpellCostChoice,
         PendingInteraction.BrilliantUltimatumPileSeparationChoice,
         PendingInteraction.BrilliantUltimatumPileChoice,
         PendingInteraction.BrilliantUltimatumPlayChoice,
@@ -264,6 +265,27 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             implements PendingInteraction {
 
         public ExiledSpellCopyChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
+        }
+    }
+
+    /** Choice of an instant or sorcery spell to exile as an activated-ability cost. */
+    record ExileInstantOrSorcerySpellCostChoice(UUID playerId, UUID sourcePermanentId,
+                                                int abilityIndex, int xValue,
+                                                java.util.List<UUID> validCardIds)
+            implements PendingInteraction {
+
+        public ExileInstantOrSorcerySpellCostChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
         }
 

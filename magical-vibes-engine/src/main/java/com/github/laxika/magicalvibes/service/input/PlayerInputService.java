@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -156,6 +157,34 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a color", gameData.id, playerName);
+    }
+
+    public void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetId,
+            ChooseColorEffect choice) {
+        if (choice.choicesRequired() == 2) {
+            beginTwoColorsOnEnterChoice(gameData, playerId, permanentId, etbTargetId, List.of());
+            return;
+        }
+        beginColorChoice(gameData, playerId, permanentId, etbTargetId, choice.allowedColors());
+    }
+
+    public void beginTwoColorsOnEnterChoice(GameData gameData, UUID playerId, UUID permanentId,
+            UUID etbTargetId, List<CardColor> chosen) {
+        ChoiceContext.ChooseTwoColorsOnEnterChoice ctx =
+                new ChoiceContext.ChooseTwoColorsOnEnterChoice(permanentId, etbTargetId, new ArrayList<>(chosen));
+
+        List<String> options = new ArrayList<>();
+        for (CardColor color : List.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN)) {
+            if (!chosen.contains(color)) {
+                options.add(color.name());
+            }
+        }
+        String prompt = chosen.isEmpty() ? "Choose two colors." : "Choose a second color.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, ctx, options, prompt));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose two colors", gameData.id, playerName);
     }
 
     public void beginDiscardChosenColorChoice(GameData gameData, UUID controllerId, UUID targetPlayerId) {

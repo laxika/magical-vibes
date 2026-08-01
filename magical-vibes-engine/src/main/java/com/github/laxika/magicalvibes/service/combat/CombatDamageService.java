@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDamagedByWatchedCreature;
+import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDealingCombatDamageToPlaneswalker;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -287,6 +288,8 @@ public class CombatDamageService {
 
         // Acidic Dagger's delayed "destroy the non-Wall creature that creature damaged" trigger.
         processDelayedDestroyCreatureDamagedTriggers(gameData, state.combatDamageDealtToCreatures);
+
+        processDelayedPlaneswalkerCombatDamageTriggers(gameData, state.combatDamageDealt);
 
         // Process ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen)
         processAllyDealtDamageToCreatureReflectionTriggers(gameData, state);
@@ -1565,6 +1568,38 @@ public class CombatDamageService {
                     gameData.stack.add(trigger);
                     gameLogService.append(gameData, GameLog.abilityTriggers(delayed.sourceCard()));
                 }
+            }
+        }
+    }
+
+    private void processDelayedPlaneswalkerCombatDamageTriggers(GameData gameData,
+                                                                Map<Permanent, Integer> combatDamageDealt) {
+        if (combatDamageDealt.isEmpty()
+                || !gameData.hasDelayedAction(DelayedDestroyCreatureDealingCombatDamageToPlaneswalker.class)) {
+            return;
+        }
+
+        for (DelayedDestroyCreatureDealingCombatDamageToPlaneswalker delayed
+                : gameData.getDelayedActions(DelayedDestroyCreatureDealingCombatDamageToPlaneswalker.class)) {
+            for (var entry : combatDamageDealt.entrySet()) {
+                Permanent creature = entry.getKey();
+                if (entry.getValue() <= 0
+                        || !delayed.planeswalkerId().equals(creature.getAttackTarget())) {
+                    continue;
+                }
+
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        delayed.sourceCard(),
+                        delayed.controllerId(),
+                        delayed.sourceCard().getName() + "'s delayed trigger",
+                        List.of(new DestroyTargetPermanentEffect()),
+                        creature.getId(),
+                        (UUID) null
+                );
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData, GameLog.abilityTriggers(delayed.sourceCard()));
             }
         }
     }

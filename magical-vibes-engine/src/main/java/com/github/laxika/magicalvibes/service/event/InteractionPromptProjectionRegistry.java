@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.networking.message.AttackTarget;
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
@@ -58,6 +59,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.ImprovisationCapstoneCastChoice.class,
                 this::projectImprovisationCapstoneCastChoice);
         register(PendingInteraction.ExiledSpellCopyChoice.class, this::projectExiledSpellCopyChoice);
+        register(PendingInteraction.ExileInstantOrSorcerySpellCostChoice.class,
+                this::projectExileInstantOrSorcerySpellCostChoice);
         register(PendingInteraction.BrilliantUltimatumPileSeparationChoice.class,
                 this::projectBrilliantUltimatumPileSeparationChoice);
         register(PendingInteraction.BrilliantUltimatumPileChoice.class,
@@ -228,6 +231,18 @@ public class InteractionPromptProjectionRegistry {
                 1,
                 "Choose an instant or sorcery card exiled this way to copy "
                         + interaction.copies() + " times.");
+    }
+
+    private InteractionPromptMessage projectExileInstantOrSorcerySpellCostChoice(
+            GameData gameData, PendingInteraction.ExileInstantOrSorcerySpellCostChoice interaction) {
+        List<CardView> cards = gameData.stack.stream()
+                .filter(entry -> interaction.validCardIds().contains(entry.getCard().getId()))
+                .map(StackEntry::getCard)
+                .map(cardViewFactory::create)
+                .toList();
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cards, 1,
+                "Choose an instant or sorcery spell you control to exile as an activation cost.");
     }
 
     private InteractionPromptMessage projectBrilliantUltimatumPileSeparationChoice(

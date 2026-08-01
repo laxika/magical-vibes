@@ -75,6 +75,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.RevealTwoCardsSharingColorCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileInstantOrSorcerySpellCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -698,15 +699,15 @@ public class AbilityActivationService {
      * @param targetZone        target zone for zone-targeted effects, or {@code null}
      */
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone) {
-        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, null, null, null);
+        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, null, null, null, null);
     }
 
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds) {
-        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, targetIds, null, null);
+        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, targetIds, null, null, null);
     }
 
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds, Map<UUID, Integer> damageAssignments) {
-        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, targetIds, damageAssignments, null);
+        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, targetIds, damageAssignments, null, null);
     }
 
     /**
@@ -1390,7 +1391,8 @@ public class AbilityActivationService {
                 null,
                 null,
                 null,
-                source
+                source,
+                null
         );
     }
 
@@ -1480,13 +1482,53 @@ public class AbilityActivationService {
                 cardIndex,
                 null,
                 null,
-                source
+                source,
+                null
+        );
+    }
+
+    public void handleActivatedAbilityExileInstantOrSorcerySpellCostChosen(
+            GameData gameData, Player player,
+            PendingInteraction.ExileInstantOrSorcerySpellCostChoice choice, UUID cardId) {
+        if (!player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        PendingInteraction.ExileInstantOrSorcerySpellCostChoice activeChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.ExileInstantOrSorcerySpellCostChoice.class);
+        if (activeChoice == null || !activeChoice.equals(choice)) {
+            throw new IllegalStateException("Not awaiting instant or sorcery spell cost choice");
+        }
+        if (!choice.validCardIds().contains(cardId)) {
+            throw new IllegalStateException("Invalid instant or sorcery spell choice");
+        }
+        Permanent source = gameQueryService.findPermanentById(gameData, choice.sourcePermanentId());
+        if (source == null) {
+            gameData.interaction.clearAwaitingInput();
+            throw new IllegalStateException("Source permanent is no longer on the battlefield");
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        activateAbilityInternal(
+                gameData,
+                player,
+                -1,
+                choice.abilityIndex(),
+                choice.xValue(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                source,
+                cardId
         );
     }
 
     private void activateAbilityInternal(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue,
                                          UUID targetId, Zone targetZone, Integer discardCardIndex, Integer exileGraveyardCardIndex,
-                                         List<UUID> targetIds, Map<UUID, Integer> damageAssignments, Permanent preResolvedSource) {
+                                         List<UUID> targetIds, Map<UUID, Integer> damageAssignments, Permanent preResolvedSource,
+                                         UUID exileInstantOrSorcerySpellCardId) {
         // Spell-only mana (e.g. tapped via Piracy) can't pay ability costs — hide it for the duration of
         // this activation (including the affordability check) so it is neither counted nor spent, then
         // restore it afterward. Re-entrant callbacks (discard/exile cost) call this method afresh, so each
@@ -1501,7 +1543,8 @@ public class AbilityActivationService {
         Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();
         try {
             activateAbilityInternalImpl(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone,
-                    discardCardIndex, exileGraveyardCardIndex, targetIds, damageAssignments, preResolvedSource);
+                    discardCardIndex, exileGraveyardCardIndex, targetIds, damageAssignments, preResolvedSource,
+                    exileInstantOrSorcerySpellCardId);
         } finally {
             if (pool != null && !withheldSpellOnlyMana.isEmpty()) {
                 pool.restoreSpellOnlyMana(withheldSpellOnlyMana);
@@ -1511,7 +1554,8 @@ public class AbilityActivationService {
 
     private void activateAbilityInternalImpl(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue,
                                          UUID targetId, Zone targetZone, Integer discardCardIndex, Integer exileGraveyardCardIndex,
-                                         List<UUID> targetIds, Map<UUID, Integer> damageAssignments, Permanent preResolvedSource) {
+                                         List<UUID> targetIds, Map<UUID, Integer> damageAssignments, Permanent preResolvedSource,
+                                         UUID exileInstantOrSorcerySpellCardId) {
         int effectiveXValue = xValue != null ? xValue : 0;
 
         UUID playerId = player.getId();
@@ -1610,6 +1654,23 @@ public class AbilityActivationService {
             }
         }
 
+        ExileInstantOrSorcerySpellCost exileInstantOrSorcerySpellCost = abilityEffects.stream()
+                .filter(ExileInstantOrSorcerySpellCost.class::isInstance)
+                .map(ExileInstantOrSorcerySpellCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (exileInstantOrSorcerySpellCost != null) {
+            List<UUID> validSpellIds = collectExileInstantOrSorcerySpellIds(gameData, playerId);
+            if (exileInstantOrSorcerySpellCardId == null) {
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExileInstantOrSorcerySpellCostChoice(
+                        playerId, permanent.getId(), effectiveIndex, effectiveXValue, validSpellIds));
+                return;
+            }
+            if (!validSpellIds.contains(exileInstantOrSorcerySpellCardId)) {
+                throw new IllegalStateException("Selected instant or sorcery spell is no longer on the stack");
+            }
+        }
+
         HandCardCost discardCardTypeCost = abilityEffects.stream()
                 .filter(HandCardCost.class::isInstance)
                 .map(HandCardCost.class::cast)
@@ -1692,6 +1753,10 @@ public class AbilityActivationService {
         if (exileGraveyardCost != null) {
             payGraveyardExileCost(gameData, player, exileGraveyardCost.requiredType(),
                     exileGraveyardCost.requiredSubtype(), exileGraveyardCardIndex);
+        }
+
+        if (exileInstantOrSorcerySpellCost != null) {
+            payExileInstantOrSorcerySpellCost(gameData, player, exileInstantOrSorcerySpellCardId);
         }
 
         // Pay exile-N-cards-from-graveyard cost by exiling the front N matching cards (Immortal Coil,
@@ -2415,6 +2480,11 @@ public class AbilityActivationService {
                         exileGraveyardCost.requiredSubtype()).isEmpty()) {
             String typeName = graveyardExileFilterLabel(exileGraveyardCost.requiredType(), exileGraveyardCost.requiredSubtype());
             throw new IllegalStateException("No " + typeName + "card in graveyard to exile");
+        }
+
+        if (abilityEffects.stream().anyMatch(ExileInstantOrSorcerySpellCost.class::isInstance)
+                && collectExileInstantOrSorcerySpellIds(gameData, playerId).isEmpty()) {
+            throw new IllegalStateException("No instant or sorcery spell you control to exile from the stack");
         }
 
         // Exile-N-cards-from-graveyard cost (e.g. Immortal Coil "Exile two cards from your graveyard")
@@ -3220,6 +3290,32 @@ public class AbilityActivationService {
             }
         }
         return validIndices;
+    }
+
+    private List<UUID> collectExileInstantOrSorcerySpellIds(GameData gameData, UUID playerId) {
+        return gameData.stack.stream()
+                .filter(entry -> (entry.getEntryType() == StackEntryType.INSTANT_SPELL
+                        || entry.getEntryType() == StackEntryType.SORCERY_SPELL)
+                        && playerId.equals(entry.getControllerId()))
+                .map(entry -> entry.getCard().getId())
+                .toList();
+    }
+
+    private void payExileInstantOrSorcerySpellCost(GameData gameData, Player player, UUID cardId) {
+        StackEntry entry = gameQueryService.findStackEntryByCardId(gameData, cardId);
+        if (entry == null
+                || (entry.getEntryType() != StackEntryType.INSTANT_SPELL
+                && entry.getEntryType() != StackEntryType.SORCERY_SPELL)
+                || !player.getId().equals(entry.getControllerId())) {
+            throw new IllegalStateException("Must exile an instant or sorcery spell you control from the stack");
+        }
+
+        gameData.stack.remove(entry);
+        if (!entry.isCopy()) {
+            gameData.addToExile(entry.getOwnerId(), entry.getCard());
+        }
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " exiles ", entry.getCard(), " from the stack as an activation cost."));
     }
 
     /**

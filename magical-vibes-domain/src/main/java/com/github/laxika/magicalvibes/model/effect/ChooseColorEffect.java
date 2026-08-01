@@ -6,6 +6,11 @@ import java.util.List;
 
 public interface ChooseColorEffect extends CardEffect {
 
+    /** Number of distinct colors this as-enters choice must collect. */
+    default int choicesRequired() {
+        return 1;
+    }
+
     /**
      * The colors the choosing player may pick from. Defaults to all five; cards that restrict the
      * choice ("choose black or red" — Mangara's Equity) override it with a narrower list.

@@ -97,6 +97,7 @@ public class Permanent {
      */
     @Setter private UUID pairedWithId;
     @Setter private CardColor chosenColor;
+    private final Set<CardColor> chosenColors = EnumSet.noneOf(CardColor.class);
     @Setter private String chosenName;
     /** Second card name chosen "as this enters" when two players each name a card
      *  (Null Chamber: the controller's pick → {@link #chosenName}, the opponent's → here). */
@@ -497,6 +498,7 @@ public class Permanent {
         this.attachedTo = source.attachedTo;
         this.pairedWithId = source.pairedWithId;
         this.chosenColor = source.chosenColor;
+        this.chosenColors.addAll(source.chosenColors);
         this.chosenName = source.chosenName;
         this.secondChosenName = source.secondChosenName;
         this.chosenSubtype = source.chosenSubtype;

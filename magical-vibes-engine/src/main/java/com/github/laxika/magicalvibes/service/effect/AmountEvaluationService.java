@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
+import com.github.laxika.magicalvibes.model.amount.AttachedPermanentColorCount;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInExile;
@@ -147,6 +148,8 @@ public class AmountEvaluationService {
                             ? evaluate(gameData, d.amount(), ctx) : 0;
             case PermanentCount c ->
                     countPermanents(gameData, c, ctx);
+            case AttachedPermanentColorCount ignored ->
+                    attachedPermanentColorCount(gameData, ctx);
             case BasicLandTypesAmongControlledLands ignored ->
                     countBasicLandTypesAmongControlledLands(gameData, ctx);
             case CardTypesAmongCardsInGraveyard c ->
@@ -305,6 +308,19 @@ public class AmountEvaluationService {
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
         // No legal target at resolution -> 0, matching the fizzle behaviour of the handlers this replaces.
         return target == null ? 0 : Math.max(0, gameQueryService.getEffectiveToughness(gameData, target));
+    }
+
+    private int attachedPermanentColorCount(GameData gameData, AmountContext ctx) {
+        Permanent source = ctx.sourcePermanent();
+        if (source == null || source.getAttachedTo() == null) {
+            return 0;
+        }
+        var layered = LayerSystemService.activeStateFor(source.getAttachedTo());
+        if (layered != null) {
+            return layered.getColors().size();
+        }
+        Permanent attached = gameQueryService.findPermanentById(gameData, source.getAttachedTo());
+        return attached == null ? 0 : gameQueryService.getEffectiveColors(gameData, attached).size();
     }
 
     private int targetEffectivePower(GameData gameData, AmountContext ctx) {

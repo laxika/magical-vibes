@@ -27,6 +27,7 @@ public final class AiInteractionStrategies {
         register(new KnowledgePoolCastChoiceAiStrategy());
         register(new ImprovisationCapstoneCastChoiceAiStrategy());
         register(new ExiledSpellCopyChoiceAiStrategy());
+        register(new ExileInstantOrSorcerySpellCostChoiceAiStrategy());
         register(new BrilliantUltimatumPileSeparationChoiceAiStrategy());
         register(new BrilliantUltimatumPileChoiceAiStrategy());
         register(new BrilliantUltimatumPlayChoiceAiStrategy());
