@@ -37,16 +37,14 @@ public class PlayedCardNameTriggerCollectorService {
 
     @CollectsTrigger(value = PlayedCardNameMatchesCardExiledWithSourceTriggerEffect.class,
             slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
-    private boolean handleControllerCastsSpell(TriggerMatchContext match,
-            PlayedCardNameMatchesCardExiledWithSourceTriggerEffect trigger, TriggerContext ctx) {
+    private boolean handleControllerCastsSpell(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return collect(match, sc.spellCard());
     }
 
     @CollectsTrigger(value = PlayedCardNameMatchesCardExiledWithSourceTriggerEffect.class,
             slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
-    private boolean handleControllerPlaysLand(TriggerMatchContext match,
-            PlayedCardNameMatchesCardExiledWithSourceTriggerEffect trigger, TriggerContext ctx) {
+    private boolean handleControllerPlaysLand(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
         return collect(match, lp.landCard());
     }
@@ -58,7 +56,7 @@ public class PlayedCardNameTriggerCollectorService {
      */
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
     private boolean handleControllerPlaysLandDefault(TriggerMatchContext match,
-            CardEffect effect, TriggerContext ctx) {
+            CardEffect effect) {
         Card sourceCard = match.permanent().getCard();
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

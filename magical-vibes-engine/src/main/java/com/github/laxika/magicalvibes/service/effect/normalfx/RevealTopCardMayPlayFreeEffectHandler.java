@@ -56,7 +56,7 @@ public class RevealTopCardMayPlayFreeEffectHandler implements NormalEffectHandle
         if (e.requireCreatureSharingTypeWithYourCreatures()
                 && !(topCard.hasType(CardType.CREATURE)
                         && gameQueryService.cardSharesCreatureTypeWithControlledCreature(gameData, topCard, controllerId))) {
-            disposeOfUnplayedCard(gameData, controllerId, deck, topCard, playerName, e.notPlayedDestination(),
+            disposeOfUnplayedCard(gameData, controllerId, deck, topCard, e.notPlayedDestination(),
                     "doesn't share a creature type with a creature you control");
             return;
         }
@@ -67,7 +67,7 @@ public class RevealTopCardMayPlayFreeEffectHandler implements NormalEffectHandle
             int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(controllerId, 0);
             if (!isControllersTurn || landsPlayed >= gameData.getMaxLandsThisTurn(controllerId)) {
                 String reason = !isControllersTurn ? "not controller's turn" : "land already played this turn";
-                disposeOfUnplayedCard(gameData, controllerId, deck, topCard, playerName, e.notPlayedDestination(),
+                disposeOfUnplayedCard(gameData, controllerId, deck, topCard, e.notPlayedDestination(),
                         "can't be played (" + reason + ")");
                 return;
             }
@@ -82,8 +82,7 @@ public class RevealTopCardMayPlayFreeEffectHandler implements NormalEffectHandle
         ));
     }
 
-    private void disposeOfUnplayedCard(GameData gameData, UUID controllerId, List<Card> deck, Card topCard,
-                                       String playerName, LookDestination destination, String reason) {
+    private void disposeOfUnplayedCard(GameData gameData, UUID controllerId, List<Card> deck, Card topCard, LookDestination destination, String reason) {
         switch (destination) {
             case EXILE -> {
                 deck.removeFirst();

@@ -383,7 +383,7 @@ public class MayCopyHandlerService {
         }
 
         if (validTargets.isEmpty()) {
-            String logEntry = "No valid new targets for " + spellCard.getName() + ".";
+            
             gameLogService.append(gameData, GameLog.textCardText("No valid new targets for ", spellCard, "."));
             log.info("Game {} - No valid targets for redirect retarget", gameData.id);
 
@@ -422,7 +422,7 @@ public class MayCopyHandlerService {
         }
 
         if (sourcePermanent == null) {
-            String logEntry = sourceCard.getName() + " is no longer on the battlefield.";
+            
             gameLogService.append(gameData, GameLog.cardThen(sourceCard, " is no longer on the battlefield."));
             log.info("Game {} - {} become-copy source no longer on battlefield", gameData.id, sourceCard.getName());
 
@@ -434,7 +434,7 @@ public class MayCopyHandlerService {
         UUID targetPermId = ability.targetCardId();
         Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetPermId);
         if (targetPerm == null) {
-            String logEntry = sourceCard.getName() + "'s copy target is no longer on the battlefield.";
+            
             gameLogService.append(gameData, GameLog.cardThen(sourceCard, "'s copy target is no longer on the battlefield."));
             log.info("Game {} - {} become-copy target no longer on battlefield", gameData.id, sourceCard.getName());
 
@@ -451,7 +451,7 @@ public class MayCopyHandlerService {
         copiedCard.addEffect(EffectSlot.UPKEEP_TRIGGERED, new BecomeCopyOfTargetCreatureEffect());
 
         String targetName = targetPerm.getCard().getName();
-        String logEntry = originalName + " becomes a copy of " + targetName + ".";
+        
         gameLogService.append(gameData, GameLog.cardThen(sourceCard, "'s copy target is no longer on the battlefield."));
         log.info("Game {} - {} becomes a copy of {}", gameData.id, originalName, targetName);
 

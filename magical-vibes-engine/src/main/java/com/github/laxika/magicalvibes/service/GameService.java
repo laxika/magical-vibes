@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -42,7 +41,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class GameService {
 
-    private final GameRegistry gameRegistry;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final CombatService combatService;
@@ -52,7 +50,6 @@ public class GameService {
     private final StackResolutionService stackResolutionService;
     private final AbilityActivationService abilityActivationService;
     private final MulliganService mulliganService;
-    private final ExileSupport exileSupport;
     private final GameOutcomeService gameOutcomeService;
     private final GameMutationCoordinator mutationCoordinator;
 

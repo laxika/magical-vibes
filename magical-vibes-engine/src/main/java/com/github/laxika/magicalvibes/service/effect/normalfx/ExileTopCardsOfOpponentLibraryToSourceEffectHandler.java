@@ -64,9 +64,7 @@ public class ExileTopCardsOfOpponentLibraryToSourceEffectHandler implements Norm
 
         if (toExile > 0) {
             String playerName = gameData.playerIdToName.get(opponentId);
-            String logEntry = playerName + " exiles the top " + toExile + " card"
-                    + (toExile != 1 ? "s" : "") + " of their library face down ("
-                    + sourcePermanent.getCard().getName() + ").";
+            
             gameLogService.append(gameData, GameLog.builder().text(playerName + " exiles the top " + toExile + " card" + (toExile != 1 ? "s" : "") + " of their library face down (").card(sourcePermanent.getCard()).text(").").build());
             log.info("Game {} - {} exiles {} cards from {}'s library to {}",
                     gameData.id, playerName, toExile, playerName, sourcePermanent.getCard().getName());

@@ -25,7 +25,6 @@ public class DiscardOwnHandThenDrawThatManyEffectHandler implements NormalEffect
     private final DrawService drawService;
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
-    private final PlayerInteractionSupport playerInteractionSupport;
     private final TriggerCollectionService triggerCollectionService;
 
     @Override

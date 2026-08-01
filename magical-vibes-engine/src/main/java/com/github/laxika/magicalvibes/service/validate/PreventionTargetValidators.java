@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 public class PreventionTargetValidators {
 
     private final TargetValidationService tvs;
-    private final GameQueryService gameQueryService;
 
     // Remedy: divided prevention among target creatures and/or players. Targets are announced onto
     // StackEntry.damageAssignments (like DealDividedDamageEffect CHOSEN mode), so targetId is null on

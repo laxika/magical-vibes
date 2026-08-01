@@ -117,8 +117,7 @@ public class JuxtaposeSupport {
         creatureControlService.applyControlEffect(gameData, controllerId, targetPerm, control,
                 ControlDuration.PERMANENT.toEffectDuration(), null, sourceCard.getName());
 
-        String logEntry = sourceCard.getName() + ": " + controllerPerm.getCard().getName() + " and "
-                + targetPerm.getCard().getName() + " exchange controllers.";
+        
         gameLogService.append(gameData, GameLog.builder().card(sourceCard).text(": ").card(controllerPerm.getCard()).text(" and ").card(targetPerm.getCard()).text(" exchange controllers.").build());
         log.info("Game {} - {} exchanges control of {} and {}", gameData.id, sourceCard.getName(),
                 controllerPerm.getCard().getName(), targetPerm.getCard().getName());

@@ -38,8 +38,7 @@ public class WinGameEffectHandler implements NormalEffectHandlerBean {
         // replacer (Lich's Mirror) gets a say — see GameOutcomeService.canPlayerWinGame.
         UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
         if (!gameOutcomeService.canPlayerWinGame(gameData, controllerId)) {
-            String logEntry = entry.getCard().getName() + "'s win condition is met but " +
-                    gameData.playerIdToName.get(opponentId) + " can't lose the game.";
+            
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text("'s win condition is met but " + gameData.playerIdToName.get(opponentId) + " can't lose the game.").build());
             log.info("Game {} - {} win prevented — opponent can't lose", gameData.id, entry.getCard().getName());
             return;

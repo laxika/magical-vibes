@@ -161,8 +161,7 @@ public class EnterTriggerCollectorService {
     }
 
     @CollectsTrigger(value = GainLifeEqualToToughnessEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
-    private boolean handleAllyCreatureGainLifeEqualToToughness(TriggerMatchContext match,
-            GainLifeEqualToToughnessEffect effect, TriggerContext ctx) {
+    private boolean handleAllyCreatureGainLifeEqualToToughness(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         return enqueueGainLife(match, ctx, pe.enteringCard().getToughness());
     }
@@ -491,8 +490,7 @@ public class EnterTriggerCollectorService {
 
     @CollectsTrigger(value = LookAtTopCardsEqualToEnteringPowerPutOneOnTopRestOnBottomEffect.class,
             slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
-    private boolean handleAllyLookAtTopEqualToEnteringPower(TriggerMatchContext match,
-            LookAtTopCardsEqualToEnteringPowerPutOneOnTopRestOnBottomEffect effect, TriggerContext ctx) {
+    private boolean handleAllyLookAtTopEqualToEnteringPower(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         int power = Math.max(0, pe.enteringCard().getPower());
         Card sourceCard = match.permanent().getCard();
@@ -518,8 +516,7 @@ public class EnterTriggerCollectorService {
      */
     @CollectsTrigger(value = AttachSourceEquipmentToEnteringCreatureEffect.class,
             slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
-    private boolean handleAnyCreatureAttachEquipment(TriggerMatchContext match,
-            AttachSourceEquipmentToEnteringCreatureEffect effect, TriggerContext ctx) {
+    private boolean handleAnyCreatureAttachEquipment(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Card sourceCard = match.permanent().getCard();
         UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
@@ -545,8 +542,7 @@ public class EnterTriggerCollectorService {
      */
     @CollectsTrigger(value = AttachSourceAuraToEnteringCreatureEffect.class,
             slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD)
-    private boolean handleOpponentCreatureAttachAura(TriggerMatchContext match,
-            AttachSourceAuraToEnteringCreatureEffect effect, TriggerContext ctx) {
+    private boolean handleOpponentCreatureAttachAura(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Card sourceCard = match.permanent().getCard();
         UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());

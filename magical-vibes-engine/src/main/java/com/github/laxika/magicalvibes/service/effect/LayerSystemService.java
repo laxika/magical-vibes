@@ -750,7 +750,7 @@ public class LayerSystemService {
             slotsById.put(permanent.getId(), slot);
         }
 
-        applyLayer4(gameData, slots, slotsById, states, board);
+        applyLayer4(gameData, slots, slotsById, board);
 
         // Runtime one-shot type state not yet migrated to floating effects, applied with legacy
         // precedence: the transient "becomes the basic land type of your choice" self-override
@@ -780,8 +780,8 @@ public class LayerSystemService {
 
         // Layers 5 (colors) and 6 (abilities): the classified instances in CDA-first,
         // timestamp order.
-        applyLayer5(gameData, slots, slotsById, states, board);
-        applyLayer6(gameData, slots, slotsById, states, board);
+        applyLayer5(gameData, slots, slotsById, board);
+        applyLayer6(gameData, slots, slotsById, board);
 
         // Sublayer 7b (base P/T setting): every setter — static aura, one-shot floating,
         // animation, permanent exchange — ordered by one timestamp sequence.
@@ -1091,8 +1091,7 @@ public class LayerSystemService {
     // ===== layer 4 =====
 
     private void applyLayer4(GameData gameData, List<PermanentSlot> slots,
-                             Map<UUID, PermanentSlot> slotsById,
-                             Map<UUID, CharacteristicState> states, LayeredBoardState board) {
+                             Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
         applyInstances(gameData, collectInstances(gameData, slots, slotsById, Layer.L4_TYPE),
                 slots, slotsById, board, this::applyL4Instance);
     }
@@ -1680,8 +1679,7 @@ public class LayerSystemService {
      * so of several setters the latest timestamp wins and earlier additive grants are wiped.
      */
     private void applyLayer5(GameData gameData, List<PermanentSlot> slots,
-                             Map<UUID, PermanentSlot> slotsById,
-                             Map<UUID, CharacteristicState> states, LayeredBoardState board) {
+                             Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
         applyInstances(gameData, collectInstances(gameData, slots, slotsById, Layer.L5_COLOR),
                 slots, slotsById, board, this::applyL5Instance);
     }
@@ -1765,8 +1763,7 @@ public class LayerSystemService {
      * creature types).
      */
     private void applyLayer6(GameData gameData, List<PermanentSlot> slots,
-                             Map<UUID, PermanentSlot> slotsById,
-                             Map<UUID, CharacteristicState> states, LayeredBoardState board) {
+                             Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
         applyInstances(gameData, collectInstances(gameData, slots, slotsById, Layer.L6_ABILITIES),
                 slots, slotsById, board, this::applyL6Instance);
     }

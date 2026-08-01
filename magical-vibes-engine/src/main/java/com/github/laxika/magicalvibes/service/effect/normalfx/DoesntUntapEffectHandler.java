@@ -51,13 +51,13 @@ public class DoesntUntapEffectHandler implements NormalEffectHandlerBean {
         switch (doesntUntap.condition()) {
             case WHILE_SOURCE_ON_BATTLEFIELD -> {
                 target.getUntapPreventedWhileSourceOnBattlefieldIds().add(sourcePermanentId);
-                String logEntry = target.getCard().getName() + " won't untap as long as you control " + entry.getCard().getName() + ".";
+                
                 gameLogService.append(gameData, GameLog.cardTextCard(target.getCard(), " won't untap as long as you control ", entry.getCard(), "."));
                 log.info("Game {} - {} untap prevented while {} on battlefield", gameData.id, target.getCard().getName(), entry.getCard().getName());
             }
             case WHILE_SOURCE_TAPPED -> {
                 target.getUntapPreventedByPermanentIds().add(sourcePermanentId);
-                String logEntry = target.getCard().getName() + " won't untap as long as " + entry.getCard().getName() + " remains tapped.";
+                
                 gameLogService.append(gameData, GameLog.cardTextCard(target.getCard(), " won't untap as long as ", entry.getCard(), " remains tapped."));
                 log.info("Game {} - {} untap prevented while {} remains tapped", gameData.id, target.getCard().getName(), entry.getCard().getName());
             }

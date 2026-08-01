@@ -52,7 +52,7 @@ public class SacrificeCreatureCreateSizedTokenEqualToPowerEffectHandler implemen
         }
 
         if (validIds.isEmpty()) {
-            String logEntry = playerName + " has no creature to sacrifice for " + entry.getCard().getName() + ".";
+            
             gameLogService.append(gameData, GameLog.textCardText(playerName + " has no creature to sacrifice for " , entry.getCard(), "."));
             log.info("Game {} - {} has no creature to sacrifice for {}",
                     gameData.id, playerName, entry.getCard().getName());

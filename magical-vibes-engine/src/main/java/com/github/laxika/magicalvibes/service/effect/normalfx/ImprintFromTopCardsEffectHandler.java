@@ -22,7 +22,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ImprintFromTopCardsEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final ExileService exileService;
     private final LibraryRevealSupport libraryRevealSupport;

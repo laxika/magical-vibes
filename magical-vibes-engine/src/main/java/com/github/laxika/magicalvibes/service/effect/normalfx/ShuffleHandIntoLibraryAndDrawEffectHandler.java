@@ -22,7 +22,6 @@ public class ShuffleHandIntoLibraryAndDrawEffectHandler implements NormalEffectH
 
     private final DrawService drawService;
     private final GameLogService gameLogService;
-    private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

@@ -98,7 +98,7 @@ public class ETBTokenTargetService {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
-                        if (matchesPermanentTargetFilter(gameData, p, pending.targetFilter(), pending.effects(),
+                        if (matchesPermanentTargetFilter(gameData, p, pending.targetFilter(),
                                 pending.controllerId(), pending.sourceCard())) {
                             validPermanentTargets.add(p.getId());
                         }
@@ -184,7 +184,7 @@ public class ETBTokenTargetService {
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
                         if (pending.chosenTargetsSoFar().contains(p.getId())) continue;
-                        if (matchesPermanentTargetFilter(gameData, p, group.getFilter(), groupEffects,
+                        if (matchesPermanentTargetFilter(gameData, p, group.getFilter(),
                                 pending.controllerId(), card)) {
                             validPermanentTargets.add(p.getId());
                         }
@@ -294,7 +294,7 @@ public class ETBTokenTargetService {
     }
 
     private boolean matchesPermanentTargetFilter(GameData gameData, Permanent permanent,
-                                                  TargetFilter targetFilter, List<CardEffect> effects,
+                                                  TargetFilter targetFilter,
                                                   UUID controllerId, Card sourceCard) {
         if (targetFilter == null) {
             return gameQueryService.isCreature(gameData, permanent);

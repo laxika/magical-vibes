@@ -37,7 +37,7 @@ public class ChangeTargetOfTargetSpellWithSingleTargetEffectHandler implements N
         }
 
         if (!targetSpell.isSingleTarget()) {
-            String logEntry = entry.getCard().getName() + " has no effect (" + targetSpell.getCard().getName() + " no longer has a single target).";
+            
             gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " has no effect (", targetSpell.getCard(), " no longer has a single target)."));
             return;
         }

@@ -29,7 +29,7 @@ public class SacrificeSelfAndTargetDiscardsPerPoisonCounterEffectHandler impleme
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect) effect;
+        
 
         UUID targetPlayerId = entry.getTargetId();
         UUID sourcePermanentId = entry.getSourcePermanentId();

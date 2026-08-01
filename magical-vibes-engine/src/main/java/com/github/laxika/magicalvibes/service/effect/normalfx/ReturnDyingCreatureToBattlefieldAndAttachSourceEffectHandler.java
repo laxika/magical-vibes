@@ -55,7 +55,7 @@ public class ReturnDyingCreatureToBattlefieldAndAttachSourceEffectHandler implem
         Permanent creature = new Permanent(dyingCard);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, creature);
 
-        String enterLog = dyingCard.getName() + " returns to the battlefield under " + playerName + "'s control.";
+        
         gameLogService.append(gameData, GameLog.builder().card(dyingCard).text(" returns to the battlefield under " + playerName + "'s control.").build());
         log.info("Game {} - {} returns {} to battlefield via {}", gameData.id, playerName, dyingCard.getName(), entry.getCard().getName());
 
@@ -66,7 +66,7 @@ public class ReturnDyingCreatureToBattlefieldAndAttachSourceEffectHandler implem
             equipment.setAttachedTo(creature.getId());
             // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
             equipment.setTimestamp(gameData.nextTimestamp());
-            String attachLog = entry.getCard().getName() + " is now attached to " + dyingCard.getName() + ".";
+            
             gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " is now attached to ", dyingCard, "."));
             log.info("Game {} - {} attached to {}", gameData.id, entry.getCard().getName(), dyingCard.getName());
         }

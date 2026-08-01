@@ -23,7 +23,6 @@ public class SacrificeUnlessReturnOwnPermanentTypeToHandEffectHandler implements
 
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
-    private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -67,8 +66,7 @@ public class SacrificeUnlessReturnOwnPermanentTypeToHandEffectHandler implements
         if (!hasValidPermanent) {
             if (sourcePermanent != null) {
                 permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
-                String logEntry = playerName + " controls no " + typeName
-                        + "s. " + sourceCard.getName() + " is sacrificed.";
+                
                 gameLogService.append(gameData, GameLog.builder().text(playerName + " controls no " + typeName + "s. ").card(sourceCard).text(" is sacrificed.").build());
                 log.info("Game {} - {} sacrificed (no {}s to return)", gameData.id, sourceCard.getName(), typeName);
             }

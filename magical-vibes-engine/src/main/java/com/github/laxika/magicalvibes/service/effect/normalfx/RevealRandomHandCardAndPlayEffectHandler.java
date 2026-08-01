@@ -69,7 +69,7 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
         int randomIndex = ThreadLocalRandom.current().nextInt(hand.size());
         Card revealed = hand.get(randomIndex);
 
-        String revealLog = playerName + " reveals " + revealed.getName() + " at random (" + sourceName + ").";
+        
         gameLogService.append(gameData, GameLog.builder().text(playerName + " reveals ").card(revealed).text(" at random (" + sourceName + ").").build());
 
         cardRevealService.revealToAllPlayers(
@@ -85,7 +85,7 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
             hand.remove(randomIndex);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, new Permanent(revealed));
 
-            String landLog = playerName + " puts " + revealed.getName() + " onto the battlefield (" + sourceName + ").";
+            
             gameLogService.append(gameData, GameLog.builder().text(playerName + " puts ").card(revealed).text(" onto the battlefield (" + sourceName + ").").build());
             log.info("Game {} - {} puts {} onto battlefield (Wild Evocation)", gameData.id, playerName, revealed.getName());
 
@@ -120,7 +120,7 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
 
                 if (validTargets.isEmpty()) {
                     // Can't cast — card stays in hand
-                    String noTargetLog = revealed.getName() + " has no valid targets and stays in " + playerName + "'s hand.";
+                    
                     gameLogService.append(gameData, GameLog.builder().card(revealed).text(" has no valid targets and stays in " + playerName + "'s hand.").build());
                     log.info("Game {} - {} can't be cast (no targets), stays in hand", gameData.id, revealed.getName());
                     return;
@@ -133,7 +133,7 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
                 playerInputService.beginPermanentChoice(gameData, targetPlayerId, validTargets,
                         "Choose a target for " + revealed.getName() + ".");
 
-                String castLog = playerName + " casts " + revealed.getName() + " without paying its mana cost — choosing target (" + sourceName + ").";
+                
                 gameLogService.append(gameData, GameLog.builder().text(playerName + " casts ").card(revealed).text(" without paying its mana cost — choosing target (" + sourceName + ").").build());
                 log.info("Game {} - {} casts {} (Wild Evocation), choosing target", gameData.id, playerName, revealed.getName());
             } else {
@@ -147,7 +147,7 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
                 gameData.recordSpellCast(targetPlayerId, revealed);
                 gameData.priorityPassedBy.clear();
 
-                String castLog = playerName + " casts " + revealed.getName() + " without paying its mana cost (" + sourceName + ").";
+                
                 gameLogService.append(gameData, GameLog.builder().text(playerName + " casts ").card(revealed).text(" without paying its mana cost (" + sourceName + ").").build());
                 log.info("Game {} - {} casts {} (Wild Evocation) without paying mana", gameData.id, playerName, revealed.getName());
 

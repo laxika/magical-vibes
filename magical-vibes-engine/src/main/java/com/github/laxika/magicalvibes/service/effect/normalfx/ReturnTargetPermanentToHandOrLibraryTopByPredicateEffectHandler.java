@@ -41,7 +41,7 @@ public class ReturnTargetPermanentToHandOrLibraryTopByPredicateEffectHandler imp
 
         if (toLibraryTop) {
             if (permanentRemovalService.removePermanentToLibraryTop(gameData, target)) {
-                String logEntry = target.getCard().getName() + " is put on top of its owner's library.";
+                
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is put on top of its owner's library."));
                 log.info("Game {} - {} put on top of library by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
             }

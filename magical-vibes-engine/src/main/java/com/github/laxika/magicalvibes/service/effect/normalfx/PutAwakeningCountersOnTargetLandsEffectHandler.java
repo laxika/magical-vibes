@@ -24,9 +24,7 @@ import org.springframework.stereotype.Component;
 public class PutAwakeningCountersOnTargetLandsEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
-    private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
-    private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

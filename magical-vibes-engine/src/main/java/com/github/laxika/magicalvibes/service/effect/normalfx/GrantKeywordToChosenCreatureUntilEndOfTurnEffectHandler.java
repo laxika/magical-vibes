@@ -42,7 +42,7 @@ public class GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler implements 
 
         target.getGrantedKeywords().add(e.keyword());
         String keywordName = e.keyword().name().charAt(0) + e.keyword().name().substring(1).toLowerCase().replace('_', ' ');
-        String logEntry = target.getCard().getName() + " gains " + keywordName + " until end of turn.";
+        
         gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" gains " + keywordName + " until end of turn.").build());
         log.info("Game {} - {} gains {} (chosen creature)", gameData.id, target.getCard().getName(), e.keyword());
     }

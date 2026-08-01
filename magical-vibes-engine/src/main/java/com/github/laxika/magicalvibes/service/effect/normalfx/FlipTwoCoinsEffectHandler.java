@@ -21,7 +21,6 @@ public class FlipTwoCoinsEffectHandler implements NormalEffectHandlerBean {
 
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameLogService gameLogService;
-    private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

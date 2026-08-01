@@ -455,10 +455,10 @@ public class ConditionEvaluationService {
     private boolean anyOpponentControlsAtLeastNMoreCreatures(GameData gameData, ConditionContext ctx, int minimumDifference) {
         UUID controllerId = ctx.controllerId();
         if (controllerId == null) return false;
-        int yourCreatures = countCreaturesControlled(gameData, controllerId, ctx);
+        int yourCreatures = countCreaturesControlled(gameData, controllerId);
         for (UUID candidateOpponentId : gameData.orderedPlayerIds) {
             if (candidateOpponentId.equals(controllerId)) continue;
-            if (countCreaturesControlled(gameData, candidateOpponentId, ctx) >= yourCreatures + minimumDifference) {
+            if (countCreaturesControlled(gameData, candidateOpponentId) >= yourCreatures + minimumDifference) {
                 return true;
             }
         }
@@ -532,7 +532,7 @@ public class ConditionEvaluationService {
         return bestControlled != null && bestControlled.equals(bestOverall);
     }
 
-    private int countCreaturesControlled(GameData gameData, UUID playerId, ConditionContext ctx) {
+    private int countCreaturesControlled(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return 0;
         int count = 0;

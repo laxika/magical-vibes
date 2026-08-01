@@ -41,7 +41,7 @@ public class MustAttackThisTurnEffectHandler implements NormalEffectHandlerBean 
             target.setMustAttackTargetId(entry.getControllerId());
 
             String controllerName = gameData.playerIdToName.get(entry.getControllerId());
-            String logEntry = target.getCard().getName() + " must attack " + controllerName + " this turn if able.";
+            
             gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" must attack " + controllerName + " this turn if able.").build());
             log.info("Game {} - {} must attack {} this turn if able", gameData.id, target.getCard().getName(), controllerName);
         } else {

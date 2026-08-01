@@ -41,7 +41,7 @@ public class AddCardTypeToTargetPermanentEffectHandler implements NormalEffectHa
 
         String typeName = e.cardType().name().charAt(0) + e.cardType().name().substring(1).toLowerCase();
         String duration = e.persistent() ? "" : " until end of turn";
-        String logEntry = target.getCard().getName() + " becomes an " + typeName + " in addition to its other types" + duration + ".";
+        
         gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" becomes an " + typeName + " in addition to its other types" + duration + ".").build());
 
         log.info("Game {} - {} becomes an {}{}", gameData.id, target.getCard().getName(), typeName, duration);

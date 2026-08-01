@@ -70,7 +70,6 @@ public class LibraryChoiceHandlerService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardService graveyardService;
-    private final WarpWorldService warpWorldService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
     private final StateBasedActionService stateBasedActionService;

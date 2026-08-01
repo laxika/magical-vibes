@@ -166,7 +166,7 @@ public class CounterSupport {
             }
         }
 
-        String logMsg = target.getCard().getName() + " is countered.";
+        
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is countered."));
         log.info("Game {} - {} countered {}", gameData.id, source.getCard().getName(), target.getCard().getName());
         return gained;

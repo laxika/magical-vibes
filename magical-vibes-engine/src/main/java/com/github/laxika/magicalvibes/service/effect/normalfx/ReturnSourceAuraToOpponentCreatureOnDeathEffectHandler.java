@@ -91,8 +91,7 @@ public class ReturnSourceAuraToOpponentCreatureOnDeathEffectHandler implements N
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, auraOwnerId, auraPerm);
 
             String ownerName = gameData.playerIdToName.get(auraOwnerId);
-            String logEntry = auraCard.getName() + " returns to the battlefield attached to "
-                    + target.getCard().getName() + " under " + ownerName + "'s control.";
+            
             gameLogService.append(gameData, GameLog.builder().card(auraCard).text(" returns to the battlefield attached to ").card(target.getCard()).text(" under " + ownerName + "'s control.").build());
             log.info("Game {} - {} returns attached to {} (auto-selected)",
                     gameData.id, auraCard.getName(), target.getCard().getName());

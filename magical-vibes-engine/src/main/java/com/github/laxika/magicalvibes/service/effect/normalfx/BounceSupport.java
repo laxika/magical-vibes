@@ -35,7 +35,7 @@ public class BounceSupport {
         Permanent toReturn = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
 
         if (toReturn == null) {
-            String logEntry = entry.getCard().getName() + " is no longer on the battlefield.";
+            
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is no longer on the battlefield."));
             return;
         }

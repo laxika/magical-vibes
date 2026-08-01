@@ -64,8 +64,7 @@ public class DamageTriggerCollectorService {
     // ── ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU ───────────────────────────
 
     @CollectsTrigger(value = ReturnDamageSourcePermanentToHandEffect.class, slot = EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)
-    private boolean handleBounceOnDamage(TriggerMatchContext match,
-            ReturnDamageSourcePermanentToHandEffect trigger, TriggerContext ctx) {
+    private boolean handleBounceOnDamage(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.DamageToController dc = (TriggerContext.DamageToController) ctx;
         var gameData = match.gameData();
 

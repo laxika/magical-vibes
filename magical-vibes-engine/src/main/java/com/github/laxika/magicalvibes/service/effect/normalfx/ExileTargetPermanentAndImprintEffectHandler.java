@@ -52,7 +52,7 @@ public class ExileTargetPermanentAndImprintEffectHandler implements NormalEffect
             }
         }
 
-        String logEntry = exiledCard.getName() + " is exiled by " + entry.getCard().getName() + ".";
+        
         gameLogService.append(gameData, GameLog.cardTextCard(exiledCard, " is exiled by ", entry.getCard(), "."));
         log.info("Game {} - {} exiles and imprints {}",
                 gameData.id, entry.getCard().getName(), exiledCard.getName());

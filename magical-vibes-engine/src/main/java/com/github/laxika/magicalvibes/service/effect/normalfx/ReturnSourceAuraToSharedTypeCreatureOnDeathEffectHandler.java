@@ -61,7 +61,7 @@ public class ReturnSourceAuraToSharedTypeCreatureOnDeathEffectHandler implements
         // Find the aura card in the graveyard
         Card auraCard = gameQueryService.findCardInGraveyardById(gameData, auraCardId);
         if (auraCard == null) {
-            String fizzleLog = entry.getCard().getName() + "'s ability fizzles (card not in graveyard).";
+            
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in graveyard)."));
             log.info("Game {} - {} not found in graveyard, death trigger fizzles",
                     gameData.id, entry.getCard().getName());
@@ -125,8 +125,7 @@ public class ReturnSourceAuraToSharedTypeCreatureOnDeathEffectHandler implements
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, auraOwnerId, auraPerm);
 
             String ownerName = gameData.playerIdToName.get(auraOwnerId);
-            String logEntry = auraCard.getName() + " returns to the battlefield attached to "
-                    + target.getCard().getName() + " under " + ownerName + "'s control.";
+            
             gameLogService.append(gameData, GameLog.builder().card(auraCard).text(" returns to the battlefield attached to ").card(target.getCard()).text(" under " + ownerName + "'s control.").build());
             log.info("Game {} - {} returns attached to {} (auto-selected)",
                     gameData.id, auraCard.getName(), target.getCard().getName());

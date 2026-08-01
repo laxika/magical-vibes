@@ -77,9 +77,7 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
                     source.setPowerModifier(source.getPowerModifier() + e.noncreaturePowerBoost());
                     source.setToughnessModifier(source.getToughnessModifier() + e.noncreatureToughnessBoost());
 
-                    String boostLog = source.getCard().getName() + " gets +"
-                            + e.noncreaturePowerBoost() + "/+" + e.noncreatureToughnessBoost()
-                            + " until end of turn.";
+                    
                     gameLogService.append(gameData, GameLog.builder().card(source.getCard()).text(" gets +" + e.noncreaturePowerBoost() + "/+" + e.noncreatureToughnessBoost() + " until end of turn.").build());
                     log.info("Game {} - {} gets +{}/+{}", gameData.id, source.getCard().getName(),
                             e.noncreaturePowerBoost(), e.noncreatureToughnessBoost());

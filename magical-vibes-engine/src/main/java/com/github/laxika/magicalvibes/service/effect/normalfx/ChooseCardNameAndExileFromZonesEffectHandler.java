@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 public class ChooseCardNameAndExileFromZonesEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInputService playerInputService;
-    private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

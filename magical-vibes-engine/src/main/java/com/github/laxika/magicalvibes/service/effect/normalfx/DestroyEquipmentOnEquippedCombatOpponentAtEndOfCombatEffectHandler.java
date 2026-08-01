@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffectHandler implements NormalEffectHandlerBean {
 
-    private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
 

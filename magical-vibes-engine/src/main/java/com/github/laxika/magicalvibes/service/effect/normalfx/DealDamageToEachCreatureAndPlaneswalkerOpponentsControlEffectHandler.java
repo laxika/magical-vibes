@@ -40,7 +40,7 @@ public class DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffectHandle
         String cardName = entry.getCard().getName();
         UUID controllerId = entry.getControllerId();
 
-        List<Permanent> destroyed = new ArrayList<>();
+        
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId)) continue;
 

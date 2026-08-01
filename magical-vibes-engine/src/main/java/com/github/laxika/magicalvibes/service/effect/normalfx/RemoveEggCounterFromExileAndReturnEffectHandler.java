@@ -53,7 +53,7 @@ public class RemoveEggCounterFromExileAndReturnEffectHandler implements NormalEf
         int remaining = counters - 1;
         if (remaining > 0) {
             gameData.exiledCardEggCounters.put(cardId, remaining);
-            String logEntry = exiledCard.getName() + " has an egg counter removed (" + remaining + " remaining).";
+            
             gameLogService.append(gameData, GameLog.builder().card(exiledCard).text(" has an egg counter removed (" + remaining + " remaining).").build());
             log.info("Game {} - {} egg counter removed, {} remaining", gameData.id, exiledCard.getName(), remaining);
         } else {

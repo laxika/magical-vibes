@@ -138,7 +138,7 @@ public class ChoiceHandlerService {
         }
 
         if (colorChoice.context() instanceof ChoiceContext.ExileByNameChoice ctx) {
-            handleExileByNameChoice(gameData, player, colorName, ctx);
+            handleExileByNameChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.RevealHandDamageAndExileByNameChoice ctx) {
@@ -146,11 +146,11 @@ public class ChoiceHandlerService {
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ProtectionColorChoice ctx) {
-            handleProtectionColorChoice(gameData, player, colorName, ctx);
+            handleProtectionColorChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.MassProtectionColorChoice ctx) {
-            handleMassProtectionColorChoice(gameData, player, colorName, ctx);
+            handleMassProtectionColorChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ColorSetChoice ctx) {
@@ -181,8 +181,8 @@ public class ChoiceHandlerService {
             handleSubtypeChoice(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.SpellCreatureTypeChoice ctx) {
-            handleSpellCreatureTypeChoice(gameData, player, colorName, ctx);
+        if (colorChoice.context() instanceof ChoiceContext.SpellCreatureTypeChoice) {
+            handleSpellCreatureTypeChoice(gameData, player, colorName);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ManaValueParityChoice ctx) {
@@ -210,15 +210,15 @@ public class ChoiceHandlerService {
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.AddBasicLandTypeChoice ctx) {
-            handleAddBasicLandTypeChoice(gameData, player, colorName, ctx);
+            handleAddBasicLandTypeChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.SnowLandwalkGrantChoice ctx) {
-            handleSnowLandwalkGrantChoice(gameData, player, colorName, ctx);
+            handleSnowLandwalkGrantChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.OwnLandsBecomeBasicTypeChoice ctx) {
-            handleOwnLandsBecomeBasicTypeChoice(gameData, player, colorName, ctx);
+            handleOwnLandsBecomeBasicTypeChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.LandsOfTypeBecomeBasicTypeChoice ctx) {
@@ -226,23 +226,23 @@ public class ChoiceHandlerService {
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.PermanentTypeChoice ctx) {
-            handlePermanentTypeChoice(gameData, player, colorName, ctx);
+            handlePermanentTypeChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.EachPlayerCardNameRevealChoice ctx) {
             handleEachPlayerCardNameRevealChoice(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.SphinxAmbassadorNameChoice ctx) {
-            handleSphinxAmbassadorNameChoice(gameData, player, colorName, ctx);
+        if (colorChoice.context() instanceof ChoiceContext.SphinxAmbassadorNameChoice) {
+            handleSphinxAmbassadorNameChoice(gameData, colorName);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.StorageMatrixUntapChoice ctx) {
-            handleStorageMatrixUntapChoice(gameData, player, colorName, ctx);
+            handleStorageMatrixUntapChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.TeferisRealmTypeChoice ctx) {
-            handleTeferisRealmTypeChoice(gameData, player, colorName, ctx);
+            handleTeferisRealmTypeChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.BecomeChosenColorsChoice ctx) {
@@ -278,7 +278,7 @@ public class ChoiceHandlerService {
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.AdjustCounterKindChoice ctx) {
-            handleAdjustCounterKindChoice(gameData, player, colorName, ctx);
+            handleAdjustCounterKindChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseModeChoice ctx) {
@@ -762,7 +762,7 @@ public class ChoiceHandlerService {
      * decrements. State-based actions are checked once all kinds are done (a lethal -1/-1 or a
      * planeswalker at 0 loyalty resolves only after the whole ability finishes).
      */
-    private void handleAdjustCounterKindChoice(GameData gameData, Player player, String choice,
+    private void handleAdjustCounterKindChoice(GameData gameData, String choice,
             ChoiceContext.AdjustCounterKindChoice ctx) {
         if (!ChoiceContext.AdjustCounterKindChoice.OPTIONS.contains(choice)) {
             throw new IllegalArgumentException("Invalid counter adjustment: " + choice);
@@ -912,7 +912,7 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleProtectionColorChoice(GameData gameData, Player player, String chosenValue, ChoiceContext.ProtectionColorChoice ctx) {
+    private void handleProtectionColorChoice(GameData gameData, String chosenValue, ChoiceContext.ProtectionColorChoice ctx) {
         // Parse before touching interaction state, as the dispatcher's own fallback does: an
         // unparseable answer must leave the prompt standing, since clearing it first destroys the
         // only thing that would resume the entry parked in pendingEffectResolutionEntry.
@@ -944,7 +944,7 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleMassProtectionColorChoice(GameData gameData, Player player, String chosenValue,
+    private void handleMassProtectionColorChoice(GameData gameData, String chosenValue,
             ChoiceContext.MassProtectionColorChoice ctx) {
         // Parse before touching interaction state, as the dispatcher's own fallback does: an
         // unparseable answer must leave the prompt standing, since clearing it first destroys the
@@ -1411,7 +1411,7 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleSpellCreatureTypeChoice(GameData gameData, Player player, String subtypeName, ChoiceContext.SpellCreatureTypeChoice ctx) {
+    private void handleSpellCreatureTypeChoice(GameData gameData, Player player, String subtypeName) {
         CardSubtype subtype = CardSubtype.valueOf(subtypeName);
 
         gameData.chosenSpellSubtype = subtype;
@@ -1580,7 +1580,7 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleAddBasicLandTypeChoice(GameData gameData, Player player, String subtypeName, ChoiceContext.AddBasicLandTypeChoice ctx) {
+    private void handleAddBasicLandTypeChoice(GameData gameData, String subtypeName, ChoiceContext.AddBasicLandTypeChoice ctx) {
         CardSubtype subtype = CardSubtype.valueOf(subtypeName);
 
         gameData.interaction.clearAwaitingInput();
@@ -1608,7 +1608,7 @@ public class ChoiceHandlerService {
      * Guides): it can't be blocked while the defending player controls a land that is both snow
      * and of that type (CR 702.14c).
      */
-    private void handleSnowLandwalkGrantChoice(GameData gameData, Player player, String subtypeName,
+    private void handleSnowLandwalkGrantChoice(GameData gameData, String subtypeName,
                                               ChoiceContext.SnowLandwalkGrantChoice ctx) {
         CardSubtype subtype = CardSubtype.valueOf(subtypeName);
 
@@ -1629,7 +1629,7 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleOwnLandsBecomeBasicTypeChoice(GameData gameData, Player player, String subtypeName, ChoiceContext.OwnLandsBecomeBasicTypeChoice ctx) {
+    private void handleOwnLandsBecomeBasicTypeChoice(GameData gameData, String subtypeName, ChoiceContext.OwnLandsBecomeBasicTypeChoice ctx) {
         CardSubtype subtype = CardSubtype.valueOf(subtypeName);
 
         gameData.interaction.clearAwaitingInput();
@@ -1691,7 +1691,7 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handlePermanentTypeChoice(GameData gameData, Player player, String typeName, ChoiceContext.PermanentTypeChoice ctx) {
+    private void handlePermanentTypeChoice(GameData gameData, String typeName, ChoiceContext.PermanentTypeChoice ctx) {
         CardType chosenType = CardType.valueOf(typeName);
         if (!chosenType.isPermanentType()) {
             throw new IllegalArgumentException("Invalid permanent type choice: " + typeName);
@@ -1743,7 +1743,7 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleStorageMatrixUntapChoice(GameData gameData, Player player, String typeName,
+    private void handleStorageMatrixUntapChoice(GameData gameData, String typeName,
                                                 ChoiceContext.StorageMatrixUntapChoice ctx) {
         com.github.laxika.magicalvibes.model.filter.PermanentPredicate restrict = switch (typeName) {
             case "ARTIFACT" -> new com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate();
@@ -1763,7 +1763,7 @@ public class ChoiceHandlerService {
         turnProgressionService.resumeStorageMatrixUntap(gameData, ctx.playerId(), restrict);
     }
 
-    private void handleTeferisRealmTypeChoice(GameData gameData, Player player, String typeName,
+    private void handleTeferisRealmTypeChoice(GameData gameData, String typeName,
                                               ChoiceContext.TeferisRealmTypeChoice ctx) {
         gameData.interaction.clearAwaitingInput();
 
@@ -2093,7 +2093,7 @@ public class ChoiceHandlerService {
         return new ArrayList<>(names);
     }
 
-    private void handleExileByNameChoice(GameData gameData, Player player, String cardName, ChoiceContext.ExileByNameChoice ctx) {
+    private void handleExileByNameChoice(GameData gameData, String cardName, ChoiceContext.ExileByNameChoice ctx) {
         gameData.interaction.clearAwaitingInput();
 
         UUID targetPlayerId = ctx.targetPlayerId();
@@ -2220,7 +2220,7 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleSphinxAmbassadorNameChoice(GameData gameData, Player player, String cardName, ChoiceContext.SphinxAmbassadorNameChoice ctx) {
+    private void handleSphinxAmbassadorNameChoice(GameData gameData, String cardName) {
         // Validate before touching interaction state: clearing first and then throwing destroys the
         // only thing that would resume the entry parked in pendingEffectResolutionEntry.
         PendingSphinxAmbassadorChoice pending = gameData.peekPendingInteraction(PendingSphinxAmbassadorChoice.class);
@@ -2233,7 +2233,7 @@ public class ChoiceHandlerService {
         Card selectedCard = pending.selectedCard();
         UUID controllerId = pending.controllerId();
         UUID targetPlayerId = pending.targetPlayerId();
-        String controllerName = gameData.playerIdToName.get(controllerId);
+        
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
         String choiceLog = targetName + " chooses \"" + cardName + "\".";

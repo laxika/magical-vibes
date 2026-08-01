@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AwardAnyColorManaEffectHandler implements NormalEffectHandlerBean {
 
-    private final PlayerInteractionSupport playerInteractionSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override

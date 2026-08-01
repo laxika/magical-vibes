@@ -46,7 +46,7 @@ public class ReturnSourceCardFromGraveyardToOwnerHandEffectHandler implements No
         gameData.playerHands.get(ownerId).add(sourceCard);
 
         String ownerName = gameData.playerIdToName.get(ownerId);
-        String logEntry = sourceCard.getName() + " returns from graveyard to " + ownerName + "'s hand.";
+        
         gameLogService.append(gameData, GameLog.builder().card(sourceCard).text(" returns from graveyard to " + ownerName + "'s hand.").build());
         log.info("Game {} - {} returns from graveyard to {}'s hand", gameData.id, sourceCard.getName(), ownerName);
     }

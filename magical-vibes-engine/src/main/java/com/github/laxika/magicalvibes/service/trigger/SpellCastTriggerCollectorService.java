@@ -117,8 +117,7 @@ public class SpellCastTriggerCollectorService {
     }
 
     @CollectsTrigger(value = KnowledgePoolCastTriggerEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
-    private boolean handleKnowledgePoolCast(TriggerMatchContext match,
-            KnowledgePoolCastTriggerEffect trigger, TriggerContext ctx) {
+    private boolean handleKnowledgePoolCast(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         if (!sc.castFromHand()) return false;
 
@@ -378,7 +377,7 @@ public class SpellCastTriggerCollectorService {
 
     @CollectsTrigger(value = BoostEquippedCreatureUntilEndOfTurnEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleBoostEquippedOnSpellCast(TriggerMatchContext match,
-            BoostEquippedCreatureUntilEndOfTurnEffect trigger, TriggerContext ctx) {
+            BoostEquippedCreatureUntilEndOfTurnEffect trigger) {
         // "Whenever you cast a spell, equipped creature gets +X/+Y until end of turn" (Leering Emblem).
         // Carry the source permanent id so the handler can find the equipment and its equipped creature
         // (the effect fizzles at resolution if the Equipment is no longer attached).
@@ -582,8 +581,7 @@ public class SpellCastTriggerCollectorService {
     }
 
     @CollectsTrigger(value = SunbirdsInvocationTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
-    private boolean handleSunbirdsInvocationCast(TriggerMatchContext match,
-            SunbirdsInvocationTriggerEffect trigger, TriggerContext ctx) {
+    private boolean handleSunbirdsInvocationCast(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         if (!sc.castFromHand()) return false;
 
@@ -694,7 +692,7 @@ public class SpellCastTriggerCollectorService {
 
     @CollectsTrigger(value = PutCountersOnSourceEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
     private boolean handleOpponentSpellCastPutCountersOnSource(TriggerMatchContext match,
-            PutCountersOnSourceEffect trigger, TriggerContext ctx) {
+            PutCountersOnSourceEffect trigger) {
         // "Whenever an opponent casts a spell, put a counter on this creature" (Ammit Eternal, -1/-1).
         // Mandatory — carry the source permanent id so the counter effect knows which permanent to
         // modify (the generic SpellCastTriggerEffect path only binds the source for "may" abilities).
@@ -797,7 +795,7 @@ public class SpellCastTriggerCollectorService {
 
     @CollectsTrigger(value = RevealTopCardCreatureToBattlefieldOrMayBottomEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
     private boolean handleRevealTopCardCreatureToBattlefield(TriggerMatchContext match,
-            RevealTopCardCreatureToBattlefieldOrMayBottomEffect trigger, TriggerContext ctx) {
+            RevealTopCardCreatureToBattlefieldOrMayBottomEffect trigger) {
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),

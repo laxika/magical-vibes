@@ -47,8 +47,7 @@ public class RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandler implemen
         Card topCard = deck.getFirst();
 
         // Reveal the card to all players
-        String revealLog = playerName + " reveals " + topCard.getName()
-                + " from the top of their library (" + sourceName + ").";
+        
         gameLogService.append(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" from the top of their library (" + sourceName + ").").build());
 
         boolean isCreature = topCard.hasType(CardType.CREATURE);

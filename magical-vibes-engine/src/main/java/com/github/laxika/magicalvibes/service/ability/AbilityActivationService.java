@@ -193,7 +193,7 @@ public class AbilityActivationService {
         }
         // Check for land type override (e.g. Evil Presence / Lush Growth)
         List<ManaColor> overriddenManaColors = gameQueryService.getOverriddenLandManaColors(gameData, permanent);
-        ManaColor overriddenManaColor = overriddenManaColors.size() == 1 ? overriddenManaColors.getFirst() : null;
+        
         if (permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty() && overriddenManaColors.isEmpty()) {
             throw new IllegalStateException("Permanent has no tap effects");
         }
@@ -633,7 +633,7 @@ public class AbilityActivationService {
 
         // Validate target for effects that need one
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_SACRIFICE)) {
-            if (effect instanceof DestroyTargetPermanentEffect destroy) {
+            if (effect instanceof DestroyTargetPermanentEffect) {
                 if (targetId == null) {
                     throw new IllegalStateException("Sacrifice ability requires a target");
                 }
@@ -1822,8 +1822,7 @@ public class AbilityActivationService {
         if (removeChargeCost.isPresent()) {
             int required = removeChargeCost.get().count();
             permanent.setCounterCount(CounterType.CHARGE, permanent.getCounterCount(CounterType.CHARGE) - required);
-            String counterLog = player.getUsername() + " removes " + required + " charge counter(s) from " + permanent.getCard().getName()
-                    + " (" + permanent.getCounterCount(CounterType.CHARGE) + " remaining).";
+            
             gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " removes " + required + " charge counter(s) from ")
                     .card(permanent.getCard())

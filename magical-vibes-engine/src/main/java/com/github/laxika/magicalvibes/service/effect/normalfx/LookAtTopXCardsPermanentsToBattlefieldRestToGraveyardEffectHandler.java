@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
@@ -43,9 +42,7 @@ public class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler 
 
         int count = Math.min(xValue, deck.size());
         if (count <= 0) {
-            String logMsg = entry.getCard().getName() + ": " + playerName
-                    + (deck.isEmpty() ? "'s library is empty."
-                    : toBottomRandom ? " reveals 0 cards (0 damage dealt)." : " looks at 0 cards (X is 0).");
+            
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(": " + playerName + (deck.isEmpty() ? "'s library is empty." : toBottomRandom ? " reveals 0 cards (0 damage dealt)." : " looks at 0 cards (X is 0).")).build());
             return;
         }

@@ -33,7 +33,7 @@ public class ChangeTargetOfTargetSpellToSourceEffectHandler implements NormalEff
         }
 
         if (!targetSpell.hasAnyTarget()) {
-            String logEntry = entry.getCard().getName() + " has no effect (" + targetSpell.getCard().getName() + " has no targets).";
+            
             gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " has no effect (", targetSpell.getCard(), " has no targets)."));
             return;
         }
@@ -41,7 +41,7 @@ public class ChangeTargetOfTargetSpellToSourceEffectHandler implements NormalEff
         UUID sourcePermanentId = entry.getSourcePermanentId();
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (sourcePermanent == null) {
-            String logEntry = entry.getCard().getName() + " has no effect (source permanent no longer on the battlefield).";
+            
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " has no effect (source permanent no longer on the battlefield)."));
             return;
         }
@@ -54,14 +54,14 @@ public class ChangeTargetOfTargetSpellToSourceEffectHandler implements NormalEff
             }
             if (targetRedirectionSupport.isValidNewTargetForSpell(gameData, targetSpell, sourcePermanentId)) {
                 targetSpell.setTargetId(sourcePermanentId);
-                String logEntry = targetSpell.getCard().getName() + "'s target is changed to " + entry.getCard().getName() + ".";
+                
                 gameLogService.append(gameData, GameLog.cardTextCard(targetSpell.getCard(), "'s target is changed to ", entry.getCard(), "."));
             } else {
-                String logEntry = entry.getCard().getName() + " is not a legal target for " + targetSpell.getCard().getName() + ". Target not changed.";
+                
                 gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " is not a legal target for ", targetSpell.getCard(), ". Target not changed."));
             }
         } else {
-            String logEntry = entry.getCard().getName() + " has no effect (" + targetSpell.getCard().getName() + " does not have a single target).";
+            
             gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " has no effect (", targetSpell.getCard(), " does not have a single target)."));
         }
     }

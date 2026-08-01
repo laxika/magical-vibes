@@ -80,8 +80,7 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
 
         String durationText = e.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN
                 ? "until your next turn" : "until end of turn";
-        String logEntry = entry.getCard().getName() + " grants \"" + e.ability().getDescription()
-                + "\" to " + count + " creature(s) " + durationText + ".";
+        
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" grants \"" + e.ability().getDescription() + "\" to " + count + " creature(s) " + durationText + ".").build());
         log.info("Game {} - {} grants activated ability to {} creature(s) {}",
                 gameData.id, entry.getCard().getName(), count, durationText);

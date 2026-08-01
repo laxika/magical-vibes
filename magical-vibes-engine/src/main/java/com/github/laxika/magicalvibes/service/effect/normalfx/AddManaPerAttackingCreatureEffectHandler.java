@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AddManaPerAttackingCreatureEffectHandler implements NormalEffectHandlerBean {
 
-    private final PlayerInteractionSupport playerInteractionSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override

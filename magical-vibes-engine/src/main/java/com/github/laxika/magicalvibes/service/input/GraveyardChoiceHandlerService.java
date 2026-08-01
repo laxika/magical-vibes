@@ -242,8 +242,7 @@ public class GraveyardChoiceHandlerService {
                     com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper
                             .shuffleLibrary(gameData, playerId);
 
-                    String logEntry = player.getUsername() + " shuffles " + card.getName()
-                            + " from their graveyard into their library.";
+                    
                     gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " shuffles ").card(card).text(" from their graveyard into their library.").build());
                     log.info("Game {} - {} shuffles {} from graveyard into library", gameData.id,
                             player.getUsername(), card.getName());
@@ -252,8 +251,7 @@ public class GraveyardChoiceHandlerService {
                     UUID libraryOwnerId = cardGraveyardOwnerId != null ? cardGraveyardOwnerId : playerId;
                     gameData.playerDecks.get(libraryOwnerId).addFirst(card);
 
-                    String logEntry = player.getUsername() + " puts " + card.getName()
-                            + " on top of their library from their graveyard.";
+                    
                     gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " puts ").card(card).text(" on top of their library from their graveyard.").build());
                     log.info("Game {} - {} puts {} on top of library from graveyard", gameData.id,
                             player.getUsername(), card.getName());
@@ -262,8 +260,7 @@ public class GraveyardChoiceHandlerService {
                     UUID libraryOwnerId = cardGraveyardOwnerId != null ? cardGraveyardOwnerId : playerId;
                     gameData.playerDecks.get(libraryOwnerId).addLast(card);
 
-                    String logEntry = player.getUsername() + " puts " + card.getName()
-                            + " on the bottom of their library from their graveyard.";
+                    
                     gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " puts ").card(card).text(" on the bottom of their library from their graveyard.").build());
                     log.info("Game {} - {} puts {} on bottom of library from graveyard", gameData.id,
                             player.getUsername(), card.getName());
@@ -304,8 +301,7 @@ public class GraveyardChoiceHandlerService {
                     if (gameData.resolvedMayTargetingEntry != null) {
                         StackEntry pendingEntry = gameData.resolvedMayTargetingEntry;
                         gameData.resolvedMayTargetingEntry = null;
-                        String resolveLog = player.getUsername() + " targets " + card.getName() + " in graveyard with "
-                                + pendingEntry.getCard().getName() + "'s ability.";
+                        
                         gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " targets ").card(card).text(" in graveyard with ").card(pendingEntry.getCard()).text("'s ability.").build());
                         log.info("Game {} - {} targets {} in graveyard for may ability", gameData.id,
                                 player.getUsername(), card.getName());
@@ -317,8 +313,7 @@ public class GraveyardChoiceHandlerService {
                         return;
                     }
 
-                    String logEntry = player.getUsername() + " targets " + card.getName() + " in graveyard with "
-                            + mayAbilitySourceCard.getName() + "'s ability.";
+                    
                     gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " targets ").card(card).text(" in graveyard with ").card(mayAbilitySourceCard).text("'s ability.").build());
                     log.info("Game {} - {} targets {} in graveyard for may ability", gameData.id,
                             player.getUsername(), card.getName());
@@ -551,8 +546,7 @@ public class GraveyardChoiceHandlerService {
             gameData.recordSpellCast(controllerId, pendingCard);
             gameData.priorityPassedBy.clear();
 
-            String castLog = gameData.playerIdToName.get(controllerId) + " casts " + pendingCard.getName()
-                    + " targeting " + String.join(", ", targetNames) + ".";
+            
             gameLogService.append(gameData, GameLog.builder().text(gameData.playerIdToName.get(controllerId) + " casts ").card(pendingCard).text(" targeting " + String.join(", ", targetNames) + ".").build());
             log.info("Game {} - {} casts {} with {} graveyard targets", gameData.id, pendingCard.getName(),
                     pendingCard.getName(), cardIds.size());

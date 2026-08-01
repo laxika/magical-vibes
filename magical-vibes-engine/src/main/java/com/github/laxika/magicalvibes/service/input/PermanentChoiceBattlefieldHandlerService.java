@@ -76,7 +76,6 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final TriggerTargetCollector triggerTargetCollector;
     private final CreatureControlService creatureControlService;
     private final PopulateSupport populateSupport;
-    private final TurnProgressionService turnProgressionService;
     private final DamageSupport damageSupport;
     private final DestructionSupport destructionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MaySacrificeForCounterSupport maySacrificeForCounterSupport;
@@ -768,8 +767,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                 ? targetPerm.getCard().getName()
                 : gameData.playerIdToName.getOrDefault(targetId, "unknown");
 
-        String logEntry = "The next " + ctx.amount() + " damage " + chosenPermanent.getCard().getName()
-                + " would deal to " + targetName + " is prevented.";
+        
         gameLogService.append(gameData, GameLog.builder().text("The next " + ctx.amount() + " damage ").card(chosenPermanent.getCard()).text(" would deal to " + targetName + " is prevented.").build());
         log.info("Game {} - Chose {} as damage source, preventing up to {} damage to {}",
                 gameData.id, chosenPermanent.getCard().getName(), ctx.amount(), targetName);
@@ -1192,7 +1190,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         entering.setChosenPermanentId(chosenCreatureId);
 
-        String logEntry = entering.getCard().getName() + " chooses " + chosen.getCard().getName() + ".";
+        
         gameLogService.append(gameData, GameLog.cardTextCard(entering.getCard(), " chooses ", chosen.getCard(), "."));
         log.info("Game {} - {} chooses {} as protected creature", gameData.id,
                 entering.getCard().getName(), chosen.getCard().getName());
@@ -1248,7 +1246,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             }
 
             String playerName = gameData.playerIdToName.get(auraControllerId);
-            String logEntry = auraCard.getName() + " enters the battlefield attached to " + enchantTarget.getCard().getName() + " under " + playerName + "'s control.";
+            
             gameLogService.append(gameData, GameLog.builder().card(auraCard).text(" enters the battlefield attached to ").card(enchantTarget.getCard()).text(" under " + playerName + "'s control.").build());
             log.info("Game {} - {} puts {} onto battlefield attached to {}",
                     gameData.id, playerName, auraCard.getName(), enchantTarget.getCard().getName());

@@ -63,7 +63,7 @@ public class ExileTargetPermanentAndTrackWithSourceEffectHandler implements Norm
             gameData.addToExile(ownerId, exiledCard, sourcePermanentId);
         }
 
-        String logEntry = exiledCard.getName() + " is exiled by " + entry.getCard().getName() + ".";
+        
         gameLogService.append(gameData, GameLog.cardTextCard(exiledCard, " is exiled by ", entry.getCard(), "."));
         log.info("Game {} - {} exiles {} (tracked with source)",
                 gameData.id, entry.getCard().getName(), exiledCard.getName());

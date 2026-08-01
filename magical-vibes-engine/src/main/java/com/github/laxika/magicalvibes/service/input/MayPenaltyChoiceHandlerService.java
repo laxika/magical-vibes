@@ -57,8 +57,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -85,8 +83,6 @@ public class MayPenaltyChoiceHandlerService {
     private final DrawService drawService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
-    private final TurnProgressionService turnProgressionService;
-    private final StateBasedActionService stateBasedActionService;
     private final PermanentRemovalService permanentRemovalService;
     private final DestructionSupport destructionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LibraryExileSupport libraryExileSupport;

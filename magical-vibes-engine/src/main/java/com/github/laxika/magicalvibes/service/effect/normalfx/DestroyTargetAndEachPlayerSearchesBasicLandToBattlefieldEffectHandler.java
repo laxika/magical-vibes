@@ -34,12 +34,11 @@ public class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandl
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        doResolve(gameData, entry, (DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect) effect);
+        doResolve(gameData, entry);
     }
 
     private void doResolve(
-            GameData gameData, StackEntry entry,
-            DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect effect) {
+            GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;

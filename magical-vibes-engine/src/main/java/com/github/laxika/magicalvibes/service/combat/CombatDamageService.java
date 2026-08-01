@@ -62,7 +62,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -93,7 +92,6 @@ public class CombatDamageService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final GameLogService gameLogService;
-    private final GameOutcomeService gameOutcomeService;
     private final DamagePreventionService damagePreventionService;
     private final GraveyardService graveyardService;
     private final PermanentRemovalService permanentRemovalService;
@@ -169,14 +167,13 @@ public class CombatDamageService {
             // dealing first-strike damage; the collected assignments are consumed by this step
             // only — a double striker assigns its regular-step damage anew.
             if (!gameData.combatDamageFirstStrikeAssignmentPhase
-                    && collectManualAssignments(gameData, state, blockerMap, atkBf, defBf, defenderId, true)) {
+                    && collectManualAssignments(gameData, state, blockerMap, atkBf, defBf, true)) {
                 gameData.combatDamagePhase1State = savePhase1State(state, blockerMap, anyFirstStrike);
                 gameData.combatDamageFirstStrikeAssignmentPhase = true;
                 sendNextCombatDamageAssignment(gameData, atkBf, defBf, activeId, defenderId);
                 return CombatResult.DONE;
             }
-            resolveDamagePhase(gameData, state, blockerMap, atkBf, defBf,
-                    attackingIndices, activeId, defenderId, redirectTarget, true);
+            resolveDamagePhase(gameData, state, blockerMap, atkBf, defBf, activeId, defenderId, redirectTarget, true);
             CombatResult result = finishCombatDamageStep(gameData, state, atkBf, defBf,
                     activeId, defenderId, redirectTarget);
             gameData.combatDamageFirstStrikeAssignmentPhase = false;
@@ -189,15 +186,14 @@ public class CombatDamageService {
 
         // Check if any regular-step attackers or multi-blocking creatures need manual damage assignment
         if (!gameData.combatDamagePhase1Complete
-                && collectManualAssignments(gameData, state, blockerMap, atkBf, defBf, defenderId, false)) {
+                && collectManualAssignments(gameData, state, blockerMap, atkBf, defBf, false)) {
             gameData.combatDamagePhase1State = savePhase1State(state, blockerMap, anyFirstStrike);
             gameData.combatDamagePhase1Complete = true;
             sendNextCombatDamageAssignment(gameData, atkBf, defBf, activeId, defenderId);
             return CombatResult.DONE;
         }
 
-        resolveDamagePhase(gameData, state, blockerMap, atkBf, defBf,
-                attackingIndices, activeId, defenderId, redirectTarget, false);
+        resolveDamagePhase(gameData, state, blockerMap, atkBf, defBf, activeId, defenderId, redirectTarget, false);
 
         gameData.combatDamageFirstStrikeStepComplete = false;
         return finishCombatDamageStep(gameData, state, atkBf, defBf, activeId, defenderId, redirectTarget);
@@ -436,7 +432,7 @@ public class CombatDamageService {
         // unblocked creature's combat damage isn't divided).
         boolean unblockedRedirect = livingBlockers.isEmpty()
                 && !atk.isBlockedWithoutBlockers()
-                && canRedirectUnblockedDamageToDefendingCreature(gameData, atk, defenderId, defBf);
+                && canRedirectUnblockedDamageToDefendingCreature(gameData, atk, defBf);
 
         Set<UUID> validTargetIds = new HashSet<>();
         for (int blkIdx : livingBlockers) {
@@ -626,7 +622,6 @@ public class CombatDamageService {
     private void resolveDamagePhase(GameData gameData, CombatDamageState state,
                                      Map<Integer, List<Integer>> blockerMap,
                                      List<Permanent> atkBf, List<Permanent> defBf,
-                                     List<Integer> attackingIndices,
                                      UUID activeId, UUID defenderId,
                                      Permanent redirectTarget, boolean isFirstStrikePhase) {
         // CR 510.4: all combat damage in this step is dealt simultaneously, so every value used
@@ -668,7 +663,7 @@ public class CombatDamageService {
 
             if (playerAssignment != null) {
                 if (atkParticipates && !atkStats.preventedFromDealingCombatDamage()) {
-                    applyPlayerAssignedDamage(gameData, state, atk, atkStats, blkIndices, defBf,
+                    applyPlayerAssignedDamage(gameData, state, atk, atkStats, defBf,
                             playerAssignment, activeId, defenderId, redirectTarget,
                             damagePreventableFrom(gameData, snap.damagePreventable(), atk));
                 }
@@ -847,7 +842,7 @@ public class CombatDamageService {
     }
 
     private void applyPlayerAssignedDamage(GameData gameData, CombatDamageState state,
-                                            Permanent atk, CombatantStats atkStats, List<Integer> blkIndices,
+                                            Permanent atk, CombatantStats atkStats,
                                             List<Permanent> defBf,
                                             Map<UUID, Integer> playerAssignment,
                                             UUID activeId, UUID defenderId,
@@ -1238,7 +1233,7 @@ public class CombatDamageService {
             }
 
             checkAttachedCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId);
-            checkPlayerAttachedCurseCombatDamageTriggers(gameData, creature, attackerId, defenderId);
+            checkPlayerAttachedCurseCombatDamageTriggers(gameData, creature, defenderId);
             checkAllyCreatureCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt);
         }
     }
@@ -1291,7 +1286,7 @@ public class CombatDamageService {
      * E.g. Curse of Stalked Prey: "Whenever a creature deals combat damage to enchanted player,
      * put a +1/+1 counter on that creature."
      */
-    private void checkPlayerAttachedCurseCombatDamageTriggers(GameData gameData, Permanent creature, UUID attackerId, UUID defenderId) {
+    private void checkPlayerAttachedCurseCombatDamageTriggers(GameData gameData, Permanent creature, UUID defenderId) {
         gameData.forEachPermanent((ownerId, perm) -> {
             if (perm.isAttached() && perm.getAttachedTo().equals(defenderId)) {
                 List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER);
@@ -2392,8 +2387,7 @@ public class CombatDamageService {
      * defending creature (e.g. Cunning Giant) and the defending player controls at least one
      * creature to redirect to. Only applies when attacking a player (not a planeswalker).
      */
-    private boolean canRedirectUnblockedDamageToDefendingCreature(GameData gameData, Permanent atk,
-                                                                  UUID defenderId, List<Permanent> defBf) {
+    private boolean canRedirectUnblockedDamageToDefendingCreature(GameData gameData, Permanent atk, List<Permanent> defBf) {
         if (!assignsUnblockedDamageToDefendingCreature(atk)) return false;
         UUID attackTarget = atk.getAttackTarget();
         if (attackTarget != null && !gameData.playerIds.contains(attackTarget)) return false;
@@ -2414,7 +2408,7 @@ public class CombatDamageService {
     private boolean collectManualAssignments(GameData gameData, CombatDamageState state,
                                              Map<Integer, List<Integer>> blockerMap,
                                              List<Permanent> atkBf, List<Permanent> defBf,
-                                             UUID defenderId, boolean isFirstStrikePhase) {
+                                             boolean isFirstStrikePhase) {
         record Collected(List<Integer> attackerIndices, List<Integer> blockerIndices) {}
         Collected collected = gameQueryService.withQueryScope(gameData, () -> {
             List<Integer> attackers = new ArrayList<>();
@@ -2437,7 +2431,7 @@ public class CombatDamageService {
                 for (int i : bEntry.getValue()) {
                     if (!state.deadDefenderIndices.contains(i)) livingBlockers.add(i);
                 }
-                if (needsManualDamageAssignment(gameData, bAtk, livingBlockers, defenderId, defBf)) {
+                if (needsManualDamageAssignment(gameData, bAtk, livingBlockers, defBf)) {
                     attackers.add(bAtkIdx);
                 }
             }
@@ -2469,7 +2463,7 @@ public class CombatDamageService {
 
     private boolean needsManualDamageAssignment(GameData gameData, Permanent atk,
                                                 List<Integer> livingBlockerIndices,
-                                                UUID defenderId, List<Permanent> defBf) {
+                                                List<Permanent> defBf) {
         // A creature with 0 or negative power deals no combat damage (CR 510.1a),
         // so there is nothing for the player to distribute.
         if (gameQueryService.getEffectiveCombatDamage(gameData, atk) <= 0) return false;
@@ -2478,7 +2472,7 @@ public class CombatDamageService {
         if (livingBlockerIndices.isEmpty()) {
             // Unblocked attacker that may assign its combat damage to a defending creature
             // (e.g. Cunning Giant). Prompt only when there is a defending creature to choose.
-            return canRedirectUnblockedDamageToDefendingCreature(gameData, atk, defenderId, defBf);
+            return canRedirectUnblockedDamageToDefendingCreature(gameData, atk, defBf);
         }
         if (livingBlockerIndices.size() >= 2) return true;
         if (gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)) return true;
@@ -2629,7 +2623,7 @@ public class CombatDamageService {
         // (e.g. Cunning Giant): offer every defending creature plus the defending player.
         boolean unblockedRedirect = livingBlockers.isEmpty()
                 && !atk.isBlockedWithoutBlockers()
-                && canRedirectUnblockedDamageToDefendingCreature(gameData, atk, defenderId, defBf);
+                && canRedirectUnblockedDamageToDefendingCreature(gameData, atk, defBf);
         if (unblockedRedirect) {
             for (Permanent def : defBf) {
                 if (gameQueryService.isCreature(gameData, def)) {

@@ -27,7 +27,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements NormalEffectHandlerBean {
 
-    private final DrawService drawService;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final GraveyardService graveyardService;
@@ -61,7 +60,7 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
             Card discarded = hand.remove(randomIndex);
             discardedCards.add(discarded);
             graveyardService.discardCard(gameData, controllerId, discarded);
-            String logEntry = playerName + " discards " + discarded.getName() + " at random.";
+            
             gameLogService.append(gameData, GameLog.textCardText(playerName + " discards " , discarded, " at random."));
             log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
             triggerCollectionService.checkDiscardTriggers(gameData, controllerId, discarded);

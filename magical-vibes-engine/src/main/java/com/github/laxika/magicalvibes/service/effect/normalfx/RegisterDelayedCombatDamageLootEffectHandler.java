@@ -16,8 +16,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RegisterDelayedCombatDamageLootEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameLogService gameLogService;
-    private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

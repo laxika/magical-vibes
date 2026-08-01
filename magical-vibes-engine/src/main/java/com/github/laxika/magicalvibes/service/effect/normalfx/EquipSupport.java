@@ -50,7 +50,7 @@ public class EquipSupport {
         if (hasSacrificeOnUnattach && oldAttachedTo != null && !oldAttachedTo.equals(newAttachedTo)) {
             Permanent oldCreature = gameQueryService.findPermanentById(gameData, oldAttachedTo);
             if (oldCreature != null) {
-                String sacrificeLog = oldCreature.getCard().getName() + " is sacrificed (" + equipment.getCard().getName() + " became unattached).";
+                
                 gameLogService.append(gameData, GameLog.cardTextCard(oldCreature.getCard(), " is sacrificed (", equipment.getCard(), " became unattached)."));
                 log.info("Game {} - {} sacrificed due to {} unattach", gameData.id, oldCreature.getCard().getName(), equipment.getCard().getName());
                 permanentRemovalService.removePermanentToGraveyard(gameData, oldCreature);

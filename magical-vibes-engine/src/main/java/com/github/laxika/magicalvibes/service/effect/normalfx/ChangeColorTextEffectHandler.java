@@ -22,7 +22,6 @@ import org.springframework.stereotype.Component;
 public class ChangeColorTextEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final PlayerInteractionSupport playerInteractionSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override

@@ -97,7 +97,7 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
 
         String cardName = entry.getCard().getName();
-        List<Permanent> destroyed = new ArrayList<>();
+        
 
         for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
             UUID targetId = assignment.getKey();

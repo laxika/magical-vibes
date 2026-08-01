@@ -176,8 +176,7 @@ public class LandTapTriggerCollectorService {
     }
 
     @CollectsTrigger(value = AddExtraManaOfChosenColorOnLandTapEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
-    private boolean handleAddExtraManaOfChosenColor(TriggerMatchContext match,
-            AddExtraManaOfChosenColorOnLandTapEffect trigger, TriggerContext ctx) {
+    private boolean handleAddExtraManaOfChosenColor(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
         // Only triggers for the controller's own lands
         if (!match.controllerId().equals(lt.tappingPlayerId())) return false;
@@ -261,8 +260,7 @@ public class LandTapTriggerCollectorService {
     }
 
     @CollectsTrigger(value = AddProducedManaWhenSnowLandTappedEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
-    private boolean handleAddProducedManaWhenSnowLandTapped(TriggerMatchContext match,
-            AddProducedManaWhenSnowLandTappedEffect trigger, TriggerContext ctx) {
+    private boolean handleAddProducedManaWhenSnowLandTapped(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
 
         Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
@@ -289,8 +287,7 @@ public class LandTapTriggerCollectorService {
     }
 
     @CollectsTrigger(value = TappedSnowLandDoesntUntapEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
-    private boolean handleTappedSnowLandDoesntUntap(TriggerMatchContext match,
-            TappedSnowLandDoesntUntapEffect trigger, TriggerContext ctx) {
+    private boolean handleTappedSnowLandDoesntUntap(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
 
         Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
@@ -346,8 +343,7 @@ public class LandTapTriggerCollectorService {
     }
 
     @CollectsTrigger(value = ReturnTappedLandToHandEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
-    private boolean handleReturnTappedLandToHand(TriggerMatchContext match,
-            ReturnTappedLandToHandEffect trigger, TriggerContext ctx) {
+    private boolean handleReturnTappedLandToHand(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
 
         Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
@@ -361,8 +357,7 @@ public class LandTapTriggerCollectorService {
     }
 
     @CollectsTrigger(value = OpponentTappedLandDoesntUntapEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
-    private boolean handleOpponentLandDoesntUntap(TriggerMatchContext match,
-            OpponentTappedLandDoesntUntapEffect trigger, TriggerContext ctx) {
+    private boolean handleOpponentLandDoesntUntap(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
         // Only triggers for opponents' lands
         if (match.controllerId().equals(lt.tappingPlayerId())) return false;

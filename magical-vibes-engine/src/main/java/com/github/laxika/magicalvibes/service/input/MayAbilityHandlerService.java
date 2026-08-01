@@ -67,7 +67,7 @@ public class MayAbilityHandlerService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
-    private final TurnProgressionService turnProgressionService;
+    
     private final EffectResolutionService effectResolutionService;
     private final DestructionSupport destructionSupport;
     private final GraveyardReturnSupport graveyardReturnSupport;
@@ -102,7 +102,7 @@ public class MayAbilityHandlerService {
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
-        this.turnProgressionService = turnProgressionService;
+        
         this.effectResolutionService = effectResolutionService;
         this.destructionSupport = destructionSupport;
         this.graveyardReturnSupport = graveyardReturnSupport;

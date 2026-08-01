@@ -27,7 +27,6 @@ public class SacrificeCreatureToCreateTokensEqualToToughnessEffectHandler implem
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
-    private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,7 +52,7 @@ public class SacrificeCreatureToCreateTokensEqualToToughnessEffectHandler implem
         }
 
         if (validIds.isEmpty()) {
-            String logEntry = playerName + " has no creature to sacrifice for " + entry.getCard().getName() + ".";
+            
             gameLogService.append(gameData, GameLog.textCardText(playerName + " has no creature to sacrifice for " , entry.getCard(), "."));
             log.info("Game {} - {} has no creature to sacrifice for {}",
                     gameData.id, playerName, entry.getCard().getName());

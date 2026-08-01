@@ -274,7 +274,7 @@ public class GraveyardService {
         // (e.g. a spell cast via Nita, Forum Conciliator). Tracked for the specific card until cleanup.
         if (gameData.exileInsteadOfGraveyard.remove(card.getId())) {
             exileService.exileCard(gameData, ownerId, card);
-            String exileLog = card.getName() + " is exiled instead of being put into a graveyard.";
+            
             gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
             log.info("Game {} - {} replacement effect: exiled instead of graveyard (cast permission)",
                     gameData.id, card.getName());
@@ -285,7 +285,7 @@ public class GraveyardService {
         // ExileOpponentCardsInsteadOfGraveyardEffect, exile the card instead
         if (opponentHasExileReplacementEffect(gameData, ownerId)) {
             exileService.exileCard(gameData, ownerId, card);
-            String exileLog = card.getName() + " is exiled instead of being put into a graveyard.";
+            
             gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
             log.info("Game {} - {} replacement effect: exiled instead of graveyard", gameData.id, card.getName());
             return false;

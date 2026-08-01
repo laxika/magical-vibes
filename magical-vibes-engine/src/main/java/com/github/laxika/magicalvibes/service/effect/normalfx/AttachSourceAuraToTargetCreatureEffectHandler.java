@@ -29,7 +29,7 @@ public class AttachSourceAuraToTargetCreatureEffectHandler implements NormalEffe
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
-            String logEntry = entry.getCard().getName() + "'s attach ability fizzles (target creature no longer exists).";
+            
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s attach ability fizzles (target creature no longer exists)."));
             log.info("Game {} - Attach source aura fizzles, target creature left battlefield", gameData.id);
             return;
@@ -37,7 +37,7 @@ public class AttachSourceAuraToTargetCreatureEffectHandler implements NormalEffe
 
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (aura == null) {
-            String logEntry = entry.getCard().getName() + "'s attach ability fizzles (Aura no longer on the battlefield).";
+            
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s attach ability fizzles (Aura no longer on the battlefield)."));
             log.info("Game {} - Attach source aura fizzles, Aura left battlefield", gameData.id);
             return;

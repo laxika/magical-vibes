@@ -53,7 +53,7 @@ public class ReturnEnchantedCreatureToOwnerHandOnDeathEffectHandler implements N
         gameData.playerHands.get(ownerId).add(creatureCard);
 
         String ownerName = gameData.playerIdToName.get(ownerId);
-        String logEntry = creatureCard.getName() + " returns from graveyard to " + ownerName + "'s hand.";
+        
         gameLogService.append(gameData, GameLog.builder().card(creatureCard).text(" returns from graveyard to " + ownerName + "'s hand.").build());
         log.info("Game {} - {} returns {} from graveyard to {}'s hand",
                 gameData.id, entry.getCard().getName(), creatureCard.getName(), ownerName);

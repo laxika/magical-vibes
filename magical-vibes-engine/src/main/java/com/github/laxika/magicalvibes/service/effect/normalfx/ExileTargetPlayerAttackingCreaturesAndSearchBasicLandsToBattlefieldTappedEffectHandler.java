@@ -37,12 +37,11 @@ public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefield
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        doResolve(gameData, entry, (ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefieldTappedEffect) effect);
+        doResolve(gameData, entry);
     }
 
     private void doResolve(
-            GameData gameData, StackEntry entry,
-            ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefieldTappedEffect effect) {
+            GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetId();
         if (!gameData.playerIds.contains(targetPlayerId)) {
             return;
