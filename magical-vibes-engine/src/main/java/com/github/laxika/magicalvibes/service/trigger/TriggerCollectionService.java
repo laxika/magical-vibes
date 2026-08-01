@@ -3788,7 +3788,7 @@ public class TriggerCollectionService {
         if (effect instanceof ConditionalEffect conditional
                 && conditional.condition() instanceof PermanentEnteredThisTurn) {
             ConditionContext ctx = new ConditionContext(affectedPlayerId, null, null, null,
-                    false, false, null, 0, null, null);
+                    false, false, false, null, 0, null, null);
             if (!conditionEvaluationService.isMet(gameData, conditional.condition(), ctx)) {
                 return null;
             }

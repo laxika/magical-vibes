@@ -42,6 +42,7 @@ export function browseInfoToCard(info: BrowseCardInfo): Card {
     graveyardActivatedAbilities: [],
     transformable: false,
     kickerCost: null,
+    buybackCost: null,
     modalChoicesRequired: 0,
     modalChoicesMax: 0,
     modalOptional: false,

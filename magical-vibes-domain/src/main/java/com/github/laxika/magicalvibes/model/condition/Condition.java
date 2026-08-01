@@ -24,6 +24,7 @@ public sealed interface Condition permits
         AttackedWithCreaturesThisTurn,
         AttacksAlone,
         BlockedByMinCreatures,
+        BuybackPaid,
         CameUnderControlThisTurn,
         CardDirectlyAboveSelfInGraveyard,
         CardsAboveSelfInGraveyard,

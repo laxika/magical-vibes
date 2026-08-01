@@ -373,6 +373,18 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, sacrificePermanentId, null, null, null, null, true);
     }
 
+    public void castInstantWithBuyback(Player player, int cardIndex, UUID targetId) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, null, null, null,
+                false, null, null, null, null, List.of(), true);
+    }
+
+    public void castSorceryWithBuyback(Player player, int cardIndex, UUID targetId) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, null, null, null,
+                false, null, null, null, null, List.of(), true);
+    }
+
     public void castCreatureWithGraveyardExile(Player player, int cardIndex, int exileGraveyardCardIndex) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, null, exileGraveyardCardIndex);
@@ -533,7 +545,7 @@ public class GameTestHarness {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 1 + repeatedAdditionalCosts.size(), null, null,
                 targetIds, List.of(), false, null, null, null, null, null, false, null, null, null, null,
-                repeatedAdditionalCosts);
+                repeatedAdditionalCosts, false);
     }
 
     public void castSorceryWithSacrifice(Player player, int cardIndex, UUID sacrificePermanentId) {

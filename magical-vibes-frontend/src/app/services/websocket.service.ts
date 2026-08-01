@@ -177,6 +177,7 @@ export interface Card {
   handActivatedAbilities?: ActivatedAbilityView[];
   transformable: boolean;
   kickerCost: string | null;
+  buybackCost: string | null;
   modalChoicesRequired: number;
   modalChoicesMax: number;
   modalOptional: boolean;

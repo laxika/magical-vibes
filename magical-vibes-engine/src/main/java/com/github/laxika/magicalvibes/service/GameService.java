@@ -479,9 +479,10 @@ public class GameService {
     /**
      * Cast entry point that also carries {@code repeatedAdditionalCosts} — the caster's chosen
      * payments for a repeatable additional mana cost ("you may pay {1}{R} and/or {1}{G} any number
-     * of times", Primitive Justice), one entry per repetition.
+     * of times", Primitive Justice), one entry per repetition — and {@code buyback}, whether the
+     * caster pays the spell's optional buyback cost (CR 702.27).
      */
-    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId, Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices, boolean kicked, Integer discardHandCardIndex, List<Integer> discardHandCardIndices, List<UUID> imposedSacrificePermanentIds, List<UUID> additionalCostSacrificePermanentIds, List<String> repeatedAdditionalCosts) {
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId, Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices, boolean kicked, Integer discardHandCardIndex, List<Integer> discardHandCardIndices, List<UUID> imposedSacrificePermanentIds, List<UUID> additionalCostSacrificePermanentIds, List<String> repeatedAdditionalCosts, boolean buyback) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playCard(gameData, actionPlayer, cardIndex, xValue, targetId, damageAssignments,
@@ -490,7 +491,7 @@ public class GameService {
                         exileGraveyardCardIndex, exileGraveyardCardIndices, kicked,
                         discardHandCardIndex, discardHandCardIndices,
                         imposedSacrificePermanentIds, additionalCostSacrificePermanentIds,
-                        repeatedAdditionalCosts))) return;
+                        repeatedAdditionalCosts, buyback))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -499,7 +500,7 @@ public class GameService {
                     alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices,
                     kicked, discardHandCardIndex, discardHandCardIndices, null,
                     imposedSacrificePermanentIds, additionalCostSacrificePermanentIds,
-                    repeatedAdditionalCosts);
+                    repeatedAdditionalCosts, buyback);
         }
     }
 

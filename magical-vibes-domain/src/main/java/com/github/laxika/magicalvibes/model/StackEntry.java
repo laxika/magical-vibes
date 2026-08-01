@@ -61,6 +61,14 @@ public class StackEntry {
     @Setter private UUID ownerIdOverride;
     @Setter private boolean kicked;
     /**
+     * Whether this spell's buyback cost was paid (CR 702.27). Stamped by
+     * {@code SpellCastingService} when the caster announces buyback; read at resolution by
+     * {@code BuybackPaid} conditions ("if buyback was paid, put this card into its owner's
+     * hand as it resolves"). Buyback only applies to instants and sorceries, so this flag
+     * only ever rides a spell entry.
+     */
+    @Setter private boolean buyback;
+    /**
      * The individual mana payments the caster chose for this spell's
      * {@link com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost}, one entry
      * per repetition ("you may pay {1}{R} and/or {1}{G} any number of times"). Snapshotted at cast
@@ -371,6 +379,7 @@ public class StackEntry {
         this.sourceZone = source.sourceZone;
         this.ownerIdOverride = source.ownerIdOverride;
         this.kicked = source.kicked;
+        this.buyback = source.buyback;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts.isEmpty()
                 ? List.of() : new ArrayList<>(source.repeatedAdditionalCosts);
         this.castWhenSorceryCouldNotBeCast = source.castWhenSorceryCouldNotBeCast;

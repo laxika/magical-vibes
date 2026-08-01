@@ -53,6 +53,7 @@ public enum CardSet {
     SET_POR("POR"),
     SET_P02("P02"),
     SET_PTK("PTK"),
+    SET_TMP("TMP"),
     SET_DRB("DRB");
 
     @Getter

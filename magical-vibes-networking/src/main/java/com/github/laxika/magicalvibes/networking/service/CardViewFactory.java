@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -155,6 +156,10 @@ public class CardViewFactory {
                             if (ke.hasSacrificeCost()) return "Sacrifice " + ke.sacrificeDescription();
                             return null;
                         })
+                        .findFirst().orElse(null),
+                card.getEffects(EffectSlot.STATIC).stream()
+                        .filter(e -> e instanceof BuybackEffect)
+                        .map(e -> ((BuybackEffect) e).cost())
                         .findFirst().orElse(null),
                 modalEffect != null ? modalEffect.choicesRequired() : 0,
                 modalEffect != null ? modalEffect.choicesMax() : 0,

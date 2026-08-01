@@ -1561,6 +1561,7 @@ export class GameComponent implements OnInit, OnDestroy {
     if (t.choosingAbility) { t.cancelAbilityChoice(); return true; }
     if (t.choosingMode) { t.cancelModes(); return true; }
     if (t.choosingKicker) { t.cancelKicker(); return true; }
+    if (t.choosingBuyback) { t.cancelBuyback(); return true; }
     if (t.choosingPhyrexianPayment) { t.cancelPhyrexianPayment(); return true; }
     if (t.choosingAlternateCost || t.selectingAlternateCostCreatures || t.selectingAlternateCostHandCard) { t.cancelAlternateCost(); return true; }
     if (t.choosingXValue) { t.cancelXValue(); return true; }
@@ -1584,7 +1585,7 @@ export class GameComponent implements OnInit, OnDestroy {
       || c.library.scrying || c.library.reorderingLibrary || c.library.searchingLibrary || c.library.choosingHandTopBottom
       || c.damage.assigningCombatDamage || c.damage.distributingDamage
       || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking || t.payingForCast || t.payingForAbility
-      || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker
+      || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker || t.choosingBuyback
       || t.choosingPhyrexianPayment || t.choosingAlternateCost || t.selectingAlternateCostCreatures
       || t.selectingAlternateCostHandCard
       || t.targetingGraveyard;

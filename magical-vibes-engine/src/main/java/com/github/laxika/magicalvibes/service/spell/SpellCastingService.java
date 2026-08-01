@@ -80,6 +80,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -526,13 +527,15 @@ public class SpellCastingService {
                 fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds,
                 exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, discardHandCardIndex,
                 discardHandCardIndices, modalXValue, imposedSacrificePermanentIds,
-                additionalCostSacrificePermanentIds, List.of());
+                additionalCostSacrificePermanentIds, List.of(), false);
     }
 
     /**
      * Full cast entry point including {@code repeatedAdditionalCosts} — the caster's chosen
      * payments for a {@link com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost}
-     * ("you may pay {1}{R} and/or {1}{G} any number of times"), one entry per repetition.
+     * ("you may pay {1}{R} and/or {1}{G} any number of times"), one entry per repetition — and
+     * {@code buyback} — whether the caster pays the spell's optional buyback cost
+     * ({@link com.github.laxika.magicalvibes.model.effect.BuybackEffect}, CR 702.27).
      */
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
                   List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
@@ -540,7 +543,7 @@ public class SpellCastingService {
                   List<Integer> exileGraveyardCardIndices, boolean kicked, Integer discardHandCardIndex,
                   List<Integer> discardHandCardIndices, Integer modalXValue,
                   List<UUID> imposedSacrificePermanentIds, List<UUID> additionalCostSacrificePermanentIds,
-                  List<String> repeatedAdditionalCosts) {
+                  List<String> repeatedAdditionalCosts, boolean buyback) {
         List<Card> hand = gameData.playerHands.get(player.getId());
         Card attempted = !fromGraveyard && hand != null && cardIndex >= 0 && cardIndex < hand.size()
                 ? hand.get(cardIndex) : null;
@@ -550,7 +553,7 @@ public class SpellCastingService {
                     alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked,
                     discardHandCardIndex, discardHandCardIndices, false, List.of(), modalXValue,
                     List.of(), imposedSacrificePermanentIds, additionalCostSacrificePermanentIds,
-                    repeatedAdditionalCosts);
+                    repeatedAdditionalCosts, buyback);
         } catch (IllegalArgumentException | IllegalStateException e) {
             // CR 730: an illegal cast rewinds. The internal flow removes the card from hand before
             // some validations run (e.g. target-based cost reduction) — if the failed cast left the
@@ -577,7 +580,7 @@ public class SpellCastingService {
             playCardInternal(gameData, player, cardIndex, xValue, targetId, damageAssignments,
                     targetIds != null ? targetIds : List.of(), List.of(), false, null, null, List.of(),
                     null, null, false, null, null, false, List.of(), null,
-                    spliceHandCardIndices != null ? spliceHandCardIndices : List.of(), null, null, List.of());
+                    spliceHandCardIndices != null ? spliceHandCardIndices : List.of(), null, null, List.of(), false);
         } catch (IllegalArgumentException | IllegalStateException e) {
             if (attempted != null && !hand.contains(attempted)
                     && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
@@ -600,7 +603,7 @@ public class SpellCastingService {
         try {
             playCardInternal(gameData, player, cardIndex, xValue, targetId, damageAssignments,
                     targetIds != null ? targetIds : List.of(), List.of(), false, null, null, List.of(),
-                    null, null, false, null, null, true, List.of(), null, List.of(), null, null, List.of());
+                    null, null, false, null, null, true, List.of(), null, List.of(), null, null, List.of(), false);
         } catch (IllegalArgumentException | IllegalStateException e) {
             if (attempted != null && !hand.contains(attempted)
                     && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
@@ -622,7 +625,7 @@ public class SpellCastingService {
         try {
             playCardInternal(gameData, player, cardIndex, xValue, targetId, damageAssignments,
                     targetIds != null ? targetIds : List.of(), List.of(), false, null, null, List.of(),
-                    null, null, false, null, null, true, List.of(), null, List.of(), null, null, List.of());
+                    null, null, false, null, null, true, List.of(), null, List.of(), null, null, List.of(), false);
         } catch (IllegalArgumentException | IllegalStateException e) {
             if (attempted != null && !hand.contains(attempted)
                     && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
@@ -647,7 +650,7 @@ public class SpellCastingService {
             playCardInternal(gameData, player, cardIndex, xValue, targetId, damageAssignments,
                     targetIds != null ? targetIds : List.of(), List.of(), false, null, null, List.of(),
                     null, null, false, null, null, false,
-                    conspireCreatureIds != null ? conspireCreatureIds : List.of(), null, List.of(), null, null, List.of());
+                    conspireCreatureIds != null ? conspireCreatureIds : List.of(), null, List.of(), null, null, List.of(), false);
         } catch (IllegalArgumentException | IllegalStateException e) {
             if (attempted != null && !hand.contains(attempted)
                     && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
@@ -664,7 +667,7 @@ public class SpellCastingService {
                   List<Integer> discardHandCardIndices, boolean forceAlternateCost,
                   List<UUID> conspireCreatureIds, Integer modalXValue, List<Integer> spliceHandCardIndices,
                   List<UUID> imposedSacrificePermanentIds, List<UUID> additionalCostSacrificePermanentIds,
-                  List<String> repeatedAdditionalCosts) {
+                  List<String> repeatedAdditionalCosts, boolean buyback) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (repeatedAdditionalCosts == null) repeatedAdditionalCosts = List.of();
         if (additionalCostSacrificePermanentIds == null) additionalCostSacrificePermanentIds = List.of();
@@ -1310,6 +1313,7 @@ public class SpellCastingService {
             // unpayable non-mana additional cost up front, before any cost is consumed. A throw
             // later in the pay chain would keep the mana (and costs) already paid.
             KickerEffect kickerEffect = findKickerEffect(card);
+            BuybackEffect buybackEffect = findBuybackEffect(card);
             additionalSpellCostService.validateAll(gameData, player, card, additionalCosts, costSelection);
             validateImposedSacrificeTax(gameData, player, card, imposedSacrificePermanentIds);
             if (kicked && kickerEffect != null && kickerEffect.hasSacrificeCost()) {
@@ -1324,6 +1328,7 @@ public class SpellCastingService {
             }
 
             ManaPool preManaPaymentPool = (kicked && kickerEffect != null && kickerEffect.hasManaCost())
+                    || (buyback && buybackEffect != null)
                     || (additionalCosts.sacrificeCreatureOrPayManaCost() != null && sacrificePermanentId == null)
                     || (additionalCosts.discardCardOrPayManaCost() != null && discardHandCardIndex == null)
                     ? new ManaPool(gameData.playerManaPools.get(playerId)) : null;
@@ -1345,6 +1350,9 @@ public class SpellCastingService {
             }
             if (kicked && kickerEffect != null) {
                 payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId, preManaPaymentPool);
+            }
+            if (buyback && buybackEffect != null) {
+                payBuybackCost(gameData, player, card, buybackEffect, preManaPaymentPool);
             }
             payAdditionalCosts(gameData, player, card, additionalCosts, costSelection, 0, preManaPaymentPool);
             payImposedSacrificeTax(gameData, player, card, imposedSacrificePermanentIds);
@@ -1389,6 +1397,9 @@ public class SpellCastingService {
             }
             if (kicked && kickerEffect != null) {
                 entry.setKicked(true);
+            }
+            if (buyback && buybackEffect != null) {
+                entry.setBuyback(true);
             }
             // Evoke (CR 702.75): a permanent cast for its alternate (evoke) cost is flagged so its
             // "when it enters, sacrifice it" ETB trigger fires. Harmless for non-evoke alternate
@@ -1444,6 +1455,7 @@ public class SpellCastingService {
             // unpayable non-mana additional cost up front, before any cost is consumed. A throw
             // later in the pay chain would keep the mana (and costs) already paid.
             KickerEffect kickerEffect = findKickerEffect(card);
+            BuybackEffect buybackEffect = findBuybackEffect(card);
             additionalSpellCostService.validateAll(gameData, player, card, additionalCosts, costSelection);
             if (additionalCosts.payXLife()) {
                 additionalSpellCostService.validatePayXLifeCost(gameData, player, card, resolvedXValue);
@@ -1456,6 +1468,7 @@ public class SpellCastingService {
             }
 
             ManaPool preManaPaymentPool = (kicked && kickerEffect != null && kickerEffect.hasManaCost())
+                    || (buyback && buybackEffect != null)
                     || !pendingSpliceCosts.isEmpty()
                     || (additionalCosts.sacrificeCreatureOrPayManaCost() != null && sacrificePermanentId == null)
                     || (additionalCosts.discardCardOrPayManaCost() != null && discardHandCardIndex == null)
@@ -1469,6 +1482,9 @@ public class SpellCastingService {
             }
             if (kicked && kickerEffect != null) {
                 payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId, preManaPaymentPool);
+            }
+            if (buyback && buybackEffect != null) {
+                payBuybackCost(gameData, player, card, buybackEffect, preManaPaymentPool);
             }
             paySpliceCosts(gameData, player, card, pendingSpliceCosts, preManaPaymentPool);
             resolvedXValue = payAdditionalCosts(gameData, player, card, additionalCosts, costSelection, resolvedXValue, preManaPaymentPool);
@@ -1911,6 +1927,9 @@ public class SpellCastingService {
             }
             if (kicked && kickerEffect != null && !gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setKicked(true);
+            }
+            if (buyback && buybackEffect != null && !gameData.stack.isEmpty()) {
+                gameData.stack.getLast().setBuyback(true);
             }
             if (!repeatedAdditionalCosts.isEmpty() && !gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
@@ -3387,6 +3406,38 @@ public class SpellCastingService {
                 .filter(e -> e instanceof KickerEffect)
                 .map(e -> (KickerEffect) e)
                 .findFirst().orElse(null);
+    }
+
+    private BuybackEffect findBuybackEffect(Card card) {
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .filter(e -> e instanceof BuybackEffect)
+                .map(e -> (BuybackEffect) e)
+                .findFirst().orElse(null);
+    }
+
+    /**
+     * Pays the buyback cost right after the base mana payment (CR 702.27). Buyback is a
+     * mana-only optional additional cost, so its affordability can only be checked against the
+     * pool as it stands after the base payment; on a shortfall the whole mana payment is rolled
+     * back from {@code preManaPaymentPool} (the snapshot taken before the base payment) — the
+     * failed cast rewinds instead of eating the base mana (CR 601.2h).
+     */
+    private void payBuybackCost(GameData gameData, Player player, Card card, BuybackEffect buybackEffect,
+                                ManaPool preManaPaymentPool) {
+        try {
+            ManaCost buybackCost = new ManaCost(buybackEffect.cost());
+            ManaPool pool = gameData.playerManaPools.get(player.getId());
+            if (!buybackCost.canPay(pool)) {
+                throw new IllegalStateException("Not enough mana to pay buyback cost");
+            }
+            buybackCost.pay(pool, 0);
+            gameData.addSpellCastManaSpent(card.getId(), buybackCost.getManaValue());
+        } catch (IllegalStateException e) {
+            if (preManaPaymentPool != null) {
+                gameData.playerManaPools.put(player.getId(), preManaPaymentPool);
+            }
+            throw e;
+        }
     }
 
     /**

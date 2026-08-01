@@ -18,6 +18,7 @@ import java.util.UUID;
  * @param sourcePermanent  the source permanent itself, when the call site has it at hand
  * @param sourceCard       the source card (stack entry card, entering card, or permanent's card)
  * @param kicked           whether the spell/permanent was kicked (from the stack entry or permanent)
+ * @param buyback          whether the spell's buyback cost was paid (from the stack entry)
  * @param prowl            whether the spell/permanent was cast for its prowl cost (from the stack entry or permanent)
  * @param sourceZone       zone the spell was cast from, when known
  * @param xValue           snapshotted numeric context (attacker count, mana spent)
@@ -30,6 +31,7 @@ public record ConditionContext(
         Permanent sourcePermanent,
         Card sourceCard,
         boolean kicked,
+        boolean buyback,
         boolean prowl,
         Zone sourceZone,
         int xValue,
@@ -40,14 +42,14 @@ public record ConditionContext(
     /** Context for resolving an effect on a stack entry (stack resolution time). */
     public static ConditionContext forStackEntry(StackEntry entry) {
         return new ConditionContext(entry.getControllerId(), entry.getSourcePermanentId(), null,
-                entry.getCard(), entry.isKicked(), entry.isProwl(), entry.getSourceZone(), entry.getXValue(),
-                entry.getTargetId(), null);
+                entry.getCard(), entry.isKicked(), entry.isBuyback(), entry.isProwl(), entry.getSourceZone(),
+                entry.getXValue(), entry.getTargetId(), null);
     }
 
     /** Context for trigger-time (intervening-if) checks against a battlefield permanent. */
     public static ConditionContext forPermanent(Permanent permanent, UUID controllerId) {
         return new ConditionContext(controllerId, permanent.getId(), permanent,
-                permanent.getCard(), permanent.isKicked(), permanent.isProwl(), null, 0, null, null);
+                permanent.getCard(), permanent.isKicked(), false, permanent.isProwl(), null, 0, null, null);
     }
 
     /**
@@ -66,7 +68,7 @@ public record ConditionContext(
      * (metalcraft, controls-a-permanent, opponent creature counts) are meaningful here.
      */
     public static ConditionContext forCasting(UUID castingPlayerId) {
-        return new ConditionContext(castingPlayerId, null, null, null, false, false, null, 0, null, null);
+        return new ConditionContext(castingPlayerId, null, null, null, false, false, false, null, 0, null, null);
     }
 
     /**
@@ -74,24 +76,24 @@ public record ConditionContext(
      * ability gates such as {@code CardsAboveSelfInGraveyard}).
      */
     public static ConditionContext forCard(Card card, UUID controllerId) {
-        return new ConditionContext(controllerId, null, null, card, false, false, null, 0, null, null);
+        return new ConditionContext(controllerId, null, null, card, false, false, false, null, 0, null, null);
     }
 
     /** Returns a copy with the given snapshotted numeric value (attacker count, mana spent). */
     public ConditionContext withXValue(int newXValue) {
         return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
-                kicked, prowl, sourceZone, newXValue, targetId, triggeringCard);
+                kicked, buyback, prowl, sourceZone, newXValue, targetId, triggeringCard);
     }
 
     /** Returns a copy with the given target id (e.g. a multi-target group's chosen target). */
     public ConditionContext withTargetId(UUID newTargetId) {
         return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
-                kicked, prowl, sourceZone, xValue, newTargetId, triggeringCard);
+                kicked, buyback, prowl, sourceZone, xValue, newTargetId, triggeringCard);
     }
 
     /** Returns a copy with the given triggering (entering) card. */
     public ConditionContext withTriggeringCard(Card card) {
         return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
-                kicked, prowl, sourceZone, xValue, targetId, card);
+                kicked, buyback, prowl, sourceZone, xValue, targetId, card);
     }
 }

@@ -66,6 +66,7 @@ public record CardView(
         List<ActivatedAbilityView> handActivatedAbilities,
         boolean transformable,
         String kickerCost,
+        String buybackCost,
         int modalChoicesRequired,
         int modalChoicesMax,
         boolean modalOptional,

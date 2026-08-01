@@ -318,6 +318,17 @@
       </div>
     }
 
+    @if (choice.targeting.choosingBuyback) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">Cast {{ choice.targeting.buybackCardName }} &mdash; pay buyback {{ choice.targeting.buybackCost }}?</span>
+        <div class="side-prompt-buttons side-prompt-buttons-stacked">
+          <button class="btn-side-prompt" (click)="choice.targeting.confirmBuyback()">Pay Buyback</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.skipBuyback()">Skip Buyback</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelBuyback()">Cancel</button>
+        </div>
+      </div>
+    }
+
     @if (choice.targeting.choosingMode) {
       <div class="side-prompt prompt-targeting">
         <span class="side-prompt-text">

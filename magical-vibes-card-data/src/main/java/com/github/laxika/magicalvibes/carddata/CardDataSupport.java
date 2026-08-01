@@ -97,6 +97,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Delirium", Keyword.DELIRIUM);
         KEYWORD_MAP.put("Prepared", Keyword.PREPARED);
         KEYWORD_MAP.put("Phasing", Keyword.PHASING);
+        KEYWORD_MAP.put("Buyback", Keyword.BUYBACK);
     }
 
     /** {@link #KEYWORD_MAP} keyed by lowercase spelling — upstream casing differs between sources. */

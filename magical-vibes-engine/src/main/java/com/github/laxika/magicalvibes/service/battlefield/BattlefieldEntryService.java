@@ -632,7 +632,7 @@ public class BattlefieldEntryService {
             } else if (effect instanceof ConditionalEffect conditional
                     && conditional.wrapped() instanceof EnterWithCountersEffect wrapped) {
                 ConditionContext conditionContext = new ConditionContext(controllerId, null, permanent,
-                        card, kicked, false, permanent.getCastFromZone(), xValue, null, null);
+                        card, kicked, false, false, permanent.getCastFromZone(), xValue, null, null);
                 if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
                     continue;
                 }
@@ -685,7 +685,7 @@ public class BattlefieldEntryService {
         if (granted <= 0) return;
 
         ConditionContext conditionContext = new ConditionContext(controllerId, null, permanent,
-                permanent.getCard(), false, false, permanent.getCastFromZone(), 0, null, null);
+                permanent.getCard(), false, false, false, permanent.getCastFromZone(), 0, null, null);
         if (!conditionEvaluationService.isMet(gameData, new OpponentDealtDamageThisTurn(1), conditionContext)) {
             return;
         }

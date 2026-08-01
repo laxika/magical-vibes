@@ -90,6 +90,12 @@ export class TargetingChoiceService {
     this.kickerCardName = '';
     this.kickerCost = '';
     this.pendingKicked = false;
+    // Buyback
+    this.choosingBuyback = false;
+    this.buybackCardIndex = -1;
+    this.buybackCardName = '';
+    this.buybackCost = '';
+    this.pendingBuyback = false;
     // Modal mode picker
     this.choosingMode = false;
     this.modeCardIndex = -1;
@@ -225,6 +231,12 @@ export class TargetingChoiceService {
   kickerCardName = '';
   kickerCost = '';
   private pendingKicked = false;
+
+  choosingBuyback = false;
+  buybackCardIndex = -1;
+  buybackCardName = '';
+  buybackCost = '';
+  private pendingBuyback = false;
 
   // --- Flashback state ---
   private pendingFlashback = false;
@@ -410,6 +422,15 @@ export class TargetingChoiceService {
         return;
       }
 
+      // Check for buyback — offer choice before continuing
+      if (card.buybackCost) {
+        this.choosingBuyback = true;
+        this.buybackCardIndex = index;
+        this.buybackCardName = card.name;
+        this.buybackCost = card.buybackCost;
+        return;
+      }
+
       this.continuePlayCard(index);
     }
   }
@@ -528,6 +549,34 @@ export class TargetingChoiceService {
     this.pendingKicked = false;
   }
 
+  confirmBuyback(): void {
+    this.pendingBuyback = true;
+    const savedIndex = this.buybackCardIndex;
+    this.choosingBuyback = false;
+    this.buybackCardIndex = -1;
+    this.buybackCardName = '';
+    this.buybackCost = '';
+    this.continuePlayCard(savedIndex);
+  }
+
+  skipBuyback(): void {
+    this.pendingBuyback = false;
+    const savedIndex = this.buybackCardIndex;
+    this.choosingBuyback = false;
+    this.buybackCardIndex = -1;
+    this.buybackCardName = '';
+    this.buybackCost = '';
+    this.continuePlayCard(savedIndex);
+  }
+
+  cancelBuyback(): void {
+    this.choosingBuyback = false;
+    this.buybackCardIndex = -1;
+    this.buybackCardName = '';
+    this.buybackCost = '';
+    this.pendingBuyback = false;
+  }
+
   // ========== Modal mode picker ==========
 
   toggleMode(optionIndex: number): void {
@@ -627,6 +676,7 @@ export class TargetingChoiceService {
     this.resetModeState();
     this.pendingPhyrexianLifeCount = null;
     this.pendingKicked = false;
+    this.pendingBuyback = false;
     this.pendingFromExileCardId = null;
     this.pendingFromLibraryTop = false;
     this.pendingZoneCard = null;
@@ -785,6 +835,10 @@ export class TargetingChoiceService {
       msg.kicked = true;
       this.pendingKicked = false;
     }
+    if (this.pendingBuyback) {
+      msg.buyback = true;
+      this.pendingBuyback = false;
+    }
     if (extra) {
       Object.assign(msg, extra);
     }
@@ -826,6 +880,9 @@ export class TargetingChoiceService {
     }
     if (msg.kicked && card.kickerCost) {
       clientCheckedCost = (clientCheckedCost ?? card.manaCost ?? '') + card.kickerCost;
+    }
+    if (msg.buyback && card.buybackCost) {
+      clientCheckedCost = (clientCheckedCost ?? card.manaCost ?? '') + card.buybackCost;
     }
 
     if (this.isStrictlyPlayableFn(msg.cardIndex)
@@ -1404,6 +1461,7 @@ export class TargetingChoiceService {
     this.addPendingTargetsToMsg(msg);
     this.addPendingPhyrexianToMsg(msg);
     this.addPendingKickedToMsg(msg);
+    this.addPendingBuybackToMsg(msg);
     this.addPendingXValueToMsg(msg);
     this.websocketService.send(msg);
     this.cancelConvoke();
@@ -1419,6 +1477,7 @@ export class TargetingChoiceService {
     this.addPendingTargetsToMsg(msg);
     this.addPendingPhyrexianToMsg(msg);
     this.addPendingKickedToMsg(msg);
+    this.addPendingBuybackToMsg(msg);
     this.addPendingXValueToMsg(msg);
     this.websocketService.send(msg);
     this.cancelConvoke();
@@ -1447,6 +1506,13 @@ export class TargetingChoiceService {
     if (this.pendingKicked) {
       msg.kicked = true;
       this.pendingKicked = false;
+    }
+  }
+
+  private addPendingBuybackToMsg(msg: any): void {
+    if (this.pendingBuyback) {
+      msg.buyback = true;
+      this.pendingBuyback = false;
     }
   }
 

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.BlockedByMinCreatures;
+import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.condition.CameUnderControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
@@ -186,6 +187,8 @@ public class ConditionEvaluationService {
                     ctx.kicked();
             case NotKicked ignored ->
                     !ctx.kicked();
+            case BuybackPaid ignored ->
+                    ctx.buyback();
             case CastForProwlCost ignored ->
                     ctx.prowl();
             case Raid ignored ->
