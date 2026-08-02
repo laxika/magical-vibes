@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
@@ -396,7 +396,7 @@ class AiManaManagerTest {
             perm.setSummoningSick(true);
             gd.playerBattlefields.get(player1Id).add(perm);
             when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
-            when(gameQueryService.hasKeyword(gd, perm, Keyword.HASTE)).thenReturn(false);
+            when(gameQueryService.isSummoningSickForTapCost(gd, perm, player1Id)).thenReturn(true);
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.getTotal()).isZero();
@@ -410,7 +410,7 @@ class AiManaManagerTest {
             perm.setSummoningSick(true);
             gd.playerBattlefields.get(player1Id).add(perm);
             when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
-            when(gameQueryService.hasKeyword(gd, perm, Keyword.HASTE)).thenReturn(true);
+            when(gameQueryService.isSummoningSickForTapCost(gd, perm, player1Id)).thenReturn(false);
             when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
             when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
 
@@ -495,8 +495,14 @@ class AiManaManagerTest {
             assertThat(pool.getCreatureMana(ManaColor.GREEN)).isZero();
         }
 
+        /**
+         * "Add one mana of any color" offers every color, so it can pay a colored pip of any of
+         * them; booking it as colorless instead covered generic costs and no pip at all. The
+         * over-count keeps the one tap worth one mana, and CR 105.4 keeps colorless out of the
+         * five, so the source can never pay a {@code {C}} pip.
+         */
         @Test
-        @DisplayName("handles AwardAnyColorManaEffect as one mana of each color")
+        @DisplayName("offers every color for AwardAnyColorManaEffect, worth one mana in total")
         void anyColorOffersEveryColor() {
             Card card = createAnyColorLand("City of Brass");
             Permanent perm = new Permanent(card);
@@ -731,6 +737,7 @@ class AiManaManagerTest {
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.get(ManaColor.RED)).isEqualTo(1);
             assertThat(pool.get(ManaColor.WHITE)).isEqualTo(1);
+            assertThat(pool.get(ManaColor.COLORLESS)).isZero();
             assertThat(pool.getTotal()).as("one tap is still one mana").isEqualTo(1);
         }
 
@@ -777,6 +784,7 @@ class AiManaManagerTest {
             addUntappedChargeCounterArtifact("Sphere of the Suns", 3);
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.get(ManaColor.RED)).isEqualTo(1);
             assertThat(pool.getTotal()).isEqualTo(1);
         }
 
@@ -795,6 +803,7 @@ class AiManaManagerTest {
             addUntappedChargeCounterArtifact("Sphere of the Suns", 1);
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.get(ManaColor.RED)).isEqualTo(1);
             assertThat(pool.getTotal()).isEqualTo(1);
         }
 
@@ -827,6 +836,7 @@ class AiManaManagerTest {
             addUntappedBrickCounterArtifact("Pyramid of the Pantheon", 3);
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.get(ManaColor.RED)).isEqualTo(3);
             assertThat(pool.getTotal()).isEqualTo(3);
         }
 
@@ -875,6 +885,7 @@ class AiManaManagerTest {
             addUntappedMetalcraftArtifact("Mox Opal");
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.get(ManaColor.WHITE)).isEqualTo(1);
             assertThat(pool.getTotal()).isEqualTo(1);
         }
 
@@ -899,8 +910,9 @@ class AiManaManagerTest {
             addUntappedMetalcraftArtifact("Mox Opal");
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
-            // The Forest's {G} plus the Mox's any-color, which offers green too.
+            // The Forest's {G} plus the Mox, which is offered as {G} too — and as every other color.
             assertThat(pool.get(ManaColor.GREEN)).isEqualTo(2);
+            assertThat(pool.get(ManaColor.RED)).isEqualTo(1);
             assertThat(pool.get(ManaColor.COLORLESS)).isZero();
             assertThat(pool.getTotal()).isEqualTo(2);
         }
@@ -1334,7 +1346,8 @@ class AiManaManagerTest {
             perm.setSummoningSick(true);
             gd.playerBattlefields.get(player1Id).add(perm);
             when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
-            when(gameQueryService.hasKeyword(gd, perm, Keyword.HASTE)).thenReturn(false);
+            when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
+            when(gameQueryService.isSummoningSickForTapCost(gd, perm, player1Id)).thenReturn(true);
 
             AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
             manager.tapLandsForCost(gd, player1Id, "{G}", 0, action);
@@ -1910,7 +1923,7 @@ class AiManaManagerTest {
             perm.setSummoningSick(true);
             gd.playerBattlefields.get(player1Id).add(perm);
             when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
-            when(gameQueryService.hasKeyword(gd, perm, Keyword.HASTE)).thenReturn(false);
+            when(gameQueryService.isSummoningSickForTapCost(gd, perm, player1Id)).thenReturn(true);
 
             AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
             manager.tapCreaturesForCost(gd, player1Id, "{G}", 0, action);
@@ -2457,8 +2470,13 @@ class AiManaManagerTest {
             assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1);
         }
 
+        /**
+         * The Hard AI picks which land to play by how many spells the resulting pool could cast.
+         * Booking City of Brass as colorless made it cover generic costs and no colored pip, so a
+         * hand of colored spells rated it below a basic of the wrong color.
+         */
         @Test
-        @DisplayName("adds any-color ON_TAP as one mana of each color")
+        @DisplayName("offers every color for an any-color ON_TAP land, worth one mana in total")
         void addsAnyColorAsEveryColor() {
             Card card = createAnyColorLand("City of Brass");
             VirtualManaPool pool = new VirtualManaPool();
@@ -2469,6 +2487,17 @@ class AiManaManagerTest {
             assertThat(pool.get(ManaColor.WHITE)).isEqualTo(1);
             assertThat(pool.get(ManaColor.COLORLESS)).isZero();
             assertThat(pool.getTotal()).as("one tap is still one mana").isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("an any-color land pays a colored pip the hypothetical pool is short of")
+        void anyColorLandCoversColoredPip() {
+            VirtualManaPool pool = new VirtualManaPool();
+            pool.add(ManaColor.GREEN, 1);
+
+            manager.addCardManaToPool(createAnyColorLand("City of Brass"), pool);
+
+            assertThat(new ManaCost("{1}{U}").canPay(pool, 0)).isTrue();
         }
 
         @Test
@@ -2519,10 +2548,11 @@ class AiManaManagerTest {
             Card card = createChargeCounterManaArtifact("Sphere of the Suns");
             // The Hard AI's land comparison passes a VirtualManaPool, which is what collapses a
             // mutually exclusive any-color source back to the one mana a tap yields.
-            ManaPool pool = new VirtualManaPool();
+            VirtualManaPool pool = new VirtualManaPool();
 
             manager.addCardManaToPool(card, pool);
 
+            assertThat(pool.get(ManaColor.RED)).isEqualTo(1);
             assertThat(pool.getTotal()).isEqualTo(1);
         }
 
@@ -2532,10 +2562,11 @@ class AiManaManagerTest {
             // addCardManaToPool is used for hypothetical evaluation (no game state),
             // so timing restrictions should be assumed met
             Card card = createMetalcraftManaArtifact("Mox Opal");
-            ManaPool pool = new VirtualManaPool();
+            VirtualManaPool pool = new VirtualManaPool();
 
             manager.addCardManaToPool(card, pool);
 
+            assertThat(pool.get(ManaColor.WHITE)).isEqualTo(1);
             assertThat(pool.getTotal()).isEqualTo(1);
         }
     }
@@ -2556,14 +2587,15 @@ class AiManaManagerTest {
             assertThat(colors).containsExactly(ManaColor.GREEN);
         }
 
+        /** CR 105.4: an any-color land covers the five colors, never a {@code {C}} requirement. */
         @Test
-        @DisplayName("returns all colors for any-color land")
-        void allColorsForAnyColorLand() {
+        @DisplayName("returns the five colors for any-color land")
+        void fiveColorsForAnyColorLand() {
             Card card = createAnyColorLand("City of Brass");
 
             Set<ManaColor> colors = manager.getProducedColors(card);
 
-            assertThat(colors).containsExactlyInAnyOrder(ManaColor.values());
+            assertThat(colors).containsExactlyInAnyOrderElementsOf(ManaColor.COLORS);
         }
 
         @Test
@@ -2605,8 +2637,8 @@ class AiManaManagerTest {
         }
 
         @Test
-        @DisplayName("returns all colors for activated AwardAnyColorManaEffect")
-        void allColorsForActivatedAnyColorAbility() {
+        @DisplayName("returns the five colors for activated AwardAnyColorManaEffect")
+        void fiveColorsForActivatedAnyColorAbility() {
             Card card = new Card();
             card.setName("Exotic Orchard");
             card.setType(CardType.LAND);
@@ -2615,7 +2647,7 @@ class AiManaManagerTest {
 
             Set<ManaColor> colors = manager.getProducedColors(card);
 
-            assertThat(colors).containsExactlyInAnyOrder(ManaColor.values());
+            assertThat(colors).containsExactlyInAnyOrderElementsOf(ManaColor.COLORS);
         }
 
         @Test

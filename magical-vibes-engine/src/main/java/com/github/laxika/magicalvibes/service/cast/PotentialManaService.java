@@ -409,10 +409,7 @@ public class PotentialManaService {
             return List.of(fixed);
         }
         List<EnumMap<ManaColor, Integer>> options = new ArrayList<>();
-        for (ManaColor color : ManaColor.values()) {
-            if (color == ManaColor.COLORLESS) {
-                continue;
-            }
+        for (ManaColor color : ManaColor.COLORS) {
             EnumMap<ManaColor, Integer> option = new EnumMap<>(fixed);
             option.merge(color, anyColorAmount, Integer::sum);
             options.add(option);
@@ -421,29 +418,27 @@ public class PotentialManaService {
     }
 
     /**
-     * Adds an ON_TAP "one mana of any color" producer to a virtual pool: every color is offered,
-     * and the inflation of the total is recorded so the source still counts as the single mana one
-     * tap yields. Mirrors {@link #manaOptionsFor} for the slot that has no per-ability bookkeeping.
+     * Adds a "one mana of any color" producer to a virtual pool: every color is offered, and the
+     * inflation of the total is recorded so the source still counts as the single mana one tap
+     * yields. Mirrors {@link #manaOptionsFor} for the slots that have no per-ability bookkeeping —
+     * the {@code ON_TAP} slot here, and {@code AiManaManager.addCardManaToPool}'s hypothetical
+     * land evaluation.
      */
     public static void addAnyColorManaToVirtualPool(ManaPool virtual, int amount, boolean isCreature) {
         if (amount <= 0) {
             return;
         }
-        int colors = 0;
-        for (ManaColor color : ManaColor.values()) {
-            if (color == ManaColor.COLORLESS) {
-                continue;
-            }
-            colors++;
+        for (ManaColor color : ManaColor.COLORS) {
             virtual.add(color, amount);
             if (isCreature) {
                 virtual.addCreatureMana(color, amount);
             }
         }
         if (virtual instanceof VirtualManaPool vmp) {
-            vmp.addFlexibleOvercount(amount * (colors - 1));
+            int overcount = amount * (ManaColor.COLORS.size() - 1);
+            vmp.addFlexibleOvercount(overcount);
             if (isCreature) {
-                vmp.addCreatureManaOvercount(amount * (colors - 1));
+                vmp.addCreatureManaOvercount(overcount);
             }
         }
     }

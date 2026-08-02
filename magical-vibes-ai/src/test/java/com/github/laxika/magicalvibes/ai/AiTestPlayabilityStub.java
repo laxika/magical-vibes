@@ -48,17 +48,7 @@ final class AiTestPlayabilityStub {
 
     static void install(GameActionAvailabilityService actionAvailabilityService, CastingCostService castingCostService,
                         GameQueryService gameQueryService) {
-        // AiDecisionEngine reads its potential-mana model off this service. Activation legality is
-        // the engine's answer, which these mock-wired suites do not stage, so allow every ability
-        // and index them as printed.
-        AbilityActivationService abilityActivationService = Mockito.mock(AbilityActivationService.class);
-        Mockito.lenient().when(abilityActivationService.getEffectiveActivatedAbilities(any(), any()))
-                .thenAnswer(inv -> ((Permanent) inv.getArgument(1)).getCard().getActivatedAbilities());
-        Mockito.lenient().when(abilityActivationService.canActivateAbility(
-                        any(), any(), any(), anyInt(), any()))
-                .thenReturn(true);
-        Mockito.lenient().when(actionAvailabilityService.potentialManaService())
-                .thenReturn(new PotentialManaService(gameQueryService, abilityActivationService));
+        installPotentialManaService(actionAvailabilityService, gameQueryService);
 
         Mockito.lenient().when(castingCostService.canPayAdditionalSpellCosts(
                         any(GameData.class), any(UUID.class), any(Card.class)))
@@ -107,6 +97,28 @@ final class AiTestPlayabilityStub {
                     }
                     return !card.isRequiresCreatureMana() || cost.canPayCreatureOnly(pool, modifier);
                 });
+    }
+
+    /**
+     * Answers {@link GameActionAvailabilityService#potentialManaService()}, which every AI decision
+     * engine and {@code GameSimulator} reads its mana model off in the constructor — an unstubbed
+     * mock hands them a null model and the first planning call fails with an NPE. Activation
+     * legality is the engine's answer, which these mock-wired suites do not stage, so allow every
+     * ability and index them as printed.
+     *
+     * <p>Separate from {@link #install} for the suites that stage their own
+     * {@code isCardPlayable} answer and only need the mana model.
+     */
+    static void installPotentialManaService(GameActionAvailabilityService actionAvailabilityService,
+                                            GameQueryService gameQueryService) {
+        AbilityActivationService abilityActivationService = Mockito.mock(AbilityActivationService.class);
+        Mockito.lenient().when(abilityActivationService.getEffectiveActivatedAbilities(any(), any()))
+                .thenAnswer(inv -> ((Permanent) inv.getArgument(1)).getCard().getActivatedAbilities());
+        Mockito.lenient().when(abilityActivationService.canActivateAbility(
+                        any(), any(), any(), anyInt(), any()))
+                .thenReturn(true);
+        Mockito.lenient().when(actionAvailabilityService.potentialManaService())
+                .thenReturn(new PotentialManaService(gameQueryService, abilityActivationService));
     }
 
     /**

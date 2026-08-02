@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
+import java.util.List;
+
 public enum ManaColor {
 
     WHITE("W"),
@@ -8,6 +10,12 @@ public enum ManaColor {
     RED("R"),
     GREEN("G"),
     COLORLESS("C");
+
+    /**
+     * The five colors a "of any color" choice ranges over. CR 105.4: colorless is not a color, so
+     * an any-color mana source can never pay a {@code {C}} pip and never counts as covering one.
+     */
+    public static final List<ManaColor> COLORS = List.of(WHITE, BLUE, BLACK, RED, GREEN);
 
     private final String code;
 

@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -225,8 +224,7 @@ class AbilityActivationServiceTest {
             gameData.playerBattlefields.get(player1Id).add(perm);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.isCreature(gameData, perm)).thenReturn(true);
-            when(gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)).thenReturn(false);
+            when(gameQueryService.isSummoningSickForTapCost(gameData, perm, player1Id)).thenReturn(true);
 
             assertThatThrownBy(() -> service.tapPermanent(gameData, player1, 0))
                     .isInstanceOf(IllegalStateException.class)
@@ -438,8 +436,7 @@ class AbilityActivationServiceTest {
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
-            when(gameQueryService.isCreature(gameData, perm)).thenReturn(true);
-            when(gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)).thenReturn(false);
+            when(gameQueryService.isSummoningSickForTapCost(gameData, perm, player1Id)).thenReturn(true);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)

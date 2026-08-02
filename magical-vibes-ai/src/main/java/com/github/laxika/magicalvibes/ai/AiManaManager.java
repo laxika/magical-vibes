@@ -821,6 +821,9 @@ public class AiManaManager {
      * on the battlefield. Used by the Hard AI to compare different land play options.
      * Spend-restricted producers add nothing, matching {@code PotentialManaService}: a land is
      * not worth playing for mana a generic cost could never spend.
+     *
+     * <p>Pass a {@link VirtualManaPool}: an any-color producer is offered as every color it could
+     * make, and only that pool carries the over-count that keeps one tap worth one mana.
      */
     public void addCardManaToPool(Card card, ManaPool pool) {
         if (hasOnTapManaEffects(card)) {
@@ -872,7 +875,7 @@ public class AiManaManager {
             if (mp.estimatedManaColor() != null) {
                 colors.add(mp.estimatedManaColor());
             } else if (mp.estimatedCountsAllColors()) {
-                Collections.addAll(colors, ManaColor.values());
+                colors.addAll(ManaColor.COLORS);
             }
         }
     }

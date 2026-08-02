@@ -696,6 +696,7 @@ class EasyAiDecisionEngineTest {
         pool.add(ManaColor.COLORLESS, 1);
 
         // Engine says not playable (e.g. spell limit reached, type restricted, silenced)
+        AiTestPlayabilityStub.installPotentialManaService(actionAvailabilityService, gameQueryService);
         when(actionAvailabilityService.isCardPlayable(any(), any(), any(), any(), org.mockito.ArgumentMatchers.anyInt()))
                 .thenReturn(false);
 

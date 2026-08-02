@@ -2093,6 +2093,8 @@ class AiDecisionEngineTest {
         }
 
         private EasyAiDecisionEngine createEngine() {
+            AiTestPlayabilityStub.installPotentialManaService(
+                    mockGameActionAvailabilityService, mockGameQueryService);
             EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
                     mockGameQueryService, mockBlockLegalityService, mockCombatAttackService, mockGameActionAvailabilityService,
