@@ -18,8 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * a delayed trigger at the beginning of the next {@code returnStep}.
  *
  * <p>The bonus fields ({@code bonusSubtype}/{@code bonusEffect}/{@code plusOnePlusOneCountersOnReturn})
- * only apply to {@link ReturnTiming#IMMEDIATE} flickers (Siren's Ruse / Daydream / Essence Flux) and
- * default to {@code null}/{@code 0} otherwise. When {@code bonusSubtype} is set with
+ * apply when the permanent returns. The counter field is supported for both immediate and delayed
+ * returns. When {@code bonusSubtype} is set with
  * {@code plusOnePlusOneCountersOnReturn}, counters apply only if the exiled permanent had that
  * subtype. {@code returnUnderController} is only meaningful for {@link ReturnTiming#IMMEDIATE}
  * TARGET flickers.
@@ -44,6 +44,12 @@ public record FlickerEffect(
     public static FlickerEffect exileTargetReturnAtEndStep(boolean returnTapped) {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
                 TurnStep.END_STEP, returnTapped, null, null, 0, false);
+    }
+
+    /** Exile target permanent, return it at the beginning of the next end step with +1/+1 counters. */
+    public static FlickerEffect exileTargetReturnAtEndStepWithCounters(int counters) {
+        return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
+                TurnStep.END_STEP, false, null, null, counters, false);
     }
 
     /** Exile this permanent, return it under your control at the beginning of the next end step (Argent Sphinx). */

@@ -11,6 +11,10 @@ import java.util.Set;
  * <p>
  * Used by Shape Anew (artifact → artifact), and can be reused for Polymorph-style effects
  * (creature → creature) by changing the cardTypes parameter.
+ * <p>
+ * An <em>empty</em> {@code cardTypes} set switches to Reweave's dynamic mode: the revealed card must
+ * be a permanent card that shares a card type with the sacrificed permanent, rather than matching a
+ * fixed set of types.
  */
 public record SacrificeTargetThenRevealUntilTypeToBattlefieldEffect(
         Set<CardType> cardTypes

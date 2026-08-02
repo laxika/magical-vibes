@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CreatureSubtypeDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
 import com.github.laxika.magicalvibes.model.amount.CreaturesDevoured;
 import com.github.laxika.magicalvibes.model.amount.DevouredCreaturesOfSubtype;
@@ -89,6 +90,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -211,6 +213,8 @@ public class AmountEvaluationService {
                     countOtherAttackersSharingCreatureTypeWithTarget(gameData, ctx);
             case CreatureDeathsThisTurn c ->
                     countCreatureDeathsThisTurn(gameData, c, ctx);
+            case CreatureSubtypeDeathsThisTurn c ->
+                    countCreatureSubtypeDeathsThisTurn(gameData, c, ctx);
             case LifeGainedThisTurn c ->
                     countLifeGainedThisTurn(gameData, c, ctx);
             case LifeLostThisTurn c ->
@@ -744,6 +748,19 @@ public class AmountEvaluationService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
             total += gameData.creatureDeathCountThisTurn.getOrDefault(playerId, 0);
+        }
+        return total;
+    }
+
+    private int countCreatureSubtypeDeathsThisTurn(GameData gameData,
+                                                    CreatureSubtypeDeathsThisTurn count,
+                                                    AmountContext ctx) {
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
+            total += gameData.creatureSubtypeDeathCountThisTurn
+                    .getOrDefault(playerId, Map.of())
+                    .getOrDefault(count.subtype(), 0);
         }
         return total;
     }

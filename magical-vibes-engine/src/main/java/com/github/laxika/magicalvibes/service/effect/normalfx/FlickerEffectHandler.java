@@ -80,7 +80,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
 
-        exileSupport.exileAndScheduleReturn(gameData, entry, target, ownerId, e.returnTapped(), e.returnStep());
+        exileSupport.exileAndScheduleReturn(gameData, entry, target, ownerId, e.returnTapped(), e.returnStep(),
+                e.plusOnePlusOneCountersOnReturn());
     }
 
     private void resolveSelfAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {
@@ -89,7 +90,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        exileSupport.exileAndScheduleReturn(gameData, entry, source, entry.getControllerId(), e.returnTapped(), e.returnStep());
+        exileSupport.exileAndScheduleReturn(gameData, entry, source, entry.getControllerId(), e.returnTapped(), e.returnStep(),
+                e.plusOnePlusOneCountersOnReturn());
     }
 
     private void resolvePlayersPermanentsAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {
@@ -111,7 +113,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
             UUID ownerId = gameData.stolenCreatures.getOrDefault(permanent.getId(), controllerId);
             exileSupport.exileAndScheduleReturn(
-                    gameData, entry, permanent, ownerId, e.returnTapped(), e.returnStep());
+                    gameData, entry, permanent, ownerId, e.returnTapped(), e.returnStep(),
+                    e.plusOnePlusOneCountersOnReturn());
         }
     }
 

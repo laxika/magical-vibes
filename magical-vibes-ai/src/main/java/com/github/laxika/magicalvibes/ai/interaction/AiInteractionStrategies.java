@@ -22,6 +22,7 @@ public final class AiInteractionStrategies {
         register(new HandTopBottomChoiceAiStrategy());
         register(new PutCardsFromHandOnLibraryCardChoiceAiStrategy());
         register(new PutCardsFromHandOnLibraryDestinationChoiceAiStrategy());
+        register(new CounteredSpellLibraryDestinationChoiceAiStrategy());
         register(new LibraryReorderAiStrategy());
         register(new MayAbilityChoiceAiStrategy());
         register(new KnowledgePoolCastChoiceAiStrategy());
@@ -46,6 +47,7 @@ public final class AiInteractionStrategies {
         register(new ColorChoiceAiStrategy());
         register(new RevealedHandChoiceAiStrategy());
         register(new RevealCardsDiscardChoiceAiStrategy());
+        register(new AlternatingHandExileChoiceAiStrategy());
         register(new GraveyardChoiceAiStrategy());
         register(new GraveyardExileCostChoiceAiStrategy());
         register(new LibraryRevealChoiceAiStrategy());

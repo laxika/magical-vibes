@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.TappedBlockPermissionEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -74,6 +75,7 @@ public class BlockLegalityService {
     public BlockLegalityContext createBlockLegalityContext(GameData gameData, List<Permanent> defenderBattlefield) {
         List<GlobalBlockRestriction> globalBlockRestrictions = new ArrayList<>();
         List<GlobalAttackOrBlockRestriction> globalAttackOrBlockRestrictions = new ArrayList<>();
+        List<BlockLegalityContext.TappedBlockPermission> tappedBlockPermissions = new ArrayList<>();
         Map<UUID, List<Permanent>> attachedByHostId = new HashMap<>();
         boolean[] landwalkIgnored = {false};
         gameData.forEachPermanent((playerId, source) -> {
@@ -98,6 +100,14 @@ public class BlockLegalityService {
                                     .withSourceControllerId(playerId)
                                     .withSourceCardId(source.getOriginalCard().getId())));
                 }
+                if (effect instanceof TappedBlockPermissionEffect permission
+                        && permission.tappedBlockMatcher() != null) {
+                    tappedBlockPermissions.add(new BlockLegalityContext.TappedBlockPermission(
+                            permission,
+                            FilterContext.of(gameData)
+                                    .withSourceControllerId(playerId)
+                                    .withSourceCardId(source.getOriginalCard().getId())));
+                }
             }
         });
         List<Permanent> defenders = defenderBattlefield == null ? List.of() : defenderBattlefield;
@@ -106,7 +116,8 @@ public class BlockLegalityService {
             defenderCardSubtypes.addAll(defender.getCard().getSubtypes());
         }
         return new BlockLegalityContext(gameData, defenders, globalBlockRestrictions,
-                globalAttackOrBlockRestrictions, attachedByHostId, defenderCardSubtypes, landwalkIgnored[0]);
+                globalAttackOrBlockRestrictions, tappedBlockPermissions, attachedByHostId,
+                defenderCardSubtypes, landwalkIgnored[0]);
     }
 
     /**
@@ -126,7 +137,7 @@ public class BlockLegalityService {
      */
     public boolean canBlock(BlockLegalityContext context, Permanent creature) {
         if (!gameQueryService.isCreature(context.gameData, creature)
-                || creature.isTapped()
+                || (creature.isTapped() && !canBlockAsThoughUntapped(context, creature))
                 || creature.isCantBlockThisTurn()) {
             return false;
         }
@@ -180,6 +191,9 @@ public class BlockLegalityService {
      */
     private BlockDenial findBlockDenial(BlockLegalityContext context, Permanent blocker, Permanent attacker) {
         GameData gameData = context.gameData;
+        if (blocker.isTapped() && !canBlockAsThoughUntapped(context, blocker)) {
+            return BlockDenial.CANT_BLOCK;
+        }
         BlockLegalityContext.AttackerFacts atk = context.attackerFacts.computeIfAbsent(
                 attacker.getId(), id -> buildAttackerFacts(context, attacker));
         if (atk.unblockable()) {
@@ -265,6 +279,17 @@ public class BlockLegalityService {
             return BlockDenial.PROTECTION;
         }
         return null;
+    }
+
+    /** Whether a static permission lets this tapped creature block as though it were untapped. */
+    private boolean canBlockAsThoughUntapped(BlockLegalityContext context, Permanent creature) {
+        for (BlockLegalityContext.TappedBlockPermission permission : context.tappedBlockPermissions) {
+            if (predicateEvaluationService.matchesPermanentPredicate(
+                    creature, permission.effect().tappedBlockMatcher(), permission.filterContext())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

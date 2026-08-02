@@ -1570,6 +1570,30 @@ public class GraveyardReturnSupport {
         }
     }
 
+    /**
+     * Gifts Ungiven: the targeted opponent has chosen which of the revealed cards go to the
+     * controller's graveyard; every other card in the pool goes to the controller's hand. Unlike the
+     * pile-separation dispositions this completes the flow — there is no second choice.
+     */
+    public void completeGiftsUngivenChoice(GameData gameData, List<UUID> chosenCardIds) {
+        PendingPileSeparation state = gameData.pollPendingInteraction(PendingPileSeparation.class);
+        UUID controllerId = state.controllerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String chooserName = gameData.playerIdToName.get(state.targetPlayerId());
+
+        for (Card card : state.cards()) {
+            if (chosenCardIds.contains(card.getId())) {
+                gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
+                gameLogService.append(gameData, GameLog.textCardText(chooserName + " chooses ", card,
+                        ", putting it into " + controllerName + "'s graveyard."));
+            } else {
+                gameData.addCardToHand(controllerId, card);
+                gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", card,
+                        " into their hand."));
+            }
+        }
+    }
+
     public void putCardOntoBattlefieldFromExile(GameData gameData, UUID controllerId, Card card) {
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);

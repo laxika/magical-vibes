@@ -325,6 +325,8 @@ public class CombatDamageService {
                 // Combat damage to the defender always comes from the active player's attackers, so the
                 // source's controller is the active player (an opponent of the defender).
                 triggerCollectionService.checkControllerDealtDamageTriggers(gameData, defenderId, activeId, dmgEntry.getValue());
+                // Night Dealings: "whenever a source you control deals damage to another player".
+                triggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers(gameData, defenderId, activeId, dmgEntry.getValue());
                 // Mangara's Equity: "whenever a creature of the chosen color deals damage to you".
                 triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(
                         gameData, defenderId, null, dmgEntry.getKey(), dmgEntry.getValue());
@@ -1612,7 +1614,8 @@ public class CombatDamageService {
             for (var amountEntry : entry.getValue().entrySet()) {
                 UUID damagedCreatureControllerId = state.combatDamageTargetControllers.get(amountEntry.getKey());
                 triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(
-                        gameData, source, sourceControllerId, damagedCreatureControllerId, amountEntry.getValue());
+                        gameData, source, sourceControllerId, damagedCreatureControllerId,
+                        amountEntry.getKey(), amountEntry.getValue());
 
                 // Mangara's Equity: "…or a white creature you control". The damaged creature may have
                 // died to the damage; only surviving permanents can be filtered, which is enough —

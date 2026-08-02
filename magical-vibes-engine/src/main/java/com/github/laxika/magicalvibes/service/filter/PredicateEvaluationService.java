@@ -138,6 +138,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsNthSpellCastThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
@@ -1336,6 +1337,7 @@ public class PredicateEvaluationService {
             case StackEntryHasTargetPredicate ignored -> false;
             case StackEntryIsNthSpellCastThisTurnPredicate ignored -> false;
             case StackEntryManaValuePredicate ignored -> false;
+            case StackEntryMaxManaValuePredicate ignored -> false;
             case StackEntryManaValueEqualsXPredicate ignored -> false;
             case StackEntryManaValueEqualsSourceCountersPredicate ignored -> false;
             case StackEntryManaValueAtMostControlledCountPredicate ignored -> false;

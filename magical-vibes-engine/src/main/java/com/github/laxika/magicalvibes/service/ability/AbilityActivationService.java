@@ -90,6 +90,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -1647,7 +1648,7 @@ public class AbilityActivationService {
                 discardCardIndex != null && discardCardIndex < 0);
 
         // Validate spell target for abilities that counter spells
-        if (ability.isNeedsSpellTarget()) {
+        if (ability.isNeedsSpellTarget() && targetZone == Zone.STACK) {
             targetLegalityService.validateSpellTargetOnStack(gameData, targetId, ability.getTargetFilter(), playerId, permanent);
         }
 
@@ -1754,6 +1755,11 @@ public class AbilityActivationService {
         Optional<RemoveCounterFromSourceCost> removeCounterCost = abilityEffects.stream()
                 .filter(e -> e instanceof RemoveCounterFromSourceCost)
                 .map(e -> (RemoveCounterFromSourceCost) e)
+                .findFirst();
+
+        Optional<RemoveXCountersFromSourceCost> removeXCounterCost = abilityEffects.stream()
+                .filter(e -> e instanceof RemoveXCountersFromSourceCost)
+                .map(e -> (RemoveXCountersFromSourceCost) e)
                 .findFirst();
 
         Optional<MillControllerCost> millControllerCost = abilityEffects.stream()
@@ -1875,6 +1881,17 @@ public class AbilityActivationService {
             String counterWord = count == 1 ? "a " + counterTypeLabel + " counter" : count + " " + counterTypeLabel + " counters";
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " removes " + counterWord + " from ", permanent.getCard(), "."));
+        }
+
+        // Pay remove-X-counter cost (Night Dealings): X counters of the declared type, X being the
+        // activation's chosen X, which the ability's effects read back with an XValue amount.
+        if (removeXCounterCost.isPresent()) {
+            CounterType ct = removeXCounterCost.get().counterType();
+            permanent.setCounterCount(ct, permanent.getCounterCount(ct) - effectiveXValue);
+            String counterLabel = ct.name().toLowerCase().replace('_', ' ');
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " removes " + effectiveXValue + " " + counterLabel + " counter(s) from ",
+                    permanent.getCard(), "."));
         }
 
         // Pay remove-charge-counter cost
@@ -2617,6 +2634,22 @@ public class AbilityActivationService {
             };
             if (available < required) {
                 throw new IllegalStateException("Not enough counters to remove (need " + required + ", have " + available + ")");
+            }
+        }
+
+        // Remove-X-counter cost: the chosen X may not exceed the counters actually present
+        Optional<RemoveXCountersFromSourceCost> removeXCounterCost = abilityEffects.stream()
+                .filter(e -> e instanceof RemoveXCountersFromSourceCost)
+                .map(e -> (RemoveXCountersFromSourceCost) e)
+                .findFirst();
+        if (removeXCounterCost.isPresent()) {
+            CounterType ct = removeXCounterCost.get().counterType();
+            if (xValue < 0) {
+                throw new IllegalStateException("X cannot be negative");
+            }
+            if (xValue > permanent.getCounterCount(ct)) {
+                throw new IllegalStateException("Not enough counters to remove (need " + xValue
+                        + ", have " + permanent.getCounterCount(ct) + ")");
             }
         }
 

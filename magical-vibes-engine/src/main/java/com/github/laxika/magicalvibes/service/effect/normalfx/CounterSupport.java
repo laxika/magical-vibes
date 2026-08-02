@@ -138,6 +138,31 @@ public class CounterSupport {
     }
 
     /**
+     * Hinder: counters {@code target} and puts the countered card on top of its owner's library,
+     * returning it so the caller can offer the top-or-bottom choice. Returns {@code null} when there
+     * is no card to place (a copy, or a controlled-counter replacement such as Guile applied).
+     */
+    public Card counterSpellOntoLibraryPendingEndChoice(GameData gameData, StackEntry source, StackEntry target) {
+        gameData.stack.remove(target);
+
+        stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
+
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is countered."));
+        log.info("Game {} - {} countered {} onto its owner's library", gameData.id,
+                source.getCard().getName(), target.getCard().getName());
+
+        if (target.isCopy()) {
+            return null;
+        }
+        if (applyControlledCounterExileReplacement(gameData, source, target)) {
+            return null;
+        }
+
+        gameData.playerDecks.get(target.getControllerId()).add(0, target.getCard());
+        return target.getCard();
+    }
+
+    /**
      * Desertion (CR): counters {@code target}, then reports whether the countered card is an artifact
      * or creature spell whose card the counter's controller should put onto the battlefield under their
      * control instead of into its owner's graveyard. Returns the countered {@link Card} to gain control

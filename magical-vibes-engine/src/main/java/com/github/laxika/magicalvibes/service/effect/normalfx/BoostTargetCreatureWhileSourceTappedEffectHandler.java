@@ -16,7 +16,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Resolves {@link BoostTargetCreatureWhileSourceTappedEffect}: records a {@code WHILE_SOURCE_TAPPED}
@@ -56,17 +58,35 @@ public class BoostTargetCreatureWhileSourceTappedEffectHandler implements Normal
 
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), sourcePermanentId, entry.getControllerId(),
-                    new BuffTargetCreatureIndefinitelyEffect(boost.power(), boost.toughness()),
+                    new BuffTargetCreatureIndefinitelyEffect(boost.power(), boost.toughness(), boost.keywords()),
                     target.getId(), null, null, EffectDuration.WHILE_SOURCE_TAPPED, 0));
 
             gameLogService.append(gameData, GameLog.builder()
                     .card(target.getCard())
-                    .text(String.format(" gets %+d/%+d for as long as ", boost.power(), boost.toughness()))
+                    .text(describe(boost) + " for as long as ")
                     .card(entry.getCard())
                     .text(" remains tapped.")
                     .build());
-            log.info("Game {} - {} gets {}/{} while {} remains tapped", gameData.id,
-                    target.getCard().getName(), boost.power(), boost.toughness(), entry.getCard().getName());
+            log.info("Game {} - {}{} while {} remains tapped", gameData.id,
+                    target.getCard().getName(), describe(boost), entry.getCard().getName());
         }
+    }
+
+    /**
+     * Renders the effect the way the card reads: a {@code +P/+T} boost, a keyword grant, or both.
+     * A 0/0 boost with keywords (Hisoka's Guard) must not log a meaningless "+0/+0".
+     */
+    private String describe(BoostTargetCreatureWhileSourceTappedEffect boost) {
+        StringBuilder text = new StringBuilder();
+        if (boost.power() != 0 || boost.toughness() != 0 || boost.keywords().isEmpty()) {
+            text.append(String.format(" gets %+d/%+d", boost.power(), boost.toughness()));
+        }
+        if (!boost.keywords().isEmpty()) {
+            text.append(text.isEmpty() ? " has " : " and has ");
+            text.append(boost.keywords().stream()
+                    .map(keyword -> keyword.name().toLowerCase(Locale.ROOT).replace('_', ' '))
+                    .collect(Collectors.joining(", ")));
+        }
+        return text.toString();
     }
 }

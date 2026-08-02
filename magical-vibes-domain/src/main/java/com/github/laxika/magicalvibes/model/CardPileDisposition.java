@@ -18,5 +18,11 @@ public enum CardPileDisposition {
      */
     SEARCH_ONE_TO_HAND,
     /** Jace, Architect of Thought −2: chosen pile → controller's hand; other pile → the bottom of their library in any order. */
-    HAND_AND_BOTTOM
+    HAND_AND_BOTTOM,
+    /**
+     * Gifts Ungiven: the opponent's selection is not a pile split but a direct disposal — the cards
+     * they choose go to the controller's graveyard and every other card goes to the controller's
+     * hand, so the flow completes in step 1 and never asks the controller to pick a pile.
+     */
+    GIFTS_UNGIVEN
 }

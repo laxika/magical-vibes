@@ -467,6 +467,15 @@ public sealed interface ChoiceContext {
      */
     record ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect) implements ChoiceContext {}
 
+    record RedistributePlayerLifeTotalsChoice(Map<String, Map<UUID, Integer>> choices) implements ChoiceContext {
+
+        public RedistributePlayerLifeTotalsChoice {
+            Map<String, Map<UUID, Integer>> copy = new java.util.LinkedHashMap<>();
+            choices.forEach((label, totals) -> copy.put(label, Map.copyOf(totals)));
+            choices = java.util.Collections.unmodifiableMap(copy);
+        }
+    }
+
     /**
      * Torment of Hailfire: {@code affectedPlayerId} (an opponent) chooses one of "sacrifice a nonland
      * permanent", "discard a card", or "lose N life" for one iteration of the effect. The offered

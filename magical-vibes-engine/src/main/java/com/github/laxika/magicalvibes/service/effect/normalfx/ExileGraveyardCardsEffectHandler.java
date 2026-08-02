@@ -50,7 +50,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         switch (e.scope()) {
             case OWN -> resolveOwn(gameData, entry, e);
             case OWN_ALL_MATCHING -> resolveOwnAllMatching(gameData, entry, e);
-            case TARGET_CARDS_ANY_GRAVEYARD -> resolveTargetSingleCard(gameData, entry, e);
+            case TARGET_CARDS_ANY_GRAVEYARD -> resolveTargetAnyGraveyardCards(gameData, entry, e);
             case TARGET_CARDS_OPPONENT_GRAVEYARD -> resolveTargetOpponentCards(gameData, entry);
             case TARGET_PLAYER_ENTIRE -> resolveTargetPlayerEntire(gameData, entry);
             case ALL_PLAYERS -> resolveAllGraveyards(gameData, entry);
@@ -157,38 +157,58 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         }
     }
 
-    private void resolveTargetSingleCard(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect e) {
-        UUID targetCardId = entry.getTargetId();
-        if (targetCardId == null && !entry.getTargetCardIds().isEmpty()) {
-            targetCardId = entry.getTargetCardIds().getFirst();
+    /**
+     * "Exile target card from a graveyard" ({@code count == 1}, single {@code targetId}) and its
+     * multi-target flavour "exile up to N target cards from a single graveyard" ({@code count > 1},
+     * targets riding in on {@code targetCardIds} — Rag Dealer). Each target that is no longer in a
+     * graveyard, or no longer matches the filter, is simply skipped; a single-target effect with an
+     * illegal target therefore still logs the fizzle it always did.
+     */
+    private void resolveTargetAnyGraveyardCards(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect e) {
+        List<UUID> targetCardIds = new ArrayList<>();
+        if (entry.getTargetId() != null) {
+            targetCardIds.add(entry.getTargetId());
+        } else if (entry.getTargetCardIds() != null) {
+            targetCardIds.addAll(entry.getTargetCardIds());
         }
-        if (targetCardId == null) {
+        if (targetCardIds.isEmpty()) {
             return;
         }
 
-        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
-        if (targetCard == null) {
-            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
-            return;
+        List<Card> exiledCards = new ArrayList<>();
+        for (UUID targetCardId : targetCardIds) {
+            Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
+            if (targetCard == null) {
+                gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
+                continue;
+            }
+
+            if (e.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), null)) {
+                gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target is no longer a valid "
+                                + CardPredicateUtils.describeFilter(e.filter()) + ")."));
+                continue;
+            }
+
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
+
+            permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+
+            // Add to graveyard owner's exiled cards
+            if (graveyardOwnerId != null) {
+                exileService.exileCard(gameData, graveyardOwnerId, targetCard);
+            }
+            exiledCards.add(targetCard);
         }
 
-        if (e.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), null)) {
-            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target is no longer a valid "
-                            + CardPredicateUtils.describeFilter(e.filter()) + ")."));
+        if (exiledCards.isEmpty()) {
             return;
-        }
-
-        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
-
-        permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
-
-        // Add to graveyard owner's exiled cards
-        if (graveyardOwnerId != null) {
-            exileService.exileCard(gameData, graveyardOwnerId, targetCard);
         }
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
-        gameLogService.append(gameData, GameLog.textCardText(playerName + " exiles ", targetCard, " from a graveyard."));
+        GameLog.Builder builder = GameLog.builder().text(playerName + " exiles ");
+        appendCardList(builder, exiledCards);
+        builder.text(" from a graveyard.");
+        gameLogService.append(gameData, builder.build());
     }
 
     private void resolveTargetOpponentCards(GameData gameData, StackEntry entry) {

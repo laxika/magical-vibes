@@ -12,5 +12,10 @@ public enum CounteredSpellDestination {
     /** The countered card is exiled instead of going to the graveyard (Dissipate, Faerie Trickery). */
     EXILE,
     /** The countered card is put on top of its owner's library instead of the graveyard (Memory Lapse). */
-    LIBRARY_TOP
+    LIBRARY_TOP,
+    /**
+     * The countered card is put on the top or the bottom of its owner's library — the counter's
+     * controller chooses as the counter resolves (Hinder).
+     */
+    LIBRARY_TOP_OR_BOTTOM
 }

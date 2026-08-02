@@ -18,6 +18,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryIsNthSpellCastThisTurnPredicate,
         StackEntryIsSingleTargetPredicate,
         StackEntryManaValuePredicate,
+        StackEntryMaxManaValuePredicate,
         StackEntryManaValueEqualsXPredicate,
         StackEntryManaValueEqualsSourceCountersPredicate,
         StackEntryManaValueAtMostControlledCountPredicate,

@@ -16,7 +16,9 @@ import java.util.UUID;
  * {@code ExileAllOpponentsGraveyardsEffect} (ALL_OPPONENTS).
  *
  * @param count            number of cards to exile (used by OWN and TARGET_CARDS_OPPONENT_GRAVEYARD;
- *                         1 for the single-target card scope; unused for the whole-graveyard scopes).
+ *                         1 for the single-target card scope, or {@code > 1} for
+ *                         TARGET_CARDS_ANY_GRAVEYARD's "up to N target cards from a single
+ *                         graveyard" flavour — Rag Dealer; unused for the whole-graveyard scopes).
  *                         Kept as an int — no live card uses a dynamic count here.
  * @param scope            which graveyard(s) are affected and how targets are chosen
  * @param filter           for TARGET_CARDS_ANY_GRAVEYARD only: an optional type restriction on the

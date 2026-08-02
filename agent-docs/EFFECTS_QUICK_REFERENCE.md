@@ -230,6 +230,7 @@ a code change. Branching on one of these interfaces is fine anywhere — it is t
   `AbilityActivationService` at cycling activation (CR 118.9 alt cost; only the mana cost is replaced,
   the discard is still paid): `minCardsInHand()` cards the controller must hold, counting the card
   being cycled. Impl `FreeCyclingWhileHandSizeEffect` (New Perspectives, `EffectSlot.STATIC`, min 7)
+| `TappedBlockPermissionEffect` | `CardEffect` | `tappedBlockMatcher()` returns a `PermanentPredicate` selecting creatures that may block while tapped, or `null`. Evaluated by `BlockLegalityService` relative to the permanent carrying the effect, so the permission stays correct after control changes. Impl `ControlledCreaturesCanBlockAsThoughUntappedEffect`. |
 
 ## Wrapper / modifier effects
 
@@ -479,6 +480,7 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `MakeTargetCreatureUnpreparedEffect()` — target creature becomes unprepared; no-op if not prepared
 
 See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
+- `RedirectNextDamageToTargetCreatureToControllerEffect(DynamicAmount amount)` — the next `amount` damage that would be dealt to the targeted creature this turn is dealt to the ability's controller instead, from any source. Benign `CREATURE` spec. Vassal's Duty
 
 ## Destruction / sacrifice
 
@@ -642,6 +644,8 @@ See EFFECTS_INDEX.md "Destruction" section for 10+ additional niche destruction/
 - `PutCounterOnControlledCreatureCost(CounterType, int count)` — additional spell cost: put counter(s) on a creature you control (Scarscale Ritual: `MINUS_ONE_MINUS_ONE, 1`); creature supplied via `sacrificePermanentId`, paid in `SpellCastingService`
 
 See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
+- `DestroyDamagedCreatureEffect()` — `ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE` marker, self-scoped: fires only when the permanent holding it is the damage source. Expanded at trigger-collection time into a `DestroyTargetPermanentEffect` entry aimed at the damaged creature, so it never resolves directly. Granted to itself by Cruel Deceiver
+- `SacrificeAnyNumberOfPermanentsCost(PermanentPredicate filter)` — `CostEffect`; SPELL-slot additional cast cost "you may sacrifice any number of permanents you control matching `filter`". Zero is a legal payment, so it never blocks castability; the count sacrificed becomes the spell's X. Rides on `PlayCardRequest.additionalCostSacrificePermanentIds`. Devouring Greed pairs it with `Sum(Fixed(2), Scaled(XValue(), 2))` life loss. Contrast `SacrificeMultiplePermanentsCost` (exact count) and `SacrificeXPermanentsCost` (activated abilities only)
 
 ## Counter spells
 
@@ -695,6 +699,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `ReturnTriggeringCreatureToOwnerHandEffect()` — ON_ALLY_CREATURE_DIES return dying creature to hand (Enduring Renewal)
 - `PutOnTopOfLibraryInsteadOfDyingEffect()` — if this creature would die, put it on top of its owner's library instead (static replacement, Gravebane Zombie)
 - `PutControlledCreatureOnTopOfLibraryEffect()` — "put a creature you control on top of its owner's library" (Nulltread Gargantuan ETB). Non-targeted, mandatory choice at resolution; the source itself is a legal pick (and forced when it's the only creature you control). One candidate resolves automatically; several prompt `PermanentChoiceContext.PutControlledCreatureOnTopOfLibrary`. No card target filter
+- `CounterSpellIfManaValueEqualsXEffect()` — counters the target spell only if its mana value equals the ability's X, which a `DiscardCardTypeCost` with `trackManaValue` snapshots off the discarded card. Benign `SPELL_ON_STACK` spec. Hisoka, Minamo Sensei
 
 ## Bounce / return to hand
 
@@ -713,6 +718,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `PutSourceCardFromGraveyardIntoLibraryNFromTopEffect(position)` — ON_DEATH: put dying source into owner's library N from top (0=top: Undying Beast; 2=third: Enigma Sphinx)
 - `ExileSourceCardFromGraveyardEffect()` — ON_DEATH: exile dying source from owner's graveyard ("When this dies, exile it", Cyclopean Mummy)
 - `ExileIfHadCounterElseReturnWithCounterEffect(CounterType)` — ON_DEATH: exile if dying source had that counter, else return self to battlefield under your control with one of that counter (Bogardan Phoenix / death counters). Collector snapshots the counter at death and bakes `ExileSourceCardFromGraveyardEffect` or self `ReturnCardFromGraveyardEffect` with `enterWithCounter`
+- `ReturnMatchingPermanentsUnlessControllerPaysEffect(PermanentPredicate filter, String manaCost)` — `BoardWipeEffect`; punisher mass bounce: every permanent matching `filter` across all battlefields returns to its owner's hand unless that permanent's own controller pays `manaCost`. One independent may-pay decision per permanent, offered in APNAP order. Cut the Tethers (`PermanentHasSubtypePredicate(SPIRIT)`, `"{3}"`)
 
 ## Graveyard return
 
@@ -847,6 +853,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `EachPlayerShufflesGraveyardIntoLibraryEffect()` — each player shuffles their graveyard into their library (empty GY still shuffles library; Survive)
 - `EachPlayerKeepsCardsShufflesRestIntoLibraryEffect(int keepCount)` — each player (APNAP order) chooses up to `keepCount` cards in their hand to keep, shuffles the rest into their library; interactive per-player choice (Worldpurge, `keepCount=7`)
 - `EachPlayerLosesUnspentManaEffect()` — each player's mana pool is emptied ("loses all unspent mana"; Worldpurge)
+- `AlternatingHandExileEffect()` — target opponent reveals their hand, then that player and the spell's controller alternately exile a card from it (target picks first) until it is empty; the target's picks return to their hand, the controller's picks go to their graveyard. Harmful `PLAYER` spec; alternation carried by `PendingInteraction.AlternatingHandExileChoice`. Struggle for Sanity
 
 ## Library manipulation
 
@@ -918,6 +925,9 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `BrilliantUltimatumEffect(int count)` — exile top `count` of your library; an opponent separates them into two piles (reuses the card-pile flow, `PendingPileSeparation` with `playFromExile=true`); controller picks a pile via may-ability, then a `BrilliantUltimatumPlayChoice` interaction lets them play lands (one-land-per-turn enforced) and cast spells for free from it, rest stays exiled (`BrilliantUltimatumEffectHandler` + `BrilliantUltimatumSupport`)
 - `RevealTopCardMayPlayFreeEffect(LookDestination notPlayedDestination[, boolean requireCreatureSharingTypeWithYourCreatures])` — reveal top, may play free; not-played destination is `EXILE` (Djinn of Wishes), `TOP_OF_LIBRARY` (Leaf-Crowned Elder Kinship), or `BOTTOM_OF_LIBRARY` (Descendants' Path). The flag limits the offer to a creature card sharing a creature type with a creature you control
 - `KinshipEffect(List<CardEffect> revealEffects)` — Morningtide Kinship (`UPKEEP_TRIGGERED`): look at top card; if it shares a creature type with the source, you may reveal it, and on reveal the `revealEffects` resolve against the source (Kithkin Zephyrnaut)
+- `GiftsUngivenEffect()` — search your library for up to four cards with different names and reveal them; target opponent chooses two to put into your graveyard, the rest go to your hand, then shuffle. Harmful `PLAYER` spec. Runs a `LibrarySearchDestination.GIFTS_UNGIVEN_POOL` search (cards held outside every zone) followed by a `PendingPileSeparation` with `CardPileDisposition.GIFTS_UNGIVEN`. Gifts Ungiven
+- `PutTopCardsOfLibraryOnBottomEffect(int count)` — put the top `count` cards of your library on the bottom in any order, ordered by the controller through a `LibraryReorder` interaction; a shorter library just moves what it has. Petals of Insight
+- `RevealTopCardOfOwnLibraryEffect()` — reveal the top card of the resolving controller's library; the card stays on top. Callous Deceiver, Cruel Deceiver, Harsh Deceiver
 
 ## Mill
 
@@ -978,6 +988,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `ReturnEnchantedCreatureToOwnerHandOnDeathEffect()` — aura `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` trigger: when the enchanted creature dies, return it to its owner's hand (Demonic Vigor)
 - `ReturnEnchantedCreatureToBattlefieldOnDeathEffect(boolean underAuraControllersControl)` — aura `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` trigger: when the enchanted creature dies, return it to the battlefield under its owner's control (Abduction, no-arg form) or under the Aura controller's control (Unhallowed Pact, False Demise, `true`), which tracks the returned permanent as a stolen creature so the control change persists
 - `ReturnTargetCardFromExileToHandEffect(CardPredicate, boolean ownedOnly)` — exile to hand
+- `ExilePermanentsInsteadOfGraveyardEffect()` — static replacement: permanents are exiled instead of entering a graveyard. Applies only to permanents leaving the battlefield, not to permanent cards in other zones. Samurai of the Pale Curtain
 
 ## Tokens
 
@@ -1052,6 +1063,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `AllDamageDealtWithWitherEffect()` — STATIC global: all damage is dealt as though its source had wither (creature damage becomes -1/-1 counters; player damage normal). Everlasting Torment
 - `NoncombatDamageToOpponentCreaturesAsMinusCountersEffect()` — STATIC: the controller's sources deal noncombat damage to opponents' creatures as -1/-1 counters instead (combat damage unaffected). Like wither, still counts as damage dealt. Checked in `GameQueryService.noncombatDamageToOpponentCreatureAsCounters` (noncombat path only). Soul-Scar Mage
 - `DoubleLifeGainEffect()` — STATIC: controller's life gain is doubled (Boon Reflection). Applied in `LifeSupport.applyGainLife`; multiple copies stack multiplicatively (2^count)
+- `RedistributePlayerLifeTotalsEffect()` — the resolving controller redistributes the players' current life totals among them (each total is reassigned to a player of their choice). Reverse the Sands
 
 ## Poison counters
 
@@ -1084,6 +1096,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `GrantBaseStatsToCounterBearersEffect(CounterType, int power, int toughness, Set<Keyword>)` — resolves to a game-wide continuous rule: "every creature with a [type] counter has base P/T power/toughness and has [keywords] for as long as it has such a counter" (layer 7b set + layer 6 keywords). Installs source-independent PERMANENT floating effects scoped by `PermanentHasCountersPredicate`, so the rule survives the source leaving and lapses when the counter is removed (scope re-evaluated each pass); idempotent. Put in `ON_ENTER_BATTLEFIELD` and pair with an upkeep `PutCounterOnTargetPermanentEffect(theCounter)`. Aven Mimeomancer (feather counter → base 3/1 + flying)
 - `BecomeCreatureTypeWithBasePowerToughnessEffect(int power, int toughness, CardSubtype addedSubtype[, CardSubtype requiredSubtype])` — one-shot non-targeting SELF effect: permanently adds `addedSubtype` (into `grantedSubtypes`) and sets base P/T **indefinitely** (permanent base override, layer 7b via fresh timestamp — not until end of turn). Optional `requiredSubtype` = intervening "if" checked at resolution (source must already have that subtype, granted counts). Figure of Destiny's level-up chain. Pair permanent keyword grants (flying/first strike) as STATIC `ConditionalEffect(new SourceHasSubtype(subtype), new GrantKeywordEffect(kw, SELF))`
 - `SwitchPowerToughnessEffect()` — switch P/T
+- `BoostByBushidoEffect()` — continuous Bushido lord: each OTHER Samurai its controller controls gets +1/+1 for each point of Bushido that creature has. Takeno, Samurai General
 
 ## P/T setting / counters
 
@@ -1122,6 +1135,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `KickerEffect(String cost)` — kicker declaration
 - `BuybackEffect(String cost)` — STATIC declaration of a spell's optional buyback cost (CR 702.27). Paid when the caster announces buyback (wire `PlayCardRequest.buyback`); the stack entry is stamped `StackEntry.buyback`, read at resolution by the `BuybackPaid` condition. Pair with `ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell())` in the SPELL slot so the spell returns to its owner's hand as it resolves; countered or fizzled spells (which never resolve) still go to the graveyard. Harness `castInstantWithBuyback` / `castSorceryWithBuyback`
 - `SpliceEffect(CardSubtype onto, String cost)` — STATIC: splice onto [subtype] for [cost] (CR 702.46). Cast via `harness.castWithSplice` / `GameService.playCardWithSplice`; host spell must have the subtype (e.g. Arcane). Through the Breach
+- `RemoveXCountersFromSourceCost(CounterType)` — `CostEffect`; removes X counters of that type from the source permanent, X chosen at activation and bounded by the counters actually present (prompted like a variable loyalty cost, not an `{X}` mana cost). The chosen X rides on the activation's `xValue`, readable back with an `XValue` amount. Night Dealings (`CounterType.THEFT`)
 
 ## Keywords / abilities
 
@@ -1196,6 +1210,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `LoseAllCreatureTypesEffect(GrantScope)` — creatures lose all creature types until end of turn; `TARGET` = single creature (Amoeboid Changeling), `TARGET_PLAYERS_CREATURES` = all creatures target player controls (Ego Erasure); "gains all creature types" = `GrantKeywordEffect(Keyword.CHANGELING, sameScope)`
 - `LoseSubtypesUntilEndOfTurnEffect(Set<CardSubtype>)` — source permanent loses the given subtypes until end of turn (self-targeting). Haunted Plate Mail "that's no longer an Equipment". Writes `Permanent.transientRemovedSubtypes`; equip while not Equipment has no effect; CR 704.5p unattaches if no longer Aura/Equipment
 - **Paradigm** (`Keyword.PARADIGM` on card, not an effect) — engine handled by `ParadigmService`: first resolve exiles spell + registers `GameData.ParadigmDelayedTrigger`; each precombat main fires `ParadigmCastCopyEffect` → copy in exile + `ParadigmMayCastFromExileEffect` may-cast (`ParadigmCastSupport`)
+- `BushidoEffect(int amount)` — a Bushido ability carrying its printed value, used by the combat trigger slots so other cards can distinguish Bushido from unrelated block triggers. `asBoost()` yields the `BoostSelfEffect(amount, amount)` the trigger resolves. Every CHK Bushido creature (Devoted Retainer, Konda, Lord of Eiganjo, …)
+- `GrantEffectToSourceUntilEndOfTurnEffect(EffectSlot slot, CardEffect grantedEffect)` — grants the SOURCE permanent a temporary triggered ability until end of turn ("this creature gains '…' until end of turn"). Non-targeting — the recipient is the resolving entry's source permanent. Stored via `Permanent.addTemporaryTriggeredEffect`, cleared by `resetModifiers()` at cleanup. Self-scoped sibling of `GrantEffectToTargetEffect`. Cruel Deceiver
 
 ## Combat restrictions / evasion
 
@@ -1245,6 +1261,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `CantBlockThisTurnEffect(TapUntapScope scope[, PermanentPredicate filter])` — creature(s) can't block this turn (one-shot). `TARGET` (target creature, multi-target-group), `TARGET_PLAYERS_PERMANENTS` (target player's / targeted planeswalker's controller's creatures), `ALL_CREATURES` (mass, filtered). NOT the static `CantBlockEffect()`.
 - `TargetPlayerChoosesCreatureRestCantBlockEffect()` — SPELL, player-targeting spec: the targeted player chooses one creature they control (kept able to block); all their OTHER creatures can't block this turn. Pair with a `PlayerPredicateTargetFilter(OPPONENT)`. 0-1 creatures ⇒ no choice, resolves harmlessly (Goblin War Cry).
 - `TargetPlayerChoosesCreaturesToAttackNextTurnEffect()` — player-targeting spec: the targeted player chooses any number of creatures they control; during their NEXT turn only those creatures may attack and they attack if able, and each of them that didn't attack is destroyed at that turn's end step. `GameData.chosenAttackersNextTurn` → `chosenAttackersThisTurn`. Empty choice = no creature may attack. Pair with a `PlayerPredicateTargetFilter(OPPONENT)` (Oracle en-Vec).
+- `ControlledCreaturesCanBlockAsThoughUntappedEffect()` — `TappedBlockPermissionEffect`; STATIC, tapped creatures you control can block as though they were untapped. Controller-relative (`PermanentControlledBySourceControllerPredicate`), so the permission follows control changes. Masako the Humorless
 
 ## Tap / untap
 
@@ -1386,6 +1403,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `SkipNextCombatPhaseEffect()` — ON_COMBAT_DAMAGE_TO_PLAYER: the damaged player skips their next combat phase (Blinding Angel). `(true)` = targeted spell variant where the caster picks the affected player (False Peace)
 - `SkipNextTurnEffect()` — controller skips their next turn (Chronatog); counter consumed in `TurnProgressionService.advanceTurn`
 - `EndTurnEffect()` — end the turn
+- `SkipNextUntapStepEffect()` — target player skips their next untap step. Harmful `PLAYER` spec; queued on `GameData.skipNextUntapStepCount` and consumed by `TurnProgressionService.advanceTurn`. The step is proceeded past as though it didn't exist, so phasing doesn't happen and no untap-restriction choice (Storage Matrix, Static Orb) is offered. Distinct from `SkipNextUntapEffect`, which only marks individual permanents while the step still happens. Yosei, the Morning Star
 
 ## Animate / transform
 
@@ -1482,6 +1500,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `BecomeChosenColorsIndefinitelyEffect([boolean targeted])` — controller chooses one or more colors; the permanent becomes those colors **indefinitely** (floats `BecomeChosenColorsUntilEndOfTurnEffect` with `EffectDuration.PERMANENT`). No-arg = self-scoped, wrap in `MayEffect` for "you may" (Shyft upkeep); `true` = targets a permanent (Prismatic Lace)
 - `SetTargetColorEffect(CardColor, boolean spellOnly)` — SPELL or ability; a **null** color = becomes colorless, `spellOnly` narrows the spec to `SPELL_ON_STACK` (Ersatz Gnomes); "target spell or permanent becomes [color]" **indefinitely** (Purelace → white). Layer-5 setter with `EffectDuration.PERMANENT` (no wear-off). Targets spell OR permanent like Glamerdye (spec `benign(PERMANENT)` + `targetsSpellOnStack`, no `target()` call); a color set on a permanent spell carries to the permanent via `GameData.spellColorOverrides` (CR 613.7)
 - `ChooseSubtypeOnEnterEffect()` — choose creature type ETB
+- `AllColorWordsBecomeChosenColorEffect()` — global text-changing static: every color word on every spell and permanent becomes the source's chosen color word. Pair with `ChooseColorOnEnterEffect` (read back via `Permanent.getChosenColor()`). Records no `TextReplacement` — the substitution is derived from the battlefield on each text-change query, so it starts and stops with this permanent; consumed directly by `TextChangeTransformer`, no static handler. Swirl the Mists
 
 ## Provider map
 

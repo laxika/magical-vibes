@@ -78,6 +78,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost;
@@ -875,7 +876,10 @@ public class SpellCastingService {
 
         // For modal spells, derive targeting from the chosen mode's unwrapped effect;
         // for non-modal spells, use the card's declared targeting (which accounts for auras, ETB effects, etc.)
-        boolean deriveTargetingFromResolvedEffects = wasModal || overloaded;
+        // Spliced-on effects (CR 702.46b) become part of the host spell, so they may add targeting
+        // requirements the host card itself never declares (Soulless Revival onto a targetless Arcane).
+        boolean spliced = !pendingSpliceCosts.isEmpty();
+        boolean deriveTargetingFromResolvedEffects = wasModal || overloaded || spliced;
         boolean unwrappedNeedsSpellTarget = deriveTargetingFromResolvedEffects
                 ? filteredSpellEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack)
                 : EffectResolution.needsSpellTarget(card);
@@ -1117,7 +1121,7 @@ public class SpellCastingService {
 
         // For modal spells, graveyard-targeting is determined by the chosen mode's unwrapped effects
         // (the raw SPELL slot holds only the ChooseOneEffect, which reports no graveyard targeting).
-        List<CardEffect> graveyardTargetingSource = wasModal ? filteredSpellEffects : card.getEffects(EffectSlot.SPELL);
+        List<CardEffect> graveyardTargetingSource = wasModal || spliced ? filteredSpellEffects : card.getEffects(EffectSlot.SPELL);
 
         ReturnCardFromGraveyardEffect graveyardReturnEffect = (ReturnCardFromGraveyardEffect) graveyardTargetingSource.stream()
                 .map(SpellCastingService::unwrapConditional)
@@ -2063,6 +2067,10 @@ public class SpellCastingService {
         resolvedXValue = payAllSacrificeCosts(gameData, player, card, selection.sacrificePermanentId(), costs, resolvedXValue);
         payMultipleSacrificeCost(gameData, player, card, costs.sacrificeMultiplePermanentsCost(),
                 selection.sacrificePermanentIds());
+        if (costs.sacrificeAnyNumberCost() != null) {
+            resolvedXValue = paySacrificeAnyNumberOfPermanentsCost(gameData, player, card,
+                    costs.sacrificeAnyNumberCost(), selection.sacrificePermanentIds());
+        }
         if (costs.tapAnyNumberCost() != null) {
             resolvedXValue = payTapAnyNumberOfPermanentsCost(gameData, player, card, costs.tapAnyNumberCost(),
                     selection.sacrificePermanentIds());
@@ -2235,6 +2243,24 @@ public class SpellCastingService {
             paySingleSacrificeCost(gameData, player, card, id, "a matching permanent",
                     p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
         }
+    }
+
+    /**
+     * Pays the "sacrifice any number of permanents you control" additional cast cost (Devouring
+     * Greed) and returns the number sacrificed, which becomes the spell's X value so a companion
+     * effect can scale with it. Legality is checked by
+     * {@code AdditionalSpellCostService.validateSacrificeAnyNumberOfPermanentsCost} before any cost
+     * is consumed.
+     */
+    private int paySacrificeAnyNumberOfPermanentsCost(GameData gameData, Player player, Card card,
+                                                      SacrificeAnyNumberOfPermanentsCost cost,
+                                                      List<UUID> sacrificePermanentIds) {
+        List<UUID> ids = sacrificePermanentIds != null ? sacrificePermanentIds : List.of();
+        for (UUID id : ids) {
+            paySingleSacrificeCost(gameData, player, card, id, "a matching permanent",
+                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
+        }
+        return ids.size();
     }
 
     /**
@@ -2776,7 +2802,7 @@ public class SpellCastingService {
             // Validate only the sacrifice slice so an exile-N cost (validated above with
             // the spell's GY index excluded) is not re-checked against a null selection.
             AdditionalSpellCostService.ExtractedCosts sacOnly = new AdditionalSpellCostService.ExtractedCosts(
-                    false, false, true, null, false, null, null, null, null, false, null,
+                    false, false, true, null, false, null, null, null, null, null, false, null,
                     false, null, null, null, null, null, null, false, false, null, null, null);
             AdditionalSpellCostService.CostSelection sacSelection = new AdditionalSpellCostService.CostSelection(
                     sacrificePermanentId, null, null, null, null, 0, -1, null);

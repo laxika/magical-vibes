@@ -135,6 +135,8 @@ export interface ActivatedAbilityView {
   maxTargets: number;
   isManaAbility: boolean;
   variableLoyaltyCost: boolean;
+  /** CounterType name whose counters the ability removes X of as a cost, or null. */
+  variableCounterCostType: string | null;
 }
 
 export interface Card {

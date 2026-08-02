@@ -34,6 +34,21 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
         var e = (GrantColorUntilEndOfTurnEffect) effect;
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
+            if (e.canTargetSpell()) {
+                StackEntry targetSpell = gameQueryService.findStackEntryByCardId(gameData, entry.getTargetId());
+                if (targetSpell != null) {
+                    gameData.spellColorOverridesUntilEndOfTurn.put(entry.getTargetId(),
+                            java.util.Set.of(e.color()));
+                    String colorName = e.color().name().charAt(0)
+                            + e.color().name().substring(1).toLowerCase();
+                    gameLogService.append(gameData, GameLog.builder()
+                            .card(targetSpell.getCard())
+                            .text(" becomes " + colorName + " until end of turn.")
+                            .build());
+                    log.info("Game {} - spell {} becomes {} until end of turn",
+                            gameData.id, targetSpell.getCard().getName(), colorName);
+                }
+            }
             return;
         }
 

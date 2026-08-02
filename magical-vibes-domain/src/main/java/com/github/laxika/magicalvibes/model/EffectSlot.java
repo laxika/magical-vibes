@@ -658,6 +658,18 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  ({@code CombatDamageService} per source, {@code DamageSupport} for non-combat) via
      *  {@code TriggerCollectionService.checkControllerDealtDamageTriggers}. Used by Living Artifact. */
     ON_CONTROLLER_DEALT_DAMAGE,
+    /** Triggers whenever a source this permanent's controller controls deals damage to a player
+     *  other than them — "Whenever a source you control deals damage to another player, ...".
+     *  The outbound mirror of {@link #ON_CONTROLLER_DEALT_DAMAGE}: it scans the <em>damaging</em>
+     *  source's controller's battlefield, and only fires when the damaged player is someone else.
+     *  Fires once per damage source, carrying the amount, which is snapshotted onto the queued
+     *  triggered ability's {@code eventValue} so an {@code EventValue} amount ("put that many
+     *  counters") can read it. Fired from the same two player-damage choke points as
+     *  {@link #ON_CONTROLLER_DEALT_DAMAGE} ({@code CombatDamageService} per attacker,
+     *  {@code DamageSupport} for non-combat) via
+     *  {@code TriggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers}.
+     *  Used by Night Dealings. */
+    ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT,
     /** Triggers whenever this permanent's controller is dealt damage (combat or non-combat) by a
      *  source an <em>opponent</em> controls — "Whenever a source an opponent controls deals damage to
      *  you, ...". Like {@link #ON_CONTROLLER_DEALT_DAMAGE} (fires once per damage source, snapshots the

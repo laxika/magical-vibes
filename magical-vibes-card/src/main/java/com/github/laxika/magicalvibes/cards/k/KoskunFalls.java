@@ -23,6 +23,6 @@ public class KoskunFalls extends Card {
 
         // Creatures can't attack you unless their controller pays {2} for each creature they
         // control that's attacking you.
-        addEffect(EffectSlot.STATIC, new RequirePaymentToAttackEffect(2));
+        addEffect(EffectSlot.STATIC, RequirePaymentToAttackEffect.playerOnly(2));
     }
 }

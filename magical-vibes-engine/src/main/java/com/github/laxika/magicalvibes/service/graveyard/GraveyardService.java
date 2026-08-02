@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileInstantSorceryCardsInsteadOfGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExilePermanentsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnGraveyardExileReplacement;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
@@ -277,6 +278,14 @@ public class GraveyardService {
             
             gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
             log.info("Game {} - {} replacement effect: exiled instead of graveyard (cast permission)",
+                    gameData.id, card.getName());
+            return false;
+        }
+
+        if (sourceZone == Zone.BATTLEFIELD && battlefieldHasExilePermanentsReplacement(gameData)) {
+            exileService.exileCard(gameData, ownerId, card);
+            gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
+            log.info("Game {} - {} replacement effect: permanent exiled instead of graveyard",
                     gameData.id, card.getName());
             return false;
         }
@@ -573,6 +582,11 @@ public class GraveyardService {
                 .anyMatch(e -> e instanceof ExileInsteadOfGraveyardReplacementEffect);
     }
 
+    public static boolean hasExilePermanentsInsteadOfGraveyardReplacementEffect(Card card) {
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof ExilePermanentsInsteadOfGraveyardEffect);
+    }
+
     private boolean enchantedPlayerHasBottomOfLibraryReplacement(GameData gameData, UUID ownerId) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
@@ -610,6 +624,19 @@ public class GraveyardService {
             for (Permanent p : bf) {
                 if (p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(ExileInstantSorceryCardsInsteadOfGraveyardEffect.class::isInstance)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean battlefieldHasExilePermanentsReplacement(GameData gameData) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                if (hasExilePermanentsInsteadOfGraveyardReplacementEffect(p.getCard())) {
                     return true;
                 }
             }

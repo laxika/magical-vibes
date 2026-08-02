@@ -20,12 +20,18 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 public record GrantEffectToTargetEffect(
         EffectSlot slot,
         CardEffect grantedEffect,
-        EffectDuration duration
+        EffectDuration duration,
+        boolean skipIfAlreadyPresent
 ) implements CardEffect {
 
     /** Indefinite grant (Balduvian Shaman). */
     public GrantEffectToTargetEffect(EffectSlot slot, CardEffect grantedEffect) {
-        this(slot, grantedEffect, EffectDuration.PERMANENT);
+        this(slot, grantedEffect, EffectDuration.PERMANENT, true);
+    }
+
+    /** Grant with an explicit duration, skipping equal existing grants by default. */
+    public GrantEffectToTargetEffect(EffectSlot slot, CardEffect grantedEffect, EffectDuration duration) {
+        this(slot, grantedEffect, duration, true);
     }
 
     @Override

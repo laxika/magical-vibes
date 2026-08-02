@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.DamagePreventionLifeGainShield;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
@@ -53,6 +54,10 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
             case ALL_TO_CREATURES -> {
                 gameData.preventAllDamageToAllCreatures = true;
                 gameLogService.append(gameData, GameLog.text("All damage that would be dealt to creatures this turn is prevented."));
+            }
+            case ALL_BY_CREATURES -> {
+                gameData.preventAllDamageByCreatures = true;
+                gameLogService.append(gameData, GameLog.text("All damage that would be dealt by creatures this turn is prevented."));
             }
             case ALL_TO_MATCHING_PERMANENTS -> {
                 gameData.allDamagePreventionPredicates.add(e.victimPredicate());
@@ -158,6 +163,15 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
     private void nextToTarget(GameData gameData, StackEntry entry, PreventDamageEffect e) {
         UUID targetId = entry.getTargetId();
         int amount = evaluate(gameData, entry, e);
+
+        if (e.gainLife()) {
+            gameData.damagePreventionLifeGainShields.add(new DamagePreventionLifeGainShield(
+                    targetId, entry.getControllerId(), amount));
+            gameLogService.append(gameData, GameLog.text(
+                    "The next " + amount + " damage that would be dealt to the target is prevented; "
+                            + "the controller gains life equal to the damage prevented."));
+            return;
+        }
 
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target != null) {

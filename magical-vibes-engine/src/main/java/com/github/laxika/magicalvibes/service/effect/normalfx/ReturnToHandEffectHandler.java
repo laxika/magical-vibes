@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -53,12 +54,31 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         switch (e.scope()) {
             case TARGET -> resolveTarget(gameData, entry, e);
             case SELF -> bounceSupport.applyReturnSelfToHand(gameData, entry);
-            case SELF_SPELL -> entry.setReturnToHandAfterResolving(true);
+            case SELF_SPELL -> resolveSelfSpell(gameData, entry);
             case ALL_MATCHING -> resolveAllMatching(gameData, entry, e);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
             case TARGET_PLAYERS_OWNED -> resolveTargetPlayersOwned(gameData, entry, e);
             case AURAS_ATTACHED_TO_TARGET -> resolveAurasAttachedToTarget(gameData, entry);
             case ENCHANTED -> resolveEnchanted(gameData, entry);
+        }
+    }
+
+    /**
+     * The resolving spell returns itself to its owner's hand instead of going to the graveyard.
+     * Normally this is just a marker read once the entry finishes resolving, but an effect that
+     * paused for player input earlier in the same resolution (Petals of Insight's "you may"
+     * prompt) has already had its spell disposition applied, so the card is fetched back out of
+     * the graveyard here.
+     */
+    private void resolveSelfSpell(GameData gameData, StackEntry entry) {
+        entry.setReturnToHandAfterResolving(true);
+        if (entry.getCard() == null) {
+            return;
+        }
+        UUID ownerId = entry.getOwnerId();
+        List<Card> graveyard = gameData.playerGraveyards.get(ownerId);
+        if (graveyard != null && graveyard.remove(entry.getCard())) {
+            gameData.addCardToHand(ownerId, entry.getCard());
         }
     }
 

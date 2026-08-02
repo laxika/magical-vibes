@@ -335,17 +335,31 @@ public class BattlefieldEntryService {
      * color setter (mirroring {@code SetTargetColorEffectHandler}'s permanent path).
      */
     private void carrySpellColorOverride(GameData gameData, UUID controllerId, Permanent permanent) {
-        Set<CardColor> colors = gameData.spellColorOverrides.remove(permanent.getCard().getId());
-        if (colors == null) {
+        UUID cardId = permanent.getCard().getId();
+        Set<CardColor> colors = gameData.spellColorOverrides.remove(cardId);
+        Set<CardColor> temporaryColors = gameData.spellColorOverridesUntilEndOfTurn.remove(cardId);
+        if (colors == null && temporaryColors == null) {
             return;
         }
-        CardColor color = colors.stream().findFirst().orElse(null);
-        permanent.getTransientColors().clear();
-        permanent.getTransientColors().addAll(colors);
-        permanent.setColorOverridden(true);
-        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                permanent.getCard().getName(), null, controllerId, new SetTargetColorEffect(color),
-                permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
+        if (colors != null) {
+            CardColor color = colors.stream().findFirst().orElse(null);
+            permanent.getTransientColors().clear();
+            permanent.getTransientColors().addAll(colors);
+            permanent.setColorOverridden(true);
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    permanent.getCard().getName(), null, controllerId, new SetTargetColorEffect(color),
+                    permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
+        }
+        if (temporaryColors != null && !temporaryColors.isEmpty()) {
+            CardColor color = temporaryColors.iterator().next();
+            permanent.getTransientColors().clear();
+            permanent.getTransientColors().addAll(temporaryColors);
+            permanent.setColorOverridden(true);
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    permanent.getCard().getName(), null, controllerId,
+                    new com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect(color),
+                    permanent.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+        }
     }
 
     /**

@@ -65,6 +65,7 @@ public sealed interface Condition permits
         DidntAttack,
         DidntGainLifeThisTurn,
         Enchanted,
+        EnchantedByAtLeastAuras,
         EnchantedCreatureDidntAttack,
         EnchantedCreaturePowerAtLeast,
         EnchantedPermanentMatches,
@@ -118,8 +119,10 @@ public sealed interface Condition permits
         SpellManaSpentAtLeast,
         SpellXAtLeast,
         TargetPermanentMatches,
+        TargetPlayerHandEmpty,
         TargetSpellMatches,
         TopCardOfLibraryColor,
+        TopCardOfLibraryType,
         TotalPermanentCountEven,
         TwoOrMoreSpellsCastLastTurn,
         WonClash {

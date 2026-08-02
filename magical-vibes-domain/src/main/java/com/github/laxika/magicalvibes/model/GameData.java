@@ -207,6 +207,8 @@ public class GameData {
     public UUID cardEnteringGraveyardByCycling;
     /** Counts all creature deaths (including tokens) from battlefield this turn, per controller. */
     public final Map<UUID, Integer> creatureDeathCountThisTurn = new ConcurrentHashMap<>();
+    /** Counts creature deaths by effective creature subtype and controller this turn. */
+    public final Map<UUID, Map<CardSubtype, Integer>> creatureSubtypeDeathCountThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> creatureCardsDamagedThisTurnBySourcePermanent = new ConcurrentHashMap<>();
     /**
      * Source permanent ids that dealt damage to a creature which later died this turn (Krovikan Vampire
@@ -251,10 +253,18 @@ public class GameData {
     public final Map<UUID, Integer> skipNextDrawStepCount = new ConcurrentHashMap<>();
     /** Player IDs → number of upcoming turns they must skip (Chronatog). Decremented as each is skipped. */
     public final Map<UUID, Integer> skipNextTurnCount = new ConcurrentHashMap<>();
+    /**
+     * Player IDs → number of upcoming untap steps they must skip (Yosei, the Morning Star).
+     * Decremented as each is skipped. CR 500.11 / 614.10: the whole step is proceeded past, so no
+     * phasing happens either (CR 702.26m) and no untap-restriction choice is offered.
+     */
+    public final Map<UUID, Integer> skipNextUntapStepCount = new ConcurrentHashMap<>();
     public int globalDamagePreventionShield;
     public boolean preventAllCombatDamage;
     /** When true, all damage to all creatures (both players') is prevented this turn (Blinding Fog). */
     public boolean preventAllDamageToAllCreatures;
+    /** When true, all damage that would be dealt by creatures is prevented this turn (Ethereal Haze). */
+    public boolean preventAllDamageByCreatures;
     /** When non-null, creatures NOT matching this predicate are prevented from dealing combat damage this turn. */
     public PermanentPredicate combatDamageExemptPredicate;
     public boolean allPermanentsEnterTappedThisTurn;
@@ -293,6 +303,12 @@ public class GameData {
      * queue drains.
      */
     public final List<UUID> destroyDamagersUnlessPaysRemaining = new ArrayList<>();
+    /**
+     * ReturnMatchingPermanentsUnlessControllerPays: ids of the matching permanents still to be
+     * offered the pay-or-be-bounced prompt after the one currently being decided. Cleared when the
+     * queue drains.
+     */
+    public final List<UUID> bounceUnlessPaysRemaining = new ArrayList<>();
     public final GraveyardTargetOperationState graveyardTargetOperation = new GraveyardTargetOperationState();
     public final CloneOperationState cloneOperation = new CloneOperationState();
     public StackEntry pendingEffectResolutionEntry;
@@ -501,6 +517,8 @@ public class GameData {
     public final List<SourceDamageRedirectShield> sourceDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
     /** Target+source-specific damage prevention shields (e.g. Healing Grace): prevent next N damage from a chosen source to a specific target. */
     public final List<TargetSourceDamagePreventionShield> targetSourceDamagePreventionShields = Collections.synchronizedList(new ArrayList<>());
+    /** Candles' Glow-style shields: prevent next N damage to a target and gain that much life. */
+    public final List<DamagePreventionLifeGainShield> damagePreventionLifeGainShields = Collections.synchronizedList(new ArrayList<>());
     /** Pending source redirect damage to deal after source-specific prevention (populated by DamagePreventionService, consumed by callers). */
     public final List<SourceDamageRedirectShield> pendingSourceRedirectDamage = Collections.synchronizedList(new ArrayList<>());
     /** Creature-specific damage redirect shields (e.g. Oracle's Attendants): redirect all damage a chosen source would deal to a specific creature this turn onto another permanent. */
@@ -543,6 +561,9 @@ public class GameData {
      *  carried onto the permanent it resolves into (CR 400.7a), where it replaces that permanent's colors
      *  indefinitely. */
     public final Map<UUID, Set<CardColor>> spellColorOverrides = new ConcurrentHashMap<>();
+
+    /** Temporary color override applied to a spell on the stack, cleared at end of turn. */
+    public final Map<UUID, Set<CardColor>> spellColorOverridesUntilEndOfTurn = new ConcurrentHashMap<>();
 
     /** Per-player: this player has protection from these colors until end of turn (e.g. Faith's Shield fateful hour). Cleared at end of turn. */
     public final Map<UUID, Set<CardColor>> playerProtectionFromColorsUntilEndOfTurn = new ConcurrentHashMap<>();
@@ -2137,6 +2158,7 @@ public class GameData {
         copy.globalDamagePreventionShield = this.globalDamagePreventionShield;
         copy.preventAllCombatDamage = this.preventAllCombatDamage;
         copy.preventAllDamageToAllCreatures = this.preventAllDamageToAllCreatures;
+        copy.preventAllDamageByCreatures = this.preventAllDamageByCreatures;
         copy.combatDamageExemptPredicate = this.combatDamageExemptPredicate;
         copy.allPermanentsEnterTappedThisTurn = this.allPermanentsEnterTappedThisTurn;
         this.colorSourceDamageBonusThisTurn.forEach((pid, colorMap) ->
@@ -2245,6 +2267,7 @@ public class GameData {
         copy.turnDamageRedirectToCreatureShields.addAll(this.turnDamageRedirectToCreatureShields);
         copy.playerNextDamageRedirectShields.addAll(this.playerNextDamageRedirectShields);
         copy.targetSourceDamagePreventionShields.addAll(this.targetSourceDamagePreventionShields);
+        copy.damagePreventionLifeGainShields.addAll(this.damagePreventionLifeGainShields);
         copy.playerSourceNextDamageShields.addAll(this.playerSourceNextDamageShields);
         copy.sourceNextDamageToAnyTargetShields.addAll(this.sourceNextDamageToAnyTargetShields);
         copy.eyeForAnEyeShields.addAll(this.eyeForAnEyeShields);
@@ -2367,6 +2390,8 @@ public class GameData {
         this.cardsDiscardedOrCycledThisTurn.forEach((k, v) ->
                 copy.cardsDiscardedOrCycledThisTurn.put(k, new HashSet<>(v)));
         copy.creatureDeathCountThisTurn.putAll(this.creatureDeathCountThisTurn);
+        this.creatureSubtypeDeathCountThisTurn.forEach((k, v) ->
+                copy.creatureSubtypeDeathCountThisTurn.put(k, new HashMap<>(v)));
         this.creatureCardsDamagedThisTurnBySourcePermanent.forEach((k, v) ->
                 copy.creatureCardsDamagedThisTurnBySourcePermanent.put(k, new HashSet<>(v)));
         copy.sourcesWhoseDamagedCreaturesDiedThisTurn.addAll(this.sourcesWhoseDamagedCreaturesDiedThisTurn);
@@ -2395,6 +2420,7 @@ public class GameData {
         copy.eachPlayerDamageUnlessPaysRemaining.addAll(this.eachPlayerDamageUnlessPaysRemaining);
         copy.revealHandDiscardUnlessPaysRemaining.addAll(this.revealHandDiscardUnlessPaysRemaining);
         copy.destroyDamagersUnlessPaysRemaining.addAll(this.destroyDamagersUnlessPaysRemaining);
+        copy.bounceUnlessPaysRemaining.addAll(this.bounceUnlessPaysRemaining);
 
         // --- Unified delayed-action queue (immutable records, shallow copy — shared Card refs, as the
         //     per-mechanic fields it replaced were copied) ---
@@ -2484,6 +2510,8 @@ public class GameData {
         copy.spellsMadeUncounterable.addAll(this.spellsMadeUncounterable);
         this.spellTextReplacements.forEach((k, v) -> copy.spellTextReplacements.put(k, new ArrayList<>(v)));
         this.spellColorOverrides.forEach((k, v) -> copy.spellColorOverrides.put(k, new HashSet<>(v)));
+        this.spellColorOverridesUntilEndOfTurn.forEach((k, v) ->
+                copy.spellColorOverridesUntilEndOfTurn.put(k, new HashSet<>(v)));
         this.playerProtectionFromColorsUntilEndOfTurn.forEach((k, v) ->
                 copy.playerProtectionFromColorsUntilEndOfTurn.put(k, new HashSet<>(v)));
 
@@ -2563,6 +2591,7 @@ public class GameData {
         copy.skipNextCombatPhaseCount.putAll(this.skipNextCombatPhaseCount);
         copy.skipNextDrawStepCount.putAll(this.skipNextDrawStepCount);
         copy.skipNextTurnCount.putAll(this.skipNextTurnCount);
+        copy.skipNextUntapStepCount.putAll(this.skipNextUntapStepCount);
         copy.lastClashWonByController.putAll(this.lastClashWonByController);
         copy.manaAbilityResolutionDepth = this.manaAbilityResolutionDepth;
         this.permanentTypesCastFromGraveyardThisTurn.forEach((k, v) ->

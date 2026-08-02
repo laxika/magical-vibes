@@ -100,7 +100,8 @@ const forestCard = makeCard({
     minTargets: 0,
     maxTargets: 0,
     isManaAbility: true,
-    variableLoyaltyCost: false
+    variableLoyaltyCost: false,
+    variableCounterCostType: null
   }]
 });
 
@@ -124,7 +125,8 @@ const plainsCard = makeCard({
     minTargets: 0,
     maxTargets: 0,
     isManaAbility: true,
-    variableLoyaltyCost: false
+    variableLoyaltyCost: false,
+    variableCounterCostType: null
   }]
 });
 
@@ -148,7 +150,8 @@ const islandCard = makeCard({
     minTargets: 0,
     maxTargets: 0,
     isManaAbility: true,
-    variableLoyaltyCost: false
+    variableLoyaltyCost: false,
+    variableCounterCostType: null
   }]
 });
 
@@ -172,7 +175,8 @@ const swampCard = makeCard({
     minTargets: 0,
     maxTargets: 0,
     isManaAbility: true,
-    variableLoyaltyCost: false
+    variableLoyaltyCost: false,
+    variableCounterCostType: null
   }]
 });
 
@@ -199,7 +203,8 @@ const avacynsPilgrimCard = makeCard({
     minTargets: 0,
     maxTargets: 0,
     isManaAbility: true,
-    variableLoyaltyCost: false
+    variableLoyaltyCost: false,
+    variableCounterCostType: null
   }]
 });
 

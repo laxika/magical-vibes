@@ -240,6 +240,20 @@ public class TurnProgressionService {
 
         String nextActiveName = gameData.playerIdToName.get(nextActive);
 
+        // Yosei, the Morning Star: a queued "skips their next untap step" is consumed by the first
+        // untap step this player would actually get (CR 614.10a).
+        int queuedUntapSkips = gameData.skipNextUntapStepCount.getOrDefault(nextActive, 0);
+        if (queuedUntapSkips > 0) {
+            if (queuedUntapSkips == 1) {
+                gameData.skipNextUntapStepCount.remove(nextActive);
+            } else {
+                gameData.skipNextUntapStepCount.put(nextActive, queuedUntapSkips - 1);
+            }
+            skipUntapStep = true;
+            gameLogService.append(gameData, GameLog.text(nextActiveName + " skips their untap step."));
+            log.info("Game {} - {} skips their untap step", gameData.id, nextActiveName);
+        }
+
         gameData.activePlayerId = nextActive;
 
         // Check for pending Taunt on the new active player: promote it to an active this-turn requirement
@@ -310,6 +324,7 @@ public class TurnProgressionService {
         gameData.cardsPutIntoGraveyardFromAnywhereThisTurn.clear();
         gameData.cardsDiscardedOrCycledThisTurn.clear();
         gameData.creatureDeathCountThisTurn.clear();
+        gameData.creatureSubtypeDeathCountThisTurn.clear();
         gameData.cardsDrawnThisTurn.clear();
         gameData.cardsDrawnThisTurnIds.clear();
         gameData.cardsDiscardedThisTurn.clear();

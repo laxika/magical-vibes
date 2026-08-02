@@ -538,6 +538,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new SelfWasDealtDamageThisTurn(), wrapped)` | - | yes | yes (end step) | source *was* dealt damage this turn, combat or not (Wall of Resistance) — reads `permanentsDealtDamageThisTurn`, the same tracking as `PermanentDealtDamageThisTurnPredicate` |
 | `ConditionalEffect(new Equipped(), wrapped)` | yes | yes | - |
 | `ConditionalEffect(new Enchanted(), wrapped)` | yes | yes | - |
+| `ConditionalEffect(new EnchantedByAtLeastAuras(minimum), wrapped)` | - | yes | yes (end step) | counts Auras attached to the source permanent |
 | `ConditionalEffect(new ControlsAnotherPermanent(filter), wrapped)` | yes | yes | - |
 | `ConditionalEffect(new ControlsPermanent(filter), wrapped)` | yes | yes | yes (attack) |
 | `EnchantedPermanentConditionalEffect` | yes | - | - |

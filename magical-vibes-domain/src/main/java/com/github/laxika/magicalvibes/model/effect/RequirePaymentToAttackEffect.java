@@ -10,9 +10,22 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * board-derived {@link DynamicAmount} (Sphere of Safety — enchantments you
  * control) scales with the defender's battlefield.
  */
-public record RequirePaymentToAttackEffect(DynamicAmount amountPerAttacker) implements CardEffect {
+public record RequirePaymentToAttackEffect(DynamicAmount amountPerAttacker,
+                                           boolean protectsPlaneswalkers) implements CardEffect {
+
+    public RequirePaymentToAttackEffect(DynamicAmount amountPerAttacker) {
+        this(amountPerAttacker, true);
+    }
 
     public RequirePaymentToAttackEffect(int amountPerAttacker) {
         this(new Fixed(amountPerAttacker));
+    }
+
+    public RequirePaymentToAttackEffect(int amountPerAttacker, boolean protectsPlaneswalkers) {
+        this(new Fixed(amountPerAttacker), protectsPlaneswalkers);
+    }
+
+    public static RequirePaymentToAttackEffect playerOnly(int amountPerAttacker) {
+        return new RequirePaymentToAttackEffect(amountPerAttacker, false);
     }
 }

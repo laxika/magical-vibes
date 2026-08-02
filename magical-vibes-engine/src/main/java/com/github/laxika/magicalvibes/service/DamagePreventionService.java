@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
+import com.github.laxika.magicalvibes.model.DamagePreventionLifeGainShield;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.EyeForAnEyeReflection;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -265,6 +266,8 @@ public class DamagePreventionService {
                 if (damage <= 0) return 0;
             }
             damage = applyGlobalPreventionShield(gameData, damage);
+            damage = applyDamagePreventionLifeGainShield(gameData, permanent.getId(), damage);
+            if (damage <= 0) return 0;
             int shield = permanent.getDamagePreventionShield();
             if (shield <= 0 || damage <= 0) return damage;
             int prevented = Math.min(shield, damage);
@@ -388,11 +391,41 @@ public class DamagePreventionService {
         // Process redirect shields first (e.g. Vengeful Archon)
         damage = applyRedirectShields(gameData, playerId, damage);
         damage = applyGlobalPreventionShield(gameData, damage);
+        damage = applyDamagePreventionLifeGainShield(gameData, playerId, damage);
+        if (damage <= 0) return 0;
         int shield = gameData.playerDamagePreventionShields.getOrDefault(playerId, 0);
         if (shield <= 0 || damage <= 0) return damage;
         int prevented = Math.min(shield, damage);
         gameData.playerDamagePreventionShields.put(playerId, shield - prevented);
         return damage - prevented;
+    }
+
+    /** Applies target-specific shields that gain life for their resolving controller. */
+    public int applyDamagePreventionLifeGainShield(GameData gameData, UUID targetId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)
+                || targetId == null || damage <= 0 || gameData.damagePreventionLifeGainShields.isEmpty()) {
+            return damage;
+        }
+
+        int remaining = damage;
+        List<DamagePreventionLifeGainShield> toReAdd = new ArrayList<>();
+        Iterator<DamagePreventionLifeGainShield> it = gameData.damagePreventionLifeGainShields.iterator();
+        while (it.hasNext() && remaining > 0) {
+            DamagePreventionLifeGainShield shield = it.next();
+            if (!targetId.equals(shield.targetId())) continue;
+
+            int prevented = Math.min(shield.remainingAmount(), remaining);
+            remaining -= prevented;
+            it.remove();
+            if (prevented < shield.remainingAmount()) {
+                toReAdd.add(shield.withReducedAmount(prevented));
+            }
+            if (prevented > 0 && shield.lifeGainPlayerId() != null) {
+                lifeSupport.applyGainLife(gameData, shield.lifeGainPlayerId(), prevented, "prevented damage");
+            }
+        }
+        gameData.damagePreventionLifeGainShields.addAll(toReAdd);
+        return remaining;
     }
 
     /**
@@ -673,13 +706,14 @@ public class DamagePreventionService {
      * so callers deal the redirected damage via their existing {@code processSourceRedirectDamage}.
      *
      * @param protectedPermanentId the creature receiving damage
-     * @param sourcePermanentId    the permanent dealing the damage
+     * @param sourcePermanentId    the permanent dealing the damage, or {@code null} for a spell or
+     *                             ability source
      * @param damage               the raw damage amount
      * @return the remaining damage after redirection (0 if a shield matched)
      */
     public int applyCreatureRedirectShields(GameData gameData, UUID protectedPermanentId, UUID sourcePermanentId, int damage) {
         // No isDamagePreventable check — this is redirection (replacement), not prevention.
-        if (damage <= 0 || protectedPermanentId == null || sourcePermanentId == null
+        if (damage <= 0 || protectedPermanentId == null
                 || gameData.creatureDamageRedirectShields.isEmpty()) return damage;
 
         int remaining = damage;

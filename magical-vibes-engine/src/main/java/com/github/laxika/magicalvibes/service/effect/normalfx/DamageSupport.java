@@ -83,6 +83,14 @@ public class DamageSupport {
      * and keywords are checked directly on it. When null, falls back to entry-based lookup.
      */
     public void dealCreatureDamage(GameData gameData, StackEntry entry, Permanent target, int rawDamage, Permanent damageSource) {
+        Permanent source = damageSource;
+        if (source == null && entry != null && entry.getSourcePermanentId() != null) {
+            source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        }
+        if (gameQueryService.isDamageByCreaturePrevented(gameData, source)) {
+            gameLogService.append(gameData, GameLog.textCardText("Damage dealt by ", source.getCard(), " is prevented."));
+            return;
+        }
         // Malignus: "Damage that would be dealt by this creature can't be prevented." Suppress every
         // prevention path (all gated on isDamagePreventable) for this one event, then restore — the
         // same shape DealDamageToAnyTargetEffectHandler uses for Banefire.
@@ -142,10 +150,8 @@ public class DamageSupport {
         }
         // Apply creature-specific redirect shields (e.g. Oracle's Attendants): redirect all damage from
         // a chosen source to the protected creature onto another permanent.
-        if (sourcePermId != null) {
-            rawDamage = damagePreventionService.applyCreatureRedirectShields(gameData, target.getId(), sourcePermId, rawDamage);
-            processSourceRedirectDamage(gameData);
-        }
+        rawDamage = damagePreventionService.applyCreatureRedirectShields(gameData, target.getId(), sourcePermId, rawDamage);
+        processSourceRedirectDamage(gameData);
         // Apply target+source-specific prevention shields (e.g. Healing Grace)
         if (sourcePermId != null) {
             rawDamage = damagePreventionService.applyTargetSourcePreventionShield(gameData, target.getId(), sourcePermId, rawDamage);
@@ -228,7 +234,7 @@ public class DamageSupport {
             Permanent reflectionSource = damageSource != null
                     ? damageSource
                     : (sourcePermId != null ? gameQueryService.findPermanentById(gameData, sourcePermId) : null);
-            triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource, sourceControllerId, damagedCreatureControllerId, damage);
+            triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource, sourceControllerId, damagedCreatureControllerId, target.getId(), damage);
 
             // Mangara's Equity: "…or a white creature you control"
             triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(
@@ -361,7 +367,7 @@ public class DamageSupport {
                     ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                     : null;
             UUID reflectionTargetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
-            triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource, entry.getControllerId(), reflectionTargetControllerId, damage);
+            triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource, entry.getControllerId(), reflectionTargetControllerId, target.getId(), damage);
 
             // Mangara's Equity: "…or a white creature you control"
             triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(
@@ -450,10 +456,11 @@ public class DamageSupport {
 
     public boolean isSourcePermanentPreventedFromDealingDamage(GameData gameData, StackEntry entry) {
         if (entry.getSourcePermanentId() == null) return false;
-        if (gameData.isPreventedFromDealingDamage(entry.getSourcePermanentId())) return true;
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (gameQueryService.isDamageByCreaturePrevented(gameData, source)
+                || gameData.isPreventedFromDealingDamage(entry.getSourcePermanentId())) return true;
         // Defang / Heart of Light: an aura can blank all damage dealt by the enchanted permanent,
         // including damage from its own activated and triggered abilities.
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         return source != null
                 && (gameQueryService.hasAuraWithEffect(gameData, source, PreventAllDamageDealtByEnchantedCreatureEffect.class)
                     || gameQueryService.hasAuraWithEffect(gameData, source, PreventAllDamageToAndByEnchantedCreatureEffect.class));
@@ -732,6 +739,8 @@ public class DamageSupport {
                 // The stack entry's controller is the damage source's controller (caster/activator);
                 // used to gate the opponent-only ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT slot.
                 triggerCollectionService.checkControllerDealtDamageTriggers(gameData, playerId, entry.getControllerId(), effectiveDamage);
+                // Night Dealings: "whenever a source you control deals damage to another player".
+                triggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers(gameData, playerId, entry.getControllerId(), effectiveDamage);
                 // Mangara's Equity: "whenever a creature of the chosen color deals damage to you"
                 triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(gameData, playerId, null,
                         entry.getSourcePermanentId() != null

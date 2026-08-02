@@ -275,6 +275,53 @@ public class PlayerInteractionSupport {
         cardRevealService.revealHandToAllPlayers(gameData, playerId);
     }
 
+    /**
+     * Struggle for Sanity: reveals the targeted player's hand and begins the alternating exile
+     * (the targeted player picks first). No-op on an empty hand.
+     */
+    public void resolveAlternatingHandExile(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetId();
+        UUID controllerId = entry.getControllerId();
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        if (hand == null || hand.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(targetName + " reveals their hand. It is empty."));
+            return;
+        }
+
+        GameLog.Builder revealBuilder = GameLog.builder().text(targetName + " reveals their hand: ");
+        appendCardList(revealBuilder, hand);
+        revealBuilder.text(".");
+        gameLogService.append(gameData, revealBuilder.build());
+        cardRevealService.revealToAllPlayers(
+                gameData, targetPlayerId, GameEventFact.RevealZone.HAND, hand);
+
+        beginAlternatingHandExile(gameData, targetPlayerId, targetPlayerId, controllerId,
+                List.of(), List.of());
+    }
+
+    /**
+     * Begins the next pick of the alternating hand exile over the target's current hand, or applies
+     * the two accumulated piles when the hand is empty. Returns {@code true} when a pick was begun.
+     */
+    public boolean beginAlternatingHandExile(GameData gameData, UUID decidingPlayerId, UUID targetPlayerId,
+                                             UUID controllerId, List<UUID> targetExiledIds,
+                                             List<UUID> controllerExiledIds) {
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        if (hand == null || hand.isEmpty()) {
+            return false;
+        }
+        List<Integer> validIndices = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            validIndices.add(i);
+        }
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.AlternatingHandExileChoice(
+                decidingPlayerId, targetPlayerId, controllerId, validIndices,
+                new ArrayList<>(targetExiledIds), new ArrayList<>(controllerExiledIds)));
+        return true;
+    }
+
     public void resolveHandRevealAndChoose(GameData gameData, StackEntry entry,
                                              int count, List<CardType> excludedTypes, List<CardType> includedTypes,
                                              CardPredicate filter, boolean discardMode, boolean exileMode, UUID sourcePermanentId) {

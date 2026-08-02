@@ -32,6 +32,7 @@ public sealed interface DynamicAmount permits
         CountersOnLinkedPermanent,
         CountersOnSource,
         CreatureDeathsThisTurn,
+        CreatureSubtypeDeathsThisTurn,
         CreaturesDevoured,
         CreaturesBlockingSource,
         DevouredCreaturesOfSubtype,

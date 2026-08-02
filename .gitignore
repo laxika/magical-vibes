@@ -1,6 +1,7 @@
 .idea
 .gradle
 .gradle-local*
+.gradle-user-home/
 magic-ruleset.txt
 nul
 **/.settings

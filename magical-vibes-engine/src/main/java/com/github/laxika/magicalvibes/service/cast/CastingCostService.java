@@ -581,13 +581,24 @@ public class CastingCostService {
 
     public int getAttackPaymentPerCreature(GameData gameData, UUID attackingPlayerId) {
         UUID defenderId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
+        return getAttackPaymentPerCreature(gameData, attackingPlayerId, defenderId);
+    }
+
+    public int getAttackPaymentPerCreature(GameData gameData, UUID attackingPlayerId, UUID attackTargetId) {
+        UUID defenderId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
         if (defenderBattlefield == null) return 0;
 
+        boolean attackingPlaneswalker = defenderBattlefield.stream()
+                .filter(perm -> perm.getId().equals(attackTargetId))
+                .findFirst()
+                .map(perm -> gameQueryService.isPlaneswalker(gameData, perm))
+                .orElse(false);
         int totalTax = 0;
         for (Permanent perm : defenderBattlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof RequirePaymentToAttackEffect tax) {
+                if (effect instanceof RequirePaymentToAttackEffect tax
+                        && (!attackingPlaneswalker || tax.protectsPlaneswalkers())) {
                     totalTax += amountEvaluationService.evaluate(gameData, tax.amountPerAttacker(),
                             AmountContext.forStaticEffect(perm, defenderId));
                 }

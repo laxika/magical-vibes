@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.l.LightOfDay;
 import com.github.laxika.magicalvibes.cards.m.MaraudingBoneslasher;
+import com.github.laxika.magicalvibes.cards.m.MasakoTheHumorless;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.cards.t.TrainingDrone;
@@ -40,6 +41,26 @@ class BlockLegalityServiceTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped creature can't block")
     void tappedCreatureCannotBlock() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        bears.tap();
+
+        assertThat(bls.canBlock(gd, bears)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Masako lets tapped creatures her controller controls block")
+    void masakoLetsControlledTappedCreatureBlock() {
+        harness.addToBattlefield(player2, new MasakoTheHumorless());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        bears.tap();
+
+        assertThat(bls.canBlock(gd, bears)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Masako does not let an opponent's tapped creature block")
+    void masakoDoesNotAffectOpponentsTappedCreature() {
+        harness.addToBattlefield(player1, new MasakoTheHumorless());
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
         bears.tap();
 

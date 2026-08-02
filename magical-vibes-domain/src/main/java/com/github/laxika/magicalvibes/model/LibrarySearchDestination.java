@@ -32,6 +32,11 @@ public enum LibrarySearchDestination {
     EXILE_FOR_FREE_CAST,
     /** Put the chosen card onto the battlefield under the searching player's control (Bribery). */
     BATTLEFIELD_UNDER_SEARCHER,
+    /** Gifts Ungiven — the chosen cards are held out of every zone until an opponent has chosen
+     *  which two of them go to the graveyard; the rest then go to the searcher's hand. The pool is
+     *  carried in {@link LibrarySearchParams#accumulatedCards()} and handed to the opponent as a
+     *  {@link PendingPileSeparation} with {@link CardPileDisposition#GIFTS_UNGIVEN}. */
+    GIFTS_UNGIVEN_POOL,
     /** Aladdin's Lamp — put the chosen looked-at card back on top of the library and the rest on the
      *  bottom in a random order, then draw a card (the chosen one). The final draw is a real draw
      *  event (fires draw triggers), routed back through {@code DrawService.resolveDrawCard}. */

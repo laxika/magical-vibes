@@ -738,6 +738,30 @@ class TurnProgressionServiceTest {
         }
 
         @Test
+        @DisplayName("A queued skipped untap step is consumed and skips the whole step")
+        void skipsQueuedUntapStep() {
+            gd.activePlayerId = player1Id;
+            gd.skipNextUntapStepCount.put(player2Id, 1);
+
+            turnProgressionService.advanceTurn(gd);
+
+            assertThat(gd.activePlayerId).isEqualTo(player2Id);
+            assertThat(gd.skipNextUntapStepCount).doesNotContainKey(player2Id);
+            verify(untapStepService).untapPermanents(gd, player2Id, null, true);
+        }
+
+        @Test
+        @DisplayName("Only one queued untap-step skip is consumed per turn")
+        void consumesOneQueuedUntapStepSkipAtATime() {
+            gd.activePlayerId = player1Id;
+            gd.skipNextUntapStepCount.put(player2Id, 2);
+
+            turnProgressionService.advanceTurn(gd);
+
+            assertThat(gd.skipNextUntapStepCount).containsEntry(player2Id, 1);
+        }
+
+        @Test
         @DisplayName("Clears mind control state from the ending turn")
         void clearsMindControlState() {
             gd.mindControlledPlayerId = player1Id;

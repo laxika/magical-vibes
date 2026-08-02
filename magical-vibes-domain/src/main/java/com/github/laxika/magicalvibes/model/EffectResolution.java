@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
@@ -208,6 +209,7 @@ public final class EffectResolution {
         return e.targetSpec().category() == TargetCategory.SPELL_ON_STACK
                 || (e instanceof ChangeColorTextEffect c && c.canTargetSpell())
                 || e instanceof SetTargetColorEffect
+                || (e instanceof GrantColorUntilEndOfTurnEffect c && c.canTargetSpell())
                 || e instanceof PutTargetSpellOrPermanentIntoLibraryNFromTopEffect;
     }
 

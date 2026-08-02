@@ -43,10 +43,12 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice,
         PendingInteraction.ColorChoice, PendingInteraction.RevealedHandChoice,
         PendingInteraction.RevealCardsDiscardChoice,
+        PendingInteraction.AlternatingHandExileChoice,
         PendingInteraction.GraveyardChoice, PendingInteraction.GraveyardExileCostChoice,
         PendingInteraction.HandCardChoice, PendingInteraction.TargetedHandCardChoice,
         PendingInteraction.PutCardsFromHandOnLibraryCardChoice,
         PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice,
+        PendingInteraction.CounteredSpellLibraryDestinationChoice,
         PendingInteraction.SylvanLibraryChoice,
         PendingInteraction.DiscardChoice, PendingInteraction.ExileFromHandChoice,
         PendingInteraction.ImprintFromHandChoice, PendingInteraction.DiscardCostChoice,
@@ -691,7 +693,12 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * exact begin-time text.
      */
     record MultiGraveyardChoice(UUID playerId, java.util.List<Card> cards, int maxCount,
-                                String prompt) implements PendingInteraction {
+                                String prompt, int minCount) implements PendingInteraction {
+
+        /** Optional choice ({@code minCount} 0) — the shape used by every graveyard-targeting flow. */
+        public MultiGraveyardChoice(UUID playerId, java.util.List<Card> cards, int maxCount, String prompt) {
+            this(playerId, cards, maxCount, prompt, 0);
+        }
 
         /** The selectable card IDs, in begin-time order (derived from {@link #cards}). */
         public java.util.List<UUID> validCardIds() {
@@ -705,7 +712,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds(), 0, maxCount);
+            return new InteractionOptions.MultiCardPick(validCardIds(), minCount, maxCount);
         }
     }
 
@@ -812,6 +819,32 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.CardIndexPick(validIndices, optional);
+        }
+    }
+
+    /**
+     * Struggle for Sanity's alternating hand exile: the {@code targetPlayerId} and the
+     * {@code controllerId} take turns exiling one card from the target's revealed hand until it is
+     * empty. {@code decidingPlayerId} is whoever picks next (the target picks first);
+     * {@code validIndices} are indices into the target's <em>current</em> hand, so a fresh record
+     * must be begun after every pick. {@code targetExiledIds} / {@code controllerExiledIds}
+     * accumulate the two exile piles: when the hand empties, the target's pile returns to their hand
+     * and the controller's pile goes to the target's graveyard.
+     */
+    record AlternatingHandExileChoice(UUID decidingPlayerId, UUID targetPlayerId, UUID controllerId,
+                                      java.util.List<Integer> validIndices,
+                                      java.util.List<UUID> targetExiledIds,
+                                      java.util.List<UUID> controllerExiledIds)
+            implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return decidingPlayerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
         }
     }
 
@@ -1192,6 +1225,29 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public PutCardsFromHandOnLibraryDestinationChoice {
             chosenCardIds = java.util.List.copyOf(chosenCardIds);
         }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.ListPick(OPTIONS);
+        }
+    }
+
+    /**
+     * Choose whether a spell countered by {@code CounteredSpellDestination#LIBRARY_TOP_OR_BOTTOM}
+     * goes on the top or the bottom of its owner's library (Hinder). The card is already on top of
+     * {@code ownerId}'s library when this is asked; picking "Bottom" moves it to the other end.
+     * {@code playerId} is the counter's controller, who makes the choice.
+     */
+    record CounteredSpellLibraryDestinationChoice(UUID playerId, UUID ownerId, UUID cardId, String cardName)
+            implements PendingInteraction {
+
+        /** The exact option strings the handler's prompt offers and its answer parser matches. */
+        public static final java.util.List<String> OPTIONS = java.util.List.of("Top", "Bottom");
 
         @Override
         public UUID decidingPlayerId() {

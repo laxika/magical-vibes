@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class WindbornMuse extends Card {
 
     public WindbornMuse() {
-        addEffect(EffectSlot.STATIC, new RequirePaymentToAttackEffect(2));
+        addEffect(EffectSlot.STATIC, RequirePaymentToAttackEffect.playerOnly(2));
     }
 }

@@ -110,6 +110,7 @@ function abilityView(overrides: Partial<ActivatedAbilityView> = {}): ActivatedAb
     maxTargets: 0,
     isManaAbility: false,
     variableLoyaltyCost: false,
+    variableCounterCostType: null,
     ...overrides,
   } as ActivatedAbilityView;
 }

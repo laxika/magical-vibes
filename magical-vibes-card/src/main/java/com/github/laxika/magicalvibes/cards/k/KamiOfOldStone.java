@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "24")
+@CardRegistration(set = "CHK", collectorNumber = "22")
 public class KamiOfOldStone extends Card {
 }

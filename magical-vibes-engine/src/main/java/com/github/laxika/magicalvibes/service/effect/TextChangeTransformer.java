@@ -2,8 +2,12 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
+import com.github.laxika.magicalvibes.model.effect.AllColorWordsBecomeChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
@@ -27,8 +31,10 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Layer 3 (CR 613.2c / 612): text-changing effects rewrite the WORDS of an object's abilities,
@@ -85,6 +91,50 @@ public final class TextChangeTransformer {
      *  the color pair / land-type pair is non-null (a text change never mixes the two classes). */
     private record Substitution(CardColor fromColor, CardColor toColor,
                                 CardSubtype fromLandType, CardSubtype toLandType) {
+    }
+
+    /**
+     * The replacements a global color-word change (Swirl the Mists) imposes on EVERY object:
+     * one entry per color word other than the chosen one, all pointing at the chosen word.
+     * Derived from the battlefield on every query rather than stamped onto objects, so the
+     * change starts and stops applying as the source enters and leaves.
+     *
+     * <p>Returns an empty list — the overwhelmingly common case — when no such permanent is on
+     * the battlefield, which makes {@link #transform(CardEffect, List, List)} a no-op.
+     */
+    public static List<TextReplacement> globalColorWordReplacements(GameData gameData) {
+        List<TextReplacement> replacements = null;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                CardColor chosen = permanent.getChosenColor();
+                if (chosen == null || permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .noneMatch(AllColorWordsBecomeChosenColorEffect.class::isInstance)) {
+                    continue;
+                }
+                String chosenWord = chosen.name().toLowerCase(Locale.ROOT);
+                if (replacements == null) {
+                    replacements = new ArrayList<>();
+                }
+                for (String word : COLOR_WORDS.keySet()) {
+                    if (!word.equals(chosenWord)) {
+                        replacements.add(new TextReplacement(word, chosenWord));
+                    }
+                }
+            }
+        }
+        return replacements == null ? List.of() : replacements;
+    }
+
+    /**
+     * Applies an object's own text replacements and then any global color-word change, which
+     * — rewriting every color word to one word — subsumes whatever the object's own replacements
+     * did to color words regardless of their relative timestamps.
+     */
+    public static CardEffect transform(CardEffect effect, List<TextReplacement> own,
+                                       List<TextReplacement> global) {
+        return transform(transform(effect, own), global);
     }
 
     /**

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -50,6 +51,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsNthSpellCastThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
@@ -204,6 +206,36 @@ public class TargetLegalityService {
                         if (graveyardOwnerId != null && !graveyardOwnerId.equals(playerId)) {
                             throw new IllegalStateException("Target must be in your graveyard");
                         }
+                    }
+                }
+                break;
+            }
+            if (effect instanceof ExileGraveyardCardsEffect anyGraveyardEffect
+                    && anyGraveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD) {
+                // "Exile up to N target cards from a single graveyard" (Rag Dealer) — any player's
+                // graveyard, at most N distinct cards, and all of them in the same graveyard.
+                if (targetCardIds.size() > anyGraveyardEffect.count()) {
+                    throw new IllegalStateException("Cannot target more than " + anyGraveyardEffect.count() + " cards");
+                }
+                if (new HashSet<>(targetCardIds).size() != targetCardIds.size()) {
+                    throw new IllegalStateException("Cannot target the same card twice");
+                }
+                UUID sharedGraveyardOwnerId = null;
+                for (UUID cardId : targetCardIds) {
+                    Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                    if (card == null) {
+                        throw new IllegalStateException("Target card not found in any graveyard");
+                    }
+                    if (anyGraveyardEffect.filter() != null
+                            && !predicateEvaluationService.matchesCardPredicate(card, anyGraveyardEffect.filter(), null)) {
+                        throw new IllegalStateException("Target card must be a "
+                                + CardPredicateUtils.describeFilter(anyGraveyardEffect.filter()));
+                    }
+                    UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+                    if (sharedGraveyardOwnerId == null) {
+                        sharedGraveyardOwnerId = graveyardOwnerId;
+                    } else if (!sharedGraveyardOwnerId.equals(graveyardOwnerId)) {
+                        throw new IllegalStateException("All targets must be in a single graveyard");
                     }
                 }
                 break;
@@ -1188,9 +1220,26 @@ public class TargetLegalityService {
         if (entryType == StackEntryType.TRIGGERED_ABILITY || entryType == StackEntryType.ACTIVATED_ABILITY) {
             return false;
         }
-        return gameQueryService.cantBeTargetedBySpellColor(gameData, targetPerm, entry.getCard().getColor(),
-                        entry.getControllerId())
+        Set<CardColor> spellColors = effectiveSpellColors(gameData, entry);
+        return spellColors.stream().anyMatch(color ->
+                gameQueryService.hasProtectionFrom(gameData, targetPerm, color)
+                        || gameQueryService.cantBeTargetedBySpellColor(gameData, targetPerm, color,
+                        entry.getControllerId()))
                 || gameQueryService.cantBeTargetedByAnySpell(gameData, targetPerm);
+    }
+
+    private Set<CardColor> effectiveSpellColors(GameData gameData, StackEntry entry) {
+        Set<CardColor> temporary = gameData.spellColorOverridesUntilEndOfTurn.get(entry.getCard().getId());
+        if (temporary != null) {
+            return temporary;
+        }
+        Set<CardColor> indefinite = gameData.spellColorOverrides.get(entry.getCard().getId());
+        if (indefinite != null) {
+            return indefinite;
+        }
+        return entry.getCard().getColors() == null
+                ? Set.of()
+                : Set.copyOf(entry.getCard().getColors());
     }
 
     private boolean isNonColorSourceRestricted(GameData gameData, Permanent targetPerm, StackEntry entry) {
@@ -1595,6 +1644,10 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryManaValuePredicate manaValuePredicate) {
             return stackEntry.getCard().getManaValue() == manaValuePredicate.manaValue();
+        }
+        if (predicate instanceof StackEntryMaxManaValuePredicate maxManaValuePredicate) {
+            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            return manaValue <= maxManaValuePredicate.maxManaValue();
         }
         if (predicate instanceof StackEntryManaValueEqualsXPredicate) {
             // When X is unknown (target enumeration before X is chosen), match permissively —

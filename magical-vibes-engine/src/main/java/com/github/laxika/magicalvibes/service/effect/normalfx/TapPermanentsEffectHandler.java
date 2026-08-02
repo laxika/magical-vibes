@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -10,10 +11,12 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,6 +29,7 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final TapUntapSupport tapUntapSupport;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -136,6 +140,11 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId());
 
+        if (e.chosenCount() > 0) {
+            resolveChosenPermanents(gameData, entry, e, battlefield, filterContext);
+            return;
+        }
+
         int count = 0;
         for (Permanent p : battlefield) {
             if (!predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
@@ -148,6 +157,28 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
         
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" taps " + count + " permanent(s).").build());
         log.info("Game {} - {} taps {} permanent(s) of target player", gameData.id, entry.getCard().getName(), count);
+    }
+
+    /**
+     * "Tap up to N target permanents that player controls" (Yosei, the Morning Star). The choice is
+     * made at resolution by the ability's controller; picking none is legal.
+     */
+    private void resolveChosenPermanents(GameData gameData, StackEntry entry, TapPermanentsEffect e,
+                                         List<Permanent> battlefield, FilterContext filterContext) {
+        List<UUID> validIds = new ArrayList<>();
+        for (Permanent p : battlefield) {
+            if (!predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
+            validIds.add(p.getId());
+        }
+        if (validIds.isEmpty()) {
+            return;
+        }
+
+        int maxCount = Math.min(e.chosenCount(), validIds.size());
+        playerInputService.beginMultiPermanentChoice(gameData, entry.getControllerId(), validIds, maxCount,
+                new MultiPermanentChoiceContext.TapChosenPermanents(entry.getCard().getName()),
+                entry.getCard().getName() + " — Choose up to " + maxCount + " permanent"
+                        + (maxCount == 1 ? "" : "s") + " to tap.");
     }
 
     private void resolveAllPermanents(GameData gameData, StackEntry entry, TapPermanentsEffect e) {

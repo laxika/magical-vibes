@@ -25,6 +25,6 @@ public class ElephantGrass extends Card {
 
         // Nonblack creatures can't attack you unless their controller pays {2} for each.
         // Uniform tax from the defender; black attackers are already barred above.
-        addEffect(EffectSlot.STATIC, new RequirePaymentToAttackEffect(2));
+        addEffect(EffectSlot.STATIC, RequirePaymentToAttackEffect.playerOnly(2));
     }
 }

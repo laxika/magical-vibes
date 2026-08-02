@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEf
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
@@ -67,6 +68,7 @@ public class MultiPermanentChoiceHandlerService {
     private final PermanentCounterSupport permanentCounterSupport;
     private final AnimationSupport animationSupport;
     private final LifeSupport lifeSupport;
+    private final DamagePreventionService damagePreventionService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport tapUntapSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
@@ -149,6 +151,8 @@ public class MultiPermanentChoiceHandlerService {
             handleExileAttackingCreatures(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.DestroyCreaturesOpponentControls ctx) {
             handleDestroyCreaturesOpponentControls(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.TapChosenPermanents ctx) {
+            handleTapChosenPermanents(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ReturnTargetPermanentsToHand) {
             handleReturnTargetPermanentsToHand(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.CombatDamageBounce ctx) {
@@ -450,6 +454,27 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         // Resume resolving remaining effects on the same entry (the chooser's "draws up to three cards")
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleTapChosenPermanents(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                           MultiPermanentChoiceContext.TapChosenPermanents ctx) {
+        if (permanentIds.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(
+                    gameData.playerIdToName.get(playerId) + " chooses not to tap any permanents."));
+        } else {
+            int tapped = 0;
+            for (UUID permId : permanentIds) {
+                Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+                if (perm != null && tapUntapSupport.tapPermanent(gameData, perm)) {
+                    tapped++;
+                }
+            }
+            gameLogService.append(gameData, GameLog.text(
+                    ctx.sourceName() + " taps " + tapped + " permanent(s)."));
+            log.info("Game {} - {} taps {} chosen permanent(s)", gameData.id, ctx.sourceName(), tapped);
+        }
+
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
@@ -1030,6 +1055,9 @@ public class MultiPermanentChoiceHandlerService {
                     gameData.globalDamagePreventionShield -= prevented;
                     damage -= prevented;
                 }
+
+                damage = damagePreventionService.applyDamagePreventionLifeGainShield(
+                        gameData, defendingPlayerId, damage);
 
                 // Apply player prevention shield
                 int shield = gameData.playerDamagePreventionShields.getOrDefault(defendingPlayerId, 0);

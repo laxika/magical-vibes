@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
@@ -2108,6 +2109,7 @@ public class GameQueryService {
             }
         }
         sources.sort(Comparator.comparingLong(StaticSource::timestamp).thenComparingInt(StaticSource::position));
+        List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
         for (StaticSource sourceSlot : sources) {
             Permanent source = sourceSlot.permanent();
             if (source == target) continue;
@@ -2148,7 +2150,8 @@ public class GameQueryService {
                     }
                     try {
                         handler.apply(context,
-                                TextChangeTransformer.transform(effect, source.getTextReplacements()),
+                                TextChangeTransformer.transform(effect, source.getTextReplacements(),
+                                        globalWordChange),
                                 accumulator);
                     } finally {
                         if (layeredManaged) {
@@ -2266,7 +2269,8 @@ public class GameQueryService {
                     StaticEffectContext selfContext = new StaticEffectContext(
                             target, target, resolvedTargetControllerId, true, gameData);
                     selfHandler.apply(selfContext,
-                            TextChangeTransformer.transform(effect, target.getTextReplacements()),
+                            TextChangeTransformer.transform(effect, target.getTextReplacements(),
+                                    globalWordChange),
                             accumulator);
                 } finally {
                     if (layeredManaged) {
@@ -3625,7 +3629,7 @@ public class GameQueryService {
     }
 
     /** Effective creature subtypes of a permanent (named types only; Changeling handled separately). */
-    private Set<CardSubtype> effectiveCreatureSubtypes(GameData gameData, Permanent permanent) {
+    public Set<CardSubtype> effectiveCreatureSubtypes(GameData gameData, Permanent permanent) {
         if (permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
             return Set.of();
         }
@@ -4048,7 +4052,8 @@ public class GameQueryService {
      */
     public boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature, boolean isCombatDamage) {
         if (!isDamagePreventable(gameData)) return false;
-        if (hasAuraWithEffect(gameData, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)
+        if (isDamageByCreaturePrevented(gameData, creature)
+                || hasAuraWithEffect(gameData, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)
                 || hasAuraWithEffect(gameData, creature, PreventAllDamageDealtByEnchantedCreatureEffect.class)
                 || gameData.isPreventedFromDealingDamage(creature.getId())) {
             return true;
@@ -4072,6 +4077,14 @@ public class GameQueryService {
             return true;
         }
         return false;
+    }
+
+    /** Returns whether Ethereal Haze-style prevention applies to damage from this source. */
+    public boolean isDamageByCreaturePrevented(GameData gameData, Permanent source) {
+        return isDamagePreventable(gameData)
+                && gameData.preventAllDamageByCreatures
+                && source != null
+                && isCreature(gameData, source);
     }
 
     /**

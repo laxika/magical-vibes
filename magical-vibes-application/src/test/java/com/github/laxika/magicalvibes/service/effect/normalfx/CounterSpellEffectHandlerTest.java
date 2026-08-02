@@ -47,6 +47,7 @@ class CounterSpellEffectHandlerTest {
     @Mock private GameLogService gameLogService;
     @Mock private GameQueryService gameQueryService;
     @Mock private StateTriggerService stateTriggerService;
+    @Mock private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     @InjectMocks
     private CounterSupport counterSupport;
     private GameData gd;
@@ -68,7 +69,7 @@ class CounterSpellEffectHandlerTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        counterSpellHandler = new CounterSpellEffectHandler(counterSupport);
+        counterSpellHandler = new CounterSpellEffectHandler(counterSupport, interactionHandlerRegistry);
 
     }
 

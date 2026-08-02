@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardUnlessReturnLandToHand
 import com.github.laxika.magicalvibes.model.effect.DrawCardUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnMatchingPermanentsUnlessControllerPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealHandDiscardMatchingCardsUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
@@ -99,6 +100,7 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageControllerUnlessDiscardThenTapSourceEffectHandler damageControllerUnlessDiscardThenTapSourceEffectHandler;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MustAttackUnlessControllerPaysManaValueEffectHandler mustAttackUnlessControllerPaysManaValueEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnMatchingPermanentsUnlessControllerPaysEffectHandler returnMatchingPermanentsUnlessControllerPaysEffectHandler;
 
     /**
      * Arcum's Whistle: the active player may pay {X} (X = the target creature's mana value).
@@ -762,6 +764,36 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         destroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHandler.afterCreatureDecision(
+                gameData, ability, effect, paid);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Cut the Tethers: one pay-or-be-bounced decision per matching permanent, made by that
+     * permanent's controller. Accepting spends the mana and keeps it; declining (or accepting
+     * without the mana) returns it to its owner's hand. Either way the next queued permanent is
+     * then offered.
+     */
+    public void handleReturnMatchingPermanentsUnlessControllerPaysChoice(GameData gameData, Player player,
+            boolean accepted, PendingMayAbility ability,
+            ReturnMatchingPermanentsUnlessControllerPaysEffect effect) {
+        UUID payingPlayerId = ability.controllerId();
+
+        boolean paid = false;
+        if (accepted) {
+            ManaCost cost = new ManaCost(effect.manaCost());
+            ManaPool pool = gameData.playerManaPools.get(payingPlayerId);
+            if (cost.canPay(pool)) {
+                cost.pay(pool);
+                paid = true;
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " pays " + effect.manaCost() + ". (", ability.sourceCard(), ")"));
+                log.info("Game {} - {} pays {} to keep a permanent ({})", gameData.id,
+                        player.getUsername(), effect.manaCost(), ability.sourceCard().getName());
+            }
+        }
+
+        returnMatchingPermanentsUnlessControllerPaysEffectHandler.afterPermanentDecision(
                 gameData, ability, effect, paid);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

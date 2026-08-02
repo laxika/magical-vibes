@@ -80,6 +80,14 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /**
+     * The controller taps the chosen permanents a target player controls (Yosei, the Morning Star's
+     * "Tap up to five target permanents that player controls"). {@code sourceName} names the source
+     * in the game log.
+     */
+    record TapChosenPermanents(String sourceName) implements MultiPermanentChoiceContext {
+    }
+
     /** The controller returns the chosen permanents to their owners' hands (Resounding Wave cycling trigger). */
     record ReturnTargetPermanentsToHand() implements MultiPermanentChoiceContext {
     }

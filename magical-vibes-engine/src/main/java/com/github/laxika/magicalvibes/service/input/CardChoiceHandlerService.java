@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -778,6 +779,75 @@ public class CardChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex);
         }
 
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    /**
+     * Answers Struggle for Sanity's alternating exile
+     * ({@link PendingInteraction.AlternatingHandExileChoice}). The picked card is exiled from the
+     * target's hand into the deciding player's pile; the next pick goes to the other player. Once
+     * the hand is empty the target's own pile returns to their hand and the controller's pile goes
+     * to the target's graveyard.
+     */
+    public void handleAlternatingHandExileChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.AlternatingHandExileChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.AlternatingHandExileChoice.class);
+        if (choice == null || !player.getId().equals(choice.decidingPlayerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        UUID targetPlayerId = choice.targetPlayerId();
+        UUID controllerId = choice.controllerId();
+        List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
+        if (targetHand == null || cardIndex >= targetHand.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        boolean targetPicked = choice.decidingPlayerId().equals(targetPlayerId);
+        Card exiled = targetHand.remove(cardIndex);
+        exileService.exileCard(gameData, targetPlayerId, exiled);
+
+        List<UUID> targetExiled = new ArrayList<>(choice.targetExiledIds());
+        List<UUID> controllerExiled = new ArrayList<>(choice.controllerExiledIds());
+        (targetPicked ? targetExiled : controllerExiled).add(exiled.getId());
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " exiles ", exiled, "."));
+
+        gameData.interaction.clearAwaitingInput();
+        UUID nextChooser = targetPicked ? controllerId : targetPlayerId;
+        if (playerInteractionSupport.beginAlternatingHandExile(gameData, nextChooser, targetPlayerId,
+                controllerId, targetExiled, controllerExiled)) {
+            return;
+        }
+
+        for (UUID cardId : targetExiled) {
+            ExiledCardEntry entry = gameData.findExiledCard(cardId);
+            if (entry != null) {
+                gameData.removeFromExile(cardId);
+                gameData.addCardToHand(targetPlayerId, entry.card());
+            }
+        }
+        for (UUID cardId : controllerExiled) {
+            ExiledCardEntry entry = gameData.findExiledCard(cardId);
+            if (entry != null) {
+                gameData.removeFromExile(cardId);
+                graveyardService.addCardToGraveyard(gameData, targetPlayerId, entry.card());
+            }
+        }
+        log.info("Game {} - alternating hand exile finished: {} cards returned, {} to graveyard",
+                gameData.id, targetExiled.size(), controllerExiled.size());
+
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

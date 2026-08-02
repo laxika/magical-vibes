@@ -53,7 +53,8 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
 
     private void grantTo(GameData gameData, StackEntry entry, GrantEffectToTargetEffect e, Permanent target) {
         // "If it doesn't have [ability], it gains that ability" — grant at most once (Musician).
-        if (alreadyHasGrantedEffect(target, e.slot(), e.grantedEffect())) {
+        // Some abilities intentionally add another instance each time they resolve (Bushido).
+        if (e.skipIfAlreadyPresent() && alreadyHasGrantedEffect(target, e.slot(), e.grantedEffect())) {
             return;
         }
 

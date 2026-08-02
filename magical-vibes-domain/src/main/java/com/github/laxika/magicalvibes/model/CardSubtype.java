@@ -199,10 +199,13 @@ public enum CardSubtype {
     MANTICORE("Manticore"),
     JACKAL("Jackal"),
     SALAMANDER("Salamander"),
+    SAMURAI("Samurai"),
+    SHRINE("Shrine"),
     SAMUT("Samut"),
     ARCANE("Arcane"),
     GATE("Gate"),
-    SOLTARI("Soltari");
+    SOLTARI("Soltari"),
+    ZUBERA("Zubera");
 
     @Getter
     private final String displayName;

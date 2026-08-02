@@ -1756,7 +1756,8 @@ export class TargetingChoiceService {
       minTargets: 0,
       maxTargets: 0,
       isManaAbility: true,
-      variableLoyaltyCost: false
+      variableLoyaltyCost: false,
+      variableCounterCostType: null
     };
   }
 
@@ -1848,6 +1849,19 @@ export class TargetingChoiceService {
       this.xValueCardName = perm.card.name;
       this.xValueInput = 0;
       this.xValueMaximum = perm.counters?.['LOYALTY'] ?? 0;
+      this.targetingForAbility = true;
+      this.targetingAbilityIndex = abilityIndex;
+      return;
+    }
+
+    // Remove-X-counters cost (Night Dealings): X is capped by the counters on the permanent, and
+    // the mana cost is paid separately, so this is a counter prompt rather than a mana one.
+    if (ability.variableCounterCostType) {
+      this.choosingXValue = true;
+      this.xValueCardIndex = permanentIndex;
+      this.xValueCardName = perm.card.name;
+      this.xValueInput = 0;
+      this.xValueMaximum = perm.counters?.[ability.variableCounterCostType] ?? 0;
       this.targetingForAbility = true;
       this.targetingAbilityIndex = abilityIndex;
       return;

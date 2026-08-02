@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
@@ -829,6 +830,7 @@ public abstract class AiDecisionEngine {
             // Multi-permanent costs ride on additionalCostSacrificePermanentIds — see
             // selectMultiPermanentCostIds.
             if (effect instanceof SacrificeMultiplePermanentsCost
+                    || effect instanceof SacrificeAnyNumberOfPermanentsCost
                     || effect instanceof TapAnyNumberOfPermanentsCost
                     || effect instanceof ReturnAnyNumberOfPermanentsToHandCost) {
                 continue;
@@ -876,6 +878,12 @@ public abstract class AiDecisionEngine {
                         .map(Permanent::getId)
                         .toList();
                 return chosen.size() == cost.count() ? chosen : List.of();
+            }
+            if (effect instanceof SacrificeAnyNumberOfPermanentsCost cost) {
+                return battlefield.stream()
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                        .map(Permanent::getId)
+                        .toList();
             }
             if (effect instanceof TapAnyNumberOfPermanentsCost cost) {
                 return battlefield.stream()

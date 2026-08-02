@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredica
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
@@ -1875,6 +1876,49 @@ class TargetLegalityServiceTest {
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryManaValuePredicate(3), player2Id))
                     .isFalse();
+        }
+
+        @Test
+        @DisplayName("matches StackEntryMaxManaValuePredicate at and below the limit")
+        void matchesMaxManaValuePredicate() {
+            Card card = createCreature("Spider", CardColor.GREEN);
+            card.setManaCost("{3}{G}"); // mana value 4
+            StackEntry entry = new StackEntry(card, player1Id);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryMaxManaValuePredicate(4), player2Id))
+                    .isTrue();
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryMaxManaValuePredicate(5), player2Id))
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("rejects StackEntryMaxManaValuePredicate above the limit")
+        void rejectsMaxManaValuePredicateAboveLimit() {
+            Card card = createCreature("Angel", CardColor.WHITE);
+            card.setManaCost("{3}{W}{W}"); // mana value 5
+            StackEntry entry = new StackEntry(card, player1Id);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryMaxManaValuePredicate(4), player2Id))
+                    .isFalse();
+        }
+
+        @Test
+        @DisplayName("StackEntryMaxManaValuePredicate counts the chosen X (CR 107.3a)")
+        void maxManaValuePredicateCountsChosenX() {
+            Card card = createCreature("X Spell", CardColor.BLUE);
+            card.setManaCost("{X}{U}"); // mana value 1 + chosen X
+            StackEntry entry = new StackEntry(StackEntryType.CREATURE_SPELL, card, player1Id,
+                    "X Spell", List.of(), 4);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryMaxManaValuePredicate(4), player2Id))
+                    .isFalse();
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryMaxManaValuePredicate(5), player2Id))
+                    .isTrue();
         }
 
         @Test

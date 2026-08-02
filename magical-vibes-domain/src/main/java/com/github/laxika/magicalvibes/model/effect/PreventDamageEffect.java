@@ -23,6 +23,8 @@ import java.util.Set;
  * @param sourceColors    the prevented source colors for {@link PreventionScope#ALL_FROM_COLORS}
  * @param exemptPredicate creatures still dealing combat damage for {@link PreventionScope#ALL_COMBAT_EXCEPT}
  * @param victimPredicate permanents all damage to which is prevented for {@link PreventionScope#ALL_TO_MATCHING_PERMANENTS}
+ * @param gainLife        whether the controller gains life equal to damage prevented by a
+ *                        {@link PreventionScope#NEXT_TO_TARGET} shield
  */
 public record PreventDamageEffect(
         PreventionScope scope,
@@ -30,8 +32,18 @@ public record PreventDamageEffect(
         boolean combatOnly,
         Set<CardColor> sourceColors,
         PermanentPredicate exemptPredicate,
-        PermanentPredicate victimPredicate
+        PermanentPredicate victimPredicate,
+        boolean gainLife
 ) implements CardEffect {
+
+    public PreventDamageEffect(PreventionScope scope,
+                               DynamicAmount amount,
+                               boolean combatOnly,
+                               Set<CardColor> sourceColors,
+                               PermanentPredicate exemptPredicate,
+                               PermanentPredicate victimPredicate) {
+        this(scope, amount, combatOnly, sourceColors, exemptPredicate, victimPredicate, false);
+    }
 
     public PreventDamageEffect {
         boolean needsAmount = scope == PreventionScope.NEXT_TO_ANY
@@ -55,6 +67,9 @@ public record PreventDamageEffect(
         }
         if ((victimPredicate != null) != (scope == PreventionScope.ALL_TO_MATCHING_PERMANENTS)) {
             throw new IllegalArgumentException("victimPredicate is exactly the ALL_TO_MATCHING_PERMANENTS parameter: " + scope);
+        }
+        if (gainLife && scope != PreventionScope.NEXT_TO_TARGET) {
+            throw new IllegalArgumentException("gainLife is exactly the NEXT_TO_TARGET parameter: " + scope);
         }
     }
 
@@ -86,6 +101,11 @@ public record PreventDamageEffect(
     /** "Prevent the next X damage that would be dealt to any target" (Alabaster Potion). */
     public static PreventDamageEffect nextToTarget(DynamicAmount amount) {
         return new PreventDamageEffect(PreventionScope.NEXT_TO_TARGET, amount, false, null, null, null);
+    }
+
+    /** "Prevent the next {@code amount} damage to any target; you gain life equal to damage prevented this way." */
+    public static PreventDamageEffect nextToTargetAndGainLife(int amount) {
+        return new PreventDamageEffect(PreventionScope.NEXT_TO_TARGET, new Fixed(amount), false, null, null, null, true);
     }
 
     /** "Prevent the next {@code amount} damage that would be dealt to target creature" (Soldevi Heretic). */
@@ -131,6 +151,11 @@ public record PreventDamageEffect(
     /** "Prevent all combat damage target creature(s) would deal this turn" (Foxfire, Inquisitor's Snare). */
     public static PreventDamageEffect allCombatByTargetCreatures() {
         return new PreventDamageEffect(PreventionScope.ALL_BY_TARGET_CREATURES, null, true, null, null, null);
+    }
+
+    /** "Prevent all damage that would be dealt by creatures this turn" (Ethereal Haze). */
+    public static PreventDamageEffect allByCreatures() {
+        return new PreventDamageEffect(PreventionScope.ALL_BY_CREATURES, null, false, null, null, null);
     }
 
     /** "Until your next turn, prevent all damage target permanent would deal" (Gideon of the Trials +1). */

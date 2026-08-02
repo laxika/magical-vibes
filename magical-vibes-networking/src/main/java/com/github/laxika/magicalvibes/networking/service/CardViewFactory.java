@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -229,6 +230,12 @@ public class CardViewFactory {
                 ability.getMinTargets(),
                 ability.getMaxTargets(),
                 isManaAbility,
-                ability.isVariableLoyaltyCost());
+                ability.isVariableLoyaltyCost(),
+                ability.getEffects().stream()
+                        .filter(RemoveXCountersFromSourceCost.class::isInstance)
+                        .map(RemoveXCountersFromSourceCost.class::cast)
+                        .map(cost -> cost.counterType().name())
+                        .findFirst()
+                        .orElse(null));
     }
 }

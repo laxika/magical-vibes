@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "136")
 @CardRegistration(set = "M12", collectorNumber = "94")
+@CardRegistration(set = "CHK", collectorNumber = "111")
 public class Distress extends Card {
 
     public Distress() {

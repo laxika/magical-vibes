@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.input;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingOpponentExileChoice;
+import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.PendingPortalPileSearch;
 import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
@@ -56,7 +58,9 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -350,6 +354,14 @@ public class LibraryChoiceHandlerService {
             if (!canFailToFind) {
                 throw new IllegalStateException("Cannot fail to find with an unrestricted search");
             }
+            // Gifts Ungiven stopped short of four cards: the pool found so far still goes to the
+            // opponent for the two-card disposal choice.
+            if (destination == LibrarySearchDestination.GIFTS_UNGIVEN_POOL) {
+                gameLogService.append(gameData, GameLog.text(
+                        player.getUsername() + " stops searching. Library is shuffled."));
+                finishGiftsUngivenSearch(gameData, playerId, accumulatedCards);
+                return;
+            }
             // A pile search stopped early still shuffles whatever was already exiled into it.
             if (destination == LibrarySearchDestination.EXILE_FACE_DOWN_PILE) {
                 gameData.shuffleExilePile(librarySearch.sourcePermanentId());
@@ -409,6 +421,39 @@ public class LibraryChoiceHandlerService {
 
         if (!removed) {
             throw new IllegalStateException("Chosen card not found in library");
+        }
+
+        if (destination == LibrarySearchDestination.GIFTS_UNGIVEN_POOL) {
+            // Gifts Ungiven: the revealed card leaves the library but enters no zone — it waits in
+            // the pool until the opponent has chosen which two cards go to the graveyard.
+            accumulatedCards.add(chosenCard);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " reveals ", chosenCard, "."));
+
+            java.util.Set<String> excluded = java.util.Set.copyOf(excludedCardNames);
+            List<Card> remainingMatches = deck.stream()
+                    .filter(c -> !excluded.contains(c.getName()))
+                    .toList();
+            if (remainingCount > 1 && !remainingMatches.isEmpty()) {
+                int newRemaining = remainingCount - 1;
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                        LibrarySearchParams.builder(playerId, new ArrayList<>(remainingMatches))
+                                .remainingCount(newRemaining)
+                                .reveals(true)
+                                .canFailToFind(true)
+                                .destination(LibrarySearchDestination.GIFTS_UNGIVEN_POOL)
+                                .requireDifferentNames(true)
+                                .accumulatedCards(accumulatedCards)
+                                .excludedCardNames(excludedCardNames)
+                                .build(),
+                        "Search your library for a card with a different name to reveal ("
+                                + newRemaining + " remaining).", true));
+                return;
+            }
+
+            gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s library is shuffled."));
+            finishGiftsUngivenSearch(gameData, playerId, accumulatedCards);
+            return;
         }
 
         if (destination == LibrarySearchDestination.BATTLEFIELD_UNDER_SEARCHER) {
@@ -901,6 +946,7 @@ public class LibraryChoiceHandlerService {
                 case EXILE_FOR_FREE_CAST -> throw new IllegalStateException("EXILE_FOR_FREE_CAST should be handled earlier");
                 case BATTLEFIELD_UNDER_SEARCHER -> throw new IllegalStateException("BATTLEFIELD_UNDER_SEARCHER should be handled earlier");
                 case DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM -> throw new IllegalStateException("DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM should be handled earlier");
+                case GIFTS_UNGIVEN_POOL -> throw new IllegalStateException("GIFTS_UNGIVEN_POOL should be handled earlier");
             };
             GameLogEntry logEntry;
             if (targetPlayerId != null) {
@@ -949,6 +995,38 @@ public class LibraryChoiceHandlerService {
      * state-based actions; skipping it leaves the entry dangling. When nothing is parked this
      * behaves exactly like {@code resolveAutoPass}.
      */
+    /**
+     * Gifts Ungiven: the search is over ("Then shuffle" — the found cards are already out of the
+     * library, so shuffling now is equivalent to shuffling at the end of resolution). The pool is
+     * handed to the opponent recorded on the {@link PendingPileSeparation} queued when the search
+     * began; they choose two of the cards for the controller's graveyard and the rest go to their
+     * hand. An empty pool has nothing to choose from, so resolution just finishes.
+     */
+    private void finishGiftsUngivenSearch(GameData gameData, UUID controllerId, List<Card> pool) {
+        LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+
+        PendingPileSeparation state = gameData.pollPendingInteraction(PendingPileSeparation.class);
+        if (state == null || pool.isEmpty()) {
+            finishSearchAndResume(gameData);
+            return;
+        }
+
+        Map<UUID, UUID> cardOwners = new HashMap<>();
+        for (Card card : pool) {
+            cardOwners.put(card.getId(), controllerId);
+        }
+        gameData.queueInteraction(new PendingPileSeparation(controllerId, state.targetPlayerId(),
+                List.of(), List.copyOf(pool), cardOwners, List.of(), List.of(),
+                CardPileDisposition.GIFTS_UNGIVEN));
+
+        int count = Math.min(2, pool.size());
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
+                state.targetPlayerId(), List.copyOf(pool), count,
+                "Choose " + (count == 1 ? "a card" : count + " cards") + " to put into "
+                        + controllerName + "'s graveyard. The rest go to their hand.", count));
+    }
+
     private void finishSearchAndResume(GameData gameData) {
         StackEntry pending = gameData.pendingEffectResolutionEntry;
         if (pending != null) {

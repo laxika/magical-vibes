@@ -85,6 +85,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.RevealedHandChoice.class, this::projectRevealedHandChoice);
         register(PendingInteraction.RevealCardsDiscardChoice.class,
                 this::projectRevealCardsDiscardChoice);
+        register(PendingInteraction.AlternatingHandExileChoice.class,
+                this::projectAlternatingHandExileChoice);
         register(PendingInteraction.GraveyardChoice.class, this::projectGraveyardChoice);
         register(PendingInteraction.GraveyardExileCostChoice.class,
                 this::projectGraveyardExileCostChoice);
@@ -104,6 +106,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectPutCardsFromHandOnLibraryCardChoice);
         register(PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice.class,
                 this::projectPutCardsFromHandOnLibraryDestinationChoice);
+        register(PendingInteraction.CounteredSpellLibraryDestinationChoice.class,
+                this::projectCounteredSpellLibraryDestinationChoice);
         register(PendingInteraction.SylvanLibraryChoice.class, this::projectSylvanLibraryChoice);
         register(PendingInteraction.LibraryRevealChoice.class, this::projectLibraryRevealChoice);
         register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
@@ -448,6 +452,20 @@ public class InteractionPromptProjectionRegistry {
                 interaction.optional());
     }
 
+    private InteractionPromptMessage projectAlternatingHandExileChoice(
+            GameData gameData, PendingInteraction.AlternatingHandExileChoice interaction) {
+        List<CardView> cardViews =
+                cardViews(gameData.playerHands.getOrDefault(interaction.targetPlayerId(), List.of()));
+        boolean choosingOwnHand = interaction.decidingPlayerId().equals(interaction.targetPlayerId());
+        String prompt = choosingOwnHand
+                ? "Exile a card from your hand (you will return the cards you exile this way)."
+                : "Exile a card from "
+                        + gameData.playerIdToName.getOrDefault(interaction.targetPlayerId(), "that player")
+                        + "'s hand (it will go to their graveyard).";
+        return InteractionPromptMessage.cardIndexPick(
+                cardViews, interaction.validIndices(), prompt, false);
+    }
+
     private InteractionPromptMessage projectRevealCardsDiscardChoice(
             GameData gameData, PendingInteraction.RevealCardsDiscardChoice interaction) {
         List<Card> targetHand =
@@ -514,6 +532,15 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.listPick(
                 PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice.OPTIONS,
                 "Put the chosen cards on the top or bottom of your library?",
+                false);
+    }
+
+    private InteractionPromptMessage projectCounteredSpellLibraryDestinationChoice(
+            GameData gameData,
+            PendingInteraction.CounteredSpellLibraryDestinationChoice interaction) {
+        return InteractionPromptMessage.listPick(
+                PendingInteraction.CounteredSpellLibraryDestinationChoice.OPTIONS,
+                "Put " + interaction.cardName() + " on the top or bottom of its owner's library?",
                 false);
     }
 

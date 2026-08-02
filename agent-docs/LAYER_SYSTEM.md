@@ -511,6 +511,16 @@ Reasoning behind the non-obvious mappings:
   `TargetPlayerGainsControlOfSourceCreatureEffect`) → L2; `ChangeColorTextEffect` (Mind Bend)
   → L3; `LoseAllCreatureTypesEffect` → L4; `BoostTargetCreatureEffect` (Giant Growth) → 7c;
   `SwitchPowerToughnessEffect` → 7d.
+- **Global text changes** (`AllColorWordsBecomeChosenColorEffect`, Swirl the Mists) are the one
+  layer-3 effect with NO classifier entry and NO handler. They stamp nothing onto objects;
+  instead `TextChangeTransformer.globalColorWordReplacements(gameData)` scans the battlefield and
+  the derived replacements are appended after each object's own `TextReplacement`s at every
+  transform site (`LayerSystemService.collectInstances`, `seedLegacyColorAndAbilityState`,
+  `GameQueryService.assembleStaticBonusUnguarded`). Rewriting every colour word to one word, they
+  subsume an object's own colour-word replacements regardless of relative timestamps. Because the
+  substitution is derived, `Permanent.getChosenColor()` is part of the board-cache hash.
+  Not covered: colour words on spells while they are still on the stack, and the printed-text
+  strings shown in `PermanentViewFactory` / `GrantedAbilityViewFactory` (display only).
 
 ## 8. Dependency (CR 613.8)
 

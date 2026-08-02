@@ -2043,19 +2043,45 @@ public class StepTriggerService {
         }
 
         for (PendingExileReturn pending : matching) {
-            Card card = pending.card();
             UUID controllerId = pending.controllerId();
-            gameData.removeFromExile(card.getId());
-            Permanent perm = new Permanent(card);
-            if (pending.returnTapped()) {
-                perm.tap();
+            List<Card> cards = new ArrayList<>();
+            cards.add(pending.card());
+            cards.addAll(pending.additionalCards());
+
+            List<Card> returningCards = cards.stream()
+                    .filter(card -> gameData.removeFromExile(card.getId()))
+                    .toList();
+            if (returningCards.isEmpty()) {
+                log.info("Game {} - delayed return skipped because its cards are no longer in exile", gameData.id);
+                continue;
             }
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
-            String playerName = gameData.playerIdToName.get(controllerId);
-            gameLogService.append(gameData,
-                    GameLog.cardThen(card, " returns to the battlefield under " + playerName + "'s control."));
-            log.info("Game {} - {} returns from exile for {}", gameData.id, card.getName(), playerName);
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
+
+            Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+            List<Permanent> simultaneouslyEntered = new ArrayList<>();
+            for (Card card : returningCards) {
+                Permanent perm = new Permanent(card);
+                if (pending.returnTapped()) {
+                    perm.tap();
+                }
+                if (pending.plusOnePlusOneCounters() > 0
+                        && !gameQueryService.cantHaveCounters(gameData, perm)) {
+                    int counters = gameQueryService.doublePlusOnePlusOneCounters(
+                            gameData, controllerId, pending.plusOnePlusOneCounters());
+                    if (counters > 0) {
+                        perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
+                    }
+                }
+                battlefieldEntryService.putPermanentOntoBattlefield(
+                        gameData, controllerId, perm, enterTappedTypes, simultaneouslyEntered);
+                simultaneouslyEntered.add(perm);
+                String playerName = gameData.playerIdToName.get(controllerId);
+                gameLogService.append(gameData,
+                        GameLog.cardThen(card, " returns to the battlefield under " + playerName + "'s control."));
+                log.info("Game {} - {} returns from exile for {}", gameData.id, card.getName(), playerName);
+            }
+            for (Card card : returningCards) {
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
+            }
         }
     }
 
@@ -2547,6 +2573,13 @@ public class StepTriggerService {
                 if (endStepEffects == null || endStepEffects.isEmpty()) continue;
 
                 for (CardEffect effect : endStepEffects) {
+                    if (effect instanceof ConditionalEffect conditional
+                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forPermanent(perm, playerId))) {
+                        log.info("Game {} - {} end-step trigger skipped ({})",
+                                gameData.id, perm.getCard().getName(), conditional.conditionNotMetReason());
+                        continue;
+                    }
                     if (effect instanceof MayEffect may) {
                         gameData.queueMayAbility(perm.getCard(), playerId, may);
                     } else if (effect instanceof DealDamageIfDidntCastSpellThisTurnEffect) {

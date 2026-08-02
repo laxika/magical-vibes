@@ -400,6 +400,15 @@ public class ValidTargetService {
                 prompt = "Select " + graveyardEffect.count() + " target cards from an opponent's graveyard";
                 break;
             }
+            // "Exile up to N target cards from a single graveyard" (Rag Dealer): "up to" allows zero
+            if (effect instanceof ExileGraveyardCardsEffect graveyardEffect
+                    && graveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD
+                    && graveyardEffect.count() > 1) {
+                minTargets = 0;
+                maxTargets = graveyardEffect.count();
+                prompt = "Select up to " + graveyardEffect.count() + " target cards from a single graveyard";
+                break;
+            }
         }
 
         return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds, minTargets, maxTargets, prompt);

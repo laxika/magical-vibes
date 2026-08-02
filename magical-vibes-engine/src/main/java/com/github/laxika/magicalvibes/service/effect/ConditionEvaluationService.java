@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreLifeThanController;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreLifeThanAnOpponent;
@@ -64,6 +65,7 @@ import com.github.laxika.magicalvibes.model.condition.EnchantedCreaturePowerAtLe
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.DidntGainLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Enchanted;
+import com.github.laxika.magicalvibes.model.condition.EnchantedByAtLeastAuras;
 import com.github.laxika.magicalvibes.model.condition.EndStepPlayerDidntCastCreatureSpell;
 import com.github.laxika.magicalvibes.model.condition.OpponentCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
@@ -121,6 +123,7 @@ import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryColor;
+import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.WonClash;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -208,6 +211,8 @@ public class ConditionEvaluationService {
                     isSourceEquipped(gameData, ctx);
             case Enchanted ignored ->
                     isSourceEnchanted(gameData, ctx);
+            case EnchantedByAtLeastAuras c ->
+                    countAurasAttachedToSource(gameData, ctx) >= c.minimum();
             case EndStepPlayerDidntCastCreatureSpell ignored ->
                     ctx.targetId() != null
                             && gameData.getSpellsCastThisTurn(ctx.targetId()).stream()
@@ -284,6 +289,8 @@ public class ConditionEvaluationService {
                                     .noneMatch(e -> ctx.sourcePermanentId().equals(e.sourcePermanentId()));
             case ControllerHandEmpty ignored ->
                     countCardsInHand(gameData, ctx.controllerId()) == 0;
+            case TargetPlayerHandEmpty ignored ->
+                    ctx.targetId() != null && countCardsInHand(gameData, ctx.targetId()) == 0;
             case CastFromZone c ->
                     c.sourceZone() == ctx.sourceZone();
             case CastNotFromHand ignored ->
@@ -428,6 +435,8 @@ public class ConditionEvaluationService {
             }
             case TopCardOfLibraryColor c ->
                     isTopCardOfLibraryColor(gameData, ctx.controllerId(), c);
+            case TopCardOfLibraryType c ->
+                    isTopCardOfLibraryType(gameData, ctx.controllerId(), c);
             case BlockedByMinCreatures c ->
                     countBlockersOfSource(gameData, ctx) >= c.minBlockers();
             case ImprintedCardMatches c -> imprintedCardMatches(gameData, ctx, c);
@@ -692,6 +701,23 @@ public class ConditionEvaluationService {
             }
         }
         return false;
+    }
+
+    private int countAurasAttachedToSource(GameData gameData, ConditionContext ctx) {
+        UUID sourcePermanentId = ctx.sourcePermanentId();
+        if (sourcePermanentId == null) return 0;
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                if (perm.getCard().getSubtypes().contains(CardSubtype.AURA)
+                        && sourcePermanentId.equals(perm.getAttachedTo())) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     private boolean controlsMatchingPermanent(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
@@ -1110,6 +1136,13 @@ public class ConditionEvaluationService {
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (deck == null || deck.isEmpty()) return false;
         return deck.getFirst().getColors().contains(c.color());
+    }
+
+    private boolean isTopCardOfLibraryType(GameData gameData, UUID controllerId, TopCardOfLibraryType c) {
+        if (controllerId == null) return false;
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        if (deck == null || deck.isEmpty()) return false;
+        return deck.getFirst().hasType(c.cardType());
     }
 
     /**

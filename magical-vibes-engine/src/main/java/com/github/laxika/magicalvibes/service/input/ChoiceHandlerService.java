@@ -86,6 +86,7 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PhaseOutChosenTypeSupport phaseOutChosenTypeSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.RedistributePlayerLifeTotalsSupport redistributePlayerLifeTotalsSupport;
 
     public void handleListChoice(GameData gameData, Player player, String colorName) {
         if (gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class) == null) {
@@ -289,6 +290,12 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseModeChoice ctx) {
             handleChooseModeChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.RedistributePlayerLifeTotalsChoice ctx) {
+            gameData.interaction.clearAwaitingInput();
+            redistributePlayerLifeTotalsSupport.applyChoice(gameData, colorName, ctx.choices());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.TormentPenaltyChoice ctx) {

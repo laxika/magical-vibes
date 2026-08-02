@@ -32,6 +32,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -106,6 +107,9 @@ public class PermanentRemovalService {
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
         boolean wasArtifact = gameQueryService.isArtifact(target);
         boolean wasEnchantment = gameQueryService.isEnchantment(gameData, target);
+        Set<CardSubtype> creatureSubtypesAtDeath = wasCreature
+                ? gameQueryService.effectiveCreatureSubtypes(gameData, target)
+                : Set.of();
         boolean hadUndying = wasCreature && gameQueryService.hasKeyword(gameData, target, Keyword.UNDYING);
         boolean hadPersist = wasCreature && gameQueryService.hasKeyword(gameData, target, Keyword.PERSIST);
         Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
@@ -122,7 +126,8 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature);
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
-        processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, wasEnchantment, hadUndying, hadPersist, controllerId, ownerId);
+        processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, wasEnchantment,
+                creatureSubtypesAtDeath, hadUndying, hadPersist, controllerId, ownerId);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
         return true;
@@ -151,6 +156,9 @@ public class PermanentRemovalService {
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
         boolean wasArtifact = gameQueryService.isArtifact(target);
         boolean wasEnchantment = gameQueryService.isEnchantment(gameData, target);
+        Set<CardSubtype> creatureSubtypesAtDeath = wasCreature
+                ? gameQueryService.effectiveCreatureSubtypes(gameData, target)
+                : Set.of();
         boolean hadUndying = wasCreature && gameQueryService.hasKeyword(gameData, target, Keyword.UNDYING);
         boolean hadPersist = wasCreature && gameQueryService.hasKeyword(gameData, target, Keyword.PERSIST);
         RemovedPermanentInfo info = processRemovalCleanup(gameData, target, controllerId);
@@ -162,7 +170,8 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature);
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, info.controllerId());
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, info.controllerId());
-        processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, wasEnchantment, hadUndying, hadPersist, info.controllerId(), info.ownerId());
+        processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, wasEnchantment,
+                creatureSubtypesAtDeath, hadUndying, hadPersist, info.controllerId(), info.ownerId());
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
     }
@@ -608,7 +617,11 @@ public class PermanentRemovalService {
      */
     private boolean tryApplyExileReplacementEffect(GameData gameData, Permanent target,
                                                    boolean checkExileInsteadOfDie, String destinationDescription) {
-        if (!target.isExileIfLeavesBattlefield() && !(checkExileInsteadOfDie && target.isExileInsteadOfDieThisTurn())) {
+        boolean permanentGraveyardReplacement = checkExileInsteadOfDie
+                && GraveyardService.hasExilePermanentsInsteadOfGraveyardReplacementEffect(target.getCard());
+        if (!target.isExileIfLeavesBattlefield()
+                && !(checkExileInsteadOfDie && target.isExileInsteadOfDieThisTurn())
+                && !permanentGraveyardReplacement) {
             return false;
         }
         boolean exiled = removePermanentToExile(gameData, target);
@@ -670,6 +683,7 @@ public class PermanentRemovalService {
     private void processGraveyardAndTriggers(GameData gameData, Permanent target,
                                               boolean wasCreature, boolean wasArtifact,
                                               boolean wasEnchantment,
+                                              Set<CardSubtype> creatureSubtypesAtDeath,
                                               boolean hadUndying, boolean hadPersist,
                                               UUID controllerId, UUID ownerId) {
         boolean wentToGraveyard = false;
@@ -692,6 +706,11 @@ public class PermanentRemovalService {
                     gameData, target.getOriginalCard(), controllerId, ownerId);
             if (wasCreature) {
                 gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
+                Map<CardSubtype, Integer> subtypeCounts = gameData.creatureSubtypeDeathCountThisTurn
+                        .computeIfAbsent(controllerId, ignored -> new java.util.concurrent.ConcurrentHashMap<>());
+                for (CardSubtype subtype : creatureSubtypesAtDeath) {
+                    subtypeCounts.merge(subtype, 1, Integer::sum);
+                }
                 triggerCollectionService.checkAllyCreatureDeathTriggers(gameData, controllerId, target);
                 triggerCollectionService.checkAnyCreatureDeathTriggers(gameData, controllerId, target);
                 triggerCollectionService.checkAllyNontokenCreatureDeathTriggers(gameData, controllerId, target.getCard());

@@ -242,45 +242,6 @@ public class CombatAttackService {
         // must be affordable together, not just each attacker on its own.
         attackSacrificeCostService.validateGlobalSacrificeAttackCosts(gameData, playerId, attackerIndices);
 
-        // Validate attack tax (e.g. Windborn Muse / Ghostly Prison — uniform per-attacker tax from the
-        // defender's side; plus per-attacker taxes scoped to a single creature: aura taxes like Brainwash
-        // {3}, and self AttackCostEffect taxes like Phyrexian Marauder {1} per +1/+1 counter)
-        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, playerId);
-        int selfTaxTotal = 0;
-        for (int idx : attackerIndices) {
-            selfTaxTotal += gameQueryService.getCreatureAttackTax(gameData, battlefield.get(idx));
-        }
-        int totalTax = taxPerCreature * attackerIndices.size() + selfTaxTotal;
-        List<ManaColor> phyrexianPayments = castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId);
-        if (totalTax > 0) {
-            ManaPool pool = gameData.playerManaPools.get(playerId);
-            if (pool.getTotal() < totalTax) {
-                throw new IllegalStateException("Not enough mana to pay attack tax (" + totalTax + " required)");
-            }
-        }
-
-        // Validate the Phyrexian portion before paying any attack costs. Costs must be
-        // validated atomically: if the declaration cannot pay the required life, none of
-        // its generic mana or life may already have been spent (CR 508.1j / 119.4).
-        int phyrexianLifeCost = 0;
-        if (!phyrexianPayments.isEmpty()) {
-            ManaPool simulatedPool = new ManaPool(gameData.playerManaPools.get(playerId));
-            if (totalTax > 0) {
-                payGenericManaPreservingPhyrexianColors(
-                        simulatedPool, totalTax, phyrexianPayments, attackerIndices.size());
-            }
-            phyrexianLifeCost = payPhyrexianAttackTax(simulatedPool, phyrexianPayments, attackerIndices.size());
-            if (phyrexianLifeCost > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
-                throw new IllegalStateException("Life total can't change to pay Phyrexian attack tax");
-            }
-            int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 0);
-            if (currentLife < phyrexianLifeCost) {
-                throw new IllegalStateException("Not enough life to pay Phyrexian attack tax ("
-                        + phyrexianLifeCost + " required)");
-            }
-        }
-
-        // Validate attack targets
         UUID defenderId = gameQueryService.getOpponentId(gameData, playerId);
         Set<UUID> validTargetIds = attackLegalityService.getValidAttackTargetIds(gameData, playerId);
         Map<Integer, UUID> resolvedTargets = new HashMap<>();
@@ -308,6 +269,45 @@ public class CombatAttackService {
                 throw new IllegalStateException(attacker.getCard().getName() + " can't attack that player");
             }
             resolvedTargets.put(idx, targetId);
+        }
+
+        // Validate attack tax (e.g. Windborn Muse / Ghostly Prison — uniform per-attacker tax from the
+        // defender's side; plus per-attacker taxes scoped to a single creature: aura taxes like Brainwash
+        // {3}, and self AttackCostEffect taxes like Phyrexian Marauder {1} per +1/+1 counter)
+        int selfTaxTotal = 0;
+        int totalTax = 0;
+        for (int idx : attackerIndices) {
+            totalTax += castingCostService.getAttackPaymentPerCreature(gameData, playerId, resolvedTargets.get(idx));
+            selfTaxTotal += gameQueryService.getCreatureAttackTax(gameData, battlefield.get(idx));
+        }
+        totalTax += selfTaxTotal;
+        List<ManaColor> phyrexianPayments = castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId);
+        if (totalTax > 0) {
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            if (pool.getTotal() < totalTax) {
+                throw new IllegalStateException("Not enough mana to pay attack tax (" + totalTax + " required)");
+            }
+        }
+
+        // Validate the Phyrexian portion before paying any attack costs. Costs must be
+        // validated atomically: if the declaration cannot pay the required life, none of
+        // its generic mana or life may already have been spent (CR 508.1j / 119.4).
+        int phyrexianLifeCost = 0;
+        if (!phyrexianPayments.isEmpty()) {
+            ManaPool simulatedPool = new ManaPool(gameData.playerManaPools.get(playerId));
+            if (totalTax > 0) {
+                payGenericManaPreservingPhyrexianColors(
+                        simulatedPool, totalTax, phyrexianPayments, attackerIndices.size());
+            }
+            phyrexianLifeCost = payPhyrexianAttackTax(simulatedPool, phyrexianPayments, attackerIndices.size());
+            if (phyrexianLifeCost > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                throw new IllegalStateException("Life total can't change to pay Phyrexian attack tax");
+            }
+            int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 0);
+            if (currentLife < phyrexianLifeCost) {
+                throw new IllegalStateException("Not enough life to pay Phyrexian attack tax ("
+                        + phyrexianLifeCost + " required)");
+            }
         }
 
         // Validate attacking bands (CR 702.22c/d): each band needs >=1 creature with banding and

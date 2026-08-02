@@ -604,6 +604,9 @@ public class LayerSystemService {
         for (TextReplacement replacement : p.getTextReplacements()) {
             h = mix(h, System.identityHashCode(replacement));
         }
+        // A chosen color feeds layer 3 (Swirl the Mists rewrites every color word to it) and
+        // layers 5/6 (chosen-color protection, Shifting Sky), so it must invalidate the cache.
+        h = mix(h, enumOrdinal(p.getChosenColor()));
         for (Object ability : p.getPersistentGrantedActivatedAbilities()) {
             h = mix(h, System.identityHashCode(ability));
         }
@@ -726,6 +729,7 @@ public class LayerSystemService {
         // layer 5/6 passes read the states as of the layers applied so far.
         pass.board = board;
 
+        List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
         for (PermanentSlot slot : slots) {
             Permanent permanent = slot.permanent();
             CharacteristicState state = new CharacteristicState(permanent.getCard(), permanent);
@@ -741,7 +745,7 @@ public class LayerSystemService {
             // Legacy one-shot color/keyword state is seeded before ANY layer runs so filter
             // leaves answering from the states never see less than the intrinsic values
             // (colors and keywords are untouched by layer 4).
-            seedLegacyColorAndAbilityState(permanent, state);
+            seedLegacyColorAndAbilityState(permanent, state, globalWordChange);
             // Layer 3 on the object's own type line: a text change replacing a basic land
             // type word (Mind Bend targeting a Forest) rewrites the printed subtype itself,
             // and with it the land's intrinsic mana ability (CR 612, 305.6).
@@ -826,6 +830,7 @@ public class LayerSystemService {
     private List<EffectInstance> collectInstances(GameData gameData, List<PermanentSlot> slots,
                                                   Map<UUID, PermanentSlot> slotsById, Layer layer) {
         List<EffectInstance> instances = new ArrayList<>();
+        List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
         for (PermanentSlot slot : slots) {
             for (CardEffect effect : slot.permanent().getCard().getEffects(EffectSlot.STATIC)) {
                 if (isConditionalWrapper(effect) && !admitsConditionalWrapper(effect, layer)) {
@@ -839,7 +844,7 @@ public class LayerSystemService {
                 // by the source's text changes; the transform preserves the effect's class, so
                 // the classification of the original stands.
                 CardEffect rewritten = TextChangeTransformer.transform(
-                        effect, slot.permanent().getTextReplacements());
+                        effect, slot.permanent().getTextReplacements(), globalWordChange);
                 instances.add(new EffectInstance(slot, rewritten, effect, null,
                         classification.characteristicDefining(),
                         slot.permanent().getTimestamp(), slot.position()));
@@ -1170,8 +1175,7 @@ public class LayerSystemService {
                     if (becomes.isBasicLandSubtype()) {
                         setLandTypes(state, target.permanent().getId(), becomes.subtypes(), landTypeOverrides);
                     } else {
-                        // Non-land subtypes: single creature-type setter (existing cards are single-type).
-                        setCreatureType(state, becomes.subtype());
+                        setCreatureTypes(state, becomes.subtypes());
                     }
                     record(board, instance, target, new L4Contribution(
                             becomes.subtypes(), true, becomes.isBasicLandSubtype()));
@@ -1421,8 +1425,15 @@ public class LayerSystemService {
 
     /** "Is a [creature type]" (overriding): clears the other creature types, then adds. */
     private void setCreatureType(CharacteristicState state, CardSubtype subtype) {
+        setCreatureTypes(state, List.of(subtype));
+    }
+
+    /**
+     * Replaces every creature subtype with the given ones ("enchanted creature is a Demon Spirit").
+     */
+    private void setCreatureTypes(CharacteristicState state, List<CardSubtype> subtypes) {
         state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
-        state.addSubtype(subtype);
+        subtypes.forEach(state::addSubtype);
     }
 
     private static boolean isSource(EffectInstance instance, PermanentSlot target) {
@@ -1599,7 +1610,8 @@ public class LayerSystemService {
      * legacy "loses all abilities until end of turn" flag clears everything at seed time (so
      * later-timestamp layered grants still apply, matching the old accumulator behavior).
      */
-    private void seedLegacyColorAndAbilityState(Permanent permanent, CharacteristicState state) {
+    private void seedLegacyColorAndAbilityState(Permanent permanent, CharacteristicState state,
+                                                List<TextReplacement> globalWordChange) {
         if ((permanent.isAnimatedUntilEndOfTurn() || permanent.isAnimatedUntilEndOfCombat())
                 && permanent.getAnimatedColor() != null) {
             state.replaceSeedColors(Set.of(permanent.getAnimatedColor()));
@@ -1619,7 +1631,8 @@ public class LayerSystemService {
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof ProtectionFromColorsEffect protection && protection.scope() == null) {
                 ProtectionFromColorsEffect rewritten = (ProtectionFromColorsEffect)
-                        TextChangeTransformer.transform(protection, permanent.getTextReplacements());
+                        TextChangeTransformer.transform(protection, permanent.getTextReplacements(),
+                                globalWordChange);
                 state.addProtectionColors(rewritten.colors());
             }
         }

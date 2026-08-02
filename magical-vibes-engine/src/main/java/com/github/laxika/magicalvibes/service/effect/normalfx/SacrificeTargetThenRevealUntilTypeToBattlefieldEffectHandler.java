@@ -20,7 +20,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -57,6 +59,12 @@ public class SacrificeTargetThenRevealUntilTypeToBattlefieldEffectHandler implem
         String targetControllerName = gameData.playerIdToName.get(targetControllerId);
         String targetName = target.getCard().getName();
 
+        // Reweave mode: an empty type set means "shares a card type with the sacrificed permanent"
+        Set<CardType> matchTypes = e.cardTypes().isEmpty()
+                ? permanentTypesOf(target.getCard())
+                : e.cardTypes();
+        boolean permanentCardsOnly = e.cardTypes().isEmpty();
+
         // Sacrifice the targeted permanent
         permanentRemovalService.removePermanentToGraveyard(gameData, target);
         String sacrificeLog = targetControllerName + " sacrifices " + targetName + ".";
@@ -70,7 +78,8 @@ public class SacrificeTargetThenRevealUntilTypeToBattlefieldEffectHandler implem
         while (!deck.isEmpty()) {
             Card card = deck.removeFirst();
             revealedCards.add(card);
-            if (cardSpecificSupport.cardMatchesAnyType(card, e.cardTypes())) {
+            boolean eligible = !permanentCardsOnly || !permanentTypesOf(card).isEmpty();
+            if (eligible && !matchTypes.isEmpty() && cardSpecificSupport.cardMatchesAnyType(card, matchTypes)) {
                 foundCard = card;
                 break;
             }
@@ -130,5 +139,19 @@ public class SacrificeTargetThenRevealUntilTypeToBattlefieldEffectHandler implem
 
         log.info("Game {} - {} sacrificed {}, {} enters the battlefield",
                 gameData.id, targetControllerName, targetName, foundCard.getName());
+    }
+
+    /**
+     * The card types of {@code card} that make it a permanent card. Kindred is excluded because it
+     * never stands alone as a permanent type.
+     */
+    private Set<CardType> permanentTypesOf(Card card) {
+        Set<CardType> types = EnumSet.noneOf(CardType.class);
+        if (card.getType() != null) {
+            types.add(card.getType());
+        }
+        types.addAll(card.getAdditionalTypes());
+        types.removeIf(type -> !type.isPermanentType() || type == CardType.KINDRED);
+        return types;
     }
 }

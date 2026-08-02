@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
@@ -45,7 +47,9 @@ public class TargetValidationService {
             TargetSpec spec = effectToValidate.targetSpec();
             TargetValidator validator = registry.getValidator(effectToValidate);
             try {
-                if (spec.category() != TargetCategory.NONE) {
+                boolean spellTargetPath = context.targetZone() == Zone.STACK
+                        && EffectResolution.targetsSpellOnStack(effectToValidate);
+                if (spec.category() != TargetCategory.NONE && !spellTargetPath) {
                     validateSpec(context, spec);
                 }
                 if (validator != null) {

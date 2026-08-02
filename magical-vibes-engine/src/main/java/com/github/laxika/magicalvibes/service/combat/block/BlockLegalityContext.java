@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.TappedBlockPermissionEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
@@ -42,6 +43,9 @@ public final class BlockLegalityContext {
     /** Board-wide "creatures matching X can't attack or block" statics, collected once. */
     final List<GlobalAttackOrBlockRestriction> globalAttackOrBlockRestrictions;
 
+    /** Controller-relative permissions that let matching tapped creatures block. */
+    final List<TappedBlockPermission> tappedBlockPermissions;
+
     /**
      * Every attached permanent on the board, bucketed by the id of what it is attached to, so the
      * per-creature aura lookups are a map read instead of a board scan. Creatures with nothing
@@ -72,6 +76,7 @@ public final class BlockLegalityContext {
                          List<Permanent> defenderBattlefield,
                          List<GlobalBlockRestriction> globalBlockRestrictions,
                          List<GlobalAttackOrBlockRestriction> globalAttackOrBlockRestrictions,
+                         List<TappedBlockPermission> tappedBlockPermissions,
                          Map<UUID, List<Permanent>> attachedByHostId,
                          Set<CardSubtype> defenderCardSubtypes,
                          boolean landwalkIgnored) {
@@ -79,6 +84,7 @@ public final class BlockLegalityContext {
         this.defenderBattlefield = defenderBattlefield;
         this.globalBlockRestrictions = globalBlockRestrictions;
         this.globalAttackOrBlockRestrictions = globalAttackOrBlockRestrictions;
+        this.tappedBlockPermissions = tappedBlockPermissions;
         this.attachedByHostId = attachedByHostId;
         this.defenderCardSubtypes = defenderCardSubtypes;
         this.landwalkIgnored = landwalkIgnored;
@@ -105,6 +111,13 @@ public final class BlockLegalityContext {
      * evaluated relative to the source's controller for every creature the sweep asks about.
      */
     record GlobalAttackOrBlockRestriction(PermanentPredicate predicate, FilterContext filterContext) {
+    }
+
+    /**
+     * One static permission that lets creatures matching its predicate block while tapped, paired
+     * with the source controller context used to evaluate that predicate.
+     */
+    record TappedBlockPermission(TappedBlockPermissionEffect effect, FilterContext filterContext) {
     }
 
     /**

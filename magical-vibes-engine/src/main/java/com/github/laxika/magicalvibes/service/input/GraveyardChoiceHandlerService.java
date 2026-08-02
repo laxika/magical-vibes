@@ -375,6 +375,13 @@ public class GraveyardChoiceHandlerService {
             throw new IllegalStateException("Too many cards selected: " + cardIds.size() + " > " + maxCount);
         }
 
+        // A mandatory choice (Gifts Ungiven's "chooses two") must be answered in full; rejecting the
+        // answer before any state is touched leaves the prompt standing so it can be answered again.
+        if (cardIds.size() < multiGraveyardChoice.minCount()) {
+            throw new IllegalStateException("Must choose " + multiGraveyardChoice.minCount()
+                    + " cards, but chose " + cardIds.size());
+        }
+
         // Spell targeting (e.g. Midnight Ritual) requires exactly X targets — "X target" is not "up to X target"
         // Exception: "any number of target" spells (e.g. Frantic Salvage) allow 0 to max
         StackEntryType pendingEntryTypeCheck = gameData.graveyardTargetOperation.entryType;
@@ -479,6 +486,18 @@ public class GraveyardChoiceHandlerService {
             gameData.interaction.clearAwaitingInput();
             if (pileSeparation.disposition() == CardPileDisposition.PLAY_FROM_EXILE) {
                 brilliantUltimatumSupport.completePileSeparationStep1(gameData, cardIds);
+            } else if (pileSeparation.disposition() == CardPileDisposition.GIFTS_UNGIVEN) {
+                // Gifts Ungiven completes in one step: the chosen cards go to the controller's
+                // graveyard and the rest to their hand, so the spell's resolution resumes here.
+                graveyardReturnSupport.completeGiftsUngivenChoice(gameData, cardIds);
+                if (gameData.pendingEffectResolutionEntry != null && !gameData.interaction.isAwaitingInput()) {
+                    effectResolutionService.resolveEffectsFrom(gameData,
+                            gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
+                    if (gameData.interaction.isAwaitingInput()) {
+                        return;
+                    }
+                }
+                inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
             } else {
                 // BATTLEFIELD (Boneyard Parley) and HAND (Unesh) both share step 1; step 2 branches.
                 graveyardReturnSupport.completeCardPileSeparationStep1(gameData, cardIds);

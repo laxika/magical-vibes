@@ -55,5 +55,7 @@ public enum PreventionScope {
     /** "Prevent all combat damage that would be dealt by creatures other than target creature this turn"
      *  (Terrifying Presence). The target-chosen counterpart of {@link #ALL_COMBAT_EXCEPT}: the exemption
      *  predicate is built at resolution from the chosen target. */
-    ALL_COMBAT_EXCEPT_TARGET
+    ALL_COMBAT_EXCEPT_TARGET,
+    /** "Prevent all damage that would be dealt by creatures this turn" (Ethereal Haze). */
+    ALL_BY_CREATURES
 }

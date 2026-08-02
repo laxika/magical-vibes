@@ -418,3 +418,8 @@ Auras have their own trigger slots. Use this table to pick the correct one based
 **How `UPKEEP_TRIGGERED` works for auras**: The aura permanent sits on the controller's battlefield. `StepTriggerService` iterates the active player's battlefield looking for permanents with `UPKEEP_TRIGGERED` effects. Since the aura is on the controller's battlefield, the trigger fires during the controller's upkeep. The `sourcePermanentId` on the stack entry is set to the aura permanent's ID (`perm.getId()`), so the resolution handler can find the enchanted creature via `auraPerm.getAttachedTo()`.
 
 **How `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED` works**: `StepTriggerService` iterates ALL permanents on ALL battlefields, checks if each has this effect slot and is attached, then finds the enchanted permanent's controller. It only fires when that controller is the active player.
+
+**Targeted graveyard-return death triggers** use `ReturnCardFromGraveyardEffect` with
+`targetGraveyard(true)` in the `ON_DEATH` slot. The death-trigger queue applies the effect's card
+predicate and `source()` scope while the trigger is put on the stack, then stores the selected card ID
+on the triggered entry for the normal return handler. An empty selection models an optional return.

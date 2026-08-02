@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReflectDamageToChosenColorCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyDamageSourcePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentEffect;
@@ -262,6 +263,35 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = EnchantedCreatureControllerLosesLifeEffect.class,
+            slot = EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
+    private boolean handleEnchantedCreatureDealtDamageControllerLosesLife(TriggerMatchContext match,
+            EnchantedCreatureControllerLosesLifeEffect effect, TriggerContext ctx) {
+        TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
+        if (dc.damageDealt() <= 0) return false;
+
+        GameData gameData = match.gameData();
+        Permanent aura = match.permanent();
+
+        UUID controllerId = gameQueryService.findPermanentController(gameData, dc.damagedCreature().getId());
+        if (controllerId == null) return false;
+
+        // Ragged Veins: the card-def amount is a placeholder; bake in the damage just dealt.
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                aura.getCard(),
+                match.controllerId(),
+                aura.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new EnchantedCreatureControllerLosesLifeEffect(dc.damageDealt(), controllerId))),
+                null,
+                aura.getId()
+        ));
+        gameLogService.append(gameData, GameLog.abilityTriggers(aura.getCard()));
+        log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE life-loss trigger fires",
+                gameData.id, aura.getCard().getName());
+        return true;
+    }
+
     @CollectsTrigger(value = DestroyEnchantedPermanentEffect.class,
             slot = EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
     private boolean handleEnchantedCreatureDealtDamageDestroy(TriggerMatchContext match,
@@ -335,6 +365,32 @@ public class DamageTriggerCollectorService {
         gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
         log.info("Game {} - {} ON_CONTROLLER_DEALT_DAMAGE trigger fires, removing a counter",
                 gameData.id, perm.getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
+    private boolean handleAllySourceDealtDamageToOpponentPutCounters(TriggerMatchContext match,
+            PutCountersOnSelfEffect effect, TriggerContext ctx) {
+        TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
+        GameData gameData = match.gameData();
+        Permanent perm = match.permanent();
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                perm.getCard(),
+                match.controllerId(),
+                perm.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                perm.getId());
+        // Snapshot the damage dealt so the effect's EventValue amount ("put that many theft
+        // counters") reads it back at resolution.
+        entry.setEventValue(dc.amount());
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+        log.info("Game {} - {} ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT trigger fires ({} damage)",
+                gameData.id, perm.getCard().getName(), dc.amount());
         return true;
     }
 

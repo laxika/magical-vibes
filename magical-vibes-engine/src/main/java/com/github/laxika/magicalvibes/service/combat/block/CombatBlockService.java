@@ -398,25 +398,28 @@ public class CombatBlockService {
         // Check for "when this creature blocks" triggers (defending player's / NAP's)
         for (BlockerAssignment assignment : blockerAssignments) {
             Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
-            if (!blocker.getCard().getEffects(EffectSlot.ON_BLOCK).isEmpty()) {
+            List<CardEffect> blockEffects = new ArrayList<>(blocker.getCard().getEffects(EffectSlot.ON_BLOCK));
+            blockEffects.addAll(blocker.getTemporaryTriggeredEffects(EffectSlot.ON_BLOCK));
+            blockEffects.addAll(blocker.getPersistentTriggeredEffects(EffectSlot.ON_BLOCK));
+            if (!blockEffects.isEmpty()) {
                 Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
 
                 // Resolve conditional block effects (e.g. "when blocking a creature with flying")
-                List<CardEffect> blockEffects = new ArrayList<>();
-                for (CardEffect e : blocker.getCard().getEffects(EffectSlot.ON_BLOCK)) {
+                List<CardEffect> resolvedBlockEffects = new ArrayList<>();
+                for (CardEffect e : blockEffects) {
                     if (e instanceof BoostSelfWhenBlockingKeywordEffect kwEffect) {
                         if (gameQueryService.hasKeyword(gameData, attacker, kwEffect.requiredKeyword())) {
-                            blockEffects.add(new BoostSelfEffect(kwEffect.powerBoost(), kwEffect.toughnessBoost()));
+                            resolvedBlockEffects.add(new BoostSelfEffect(kwEffect.powerBoost(), kwEffect.toughnessBoost()));
                         }
                     } else if (e instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect) {
                         if (hasEquipmentAttached(gameData, attacker)) {
-                            blockEffects.add(e);
+                            resolvedBlockEffects.add(e);
                         }
                     } else {
-                        blockEffects.add(e);
+                        resolvedBlockEffects.add(e);
                     }
                 }
-                if (blockEffects.isEmpty()) continue;
+                if (resolvedBlockEffects.isEmpty()) continue;
 
                 // Targeted block triggers (e.g. Elite Javelineer's "deals 1 damage to target
                 // attacking creature") let the controller choose any legal target rather than
@@ -424,10 +427,10 @@ public class CombatBlockService {
                 // route these through the shared attack-trigger targeting pipeline, which honours the
                 // card's PermanentPredicateTargetFilter and drains via the pending-interaction queue.
                 boolean targetsChosenPermanent = blocker.getCard().getTargetFilter() != null
-                        && blockEffects.stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
+                        && resolvedBlockEffects.stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
                 if (targetsChosenPermanent) {
                     gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                            blocker.getCard(), defenderId, new ArrayList<>(blockEffects), blocker.getId()));
+                            blocker.getCard(), defenderId, new ArrayList<>(resolvedBlockEffects), blocker.getId()));
                     gameLogService.append(gameData, GameLog.cardThen(blocker.getCard(),
                             "'s block ability triggers."));
                     log.info("Game {} - {} block trigger queued for target selection", gameData.id,
@@ -436,7 +439,7 @@ public class CombatBlockService {
                 }
 
                 // Set target: attacker ID for effects that need it, otherwise blocker's own ID
-                boolean needsAttackerTarget = blockEffects.stream()
+                boolean needsAttackerTarget = resolvedBlockEffects.stream()
                         .anyMatch(e -> e instanceof DestroyBlockedCreatureAndSelfEffect
                                 || e instanceof DestroyTargetPermanentThenEffect
                                 || (e instanceof SkipNextUntapEffect s && s.scope() == TapUntapScope.TARGET)
@@ -451,7 +454,7 @@ public class CombatBlockService {
                         blocker.getCard(),
                         defenderId,
                         blocker.getCard().getName() + "'s block trigger",
-                        new ArrayList<>(blockEffects),
+                        new ArrayList<>(resolvedBlockEffects),
                         needsAttackerTarget ? attacker.getId() : blocker.getId(),
                         blocker.getId()
                 );
@@ -509,7 +512,9 @@ public class CombatBlockService {
         for (int atkIdx : blockedAttackerIndices) {
             Permanent attacker = attackerBattlefield.get(atkIdx);
             List<EffectRegistration> becomesBlockedRegs = attacker.getCard().getEffectRegistrations(EffectSlot.ON_BECOMES_BLOCKED);
-            List<CardEffect> grantedBecomesBlockedEffects = attacker.getTemporaryTriggeredEffects(EffectSlot.ON_BECOMES_BLOCKED);
+            List<CardEffect> grantedBecomesBlockedEffects = new ArrayList<>(
+                    attacker.getTemporaryTriggeredEffects(EffectSlot.ON_BECOMES_BLOCKED));
+            grantedBecomesBlockedEffects.addAll(attacker.getPersistentTriggeredEffects(EffectSlot.ON_BECOMES_BLOCKED));
             if (!becomesBlockedRegs.isEmpty() || !grantedBecomesBlockedEffects.isEmpty()) {
                 List<CardEffect> blockerSpecificEffects = becomesBlockedRegs.stream()
                         .filter(r -> r.triggerMode() == TriggerMode.PER_BLOCKER)
@@ -1126,6 +1131,7 @@ public class CombatBlockService {
                 .map(EffectRegistration::effect)
                 .toList());
         regularEffects.addAll(attacker.getTemporaryTriggeredEffects(EffectSlot.ON_BECOMES_BLOCKED));
+        regularEffects.addAll(attacker.getPersistentTriggeredEffects(EffectSlot.ON_BECOMES_BLOCKED));
         if (!regularEffects.isEmpty()) {
             StackEntry trigger = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,

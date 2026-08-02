@@ -153,6 +153,11 @@ public class EffectResolutionService {
                     effectToResolve = may.wrapped();
                     log.info("Game {} - Player accepted may ability from {} — resolving inner effect",
                             gameData.id, entry.getCard().getName());
+                } else if (may.elseEffect() != null) {
+                    // "If you don't / Otherwise, [effect]" — the decline half of the choice.
+                    effectToResolve = may.elseEffect();
+                    log.info("Game {} - Player declined may ability from {} — resolving else effect",
+                            gameData.id, entry.getCard().getName());
                 } else {
                     log.info("Game {} - Player declined may ability from {} — skipping",
                             gameData.id, entry.getCard().getName());

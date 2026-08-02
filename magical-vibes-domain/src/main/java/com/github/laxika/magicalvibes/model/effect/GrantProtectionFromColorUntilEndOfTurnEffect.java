@@ -20,25 +20,30 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param scope     {@link GrantScope#TARGET} or {@link GrantScope#SELF}
  */
 public record GrantProtectionFromColorUntilEndOfTurnEffect(
-        CardColor color, PermanentPredicate predicate, GrantScope scope)
+        CardColor color, PermanentPredicate predicate, GrantScope scope, TargetCategory targetCategory)
         implements CardEffect {
 
     public GrantProtectionFromColorUntilEndOfTurnEffect(CardColor color) {
-        this(color, null, GrantScope.TARGET);
+        this(color, null, GrantScope.TARGET, TargetCategory.CREATURE);
     }
 
     public GrantProtectionFromColorUntilEndOfTurnEffect(CardColor color, PermanentPredicate predicate) {
-        this(color, predicate, GrantScope.TARGET);
+        this(color, predicate, GrantScope.TARGET, TargetCategory.CREATURE);
     }
 
     public GrantProtectionFromColorUntilEndOfTurnEffect(CardColor color, GrantScope scope) {
-        this(color, null, scope);
+        this(color, null, scope, TargetCategory.CREATURE);
+    }
+
+    public GrantProtectionFromColorUntilEndOfTurnEffect(CardColor color, GrantScope scope,
+                                                         TargetCategory targetCategory) {
+        this(color, null, scope, targetCategory);
     }
 
     @Override
     public TargetSpec targetSpec() {
         return switch (scope) {
-            case TARGET -> TargetSpec.benign(TargetCategory.CREATURE, predicate);
+            case TARGET -> TargetSpec.benign(targetCategory, predicate);
             case SELF -> new TargetSpec(TargetCategory.NONE, false, null, true, 1);
             default -> TargetSpec.NONE;
         };

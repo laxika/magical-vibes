@@ -1203,7 +1203,7 @@ public class ActivatedAbilityExecutionService {
                                     List<UUID> targetIds,
                                     Map<UUID, Integer> damageAssignments) {
         Zone effectiveTargetZone = targetZone;
-        if (ability.isNeedsSpellTarget()) {
+        if (ability.isNeedsSpellTarget() && targetZone == Zone.STACK) {
             effectiveTargetZone = Zone.STACK;
         }
         if (effectiveTargetZone == Zone.BATTLEFIELD) {

@@ -251,6 +251,8 @@ public class PermanentCounterSupport {
             }
             case DESPAIR -> { target.setCounterCount(CounterType.DESPAIR, target.getCounterCount(CounterType.DESPAIR) + count); yield "despair"; }
             case DEATH -> { target.setCounterCount(CounterType.DEATH, target.getCounterCount(CounterType.DEATH) + count); yield "death"; }
+            case DEVOTION -> { target.setCounterCount(CounterType.DEVOTION, target.getCounterCount(CounterType.DEVOTION) + count); yield "devotion"; }
+            case DIVINITY -> { target.setCounterCount(CounterType.DIVINITY, target.getCounterCount(CounterType.DIVINITY) + count); yield "divinity"; }
             case HATCHLING -> { target.setCounterCount(CounterType.HATCHLING, target.getCounterCount(CounterType.HATCHLING) + count); yield "hatchling"; }
             case HOOFPRINT -> { target.setCounterCount(CounterType.HOOFPRINT, target.getCounterCount(CounterType.HOOFPRINT) + count); yield "hoofprint"; }
             case INVITATION -> { target.setCounterCount(CounterType.INVITATION, target.getCounterCount(CounterType.INVITATION) + count); yield "invitation"; }
@@ -292,6 +294,7 @@ public class PermanentCounterSupport {
             case RUST -> { target.setCounterCount(CounterType.RUST, target.getCounterCount(CounterType.RUST) + count); yield "rust"; }
             case VORTEX -> { target.setCounterCount(CounterType.VORTEX, target.getCounterCount(CounterType.VORTEX) + count); yield "vortex"; }
             case VELOCITY -> { target.setCounterCount(CounterType.VELOCITY, target.getCounterCount(CounterType.VELOCITY) + count); yield "velocity"; }
+            case TRAINING -> { target.setCounterCount(CounterType.TRAINING, target.getCounterCount(CounterType.TRAINING) + count); yield "training"; }
             default -> throw new IllegalStateException("Unsupported counter type: " + counterType);
         };
         if (counterName == null) return;
