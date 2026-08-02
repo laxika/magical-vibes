@@ -29,23 +29,35 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * declares a normal single-permanent {@code targetSpec()} narrowed by {@code targetPredicate}, so
  * the ordinary targeted-trigger machinery picks the target; {@code targetPredicate} is then only
  * checked against that one target, never against the source.
+ *
+ * <p>{@code requireSharedArtifactOrCreatureType} re-checks Legerdemain's cross-target "another
+ * target permanent that shares one of those types with it" restriction at resolution; at
+ * announcement it is enforced by {@code MultiTargetConstraint.SHARE_ARTIFACT_OR_CREATURE_TYPE}.
  */
 public record ExchangeControlOfTargetPermanentsEffect(
         PermanentPredicate targetPredicate,
         boolean requireOpponentManaValueNotGreater,
         boolean requireFirstTargetControlledByController,
-        boolean sourceIsFirstTarget) implements CardEffect {
+        boolean sourceIsFirstTarget,
+        boolean requireSharedArtifactOrCreatureType) implements CardEffect {
 
     public ExchangeControlOfTargetPermanentsEffect(
             PermanentPredicate targetPredicate, boolean requireOpponentManaValueNotGreater) {
-        this(targetPredicate, requireOpponentManaValueNotGreater, true, false);
+        this(targetPredicate, requireOpponentManaValueNotGreater, true, false, false);
     }
 
     public ExchangeControlOfTargetPermanentsEffect(
             PermanentPredicate targetPredicate, boolean requireOpponentManaValueNotGreater,
             boolean requireFirstTargetControlledByController) {
         this(targetPredicate, requireOpponentManaValueNotGreater,
-                requireFirstTargetControlledByController, false);
+                requireFirstTargetControlledByController, false, false);
+    }
+
+    public ExchangeControlOfTargetPermanentsEffect(
+            PermanentPredicate targetPredicate, boolean requireOpponentManaValueNotGreater,
+            boolean requireFirstTargetControlledByController, boolean sourceIsFirstTarget) {
+        this(targetPredicate, requireOpponentManaValueNotGreater,
+                requireFirstTargetControlledByController, sourceIsFirstTarget, false);
     }
 
     @Override

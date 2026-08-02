@@ -27,6 +27,7 @@ public class BlockDenialMessageService {
             case FEAR -> blockerName + " cannot block " + attackerName + " (fear)";
             case INTIMIDATE -> blockerName + " cannot block " + attackerName + " (intimidate)";
             case SKULK -> blockerName + " cannot block " + attackerName + " (skulk)";
+            case SHADOW -> blockerName + " cannot block " + attackerName + " (shadow)";
             case BLOCKER_LIMITED_TO_ATTACKERS -> blockerName + " can only block " + denial.detail();
             case GLOBAL_RESTRICTION -> denial.detail();
             case ATTACKER_LIMITED_TO_BLOCKERS -> attackerName + " can only be blocked by " + denial.detail();

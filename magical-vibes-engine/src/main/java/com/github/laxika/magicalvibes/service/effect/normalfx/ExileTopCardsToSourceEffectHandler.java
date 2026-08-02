@@ -62,6 +62,10 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
+        if (e.toGraveyardOnControlLoss()) {
+            gameData.exiledCardsToGraveyardOnControlLossWatch.put(sourcePermanentId, controllerId);
+        }
+
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (deck == null) return;
 

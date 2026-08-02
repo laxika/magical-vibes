@@ -17,6 +17,7 @@ import java.util.UUID;
 public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingSphinxAmbassadorChoice, PendingCapriciousEfreetState,
         PendingKarnScionRevealChoice, PendingKarnScionExileReturn,
+        PendingIntuitionRevealChoice,
         PendingReturnExiledWithSourceCard, PendingPortalPileSearch,
         PendingKarnRestart, PendingKnowledgePoolCast, PendingPileSeparation,
         PendingEachPlayerLibraryExile, PendingGuildFeud,
@@ -32,6 +33,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.MirrorOfFateChoice, PendingInteraction.KeepCardsInHandChoice,
         PendingInteraction.DoomsdayChoice,
         PendingInteraction.SearchLibraryToTopChoice,
+        PendingInteraction.IntuitionSearchChoice,
         PendingInteraction.PermanentAuctionChoice,
         PendingInteraction.IllicitAuctionBidChoice,
         PendingInteraction.MultiZoneExileChoice,
@@ -464,6 +466,35 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds(), 0, pool.size());
+        }
+    }
+
+    /**
+     * Intuition's search: the controller picks exactly {@code count} cards from {@code pool}
+     * (their whole library) to reveal. {@code opponentId} — the spell's target — then chooses one
+     * of them through the library-reveal prompt; the unchosen library cards are never held out, so
+     * only the picked cards leave the library before the shuffle.
+     */
+    record IntuitionSearchChoice(UUID playerId, UUID opponentId, java.util.List<Card> pool, int count)
+            implements PendingInteraction {
+
+        public IntuitionSearchChoice {
+            pool = java.util.List.copyOf(pool);
+        }
+
+        /** The selectable card IDs, in begin-time pool order. */
+        public java.util.List<UUID> validCardIds() {
+            return pool.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), count, count);
         }
     }
 

@@ -759,6 +759,12 @@ public class TargetLegalityService {
                                     "Chosen permanents must share an artifact, creature, or land type");
                         }
                     }
+                    case SHARE_ARTIFACT_OR_CREATURE_TYPE -> {
+                        if (!gameQueryService.sharesArtifactOrCreatureType(a, b)) {
+                            throw new IllegalStateException(
+                                    "Chosen permanents must share an artifact or creature type");
+                        }
+                    }
                     case CONTROLLED_BY_FIRST_TARGET, AT_MOST_TWO_CREATURES_AND_TWO_LANDS -> {
                         // Handled by early returns above.
                     }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -32,9 +33,7 @@ public class GrantProtectionChoiceUntilEndOfTurnEffectHandler implements NormalE
 
         // Multi-target spells (Prismatic Boon's "X target creatures") carry their targets in the
         // flat list; single-target spells and abilities carry theirs on targetId.
-        List<UUID> targetIds = entry.getTargetIds().isEmpty()
-                ? (entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId()))
-                : entry.getTargetIds();
+        List<UUID> targetIds = resolveRecipientIds(entry, e);
 
         List<Permanent> targets = targetIds.stream()
                 .map(id -> gameQueryService.findPermanentById(gameData, id))
@@ -53,5 +52,20 @@ public class GrantProtectionChoiceUntilEndOfTurnEffectHandler implements NormalE
 
         playerInputService.beginProtectionColorChoice(gameData, choosingPlayerId,
                 targets.stream().map(Permanent::getId).toList(), e.includeArtifacts());
+    }
+
+    /**
+     * Self-scoped abilities ("this creature gains protection from the color of your choice") have no
+     * target and resolve against the source permanent; targeted ones use the flat list (Prismatic
+     * Boon's "X target creatures") or the single {@code targetId}.
+     */
+    private List<UUID> resolveRecipientIds(StackEntry entry, GrantProtectionChoiceUntilEndOfTurnEffect e) {
+        if (e.scope() == GrantScope.SELF) {
+            UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
+            return selfId == null ? List.of() : List.of(selfId);
+        }
+        return entry.getTargetIds().isEmpty()
+                ? (entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId()))
+                : entry.getTargetIds();
     }
 }

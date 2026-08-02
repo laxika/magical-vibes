@@ -14,6 +14,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -137,6 +138,11 @@ public class Permanent {
      *  (Dazzling Beauty). CR 509.1h — it deals no combat damage, since a blocked creature with no
      *  blockers to assign damage to assigns none. Cleared at end of turn. */
     @Setter private boolean blockedWithoutBlockers;
+    /** When true, this Aura's static effects are ignored until end of turn — the enchanted
+     *  permanent's controller paid the Aura's "ignore this effect" cost (Volrath's Curse,
+     *  {@code IgnoreSourceAuraEffectsUntilEndOfTurnEffect}). Read by
+     *  {@code GameQueryService.hasAuraWithEffect}. Cleared at end of turn. */
+    @Setter private boolean auraEffectsIgnoredThisTurn;
     @Setter private boolean cantRegenerateThisTurn;
     /** When true, creatures this permanent dealt damage to this turn can't be regenerated this turn
      *  (Bone Shaman's activated ability). Cleared at end of turn. */
@@ -274,6 +280,9 @@ public class Permanent {
      *  {@link #persistentGrantedSupertypes} — the later activation wins. NOT cleared by
      *  {@link #resetModifiers()}. */
     private final Set<CardSupertype> persistentRemovedSupertypes = EnumSet.noneOf(CardSupertype.class);
+    /** Word substitutions applied by text-changing effects (CR 612). Entries flagged
+     *  {@link TextReplacement#untilEndOfTurn()} (Whim of Volrath) are dropped by
+     *  {@link #resetModifiers()}; the rest survive turn resets (Mind Bend, Magical Hack). */
     private final List<TextReplacement> textReplacements = new ArrayList<>();
     private final Set<CardType> protectionFromCardTypes = EnumSet.noneOf(CardType.class);
     private final Set<CardColor> protectionFromColorsUntilEndOfTurn = EnumSet.noneOf(CardColor.class);
@@ -1018,6 +1027,7 @@ public class Permanent {
         this.mustBeBlockedThisTurn = false;
         this.mustBeBlockedByAllThisTurn = false;
         this.blockedWithoutBlockers = false;
+        this.auraEffectsIgnoredThisTurn = false;
         this.cantRegenerateThisTurn = false;
         this.damagedCreaturesCantRegenerateThisTurn = false;
         this.exileInsteadOfDieThisTurn = false;
@@ -1048,6 +1058,33 @@ public class Permanent {
         this.losesAllCreatureTypesUntilEndOfTurn = false;
         this.transientRemovedSubtypes.clear();
         this.temporaryActivatedAbilities.clear();
+        expireTemporaryTextReplacements();
+    }
+
+    /**
+     * Drops the "until end of turn" word substitutions (CR 612) and undoes any chosen-color swap they
+     * made, so a permanent whose chosen color was renamed by Whim of Volrath goes back to the color it
+     * was chosen as.
+     */
+    private void expireTemporaryTextReplacements() {
+        this.textReplacements.removeIf(replacement -> {
+            if (!replacement.untilEndOfTurn()) {
+                return false;
+            }
+            CardColor renamedTo = textChangeWordAsColor(replacement.toWord());
+            if (renamedTo != null && renamedTo == this.chosenColor) {
+                this.chosenColor = textChangeWordAsColor(replacement.fromWord());
+            }
+            return true;
+        });
+    }
+
+    private static CardColor textChangeWordAsColor(String word) {
+        try {
+            return CardColor.valueOf(word.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
     }
 
     /**

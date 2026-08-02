@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "7ED", collectorNumber = "11")
+@CardRegistration(set = "TMP", collectorNumber = "15")
 public class CloudchaserEagle extends Card {
 
     public CloudchaserEagle() {

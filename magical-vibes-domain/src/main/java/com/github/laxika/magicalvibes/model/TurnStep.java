@@ -39,6 +39,11 @@ public enum TurnStep {
                 || this == COMBAT_DAMAGE || this == END_OF_COMBAT;
     }
 
+    /** True for steps that occur before the combat phase begins (used by "only before combat" timing restrictions). */
+    public boolean isBeforeCombat() {
+        return ordinal() < BEGINNING_OF_COMBAT.ordinal();
+    }
+
     /** True for steps that occur before the declare attackers step (used by "before attackers are declared" timing restrictions). */
     public boolean isBeforeAttackersDeclared() {
         return ordinal() < DECLARE_ATTACKERS.ordinal();
@@ -47,6 +52,11 @@ public enum TurnStep {
     /** True for steps that occur before the declare blockers step (used by "before blockers are declared" timing restrictions). */
     public boolean isBeforeBlockersDeclared() {
         return ordinal() < DECLARE_BLOCKERS.ordinal();
+    }
+
+    /** True for steps that occur before the combat damage step (used by "only before the combat damage step" timing restrictions). */
+    public boolean isBeforeCombatDamage() {
+        return ordinal() < COMBAT_DAMAGE.ordinal();
     }
 
     /** True for steps that occur before the end of combat step (used by "activate only before the end of combat step" timing restrictions). */

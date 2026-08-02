@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetCreat
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -315,6 +316,32 @@ public class EnterTriggerCollectorService {
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (create token copy of entering creature)",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
+        return true;
+    }
+
+    /**
+     * Unstable Shapeshifter: "Whenever another creature enters, this creature becomes a copy of that
+     * creature, except it has this ability." The entering permanent's id is baked in at trigger time
+     * and the source permanent rides along as the stack entry's self-target.
+     */
+    @CollectsTrigger(value = BecomeCopyOfEnteringCreatureEffect.class,
+            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAnyCreatureBecomeCopyOfEntering(TriggerMatchContext match,
+            BecomeCopyOfEnteringCreatureEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        UUID enteringPermanentId = pe.mayPayTargetCardId();
+        if (enteringPermanentId == null) {
+            enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        }
+        if (enteringPermanentId == null) {
+            // The creature already left the battlefield; nothing to copy.
+            return true;
+        }
+        enqueue(match, new BecomeCopyOfEnteringCreatureEffect(enteringPermanentId),
+                match.permanent().getId(), pe.perEffectTriggerCount());
+        logTriggered(match);
+        log.info("Game {} - {} triggers for {} entering (become a copy of it)",
+                match.gameData().id, match.permanent().getCard().getName(), pe.enteringCard().getName());
         return true;
     }
 

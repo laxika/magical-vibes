@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.BlockCostEffect;
+import com.github.laxika.magicalvibes.model.effect.BlockPairConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.BlockParticipant;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
@@ -590,6 +592,10 @@ public class CombatBlockService {
             // Check for "whenever a creature you control becomes blocked" triggers (active player's / AP's).
             checkAllyBecomesBlockedTriggers(gameData, activeId, attacker);
         }
+
+        // Global "whenever a creature becomes blocked / blocks a creature" watchers
+        // (ON_ANY_CREATURE_BECOMES_BLOCKED) on every battlefield, once per attacker/blocker pair.
+        checkAnyCreatureBecomesBlockedTriggers(gameData, attackerBattlefield, defenderBattlefield, blockerAssignments);
 
         // Engine-level flanking triggers (CR 702.25a): whenever a creature with flanking becomes
         // blocked by a creature without flanking, that blocker gets -1/-1 until end of turn. Each
@@ -1184,6 +1190,54 @@ public class CombatBlockService {
             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             log.info("Game {} - {} ON_ALLY_CREATURE_BECOMES_BLOCKED trigger for {} blocked",
                     gameData.id, perm.getCard().getName(), blockedAttacker.getCard().getName());
+        }
+    }
+
+    /**
+     * Fires ON_ANY_CREATURE_BECOMES_BLOCKED watchers once per declared attacker/blocker pair, scanning
+     * every battlefield (the watcher's controller need not control either creature). Effects
+     * implementing {@link BlockPairConditionalEffect} are filtered against the pair's effective powers
+     * here — the comparison is a trigger condition, so it is never re-checked on resolution — and the
+     * participant the effect acts on is baked in as the non-targeting target.
+     */
+    private void checkAnyCreatureBecomesBlockedTriggers(GameData gameData,
+                                                        List<Permanent> attackerBattlefield,
+                                                        List<Permanent> defenderBattlefield,
+                                                        List<BlockerAssignment> blockerAssignments) {
+        for (BlockerAssignment assignment : blockerAssignments) {
+            Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
+            Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
+            int attackerPower = gameQueryService.getEffectivePower(gameData, attacker);
+            int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);
+
+            for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
+                for (Permanent watcher : List.copyOf(battlefield.getValue())) {
+                    for (CardEffect effect : watcher.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_BECOMES_BLOCKED)) {
+                        if (!(effect instanceof BlockPairConditionalEffect pairEffect)) {
+                            continue;
+                        }
+                        if (!pairEffect.firesForPair(attackerPower, blockerPower)) {
+                            continue;
+                        }
+                        Permanent subject = pairEffect.actsOn() == BlockParticipant.BLOCKER ? blocker : attacker;
+                        StackEntry trigger = new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                watcher.getCard(),
+                                battlefield.getKey(),
+                                watcher.getCard().getName() + "'s block trigger",
+                                List.of(effect),
+                                subject.getId(),
+                                attacker.getId()
+                        );
+                        // "That creature" wording references a combatant without targeting it.
+                        trigger.setNonTargeting(true);
+                        gameData.stack.add(trigger);
+                        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+                        log.info("Game {} - {} block-pair trigger pushed onto stack for {}",
+                                gameData.id, watcher.getCard().getName(), subject.getCard().getName());
+                    }
+                }
+            }
         }
     }
 

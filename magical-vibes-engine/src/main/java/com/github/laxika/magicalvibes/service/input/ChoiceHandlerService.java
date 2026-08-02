@@ -189,6 +189,10 @@ public class ChoiceHandlerService {
             handleNumberChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.PayAnyAmountOfLifeAsEnters ctx) {
+            handlePayAnyAmountOfLifeAsEnters(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.RemoveCountersForManaChoice ctx) {
             handleRemoveCountersForManaChoice(gameData, player, colorName, ctx);
             return;
@@ -455,7 +459,7 @@ public class ChoiceHandlerService {
         }
 
         ChoiceContext.TextChangeToWord choiceContext =
-                new ChoiceContext.TextChangeToWord(ctx.targetId(), chosenWord, isColor);
+                new ChoiceContext.TextChangeToWord(ctx.targetId(), chosenWord, isColor, ctx.untilEndOfTurn());
 
         List<String> remainingOptions;
         String promptType;
@@ -490,7 +494,7 @@ public class ChoiceHandlerService {
 
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (target != null) {
-            target.getTextReplacements().add(new TextReplacement(fromText, toText));
+            target.getTextReplacements().add(new TextReplacement(fromText, toText, ctx.untilEndOfTurn()));
 
             // If the permanent has a chosenColor matching the from-color, update it
             if (ctx.isColor()) {
@@ -1420,6 +1424,34 @@ public class ChoiceHandlerService {
         // Resumes the paused upkeep may-ability resolution when present; otherwise auto-passes
         // (the "as this enters" ETB choice, which has no pending stack-effect resolution).
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handlePayAnyAmountOfLifeAsEnters(GameData gameData, Player player, String numberName,
+                                                  ChoiceContext.PayAnyAmountOfLifeAsEnters ctx) {
+        int paid = Integer.parseInt(numberName);
+
+        gameData.interaction.clearAwaitingInput();
+
+        Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
+        if (perm != null) {
+            perm.setChosenNumber(paid);
+        }
+
+        if (paid > 0) {
+            lifeSupport.applyLifeLoss(gameData, player.getId(), paid, ctx.card().getName());
+        }
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " pays " + paid + " life for ", ctx.card(), "."));
+        log.info("Game {} - {} pays {} life for {}", gameData.id, player.getUsername(), paid, ctx.card().getName());
+
+        // The life payment deferred the permanent's ETB triggers (skipped while input was pending).
+        battlefieldEntryService.processCreatureETBEffects(gameData, ctx.controllerId(), ctx.card(),
+                ctx.targetId(), ctx.wasCastFromHand(), ctx.etbMode(), ctx.kicked());
+
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     private void handleRemoveCountersForManaChoice(GameData gameData, Player player, String numberName,

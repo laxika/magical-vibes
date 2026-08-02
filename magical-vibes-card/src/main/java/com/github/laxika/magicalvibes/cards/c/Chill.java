@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 @CardRegistration(set = "6ED", collectorNumber = "60")
+@CardRegistration(set = "TMP", collectorNumber = "56")
 public class Chill extends Card {
 
     public Chill() {

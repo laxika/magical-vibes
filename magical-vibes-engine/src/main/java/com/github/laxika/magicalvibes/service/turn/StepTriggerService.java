@@ -117,6 +117,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapUpToControlledPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveDelayCounterFromExiledSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndReturnCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
@@ -600,6 +601,26 @@ public class StepTriggerService {
                                 gameData.id, perm.getCard().getName(), atMostCheck.maxCount());
                     }
                 } else if (effect instanceof ConditionalEffect conditional
+                        && conditional.condition() instanceof AnyPlayerControlsPermanentCountAtMost anyAtMostCheck) {
+                    // Intervening-if: only trigger if at most N matching permanents exist across all
+                    // battlefields (Spirit Mirror — "if there are no Reflection tokens on the battlefield")
+                    if (conditionEvaluationService.isMet(gameData, anyAtMostCheck,
+                            ConditionContext.forPermanent(perm, activePlayerId))) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                activePlayerId,
+                                perm.getCard().getName() + "'s upkeep ability",
+                                new ArrayList<>(List.of(effect)),
+                                (UUID) null,
+                                perm.getId()
+                        ));
+
+                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
+                        log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: {} or fewer matching permanents on the battlefield)",
+                                gameData.id, perm.getCard().getName(), anyAtMostCheck.maxCount());
+                    }
+                } else if (effect instanceof ConditionalEffect conditional
                         && conditional.condition() instanceof CardsInHandAtLeast handCheck) {
                     // Intervening-if: only trigger if controller has enough cards in hand (Imaginary Pet)
                     if (conditionEvaluationService.isMet(gameData, handCheck,
@@ -965,6 +986,27 @@ public class StepTriggerService {
                     }
                 }
             }
+        }
+
+        // Ertai's Meddling: "At the beginning of each of that player's upkeeps, if that card is
+        // exiled, remove a delay counter from it." The trigger belongs to the exiled spell's
+        // controller, so it only fires on their own upkeeps.
+        for (GameData.DelayedSpellExile pending : new ArrayList<>(gameData.delayedSpellExiles)) {
+            if (!pending.controllerId().equals(activePlayerId)) {
+                continue;
+            }
+            Card delayedCard = pending.originalEntry().getCard();
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    delayedCard,
+                    activePlayerId,
+                    delayedCard.getName() + "'s delay counter ability",
+                    new ArrayList<>(List.of(new RemoveDelayCounterFromExiledSpellEffect(pending.cardId())))
+            ));
+
+            gameLogService.append(gameData,
+                    GameLog.cardThen(delayedCard, "'s delay counter ability triggers."));
+            log.info("Game {} - {} delay counter upkeep trigger pushed onto stack", gameData.id, delayedCard.getName());
         }
 
         // Phase-in targeted triggers were queued during the untap-step phasing action; choose targets

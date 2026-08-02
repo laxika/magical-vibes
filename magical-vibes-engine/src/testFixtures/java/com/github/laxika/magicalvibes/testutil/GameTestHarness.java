@@ -379,6 +379,13 @@ public class GameTestHarness {
                 false, null, null, null, null, List.of(), true);
     }
 
+    /** Cast an instant paying both buyback and a sacrifice additional cost (Worthy Cause). */
+    public void castInstantWithSacrificeAndBuyback(Player player, int cardIndex, UUID targetId, UUID sacrificePermanentId) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, sacrificePermanentId, null, null, null, null,
+                false, null, null, null, null, List.of(), true);
+    }
+
     public void castSorceryWithBuyback(Player player, int cardIndex, UUID targetId) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, null, null, null,
@@ -612,6 +619,17 @@ public class GameTestHarness {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, damageAssignments, List.of(), List.of(), false,
                 null, null, null, null, null, false, null, null, null, returnPermanentIds);
+    }
+
+    /**
+     * Casts an X sorcery that pays a "discard X cards" additional cost (Abandon Hope).
+     * {@code discardHandCardIndices} are pre-removal hand indices (the spell still in hand).
+     */
+    public void castSorceryWithDiscards(Player player, int cardIndex, int xValue, UUID targetId,
+                                        List<Integer> discardHandCardIndices) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, xValue, targetId, null, List.of(), List.of(), false,
+                null, null, List.of(), null, List.of(), false, null, discardHandCardIndices);
     }
 
     public void castSorceryWithDiscard(Player player, int cardIndex, int discardHandCardIndex) {

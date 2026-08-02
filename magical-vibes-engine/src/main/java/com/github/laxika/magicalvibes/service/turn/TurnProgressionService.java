@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEn
 import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DestroyPermanentIfDidNotAttackAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.GainControlOfPermanentAtEndOfCombat;
@@ -45,6 +46,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -248,6 +250,22 @@ public class TurnProgressionService {
             String tauntLog = "Creatures " + nextActiveName + " controls must attack " + taunterName + " this turn if able.";
             gameLogService.append(gameData, GameLog.text(tauntLog));
             log.info("Game {} - {}'s creatures must attack {} this turn (Taunt)", gameData.id, nextActiveName, taunterName);
+        }
+
+        // Oracle en-Vec: promote the creatures the new active player chose last turn. They attack if
+        // able, every other creature is barred, and each of them is destroyed at this turn's end step
+        // if it didn't attack.
+        gameData.chosenAttackersThisTurn.clear();
+        Set<UUID> chosenAttackers = gameData.chosenAttackersNextTurn.remove(nextActive);
+        if (chosenAttackers != null) {
+            gameData.chosenAttackersThisTurn.put(nextActive, chosenAttackers);
+            for (UUID chosenId : chosenAttackers) {
+                gameData.queueDelayedAction(new DestroyPermanentIfDidNotAttackAtEndStep(chosenId));
+            }
+            gameLogService.append(gameData, GameLog.text("Only the " + chosenAttackers.size()
+                    + " creature(s) " + nextActiveName + " chose can attack this turn, and they attack if able."));
+            log.info("Game {} - {} is restricted to {} chosen attackers this turn (Oracle en-Vec)",
+                    gameData.id, nextActiveName, chosenAttackers.size());
         }
 
         // Check for pending Mindslaver control on the new active player

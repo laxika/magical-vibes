@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -32,9 +33,15 @@ public class GrantAdditionalBlockToTargetUntilEndOfTurnEffectHandler implements 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var grant = (GrantAdditionalBlockToTargetUntilEndOfTurnEffect) effect;
 
-        List<UUID> targetIds = entry.targetsForEffect(effect);
-        if (targetIds.isEmpty() && entry.getTargetId() != null) {
-            targetIds = List.of(entry.getTargetId());
+        List<UUID> targetIds;
+        if (grant.scope() == GrantScope.SELF) {
+            UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
+            targetIds = selfId != null ? List.of(selfId) : List.of();
+        } else {
+            targetIds = entry.targetsForEffect(effect);
+            if (targetIds.isEmpty() && entry.getTargetId() != null) {
+                targetIds = List.of(entry.getTargetId());
+            }
         }
 
         for (UUID targetId : targetIds) {

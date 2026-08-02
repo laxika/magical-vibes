@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.cards.z.ZodiacMonkey;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,6 +34,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -85,6 +88,31 @@ class BlockLegalityContextTest extends BaseCardTest {
 
         assertThat(reason(bears, cavalry)).contains("Grizzly Bears cannot block Shu Cavalry (horsemanship)");
         assertThat(reason(defenderCavalry, cavalry)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Shadow creatures can block only creatures with shadow")
+    void shadowEvasion() {
+        Permanent shadowAttacker = attacking(player1, shadowCreature());
+        Permanent normalBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent shadowBlocker = addCreatureReady(player2, shadowCreature());
+        Permanent normalAttacker = attacking(player1, new GrizzlyBears());
+
+        assertThat(reason(normalBlocker, shadowAttacker))
+                .contains("Grizzly Bears cannot block Shadow Creature (shadow)");
+        assertThat(reason(shadowBlocker, shadowAttacker)).isEmpty();
+        assertThat(reason(shadowBlocker, normalAttacker))
+                .contains("Shadow Creature cannot block Grizzly Bears (shadow)");
+    }
+
+    private Card shadowCreature() {
+        Card card = new Card();
+        card.setName("Shadow Creature");
+        card.setType(CardType.CREATURE);
+        card.setPower(2);
+        card.setToughness(2);
+        card.setKeywords(Set.of(Keyword.SHADOW));
+        return card;
     }
 
     @Test

@@ -34,6 +34,7 @@ public final class AiInteractionStrategies {
         register(new KeepCardsInHandChoiceAiStrategy());
         register(new DoomsdayChoiceAiStrategy());
         register(new SearchLibraryToTopChoiceAiStrategy());
+        register(new IntuitionSearchChoiceAiStrategy());
         register(new PermanentAuctionChoiceAiStrategy());
         register(new IllicitAuctionBidChoiceAiStrategy());
         register(new MultiZoneExileChoiceAiStrategy());

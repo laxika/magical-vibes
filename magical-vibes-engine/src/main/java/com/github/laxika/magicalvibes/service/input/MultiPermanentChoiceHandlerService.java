@@ -133,6 +133,8 @@ public class MultiPermanentChoiceHandlerService {
             handleDestroyDamagedPlayerControlsPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.UntapChosenPermanent ctx) {
             handleUntapChosenPermanent(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.TapChosenPermanent ctx) {
+            handleTapChosenPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeDamagedPlayerControls ctx) {
             handleSacrificeDamagedPlayerControlsPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeSelfToDestroy ctx) {
@@ -173,6 +175,8 @@ public class MultiPermanentChoiceHandlerService {
             handleForcedReturnToHand(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseCreatureRestCantBlock ctx) {
             handleChooseCreatureRestCantBlock(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.ChooseCreaturesToAttackNextTurn ctx) {
+            handleChooseCreaturesToAttackNextTurn(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapCreaturesGainLife ctx) {
             handleTapCreaturesGainLife(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapCreaturesCreateTokens ctx) {
@@ -334,6 +338,27 @@ public class MultiPermanentChoiceHandlerService {
                 gameLogService.append(gameData,
                         GameLog.builder().text(context.sourceName() + " untaps ").card(target.getCard()).text(".").build());
                 log.info("Game {} - {} untaps {}", gameData.id, context.sourceName(), target.getCard().getName());
+            }
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleTapChosenPermanent(GameData gameData, List<UUID> permanentIds,
+                                          MultiPermanentChoiceContext.TapChosenPermanent context) {
+        if (!permanentIds.isEmpty()) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
+            if (target != null) {
+                tapUntapSupport.tapPermanent(gameData, target);
+                gameLogService.append(gameData,
+                        GameLog.builder().text(context.sourceName() + " taps ").card(target.getCard()).text(".").build());
+                log.info("Game {} - {} taps {}", gameData.id, context.sourceName(), target.getCard().getName());
+
+                if (context.preventUntapWhileSourceTapped() && context.sourcePermanentId() != null) {
+                    target.getUntapPreventedByPermanentIds().add(context.sourcePermanentId());
+                    gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                            " won't untap as long as " + context.sourceName() + " remains tapped."));
+                }
             }
         }
 
@@ -726,6 +751,19 @@ public class MultiPermanentChoiceHandlerService {
             String playerName = gameData.playerIdToName.get(targetPlayerId);
             gameLogService.append(gameData, GameLog.text("Other creatures controlled by " + playerName + " can't block this turn."));
         }
+
+        // Standard completion: SBA → may abilities → resume effects
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleChooseCreaturesToAttackNextTurn(GameData gameData, List<UUID> permanentIds,
+                                                       MultiPermanentChoiceContext.ChooseCreaturesToAttackNextTurn context) {
+        UUID targetPlayerId = context.targetPlayerId();
+        gameData.chosenAttackersNextTurn.put(targetPlayerId, Set.copyOf(permanentIds));
+
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+        gameLogService.append(gameData, GameLog.text(playerName + " chooses " + permanentIds.size()
+                + " creature(s) that must attack during their next turn; other creatures can't attack."));
 
         // Standard completion: SBA → may abilities → resume effects
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);

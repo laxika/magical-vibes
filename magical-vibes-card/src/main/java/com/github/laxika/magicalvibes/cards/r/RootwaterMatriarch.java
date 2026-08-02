@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "103")
+@CardRegistration(set = "TMP", collectorNumber = "83")
 public class RootwaterMatriarch extends Card {
 
     public RootwaterMatriarch() {

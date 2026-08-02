@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCreatureCards
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -32,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterE
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
@@ -990,6 +992,21 @@ public class BattlefieldEntryService {
                 return;
             }
             // No other creatures — devours nothing; ETB triggers proceed with 0 devoured creatures.
+        }
+
+        // "As this creature enters, pay any amount of life" (Minion of the Wastes). The payment is a
+        // choice made during entry, before ETB triggers; the amount is stored on the permanent so a
+        // characteristic-defining power/toughness can read it back.
+        boolean needsLifePayment = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof PayAnyAmountOfLifeOnEnterEffect);
+        if (needsLifePayment) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = bf.get(bf.size() - 1);
+            int life = gameData.playerLifeTotals.getOrDefault(controllerId, 0);
+            playerInputService.beginPayAnyAmountOfLifeChoice(gameData, controllerId, life,
+                    new ChoiceContext.PayAnyAmountOfLifeAsEnters(justEntered.getId(), controllerId, card,
+                            targetId, wasCastFromHand, etbMode, kicked));
+            return;
         }
 
         // "As this creature enters, exile any number of creature cards from your graveyard"

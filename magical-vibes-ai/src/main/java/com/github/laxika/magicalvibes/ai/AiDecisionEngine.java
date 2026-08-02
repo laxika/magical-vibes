@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -704,6 +705,10 @@ public abstract class AiDecisionEngine {
         if (cost.hasX() && getMaxXForGraveyardRequirements(gameData, card) <= 0) {
             return false;
         }
+        // "Discard X cards" (Abandon Hope): X = 0 is legal but does nothing, so require a spare card.
+        if (cost.hasX() && getMaxXForDiscardCost(gameData, card) <= 0) {
+            return false;
+        }
         // For modal spells, ensure at least one mode has valid targets
         if (!hasValidModalMode(gameData, card)) {
             return false;
@@ -768,6 +773,37 @@ public abstract class AiDecisionEngine {
         return (int) gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of()).stream()
                 .filter(c -> c.hasType(CardType.CREATURE))
                 .count();
+    }
+
+    /**
+     * Returns the maximum X allowed by a {@link DiscardXCardsCost} additional cast cost (Abandon
+     * Hope): the hand size minus the spell itself, which cannot be discarded to pay for itself
+     * (CR 601.2a). Returns {@link Integer#MAX_VALUE} when the card has no such cost.
+     */
+    protected int getMaxXForDiscardCost(GameData gameData, Card card) {
+        if (card.getEffects(EffectSlot.SPELL).stream().noneMatch(DiscardXCardsCost.class::isInstance)) {
+            return Integer.MAX_VALUE;
+        }
+        return Math.max(0, gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of()).size() - 1);
+    }
+
+    /**
+     * Picks {@code count} pre-removal hand indices to pay a {@link DiscardXCardsCost}, skipping the
+     * spell's own index. Returns null when the card has no such cost, so the request field stays
+     * empty for every other spell.
+     */
+    protected List<Integer> chooseDiscardXCostIndices(GameData gameData, Card card, int cardIndex, int count) {
+        if (card.getEffects(EffectSlot.SPELL).stream().noneMatch(DiscardXCardsCost.class::isInstance)) {
+            return null;
+        }
+        List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());
+        List<Integer> indices = new java.util.ArrayList<>();
+        for (int i = 0; i < hand.size() && indices.size() < count; i++) {
+            if (i != cardIndex) {
+                indices.add(i);
+            }
+        }
+        return indices;
     }
 
     /**

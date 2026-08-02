@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "7ED", collectorNumber = "63")
+@CardRegistration(set = "TMP", collectorNumber = "54")
 public class BenthicBehemoth extends Card {
 
     public BenthicBehemoth() {

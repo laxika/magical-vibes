@@ -40,6 +40,7 @@ public sealed interface Condition permits
         ChosenColorStrictlyMostCommonAmongOpponentNontokens,
         ColorSpentToCast,
         ControllerCastAnotherSpellThisTurn,
+        ControllerCastSpellThisTurn,
         ControllerHasMoreLifeThanAnOpponent,
         ControllerHandEmpty,
         ControllerLifeAtLeast,

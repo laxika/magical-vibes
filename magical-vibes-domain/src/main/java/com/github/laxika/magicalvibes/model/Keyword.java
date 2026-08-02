@@ -47,6 +47,7 @@ public enum Keyword {
     INCREMENT,
     PARADIGM,
     HORSEMANSHIP,
+    SHADOW,
     FLANKING,
     CONSPIRE,
     RETRACE,

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageDamagedCreatureControllerAndSelfEffect;
 
 @CardRegistration(set = "7ED", collectorNumber = "119")
+@CardRegistration(set = "TMP", collectorNumber = "108")
 public class BellowingFiend extends Card {
 
     public BellowingFiend() {

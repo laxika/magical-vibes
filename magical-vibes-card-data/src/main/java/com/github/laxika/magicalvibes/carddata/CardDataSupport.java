@@ -77,6 +77,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Increment", Keyword.INCREMENT);
         KEYWORD_MAP.put("Paradigm", Keyword.PARADIGM);
         KEYWORD_MAP.put("Horsemanship", Keyword.HORSEMANSHIP);
+        KEYWORD_MAP.put("Shadow", Keyword.SHADOW);
         KEYWORD_MAP.put("Flanking", Keyword.FLANKING);
         KEYWORD_MAP.put("Conspire", Keyword.CONSPIRE);
         KEYWORD_MAP.put("Retrace", Keyword.RETRACE);

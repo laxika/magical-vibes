@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingEachPlayerLibraryExile;
 import com.github.laxika.magicalvibes.model.PendingGuildFeud;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingIntuitionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -502,19 +503,32 @@ public class LibraryChoiceHandlerService {
         }
 
         if (destination == LibrarySearchDestination.EXILE) {
-            // Unrestricted search — the found card is not revealed, so it is exiled face down.
-            exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, null);
+            // An unrestricted search does not reveal the found card, so it is exiled face down
+            // (Jester's Cap). A restricted search (Mana Severance) exiles face up per CR 406.3.
+            if (filterPredicate != null) {
+                exileService.exileCard(gameData, deckOwnerId, chosenCard);
+            } else {
+                exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, null);
+            }
 
             // Multi-card exile (Jester's Cap): re-prompt for the next card until the count is
             // spent or the library runs out. Only the final pick shuffles the library.
+            String exileLog = player.getUsername()
+                    + (filterPredicate != null ? " exiles a card." : " exiles a card face down.");
+
             if (remainingCount > 1) {
                 int newRemaining = remainingCount - 1;
-                List<Card> newSearchCards = new ArrayList<>(deck);
+                List<Card> newSearchCards = filterPredicate == null
+                        ? new ArrayList<>(deck)
+                        : new ArrayList<>(deck.stream()
+                                .filter(c -> predicateEvaluationService.matchesCardPredicate(
+                                        c, filterPredicate, null, gameData, playerId))
+                                .toList());
                 if (newSearchCards.isEmpty()) {
                     if (shuffleAfterSelection) {
                         LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
                     }
-                    gameLogService.append(gameData, GameLog.text(player.getUsername() + " exiles a card face down. Library is shuffled."));
+                    gameLogService.append(gameData, GameLog.text(exileLog + " Library is shuffled."));
                     finishSearchAndResume(gameData);
                     return;
                 }
@@ -527,10 +541,11 @@ public class LibraryChoiceHandlerService {
                                 .remainingCount(newRemaining)
                                 .canFailToFind(canFailToFind)
                                 .destination(LibrarySearchDestination.EXILE)
+                                .filterPredicate(filterPredicate)
                                 .shuffleAfterSelection(shuffleAfterSelection)
                                 .build(),
                         exilePrompt, canFailToFind));
-                gameLogService.append(gameData, GameLog.text(player.getUsername() + " exiles a card face down."));
+                gameLogService.append(gameData, GameLog.text(exileLog));
                 return;
             }
 
@@ -538,9 +553,7 @@ public class LibraryChoiceHandlerService {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
             }
 
-            String logMsg = shuffleAfterSelection
-                    ? player.getUsername() + " exiles a card face down. Library is shuffled."
-                    : player.getUsername() + " exiles a card face down.";
+            String logMsg = shuffleAfterSelection ? exileLog + " Library is shuffled." : exileLog;
             gameLogService.append(gameData, GameLog.text(logMsg));
             log.info("Game {} - {} exiles {} from library search", gameData.id, player.getUsername(), chosenCard.getName());
 
@@ -1236,6 +1249,12 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        // Intuition: the targeted opponent chose which revealed card goes to the controller's hand
+        if (gameData.hasPendingInteraction(PendingIntuitionRevealChoice.class)) {
+            handleIntuitionRevealChoice(gameData, allRevealedCards, cardIds);
+            return;
+        }
+
         // Karn, Scion of Urza -1: controller chose which silver-counter card to return
         if (gameData.hasPendingInteraction(PendingKarnScionExileReturn.class)) {
             handleKarnScionReturnFromExile(gameData, allRevealedCards, cardIds, controllerId);
@@ -1500,6 +1519,52 @@ public class LibraryChoiceHandlerService {
                 gameData.id,
                 toHand != null ? toHand.getName() : "none",
                 toExile != null ? toExile.getName() : "none");
+
+        finishSearchAndResume(gameData);
+    }
+
+    /**
+     * Intuition: the targeted opponent picked one of the revealed cards. That card goes into the
+     * controller's hand, the rest into their graveyard, then their library is shuffled. An empty
+     * answer is treated as picking the first revealed card — the choice is mandatory.
+     */
+    private void handleIntuitionRevealChoice(GameData gameData, List<Card> allRevealedCards,
+                                             List<UUID> selectedCardIds) {
+        UUID controllerId = gameData.pollPendingInteraction(PendingIntuitionRevealChoice.class).controllerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+
+        UUID chosenId = selectedCardIds.isEmpty()
+                ? allRevealedCards.getFirst().getId()
+                : selectedCardIds.getFirst();
+
+        Card toHand = null;
+        List<Card> toGraveyard = new ArrayList<>();
+        for (Card card : allRevealedCards) {
+            if (toHand == null && card.getId().equals(chosenId)) {
+                toHand = card;
+            } else {
+                toGraveyard.add(card);
+            }
+        }
+
+        if (toHand != null) {
+            gameData.addCardToHand(controllerId, toHand);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    controllerName + " puts ", toHand, " into their hand."));
+        }
+        for (Card card : toGraveyard) {
+            graveyardService.addCardToGraveyard(gameData, controllerId, card);
+        }
+        if (!toGraveyard.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text("The rest are put into " + controllerName
+                    + "'s graveyard."));
+        }
+
+        LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+        gameLogService.append(gameData, GameLog.text(controllerName + " shuffles their library."));
+
+        log.info("Game {} - Intuition resolved: {} to hand, {} to graveyard",
+                gameData.id, toHand != null ? toHand.getName() : "none", toGraveyard.size());
 
         finishSearchAndResume(gameData);
     }

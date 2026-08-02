@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "52")
+@CardRegistration(set = "TMP", collectorNumber = "51")
 public class Warmth extends Card {
 
     public Warmth() {

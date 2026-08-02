@@ -69,6 +69,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.DoomsdayChoice.class, this::projectDoomsdayChoice);
         register(PendingInteraction.SearchLibraryToTopChoice.class,
                 this::projectSearchLibraryToTopChoice);
+        register(PendingInteraction.IntuitionSearchChoice.class, this::projectIntuitionSearchChoice);
         register(PendingInteraction.PermanentAuctionChoice.class, this::projectPermanentAuctionChoice);
         register(PendingInteraction.IllicitAuctionBidChoice.class, this::projectIllicitAuctionBidChoice);
         register(PendingInteraction.MultiZoneExileChoice.class, this::projectMultiZoneExileChoice);
@@ -302,6 +303,17 @@ public class InteractionPromptProjectionRegistry {
                 interaction.pool().size(),
                 "Choose any number of " + interaction.subtypeLabel()
                         + " cards to reveal and put on top of your library.");
+    }
+
+    private InteractionPromptMessage projectIntuitionSearchChoice(
+            GameData gameData, PendingInteraction.IntuitionSearchChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.pool()),
+                interaction.count(),
+                "Search your library for " + interaction.count()
+                        + " cards to reveal. Your opponent chooses one of them for your hand; "
+                        + "the rest go into your graveyard.");
     }
 
     private InteractionPromptMessage projectPermanentAuctionChoice(

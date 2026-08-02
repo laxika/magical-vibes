@@ -36,6 +36,7 @@ public class ChangeColorTextEffectHandler implements NormalEffectHandlerBean {
         UUID targetId = entry.getTargetId();
         boolean colorWordsAllowed = !(effect instanceof ChangeColorTextEffect e) || e.colorWordsAllowed();
         boolean landTypesAllowed = effect instanceof ChangeColorTextEffect e && e.landTypesAllowed();
+        boolean untilEndOfTurn = effect instanceof ChangeColorTextEffect e && e.untilEndOfTurn();
 
         // Target may be a permanent (Mind Bend) or, for Glamerdye/Magical Hack, a spell still on the stack.
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
@@ -43,7 +44,7 @@ public class ChangeColorTextEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        ChoiceContext.TextChangeFromWord choiceContext = new ChoiceContext.TextChangeFromWord(targetId);
+        ChoiceContext.TextChangeFromWord choiceContext = new ChoiceContext.TextChangeFromWord(targetId, untilEndOfTurn);
 
         List<String> options = new ArrayList<>();
         if (colorWordsAllowed) {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateDiscardCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
@@ -87,6 +88,7 @@ public class AdditionalSpellCostService {
             DiscardCardTypeCost.class,
             DiscardCardOrPayManaCost.class,
             DiscardHandCost.class,
+            DiscardXCardsCost.class,
             EscalateDiscardCost.class,
             EscalateManaCost.class,
             RepeatableAdditionalManaCost.class);
@@ -119,6 +121,7 @@ public class AdditionalSpellCostService {
             DiscardCardTypeCost discardCost,
             DiscardCardOrPayManaCost discardCardOrPayManaCost,
             boolean discardHand,
+            boolean discardXCards,
             EscalateDiscardCost escalateDiscardCost,
             EscalateManaCost escalateManaCost,
             RepeatableAdditionalManaCost repeatableManaCost
@@ -133,7 +136,7 @@ public class AdditionalSpellCostService {
                     || returnCreatureToHand || putCounterCost != null
                     || payXLife || payLifeCost != null
                     || exileGraveyardCost != null || exileXCardsCost != null || exileNCardsCost != null
-                    || discardCost != null || discardCardOrPayManaCost != null || discardHand
+                    || discardCost != null || discardCardOrPayManaCost != null || discardHand || discardXCards
                     || escalateDiscardCost != null || escalateManaCost != null
                     || repeatableManaCost != null;
         }
@@ -213,13 +216,14 @@ public class AdditionalSpellCostService {
         DiscardCardTypeCost discardCost = removeFirst(effects, DiscardCardTypeCost.class);
         DiscardCardOrPayManaCost discardOrPay = removeFirst(effects, DiscardCardOrPayManaCost.class);
         boolean discardHand = effects.removeIf(DiscardHandCost.class::isInstance);
+        boolean discardXCards = effects.removeIf(DiscardXCardsCost.class::isInstance);
         EscalateDiscardCost escalateDiscardCost = removeFirst(effects, EscalateDiscardCost.class);
         EscalateManaCost escalateManaCost = removeFirst(effects, EscalateManaCost.class);
         RepeatableAdditionalManaCost repeatableManaCost = removeFirst(effects, RepeatableAdditionalManaCost.class);
         return new ExtractedCosts(sacAllCreatures, sacAllPermanents, sacCreature, sacOrPay, sacArtifact, permCost, multiPermCost,
                 tapAnyNumberCost, returnAnyNumberCost, returnCreature,
                 putCounterCost, payXLife, payLifeCost, exileGraveyardCost, exileXCardsCost, exileNCardsCost, discardCost, discardOrPay,
-                discardHand, escalateDiscardCost, escalateManaCost, repeatableManaCost);
+                discardHand, discardXCards, escalateDiscardCost, escalateManaCost, repeatableManaCost);
     }
 
     /** Reads the card's additional cast costs without touching the card (for gating queries). */
@@ -323,6 +327,9 @@ public class AdditionalSpellCostService {
                 case SacrificeAllPermanentsYouControlCost ignored -> { }
                 // Discarding your entire hand is legal with an empty hand.
                 case DiscardHandCost ignored -> { }
+                // "Discard X cards" is payable with X = 0, so it never blocks a cast on its own;
+                // the announced X is checked against the hand by validateDiscardXCardsCost.
+                case DiscardXCardsCost ignored -> { }
                 // Tapping / returning "any number of" permanents is payable with zero, so it never
                 // blocks a cast.
                 case TapAnyNumberOfPermanentsCost ignored -> { }
@@ -841,6 +848,46 @@ public class AdditionalSpellCostService {
             throw new IllegalStateException("Discarded card must be " + label);
         }
         return effectiveIndex;
+    }
+
+    /**
+     * Validates the "discard X cards" additional cast cost (Abandon Hope) against the announced X,
+     * without mutating anything. Returns the post-spell-removal hand indices that would be
+     * discarded. Kept out of {@link #validateAll} because only the cast path knows the announced X.
+     */
+    public List<Integer> validateDiscardXCardsCost(GameData gameData, Player player, Card card, int announcedX,
+                                                   List<Integer> discardHandCardIndices, int spellCardIndex) {
+        if (announcedX < 0) {
+            throw new IllegalStateException("X cannot be negative for " + card.getName());
+        }
+        List<Integer> indices = discardHandCardIndices != null ? discardHandCardIndices : List.of();
+        if (indices.size() != announcedX) {
+            throw new IllegalStateException("Must discard " + announcedX + " card"
+                    + (announcedX == 1 ? "" : "s") + " to cast " + card.getName());
+        }
+        if (announcedX == 0) {
+            return List.of();
+        }
+        if (indices.stream().distinct().count() != indices.size()) {
+            throw new IllegalStateException("Duplicate discard indices for " + card.getName());
+        }
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null) {
+            throw new IllegalStateException("Must discard cards to cast " + card.getName());
+        }
+        List<Integer> effectiveIndices = new ArrayList<>();
+        for (int discardHandCardIndex : indices) {
+            if (discardHandCardIndex == spellCardIndex) {
+                throw new IllegalStateException("Cannot discard " + card.getName() + " to pay for itself");
+            }
+            int effectiveIndex = spellCardIndex >= 0 && discardHandCardIndex > spellCardIndex
+                    ? discardHandCardIndex - 1 : discardHandCardIndex;
+            if (effectiveIndex < 0 || effectiveIndex >= hand.size()) {
+                throw new IllegalStateException("Must discard cards to cast " + card.getName());
+            }
+            effectiveIndices.add(effectiveIndex);
+        }
+        return effectiveIndices;
     }
 
     /**

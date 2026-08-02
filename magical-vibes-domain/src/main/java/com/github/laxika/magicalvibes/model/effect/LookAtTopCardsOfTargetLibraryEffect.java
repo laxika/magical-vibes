@@ -10,9 +10,10 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * Puresight Merrow), may-shuffle (Visions) and put-one-into-graveyard (Cruel Fate, Wu Spy).
  *
  * <p>The target player is the stack entry's {@code targetId}; cards declare the player target via
- * {@code target(...)} / activated-ability player filters. Only {@code MAY_SHUFFLE} carries a
- * {@link TargetSpec} of its own (as its old record did); the other actions keep the record
- * targeting-neutral. Eye Spy / Wand of Denial's "look at top card, may put it into the graveyard
+ * {@code target(...)} / activated-ability player filters. {@code MAY_SHUFFLE},
+ * {@code KEEP_ONE_ON_TOP_EXILE_REST} and {@code MAY_PUT_TOP_ON_BOTTOM} carry a {@link TargetSpec}
+ * of their own (the latter so a targeted trigger such as Precognition's upkeep ability routes
+ * through the player-target pipeline); the other actions keep the record targeting-neutral. Eye Spy / Wand of Denial's "look at top card, may put it into the graveyard
  * with a cost" stays a separate record ({@link LookAtTargetPlayerTopCardMayGraveyardEffect}) —
  * it re-pushes itself as a costed may-ability, a different mechanism.
  *
@@ -32,7 +33,7 @@ public record LookAtTopCardsOfTargetLibraryEffect(DynamicAmount count, TargetLib
     public TargetSpec targetSpec() {
         return switch (action) {
             case MAY_SHUFFLE -> TargetSpec.benign(TargetCategory.PLAYER);
-            case KEEP_ONE_ON_TOP_EXILE_REST -> TargetSpec.harmful(TargetCategory.PLAYER);
+            case KEEP_ONE_ON_TOP_EXILE_REST, MAY_PUT_TOP_ON_BOTTOM -> TargetSpec.harmful(TargetCategory.PLAYER);
             default -> CardEffect.super.targetSpec();
         };
     }

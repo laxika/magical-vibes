@@ -30,6 +30,16 @@ public sealed interface MultiPermanentChoiceContext {
     record UntapChosenPermanent(String sourceName) implements MultiPermanentChoiceContext {
     }
 
+    /**
+     * Tap the single chosen permanent (any battlefield), for a triggered ability with no cast-time
+     * target — e.g. Thalakos Dreamsower's "tap target creature". When
+     * {@code preventUntapWhileSourceTapped} is set, the chosen permanent is also untap-locked for as
+     * long as {@code sourcePermanentId} remains tapped.
+     */
+    record TapChosenPermanent(String sourceName, UUID sourcePermanentId,
+                              boolean preventUntapWhileSourceTapped) implements MultiPermanentChoiceContext {
+    }
+
     /** Sacrifice a permanent the damaged player controls (mandatory combat damage trigger, e.g. Ashling, the Extinguisher). */
     record SacrificeDamagedPlayerControls(String sourceName) implements MultiPermanentChoiceContext {
     }
@@ -165,6 +175,15 @@ public sealed interface MultiPermanentChoiceContext {
      * control can't block this turn (Goblin War Cry).
      */
     record ChooseCreatureRestCantBlock(UUID targetPlayerId) implements MultiPermanentChoiceContext {
+    }
+
+    /**
+     * Oracle en-Vec: {@code targetPlayerId} chose any number of creatures they control. The chosen
+     * set is recorded in {@code GameData.chosenAttackersNextTurn} and takes effect when that
+     * player's next turn begins — the chosen creatures attack if able, every other creature can't
+     * attack, and each chosen creature that didn't attack is destroyed at that turn's end step.
+     */
+    record ChooseCreaturesToAttackNextTurn(UUID targetPlayerId) implements MultiPermanentChoiceContext {
     }
 
     /**

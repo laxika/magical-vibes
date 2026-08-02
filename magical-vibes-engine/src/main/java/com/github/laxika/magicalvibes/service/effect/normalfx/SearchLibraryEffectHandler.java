@@ -171,6 +171,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                     + (restricted
                             ? ", reveal it, then shuffle and put that card on top."
                             : ", then shuffle and put that card on top.");
+            case EXILE -> "Search your library for a " + desc + " to exile" + remaining + ".";
             case BATTLEFIELD_TAPPED -> count > 1
                     ? "Search your library for a " + desc + " to put onto the battlefield tapped" + remaining + "."
                     : "Search your library for a " + desc + " and put it onto the battlefield tapped.";

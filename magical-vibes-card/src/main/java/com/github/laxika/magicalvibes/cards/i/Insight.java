@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "75")
+@CardRegistration(set = "TMP", collectorNumber = "68")
 public class Insight extends Card {
 
     public Insight() {

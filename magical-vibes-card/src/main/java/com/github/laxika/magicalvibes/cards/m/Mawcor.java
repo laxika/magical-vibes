@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "87")
+@CardRegistration(set = "TMP", collectorNumber = "75")
 public class Mawcor extends Card {
 
     public Mawcor() {

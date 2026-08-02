@@ -629,6 +629,7 @@ public class AbilityActivationService {
         validateNotBlockedByOpponentsTurnRestriction(gameData, playerId, permanent);
         // Overwhelming Splendor: sacrifice abilities are never mana / loyalty abilities
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, null);
+        validateNotBlockedByCombatActionLock(gameData, null);
 
         // Validate target for effects that need one
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_SACRIFICE)) {
@@ -793,6 +794,7 @@ public class AbilityActivationService {
 
         // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
+        validateNotBlockedByCombatActionLock(gameData, ability);
 
         // Identify permanent-choice costs (e.g. return lands to hand)
         List<PermanentChoiceCostHandler> permanentChoiceCosts = ability.getEffects().stream()
@@ -1066,6 +1068,7 @@ public class AbilityActivationService {
 
         // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
+        validateNotBlockedByCombatActionLock(gameData, ability);
 
         // Validate targeting before any cost is paid — an illegal activation rewinds cleanly (CR 601.2c)
         targetLegalityService.validateActivatedAbilityTargeting(
@@ -1238,6 +1241,7 @@ public class AbilityActivationService {
 
         // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
+        validateNotBlockedByCombatActionLock(gameData, ability);
 
         // Validate targeting before any cost is paid — an illegal activation rewinds cleanly (CR 601.2c)
         targetLegalityService.validateMultiTargetGraveyardAbility(gameData, playerId, abilityEffects, graveyardCardIds);
@@ -2288,6 +2292,17 @@ public class AbilityActivationService {
         // City of Solitude: players can activate abilities only during their own turns.
         validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
 
+        // Volrath's Curse: only the enchanted permanent's controller may activate this ability.
+        if (ability.isActivatableOnlyByEnchantedPermanentController()) {
+            UUID enchantedController = permanent.isAttached()
+                    ? gameQueryService.findPermanentController(gameData, permanent.getAttachedTo())
+                    : null;
+            if (!playerId.equals(enchantedController)) {
+                throw new IllegalStateException(
+                        "Only the enchanted permanent's controller may activate this ability");
+            }
+        }
+
         // Pithing Needle check: block non-mana activated abilities of the chosen name
         validateNotBlockedByPithingNeedle(gameData, permanent, ability);
 
@@ -2300,6 +2315,7 @@ public class AbilityActivationService {
 
         // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
+        validateNotBlockedByCombatActionLock(gameData, ability);
 
         // Activation timing restrictions (e.g. "Activate only during your upkeep")
         validateTimingRestrictions(gameData, playerId, permanent, ability);
@@ -2644,6 +2660,14 @@ public class AbilityActivationService {
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_WHILE_ATTACKING_OR_BLOCKING) {
                 if (!permanent.isAttacking() && !permanent.isBlocking()) {
                     throw new IllegalStateException("Activate only if this creature is attacking or blocking");
+                }
+            }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_OPPONENTS_TURN_BEFORE_COMBAT) {
+                if (playerId.equals(gameData.activePlayerId)) {
+                    throw new IllegalStateException("This ability can only be activated during an opponent's turn");
+                }
+                if (!gameData.currentStep.isBeforeCombat()) {
+                    throw new IllegalStateException("This ability can only be activated before combat");
                 }
             }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_BEFORE_ATTACKERS_DECLARED) {
@@ -3393,6 +3417,19 @@ public class AbilityActivationService {
         if (gameQueryService.playerCantActivateNonManaOrLoyaltyAbilities(gameData, playerId)) {
             throw new IllegalStateException(
                     "You can only activate mana abilities and loyalty abilities (Overwhelming Splendor)");
+        }
+    }
+
+    /**
+     * Hand to Hand: during combat, no player can activate abilities that aren't mana abilities.
+     * {@code ability} is the activated ability being played, or {@code null} for activations that
+     * are never mana abilities (e.g. an ON_SACRIFICE ability).
+     */
+    private void validateNotBlockedByCombatActionLock(GameData gameData, ActivatedAbility ability) {
+        if (ability != null && isManaAbility(ability)) return;
+        if (gameQueryService.isCombatActionLockActive(gameData)) {
+            throw new IllegalStateException(
+                    "You can't activate abilities that aren't mana abilities during combat");
         }
     }
 

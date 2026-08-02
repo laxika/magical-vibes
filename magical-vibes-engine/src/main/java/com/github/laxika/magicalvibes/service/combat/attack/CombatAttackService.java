@@ -860,6 +860,42 @@ public class CombatAttackService {
             }
         }
 
+        // Check for "whenever one or more creatures attack you" triggers (ON_CREATURES_ATTACK_YOU).
+        // Unlike ON_CREATURE_ATTACKS_YOU these fire once per combat per attacked player, and only for
+        // creatures attacking that player directly — attacking a planeswalker they control does not
+        // count. No targetId is set; effects size themselves off the attacking creatures at resolution.
+        Set<UUID> directlyAttackedPlayerIds = new LinkedHashSet<>();
+        for (int idx : attackerIndices) {
+            UUID attackedTargetId = resolvedTargets.get(idx);
+            if (gameData.playerIds.contains(attackedTargetId)) {
+                directlyAttackedPlayerIds.add(attackedTargetId);
+            }
+        }
+        for (UUID attackedPlayerId : directlyAttackedPlayerIds) {
+            List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(attackedPlayerId);
+            if (defenderBattlefield == null) continue;
+            for (Permanent perm : new ArrayList<>(defenderBattlefield)) {
+                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_CREATURES_ATTACK_YOU);
+                if (effects.isEmpty()) continue;
+
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        attackedPlayerId,
+                        perm.getCard().getName() + "'s trigger",
+                        new ArrayList<>(effects),
+                        null,
+                        perm.getId()
+                );
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData,
+                        GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
+                log.info("Game {} - {} ON_CREATURES_ATTACK_YOU trigger for player {}",
+                        gameData.id, perm.getCard().getName(), attackedPlayerId);
+            }
+        }
+
         // Check for "whenever a creature attacks" triggers (ON_ANY_CREATURE_ATTACKS). These fire once
         // per attacking creature, on every permanent with this slot across all battlefields, regardless
         // of who controls the attacker or whom it attacks (e.g. Caltrops pings every attacker). The

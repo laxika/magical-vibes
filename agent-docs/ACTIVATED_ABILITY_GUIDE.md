@@ -31,6 +31,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `ONLY_DURING_YOUR_UPKEEP` | Abilities that can only be used during your upkeep |
 | `ONLY_DURING_ANY_UPKEEP` | Abilities usable during any player's upkeep step (only checks `currentStep == UPKEEP`, not the active player). Pair with `.withActivatableByAnyPlayer()` for "any player may activate this ability but only during any upkeep step" (Infinite Hourglass) |
 | `ONLY_DURING_OPPONENTS_UPKEEP` | Abilities usable only during an upkeep step of a turn whose active player is not the activating player (`currentStep == UPKEEP` **and** activator != active player). Trade Caravan |
+| `ONLY_DURING_OPPONENTS_TURN_BEFORE_COMBAT` | Abilities usable only during a turn whose active player is not the activating player **and** only in a step before the combat phase (`TurnStep.isBeforeCombat()` — untap/upkeep/draw/precombat main). Maddening Imp |
 | `ONLY_WHILE_ATTACKING` | Activate only if this creature is attacking (checks `permanent.isAttacking()`) |
 | `ONLY_WHILE_ATTACKING_OR_BLOCKING` | Activate only if this creature is attacking or blocking (checks `permanent.isAttacking() \|\| permanent.isBlocking()`). Sawback Manticore |
 | `ONLY_BEFORE_ATTACKERS_DECLARED` | Activate only during your turn, before attackers are declared (active player + step before `DECLARE_ATTACKERS`). Stern Marshal |
@@ -441,6 +442,23 @@ new ActivatedAbility(false, null,
 
 Cards: `OonasProwler`, `Mercenaries`, `ArmageddonClock`, `InfiniteHourglass`, `AetherStorm`, `FeralHydra`
 
+Chain `.withActivatableOnlyByEnchantedPermanentController()` on top of the any-player flag for an
+Aura ability only the enchanted permanent's controller may activate ("That creature's controller may
+sacrifice a permanent…", Volrath's Curse). The any-player flag makes the Aura reachable from a
+battlefield the activator doesn't control; the second flag rejects every player except the enchanted
+permanent's controller (`AbilityActivationService.validateActivationLegality`).
+
+```java
+// Sacrifice a permanent: the enchanted creature's controller ignores this Aura until end of turn.
+new ActivatedAbility(false, null,
+    List.of(new SacrificePermanentCost(new PermanentTruePredicate(), "a permanent"),
+            new IgnoreSourceAuraEffectsUntilEndOfTurnEffect()), description)
+    .withActivatableByAnyPlayer()
+    .withActivatableOnlyByEnchantedPermanentController()
+```
+
+Cards: `VolrathsCurse`
+
 ---
 
 ### 8b. Untap-symbol cost `{Q}` (`.withRequiresUntap()`)
@@ -840,6 +858,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ALLY_CREATURE_ATTACKS` | Fires once per attacking creature the controller controls (unlike ON_ALLY_CREATURES_ATTACK which fires once per combat). Scans all controller's permanents for each attacker. Supports `TriggeringCardConditionalEffect` (filter by the attacking creature's card) and `TriggeringPermanentConditionalEffect` (filter by the attacking permanent, e.g. "with a +1/+1 counter on it"). Mandatory effects go on the stack sourced by the ability's owner (attacked target captured for `DealDamageToAttackedTargetEffect`). A `MayEffect` is queued as a CR 603.5 resolution-time may whose source **permanent** is the *attacking* creature ("that creature") while the source **card** is the ability's owner — so the owner's card-level `target(...)` filter governs legal targets (give it a `PermanentPredicateTargetFilter(new PermanentIsPlaneswalkerPredicate())` for player-or-planeswalker damage). Used by Sanctum Seeker (Vampire drain), Hellrider (attacked-target damage), Rage Forger (counter-bearing attacker may ping a player/planeswalker) |
 | `ON_ALLY_CREATURE_ATTACKS_UNBLOCKED` | Fires once per **unblocked** attacking creature the controller controls, during the declare-blockers step (both when the defender declares blocks and when no blockers exist). Supports `TriggeringCardConditionalEffect` to filter by the unblocked creature. The unblocked creature is set as the trigger's non-targeting `sourcePermanentId`, so self-scoped effects like `BoostSelfEffect` apply to "it" (the unblocked creature), not the source. Checked in `CombatBlockService`. Used by Stinkdrinker Bandit (Rogues get +2/+1) |
 | `ON_CREATURE_ATTACKS_YOU` | Whenever a creature attacks you or a planeswalker you control. Fires once per attacking creature, on the defending player's permanents (the player being attacked, directly or via their planeswalker). The attacking creature's permanent ID is set as the non-targeting `targetId` on the stack entry. Checked in `CombatAttackService.declareAttackers`. Used by Lost in the Woods |
+| `ON_CREATURES_ATTACK_YOU` | Whenever one or more creatures attack you. Fires **once per combat** (not per creature), on the attacked player's permanents, and only for creatures attacking that player directly — attacking a planeswalker they control does not count (unlike `ON_CREATURE_ATTACKS_YOU`). No `targetId` is set; scale the effect with `PermanentCount(PermanentIsAttackingSourceControllerPredicate(), CountScope.ANY_PLAYER)`. Checked in `CombatAttackService.declareAttackers`. Used by Orim's Prayer |
 | `ON_ANY_PLAYER_ATTACKS` | Whenever ANY player attacks with one or more creatures. Fires once per combat (not per creature), on every permanent with this slot across all battlefields. The attacking player is set as the non-targeting `targetId`, so player-scoped effects (e.g. `DestroyAllPermanentsEffect` with `EachPermanentScope.TARGET_PLAYER`) act on "that player". Checked in `CombatAttackService.declareAttackers`. Used by Total War |
 | `ON_ANY_CREATURE_ATTACKS` | Whenever ANY creature attacks (any controller, any defender). Fires once per attacking creature, on every permanent with this slot across all battlefields. The attacking creature is set as the non-targeting `targetId`, so a plain `DealDamageToTargetCreatureEffect` hits "it". Checked in `CombatAttackService.declareAttackers`. Supports `TriggeringPermanentConditionalEffect` to restrict which attackers trigger it (Windreader Sphinx — flying attackers only). Used by Caltrops |
 | `ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY` | Whenever ANY creature (any controller) becomes the target of ANY spell or ability. Fires on ALL permanents with this slot across every battlefield. The targeted creature is set as the non-targeting `targetId`. Checked in `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers`. Used by Cowardice (`ReturnToHandEffect.target()`) |
@@ -850,6 +869,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ATTACKS_UNBLOCKED` | This creature attacks and isn't blocked. Fires once per unblocked attacker during the declare-blockers step (after blocks are declared, or immediately if the defender can't block) — before combat damage, and independent of whether damage is dealt. Player-affecting effects read the defending player from the non-targeting `targetId`. Checked in `CombatBlockService`. Used by Abyssal Nightstalker |
 | `ON_ENCHANTED_CREATURE_ATTACKS_UNBLOCKED` | Aura slot: the creature this aura is attached to attacks and isn't blocked. Fires alongside `ON_ATTACKS_UNBLOCKED` in `CombatBlockService.collectUnblockedAttackTriggers` (scanning auras attached to each unblocked attacker); the enchanted attacker is baked as the non-targeting `sourcePermanentId` and the defending player as `targetId`. Used by Cloak of Confusion (`AssignNoCombatDamageAndDefendingPlayerDiscardsEffect`) |
 | `ON_ALLY_CREATURE_BECOMES_BLOCKED` | Whenever a creature you control becomes blocked. Fires once per blocked attacker, on every permanent with this slot on the blocked creature's controller's battlefield. The blocked creature is set as the non-targeting `sourcePermanentId`, so self-scoped effects like `BoostSelfEffect` apply to "it". Wrap in `TriggeringCardConditionalEffect` to filter by the blocked creature. Checked in `CombatBlockService`. Used by Unstoppable Ash |
+| `ON_ANY_CREATURE_BECOMES_BLOCKED` | Global watcher: whenever ANY creature becomes blocked, regardless of controller. Fires once per attacker/blocker pair on every permanent with this slot across all battlefields. Effects must implement `BlockPairConditionalEffect`; `CombatBlockService` evaluates `firesForPair(attackerPower, blockerPower)` at trigger time and bakes the `actsOn()` participant in as the non-targeting `targetId` (attacker as `sourcePermanentId`). Used by No Quarter |
 | `ON_ANY_PERMANENT_RETURNED_TO_HAND` | Whenever a permanent is returned to a player's hand (bounced from the battlefield). Fires on every permanent with this slot across all battlefields, once per returned permanent. The owner the permanent returned to is the non-targeting `targetId`, so a player-directed effect (e.g. `DiscardEffect(1, TARGET_PLAYER)`) acts on "that player". Fired from `PermanentRemovalService.removePermanentToHand` via `TriggerCollectionService.checkPermanentReturnedToHandTriggers`. Used by Warped Devotion |
 | `ON_COMBAT_DAMAGE_TO_PLAYER` | This creature deals combat damage to a player. Fires once per combat damage step, so double strike can trigger in both first-strike and regular damage steps |
 | `ON_COMBAT_DAMAGE_TO_CREATURE` | This creature deals combat damage to a creature. Fires once per damaged creature; the damaged creature is baked as non-targeting `targetId` so effects like `DestroyTargetPermanentEffect` / `PutCounterOnTargetPermanentEffect` act on "that creature" |

@@ -5,11 +5,14 @@ import java.util.UUID;
 /**
  * Removes the permanent linked to the source via {@link com.github.laxika.magicalvibes.model.Permanent#getChosenPermanentId()}.
  *
- * <p>Placed in {@code ON_SELF_LEAVES_BATTLEFIELD}. The dedicated trigger collector reads the leaving
+ * <p>Placed in {@code ON_SELF_LEAVES_BATTLEFIELD} and/or {@code ON_SELF_BECOMES_UNTAPPED} (Coffin
+ * Queen exiles the creature it reanimated on both). The dedicated trigger collector reads the leaving
  * permanent's {@code chosenPermanentId} and bakes it into {@link #linkedPermanentId()}; the handler
  * then removes that linked permanent according to {@link Mode} (exile or sacrifice). The id is carried
  * on the effect (not the stack entry's {@code targetId}) so resolution does not validate it as an
- * on-battlefield spell target and fizzle it. Used by Dance of Many for the mutual bond between the
+ * on-battlefield spell target and fizzle it. On the becomes-untapped slot the id stays {@code null}
+ * and the handler reads the link off the still-present source. Either way the link is cleared, so a
+ * second untap is a no-op. Used by Dance of Many for the mutual bond between the
  * enchantment and its token: when the enchantment leaves it exiles the token ({@code EXILE}); when the
  * token leaves it sacrifices the enchantment ({@code SACRIFICE}).
  */

@@ -40,6 +40,12 @@ public enum ActivationTimingRestriction {
     ONLY_DURING_ANY_UPKEEP,
     /** Activate only during an upkeep step of a turn whose active player is not you. Trade Caravan. */
     ONLY_DURING_OPPONENTS_UPKEEP,
+    /**
+     * Activate only during a turn whose active player is not you, and only in a step that precedes
+     * the combat phase. Maddening Imp's "Activate only during an opponent's turn and only before
+     * combat."
+     */
+    ONLY_DURING_OPPONENTS_TURN_BEFORE_COMBAT,
     ONLY_WHILE_ATTACKING,
     /** Activate only if this creature is attacking or blocking. Sawback Manticore. */
     ONLY_WHILE_ATTACKING_OR_BLOCKING,

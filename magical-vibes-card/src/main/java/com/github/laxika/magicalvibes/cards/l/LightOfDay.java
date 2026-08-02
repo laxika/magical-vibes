@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "6ED", collectorNumber = "29")
+@CardRegistration(set = "TMP", collectorNumber = "27")
 public class LightOfDay extends Card {
 
     public LightOfDay() {

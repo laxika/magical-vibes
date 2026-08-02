@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.condition.CastNotFromHand;
 import com.github.laxika.magicalvibes.model.condition.ChosenColorStrictlyMostCommonAmongOpponentNontokens;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreLifeThanController;
@@ -350,6 +351,9 @@ public class ConditionEvaluationService {
             case ControllerCastAnotherSpellThisTurn c ->
                     ctx.controllerId() != null && gameQueryService.hasControllerCastAnotherSpellThisTurn(
                             gameData, ctx.controllerId(), ctx.sourceCard(), c.filter());
+            case ControllerCastSpellThisTurn c ->
+                    ctx.controllerId() != null && gameQueryService.hasControllerCastAnotherSpellThisTurn(
+                            gameData, ctx.controllerId(), null, c.filter());
             case OpponentCastSpellThisTurn c ->
                     opponentCastMatchingSpellThisTurn(gameData, ctx, c.filter());
             case SpellManaSpentAtLeast c ->

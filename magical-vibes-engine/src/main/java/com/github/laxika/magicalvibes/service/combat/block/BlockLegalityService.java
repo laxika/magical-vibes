@@ -43,7 +43,7 @@ import java.util.UUID;
 /**
  * Declare-blockers legality (CR 509): whether a creature may block at all, and whether a given
  * blocker may block a given attacker. Owns evasion keywords (flying, fear, intimidate, skulk,
- * horsemanship, landwalk), blocking restrictions from statics and auras, board-wide
+ * horsemanship, shadow, landwalk), blocking restrictions from statics and auras, board-wide
  * "X can't block Y" effects, and protection as it applies to blocking.
  *
  * <p>This service answers legality questions only — declaring blockers, ordering them, and the
@@ -186,6 +186,9 @@ public class BlockLegalityService {
             return BlockDenial.CANT_BE_BLOCKED;
         }
         BlockLegalityContext.BlockerFacts blk = blockerFacts(context, blocker);
+        if (atk.shadow() != blk.shadow()) {
+            return BlockDenial.SHADOW;
+        }
         if (atk.flying() && !blk.flying() && !blk.reach()) {
             return BlockDenial.FLYING;
         }
@@ -418,6 +421,7 @@ public class BlockLegalityService {
                 gameQueryService.hasKeyword(attacker, bonus, Keyword.FEAR),
                 intimidate,
                 gameQueryService.hasKeyword(attacker, bonus, Keyword.SKULK),
+                gameQueryService.hasKeyword(attacker, bonus, Keyword.SHADOW),
                 cantBeBlockedByLessPower,
                 intimidate ? gameQueryService.getEffectiveColors(gameData, attacker) : Set.of(),
                 pairRestrictions,
@@ -455,6 +459,7 @@ public class BlockLegalityService {
                 gameQueryService.hasKeyword(blocker, bonus, Keyword.FLYING),
                 gameQueryService.hasKeyword(blocker, bonus, Keyword.REACH),
                 gameQueryService.hasKeyword(blocker, bonus, Keyword.HORSEMANSHIP),
+                gameQueryService.hasKeyword(blocker, bonus, Keyword.SHADOW),
                 gameQueryService.isArtifact(blocker),
                 gameQueryService.getEffectiveColors(gameData, blocker),
                 attackerFilterRestrictions == null ? List.of() : attackerFilterRestrictions,

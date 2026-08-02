@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "113")
+@CardRegistration(set = "TMP", collectorNumber = "104")
 public class WindDancer extends Card {
 
     public WindDancer() {

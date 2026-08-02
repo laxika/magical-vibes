@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "6ED", collectorNumber = "24")
+@CardRegistration(set = "TMP", collectorNumber = "23")
 public class HerosResolve extends Card {
 
     public HerosResolve() {

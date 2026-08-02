@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "8ED", collectorNumber = "19")
+@CardRegistration(set = "TMP", collectorNumber = "17")
 public class EliteJavelineer extends Card {
 
     public EliteJavelineer() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M10", collectorNumber = "75")
+@CardRegistration(set = "TMP", collectorNumber = "97")
 public class TimeWarp extends Card {
 
     public TimeWarp() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
+import com.github.laxika.magicalvibes.model.PendingIntuitionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
@@ -48,6 +49,7 @@ class PendingInteractionContractTest {
             PendingSphinxAmbassadorChoice.class,
             PendingCapriciousEfreetState.class,
             PendingKarnScionRevealChoice.class,
+            PendingIntuitionRevealChoice.class,
             PendingKarnScionExileReturn.class,
             PendingReturnExiledWithSourceCard.class,
             PendingPortalPileSearch.class,

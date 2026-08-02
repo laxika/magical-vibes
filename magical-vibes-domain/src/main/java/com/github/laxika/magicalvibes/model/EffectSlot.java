@@ -512,6 +512,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  entry so the resolved effect can act on it. Checked in
      *  {@code CombatAttackService.declareAttackers}. Used by Lost in the Woods. */
     ON_CREATURE_ATTACKS_YOU,
+    /** Triggers once per combat when one or more creatures attack the controller of this permanent.
+     *  Unlike {@link #ON_CREATURE_ATTACKS_YOU} this fires a single time no matter how many creatures
+     *  attack, and only counts creatures attacking the player directly (attacking a planeswalker they
+     *  control does not trigger it). Fires on the attacked player's permanents; no targetId is set, so
+     *  effects scale via {@code PermanentCount(PermanentIsAttackingSourceControllerPredicate(), ...)}.
+     *  Checked in {@code CombatAttackService.declareAttackers}. Used by Orim's Prayer. */
+    ON_CREATURES_ATTACK_YOU,
     /** Triggers once per attacking creature whenever a creature attacks, regardless of who controls
      *  the attacker or whom it attacks. Fires on every permanent with this slot across all
      *  battlefields (e.g. Caltrops pings every attacker). The attacking creature's permanent ID is
@@ -604,6 +611,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  apply to "it" (the blocked creature). Wrap the effect in {@code TriggeringCardConditionalEffect}
      *  to filter by the blocked creature. Checked in {@code CombatBlockService}. Used by Unstoppable Ash. */
     ON_ALLY_CREATURE_BECOMES_BLOCKED,
+    /** Global watcher: triggers once for every attacker/blocker pair created in the declare-blockers
+     *  step, on every permanent with this slot across all battlefields, regardless of who controls
+     *  the creatures involved. Effects implementing {@code BlockPairConditionalEffect} are filtered
+     *  at trigger time against the pair (e.g. "by a creature with lesser power"), and the participant
+     *  the effect names is baked as the non-targeting {@code targetId} on the stack entry, with the
+     *  attacker as {@code sourcePermanentId}. Checked in {@code CombatBlockService}. Used by No Quarter. */
+    ON_ANY_CREATURE_BECOMES_BLOCKED,
     /** Triggers whenever a permanent is returned to a player's hand (bounced from the battlefield),
      *  regardless of who controls this permanent or owns the returned one. Fires on every permanent
      *  with this slot across all battlefields, once per returned permanent. The player the permanent

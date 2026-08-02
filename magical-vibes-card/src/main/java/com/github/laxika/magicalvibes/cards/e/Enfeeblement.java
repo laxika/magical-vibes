@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "MIR", collectorNumber = "121")
 @CardRegistration(set = "9ED", collectorNumber = "127")
 @CardRegistration(set = "6ED", collectorNumber = "125")
+@CardRegistration(set = "TMP", collectorNumber = "133")
 public class Enfeeblement extends Card {
 
     public Enfeeblement() {

@@ -43,6 +43,9 @@ public record BlockDenial(Reason reason, String detail) {
         /** CR 702.129a — the attacker has skulk and the blocker's power is greater than its own. */
         SKULK,
 
+        /** The attacker and blocker do not agree on shadow. */
+        SHADOW,
+
         /**
          * The blocker carries a "can block only creatures with …" restriction that this attacker does
          * not match. {@link BlockDenial#detail()} is the phrase describing which attackers it may block.
@@ -124,6 +127,7 @@ public record BlockDenial(Reason reason, String detail) {
     public static final BlockDenial FEAR = new BlockDenial(Reason.FEAR, null);
     public static final BlockDenial INTIMIDATE = new BlockDenial(Reason.INTIMIDATE, null);
     public static final BlockDenial SKULK = new BlockDenial(Reason.SKULK, null);
+    public static final BlockDenial SHADOW = new BlockDenial(Reason.SHADOW, null);
     public static final BlockDenial CANT_BE_BLOCKED_BY_MATCHING = new BlockDenial(Reason.CANT_BE_BLOCKED_BY_MATCHING, null);
     public static final BlockDenial CANT_BE_BLOCKED_BY_LESS_POWER =
             new BlockDenial(Reason.CANT_BE_BLOCKED_BY_LESS_POWER, null);

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "POR", collectorNumber = "75")
 @CardRegistration(set = "P02", collectorNumber = "57")
 @CardRegistration(set = "M14", collectorNumber = "74")
+@CardRegistration(set = "TMP", collectorNumber = "96")
 public class TimeEbb extends Card {
 
     public TimeEbb() {

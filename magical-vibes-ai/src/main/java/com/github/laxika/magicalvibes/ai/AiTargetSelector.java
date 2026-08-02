@@ -547,6 +547,8 @@ class AiTargetSelector {
                 case SHARE_NO_CREATURE_TYPES -> !gameQueryService.shareCreatureType(gameData, other, candidate);
                 case SHARE_ARTIFACT_CREATURE_OR_LAND_TYPE ->
                         gameQueryService.sharesArtifactCreatureOrLandType(other, candidate);
+                case SHARE_ARTIFACT_OR_CREATURE_TYPE ->
+                        gameQueryService.sharesArtifactOrCreatureType(other, candidate);
                 case CONTROLLED_BY_FIRST_TARGET -> java.util.Objects.equals(candidateControllerId,
                         gameQueryService.findPermanentController(gameData, other.getId()));
                 case AT_MOST_TWO_CREATURES_AND_TWO_LANDS -> true; // handled above

@@ -29,6 +29,7 @@ public enum CardSubtype {
     BAT("Bat"),
     BASILISK("Basilisk"),
     RHINO("Rhino"),
+    REFLECTION("Reflection"),
     ELF("Elf"),
     SHAMAN("Shaman"),
     SIEGE("Siege"),
@@ -132,6 +133,7 @@ public enum CardSubtype {
     EQUIPMENT("Equipment"),
     LIZARD("Lizard"),
     LHURGOYF("Lhurgoyf"),
+    LICID("Licid"),
     SCOUT("Scout"),
     SIREN("Siren"),
     AVATAR("Avatar"),
@@ -199,7 +201,8 @@ public enum CardSubtype {
     SALAMANDER("Salamander"),
     SAMUT("Samut"),
     ARCANE("Arcane"),
-    GATE("Gate");
+    GATE("Gate"),
+    SOLTARI("Soltari");
 
     @Getter
     private final String displayName;

@@ -10,6 +10,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
+@CardRegistration(set = "TMP", collectorNumber = "29")
 @CardRegistration(set = "9ED", collectorNumber = "27")
 @CardRegistration(set = "8ED", collectorNumber = "29")
 public class MasterDecoy extends Card {

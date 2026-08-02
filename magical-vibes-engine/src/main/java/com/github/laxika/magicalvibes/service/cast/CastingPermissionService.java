@@ -157,6 +157,10 @@ public class CastingPermissionService {
         if (gameData.playersCantCastCreatureSpellsThisTurn.contains(playerId)) {
             restricted.add(CardType.CREATURE);
         }
+        // Hand to Hand: during combat no player can cast instant spells.
+        if (gameQueryService.isCombatActionLockActive(gameData)) {
+            restricted.add(CardType.INSTANT);
+        }
         // Controller-only restrictions (Steel Golem) come from the player's own permanents;
         // symmetric restrictions (Aether Storm) apply no matter whose battlefield they sit on.
         for (UUID pid : gameData.orderedPlayerIds) {
@@ -496,6 +500,7 @@ public class CastingPermissionService {
                     !playerId.equals(gameData.activePlayerId)
                             && gameData.currentStep.isBeforeAttackersDeclared();
             case OPPONENTS_TURN -> !playerId.equals(gameData.activePlayerId);
+            case BEFORE_COMBAT_DAMAGE -> gameData.currentStep.isBeforeCombatDamage();
             case AFTER_COMBAT ->
                     gameData.currentStep.ordinal() > TurnStep.END_OF_COMBAT.ordinal();
         };

@@ -47,6 +47,7 @@ class CardImmutabilityArchTest {
             "MayCopyHandlerService",   // re-adds the copy ability on the fresh clone-copy card
             "BecomeCopyOfDyingCreatureEffectHandler", // "except it has this ability" on the fresh clone-copy card (Cemetery Puca)
             "BecomeAuraReanimateFromGraveyardEffectHandler", // Aura subtype + enchant filter on the fresh runtime copy (Necrotic Plague)
+            "LicidBecomeAuraEffectHandler", // Aura face built on the fresh runtime copy (Licid cycle)
             "TokenCardFactory",        // assembles the fresh token card it just instantiated
             "GraveyardReturnSupport",
             "LivingWeaponEffectHandler",

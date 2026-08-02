@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDuringYourTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCanCastAndActivateOnlyDuringOwnTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantCastInstantsOrActivateNonManaAbilitiesDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
@@ -3374,10 +3375,12 @@ public class GameQueryService {
      * that carries a static effect of the given type. Also unwraps
      * {@link EnchantedPermanentConditionalEffect} wrappers: if the currently active
      * inner effect (based on the enchanted permanent predicate) matches, returns {@code true}.
+     * An Aura whose effects are being ignored this turn (Volrath's Curse) is skipped entirely.
      */
     public boolean hasAuraWithEffect(GameData gameData, Permanent creature, Class<? extends CardEffect> effectClass) {
         return gameData.anyPermanentMatches(p ->
                 p.isAttached() && p.getAttachedTo().equals(creature.getId())
+                        && !p.isAuraEffectsIgnoredThisTurn()
                         && p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> isActiveEffect(gameData, creature, e, effectClass)));
     }
@@ -3566,6 +3569,18 @@ public class GameQueryService {
         return (aCard.hasType(CardType.ARTIFACT) && bCard.hasType(CardType.ARTIFACT))
                 || (aCard.hasType(CardType.CREATURE) && bCard.hasType(CardType.CREATURE))
                 || (aCard.hasType(CardType.LAND) && bCard.hasType(CardType.LAND));
+    }
+
+    /**
+     * Returns {@code true} if the two permanents share at least one of the card types artifact or
+     * creature (Legerdemain's "another target permanent that shares one of those types with it",
+     * where "those types" are only artifact and creature). Uses each permanent's card types.
+     */
+    public boolean sharesArtifactOrCreatureType(Permanent a, Permanent b) {
+        Card aCard = a.getCard();
+        Card bCard = b.getCard();
+        return (aCard.hasType(CardType.ARTIFACT) && bCard.hasType(CardType.ARTIFACT))
+                || (aCard.hasType(CardType.CREATURE) && bCard.hasType(CardType.CREATURE));
     }
 
     /**
@@ -3792,6 +3807,17 @@ public class GameQueryService {
         UUID activePlayerId = gameData.activePlayerId;
         if (activePlayerId == null || activePlayerId.equals(playerId)) return false;
         return anyBattlefieldHasStaticEffect(gameData, PlayersCanCastAndActivateOnlyDuringOwnTurnEffect.class);
+    }
+
+    /**
+     * True while a {@link PlayersCantCastInstantsOrActivateNonManaAbilitiesDuringCombatEffect}
+     * (Hand to Hand) is on the battlefield and the game is currently in a combat step: no player
+     * may cast instant spells or activate abilities that aren't mana abilities.
+     */
+    public boolean isCombatActionLockActive(GameData gameData) {
+        return gameData.currentStep != null && gameData.currentStep.isCombatPhase()
+                && anyBattlefieldHasStaticEffect(gameData,
+                PlayersCantCastInstantsOrActivateNonManaAbilitiesDuringCombatEffect.class);
     }
 
     /**

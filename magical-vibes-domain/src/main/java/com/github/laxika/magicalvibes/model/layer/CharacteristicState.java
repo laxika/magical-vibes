@@ -256,6 +256,11 @@ public class CharacteristicState {
         protectionColors.addAll(colors);
     }
 
+    /** Whether the layer-6 state so far gives this permanent protection from the given color. */
+    public boolean hasProtectionColor(CardColor color) {
+        return protectionColors.contains(color);
+    }
+
     public void addActivatedAbility(ActivatedAbility ability) {
         grantedActivatedAbilities.add(ability);
     }

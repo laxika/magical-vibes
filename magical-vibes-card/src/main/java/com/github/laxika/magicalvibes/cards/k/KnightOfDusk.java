@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "152")
+@CardRegistration(set = "TMP", collectorNumber = "140")
 public class KnightOfDusk extends Card {
 
     public KnightOfDusk() {

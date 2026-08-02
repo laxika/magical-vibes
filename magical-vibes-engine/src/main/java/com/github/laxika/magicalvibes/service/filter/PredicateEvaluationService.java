@@ -10,7 +10,10 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -20,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasEmbalmOrEternalizePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsAuraEnchantCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
@@ -67,6 +71,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCumulativeUpkeepP
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControlledCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasProtectionFromColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
@@ -108,6 +113,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledCreatureCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostXPredicate;
@@ -227,6 +233,8 @@ public class PredicateEvaluationService {
                     card.getManaCost() != null && new ManaCost(card.getManaCost()).hasPhyrexianMana();
             case CardIsAuraPredicate ignored ->
                     card.isAura();
+            case CardIsAuraEnchantCreaturePredicate ignored ->
+                    isAuraEnchantingCreature(card);
             case CardHasFlashbackPredicate ignored ->
                     card.getCastingOption(FlashbackCast.class).isPresent();
             case CardHasCyclingPredicate ignored ->
@@ -310,6 +318,12 @@ public class PredicateEvaluationService {
                     yield permanent.hasKeyword(hasKeywordPredicate.keyword());
                 }
                 yield gameQueryService.hasKeyword(gameData, permanent, hasKeywordPredicate.keyword());
+            }
+            case PermanentHasProtectionFromColorPredicate hasProtectionPredicate -> {
+                if (gameData == null) {
+                    yield hasRecursionSafeProtectionFrom(permanent, hasProtectionPredicate.color());
+                }
+                yield gameQueryService.hasProtectionFrom(gameData, permanent, hasProtectionPredicate.color());
             }
             case PermanentHasSubtypePredicate hasSubtypePredicate -> {
                 // While a CR 613 layered pass is active, subtype questions are answered from the
@@ -687,6 +701,22 @@ public class PredicateEvaluationService {
                 int targetToughness = gameQueryService.getEffectiveToughness(gameData, permanent);
                 yield targetToughness < sourcePower;
             }
+            case PermanentPowerAtMostSourceCountersPredicate countersPredicate -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                // CR 608.2b: the source is sacrificed to pay the ability's cost, so at the
+                // resolution-time re-check its last known information supplies the counter count.
+                Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                if (sourcePermanent == null && filterContext != null) {
+                    sourcePermanent = filterContext.sourcePermanentSnapshot();
+                }
+                if (sourcePermanent == null) {
+                    yield false;
+                }
+                int counters = sourcePermanent.getCounterCount(countersPredicate.counterType());
+                yield gameQueryService.getEffectivePower(gameData, permanent) <= counters;
+            }
             case PermanentPowerAtMostSourcePowerPredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
                     yield false;
@@ -946,6 +976,9 @@ public class PredicateEvaluationService {
             case PermanentIsTappedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsTokenPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentNamedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            // Recursion-safe: asking GameQueryService.hasProtectionFrom would re-enter the
+            // static-bonus assembly that is currently running for another permanent.
+            case PermanentHasProtectionFromColorPredicate p -> hasRecursionSafeProtectionFrom(permanent, p.color());
             case PermanentPowerAtLeastPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentPowerAtMostPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentToughnessAtMostPredicate ignored -> matchesStaticLeaf(permanent, predicate);
@@ -963,6 +996,29 @@ public class PredicateEvaluationService {
      * instance compares equal to some unrelated ability's filter and would collect that ability's
      * verdict. Only a filter that really is the ability's own may consult the memo.
      */
+    /**
+     * Protection from a color without consulting {@code GameQueryService.computeStaticBonus}:
+     * the in-flight layer-6 state when a CR 613 pass is running (it already carries the
+     * permanent's own printed protection plus any grants applied so far), the printed static
+     * ability otherwise, plus until-end-of-turn grants either way.
+     */
+    private boolean hasRecursionSafeProtectionFrom(Permanent permanent, CardColor color) {
+        if (color == null) return false;
+        if (permanent.getProtectionFromColorsUntilEndOfTurn().contains(color)) return true;
+        CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
+        if (layered != null) {
+            return layered.hasProtectionColor(color);
+        }
+        for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof ProtectionGrantingEffect protection
+                    && protection.protectionScope() == null
+                    && protection.protectionFromColors().contains(color)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean matchesStaticLeaf(Permanent permanent, PermanentPredicate predicate) {
         return matchesPermanentPredicate(
                 LayerSystemService.activeStateFor(permanent.getId()), permanent, predicate, null);
@@ -1074,6 +1130,9 @@ public class PredicateEvaluationService {
                     state.hasCardType(CardType.PLANESWALKER);
             case PermanentHasKeywordPredicate p ->
                     state.hasKeyword(p.keyword());
+            case PermanentHasProtectionFromColorPredicate p ->
+                    state.hasProtectionColor(p.color())
+                            || permanent.getProtectionFromColorsUntilEndOfTurn().contains(p.color());
             case PermanentHasSupertypePredicate p ->
                     hasSupertype(state, permanent, gameData, p.supertype());
             case PermanentIsHistoricPredicate ignored ->
@@ -1407,5 +1466,31 @@ public class PredicateEvaluationService {
             case GraveyardCardPredicateTargetFilter ignored -> "Target must be a card in a graveyard";
             case StackEntryPredicateTargetFilter f -> f.errorMessage();
         };
+    }
+
+    /**
+     * Returns true if the card is an Aura whose enchant ability restricts it to creatures. An
+     * Aura's enchant restriction lives in its spell target filter, so a creature restriction is
+     * detected by looking for a creature requirement in that filter's predicate.
+     */
+    private boolean isAuraEnchantingCreature(Card card) {
+        if (!card.isAura() || card.isEnchantPlayer()) return false;
+        TargetFilter filter = card.getTargetFilter();
+        if (filter == null) return false;
+        PermanentPredicate predicate = switch (filter) {
+            case ControlledPermanentPredicateTargetFilter f -> f.predicate();
+            case OwnedPermanentPredicateTargetFilter f -> f.predicate();
+            case PermanentPredicateTargetFilter f -> f.predicate();
+            default -> null;
+        };
+        return requiresCreature(predicate);
+    }
+
+    private boolean requiresCreature(PermanentPredicate predicate) {
+        if (predicate instanceof PermanentIsCreaturePredicate) return true;
+        if (predicate instanceof PermanentAllOfPredicate all) {
+            return all.predicates().stream().anyMatch(this::requiresCreature);
+        }
+        return false;
     }
 }

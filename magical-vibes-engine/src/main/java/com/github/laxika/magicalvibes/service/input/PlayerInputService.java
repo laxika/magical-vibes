@@ -425,6 +425,20 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a number between {} and {}", gameData.id, playerName, min, max);
     }
 
+    public void beginPayAnyAmountOfLifeChoice(GameData gameData, UUID playerId, int maxLife,
+                                              ChoiceContext.PayAnyAmountOfLifeAsEnters choiceContext) {
+        List<String> options = java.util.stream.IntStream.rangeClosed(0, Math.max(0, maxLife))
+                .mapToObj(Integer::toString)
+                .toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options,
+                choiceContext.card().getName() + " — pay any amount of life (0-" + Math.max(0, maxLife) + ")."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to pay any amount of life for {}", gameData.id, playerName,
+                choiceContext.card().getName());
+    }
+
     public void beginTetravusCounterRemovalChoice(GameData gameData, UUID playerId, UUID permanentId,
                                                   int maxCounters,
                                                   com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate) {

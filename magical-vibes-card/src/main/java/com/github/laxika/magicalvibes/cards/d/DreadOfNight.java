@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "6ED", collectorNumber = "122")
+@CardRegistration(set = "TMP", collectorNumber = "130")
 public class DreadOfNight extends Card {
 
     public DreadOfNight() {

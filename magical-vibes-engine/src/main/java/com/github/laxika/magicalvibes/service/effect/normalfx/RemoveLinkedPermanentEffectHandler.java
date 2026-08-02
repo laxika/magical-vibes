@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -37,8 +38,19 @@ public class RemoveLinkedPermanentEffectHandler implements NormalEffectHandlerBe
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RemoveLinkedPermanentEffect) effect;
 
-        Permanent linked = e.linkedPermanentId() == null
-                ? null : gameQueryService.findPermanentById(gameData, e.linkedPermanentId());
+        // The leaves-battlefield collector bakes the id in before the source is gone; the
+        // becomes-untapped trigger leaves it null and the still-present source carries the link.
+        UUID linkedId = e.linkedPermanentId();
+        Permanent source = entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (linkedId == null) {
+            linkedId = source == null ? null : source.getChosenPermanentId();
+        }
+        if (source != null) {
+            source.setChosenPermanentId(null);
+        }
+
+        Permanent linked = linkedId == null ? null : gameQueryService.findPermanentById(gameData, linkedId);
         if (linked == null) {
             return;
         }

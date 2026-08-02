@@ -9,9 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 
 public sealed interface ChoiceContext {
 
-    record TextChangeFromWord(UUID targetId) implements ChoiceContext {}
+    record TextChangeFromWord(UUID targetId, boolean untilEndOfTurn) implements ChoiceContext {}
 
-    record TextChangeToWord(UUID targetId, String fromWord, boolean isColor) implements ChoiceContext {}
+    record TextChangeToWord(UUID targetId, String fromWord, boolean isColor, boolean untilEndOfTurn)
+            implements ChoiceContext {}
 
     record ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
                            boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype,
@@ -164,6 +165,16 @@ public sealed interface ChoiceContext {
      * permanent via {@code Permanent.setChosenNumber(int)}.
      */
     record NumberChoice(UUID permanentId) implements ChoiceContext {}
+
+    /**
+     * "As this creature enters, pay any amount of life" (Minion of the Wastes). The controller
+     * picks 0..their life total as {@code permanentId} enters; on the answer that much life is
+     * paid, the amount is stored via {@code Permanent.setChosenNumber(int)}, and the deferred
+     * enter-the-battlefield triggers of {@code card} are processed.
+     */
+    record PayAnyAmountOfLifeAsEnters(UUID permanentId, UUID controllerId, Card card, UUID targetId,
+                                      boolean wasCastFromHand, int etbMode,
+                                      boolean kicked) implements ChoiceContext {}
 
     /**
      * Choosing how many {@code counterType} counters to remove from {@code permanentId} as a

@@ -17,9 +17,16 @@ package com.github.laxika.magicalvibes.model.effect;
  *                         {@code EffectResolution.targetsSpellOnStack(effect)}. Spell targets are
  *                         validated on the stack path ({@code checkSpellTargetOnStack}), never by the
  *                         spec interpreter.
+ * @param untilEndOfTurn   when true the recorded {@code TextReplacement} wears off at the cleanup step
+ *                         (Whim of Volrath); when false it lasts as long as the permanent remains on
+ *                         the battlefield (Mind Bend, Magical Hack, Glamerdye).
  */
-public record ChangeColorTextEffect(boolean colorWordsAllowed, boolean landTypesAllowed, boolean canTargetSpell)
-        implements CardEffect {
+public record ChangeColorTextEffect(boolean colorWordsAllowed, boolean landTypesAllowed, boolean canTargetSpell,
+                                    boolean untilEndOfTurn) implements CardEffect {
+
+    public ChangeColorTextEffect(boolean colorWordsAllowed, boolean landTypesAllowed, boolean canTargetSpell) {
+        this(colorWordsAllowed, landTypesAllowed, canTargetSpell, false);
+    }
 
     @Override
     public TargetSpec targetSpec() {

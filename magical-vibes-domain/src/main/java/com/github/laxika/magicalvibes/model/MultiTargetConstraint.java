@@ -16,6 +16,12 @@ public enum MultiTargetConstraint {
      */
     SHARE_ARTIFACT_CREATURE_OR_LAND_TYPE,
     /**
+     * The chosen permanents must share at least one of the card types artifact or creature — land
+     * alone does not satisfy it (e.g. Legerdemain: "target artifact or creature and another target
+     * permanent that shares one of those types with it").
+     */
+    SHARE_ARTIFACT_OR_CREATURE_TYPE,
+    /**
      * Every permanent chosen after the first target must be controlled by the first target — the
      * first target itself when it is a player, otherwise the controller of the first target
      * permanent (e.g. Chandra, Pyromaster's "up to one target creature that player or that

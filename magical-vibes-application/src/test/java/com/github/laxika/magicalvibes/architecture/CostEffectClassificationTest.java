@@ -83,6 +83,7 @@ class CostEffectClassificationTest {
             "DiscardCardTypeCost",
             "DiscardCardOrPayManaCost",
             "DiscardHandCost",
+            "DiscardXCardsCost",
             "EscalateDiscardCost",
             "EscalateManaCost",
             "RepeatableAdditionalManaCost");

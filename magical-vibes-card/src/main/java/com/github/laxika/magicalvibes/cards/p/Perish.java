@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "6ED", collectorNumber = "148")
+@CardRegistration(set = "TMP", collectorNumber = "147")
 public class Perish extends Card {
 
     public Perish() {

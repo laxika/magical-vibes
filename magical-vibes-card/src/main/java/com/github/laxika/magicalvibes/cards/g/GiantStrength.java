@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
+@CardRegistration(set = "TMP", collectorNumber = "178")
 @CardRegistration(set = "6ED", collectorNumber = "181")
 @CardRegistration(set = "5ED", collectorNumber = "233")
 @CardRegistration(set = "4ED", collectorNumber = "196")

@@ -234,6 +234,8 @@ public class GameData {
     public final Map<UUID, Integer> exiledCardEggCounters = new ConcurrentHashMap<>();
     /** Tracks exiled card UUIDs that have silver counters (Karn, Scion of Urza). */
     public final Set<UUID> exiledCardsWithSilverCounters = ConcurrentHashMap.newKeySet();
+    /** Spells exiled with delay counters and waiting to go back onto the stack (Ertai's Meddling). */
+    public final List<DelayedSpellExile> delayedSpellExiles = Collections.synchronizedList(new ArrayList<>());
     public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
     /** Player IDs → number of upcoming combat phases they must skip (Blinding Angel). Decremented as each is skipped. */
     public final Map<UUID, Integer> skipNextCombatPhaseCount = new ConcurrentHashMap<>();
@@ -652,6 +654,17 @@ public class GameData {
 
     public record ParadigmDelayedTrigger(UUID controllerId, Card spellPrototype) {}
 
+    /**
+     * A spell exiled with delay counters by Ertai's Meddling.
+     *
+     * @param cardId        the exiled card
+     * @param controllerId  the player whose upkeeps remove the counters — the spell's controller
+     * @param counters      delay counters still on the card
+     * @param originalEntry a snapshot of the stack entry the spell had, restored when the last
+     *                      counter is removed so the spell keeps its X value and targets
+     */
+    public record DelayedSpellExile(UUID cardId, UUID controllerId, int counters, StackEntry originalEntry) {}
+
     /** Spell names a player has already resolved while controlling (for Paradigm's "first time" check). */
     public final Map<UUID, Set<String>> paradigmResolvedSpellNames = new ConcurrentHashMap<>();
 
@@ -905,6 +918,12 @@ public class GameData {
     public final Map<UUID, UUID> tauntedNextTurn = new ConcurrentHashMap<>();
     /** Active this turn: affectedPlayerId -> controllerId all their creatures must attack if able. */
     public final Map<UUID, UUID> tauntedThisTurn = new ConcurrentHashMap<>();
+
+    // Oracle en-Vec — "the chosen creatures attack if able, and other creatures can't attack"
+    /** Delayed: affectedPlayerId -> the creature IDs that player chose, consumed when their turn begins. */
+    public final Map<UUID, Set<UUID>> chosenAttackersNextTurn = new ConcurrentHashMap<>();
+    /** Active this turn: affectedPlayerId -> the only creatures allowed to attack (all others can't). */
+    public final Map<UUID, Set<UUID>> chosenAttackersThisTurn = new ConcurrentHashMap<>();
 
     /** Intimidation Bolt — "Other creatures can't attack this turn." Each resolution appends the
      *  targeted (exempted) creature's permanent ID; a creature may attack only if its ID equals every
@@ -2307,6 +2326,7 @@ public class GameData {
         copy.exiledCards.addAll(this.exiledCards);
         copy.exiledCardEggCounters.putAll(this.exiledCardEggCounters);
         copy.exiledCardsWithSilverCounters.addAll(this.exiledCardsWithSilverCounters);
+        copy.delayedSpellExiles.addAll(this.delayedSpellExiles);
 
         // --- Map<UUID, List<Permanent>> (deep copy each Permanent) ---
         this.playerBattlefields.forEach((k, v) -> {
@@ -2508,6 +2528,8 @@ public class GameData {
         copy.mindControllerPlayerId = this.mindControllerPlayerId;
         copy.tauntedNextTurn.putAll(this.tauntedNextTurn);
         copy.tauntedThisTurn.putAll(this.tauntedThisTurn);
+        this.chosenAttackersNextTurn.forEach((playerId, ids) -> copy.chosenAttackersNextTurn.put(playerId, Set.copyOf(ids)));
+        this.chosenAttackersThisTurn.forEach((playerId, ids) -> copy.chosenAttackersThisTurn.put(playerId, Set.copyOf(ids)));
         copy.otherCreaturesCantAttackExemptCreatureIds.addAll(this.otherCreaturesCantAttackExemptCreatureIds);
         copy.peaceTalksTurnsRemaining = this.peaceTalksTurnsRemaining;
         copy.currentlyResolvingControllerId = this.currentlyResolvingControllerId;

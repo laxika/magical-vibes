@@ -194,13 +194,13 @@ public class GraveyardReturnSupport {
         // A card returned to HAND or to the top of a library always goes to its owner's zone
         // (only BATTLEFIELD returns can put a card under a non-owner's control). Resolve the
         // graveyard owner before removal.
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
         UUID destinationPlayerId = controllerId;
         if (effect.destination() == GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY
                 || effect.destination() == GraveyardChoiceDestination.BOTTOM_OF_OWNERS_LIBRARY
                 || effect.destination() == GraveyardChoiceDestination.HAND) {
-            UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
-            if (ownerId != null) {
-                destinationPlayerId = ownerId;
+            if (graveyardOwnerId != null) {
+                destinationPlayerId = graveyardOwnerId;
             }
         }
 
@@ -217,10 +217,52 @@ public class GraveyardReturnSupport {
 
         if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
             applyBattlefieldReturnRiders(gameData, controllerId, targetCard, effect);
+            trackAndLinkReanimatedPermanent(gameData, entry, effect, controllerId, targetCard, graveyardOwnerId);
         }
 
         if (effect.gainLifeEqualToManaValue()) {
             applyLifeGainEqualToManaValue(gameData, controllerId, targetCard);
+        }
+
+        if (effect.loseLifeEqualToManaValue()) {
+            applyLifeLossEqualToManaValue(gameData, entry, controllerId, targetCard);
+        }
+    }
+
+    /**
+     * Post-processes a pre-targeted graveyard-to-battlefield return. A card reanimated out of another
+     * player's graveyard entered under a non-owner's control, so its original owner is recorded (it must
+     * go to that player's graveyard when it dies). When the effect asks for it, the new permanent is also
+     * bonded to the source permanent via {@code chosenPermanentId} so a later
+     * {@link com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect} trigger can find it.
+     */
+    private void trackAndLinkReanimatedPermanent(GameData gameData, StackEntry entry,
+                                                 ReturnCardFromGraveyardEffect effect, UUID controllerId,
+                                                 Card card, UUID graveyardOwnerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return;
+        }
+        Permanent entered = null;
+        for (Permanent p : battlefield) {
+            if (p.getCard().getId().equals(card.getId())) {
+                entered = p;
+                break;
+            }
+        }
+        if (entered == null) {
+            return;
+        }
+
+        if (graveyardOwnerId != null && !graveyardOwnerId.equals(controllerId)) {
+            trackStolenCreature(gameData, entered.getId(), controllerId, graveyardOwnerId);
+        }
+
+        if (effect.linkToSource() && entry.getSourcePermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source != null) {
+                source.setChosenPermanentId(entered.getId());
+            }
         }
     }
 
@@ -926,6 +968,17 @@ public class GraveyardReturnSupport {
         int manaValue = card.getManaValue();
         if (manaValue > 0) {
             lifeSupport.applyGainLife(gameData, controllerId, manaValue);
+        }
+    }
+
+    /**
+     * Reanimate's rider: the spell's controller loses life equal to the returned card's mana value.
+     * Routed through {@link LifeSupport} so loses-life triggers fire.
+     */
+    public void applyLifeLossEqualToManaValue(GameData gameData, StackEntry entry, UUID controllerId, Card card) {
+        int manaValue = card.getManaValue();
+        if (manaValue > 0) {
+            lifeSupport.applyLifeLoss(gameData, controllerId, manaValue, entry.getCard().getName());
         }
     }
 

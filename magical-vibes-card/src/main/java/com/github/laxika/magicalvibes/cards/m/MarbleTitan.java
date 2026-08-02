@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntap
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 @CardRegistration(set = "9ED", collectorNumber = "26")
+@CardRegistration(set = "TMP", collectorNumber = "28")
 public class MarbleTitan extends Card {
 
     public MarbleTitan() {

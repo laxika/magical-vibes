@@ -83,6 +83,7 @@ public class AttackLegalityService {
         if (gameQueryService.isLockedFromAttacking(gameData, creature.getId())) return false;
         if (gameQueryService.isPeaceTalksActive(gameData)) return false;
         if (isRestrictedByOtherCreaturesCantAttack(gameData, creature)) return false;
+        if (isOutsideChosenAttackers(gameData, creature)) return false;
         if (creature.isSummoningSick() && !gameQueryService.hasKeyword(gameData, creature, Keyword.HASTE)
                 && !gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCanAttackAsThoughHasteEffect.class)
                 && !canAttackAsThoughHasteFromOwnStatic(gameData, creature)) return false;
@@ -254,6 +255,24 @@ public class AttackLegalityService {
         return false;
     }
 
+    /**
+     * Oracle en-Vec lock ("the chosen creatures attack if able, and other creatures can't attack").
+     * While {@code gameData.chosenAttackersThisTurn} holds a chosen set, only creatures inside every
+     * such set may attack — so an empty choice bars everyone, and creatures that entered after the
+     * choice are barred too. No entries = no restriction.
+     */
+    private boolean isOutsideChosenAttackers(GameData gameData, Permanent creature) {
+        if (gameData.chosenAttackersThisTurn.isEmpty()) {
+            return false;
+        }
+        for (Set<UUID> chosen : gameData.chosenAttackersThisTurn.values()) {
+            if (!chosen.contains(creature.getId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean isCantAttackDueToGlobalRestriction(GameData gameData, Permanent creature) {
         boolean[] restricted = {false};
         UUID creatureController = gameData.findControllerOf(creature);
@@ -373,6 +392,13 @@ public class AttackLegalityService {
         UUID taunter = gameData.tauntedThisTurn.get(creatureControllerId);
         if (taunter != null && getValidAttackTargetIds(gameData, creatureControllerId).contains(taunter)) {
             count[0]++;
+        }
+
+        // Oracle en-Vec: a creature its controller chose last turn attacks this turn if able.
+        for (Set<UUID> chosen : gameData.chosenAttackersThisTurn.values()) {
+            if (chosen.contains(creature.getId())) {
+                count[0]++;
+            }
         }
 
         gameData.forEachPermanent((playerId, permanent) -> {

@@ -40,6 +40,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardIsAuraPredicate) {
             return "Aura card";
         }
+        if (predicate instanceof CardIsAuraEnchantCreaturePredicate) {
+            return "Aura card with enchant creature";
+        }
         if (predicate instanceof CardIsColorlessPredicate) {
             return "colorless card";
         }

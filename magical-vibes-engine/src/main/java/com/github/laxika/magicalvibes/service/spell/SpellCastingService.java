@@ -246,6 +246,35 @@ public class SpellCastingService {
     }
 
     /**
+     * Pays the "discard X cards" additional cast cost (Abandon Hope) for the announced X. Discards
+     * highest post-removal hand indices first so earlier removals do not shift later ones; legality
+     * is re-checked by {@code AdditionalSpellCostService.validateDiscardXCardsCost}, which the cast
+     * path already ran before any cost was consumed.
+     */
+    private void payDiscardXCardsCost(GameData gameData, Player player, Card card, int announcedX,
+                                      List<Integer> discardHandCardIndices, int spellCardIndex) {
+        List<Integer> effectiveIndices = new ArrayList<>(
+                additionalSpellCostService.validateDiscardXCardsCost(
+                        gameData, player, card, announcedX, discardHandCardIndices, spellCardIndex));
+        effectiveIndices.sort(java.util.Collections.reverseOrder());
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        for (int effectiveIndex : effectiveIndices) {
+            Card toDiscard = hand.get(effectiveIndex);
+            hand.remove(effectiveIndex);
+            graveyardService.addCardToGraveyard(gameData, playerId, toDiscard);
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(player.getUsername() + " discards ")
+                    .card(toDiscard)
+                    .text(" to cast ")
+                    .card(card)
+                    .text(".")
+                    .build());
+            triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
+        }
+    }
+
+    /**
      * Pays escalate's discard-per-extra-mode cost. Discards highest post-removal hand indices
      * first so earlier removals do not shift later ones.
      */
@@ -1507,6 +1536,10 @@ public class SpellCastingService {
             if (additionalCosts.payXLife()) {
                 additionalSpellCostService.validatePayXLifeCost(gameData, player, card, resolvedXValue);
             }
+            if (additionalCosts.discardXCards()) {
+                additionalSpellCostService.validateDiscardXCardsCost(gameData, player, card, resolvedXValue,
+                        discardHandCardIndices, cardIndex);
+            }
             validateImposedSacrificeTax(gameData, player, card, imposedSacrificePermanentIds);
             if (kicked && kickerEffect != null && kickerEffect.hasSacrificeCost()) {
                 additionalSpellCostService.validateSingleSacrificeCost(gameData, player, card, sacrificePermanentId,
@@ -2052,6 +2085,10 @@ public class SpellCastingService {
         payDiscardCost(gameData, player, card, costs.discardCost(), selection.discardHandCardIndex(), selection.spellCardIndex());
         if (costs.discardHand()) {
             payDiscardHandCost(gameData, player, card);
+        }
+        if (costs.discardXCards()) {
+            payDiscardXCardsCost(gameData, player, card, resolvedXValue,
+                    selection.discardHandCardIndices(), selection.spellCardIndex());
         }
         payEscalateDiscardCost(gameData, player, card, costs.escalateDiscardCost(),
                 selection.escalateModeCount(), selection.discardHandCardIndices(), selection.spellCardIndex());
@@ -2722,6 +2759,7 @@ public class SpellCastingService {
                 || additionalCosts.putCounterCost() != null || additionalCosts.exileGraveyardCost() != null
                 || additionalCosts.exileXCardsCost() != null || additionalCosts.discardCost() != null
                 || additionalCosts.discardCardOrPayManaCost() != null || additionalCosts.discardHand()
+                || additionalCosts.discardXCards()
                 || additionalCosts.escalateDiscardCost() != null
                 || additionalCosts.escalateManaCost() != null;
         if (hasUnsupportedAdditionalCost) {
@@ -2739,7 +2777,7 @@ public class SpellCastingService {
             // the spell's GY index excluded) is not re-checked against a null selection.
             AdditionalSpellCostService.ExtractedCosts sacOnly = new AdditionalSpellCostService.ExtractedCosts(
                     false, false, true, null, false, null, null, null, null, false, null,
-                    false, null, null, null, null, null, null, false, null, null, null);
+                    false, null, null, null, null, null, null, false, false, null, null, null);
             AdditionalSpellCostService.CostSelection sacSelection = new AdditionalSpellCostService.CostSelection(
                     sacrificePermanentId, null, null, null, null, 0, -1, null);
             additionalSpellCostService.validateAll(gameData, player, castHalf, sacOnly, sacSelection);

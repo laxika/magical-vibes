@@ -76,6 +76,9 @@ import lombok.Builder;
  *                             controller chooses which permanent to attach to (e.g. Nomad Mythmaker)
  * @param gainLifeEqualToManaValue {@code true} if the controller gains life equal to the returned
  *                             card's mana value after it is returned (e.g. Razor Hippogriff)
+ * @param loseLifeEqualToManaValue {@code true} if the controller loses life equal to the returned
+ *                             card's mana value after it is returned (e.g. Reanimate); only meaningful
+ *                             on the pre-targeted path
  * @param attachToSource       {@code true} to attach the returned card to the source permanent. On the
  *                             search-and-choose path the controller gets a second "you may" prompt and the
  *                             equipment enters the battlefield first (e.g. Auriok Survivors). On the
@@ -155,6 +158,11 @@ import lombok.Builder;
  *                             only meaningful for {@code BATTLEFIELD}
  * @param enterWithCounterCount number of {@link #enterWithCounter} counters to place; ignored when
  *                             {@code enterWithCounter} is null (defaults to {@code 0})
+ * @param linkToSource         {@code true} to record the reanimated permanent on the source permanent's
+ *                             {@code chosenPermanentId} (Coffin Queen), so a later
+ *                             {@link RemoveLinkedPermanentEffect} trigger can still name "that creature"
+ *                             after the ability that put it there has finished; only meaningful on the
+ *                             pre-targeted {@code BATTLEFIELD} path
  */
 @Builder
 public record ReturnCardFromGraveyardEffect(
@@ -171,6 +179,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean targetPutIntoGraveyardFromBattlefieldThisTurn,
         PermanentPredicate attachmentTarget,
         boolean gainLifeEqualToManaValue,
+        boolean loseLifeEqualToManaValue,
         boolean attachToSource,
         boolean grantHaste,
         boolean exileAtEndStep,
@@ -195,7 +204,8 @@ public record ReturnCardFromGraveyardEffect(
         CardSubtype plusOneCountersIfSubtype,
         int plusOneCounterCount,
         CounterType enterWithCounter,
-        int enterWithCounterCount
+        int enterWithCounterCount,
+        boolean linkToSource
 ) implements CardEffect {
 
     /**

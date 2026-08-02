@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "TMP", collectorNumber = "165")
 @CardRegistration(set = "8ED", collectorNumber = "180")
 @CardRegistration(set = "7ED", collectorNumber = "177")
 @CardRegistration(set = "6ED", collectorNumber = "169")

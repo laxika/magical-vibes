@@ -34,7 +34,8 @@ public class DestroyEnchantedPermanentEffectHandler implements NormalEffectHandl
         }
         Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
         if (enchanted != null) {
-            destructionSupport.tryDestroyAndLog(gameData, enchanted, entry.getCard().getName());
+            boolean cannotBeRegenerated = ((DestroyEnchantedPermanentEffect) effect).cannotBeRegenerated();
+            destructionSupport.tryDestroyAndLog(gameData, enchanted, entry.getCard().getName(), cannotBeRegenerated);
         }
     }
 }
