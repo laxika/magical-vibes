@@ -638,9 +638,13 @@ public class PotentialManaService {
             }
         }
         if (virtual instanceof VirtualManaPool vmp && twisted.size() > 1) {
+            // Only the total is inflated. Each colour is offered by exactly one of the mutually
+            // exclusive options, so its per-colour maximum equals its per-colour sum and the
+            // per-colour over-count is zero — subtracting `amount` per colour instead drove
+            // get(colour) to 0 for every option, leaving the land unable to pay any pip at all.
             vmp.addFlexibleOvercount(amount * (twisted.size() - 1));
-            for (ManaColor color : twisted) {
-                vmp.addPerColorOvercount(color, amount);
+            if (isCreature) {
+                vmp.addCreatureManaOvercount(amount * (twisted.size() - 1));
             }
         }
     }
