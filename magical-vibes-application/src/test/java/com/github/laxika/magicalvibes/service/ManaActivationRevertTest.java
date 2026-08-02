@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.cards.b.BirdsOfParadise;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.w.WanderwineHub;
 import com.github.laxika.magicalvibes.model.Card;
@@ -103,6 +104,65 @@ class ManaActivationRevertTest extends BaseCardTest {
         harness.passPriority(player1);
 
         assertThat(gd.revertableManaActivations).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Reverting untaps a Birds of Paradise and drains the color it was asked to choose")
+    void revertUntapsAnyColorSource() {
+        harness.addToBattlefield(player1, new BirdsOfParadise());
+        Permanent birds = gd.playerBattlefields.get(player1.getId()).getFirst();
+        birds.setSummoningSick(false);
+        harness.ensurePriority(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        // The activation taps immediately but owes its mana until the color prompt is answered.
+        assertThat(birds.isTapped()).isTrue();
+        assertThat(gd.revertableManaActivations).isEmpty();
+
+        harness.handleListChoice(player1, "RED");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.revertableManaActivations).hasSize(1);
+
+        gs.revertManaActivations(gd, player1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(birds.isTapped()).isFalse();
+        assertThat(gd.revertableManaActivations).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Birds of Paradise activation does not poison earlier revertable taps")
+    void anyColorSourceKeepsEarlierActivationsRevertable() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new BirdsOfParadise());
+        Permanent birds = gd.playerBattlefields.get(player1.getId()).get(1);
+        birds.setSummoningSick(false);
+        harness.ensurePriority(player1);
+
+        harness.tapPermanent(player1, 0);
+        harness.activateAbility(player1, 1, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        gs.revertManaActivations(gd, player1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(Permanent::isTapped);
+    }
+
+    @Test
+    @DisplayName("Reverting while the color prompt is still open is refused and drops the parked activation")
+    void cannotRevertWhileColorChoiceIsOpen() {
+        harness.addToBattlefield(player1, new BirdsOfParadise());
+        Permanent birds = gd.playerBattlefields.get(player1.getId()).getFirst();
+        birds.setSummoningSick(false);
+        harness.ensurePriority(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        // The engine refuses actions while input is awaited, so the prompt must be answered first.
+        assertThatThrownBy(() -> gs.revertManaActivations(gd, player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(birds.isTapped()).isTrue();
     }
 
     @Test

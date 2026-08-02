@@ -54,7 +54,7 @@ public class PutCappedCountersOnSourceEffectHandler implements NormalEffectHandl
         }
 
         source.setCounterCount(e.counterType(), current + toAdd);
-        String logEntry = source.getCard().getName() + " gets " + toAdd + " counter(s).";
+        
         gameLogService.append(gameData, GameLog.builder().card(source.getCard()).text(" gets " + toAdd + " counter(s).").build());
         log.info("Game {} - {} gets {} {} counter(s)", gameData.id,
                 source.getCard().getName(), toAdd, e.counterType());

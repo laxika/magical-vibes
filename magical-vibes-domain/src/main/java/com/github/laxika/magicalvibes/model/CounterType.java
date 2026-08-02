@@ -19,6 +19,7 @@ public enum CounterType {
     ECHO,
     EYEBALL,
     FEATHER,
+    FILIBUSTER,
     FLOOD,
     FUNGUS,
     GROWTH,

@@ -57,7 +57,7 @@ public class GrantFlashbackToGraveyardCardsEffectHandler implements NormalEffect
             count++;
         }
 
-        String logEntry = entry.getCard().getName() + " grants flashback to " + count + " card(s) in graveyard until end of turn.";
+        
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" grants flashback to " + count + " card(s) in graveyard until end of turn.").build());
         log.info("Game {} - {} grants flashback to {} graveyard card(s)", gameData.id, entry.getCard().getName(), count);
     }

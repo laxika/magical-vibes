@@ -50,8 +50,7 @@ public class DestroyPermanentDamagedPlayerControlsEffectHandler implements Norma
         }
 
         if (validIds.isEmpty()) {
-            String logEntry = entry.getCard().getName() + "'s ability resolves, but "
-                    + gameData.playerIdToName.get(defenderId) + " has no valid targets.";
+            
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text("'s ability resolves, but " + gameData.playerIdToName.get(defenderId) + " has no valid targets.").build());
             return;
         }

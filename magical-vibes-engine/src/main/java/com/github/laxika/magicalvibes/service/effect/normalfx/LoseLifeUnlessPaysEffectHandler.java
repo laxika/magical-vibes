@@ -21,7 +21,6 @@ public class LoseLifeUnlessPaysEffectHandler implements NormalEffectHandlerBean 
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
-    private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

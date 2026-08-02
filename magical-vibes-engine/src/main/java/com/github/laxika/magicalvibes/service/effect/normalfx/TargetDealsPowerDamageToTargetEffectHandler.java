@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.CardColor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -45,15 +44,13 @@ public class TargetDealsPowerDamageToTargetEffectHandler implements NormalEffect
 
         // The biting creature deals the damage — check if it is prevented from dealing damage
         if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.isPreventedFromDealingDamage(gameData, biter)) {
-            String logEntry = biter.getCard().getName() + "'s damage is prevented.";
+            
             gameLogService.append(gameData, GameLog.cardThen(biter.getCard(), "'s damage is prevented."));
             return;
         }
 
         // Use the biting creature's color for protection checks (not the spell's color)
         if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, target, biter)) {
-            CardColor biterColor = gameQueryService.getEffectiveColor(gameData, biter);
-            String logEntry = target.getCard().getName() + " has protection from " + (biterColor != null ? biterColor.name().toLowerCase() : "source") + " — damage prevented.";
             gameLogService.append(gameData, GameLog.cardThen(biter.getCard(), "'s damage is prevented."));
             return;
         }

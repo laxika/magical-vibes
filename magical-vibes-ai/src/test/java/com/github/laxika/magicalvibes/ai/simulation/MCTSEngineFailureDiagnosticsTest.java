@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.ai.simulation;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -12,6 +14,8 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Covers the failed-iteration diagnostics of {@link MCTSEngine}: when the simulator
@@ -41,7 +45,18 @@ class MCTSEngineFailureDiagnosticsTest {
      */
     private static class ThrowingSimulator extends GameSimulator {
         ThrowingSimulator() {
-            super(null, null, null, null, null, null, null, null);
+            super(null, null, null, availabilityService(), null, null, null, null);
+        }
+
+        /**
+         * The only dependency the superclass constructor dereferences: it reads the mana model
+         * it plans against off this service. Nothing here ever plans mana, so the model behind
+         * it is as inert as the other nulls.
+         */
+        private static GameActionAvailabilityService availabilityService() {
+            GameActionAvailabilityService service = mock(GameActionAvailabilityService.class);
+            when(service.potentialManaService()).thenReturn(new PotentialManaService(null, null));
+            return service;
         }
 
         @Override

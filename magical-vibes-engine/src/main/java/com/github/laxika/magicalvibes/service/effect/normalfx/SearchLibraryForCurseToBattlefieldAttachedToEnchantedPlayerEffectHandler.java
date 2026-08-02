@@ -38,11 +38,10 @@ public class SearchLibraryForCurseToBattlefieldAttachedToEnchantedPlayerEffectHa
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        doResolve(gameData, entry, (SearchLibraryForCurseToBattlefieldAttachedToEnchantedPlayerEffect) effect);
+        doResolve(gameData, entry);
     }
 
-    private void doResolve(GameData gameData, StackEntry entry,
-                                                                            SearchLibraryForCurseToBattlefieldAttachedToEnchantedPlayerEffect effect) {
+    private void doResolve(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
         UUID sourcePermanentId = entry.getSourcePermanentId();
         Permanent source = sourcePermanentId == null ? null

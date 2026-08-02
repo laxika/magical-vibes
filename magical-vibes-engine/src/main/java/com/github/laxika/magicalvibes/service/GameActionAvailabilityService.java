@@ -28,6 +28,15 @@ public class GameActionAvailabilityService {
     private final CastingPermissionService castingPermissionService;
     private final PotentialManaService potentialManaService;
 
+    /**
+     * The potential-mana model this service answers playability with. Exposed so AI planning shares
+     * the one instance rather than building a second: a planner that disagrees with this service
+     * about what can be tapped disagrees with the server about what can be cast.
+     */
+    public PotentialManaService potentialManaService() {
+        return potentialManaService;
+    }
+
     public List<Integer> getPlayableCardIndices(GameData gameData, UUID playerId) {
         return getPlayableCardIndices(gameData, playerId, 0);
     }

@@ -25,9 +25,7 @@ public class SacrificeUnlessDiscardCardTypeEffectHandler implements NormalEffect
 
     private final DrawService drawService;
     private final GameLogService gameLogService;
-    private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
-    private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -72,8 +70,7 @@ public class SacrificeUnlessDiscardCardTypeEffectHandler implements NormalEffect
             if (sourcePermanent != null) {
                 // No valid cards to discard — sacrifice immediately
                 permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
-                String logEntry = playerName + " has no " + typeName
-                        + " to discard. " + sourceCard.getName() + " is sacrificed.";
+                
                 gameLogService.append(gameData, GameLog.builder().text(playerName + " has no " + typeName + " to discard. ").card(sourceCard).text(" is sacrificed.").build());
                 log.info("Game {} - {} sacrificed (no {} to discard)", gameData.id, sourceCard.getName(), typeName);
             } else {

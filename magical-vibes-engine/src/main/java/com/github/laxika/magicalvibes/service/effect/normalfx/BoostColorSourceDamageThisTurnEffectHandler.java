@@ -34,8 +34,7 @@ public class BoostColorSourceDamageThisTurnEffectHandler implements NormalEffect
                 .merge(e.color(), e.bonus(), Integer::sum);
         String playerName = gameData.playerIdToName.get(controllerId);
         String colorName = e.color().name().toLowerCase();
-        String logEntry = playerName + "'s " + colorName + " sources deal +" + e.bonus()
-                + " damage this turn (" + entry.getCard().getName() + ").";
+        
         gameLogService.append(gameData, GameLog.builder().text(playerName + "'s " + colorName + " sources deal +" + e.bonus() + " damage this turn (").card(entry.getCard()).text(").").build());
         log.info("Game {} - {} gains +{} {} source damage bonus this turn ({})",
                 gameData.id, playerName, e.bonus(), colorName, entry.getCard().getName());

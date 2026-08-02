@@ -36,11 +36,10 @@ public class SacrificeCreatureSearchLibraryForCreatureToHandEffectHandler implem
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        doResolve(gameData, entry, (SacrificeCreatureSearchLibraryForCreatureToHandEffect) effect);
+        doResolve(gameData, entry);
     }
 
-    private void doResolve(GameData gameData, StackEntry entry,
-                                                SacrificeCreatureSearchLibraryForCreatureToHandEffect effect) {
+    private void doResolve(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(controllerId);
 

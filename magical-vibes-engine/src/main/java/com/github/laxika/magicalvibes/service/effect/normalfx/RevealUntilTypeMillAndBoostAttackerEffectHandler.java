@@ -82,9 +82,7 @@ public class RevealUntilTypeMillAndBoostAttackerEffectHandler implements NormalE
             equippedCreature.setPowerModifier(equippedCreature.getPowerModifier() + powerBoost);
             equippedCreature.setToughnessModifier(equippedCreature.getToughnessModifier() + toughnessBoost);
 
-            String boostLog = equippedCreature.getCard().getName() + " gets +"
-                    + powerBoost + "/+" + toughnessBoost + " until end of turn ("
-                    + revealedCount + " " + (revealedCount != 1 ? "cards" : "card") + " revealed).";
+            
             gameLogService.append(gameData, GameLog.builder().card(equippedCreature.getCard()).text(" gets +" + powerBoost + "/+" + toughnessBoost + " until end of turn (" + revealedCount + " " + (revealedCount != 1 ? "cards" : "card") + " revealed).").build());
         }
 

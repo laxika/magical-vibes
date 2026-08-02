@@ -71,8 +71,7 @@ public class EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffectHan
             count++;
         }
 
-        String logMsg = entry.getCard().getName() + " makes " + count
-                + " other creature(s) a copy of " + targetName + " until end of turn.";
+        
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" makes " + count + " other creature(s) a copy of " + targetName + " until end of turn.").build());
         log.info("Game {} - Mirrorweave copies {} onto {} creatures", gameData.id, targetName, count);
     }

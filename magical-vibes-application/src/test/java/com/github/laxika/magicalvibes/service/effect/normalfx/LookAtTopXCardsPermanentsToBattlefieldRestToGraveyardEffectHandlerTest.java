@@ -83,7 +83,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
 
         libraryRevealSupport = new LibraryRevealSupport(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
-        lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler = new LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler(gameQueryService, predicateEvaluationService, gameLogService,
+        lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler = new LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler(predicateEvaluationService, gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
 
     }

@@ -24,7 +24,7 @@ public class DrawDiscardTransformIfCreatureDiscardedEffectHandler implements Nor
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (DrawDiscardTransformIfCreatureDiscardedEffect) effect;
+        
 
         UUID controllerId = entry.getControllerId();
         // Draw a card

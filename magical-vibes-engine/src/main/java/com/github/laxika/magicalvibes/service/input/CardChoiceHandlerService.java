@@ -157,9 +157,9 @@ public class CardChoiceHandlerService {
             Card card = hand.remove(cardIndex);
 
             if (isTargeted) {
-                resolveTargetedCardChoice(gameData, player, playerId, hand, card, targetId);
+                resolveTargetedCardChoice(gameData, player, playerId, card, targetId);
             } else {
-                resolveUntargetedCardChoice(gameData, player, playerId, hand, card, enterTapped, grantHaste,
+                resolveUntargetedCardChoice(gameData, player, playerId, card, enterTapped, grantHaste,
                         sacrificeAtEndStep, attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction);
                 // Cultivator Colossus / Wrenn and Seven: re-offer until decline / no matches.
                 if ((drawAndRepeat || putAnyNumber) && drawAndRepeatPredicate != null && drawAndRepeatLabel != null
@@ -842,7 +842,7 @@ public class CardChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
-    private void resolveTargetedCardChoice(GameData gameData, Player player, UUID playerId, List<Card> hand, Card card, UUID targetId) {
+    private void resolveTargetedCardChoice(GameData gameData, Player player, UUID playerId, Card card, UUID targetId) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target != null) {
             Permanent auraPerm = new Permanent(card);
@@ -865,7 +865,7 @@ public class CardChoiceHandlerService {
         }
     }
 
-    private void resolveUntargetedCardChoice(GameData gameData, Player player, UUID playerId, List<Card> hand, Card card,
+    private void resolveUntargetedCardChoice(GameData gameData, Player player, UUID playerId, Card card,
                                              boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
                                              UUID attachEquipmentCardId, boolean enterAttacking,
                                              Integer sacrificeUnlessPayGenericReduction) {

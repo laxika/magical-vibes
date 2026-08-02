@@ -45,7 +45,6 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -76,7 +75,6 @@ public class GraveyardReturnSupport {
     private final PlayerInputService playerInputService;
     private final LifeSupport lifeSupport;
     private final ExileService exileService;
-    private final CardViewFactory cardViewFactory;
     private final GraveyardService graveyardService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PermanentCounterSupport permanentCounterSupport;
@@ -318,7 +316,7 @@ public class GraveyardReturnSupport {
     public void resolveReturnAll(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
                                   UUID controllerId, UUID sourceCardId) {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-        String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
+        
 
         if (effect.thisTurnOnly() || effect.fromBattlefieldThisTurn() || effect.fromAnywhereThisTurn()
                 || effect.discardedOrCycledThisTurn()) {
@@ -729,11 +727,11 @@ public class GraveyardReturnSupport {
         String playerName = gameData.playerIdToName.get(playerId);
         if (destination == GraveyardChoiceDestination.HAND) {
             gameData.addCardToHand(playerId, card);
-            String logEntry = playerName + " returns " + card.getName() + " from graveyard to hand.";
+            
             gameLogService.append(gameData, GameLog.textCardText(playerName + " returns " , card, " from graveyard to hand."));
         } else if (destination == GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY) {
             gameData.playerDecks.get(playerId).addFirst(card);
-            String logEntry = playerName + " puts " + card.getName() + " on top of their library from a graveyard.";
+            
             gameLogService.append(gameData, GameLog.textCardText(playerName + " puts " , card, " on top of their library from a graveyard."));
         } else if (destination == GraveyardChoiceDestination.BOTTOM_OF_OWNERS_LIBRARY) {
             gameData.playerDecks.get(playerId).addLast(card);
@@ -1493,8 +1491,8 @@ public class GraveyardReturnSupport {
         List<Card> allCards = new ArrayList<>(state.cards());
         Map<UUID, UUID> cardOwners = new HashMap<>(state.cardOwners());
 
-        String chosenDesc = buildCardPileDescription(allCards, chosenPileCardIds);
-        String otherDesc = buildCardPileDescription(allCards, otherPileCardIds);
+        
+        
 
         gameLogService.append(gameData, GameLog.text(controllerName + " chooses " + chosenPileName + "."));
 

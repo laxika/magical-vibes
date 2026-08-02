@@ -1522,7 +1522,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 if (spellTargetId == null) continue;
                 double baseValue = evaluateCounterspellValue(gameData, card, spellTargetId);
                 if (baseValue <= 0) continue;
-                double timingMultiplier = getTimingMultiplier(category, step, isOpponentsTurn);
+                double timingMultiplier = getTimingMultiplier(category, step);
                 double adjustedValue = baseValue * timingMultiplier;
                 if (adjustedValue >= 5.0) {
                     candidates.add(new TimedCandidate(i, adjustedValue));
@@ -1535,7 +1535,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     && (step == TurnStep.DECLARE_BLOCKERS || step == TurnStep.COMBAT_DAMAGE)) {
                 double combatValue = evaluateCombatTrickInCombat(gameData, card, isOpponentsTurn);
                 if (combatValue > 0) {
-                    double timingMultiplier = getTimingMultiplier(category, step, isOpponentsTurn);
+                    double timingMultiplier = getTimingMultiplier(category, step);
                     double adjustedValue = combatValue * timingMultiplier;
                     if (adjustedValue >= 5.0) {
                         candidates.add(new TimedCandidate(i, adjustedValue));
@@ -1548,7 +1548,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             double baseValue = spellEvaluator.estimateSpellValue(gameData, card, aiPlayer.getId());
             if (baseValue <= 0) continue;
 
-            double timingMultiplier = getTimingMultiplier(category, step, isOpponentsTurn);
+            double timingMultiplier = getTimingMultiplier(category, step);
             double adjustedValue = baseValue * timingMultiplier;
 
             // Only cast if the timing-adjusted value meets a minimum threshold
@@ -1561,7 +1561,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         candidates.sort(Comparator.comparingDouble(TimedCandidate::adjustedValue).reversed());
         TimedCandidate best = candidates.getFirst();
-        return castInstantAtIndex(gameData, hand, best.index, best.adjustedValue);
+        return castInstantAtIndex(gameData, best.index, best.adjustedValue);
     }
 
     /**
@@ -1590,7 +1590,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * Returns a timing multiplier that reflects how valuable it is to cast
      * an instant of the given category at the current step.
      */
-    private double getTimingMultiplier(InstantCategory category, TurnStep step, boolean isOpponentsTurn) {
+    private double getTimingMultiplier(InstantCategory category, TurnStep step) {
         return switch (category) {
             case REMOVAL -> {
                 if (step == TurnStep.DECLARE_BLOCKERS) yield 1.4; // Best: after blocks
@@ -1819,7 +1819,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * Casts the instant at the given hand index. Handles targeting, mana tapping,
      * sacrifice costs, graveyard exile, and X-value calculation.
      */
-    private boolean castInstantAtIndex(GameData gameData, List<Card> hand, int cardIndex, double value) {
+    private boolean castInstantAtIndex(GameData gameData, int cardIndex, double value) {
         SpellCastingPlan plan = buildSpellCastingPlan(gameData, cardIndex, null, true);
         if (plan == null) return false;
         log.info("AI (Hard): Casting {} at instant speed{} (value={}) in game {}", plan.card().getName(),
@@ -2879,8 +2879,6 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         // If combat alone is lethal, no need for burn — the "winning the race" check
         // or MCTS will handle it. This method is specifically for combat + burn combos.
         if (combatDamage >= opponentLife) return false;
-
-        int damageNeeded = opponentLife - combatDamage;
 
         // Calculate affordable burn damage from land-based mana only.
         // After the alpha strike, creature mana producers will be tapped, so we

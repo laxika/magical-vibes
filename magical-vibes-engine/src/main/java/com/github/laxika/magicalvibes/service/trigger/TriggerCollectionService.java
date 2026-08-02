@@ -1604,12 +1604,6 @@ public class TriggerCollectionService {
         }
     }
 
-    // ── Dealt-damage-to-creature triggers ──────────────────────────────
-
-    public void checkDealtDamageToCreatureTriggers(GameData gameData, Permanent damagedCreature) {
-        checkDealtDamageToCreatureTriggers(gameData, damagedCreature, 0, null);
-    }
-
     public void checkDealtDamageToCreatureTriggers(GameData gameData, Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId) {
         if (damageDealt > 0) {
             checkEnchantedCreatureDealtDamageTriggers(gameData, damagedCreature, damageDealt);
@@ -2705,14 +2699,6 @@ public class TriggerCollectionService {
                 registry.dispatch(match, EffectSlot.ON_EQUIPPED_CREATURE_DIES, resolvedEffect, ctx);
             }
         }
-    }
-
-    public void checkEnchantedPermanentDeathTriggers(GameData gameData, UUID dyingPermanentId) {
-        checkEnchantedPermanentDeathTriggers(gameData, dyingPermanentId, null, null, 0, 0);
-    }
-
-    public void checkEnchantedPermanentDeathTriggers(GameData gameData, UUID dyingPermanentId, UUID dyingPermanentControllerId) {
-        checkEnchantedPermanentDeathTriggers(gameData, dyingPermanentId, dyingPermanentControllerId, null, 0, 0);
     }
 
     public void checkEnchantedPermanentDeathTriggers(GameData gameData, UUID dyingPermanentId,

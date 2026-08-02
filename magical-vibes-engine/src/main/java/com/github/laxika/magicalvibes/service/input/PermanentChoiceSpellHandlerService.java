@@ -115,7 +115,7 @@ public class PermanentChoiceSpellHandlerService {
             String targetName = isPlayerTarget
                     ? gameData.playerIdToName.get(permanentId)
                     : target.getCard().getName();
-            String logEntry = lct.cardToCast().getName() + " targets " + targetName + ".";
+            
             gameLogService.append(gameData, GameLog.builder().card(lct.cardToCast()).text(" targets " + targetName + ".").build());
             log.info("Game {} - {} cast-from-library targets {}", gameData.id, lct.cardToCast().getName(), targetName);
 
@@ -161,7 +161,7 @@ public class PermanentChoiceSpellHandlerService {
             String targetName = isPlayerTarget
                     ? gameData.playerIdToName.get(permanentId)
                     : target.getCard().getName();
-            String logEntry = ect.cardToCast().getName() + " targets " + targetName + " (Knowledge Pool).";
+            
             gameLogService.append(gameData, GameLog.builder().card(ect.cardToCast()).text(" targets " + targetName + " (Knowledge Pool).").build());
             log.info("Game {} - {} cast-from-exile targets {}", gameData.id, ect.cardToCast().getName(), targetName);
 
@@ -230,7 +230,7 @@ public class PermanentChoiceSpellHandlerService {
         gameData.priorityPassedBy.clear();
 
         List<String> targetNames = chosen.stream().map(id -> getTargetDisplayName(gameData, id)).toList();
-        String logEntry = card.getName() + " targets " + String.join(", ", targetNames) + ".";
+        
         gameLogService.append(gameData, GameLog.builder().card(card).text(" targets " + String.join(", ", targetNames) + ".").build());
         log.info("Game {} - {} multi-target cast-from-exile targets {}", gameData.id, card.getName(), targetNames);
 
@@ -273,7 +273,7 @@ public class PermanentChoiceSpellHandlerService {
             String targetName = isPlayerTarget
                     ? gameData.playerIdToName.get(permanentId)
                     : target.getCard().getName();
-            String logEntry = gct.cardToCast().getName() + " targets " + targetName + ".";
+            
             gameLogService.append(gameData, GameLog.builder().card(gct.cardToCast()).text(" targets " + targetName + ".").build());
             log.info("Game {} - {} cast-from-graveyard targets {}", gameData.id, gct.cardToCast().getName(), targetName);
 

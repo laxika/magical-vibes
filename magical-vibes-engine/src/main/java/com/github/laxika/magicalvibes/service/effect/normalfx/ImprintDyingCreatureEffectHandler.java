@@ -90,7 +90,7 @@ public class ImprintDyingCreatureEffectHandler implements NormalEffectHandlerBea
         // Set as imprinted on the source permanent
         gameData.setImprintedCard(sourcePermanent.getCard(), dyingCard);
 
-        String logMsg = dyingCard.getName() + " is exiled and imprinted on " + sourcePermanent.getCard().getName() + ".";
+        
         gameLogService.append(gameData, GameLog.cardTextCard(dyingCard, " is exiled and imprinted on ", sourcePermanent.getCard(), "."));
         log.info("Game {} - {} imprinted on {}", gameData.id, dyingCard.getName(), sourcePermanent.getCard().getName());
     }

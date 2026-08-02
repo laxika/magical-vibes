@@ -26,7 +26,6 @@ public class SacrificeArtifactThenDealDividedDamageEffectHandler implements Norm
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
-    private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,7 +34,7 @@ public class SacrificeArtifactThenDealDividedDamageEffectHandler implements Norm
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (SacrificeArtifactThenDealDividedDamageEffect) effect;
+        
 
         UUID controllerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(controllerId);

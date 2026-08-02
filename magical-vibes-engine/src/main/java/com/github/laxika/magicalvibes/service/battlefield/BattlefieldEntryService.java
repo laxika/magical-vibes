@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithA
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentsWithSameNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEffect;
@@ -217,6 +218,7 @@ public class BattlefieldEntryService {
         // "As this enters, you may reveal a [subtype] card from your hand; if you don't, it enters
         // tapped." Must run after the permanent is on the battlefield so we can reference/tap it.
         applyRevealSubtypeOrEntersTapped(gameData, controllerId, permanent);
+        applyMayPayLifeOrEntersTapped(gameData, controllerId, permanent);
         applyUnleash(gameData, controllerId, permanent);
     }
 
@@ -376,6 +378,36 @@ public class BattlefieldEntryService {
                 List.of(effect),
                 permanent.getCard().getName() + " — Reveal a " + effect.subtype().getDisplayName()
                         + " card from your hand? (If you don't, it enters tapped.)",
+                null,
+                null,
+                permanent.getId()));
+        playerInputService.processNextMayAbility(gameData);
+    }
+
+    private void applyMayPayLifeOrEntersTapped(GameData gameData, UUID controllerId, Permanent permanent) {
+        MayPayLifeOrEntersTappedEffect effect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(e -> e instanceof MayPayLifeOrEntersTappedEffect)
+                .map(MayPayLifeOrEntersTappedEffect.class::cast)
+                .findFirst().orElse(null);
+        if (effect == null) {
+            return;
+        }
+
+        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, controllerId)
+                && gameData.getLife(controllerId) >= effect.lifeCost();
+        if (!canPay) {
+            permanent.tap();
+            log.info("Game {} - {} enters tapped (controller cannot pay {} life)", gameData.id,
+                    permanent.getCard().getName(), effect.lifeCost());
+            return;
+        }
+
+        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                permanent.getCard(),
+                controllerId,
+                List.of(effect),
+                permanent.getCard().getName() + " — Pay " + effect.lifeCost()
+                        + " life? (If you don't, it enters tapped.)",
                 null,
                 null,
                 permanent.getId()));
@@ -954,7 +986,7 @@ public class BattlefieldEntryService {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
             playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), targetId,
-                    colorChoice.allowedColors());
+                    colorChoice);
             return;
         }
 

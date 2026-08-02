@@ -27,7 +27,7 @@ public class DiscardCardAndUntapSelfEffectHandler implements NormalEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (DiscardCardAndUntapSelfEffect) effect;
+        
 
         UUID controllerId = entry.getControllerId();
         List<Card> hand = gameData.playerHands.get(controllerId);

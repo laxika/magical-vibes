@@ -87,7 +87,7 @@ public class ForbiddenRitualEffectHandler implements NormalEffectHandlerBean {
         }
 
         // Re-entry after the opponent's sacrifice/discard sub-choice — offer the optional repeat.
-        offerRepeatOrFinish(gameData, entry, sourceName, controllerId);
+        offerRepeatOrFinish(gameData, sourceName, controllerId);
     }
 
     /**
@@ -122,7 +122,7 @@ public class ForbiddenRitualEffectHandler implements NormalEffectHandlerBean {
                 sourceName + " — sacrifice a nontoken permanent.");
     }
 
-    private void offerOpponentPenalty(GameData gameData, StackEntry entry, String sourceName,
+    private void offerOpponentPenalty(GameData gameData, StackEntry unusedEntry, String sourceName,
             UUID controllerId, UUID opponentId, int lifeLoss) {
         if (!gameData.playerIds.contains(opponentId)) {
             finish(gameData, gameData.forbiddenRitual);
@@ -133,7 +133,7 @@ public class ForbiddenRitualEffectHandler implements NormalEffectHandlerBean {
         if (options.size() == 1) {
             lifeSupport.applyLifeLoss(gameData, opponentId, lifeLoss, sourceName);
             gameOutcomeService.checkWinCondition(gameData);
-            offerRepeatOrFinish(gameData, entry, sourceName, controllerId);
+            offerRepeatOrFinish(gameData, sourceName, controllerId);
             return;
         }
 
@@ -146,12 +146,12 @@ public class ForbiddenRitualEffectHandler implements NormalEffectHandlerBean {
                 options, prompt));
     }
 
-    private void applyOpponentMode(GameData gameData, StackEntry entry, String sourceName,
+    private void applyOpponentMode(GameData gameData, StackEntry unusedEntry, String sourceName,
             UUID controllerId, UUID opponentId, int lifeLoss, String mode) {
         if (ChoiceContext.ForbiddenRitualPenaltyChoice.SACRIFICE.equals(mode)) {
             List<UUID> permanentIds = anyPermanentIds(gameData, opponentId);
             if (permanentIds.isEmpty()) {
-                offerRepeatOrFinish(gameData, entry, sourceName, controllerId);
+                offerRepeatOrFinish(gameData, sourceName, controllerId);
                 return;
             }
             gameData.rerunCurrentEffectAfterInteraction = true;
@@ -165,24 +165,24 @@ public class ForbiddenRitualEffectHandler implements NormalEffectHandlerBean {
         if (ChoiceContext.ForbiddenRitualPenaltyChoice.DISCARD.equals(mode)) {
             List<Card> hand = gameData.playerHands.get(opponentId);
             if (hand == null || hand.isEmpty()) {
-                offerRepeatOrFinish(gameData, entry, sourceName, controllerId);
+                offerRepeatOrFinish(gameData, sourceName, controllerId);
                 return;
             }
             gameData.discardCausedByOpponent = !opponentId.equals(controllerId);
             gameData.rerunCurrentEffectAfterInteraction = true;
             playerInteractionSupport.resolveDiscardCards(gameData, opponentId, 1, DiscardFollowUp.NONE);
             if (!gameData.interaction.isAwaitingInput()) {
-                offerRepeatOrFinish(gameData, entry, sourceName, controllerId);
+                offerRepeatOrFinish(gameData, sourceName, controllerId);
             }
             return;
         }
 
         lifeSupport.applyLifeLoss(gameData, opponentId, lifeLoss, sourceName);
         gameOutcomeService.checkWinCondition(gameData);
-        offerRepeatOrFinish(gameData, entry, sourceName, controllerId);
+        offerRepeatOrFinish(gameData, sourceName, controllerId);
     }
 
-    private void offerRepeatOrFinish(GameData gameData, StackEntry entry, String sourceName,
+    private void offerRepeatOrFinish(GameData gameData, String sourceName,
             UUID controllerId) {
         ForbiddenRitualState state = gameData.forbiddenRitual;
         if (nontokenPermanentIds(gameData, controllerId).isEmpty()) {

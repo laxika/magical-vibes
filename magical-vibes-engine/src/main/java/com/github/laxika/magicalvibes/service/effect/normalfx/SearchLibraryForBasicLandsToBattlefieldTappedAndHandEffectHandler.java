@@ -35,10 +35,10 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        doResolve(gameData, entry, (SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect) effect);
+        doResolve(gameData, entry);
     }
 
-    private void doResolve(GameData gameData, StackEntry entry, SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect effect) {
+    private void doResolve(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) return;
 

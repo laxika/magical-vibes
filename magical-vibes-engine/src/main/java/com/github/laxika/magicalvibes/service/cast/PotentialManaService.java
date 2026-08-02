@@ -3,14 +3,11 @@ package com.github.laxika.magicalvibes.service.cast;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -25,11 +22,12 @@ import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -42,16 +40,38 @@ import java.util.UUID;
  * the current pool plus every untapped mana source they control. Shared by the AI's
  * planning ({@code AiManaManager}) and by {@code GameActionAvailabilityService}, which uses it to
  * mark hand cards as "castable if you tap your lands" for the MTGO-style casting flow.
+ *
+ * <p>Only mana that lands in the plain pool is counted. A source whose mana pays into a restricted
+ * bucket — Cavern of Souls' chosen creature type, Ancient Ziggurat's creature spells, the
+ * flashback/instant-sorcery/artifact buckets — contributes nothing, because a caller measuring a
+ * generic cost against this pool would otherwise be promised mana that cost can never spend.
+ * {@code GameActionAvailabilityService.getPotentialPlayableCardIndices} closes that gap the honest
+ * way, by unioning with the strictly-affordable indices computed from the real pool.
  */
 @Component
 public class PotentialManaService {
 
-    private final GameQueryService gameQueryService;
-    private final CastingCostService castingCostService;
+    /**
+     * The pool {@link #canTapForManaNow} measures affordability against. Shared and never mutated:
+     * activation legality only reads a pool, and allocating one per ability would land on the MCTS
+     * rollout path.
+     */
+    private static final ManaPool NO_MANA_AVAILABLE = new ManaPool();
 
-    public PotentialManaService(GameQueryService gameQueryService, CastingCostService castingCostService) {
+    private final GameQueryService gameQueryService;
+    /**
+     * The authority on activation legality. Injected {@code @Lazy} because the edge closes a
+     * construction cycle: {@code AbilityActivationService} reaches back here through the event and
+     * view-projection stack (graveyard → log → mutation coordinator → event dispatcher → projection
+     * subscriber → view projection factory → {@code GameActionAvailabilityService}). Nothing is
+     * called on it during construction, so a deferred proxy costs nothing.
+     */
+    private final AbilityActivationService abilityActivationService;
+
+    public PotentialManaService(GameQueryService gameQueryService,
+                                @Lazy AbilityActivationService abilityActivationService) {
         this.gameQueryService = gameQueryService;
-        this.castingCostService = castingCostService;
+        this.abilityActivationService = abilityActivationService;
     }
 
     public VirtualManaPool buildVirtualManaPool(GameData gameData, UUID playerId) {
@@ -81,8 +101,7 @@ public class PotentialManaService {
                     continue;
                 }
                 boolean isCreature = gameQueryService.isCreature(gameData, perm);
-                if (isCreature && perm.isSummoningSick()
-                        && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) {
+                if (gameQueryService.isSummoningSickForTapCost(gameData, perm, playerId)) {
                     continue;
                 }
                 if (!gameQueryService.canActivateManaAbility(gameData, perm)) {
@@ -116,7 +135,7 @@ public class PotentialManaService {
                     if (isCreature) {
                         virtual.addCreatureMana(overriddenColor, 1);
                     }
-                } else if (hasOnTapManaEffects(perm.getCard())) {
+                } else if (hasLivePrintedTapMana(gameData, perm)) {
                     // Basic lands and permanents with ON_TAP mana effects
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
                         if (effect instanceof AwardManaEffect manaEffect) {
@@ -126,13 +145,7 @@ public class PotentialManaService {
                                 virtual.addCreatureMana(manaEffect.color(), amount);
                             }
                         } else if (effect instanceof AwardAnyColorManaEffect aace) {
-                            virtual.add(ManaColor.COLORLESS, aace.amount());
-                            if (isCreature) {
-                                virtual.addCreatureMana(ManaColor.COLORLESS, aace.amount());
-                            }
-                        } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
-                            // Treated as colorless for virtual pool estimation
-                            virtual.add(ManaColor.COLORLESS);
+                            addAnyColorManaToVirtualPool(virtual, aace.amount(), isCreature);
                         }
                     }
                 } else {
@@ -196,14 +209,12 @@ public class PotentialManaService {
                     addTwistedManaToVirtualPool(virtual, new LinkedHashSet<>(overriddenColors), 1, false);
                 } else if (overriddenColor != null) {
                     virtual.add(overriddenColor, 1);
-                } else if (hasOnTapManaEffects(perm.getCard())) {
+                } else if (hasLivePrintedTapMana(gameData, perm)) {
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
                         if (effect instanceof AwardManaEffect manaEffect) {
                             virtual.add(manaEffect.color(), estimateManaAmount(manaEffect.amount(), perm, gameData));
                         } else if (effect instanceof AwardAnyColorManaEffect aace) {
-                            virtual.add(ManaColor.COLORLESS, aace.amount());
-                        } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
-                            virtual.add(ManaColor.COLORLESS);
+                            addAnyColorManaToVirtualPool(virtual, aace.amount(), false);
                         }
                     }
                 } else {
@@ -239,8 +250,7 @@ public class PotentialManaService {
                     continue;
                 }
                 boolean isCreature = gameQueryService.isCreature(gameData, perm);
-                if (isCreature && perm.isSummoningSick()
-                        && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) {
+                if (gameQueryService.isSummoningSickForTapCost(gameData, perm, playerId)) {
                     continue;
                 }
                 if (!gameQueryService.canActivateManaAbility(gameData, perm)) {
@@ -276,7 +286,7 @@ public class PotentialManaService {
                     }
                 } else if (overriddenColors.size() > 1) {
                     // Multi-type land override prompts for a color — skip in the safe pool.
-                } else if (hasOnTapManaEffects(perm.getCard())) {
+                } else if (hasLivePrintedTapMana(gameData, perm)) {
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
                         if (effect instanceof AwardManaEffect manaEffect) {
                             int amount = estimateManaAmount(manaEffect.amount(), perm, gameData);
@@ -284,14 +294,9 @@ public class PotentialManaService {
                             if (isCreature) {
                                 virtual.addCreatureMana(manaEffect.color(), amount);
                             }
-                        } else if (effect instanceof AwardAnyColorManaEffect aace) {
-                            virtual.add(ManaColor.COLORLESS, aace.amount());
-                            if (isCreature) {
-                                virtual.addCreatureMana(ManaColor.COLORLESS, aace.amount());
-                            }
-                        } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
-                            virtual.add(ManaColor.COLORLESS);
                         }
+                        // An ON_TAP "add one mana of any color" prompts for the color just as the
+                        // activated-ability form does, so it is skipped here for the same reason.
                     }
                 } else {
                     // Skip activated mana abilities that would trigger a color choice
@@ -321,41 +326,37 @@ public class PotentialManaService {
         int totalAdded = 0;
         int maxAbilityTotal = 0;
 
-        for (ActivatedAbility ability : card.getActivatedAbilities()) {
-            if (!canTapForManaNow(ability, permanent, gameData, playerId)) {
+        int creatureManaAdded = 0;
+        int maxCreatureManaOption = 0;
+
+        List<ActivatedAbility> abilities = activatedAbilitiesFor(gameData, permanent, card);
+        for (int abilityIndex = 0; abilityIndex < abilities.size(); abilityIndex++) {
+            ActivatedAbility ability = abilities.get(abilityIndex);
+            if (!canTapForManaNow(ability, abilityIndex, permanent, gameData, playerId)) {
                 continue;
             }
 
-            EnumMap<ManaColor, Integer> abilityByColor = new EnumMap<>(ManaColor.class);
-            for (CardEffect effect : ability.getEffects()) {
-                if (effect instanceof AwardManaEffect manaEffect) {
-                    int amount = estimateManaAmount(manaEffect.amount(), permanent, gameData);
-                    if (amount > 0) {
-                        abilityByColor.merge(manaEffect.color(), amount, Integer::sum);
+            for (EnumMap<ManaColor, Integer> abilityByColor : manaOptionsFor(ability, permanent, gameData)) {
+                int abilityTotal = 0;
+                for (Map.Entry<ManaColor, Integer> e : abilityByColor.entrySet()) {
+                    ManaColor color = e.getKey();
+                    int amount = e.getValue();
+                    virtual.add(color, amount);
+                    if (isCreature) {
+                        virtual.addCreatureMana(color, amount);
                     }
-                } else if (effect instanceof AwardAnyColorManaEffect aace) {
-                    abilityByColor.merge(ManaColor.COLORLESS, aace.amount(), Integer::sum);
-                } else if (effect instanceof AwardChosenColorManaEffect
-                        && permanent != null && permanent.getChosenColor() != null) {
-                    abilityByColor.merge(ManaColor.valueOf(permanent.getChosenColor().name()), 1, Integer::sum);
+                    totalByColor.merge(color, amount, Integer::sum);
+                    maxPerAbilityByColor.merge(color, amount, Integer::max);
+                    abilityTotal += amount;
                 }
-            }
-
-            int abilityTotal = 0;
-            for (Map.Entry<ManaColor, Integer> e : abilityByColor.entrySet()) {
-                ManaColor color = e.getKey();
-                int amount = e.getValue();
-                virtual.add(color, amount);
+                totalAdded += abilityTotal;
+                if (abilityTotal > maxAbilityTotal) {
+                    maxAbilityTotal = abilityTotal;
+                }
                 if (isCreature) {
-                    virtual.addCreatureMana(color, amount);
+                    creatureManaAdded += abilityTotal;
+                    maxCreatureManaOption = Math.max(maxCreatureManaOption, abilityTotal);
                 }
-                totalByColor.merge(color, amount, Integer::sum);
-                maxPerAbilityByColor.merge(color, amount, Integer::max);
-                abilityTotal += amount;
-            }
-            totalAdded += abilityTotal;
-            if (abilityTotal > maxAbilityTotal) {
-                maxAbilityTotal = abilityTotal;
             }
         }
 
@@ -374,47 +375,130 @@ public class PotentialManaService {
                     vmp.addPerColorOvercount(e.getKey(), perColorOvercount);
                 }
             }
+            vmp.addCreatureManaOvercount(creatureManaAdded - maxCreatureManaOption);
         }
     }
 
     /**
-     * Returns true if {@code ability} is a mana ability the player could tap {@code permanent} for
-     * right now. This is the single predicate every mana-planning path shares — the virtual pool
-     * here and the AI's payment planning in {@code AiManaManager} — so a new activation gate is
-     * added once instead of in three hand-synced copies. The authority on activation legality
-     * remains {@code AbilityActivationService.validateActivationLegality}; anything it rejects and
-     * this predicate accepts becomes mana the AI counts on and can never actually produce.
+     * The mutually exclusive mana outputs one activation of {@code ability} could yield, as one
+     * color→amount map per outcome. Fixed producers have a single outcome; "add one mana of any
+     * color" ({@link ManaProducingEffect#estimatedCountsAllColors()}) has five, one per color,
+     * which is what lets it pay a colored pip of any color. Booking it as colorless instead would
+     * cover generic costs but no colored pip at all, so a Birds of Paradise would never mark a
+     * {@code {G}} spell castable. Since the source still taps only once, the caller's over-count
+     * bookkeeping collapses the five outcomes back to the single mana it really produces.
+     */
+    private List<EnumMap<ManaColor, Integer>> manaOptionsFor(ActivatedAbility ability, Permanent permanent,
+                                                             GameData gameData) {
+        EnumMap<ManaColor, Integer> fixed = new EnumMap<>(ManaColor.class);
+        int anyColorAmount = 0;
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof AwardManaEffect manaEffect) {
+                int amount = estimateManaAmount(manaEffect.amount(), permanent, gameData);
+                if (amount > 0) {
+                    fixed.merge(manaEffect.color(), amount, Integer::sum);
+                }
+            } else if (effect instanceof ManaProducingEffect mana && mana.estimatedCountsAllColors()) {
+                anyColorAmount += Math.max(1, mana.estimatedWildcardMana());
+            } else if (effect instanceof AwardChosenColorManaEffect
+                    && permanent != null && permanent.getChosenColor() != null) {
+                fixed.merge(ManaColor.valueOf(permanent.getChosenColor().name()), 1, Integer::sum);
+            }
+        }
+        if (anyColorAmount == 0) {
+            return List.of(fixed);
+        }
+        List<EnumMap<ManaColor, Integer>> options = new ArrayList<>();
+        for (ManaColor color : ManaColor.COLORS) {
+            EnumMap<ManaColor, Integer> option = new EnumMap<>(fixed);
+            option.merge(color, anyColorAmount, Integer::sum);
+            options.add(option);
+        }
+        return options;
+    }
+
+    /**
+     * Adds a "one mana of any color" producer to a virtual pool: every color is offered, and the
+     * inflation of the total is recorded so the source still counts as the single mana one tap
+     * yields. Mirrors {@link #manaOptionsFor} for the slots that have no per-ability bookkeeping —
+     * the {@code ON_TAP} slot here, and {@code AiManaManager.addCardManaToPool}'s hypothetical
+     * land evaluation.
+     */
+    public static void addAnyColorManaToVirtualPool(ManaPool virtual, int amount, boolean isCreature) {
+        if (amount <= 0) {
+            return;
+        }
+        for (ManaColor color : ManaColor.COLORS) {
+            virtual.add(color, amount);
+            if (isCreature) {
+                virtual.addCreatureMana(color, amount);
+            }
+        }
+        if (virtual instanceof VirtualManaPool vmp) {
+            int overcount = amount * (ManaColor.COLORS.size() - 1);
+            vmp.addFlexibleOvercount(overcount);
+            if (isCreature) {
+                vmp.addCreatureManaOvercount(overcount);
+            }
+        }
+    }
+
+    /**
+     * Whether the permanent's printed {@code ON_TAP} mana is still there to be tapped for. Ability
+     * loss strips it even when a later-timestamp grant keeps a mana ability alive (Imprisoned in
+     * the Moon on a Forest), and {@code AbilityActivationService.tapPermanent} refuses outright in
+     * that state — so the granted ability has to be read through the activated-ability path instead
+     * of the printed colour being counted twice over.
+     */
+    public boolean hasLivePrintedTapMana(GameData gameData, Permanent permanent) {
+        return hasOnTapManaEffects(permanent.getCard())
+                && !gameQueryService.hasLostAllAbilities(gameData, permanent);
+    }
+
+    /**
+     * The abilities {@code abilityIndex} is measured against — the same list
+     * {@code AbilityActivationService.activateAbility} resolves an index against, so a planner's
+     * index and the engine's never name different abilities. Falls back to the printed list for
+     * hypothetical card evaluation, where there is no permanent to grant or strip anything.
+     */
+    public List<ActivatedAbility> activatedAbilitiesFor(GameData gameData, Permanent permanent, Card card) {
+        if (gameData == null || permanent == null) {
+            return card.getActivatedAbilities();
+        }
+        return abilityActivationService.getEffectiveActivatedAbilities(gameData, permanent);
+    }
+
+    /**
+     * Returns true if the ability at {@code abilityIndex} is a mana ability the player could tap
+     * {@code permanent} for right now. This is the single predicate every mana-planning path shares
+     * — the virtual pool here and the AI's payment planning in {@code AiManaManager} — so a new
+     * activation gate is honoured everywhere at once.
+     *
+     * <p>Legality is not re-derived here: it is asked of
+     * {@code AbilityActivationService.validateActivationLegality}, the same check the engine runs
+     * before paying any cost. A hand-maintained copy of those rules is what let the AI count mana
+     * it could never produce — it knew about timing restrictions and source counters but not about
+     * mill/pay-life/sacrifice costs, activation limits, "activate only if" conditions, Sen Triplets
+     * or Grand Abolisher, so it tapped its whole board and then sent a cast the engine refused.
+     *
+     * <p>Affordability is measured against an empty pool. A free tap mana ability has no mana cost,
+     * so the only thing that reads the pool is an activation tax (Gloom) — and a taxed source can
+     * never back mana a planner has already counted as available, which is exactly the conservative
+     * answer an empty pool produces.
      *
      * @param permanent the permanent on the battlefield, or null for hypothetical card evaluation
      *                  (source-relative gates are then assumed satisfiable)
      */
-    public boolean canTapForManaNow(ActivatedAbility ability, Permanent permanent,
+    public boolean canTapForManaNow(ActivatedAbility ability, int abilityIndex, Permanent permanent,
                                     GameData gameData, UUID playerId) {
-        if (gameData != null && gameQueryService.isLockedOutByOwnTurnOnlyRestriction(gameData, playerId)) {
+        if (!isFreeTapManaAbility(ability)) {
             return false;
         }
-        return isFreeTapManaAbility(ability)
-                && canPaySourceCounterCosts(ability, permanent)
-                && meetsRequiredSourceCounters(ability, permanent)
-                && isUntaxedToActivate(gameData, permanent)
-                && canMeetTimingRestriction(ability, gameData, playerId, permanent);
-    }
-
-    /**
-     * Returns true if no static effect taxes the source's activated abilities (Gloom: activated
-     * abilities of white enchantments cost {3} more). A taxed mana ability is not free — the engine
-     * demands the tax before it produces anything — so it can never back mana a planner has already
-     * counted as available. Dropping the source is the conservative approximation: modelling one
-     * that consumes mana before producing it would have to be threaded through every planning path,
-     * and the tax normally costs more than the ability yields. What that gives up is a source worth
-     * tapping purely to fix a color at break-even.
-     * If permanent or gameData is null (hypothetical card evaluation), assumes no tax.
-     */
-    private boolean isUntaxedToActivate(GameData gameData, Permanent permanent) {
         if (gameData == null || permanent == null) {
-            return true;
+            return true; // hypothetical card evaluation: nothing on the board to gate against
         }
-        return castingCostService.getActivatedAbilityActivationTax(gameData, permanent) == 0;
+        return abilityActivationService.canActivateAbility(
+                gameData, playerId, permanent, abilityIndex, NO_MANA_AVAILABLE);
     }
 
     /**
@@ -438,85 +522,6 @@ public class PotentialManaService {
         return ability.isRequiresTap()
                 && ability.getManaCost() == null
                 && ability.getEffects().stream().anyMatch(e -> e instanceof ManaProducingEffect);
-    }
-
-    /**
-     * Returns true if the ability's timing restriction is met. If gameData or permanent is null
-     * (hypothetical card evaluation), assumes the restriction can be met.
-     */
-    private boolean canMeetTimingRestriction(ActivatedAbility ability, GameData gameData, UUID playerId, Permanent permanent) {
-        if (ability.getTimingRestriction() == null || gameData == null) {
-            return true;
-        }
-        return switch (ability.getTimingRestriction()) {
-            case CAST_NONCREATURE_SPELL_THIS_TURN -> gameQueryService.playerCastNoncreatureSpellThisTurn(gameData, playerId);
-            case COVEN -> gameQueryService.isCovenMet(gameData, playerId);
-            case METALCRAFT -> gameQueryService.isMetalcraftMet(gameData, playerId);
-            case MORBID -> gameQueryService.isMorbidMet(gameData);
-            case OPPONENT_CONTROLS_FLYING_CREATURE -> gameQueryService.anyOpponentControlsFlyingCreature(gameData, playerId);
-            case OPPONENT_CONTROLS_MORE_LANDS -> gameQueryService.anyOpponentControlsMoreLands(gameData, playerId);
-            case ONLY_DURING_YOUR_TURN -> playerId.equals(gameData.activePlayerId);
-            case ONLY_DURING_YOUR_UPKEEP -> playerId.equals(gameData.activePlayerId)
-                    && gameData.currentStep == TurnStep.UPKEEP;
-            case ONLY_DURING_ANY_UPKEEP -> gameData.currentStep == TurnStep.UPKEEP;
-            case ONLY_DURING_OPPONENTS_UPKEEP -> gameData.currentStep == TurnStep.UPKEEP
-                    && !playerId.equals(gameData.activePlayerId);
-            case ONLY_DURING_OPPONENTS_TURN_BEFORE_COMBAT -> !playerId.equals(gameData.activePlayerId)
-                    && gameData.currentStep.isBeforeCombat();
-            case ONLY_WHILE_ATTACKING -> permanent != null && permanent.isAttacking();
-            case ONLY_WHILE_ATTACKING_OR_BLOCKING -> permanent != null
-                    && (permanent.isAttacking() || permanent.isBlocking());
-            case ONLY_BEFORE_ATTACKERS_DECLARED -> playerId.equals(gameData.activePlayerId)
-                    && gameData.currentStep.isBeforeAttackersDeclared();
-            case BEFORE_ATTACKERS_DECLARED -> gameData.currentStep.isBeforeAttackersDeclared()
-                    && gameData.combatPhasesThisTurn <= 1;
-            case BEFORE_BLOCKERS_DECLARED -> gameData.currentStep.isBeforeBlockersDeclared()
-                    && gameData.combatPhasesThisTurn <= 1;
-            case ONLY_DURING_COMBAT -> gameData.currentStep.isCombatPhase();
-            case ONLY_BEFORE_END_OF_COMBAT -> gameData.currentStep.isBeforeEndOfCombat();
-            case ONLY_DURING_DECLARE_ATTACKERS_IF_ATTACKED -> gameData.currentStep == TurnStep.DECLARE_ATTACKERS
-                    && gameQueryService.isPlayerBeingAttacked(gameData, playerId);
-            case ONLY_DURING_DECLARE_BLOCKERS -> gameData.currentStep == TurnStep.DECLARE_BLOCKERS;
-            case ONLY_DURING_DECLARE_BLOCKERS_IF_BLOCKED -> gameData.currentStep == TurnStep.DECLARE_BLOCKERS
-                    && permanent != null && gameQueryService.isBlockedByAnyCreature(gameData, permanent);
-            case ONLY_WHILE_CREATURE -> permanent != null && gameQueryService.isCreature(gameData, permanent);
-            case POWER_4_OR_GREATER -> permanent != null && gameQueryService.getEffectivePower(gameData, permanent) >= 4;
-            case RAID -> gameData.playersDeclaredAttackersThisTurn.contains(playerId);
-            case SORCERY_SPEED -> playerId.equals(gameData.activePlayerId)
-                    && (gameData.currentStep == TurnStep.PRECOMBAT_MAIN || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN)
-                    && gameData.stack.isEmpty();
-        };
-    }
-
-    /**
-     * Returns true if the permanent can pay any source-counter costs required by the ability.
-     * If permanent is null (hypothetical card evaluation), assumes costs can be paid.
-     */
-    private static boolean canPaySourceCounterCosts(ActivatedAbility ability, Permanent permanent) {
-        if (permanent == null) {
-            return true;
-        }
-        for (CardEffect effect : ability.getEffects()) {
-            if (effect instanceof RemoveCounterFromSourceCost cost) {
-                int available = switch (cost.counterType()) {
-                    case SILVER -> 0;
-                    case ANY -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)
-                            + permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
-                    default -> permanent.getCounterCount(cost.counterType());
-                };
-                if (available < cost.count()) {
-                    return false;
-                }
-            }
-        }
-        for (CardEffect effect : ability.getEffects()) {
-            if (effect instanceof RemoveChargeCountersFromSourceCost cost) {
-                if (permanent.getCounterCount(CounterType.CHARGE) < cost.count()) {
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 
     /**
@@ -625,9 +630,13 @@ public class PotentialManaService {
             }
         }
         if (virtual instanceof VirtualManaPool vmp && twisted.size() > 1) {
+            // Only the total is inflated. Each colour is offered by exactly one of the mutually
+            // exclusive options, so its per-colour maximum equals its per-colour sum and the
+            // per-colour over-count is zero — subtracting `amount` per colour instead drove
+            // get(colour) to 0 for every option, leaving the land unable to pay any pip at all.
             vmp.addFlexibleOvercount(amount * (twisted.size() - 1));
-            for (ManaColor color : twisted) {
-                vmp.addPerColorOvercount(color, amount);
+            if (isCreature) {
+                vmp.addCreatureManaOvercount(amount * (twisted.size() - 1));
             }
         }
     }

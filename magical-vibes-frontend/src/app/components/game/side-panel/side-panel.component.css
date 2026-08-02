@@ -743,8 +743,16 @@
   transition: background 0.15s, transform 0.1s;
 }
 
-.btn-color-choice:hover {
+.btn-color-choice:hover:not(:disabled) {
   transform: scale(1.05);
+}
+
+/* Greyed out because this colour would not cover the cost being paid. The colour swatch stays
+   readable underneath so the player can still see which option is which. */
+.btn-color-choice:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+  filter: grayscale(0.7);
 }
 
 .btn-color-choice[data-color="WHITE"],

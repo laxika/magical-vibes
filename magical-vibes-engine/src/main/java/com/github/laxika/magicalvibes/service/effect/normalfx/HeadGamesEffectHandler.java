@@ -31,10 +31,10 @@ public class HeadGamesEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        doResolve(gameData, entry, (HeadGamesEffect) effect);
+        doResolve(gameData, entry);
     }
 
-    private void doResolve(GameData gameData, StackEntry entry, HeadGamesEffect effect) {
+    private void doResolve(GameData gameData, StackEntry entry) {
         UUID casterId = entry.getControllerId();
         UUID targetPlayerId = entry.getTargetId();
         List<Card> targetHand = gameData.playerHands.get(targetPlayerId);

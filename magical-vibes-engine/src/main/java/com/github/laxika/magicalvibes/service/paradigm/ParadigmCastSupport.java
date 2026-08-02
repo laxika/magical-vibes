@@ -84,7 +84,7 @@ public class ParadigmCastSupport {
                 if (!multiTarget) {
                     graveyardService.addCardToGraveyard(gameData, playerId, card);
                 }
-                String logEntry = card.getName() + " has no valid targets.";
+                
                 gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets."));
                 log.info("Game {} - {} paradigm copy has no valid targets", gameData.id, card.getName());
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -96,8 +96,7 @@ public class ParadigmCastSupport {
             playerInputService.beginPermanentChoice(gameData, playerId, firstCandidates,
                     "Choose a target for " + card.getName() + ".");
 
-            String logEntry = playerName + " casts " + card.getName()
-                    + " without paying its mana cost — choosing target.";
+            
             gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets."));
             return;
         }

@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.KarnRestartGameEffect;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.GameRegistry;
+import com.github.laxika.magicalvibes.service.cast.ManaChoiceNarrowingService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
@@ -23,8 +23,6 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
-import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.KarnRestartGameEffectHandler;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -138,7 +136,6 @@ class GameLifecycleEventSequenceTest {
         when(gameQueryService.getOpponentId(gameData, player2Id)).thenReturn(player1Id);
 
         GameService gameService = new GameService(
-                mock(GameRegistry.class),
                 gameQueryService,
                 gameLogs,
                 mock(CombatService.class),
@@ -148,9 +145,9 @@ class GameLifecycleEventSequenceTest {
                 mock(StackResolutionService.class),
                 mock(AbilityActivationService.class),
                 mock(MulliganService.class),
-                mock(ExileSupport.class),
                 outcomeService,
-                coordinator);
+                coordinator,
+                mock(ManaChoiceNarrowingService.class));
 
         gameService.surrender(gameData, player1);
 
@@ -183,7 +180,6 @@ class GameLifecycleEventSequenceTest {
                 mock(StackResolutionService.class),
                 stepTriggers,
                 mock(CombatAttackService.class),
-                mock(PotentialManaService.class),
                 coordinator,
                 mock(StateBasedActionService.class));
         TurnProgressionService turns = new TurnProgressionService(

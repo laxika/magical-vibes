@@ -61,8 +61,7 @@ public class MillTargetPlayerAndBoostSelfByManaValueEffectHandler implements Nor
             self.setToughnessModifier(self.getToughnessModifier() + manaValue);
         }
 
-        String logEntry = cardName + " gets +" + manaValue + "/+" + manaValue
-                + " until end of turn (milled " + topCard.getName() + ", mana value " + manaValue + ").";
+        
         gameLogService.append(gameData, GameLog.builder().text(cardName + " gets +" + manaValue + "/+" + manaValue + " until end of turn (milled ").card(topCard).text(", mana value " + manaValue + ").").build());
         log.info("Game {} - {} gets +{}/+{} from milling {}", gameData.id, cardName, manaValue, manaValue, topCard.getName());
     }

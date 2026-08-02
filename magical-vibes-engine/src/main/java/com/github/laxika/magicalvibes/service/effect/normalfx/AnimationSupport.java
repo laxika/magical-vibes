@@ -150,6 +150,7 @@ public class AnimationSupport {
         self.setAnimatedPower(power);
         self.setAnimatedToughness(toughness);
         self.setAnimatedColor(effect.animatedColor());
+        applyAnimatedColors(self, effect);
         self.getTransientSubtypes().clear();
         self.getTransientSubtypes().addAll(effect.grantedSubtypes());
         self.getGrantedKeywords().addAll(effect.grantedKeywords());
@@ -167,6 +168,15 @@ public class AnimationSupport {
                 " becomes a " + power + "/" + toughness + " creature " + durationText + "."));
 
         log.info("Game {} - {} becomes a {}/{} creature", gameData.id, self.getCard().getName(), power, toughness);
+    }
+
+    private void applyAnimatedColors(Permanent permanent, AnimatePermanentsEffect effect) {
+        if (effect.animatedColors().isEmpty()) {
+            return;
+        }
+        permanent.getTransientColors().clear();
+        permanent.getTransientColors().addAll(effect.animatedColors());
+        permanent.setColorOverridden(true);
     }
 
     /** OWN_LANDS scope — all lands you control (Sylvan Awakening), until end of turn or your next turn. */

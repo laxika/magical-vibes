@@ -37,8 +37,7 @@ public class DrawTwoToTheXCardsForTargetPlayerEffectHandler implements NormalEff
         }
 
         String playerName = gameData.playerIdToName.get(targetPlayerId);
-        String logEntry = playerName + " draws " + amount + " card" + (amount != 1 ? "s" : "")
-                + " (" + entry.getCard().getName() + ").";
+        
         gameLogService.append(gameData, GameLog.builder().text(playerName + " draws " + amount + " card" + (amount != 1 ? "s" : "") + " (").card(entry.getCard()).text(").").build());
         log.info("Game {} - {} draws {} from {}", gameData.id, playerName, amount, entry.getCard().getName());
     }

@@ -52,14 +52,13 @@ public class WinGameIfCreaturesInGraveyardEffectHandler implements NormalEffectH
             // loss replacer (Lich's Mirror) gets a say — see GameOutcomeService.canPlayerWinGame.
             UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
             if (!gameOutcomeService.canPlayerWinGame(gameData, controllerId)) {
-                String logEntry = entry.getCard().getName() + "'s win condition is met but " +
-                        gameData.playerIdToName.get(opponentId) + " can't lose the game.";
+                
                 gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text("'s win condition is met but " + gameData.playerIdToName.get(opponentId) + " can't lose the game.").build());
                 log.info("Game {} - {} win prevented — opponent can't lose", gameData.id, entry.getCard().getName());
                 return;
             }
 
-            String logEntry = playerName + " has " + creatureCount + " creature cards in their graveyard — " + entry.getCard().getName() + " wins the game!";
+            
             gameLogService.append(gameData, GameLog.textCardText(playerName + " has " + creatureCount + " creature cards in their graveyard — " , entry.getCard(), " wins the game!"));
             log.info("Game {} - {} wins via {} ({} creatures in graveyard)",
                     gameData.id, playerName, entry.getCard().getName(), creatureCount);

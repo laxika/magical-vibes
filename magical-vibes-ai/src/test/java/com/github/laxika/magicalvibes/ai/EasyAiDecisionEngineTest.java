@@ -32,7 +32,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatur
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
@@ -82,7 +81,6 @@ class EasyAiDecisionEngineTest {
     @Mock private com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
     @Mock private com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService;
     @Mock private com.github.laxika.magicalvibes.service.effect.TargetValidationService targetValidationService;
-    @Mock private Connection selfConnection;
 
     private GameData gd;
     private Player aiPlayer;
@@ -120,7 +118,7 @@ class EasyAiDecisionEngineTest {
     }
 
     private EasyAiDecisionEngine createEngine() {
-        AiTestPlayabilityStub.install(actionAvailabilityService, castingCostService);
+        AiTestPlayabilityStub.install(actionAvailabilityService, castingCostService, gameQueryService);
         EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                 gd.id, aiPlayer, gameRegistry, messageHandler,
                 gameQueryService, blockLegalityService, combatAttackService, actionAvailabilityService,
@@ -698,6 +696,7 @@ class EasyAiDecisionEngineTest {
         pool.add(ManaColor.COLORLESS, 1);
 
         // Engine says not playable (e.g. spell limit reached, type restricted, silenced)
+        AiTestPlayabilityStub.installPotentialManaService(actionAvailabilityService, gameQueryService);
         when(actionAvailabilityService.isCardPlayable(any(), any(), any(), any(), org.mockito.ArgumentMatchers.anyInt()))
                 .thenReturn(false);
 

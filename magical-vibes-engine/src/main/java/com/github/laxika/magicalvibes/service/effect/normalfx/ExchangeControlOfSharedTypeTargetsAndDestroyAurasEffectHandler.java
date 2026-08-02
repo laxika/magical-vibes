@@ -92,8 +92,7 @@ public class ExchangeControlOfSharedTypeTargetsAndDestroyAurasEffectHandler impl
         creatureControlService.applyControlEffect(gameData, ownController, opponentTarget,
                 controlEffect, ControlDuration.PERMANENT.toEffectDuration(), null, entry.getCard().getName());
 
-        String logEntry = entry.getCard().getName() + ": " + ownTarget.getCard().getName() + " and "
-                + opponentTarget.getCard().getName() + " exchange controllers.";
+        
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(": ").card(ownTarget.getCard()).text(" and ").card(opponentTarget.getCard()).text(" exchange controllers.").build());
         log.info("Game {} - {} exchanges control of {} and {}", gameData.id, entry.getCard().getName(),
                 ownTarget.getCard().getName(), opponentTarget.getCard().getName());

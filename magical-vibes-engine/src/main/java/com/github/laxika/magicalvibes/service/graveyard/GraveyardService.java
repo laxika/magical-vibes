@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileInstantSorceryCardsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnGraveyardExileReplacement;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
@@ -246,6 +247,18 @@ public class GraveyardService {
             return false;
         }
 
+        if (!card.isToken() && (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))) {
+            if (anyPlayerHasInstantSorceryExileReplacement(gameData)) {
+                exileService.exileCard(gameData, ownerId, card);
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        " is exiled instead of being put into a graveyard."));
+                log.info("Game {} - {} replacement effect: instant or sorcery exiled instead of graveyard",
+                        gameData.id, card.getName());
+                updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
+                return false;
+            }
+        }
+
         // Wheel of Sun and Moon — if the graveyard's owner is enchanted by a player aura with this
         // replacement, cards headed to their graveyard from anywhere are revealed and put on the
         // bottom of their library instead. Tokens are not cards, so they still hit the graveyard.
@@ -261,7 +274,7 @@ public class GraveyardService {
         // (e.g. a spell cast via Nita, Forum Conciliator). Tracked for the specific card until cleanup.
         if (gameData.exileInsteadOfGraveyard.remove(card.getId())) {
             exileService.exileCard(gameData, ownerId, card);
-            String exileLog = card.getName() + " is exiled instead of being put into a graveyard.";
+            
             gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
             log.info("Game {} - {} replacement effect: exiled instead of graveyard (cast permission)",
                     gameData.id, card.getName());
@@ -272,7 +285,7 @@ public class GraveyardService {
         // ExileOpponentCardsInsteadOfGraveyardEffect, exile the card instead
         if (opponentHasExileReplacementEffect(gameData, ownerId)) {
             exileService.exileCard(gameData, ownerId, card);
-            String exileLog = card.getName() + " is exiled instead of being put into a graveyard.";
+            
             gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
             log.info("Game {} - {} replacement effect: exiled instead of graveyard", gameData.id, card.getName());
             return false;
@@ -583,6 +596,20 @@ public class GraveyardService {
             for (Permanent p : bf) {
                 if (p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(ExileOpponentCardsInsteadOfGraveyardEffect.class::isInstance)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean anyPlayerHasInstantSorceryExileReplacement(GameData gameData) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                if (p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(ExileInstantSorceryCardsInsteadOfGraveyardEffect.class::isInstance)) {
                     return true;
                 }
             }

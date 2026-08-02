@@ -43,7 +43,6 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
-import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -71,7 +70,6 @@ public class LibraryChoiceHandlerService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardService graveyardService;
-    private final WarpWorldService warpWorldService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
     private final StateBasedActionService stateBasedActionService;

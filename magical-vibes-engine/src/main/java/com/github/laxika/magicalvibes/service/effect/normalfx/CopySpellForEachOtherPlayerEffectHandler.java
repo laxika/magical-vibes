@@ -63,8 +63,7 @@ public class CopySpellForEachOtherPlayerEffectHandler implements NormalEffectHan
 
             gameData.stack.add(copyEntry);
 
-            String logMsg = "A copy of " + spellCard.getName() + " is created for "
-                    + gameData.playerIdToName.get(playerId) + ".";
+            
             gameLogService.append(gameData, GameLog.builder().text("A copy of ").card(spellCard).text(" is created for " + gameData.playerIdToName.get(playerId) + ".").build());
 
             if (copyEntry.getTargetId() != null) {

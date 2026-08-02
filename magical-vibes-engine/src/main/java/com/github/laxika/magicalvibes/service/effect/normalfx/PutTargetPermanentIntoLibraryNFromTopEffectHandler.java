@@ -42,7 +42,7 @@ public class PutTargetPermanentIntoLibraryNFromTopEffectHandler implements Norma
                         case 2 -> "third from the top of";
                         default -> (position + 1) + "th from the top of";
                     };
-                    String logEntry = target.getCard().getName() + " is put " + ordinal + " its owner's library.";
+                    
                     gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" is put " + ordinal + " its owner's library.").build());
                     log.info("Game {} - {} put {} library (position {})", gameData.id, target.getCard().getName(), ordinal, position);
                 }

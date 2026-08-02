@@ -70,7 +70,7 @@ public class ExileAllPermanentsUntilSourceLeavesEffectHandler implements NormalE
 
             permanentRemovalService.removePermanentToExile(gameData, perm);
 
-            String logEntry = card.getName() + " is exiled by " + entry.getCard().getName() + ".";
+            
             gameLogService.append(gameData, GameLog.cardTextCard(card, " is exiled by ", entry.getCard(), "."));
             log.info("Game {} - {} exiles {} until it leaves the battlefield",
                     gameData.id, entry.getCard().getName(), card.getName());

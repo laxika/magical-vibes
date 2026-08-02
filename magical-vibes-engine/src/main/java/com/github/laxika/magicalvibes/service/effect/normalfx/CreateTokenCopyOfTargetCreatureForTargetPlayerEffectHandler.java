@@ -26,7 +26,6 @@ public class CreateTokenCopyOfTargetCreatureForTargetPlayerEffectHandler impleme
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

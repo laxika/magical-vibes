@@ -75,8 +75,7 @@ public class DestroyUpToTargetsThenReturnFromGraveyardEffectHandler implements N
 
             if (graveyardReturnSupport.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
                 gameData.playerGraveyards.computeIfAbsent(graveyardOwnerId, k -> new ArrayList<>()).add(card);
-                String blockedLog = gameData.playerIdToName.get(controllerId) + " can't put " + card.getName()
-                        + " onto the battlefield from a graveyard; it stays in the graveyard.";
+                
                 gameLogService.append(gameData, GameLog.builder().text(gameData.playerIdToName.get(controllerId) + " can't put ").card(card).text(" onto the battlefield from a graveyard; it stays in the graveyard.").build());
                 log.info("Game {} - {} blocked from entering the battlefield from a graveyard",
                         gameData.id, card.getName());

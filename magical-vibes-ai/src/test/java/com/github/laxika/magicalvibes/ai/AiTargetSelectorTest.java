@@ -1622,7 +1622,7 @@ class AiTargetSelectorTest {
         @Test
         @DisplayName("Beneficial ability targets own best creature")
         void beneficialAbilityTargetsOwnBestCreature() {
-            Permanent elves = harness.addToBattlefieldAndReturn(aiPlayer, new LlanowarElves()); // 1/1
+            harness.addToBattlefieldAndReturn(aiPlayer, new LlanowarElves()); // 1/1
             Permanent bears = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears()); // 2/2
 
             // Source is separate from target candidates

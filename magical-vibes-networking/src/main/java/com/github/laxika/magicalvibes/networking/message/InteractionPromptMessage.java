@@ -29,7 +29,8 @@ public record InteractionPromptMessage(
         String manaCost,
         String cardName,
         Boolean allGraveyards,
-        Boolean searchable) {
+        Boolean searchable,
+        List<String> disabledOptions) {
 
     private static InteractionPromptMessage of(InteractionShape shape, String prompt,
                                                List<Integer> cardIndices, List<CardView> cards,
@@ -40,7 +41,7 @@ public record InteractionPromptMessage(
                                                Boolean allGraveyards, Boolean searchable) {
         return new InteractionPromptMessage(MessageType.INTERACTION_PROMPT, shape, prompt,
                 cardIndices, cards, cardIds, permanentIds, playerIds, options, maxCount,
-                declinable, canPay, manaCost, cardName, allGraveyards, searchable);
+                declinable, canPay, manaCost, cardName, allGraveyards, searchable, null);
     }
 
     /** Pick one card from the player's own hand by index. */
@@ -90,8 +91,18 @@ public record InteractionPromptMessage(
 
     public static InteractionPromptMessage listPick(List<String> options, String prompt,
                                                     boolean searchable) {
-        return of(InteractionShape.LIST_PICK, prompt, null, null, null, null, null, options,
-                null, null, null, null, null, null, searchable);
+        return listPick(options, prompt, searchable, null);
+    }
+
+    /**
+     * @param disabledOptions options to grey out. Presentation only: the client blocks the click,
+     *                        but the engine still accepts any of {@code options} as an answer.
+     */
+    public static InteractionPromptMessage listPick(List<String> options, String prompt,
+                                                    boolean searchable, List<String> disabledOptions) {
+        return new InteractionPromptMessage(MessageType.INTERACTION_PROMPT, InteractionShape.LIST_PICK,
+                prompt, null, null, null, null, null, options, null, null, null, null, null, null,
+                searchable, disabledOptions == null || disabledOptions.isEmpty() ? null : List.copyOf(disabledOptions));
     }
 
     public static InteractionPromptMessage acceptDecline(String prompt, boolean canPay,

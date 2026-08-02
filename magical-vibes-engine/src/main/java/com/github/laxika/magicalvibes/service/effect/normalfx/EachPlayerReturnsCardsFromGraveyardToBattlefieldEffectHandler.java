@@ -24,7 +24,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;

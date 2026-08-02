@@ -47,8 +47,7 @@ public class GainControlOfCombatOpponentAtEndOfCombatEffectHandler implements No
 
         gameData.queueDelayedAction(new GainControlOfPermanentAtEndOfCombat(
                 targetId, entry.getControllerId(), sourceId, entry.getCard().getName()));
-        String logEntry = entry.getCard().getName() + " will gain control of "
-                + target.getCard().getName() + " at end of combat.";
+        
         gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " will gain control of ", target.getCard(), " at end of combat."));
     }
 }

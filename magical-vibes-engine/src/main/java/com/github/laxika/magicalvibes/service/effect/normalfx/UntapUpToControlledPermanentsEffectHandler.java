@@ -21,7 +21,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UntapUpToControlledPermanentsEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final TapUntapSupport tapUntapSupport;
@@ -52,7 +51,7 @@ public class UntapUpToControlledPermanentsEffectHandler implements NormalEffectH
         }
 
         if (count > 0) {
-            String logEntry = entry.getCard().getName() + " untaps " + count + " permanent(s).";
+            
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" untaps " + count + " permanent(s).").build());
         }
         log.info("Game {} - {} untaps {} permanent(s) via delayed trigger", gameData.id, entry.getCard().getName(), count);

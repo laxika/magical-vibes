@@ -66,7 +66,7 @@ public class OmenMachineDrawStepEffectHandler implements NormalEffectHandlerBean
         Card topCard = deck.removeFirst();
         exileService.exileCard(gameData, targetPlayerId, topCard);
 
-        String exileLog = playerName + " exiles " + topCard.getName() + " (" + sourceName + ").";
+        
         gameLogService.append(gameData, GameLog.builder().text(playerName + " exiles ").card(topCard).text(" (" + sourceName + ").").build());
         log.info("Game {} - {} exiles {} (Omen Machine)", gameData.id, playerName, topCard.getName());
 
@@ -125,7 +125,7 @@ public class OmenMachineDrawStepEffectHandler implements NormalEffectHandlerBean
                 playerInputService.beginPermanentChoice(gameData, targetPlayerId, validTargets,
                         "Choose a target for " + topCard.getName() + ".");
 
-                String castLog = playerName + " casts " + topCard.getName() + " without paying its mana cost — choosing target.";
+                
                 gameLogService.append(gameData, GameLog.textCardText(playerName + " casts " , topCard, " without paying its mana cost — choosing target."));
                 log.info("Game {} - {} casts {} (Omen Machine), choosing target", gameData.id, playerName, topCard.getName());
             } else {

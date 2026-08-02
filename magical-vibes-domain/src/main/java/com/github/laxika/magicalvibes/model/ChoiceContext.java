@@ -379,6 +379,10 @@ public sealed interface ChoiceContext {
      */
     record AllLandsProduceChosenColorChoice(UUID playerId) implements ChoiceContext {}
 
+    /** The controller is choosing the two distinct colors stored by Tablet of the Guilds. */
+    record ChooseTwoColorsOnEnterChoice(UUID permanentId, UUID etbTargetId,
+                                        List<CardColor> chosen) implements ChoiceContext {}
+
     /**
      * Storage Matrix: during {@code playerId}'s untap step the active player chooses artifact,
      * creature, or land; only permanents of the chosen type untap this step.

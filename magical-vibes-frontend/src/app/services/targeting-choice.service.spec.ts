@@ -249,4 +249,52 @@ describe('TargetingChoiceService MTGO-style ability activation payment', () => {
     expect(listedService.canTapPermanent(0)).toBe(true);
     expect(unlistedService.canTapPermanent(0)).toBe(false);
   });
+
+  it('survives the prompt window of a mana source that asks for a colour', () => {
+    // Tapping a Birds of Paradise opens a colour choice, and the server reports a null priority
+    // holder for as long as any interaction is awaiting input. That is not the game moving on:
+    // the held activation must still be there when the colour is picked and priority returns.
+    const perm = abilitySource('pumper', [abilityView()]);
+    const game = signal<Game | null>(gameWithPool({}));
+    const sent: any[] = [];
+    const service = makePaymentService([perm], game, sent, { pumper: [0] });
+    service.activateAbilityAtIndex(0, 0, perm);
+
+    game.set(gameWithPool({}, null as unknown as string));
+    service.onGameStateUpdate();
+
+    expect(service.payingForAbility).toBe(true);
+    expect(sent.length).toBe(0);
+
+    game.set(gameWithPool({ G: 2 }));
+    service.onGameStateUpdate();
+
+    expect(sent.length).toBe(1);
+    expect(sent[0].type).toBe(MessageType.ACTIVATE_ABILITY);
+    expect(service.payingForAbility).toBe(false);
+  });
+
+  it('tags a mana source tapped during an ability payment with what it is paying for', () => {
+    const pumper = abilitySource('pumper', [abilityView()]);
+    const sent: any[] = [];
+    const service = makePaymentService(
+      [pumper, land('forest')], signal(gameWithPool({})), sent, { pumper: [0] });
+    service.activateAbilityAtIndex(0, 0, pumper);
+
+    service.tapPermanent(1);
+
+    expect(sent.length).toBe(1);
+    expect(sent[0].type).toBe(MessageType.TAP_PERMANENT);
+    expect(sent[0].paymentIntent).toEqual({ abilityPermanentId: 'pumper', abilityIndex: 0 });
+  });
+
+  it('sends no payment intent when nothing is being paid for', () => {
+    const sent: any[] = [];
+    const service = makePaymentService([land('forest')], signal(gameWithPool({})), sent);
+
+    service.tapPermanent(0);
+
+    expect(sent.length).toBe(1);
+    expect(sent[0].paymentIntent).toBeUndefined();
+  });
 });

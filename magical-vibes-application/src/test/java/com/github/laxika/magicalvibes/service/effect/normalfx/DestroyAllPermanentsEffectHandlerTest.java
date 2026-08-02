@@ -83,7 +83,7 @@ class DestroyAllPermanentsEffectHandlerTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        destroyAllPermanentsHandler = new DestroyAllPermanentsEffectHandler(destructionSupport, gameQueryService,
+        destroyAllPermanentsHandler = new DestroyAllPermanentsEffectHandler(destructionSupport,
                 predicateEvaluationService, effectHandlerRegistry, gameOutcomeService);
 
     }

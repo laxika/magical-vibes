@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeForEachChosenColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
@@ -349,6 +350,30 @@ public class SpellCastTriggerCollectorService {
     private boolean handleControllerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
+    }
+
+    @CollectsTrigger(value = GainLifeForEachChosenColorSpellCastEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleGainLifeForEachChosenColor(TriggerMatchContext match,
+            GainLifeForEachChosenColorSpellCastEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        int lifeGain = (int) sc.spellCard().getColors().stream()
+                .filter(match.permanent().getChosenColors()::contains)
+                .count();
+        if (lifeGain == 0) {
+            return false;
+        }
+
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new GainLifeEffect(lifeGain))),
+                null,
+                match.permanent().getId()
+        ));
+        return true;
     }
 
     @CollectsTrigger(value = BoostEquippedCreatureUntilEndOfTurnEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)

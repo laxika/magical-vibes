@@ -39,40 +39,37 @@ public class PutSlimeCounterAndCreateOozeTokenEffectHandler implements NormalEff
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        
-                UUID sourcePermId = entry.getSourcePermanentId();
-                if (sourcePermId == null) {
-                    log.warn("Game {} - PutSlimeCounterAndCreateOozeTokenEffect has no sourcePermanentId", gameData.id);
-                    return;
-                }
+        UUID sourcePermId = entry.getSourcePermanentId();
+        if (sourcePermId == null) {
+            log.warn("Game {} - PutSlimeCounterAndCreateOozeTokenEffect has no sourcePermanentId", gameData.id);
+            return;
+        }
 
-                Permanent source = gameQueryService.findPermanentById(gameData, sourcePermId);
-                if (source == null) {
-                    log.info("Game {} - Gutter Grime no longer on battlefield, effect fizzles", gameData.id);
-                    return;
-                }
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermId);
+        if (source == null) {
+            log.info("Game {} - Gutter Grime no longer on battlefield, effect fizzles", gameData.id);
+            return;
+        }
 
-                if (gameQueryService.cantHaveCounters(gameData, source)) {
-                    return;
-                }
+        if (gameQueryService.cantHaveCounters(gameData, source)) {
+            return;
+        }
 
-                // Put a slime counter on the source
-                source.setCounterCount(CounterType.SLIME, source.getCounterCount(CounterType.SLIME) + 1);
-                int slimeCount = source.getCounterCount(CounterType.SLIME);
+        // Put a slime counter on the source
+        source.setCounterCount(CounterType.SLIME, source.getCounterCount(CounterType.SLIME) + 1);
+        int slimeCount = source.getCounterCount(CounterType.SLIME);
 
-                String counterLog = source.getCard().getName() + " gets a slime counter (" + slimeCount + " total).";
-                gameLogService.append(gameData, GameLog.builder().card(source.getCard()).text(" gets a slime counter (" + slimeCount + " total).").build());
-                log.info("Game {} - {} gets a slime counter ({} total)", gameData.id, source.getCard().getName(), slimeCount);
+        gameLogService.append(gameData, GameLog.builder().card(source.getCard()).text(" gets a slime counter (" + slimeCount + " total).").build());
+        log.info("Game {} - {} gets a slime counter ({} total)", gameData.id, source.getCard().getName(), slimeCount);
 
-                // Create a 0/0 green Ooze token with a CDA linking to this Gutter Grime
-                CountersOnLinkedPermanent slimeOnGrime = new CountersOnLinkedPermanent(CounterType.SLIME, sourcePermId);
-                CreateTokenEffect tokenEffect = new CreateTokenEffect(
-                        1, "Ooze", 0, 0,
-                        CardColor.GREEN, List.of(CardSubtype.OOZE),
-                        Set.of(), Set.of(),
-                        Map.of(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(slimeOnGrime, slimeOnGrime))
-                );
-                permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
-    
+        // Create a 0/0 green Ooze token with a CDA linking to this Gutter Grime
+        CountersOnLinkedPermanent slimeOnGrime = new CountersOnLinkedPermanent(CounterType.SLIME, sourcePermId);
+        CreateTokenEffect tokenEffect = new CreateTokenEffect(
+                1, "Ooze", 0, 0,
+                CardColor.GREEN, List.of(CardSubtype.OOZE),
+                Set.of(), Set.of(),
+                Map.of(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(slimeOnGrime, slimeOnGrime))
+        );
+        permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     }
 }

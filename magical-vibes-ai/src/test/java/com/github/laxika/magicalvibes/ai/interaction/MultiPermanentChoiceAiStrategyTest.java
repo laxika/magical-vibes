@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,8 +37,6 @@ class MultiPermanentChoiceAiStrategyTest {
     private GameQueryService gameQueryService;
     @Mock
     private AiGameActions gameActions;
-    @Mock
-    private Connection selfConnection;
 
     private GameData gameData;
     private UUID aiPlayerId;

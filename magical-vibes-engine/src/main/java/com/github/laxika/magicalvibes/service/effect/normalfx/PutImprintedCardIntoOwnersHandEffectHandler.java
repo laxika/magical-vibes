@@ -56,7 +56,7 @@ public class PutImprintedCardIntoOwnersHandEffectHandler implements NormalEffect
         gameData.addCardToHand(ownerId, imprintedCard);
 
         String ownerName = gameData.playerIdToName.get(ownerId);
-        String logMsg = imprintedCard.getName() + " is returned to " + ownerName + "'s hand.";
+        
         gameLogService.append(gameData, GameLog.builder().card(imprintedCard).text(" is returned to " + ownerName + "'s hand.").build());
 
         log.info("Game {} - {} puts imprinted card {} into {}'s hand",

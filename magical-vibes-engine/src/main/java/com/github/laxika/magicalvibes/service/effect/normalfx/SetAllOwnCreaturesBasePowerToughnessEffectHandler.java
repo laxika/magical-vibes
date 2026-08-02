@@ -66,8 +66,7 @@ public class SetAllOwnCreaturesBasePowerToughnessEffectHandler implements Normal
             count++;
         }
 
-        String logEntry = entry.getCard().getName() + " sets base power and toughness of " + count
-                + " creature(s) you control to " + power + "/" + toughness + " until end of turn.";
+        
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" sets base power and toughness of " + count + " creature(s) you control to " + power + "/" + toughness + " until end of turn.").build());
 
         log.info("Game {} - {} sets base P/T of {} own creature(s) to {}/{}",

@@ -87,8 +87,7 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
         lastTappedCreaturePower = Math.max(0, gameQueryService.getEffectivePower(gameData, chosen));
         chosen.tap();
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, chosen);
-        String tapLog = player.getUsername() + " taps " + chosen.getCard().getName()
-                + " (power " + lastTappedCreaturePower + ") to crew.";
+        
         gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " taps ").card(chosen.getCard()).text(" (power " + lastTappedCreaturePower + ") to crew.").build());
     }
 

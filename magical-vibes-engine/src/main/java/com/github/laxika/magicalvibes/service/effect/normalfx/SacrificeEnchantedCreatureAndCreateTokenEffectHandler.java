@@ -57,8 +57,7 @@ public class SacrificeEnchantedCreatureAndCreateTokenEffectHandler implements No
                 }
 
                 // Sacrifice the enchanted creature (its controller sacrifices it)
-                String sacrificeLog = enchantedCreature.getCard().getName() + " is sacrificed ("
-                        + entry.getCard().getName() + ").";
+                
                 gameLogService.append(gameData, GameLog.cardTextCard(enchantedCreature.getCard(), " is sacrificed (", entry.getCard(), ")."));
                 log.info("Game {} - {} sacrificed by {}", gameData.id,
                         enchantedCreature.getCard().getName(), entry.getCard().getName());

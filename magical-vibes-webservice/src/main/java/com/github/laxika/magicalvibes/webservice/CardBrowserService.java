@@ -207,12 +207,11 @@ public class CardBrowserService {
         }
 
         // Parse type line into components
-        String type = null;
         List<String> additionalTypes = new ArrayList<>();
         List<String> supertypes = new ArrayList<>();
         List<String> subtypes = new ArrayList<>();
-        parseTypeLine(typeLine, type, additionalTypes, supertypes, subtypes);
-        type = extractPrimaryType(typeLine);
+        parseTypeLine(typeLine, additionalTypes, supertypes, subtypes);
+        String type = extractPrimaryType(typeLine);
 
         // Loyalty
         Integer loyalty = null;
@@ -280,7 +279,7 @@ public class CardBrowserService {
         return "CREATURE"; // fallback
     }
 
-    private void parseTypeLine(String typeLine, String primaryType,
+    private void parseTypeLine(String typeLine,
                                List<String> additionalTypes, List<String> supertypes, List<String> subtypes) {
         String typesPart;
         String subtypesPart = null;

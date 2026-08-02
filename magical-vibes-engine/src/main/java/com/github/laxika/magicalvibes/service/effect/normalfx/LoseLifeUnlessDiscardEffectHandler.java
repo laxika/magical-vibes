@@ -22,7 +22,6 @@ public class LoseLifeUnlessDiscardEffectHandler implements NormalEffectHandlerBe
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
-    private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

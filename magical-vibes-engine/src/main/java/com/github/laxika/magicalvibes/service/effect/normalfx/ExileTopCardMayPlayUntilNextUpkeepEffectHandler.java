@@ -46,8 +46,7 @@ public class ExileTopCardMayPlayUntilNextUpkeepEffectHandler implements NormalEf
         gameData.queueDelayedAction(new RevokeExilePlayPermissionAtNextUpkeep(
                 controllerId, topCard.getId(), entry.getCard()));
 
-        String logEntry = controllerName + " exiles " + topCard.getName()
-                + " from the top of their library (may play it until their next upkeep).";
+        
         gameLogService.append(gameData, GameLog.builder().text(controllerName + " exiles ").card(topCard).text(" from the top of their library (may play it until their next upkeep).").build());
         log.info("Game {} - {} exiles {} from library top (may play until next upkeep)",
                 gameData.id, controllerName, topCard.getName());

@@ -30,7 +30,7 @@ public class AttachSourceEquipmentToTargetCreatureEffectHandler implements Norma
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
-            String logEntry = entry.getCard().getName() + "'s attach ability fizzles (target creature no longer exists).";
+            
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s attach ability fizzles (target creature no longer exists)."));
             log.info("Game {} - Attach source equipment fizzles, target creature left battlefield", gameData.id);
             return;
@@ -44,7 +44,7 @@ public class AttachSourceEquipmentToTargetCreatureEffectHandler implements Norma
             equipment = equipSupport.findEquipmentByCardId(gameData, entry.getCard().getId());
         }
         if (equipment == null) {
-            String logEntry = entry.getCard().getName() + "'s attach ability fizzles (equipment no longer on the battlefield).";
+            
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s attach ability fizzles (equipment no longer on the battlefield)."));
             log.info("Game {} - Attach source equipment fizzles, equipment left battlefield", gameData.id);
             return;
@@ -55,7 +55,7 @@ public class AttachSourceEquipmentToTargetCreatureEffectHandler implements Norma
         // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
         equipment.setTimestamp(gameData.nextTimestamp());
 
-        String logEntry = entry.getCard().getName() + " is now attached to " + target.getCard().getName() + ".";
+        
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s attach ability fizzles (target creature no longer exists)."));
         log.info("Game {} - {} attached to {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
     }

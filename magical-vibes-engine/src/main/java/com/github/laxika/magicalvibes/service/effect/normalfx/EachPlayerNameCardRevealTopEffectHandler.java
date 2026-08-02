@@ -2,13 +2,15 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerNameCardRevealTopEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-import java.util.*;
-import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,9 +30,6 @@ public class EachPlayerNameCardRevealTopEffectHandler implements NormalEffectHan
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-
-        UUID controllerId = entry.getControllerId();
-
         // Build APNAP order: active player first, then the rest
         List<UUID> playerOrder = new ArrayList<>();
         playerOrder.add(gameData.activePlayerId);
@@ -51,6 +50,5 @@ public class EachPlayerNameCardRevealTopEffectHandler implements NormalEffectHan
 
         String playerName = gameData.playerIdToName.get(firstPlayerId);
         log.info("Game {} - Awaiting {} to choose a card name (Conundrum Sphinx)", gameData.id, playerName);
-    
     }
 }

@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffectHandler implements NormalEffectHandlerBean {
 
-    private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
@@ -45,7 +44,7 @@ public class SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffectHandler im
                 // Check source creature is still on the battlefield
                 Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
                 if (source == null) {
-                    String logEntry = entry.getCard().getName() + "'s ability fizzles — source no longer on the battlefield.";
+                    
                     gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles — source no longer on the battlefield."));
                     return;
                 }
@@ -62,8 +61,7 @@ public class SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffectHandler im
                 }
 
                 if (validCreatureIds.isEmpty()) {
-                    String logEntry = entry.getCard().getName() + "'s ability resolves, but "
-                            + gameData.playerIdToName.get(defenderId) + " has no creatures.";
+                    
                     gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles — source no longer on the battlefield."));
                     return;
                 }

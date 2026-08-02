@@ -50,7 +50,7 @@ public class ExileTriggeringCreatureAndTrackWithSourceEffectHandler implements N
                     UUID ownerId = gy.getKey();
                     graveyard.remove(card);
                     exileService.exileCard(gameData, ownerId, card, sourcePermanentId);
-                    String logEntry = card.getName() + " is exiled with " + entry.getCard().getName() + ".";
+                    
                     gameLogService.append(gameData, GameLog.cardTextCard(card, " is exiled with ", entry.getCard(), "."));
                     log.info("Game {} - {} exiled with {} (creature put into graveyard from battlefield)",
                             gameData.id, card.getName(), entry.getCard().getName());

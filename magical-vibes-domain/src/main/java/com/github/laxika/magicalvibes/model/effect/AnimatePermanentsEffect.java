@@ -34,13 +34,26 @@ public record AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughne
                                       List<CardSubtype> grantedSubtypes, Set<Keyword> grantedKeywords,
                                       CardColor animatedColor, Set<CardType> grantedCardTypes,
                                       GrantScope scope, EffectDuration duration,
-                                      PermanentPredicate filter) implements CardEffect {
+                                      PermanentPredicate filter, Set<CardColor> animatedColors) implements CardEffect {
+
+    public AnimatePermanentsEffect {
+        animatedColors = Set.copyOf(animatedColors);
+    }
+
+    public AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughness,
+                                   List<CardSubtype> grantedSubtypes, Set<Keyword> grantedKeywords,
+                                   CardColor animatedColor, Set<CardType> grantedCardTypes,
+                                   GrantScope scope, EffectDuration duration,
+                                   PermanentPredicate filter) {
+        this(power, toughness, grantedSubtypes, grantedKeywords, animatedColor, grantedCardTypes,
+                scope, duration, filter, Set.of());
+    }
 
     /** Self-targeting, until end of turn (manlands). */
     public AnimatePermanentsEffect(int power, int toughness, List<CardSubtype> grantedSubtypes,
                                    Set<Keyword> grantedKeywords, CardColor animatedColor) {
         this(new Fixed(power), new Fixed(toughness), grantedSubtypes, grantedKeywords, animatedColor,
-                Set.of(), GrantScope.SELF, EffectDuration.UNTIL_END_OF_TURN, null);
+                Set.of(), GrantScope.SELF, EffectDuration.UNTIL_END_OF_TURN, null, Set.of());
     }
 
     /** Self-targeting, until end of turn, with granted card types (e.g. Inkmoth Nexus). */
@@ -48,14 +61,14 @@ public record AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughne
                                    Set<Keyword> grantedKeywords, CardColor animatedColor,
                                    Set<CardType> grantedCardTypes) {
         this(new Fixed(power), new Fixed(toughness), grantedSubtypes, grantedKeywords, animatedColor,
-                grantedCardTypes, GrantScope.SELF, EffectDuration.UNTIL_END_OF_TURN, null);
+                grantedCardTypes, GrantScope.SELF, EffectDuration.UNTIL_END_OF_TURN, null, Set.of());
     }
 
     /** Self-targeting, until end of turn, no colour (e.g. Warden of the Wall, Rusted Relic, Glint Hawk Idol). */
     public AnimatePermanentsEffect(int power, int toughness, List<CardSubtype> grantedSubtypes,
                                    Set<Keyword> grantedKeywords) {
         this(new Fixed(power), new Fixed(toughness), grantedSubtypes, grantedKeywords, null,
-                Set.of(), GrantScope.SELF, EffectDuration.UNTIL_END_OF_TURN, null);
+                Set.of(), GrantScope.SELF, EffectDuration.UNTIL_END_OF_TURN, null, Set.of());
     }
 
     /** Fully-specified fixed-P/T form (Sylvan Awakening own-lands, Awakener Druid while-source, Tezzeret/Waker target). */
@@ -63,7 +76,7 @@ public record AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughne
                                    Set<Keyword> grantedKeywords, CardColor animatedColor,
                                    Set<CardType> grantedCardTypes, GrantScope scope, EffectDuration duration) {
         this(new Fixed(power), new Fixed(toughness), grantedSubtypes, grantedKeywords, animatedColor,
-                grantedCardTypes, scope, duration, null);
+                grantedCardTypes, scope, duration, null, Set.of());
     }
 
     /**
@@ -72,7 +85,17 @@ public record AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughne
      */
     public static AnimatePermanentsEffect crew() {
         return new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
-                Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.UNTIL_END_OF_TURN, null);
+                Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.UNTIL_END_OF_TURN, null, Set.of());
+    }
+
+    /** Self-targeting animation with a fixed set of colors. */
+    public static AnimatePermanentsEffect withAnimatedColors(int power, int toughness,
+                                                               List<CardSubtype> grantedSubtypes,
+                                                               Set<Keyword> grantedKeywords,
+                                                               Set<CardColor> animatedColors) {
+        return new AnimatePermanentsEffect(new Fixed(power), new Fixed(toughness), grantedSubtypes,
+                grantedKeywords, null, Set.of(), GrantScope.SELF, EffectDuration.UNTIL_END_OF_TURN,
+                null, animatedColors);
     }
 
     @Override

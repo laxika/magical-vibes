@@ -60,6 +60,7 @@ class GameActionAvailabilityServiceTest {
     @Mock private GameLogViewFactory gameLogViewFactory;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private ValidTargetService validTargetService;
+    @Mock private com.github.laxika.magicalvibes.service.ability.AbilityActivationService abilityActivationService;
     @Mock private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
 
     private GameActionAvailabilityService svc;
@@ -86,7 +87,7 @@ class GameActionAvailabilityServiceTest {
                 gameQueryService, validTargetService, castingCostService,
                 castingPermissionService,
                 new com.github.laxika.magicalvibes.service.cast.PotentialManaService(
-                        gameQueryService, castingCostService));
+                        gameQueryService, abilityActivationService));
         projectionFactory = new GameViewProjectionFactory(
                 cardViewFactory, gameLogViewFactory, permanentViewFactory,
                 stackEntryViewFactory, gameQueryService, validTargetService,

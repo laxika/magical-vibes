@@ -19,7 +19,6 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class DestroyTargetPermanentAtEndStepEffectHandler implements NormalEffectHandlerBean {
 
-    private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
 
@@ -30,7 +29,7 @@ public class DestroyTargetPermanentAtEndStepEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (DestroyTargetPermanentAtEndStepEffect) effect;
+        
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
                 if (target == null) {
                     return;

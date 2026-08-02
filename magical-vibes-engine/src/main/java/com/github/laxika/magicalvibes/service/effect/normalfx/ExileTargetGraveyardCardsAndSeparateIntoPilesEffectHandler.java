@@ -36,7 +36,7 @@ public class ExileTargetGraveyardCardsAndSeparateIntoPilesEffectHandler implemen
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (ExileTargetGraveyardCardsAndSeparateIntoPilesEffect) effect;
+        
 
         UUID controllerId = entry.getControllerId();
         List<UUID> targetCardIds = entry.getTargetCardIds();

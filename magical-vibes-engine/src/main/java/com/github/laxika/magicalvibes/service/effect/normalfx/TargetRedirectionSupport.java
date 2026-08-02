@@ -23,7 +23,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TargetRedirectionSupport {
 
-    private final GameQueryService gameQueryService;
     private final TargetLegalityService targetLegalityService;
 
     public List<UUID> collectValidNewTargets(GameData gameData, StackEntry targetSpell) {

@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
-import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
@@ -45,7 +44,6 @@ public class AutoPassService {
     private final StackResolutionService stackResolutionService;
     private final StepTriggerService stepTriggerService;
     private final CombatAttackService combatAttackService;
-    private final PotentialManaService potentialManaService;
     private final GameMutationCoordinator mutationCoordinator;
     private final StateBasedActionService stateBasedActionService;
 
@@ -56,7 +54,6 @@ public class AutoPassService {
             StackResolutionService stackResolutionService,
             StepTriggerService stepTriggerService,
             CombatAttackService combatAttackService,
-            PotentialManaService potentialManaService,
             GameMutationCoordinator mutationCoordinator,
             @Lazy StateBasedActionService stateBasedActionService) {
         this.gameQueryService = gameQueryService;
@@ -65,7 +62,6 @@ public class AutoPassService {
         this.stackResolutionService = stackResolutionService;
         this.stepTriggerService = stepTriggerService;
         this.combatAttackService = combatAttackService;
-        this.potentialManaService = potentialManaService;
         this.mutationCoordinator = mutationCoordinator;
         this.stateBasedActionService = stateBasedActionService;
     }

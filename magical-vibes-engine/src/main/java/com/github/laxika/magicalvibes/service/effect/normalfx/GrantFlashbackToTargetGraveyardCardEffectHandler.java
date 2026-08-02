@@ -65,7 +65,7 @@ public class GrantFlashbackToTargetGraveyardCardEffectHandler implements NormalE
 
         gameData.cardsGrantedFlashbackUntilEndOfTurn.add(targetCard.getId());
 
-        String logEntry = entry.getCard().getName() + " grants flashback to " + targetCard.getName() + " until end of turn.";
+        
         gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " grants flashback to ", targetCard, " until end of turn."));
         log.info("Game {} - {} grants flashback to {} until end of turn", gameData.id, entry.getCard().getName(), targetCard.getName());
     }

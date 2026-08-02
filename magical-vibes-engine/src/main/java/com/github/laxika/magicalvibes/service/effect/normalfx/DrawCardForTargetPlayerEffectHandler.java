@@ -23,7 +23,6 @@ public class DrawCardForTargetPlayerEffectHandler implements NormalEffectHandler
 
     private final DrawService drawService;
     private final GameQueryService gameQueryService;
-    private final PlayerInteractionSupport playerInteractionSupport;
     private final AmountEvaluationService amountEvaluationService;
 
     @Override

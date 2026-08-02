@@ -36,7 +36,7 @@ public class GrantProtectionFromCardTypeUntilEndOfTurnEffectHandler implements N
         target.getProtectionFromCardTypes().add(e.cardType());
 
         String typeName = e.cardType().getDisplayName().toLowerCase() + "s";
-        String logEntry = target.getCard().getName() + " gains protection from " + typeName + " until end of turn.";
+        
         gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" gains protection from " + typeName + " until end of turn.").build());
 
         log.info("Game {} - {} gains protection from {} until end of turn", gameData.id, target.getCard().getName(), typeName);

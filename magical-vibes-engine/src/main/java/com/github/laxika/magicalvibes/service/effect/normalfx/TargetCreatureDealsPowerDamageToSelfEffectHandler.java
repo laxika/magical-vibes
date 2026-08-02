@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -34,17 +33,13 @@ public class TargetCreatureDealsPowerDamageToSelfEffectHandler implements Normal
 
         if (gameQueryService.isDamagePreventable(gameData)
                 && gameQueryService.isPreventedFromDealingDamage(gameData, target)) {
-            String logEntry = target.getCard().getName() + "'s damage is prevented.";
+            
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), "'s damage is prevented."));
             return;
         }
 
         if (gameQueryService.isDamagePreventable(gameData)
                 && gameQueryService.hasProtectionFromSource(gameData, target, target)) {
-            CardColor targetColor = gameQueryService.getEffectiveColor(gameData, target);
-            String logEntry = target.getCard().getName() + " has protection from "
-                    + (targetColor != null ? targetColor.name().toLowerCase() : "source")
-                    + " — damage prevented.";
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), "'s damage is prevented."));
             return;
         }

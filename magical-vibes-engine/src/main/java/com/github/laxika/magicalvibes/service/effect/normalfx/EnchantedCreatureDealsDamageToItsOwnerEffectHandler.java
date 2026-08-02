@@ -42,7 +42,7 @@ public class EnchantedCreatureDealsDamageToItsOwnerEffectHandler implements Norm
         UUID ownerId = gameData.stolenCreatures.getOrDefault(creature.getId(), controllerId);
 
         String creatureName = creature.getCard().getName();
-        String ownerName = gameData.playerIdToName.get(ownerId);
+        
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
 

@@ -68,6 +68,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingManaActivation;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -315,13 +316,17 @@ public class ActivatedAbilityExecutionService {
                 && snapshotEffects.stream().anyMatch(e -> e instanceof ManaProducingEffect);
 
         if (isManaAbility) {
-            // A "pure" mana activation (tap-only cost, only fixed-shape AwardManaEffect output)
-            // can be undone by the MTGO-style cancel-casting UI: snapshot the pool around
-            // resolution so the exact mana added (incl. Damping Sphere replacement) is recorded.
+            // A "pure" mana activation (tap-only cost, only fixed-shape mana output) can be undone
+            // by the MTGO-style cancel-casting UI: snapshot the pool around resolution so the exact
+            // mana added (incl. Damping Sphere replacement) is recorded. AwardAnyColorManaEffect
+            // qualifies even though it stops to ask for a colour — its output is still just N mana
+            // of one colour — but it produces that mana only once the answer arrives, so it parks
+            // the snapshot below instead of recording here.
             boolean revertable = ability.isRequiresTap()
                     && ability.getManaCost() == null
                     && abilityEffects.stream().noneMatch(e -> e instanceof CostEffect)
-                    && snapshotEffects.stream().allMatch(e -> e instanceof AwardManaEffect);
+                    && snapshotEffects.stream().allMatch(
+                            e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect);
             ManaPool pool = gameData.playerManaPools.get(playerId);
             java.util.EnumMap<ManaColor, Integer> poolBefore =
                     revertable ? AbilityActivationService.snapshotPoolColors(pool) : null;
@@ -342,12 +347,19 @@ public class ActivatedAbilityExecutionService {
             if (revertable) {
                 List<StackEntry> deferred = new ArrayList<>(gameData.pendingManaAbilityTriggers.subList(
                         pendingTriggersBefore, gameData.pendingManaAbilityTriggers.size()));
-                AbilityActivationService.recordRevertableManaActivation(
-                        gameData, playerId, permanent, poolBefore, creatureManaBefore, deferred);
+                if (AbilityActivationService.isAwaitingOwnManaColorChoice(gameData, playerId)) {
+                    // The mana has not been produced yet — park the snapshot for the colour-choice
+                    // answer to complete (ChoiceHandlerService.completeParkedManaActivation).
+                    gameData.pendingRevertableManaActivation = new PendingManaActivation(
+                            playerId, permanent.getId(), poolBefore, creatureManaBefore, List.copyOf(deferred));
+                } else {
+                    AbilityActivationService.recordRevertableManaActivation(
+                            gameData, playerId, permanent, poolBefore, creatureManaBefore, deferred);
+                }
             } else {
-                // A mana ability with side effects (pain-land damage, pool doubling, color choice,
-                // extra costs) can't be undone — and undoing earlier activations after it could
-                // interact with its result (e.g. doubled mana), so bar the whole window.
+                // A mana ability with side effects (pain-land damage, pool doubling, extra costs)
+                // can't be undone — and undoing earlier activations after it could interact with
+                // its result (e.g. doubled mana), so bar the whole window.
                 gameData.revertableManaActivations.clear();
             }
             return;
@@ -436,8 +448,7 @@ public class ActivatedAbilityExecutionService {
             if (totalMana >= 2) {
                 dampingReplacement = true;
                 gameData.playerManaPools.get(playerId).add(ManaColor.COLORLESS, 1);
-                String logEntry = player.getUsername() + " adds {C} from " + permanent.getCard().getName()
-                        + " (Damping Sphere replaces " + totalMana + " mana).";
+                
                 gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " adds {C} from ").card(permanent.getCard()).text(" (Damping Sphere replaces " + totalMana + " mana).").build());
             }
         }
@@ -526,8 +537,7 @@ public class ActivatedAbilityExecutionService {
                     // Dynamic amounts (per-permanent counts, charge counters, source power) log the
                     // realized quantity for clarity; a flat "Add {G}" is covered by the activation log.
                     if (!(award.amount() instanceof com.github.laxika.magicalvibes.model.amount.Fixed)) {
-                        String logEntry = player.getUsername() + " adds " + amount + " " + award.color().getCode()
-                                + " from " + permanent.getCard().getName() + ".";
+                        
                         gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " adds " + amount + " " + award.color().getCode() + " from ").card(permanent.getCard()).text(".").build());
                     }
                 }
@@ -665,7 +675,7 @@ public class ActivatedAbilityExecutionService {
                     CardColor onlyColor = availableColors.iterator().next();
                     ManaColor manaColor = ManaColor.valueOf(onlyColor.name());
                     gameData.playerManaPools.get(playerId).add(manaColor);
-                    String logEntry = player.getUsername() + " adds {" + onlyColor.getCode() + "} from " + permanent.getCard().getName() + ".";
+                    
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " adds {" + onlyColor.getCode() + "} from " , permanent.getCard(), "."));
                 } else if (availableColors.size() > 1) {
                     ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource);
@@ -677,8 +687,7 @@ public class ActivatedAbilityExecutionService {
                             playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
                     log.info("Game {} - Awaiting {} to choose a mana color from legendary colors", gameData.id, player.getUsername());
                 } else {
-                    String logEntry = player.getUsername() + " activates " + permanent.getCard().getName()
-                            + " but produces no mana (no colors among legendary creatures and planeswalkers).";
+                    
                     gameLogService.append(gameData, GameLog.builder()
                             .text(player.getUsername() + " activates ")
                             .card(permanent.getCard())
@@ -699,13 +708,10 @@ public class ActivatedAbilityExecutionService {
                     }
                 }
                 if (availableColors.isEmpty()) {
-                    String logEntry = player.getUsername() + " activates " + permanent.getCard().getName()
-                            + " but produces no mana (no colors among permanents controlled).";
+                    
                     gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " activates ").card(permanent.getCard()).text(" but produces no mana (no colors among permanents controlled).").build());
                 } else {
-                    String logEntry = player.getUsername() + " adds " + availableColors.stream()
-                            .sorted().map(c -> "{" + c.getCode() + "}").reduce("", String::concat)
-                            + " from " + permanent.getCard().getName() + ".";
+                    
                     gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " adds " + availableColors.stream() .sorted().map(c -> "{" + c.getCode() + "}").reduce("", String::concat) + " from ").card(permanent.getCard()).text(".").build());
                 }
             } else if (effect instanceof AwardManaOfColorsLandsCouldProduceEffect landColors) {
@@ -714,7 +720,7 @@ public class ActivatedAbilityExecutionService {
                     CardColor onlyColor = availableColors.iterator().next();
                     ManaColor manaColor = ManaColor.valueOf(onlyColor.name());
                     gameData.playerManaPools.get(playerId).add(manaColor);
-                    String logEntry = player.getUsername() + " adds {" + onlyColor.getCode() + "} from " + permanent.getCard().getName() + ".";
+                    
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " adds {" + onlyColor.getCode() + "} from " , permanent.getCard(), "."));
                 } else if (availableColors.size() > 1) {
                     ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource);
@@ -726,8 +732,7 @@ public class ActivatedAbilityExecutionService {
                             playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
                     log.info("Game {} - Awaiting {} to choose a mana color from lands' colors", gameData.id, player.getUsername());
                 } else {
-                    String logEntry = player.getUsername() + " activates " + permanent.getCard().getName()
-                            + " but produces no mana (no matching land could produce colored mana).";
+                    
                     gameLogService.append(gameData, GameLog.builder()
                             .text(player.getUsername() + " activates ")
                             .card(permanent.getCard())

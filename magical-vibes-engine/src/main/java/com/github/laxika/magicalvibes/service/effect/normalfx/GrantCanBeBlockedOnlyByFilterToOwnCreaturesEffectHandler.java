@@ -58,8 +58,7 @@ public class GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffectHandler implements
             count++;
         }
 
-        String logEntry = entry.getCard().getName() + " makes " + count + " creature(s) unblockable except by "
-                + grant.allowedBlockersDescription() + " this turn.";
+        
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" makes " + count + " creature(s) unblockable except by " + grant.allowedBlockersDescription() + " this turn.").build());
         log.info("Game {} - {} restricts blockers of {} own creature(s) to {}",
                 gameData.id, entry.getCard().getName(), count, grant.allowedBlockersDescription());

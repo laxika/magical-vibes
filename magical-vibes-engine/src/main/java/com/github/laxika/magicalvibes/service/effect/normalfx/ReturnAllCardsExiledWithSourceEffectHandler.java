@@ -49,8 +49,7 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
 
             Permanent perm = new Permanent(card);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm);
-            String logEntry = card.getName() + " returns to the battlefield under "
-                    + gameData.playerIdToName.get(ownerId) + "'s control.";
+            
             gameLogService.append(gameData, GameLog.builder().card(card).text(" returns to the battlefield under " + gameData.playerIdToName.get(ownerId) + "'s control.").build());
             log.info("Game {} - {} returns from exile via {} (put into graveyard from battlefield)",
                     gameData.id, card.getName(), entry.getCard().getName());

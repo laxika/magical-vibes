@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPaymentIntent;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -993,6 +994,18 @@ public class GameTestHarness {
     public void activateAbility(Player player, int permanentIndex, int abilityIndex, Integer xValue, UUID targetId, Zone targetZone) {
         ensurePriority(player);
         gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone);
+    }
+
+    /** Activates a mana ability the way the client does while paying for something. */
+    public void activateAbilityToPayFor(Player player, int permanentIndex, ManaPaymentIntent paymentIntent) {
+        ensurePriority(player);
+        gameService.activateAbility(gameData, player, permanentIndex, 0, null, null, null, null, null, paymentIntent);
+    }
+
+    /** Taps a source for mana the way the client does while paying for something. */
+    public void tapPermanentToPayFor(Player player, int permanentIndex, ManaPaymentIntent paymentIntent) {
+        ensurePriority(player);
+        gameService.tapPermanent(gameData, player, permanentIndex, paymentIntent);
     }
 
     public void activateAbilityWithDamageAssignments(Player player, int permanentIndex, int abilityIndex, Integer xValue, Map<UUID, Integer> damageAssignments) {

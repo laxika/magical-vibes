@@ -57,7 +57,7 @@ public class CopySpellForEachOtherSubtypePermanentEffectHandler implements Norma
 
             gameData.stack.add(copyEntry);
 
-            String logMsg = "A copy of " + spellCard.getName() + " is created targeting " + target.getCard().getName() + ".";
+            
             gameLogService.append(gameData, GameLog.builder().text("A copy of ").card(spellCard).text(" is created targeting ").card(target.getCard()).text(".").build());
         }
 

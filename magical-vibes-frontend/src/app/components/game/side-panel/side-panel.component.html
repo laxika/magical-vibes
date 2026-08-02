@@ -408,7 +408,12 @@
         } @else {
           <div class="color-choice-buttons">
             @for (option of choice.listChoices(); track option) {
-              <button class="btn-color-choice" [attr.data-color]="option" (click)="choice.chooseFromList(option)">{{ choice.getOptionDisplayName(option) }}</button>
+              <button
+                class="btn-color-choice"
+                [attr.data-color]="option"
+                [disabled]="choice.listChoiceDisabled().has(option)"
+                [title]="choice.listChoiceDisabled().has(option) ? 'Would not cover what you are paying for' : ''"
+                (click)="choice.chooseFromList(option)">{{ choice.getOptionDisplayName(option) }}</button>
             }
           </div>
         }

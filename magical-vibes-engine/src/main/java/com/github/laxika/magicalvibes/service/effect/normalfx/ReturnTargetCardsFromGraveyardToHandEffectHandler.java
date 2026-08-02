@@ -21,7 +21,7 @@ public class ReturnTargetCardsFromGraveyardToHandEffectHandler implements Normal
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (ReturnTargetCardsFromGraveyardToHandEffect) effect;
+        
 
         graveyardReturnSupport.processTargetedGraveyardCards(gameData, entry,
                 (graveyard, card) -> gameData.addCardToHand(entry.getControllerId(), card),

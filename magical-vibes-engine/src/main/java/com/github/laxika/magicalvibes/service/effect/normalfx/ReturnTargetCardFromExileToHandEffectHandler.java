@@ -53,7 +53,7 @@ public class ReturnTargetCardFromExileToHandEffectHandler implements NormalEffec
         }
 
         // Remove card from exile
-        UUID ownerId = gameQueryService.findExileOwnerById(gameData, entry.getTargetId());
+        
         gameData.removeFromExile(targetCard.getId());
 
         // Put into owner's hand

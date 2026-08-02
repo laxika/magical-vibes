@@ -32,7 +32,7 @@ public class GrantSubtypeToTargetCreatureEffectHandler implements NormalEffectHa
 
                 if (!target.getGrantedSubtypes().contains(e.subtype())) {
                     target.getGrantedSubtypes().add(e.subtype());
-                    String subtypeLog = target.getCard().getName() + " becomes a " + e.subtype().getDisplayName() + " in addition to its other types.";
+                    
                     gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" becomes a " + e.subtype().getDisplayName() + " in addition to its other types.").build());
                 }
     

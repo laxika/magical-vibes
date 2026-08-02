@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +25,6 @@ class SpecializedInteractionAiStrategiesTest {
     private UUID aiPlayerId;
     private GameData gameData;
     private AiGameActions actions;
-    private Connection connection;
     private AiInteractionContext context;
 
     @BeforeEach

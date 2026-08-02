@@ -16,10 +16,8 @@ import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -51,8 +49,6 @@ public class PlayerInteractionSupport {
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final CardRevealService cardRevealService;
-    private final PermanentRemovalService permanentRemovalService;
-    private final BattlefieldEntryService battlefieldEntryService;
     private final TriggerCollectionService triggerCollectionService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 

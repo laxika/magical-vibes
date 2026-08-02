@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class SeparatePermanentsIntoPilesAndSacrificeEffectHandler implements NormalEffectHandlerBean {
 
-    private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 

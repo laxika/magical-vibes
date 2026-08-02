@@ -39,6 +39,7 @@ class CostEffectClassificationTest {
             "CrewCost",
             "DiscardRandomCardCost",
             "ExileCardFromHandCost",
+            "ExileInstantOrSorcerySpellCost",
             "ExileSelfCost",
             "ExileSelfFromGraveyardCost",
             "ExileTopCardOfLibraryCost",

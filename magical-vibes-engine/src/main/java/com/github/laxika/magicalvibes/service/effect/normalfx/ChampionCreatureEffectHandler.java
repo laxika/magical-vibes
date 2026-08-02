@@ -49,9 +49,7 @@ public class ChampionCreatureEffectHandler implements NormalEffectHandlerBean {
         if (validIds.isEmpty()) {
             if (sourcePermanent != null) {
                 permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
-                String logEntry = playerName + " controls no other "
-                        + championQualityLabel(e.championedSubtypes())
-                        + ". " + sourceCard.getName() + " is sacrificed.";
+                
                 gameLogService.append(gameData, GameLog.builder().text(playerName + " controls no other " + championQualityLabel(e.championedSubtypes()) + ". ").card(sourceCard).text(" is sacrificed.").build());
                 log.info("Game {} - {} sacrificed (no creature to champion)", gameData.id, sourceCard.getName());
             }

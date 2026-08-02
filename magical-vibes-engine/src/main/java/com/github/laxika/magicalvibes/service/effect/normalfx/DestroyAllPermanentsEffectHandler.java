@@ -33,7 +33,6 @@ import org.springframework.stereotype.Component;
 public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBean {
 
     private final DestructionSupport destructionSupport;
-    private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameOutcomeService gameOutcomeService;

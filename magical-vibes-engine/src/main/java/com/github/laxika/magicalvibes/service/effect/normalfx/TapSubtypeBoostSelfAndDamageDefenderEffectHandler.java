@@ -56,7 +56,7 @@ public class TapSubtypeBoostSelfAndDamageDefenderEffectHandler implements Normal
         }
 
         if (eligibleIds.isEmpty()) {
-            String logEntry = entry.getCard().getName() + "'s attack ability finds no untapped " + e.subtype().getDisplayName() + " to tap.";
+            
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text("'s attack ability finds no untapped " + e.subtype().getDisplayName() + " to tap.").build());
             log.info("Game {} - {} attack trigger: no eligible {} to tap", gameData.id, entry.getCard().getName(), e.subtype().getDisplayName());
             return;

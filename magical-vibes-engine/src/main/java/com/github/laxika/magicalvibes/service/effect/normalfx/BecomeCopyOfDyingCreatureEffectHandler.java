@@ -46,7 +46,7 @@ public class BecomeCopyOfDyingCreatureEffectHandler implements NormalEffectHandl
         // Copy the dying creature from last-known information — its card sits in a graveyard.
         Card dyingCard = gameQueryService.findCardInGraveyardById(gameData, e.dyingCardId());
         if (dyingCard == null) {
-            String logEntry = source.getCard().getName() + "'s ability fizzles (the creature that died is no longer available to copy).";
+            
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s ability fizzles (the creature that died is no longer available to copy)."));
             log.info("Game {} - Become-copy-of-dying fizzles, dying card not found", gameData.id);
             return;

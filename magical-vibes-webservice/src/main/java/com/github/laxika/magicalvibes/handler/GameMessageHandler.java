@@ -425,7 +425,7 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
-            gameService.tapPermanent(gameData, player, request.permanentIndex());
+            gameService.tapPermanent(gameData, player, request.permanentIndex(), request.paymentIntent());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -446,7 +446,7 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
-            gameService.activateAbility(gameData, player, request.permanentIndex(), request.abilityIndex(), request.xValue(), request.targetId(), request.targetZone(), request.targetIds(), request.damageAssignments());
+            gameService.activateAbility(gameData, player, request.permanentIndex(), request.abilityIndex(), request.xValue(), request.targetId(), request.targetZone(), request.targetIds(), request.damageAssignments(), request.paymentIntent());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

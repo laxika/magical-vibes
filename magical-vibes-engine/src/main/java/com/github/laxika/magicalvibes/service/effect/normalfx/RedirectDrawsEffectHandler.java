@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 public class RedirectDrawsEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
-    private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

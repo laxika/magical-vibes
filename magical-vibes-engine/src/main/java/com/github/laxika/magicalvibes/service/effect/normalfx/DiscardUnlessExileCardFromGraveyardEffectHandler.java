@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DiscardUnlessExileCardFromGraveyardEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInteractionSupport playerInteractionSupport;
 
@@ -32,7 +31,7 @@ public class DiscardUnlessExileCardFromGraveyardEffectHandler implements NormalE
         var e = (DiscardUnlessExileCardFromGraveyardEffect) effect;
 
         UUID controllerId = entry.getControllerId();
-        String playerName = gameData.playerIdToName.get(controllerId);
+        
 
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         boolean hasMatchingCards = graveyard != null && graveyard.stream()

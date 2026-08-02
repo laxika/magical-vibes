@@ -125,7 +125,7 @@ public class ParadigmService {
                 copy.getId()
         ));
 
-        String logEntry = "A copy of " + prototype.getName() + " is created in exile.";
+        
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", prototype, " is created in exile."));
         log.info("Game {} - Paradigm copy of {} created for {}", gameData.id, prototype.getName(), controllerId);
 

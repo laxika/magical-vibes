@@ -345,7 +345,7 @@ public class BoardEvaluator {
         double score = creatureScore(gameData, perm, controllerId, opponentId);
         score += lordBonus(gameData, perm, controllerId);
         score += activatedAbilityThreat(gameData, perm, controllerId);
-        score += evasionContextBonus(gameData, perm, controllerId, opponentId);
+        score += evasionContextBonus(gameData, perm, opponentId);
         score += growthThreatBonus(perm);
         return score;
     }
@@ -432,7 +432,7 @@ public class BoardEvaluator {
      * Covers all evasion types: cant-be-blocked, flying, fear, intimidate,
      * menace (≤1 blocker), and landwalk.
      */
-    private double evasionContextBonus(GameData gameData, Permanent perm, UUID controllerId, UUID opponentId) {
+    private double evasionContextBonus(GameData gameData, Permanent perm, UUID opponentId) {
         if (opponentId == null) return 0;
 
         List<Permanent> opponentBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());

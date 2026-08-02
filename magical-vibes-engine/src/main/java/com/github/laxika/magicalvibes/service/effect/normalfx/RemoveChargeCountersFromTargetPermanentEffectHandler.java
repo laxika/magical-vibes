@@ -37,7 +37,7 @@ public class RemoveChargeCountersFromTargetPermanentEffectHandler implements Nor
         int toRemove = Math.min(e.maxCount(), target.getCounterCount(CounterType.CHARGE));
         if (toRemove > 0) {
             target.setCounterCount(CounterType.CHARGE, target.getCounterCount(CounterType.CHARGE) - toRemove);
-            String logEntry = toRemove + " charge counter(s) removed from " + target.getCard().getName() + " (" + target.getCounterCount(CounterType.CHARGE) + " remaining).";
+            
             gameLogService.append(gameData, GameLog.builder().text(toRemove + " charge counter(s) removed from ").card(target.getCard()).text(" (" + target.getCounterCount(CounterType.CHARGE) + " remaining).").build());
             log.info("Game {} - {} charge counter(s) removed from {} ({} remaining)", gameData.id, toRemove, target.getCard().getName(), target.getCounterCount(CounterType.CHARGE));
         }

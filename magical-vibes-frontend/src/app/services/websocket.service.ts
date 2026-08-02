@@ -470,6 +470,8 @@ export interface InteractionPromptNotification {
   cardName?: string;
   allGraveyards?: boolean;
   searchable?: boolean;
+  /** LIST_PICK options to grey out; still legally answerable, so this is presentation only. */
+  disabledOptions?: string[];
 }
 
 export interface RevealHandNotification {
