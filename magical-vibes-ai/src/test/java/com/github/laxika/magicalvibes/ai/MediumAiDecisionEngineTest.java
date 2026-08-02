@@ -454,7 +454,7 @@ class MediumAiDecisionEngineTest {
         }
 
         private MediumAiDecisionEngine createEngine() {
-            AiTestPlayabilityStub.install(mockGameActionAvailabilityService, mockCastingCostService);
+            AiTestPlayabilityStub.install(mockGameActionAvailabilityService, mockCastingCostService, mockGameQueryService);
             MediumAiDecisionEngine engine = new MediumAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
                     mockGameQueryService, mockBlockLegalityService, mockCombatAttackService, mockGameActionAvailabilityService,

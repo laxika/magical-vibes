@@ -128,7 +128,7 @@ public abstract class AiDecisionEngine {
         this.castingCostService = castingCostService;
         this.castingPermissionService = castingPermissionService;
 
-        this.manaManager = new AiManaManager(gameQueryService, castingCostService);
+        this.manaManager = new AiManaManager(gameQueryService, actionAvailabilityService.potentialManaService());
         BoardEvaluator boardEvaluator = new BoardEvaluator(gameQueryService);
         this.targetSelector = new AiTargetSelector(gameQueryService, targetValidationService,
                 targetLegalityService, boardEvaluator);

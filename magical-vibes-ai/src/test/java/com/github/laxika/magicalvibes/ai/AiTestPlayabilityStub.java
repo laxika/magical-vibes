@@ -17,7 +17,10 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
+import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import org.mockito.Mockito;
 
 import java.util.List;
@@ -43,7 +46,20 @@ final class AiTestPlayabilityStub {
     private AiTestPlayabilityStub() {
     }
 
-    static void install(GameActionAvailabilityService actionAvailabilityService, CastingCostService castingCostService) {
+    static void install(GameActionAvailabilityService actionAvailabilityService, CastingCostService castingCostService,
+                        GameQueryService gameQueryService) {
+        // AiDecisionEngine reads its potential-mana model off this service. Activation legality is
+        // the engine's answer, which these mock-wired suites do not stage, so allow every ability
+        // and index them as printed.
+        AbilityActivationService abilityActivationService = Mockito.mock(AbilityActivationService.class);
+        Mockito.lenient().when(abilityActivationService.getEffectiveActivatedAbilities(any(), any()))
+                .thenAnswer(inv -> ((Permanent) inv.getArgument(1)).getCard().getActivatedAbilities());
+        Mockito.lenient().when(abilityActivationService.canActivateAbility(
+                        any(), any(), any(), anyInt(), any()))
+                .thenReturn(true);
+        Mockito.lenient().when(actionAvailabilityService.potentialManaService())
+                .thenReturn(new PotentialManaService(gameQueryService, abilityActivationService));
+
         Mockito.lenient().when(castingCostService.canPayAdditionalSpellCosts(
                         any(GameData.class), any(UUID.class), any(Card.class)))
                 .thenAnswer(inv -> {

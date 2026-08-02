@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -19,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 
 import java.util.ArrayList;
@@ -47,9 +45,9 @@ public class AiManaManager {
     private final GameQueryService gameQueryService;
     private final PotentialManaService potentialManaService;
 
-    public AiManaManager(GameQueryService gameQueryService, CastingCostService castingCostService) {
+    public AiManaManager(GameQueryService gameQueryService, PotentialManaService potentialManaService) {
         this.gameQueryService = gameQueryService;
-        this.potentialManaService = new PotentialManaService(gameQueryService, castingCostService);
+        this.potentialManaService = potentialManaService;
     }
 
     /**
@@ -97,9 +95,17 @@ public class AiManaManager {
      * now — the shared gate behind both the virtual pool and every payment path, so planned mana is
      * always mana the engine will actually let us produce.
      */
-    public boolean canTapForManaNow(ActivatedAbility ability, Permanent permanent,
+    public boolean canTapForManaNow(ActivatedAbility ability, int abilityIndex, Permanent permanent,
                                     GameData gameData, UUID playerId) {
-        return potentialManaService.canTapForManaNow(ability, permanent, gameData, playerId);
+        return potentialManaService.canTapForManaNow(ability, abilityIndex, permanent, gameData, playerId);
+    }
+
+    /**
+     * The permanent's abilities in the order the engine indexes them, so an {@code abilityIndex}
+     * the AI plans with is the one {@code activateAbility} resolves.
+     */
+    public List<ActivatedAbility> activatedAbilitiesFor(GameData gameData, Permanent permanent) {
+        return potentialManaService.activatedAbilitiesFor(gameData, permanent, permanent.getCard());
     }
 
     void tapLandsForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, int costModifier, ManaTapAction action) {
@@ -410,8 +416,7 @@ public class AiManaManager {
             if (creaturesOnly && !creature) {
                 continue;
             }
-            if (creature && permanent.isSummoningSick()
-                    && !gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE)) {
+            if (gameQueryService.isSummoningSickForTapCost(gameData, permanent, playerId)) {
                 continue;
             }
 
@@ -432,6 +437,7 @@ public class AiManaManager {
         if (skipChoiceSources && replacementColors.size() > 1) {
             return List.of(); // Tapping would prompt for which replacement color to add
         }
+        boolean printedTapMana = potentialManaService.hasLivePrintedTapMana(gameData, permanent);
         int triggerCost = attachedTapTriggerCost(gameData, permanent);
         List<ManaColor> overriddenLandColors = card.hasType(CardType.LAND)
                 ? gameQueryService.getOverriddenLandManaColors(gameData, permanent)
@@ -448,7 +454,7 @@ public class AiManaManager {
             }
             return options;
         }
-        if (hasOnTapManaEffects(card)) {
+        if (printedTapMana) {
             return applyLandManaReplacement(replacementColors, manaOptionsForEffects(permanent.getId(), null,
                     card.getEffects(EffectSlot.ON_TAP), triggerCost, versatilityCost, false,
                     permanent, gameData));
@@ -458,10 +464,10 @@ public class AiManaManager {
         }
 
         List<ManaOption> options = new ArrayList<>();
-        List<ActivatedAbility> abilities = card.getActivatedAbilities();
+        List<ActivatedAbility> abilities = potentialManaService.activatedAbilitiesFor(gameData, permanent, card);
         for (int i = 0; i < abilities.size(); i++) {
             ActivatedAbility ability = abilities.get(i);
-            if (!potentialManaService.canTapForManaNow(ability, permanent, gameData, playerId)) {
+            if (!potentialManaService.canTapForManaNow(ability, i, permanent, gameData, playerId)) {
                 continue;
             }
             boolean painful = ability.getEffects().stream()
@@ -522,6 +528,14 @@ public class AiManaManager {
         return replaced.isEmpty() ? List.of() : new ArrayList<>(replaced);
     }
 
+    /**
+     * The mana-output options one activation offers, priced for the payment search. Only mana that
+     * lands in the plain pool is modelled: a spend-restricted any-color producer (Cavern of Souls,
+     * Ancient Ziggurat, Somberwald Sage) is worth nothing here, because the search adds its output
+     * to a plain {@link ManaPool} and asks {@link ManaCost#canPay} — which cannot spend from the
+     * restricted bucket the engine actually pays it into. Counting it built plans that tapped every
+     * source and still left the cost unpaid, and the AI then sent a cast the engine had to refuse.
+     */
     private List<ManaOption> manaOptionsForEffects(UUID permanentId, Integer abilityIndex,
                                                     List<CardEffect> effects, int triggerCost,
                                                     int versatilityCost, boolean painful,
@@ -540,8 +554,6 @@ public class AiManaManager {
                 }
             } else if (mana.estimatedCountsAllColors()) {
                 anyColorAmount += Math.max(1, mana.estimatedWildcardMana());
-            } else if (mana.estimatedWildcardMana() > 0) {
-                fixedOutput.merge(ManaColor.COLORLESS, mana.estimatedWildcardMana(), Integer::sum);
             }
         }
         if (fixedOutput.isEmpty() && anyColorAmount <= 0) {
@@ -591,7 +603,7 @@ public class AiManaManager {
                                  int index, ManaCost cost, ManaPool currentPool, ManaTapAction action) {
         Permanent perm = battlefield.get(index);
         Card card = perm.getCard();
-        if (hasOnTapManaEffects(card)) {
+        if (potentialManaService.hasLivePrintedTapMana(gameData, perm)) {
             action.tap(index, null);
             return true;
         }
@@ -629,8 +641,7 @@ public class AiManaManager {
             if (creaturesOnly && !isCreature) {
                 continue;
             }
-            if (isCreature && perm.isSummoningSick()
-                    && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) {
+            if (gameQueryService.isSummoningSickForTapCost(gameData, perm, aiPlayerId)) {
                 continue;
             }
             if (!gameQueryService.canActivateManaAbility(gameData, perm)) {
@@ -638,7 +649,7 @@ public class AiManaManager {
             }
 
             Card card = perm.getCard();
-            boolean hasOnTap = hasOnTapManaEffects(card);
+            boolean hasOnTap = potentialManaService.hasLivePrintedTapMana(gameData, perm);
             if (!hasOnTap) {
                 if (skipChoiceSources && wouldManaAbilityTriggerChoice(card)) {
                     continue;
@@ -808,6 +819,8 @@ public class AiManaManager {
     /**
      * Adds the mana that a card would produce if it were an untapped permanent
      * on the battlefield. Used by the Hard AI to compare different land play options.
+     * Spend-restricted producers add nothing, matching {@code PotentialManaService}: a land is
+     * not worth playing for mana a generic cost could never spend.
      */
     public void addCardManaToPool(Card card, ManaPool pool) {
         if (hasOnTapManaEffects(card)) {
@@ -816,8 +829,8 @@ public class AiManaManager {
                     if (mp.estimatedManaColor() != null) {
                         pool.add(mp.estimatedManaColor(),
                                 potentialManaService.estimateManaAmount(mp.estimatedManaAmount(), null, null));
-                    } else if (mp.estimatedWildcardMana() > 0) {
-                        pool.add(ManaColor.COLORLESS, mp.estimatedWildcardMana());
+                    } else if (mp.estimatedCountsAllColors()) {
+                        pool.add(ManaColor.COLORLESS, Math.max(1, mp.estimatedWildcardMana()));
                     }
                 }
             }
@@ -896,13 +909,13 @@ public class AiManaManager {
      */
     private Integer chooseBestManaAbilityIndex(Card card, ManaCost cost, ManaPool currentPool, Permanent permanent,
                                                 GameData gameData, UUID playerId) {
-        List<ActivatedAbility> abilities = card.getActivatedAbilities();
+        List<ActivatedAbility> abilities = potentialManaService.activatedAbilitiesFor(gameData, permanent, card);
         Integer bestIndex = null;
         int bestScore = -1;
 
         for (int j = 0; j < abilities.size(); j++) {
             ActivatedAbility ability = abilities.get(j);
-            if (!potentialManaService.canTapForManaNow(ability, permanent, gameData, playerId)) {
+            if (!potentialManaService.canTapForManaNow(ability, j, permanent, gameData, playerId)) {
                 continue;
             }
 

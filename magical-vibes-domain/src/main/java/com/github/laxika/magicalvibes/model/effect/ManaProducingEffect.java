@@ -42,18 +42,26 @@ public interface ManaProducingEffect extends CardEffect {
     /**
      * True when this effect adds mana of any of the five colors (player's choice) that the
      * estimator counts as full color coverage — the plain {@link AwardAnyColorManaEffect} shape.
-     * Spend-restricted any-color producers return {@code false}: the estimator treats their output
-     * as generic wildcard mana (see {@link #estimatedWildcardMana()}), not color coverage.
+     * Spend-restricted any-color producers return {@code false}, which is also what tells the
+     * estimator their mana is unspendable for an ordinary cost (see {@link #estimatedWildcardMana()}).
      */
     default boolean estimatedCountsAllColors() {
         return false;
     }
 
     /**
-     * The quantity of colorless "wildcard" mana this effect contributes to a virtual-pool estimate
-     * when its color is chosen at resolution ({@link AwardAnyColorManaEffect} → its amount;
-     * {@link AwardAnyColorChosenSubtypeCreatureManaEffect} → one), or {@code 0} when the estimator
-     * adds no wildcard mana.
+     * How much mana this effect produces once its color is chosen at resolution
+     * ({@link AwardAnyColorManaEffect} → its amount; {@link AwardAnyColorChosenSubtypeCreatureManaEffect}
+     * → one), or {@code 0} when the estimator models no such output.
+     *
+     * <p>This is a <em>quantity</em>, not a promise that the mana is spendable. When
+     * {@link #estimatedCountsAllColors()} is {@code false} the producer is spend-restricted: the
+     * engine pays it into a bucket (subtype-creature, creature-spell-only, …) that an ordinary cost
+     * cannot draw from, so virtual-pool and payment-plan builders must not add it to a plain
+     * {@link com.github.laxika.magicalvibes.model.ManaPool}. The one consumer that legitimately
+     * reads it for a restricted producer is {@code PotentialManaService.estimateLandManaAmount},
+     * where a fixed-color replacement (Infernal Darkness) has already rewritten the mana's type and
+     * dropped the restriction — only the quantity survives.
      */
     default int estimatedWildcardMana() {
         return 0;

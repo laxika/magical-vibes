@@ -146,7 +146,7 @@ public class GameSimulator {
         this.castingCostService = castingCostService;
         this.gameRegistry = gameRegistry;
         this.combatAttackService = combatAttackService;
-        this.manaManager = new AiManaManager(gameQueryService, castingCostService);
+        this.manaManager = new AiManaManager(gameQueryService, actionAvailabilityService.potentialManaService());
         this.boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
         this.combatSimulator = new CombatSimulator(gameQueryService, blockLegalityService, boardEvaluator);
@@ -1218,11 +1218,11 @@ public class GameSimulator {
             return true;
         }
         // Check activated mana abilities (dual lands, pain lands, etc.)
-        var abilities = perm.getCard().getActivatedAbilities();
+        var abilities = manaManager.activatedAbilitiesFor(gd, perm);
         Integer bestIndex = null;
         int bestScore = -1;
         for (int j = 0; j < abilities.size(); j++) {
-            if (!manaManager.canTapForManaNow(abilities.get(j), perm, gd, player.getId())) continue;
+            if (!manaManager.canTapForManaNow(abilities.get(j), j, perm, gd, player.getId())) continue;
             int score = scoreAbilityForSim(abilities.get(j), cost, currentPool);
             if (score > bestScore) {
                 bestScore = score;

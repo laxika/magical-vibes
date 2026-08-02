@@ -595,7 +595,7 @@ class HardAiDecisionEngineTest {
         }
 
         private HardAiDecisionEngine createEngine() {
-            AiTestPlayabilityStub.install(mockGameActionAvailabilityService, mockCastingCostService);
+            AiTestPlayabilityStub.install(mockGameActionAvailabilityService, mockCastingCostService, mockGameQueryService);
             HardAiDecisionEngine engine = new HardAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
                     mockGameQueryService, mockBlockLegalityService, mockCombatAttackService, mockGameActionAvailabilityService,
@@ -879,7 +879,7 @@ class HardAiDecisionEngineTest {
         }
 
         private HardAiDecisionEngine createEngine() {
-            AiTestPlayabilityStub.install(mockGameActionAvailabilityService, mockCastingCostService);
+            AiTestPlayabilityStub.install(mockGameActionAvailabilityService, mockCastingCostService, mockGameQueryService);
             HardAiDecisionEngine engine = new HardAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
                     mockGameQueryService, mockBlockLegalityService, mockCombatAttackService, mockGameActionAvailabilityService,

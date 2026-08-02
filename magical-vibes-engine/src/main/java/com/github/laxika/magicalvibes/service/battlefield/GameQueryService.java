@@ -4166,9 +4166,45 @@ public class GameQueryService {
     }
 
     /**
+     * CR 302.6: whether summoning sickness stops {@code permanent} paying a {@code {T}} or
+     * {@code {Q}} cost. Only creatures are affected, and haste — printed, granted, or supplied by an
+     * "as though it had haste" effect the controller has (Concordant Crossroads on the stack, Hall
+     * of the Bandit Lord) — lifts it.
+     *
+     * <p>Shared by the activation validator and by every mana-planning path. A planner that
+     * re-derives this without the "as though" clause silently refuses to tap mana creatures the
+     * engine would happily let it tap.
+     */
+    public boolean isSummoningSickForTapCost(GameData gameData, Permanent permanent, UUID controllerId) {
+        return permanent.isSummoningSick()
+                && isCreature(gameData, permanent)
+                && !hasKeyword(gameData, permanent, Keyword.HASTE)
+                && !canActivateCreatureAbilitiesAsThoughHaste(gameData, controllerId);
+    }
+
+    /**
+     * Returns {@code true} if the permanent has lost its printed abilities, whether continuously
+     * (Imprisoned in the Moon, Song of the Dryads) or until end of turn (Merfolk Trickster). Its
+     * printed {@code ON_TAP} mana is gone even when a later-timestamp grant leaves it with a mana
+     * ability of its own — {@code tapPermanent} refuses outright in that state, so a planner must
+     * read the granted ability instead of the printed one.
+     */
+    public boolean hasLostAllAbilities(GameData gameData, Permanent permanent) {
+        return permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                || computeStaticBonus(gameData, permanent).losesAllAbilities();
+    }
+
+    /**
      * Returns {@code true} if the permanent's mana abilities can currently be activated,
      * i.e. no static lock (Stony Silence, Pithing Needle with blocksManaAbilities, Phyrexian Revoker)
      * or aura-based lock (Arrest, Ice Cage, Serra Bestiary) prevents it.
+     *
+     * <p>This is the gate every mana-planning path shares — the virtual pool, the AI's payment
+     * search, and the client's "castable if you tap your lands" projection all consult it before
+     * counting a source. A lock the engine enforces but this method misses becomes mana a planner
+     * counts on and can never produce: it taps everything, comes up short, and fires an action the
+     * engine silently refuses. So the player-level locks below are mirrored here even though they
+     * are not properties of the permanent.
      */
     public boolean canActivateManaAbility(GameData gameData, Permanent permanent) {
         String cardName = permanent.getCard().getName();
@@ -4176,6 +4212,19 @@ public class GameQueryService {
         // City of Solitude: mana abilities can only be activated on the controller's turn.
         UUID controllerId = findPermanentController(gameData, permanent.getId());
         if (controllerId != null && isLockedOutByOwnTurnOnlyRestriction(gameData, controllerId)) {
+            return false;
+        }
+
+        // Sen Triplets: a player locked out this turn can activate no ability at all, mana included.
+        if (controllerId != null && gameData.playersCantActivateAbilitiesThisTurn.contains(controllerId)) {
+            return false;
+        }
+
+        // Grand Abolisher: on the opponent's turn, abilities of the controller's artifacts,
+        // creatures and enchantments are locked. Lands keep producing.
+        if (controllerId != null && isLockedOutByOpponentsTurnRestriction(gameData, controllerId)
+                && (isCreature(gameData, permanent) || isArtifact(gameData, permanent)
+                        || isEnchantment(gameData, permanent))) {
             return false;
         }
 

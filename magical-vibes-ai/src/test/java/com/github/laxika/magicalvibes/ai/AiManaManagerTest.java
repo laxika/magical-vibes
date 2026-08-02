@@ -35,8 +35,9 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -53,6 +54,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
@@ -87,7 +89,7 @@ class AiManaManagerTest {
     private GameQueryService gameQueryService;
 
     @Mock
-    private CastingCostService castingCostService;
+    private AbilityActivationService abilityActivationService;
 
     private AiManaManager manager;
 
@@ -96,7 +98,14 @@ class AiManaManagerTest {
 
     @BeforeEach
     void setUp() {
-        manager = new AiManaManager(gameQueryService, castingCostService);
+        manager = new AiManaManager(
+                gameQueryService, new PotentialManaService(gameQueryService, abilityActivationService));
+        // Activation legality is the engine's answer, not this unit's: default to "legal" and let
+        // individual tests deny a specific source.
+        lenient().when(abilityActivationService.getEffectiveActivatedAbilities(any(), any()))
+                .thenAnswer(call -> ((Permanent) call.getArgument(1)).getCard().getActivatedAbilities());
+        lenient().when(abilityActivationService.canActivateAbility(any(), any(), any(), anyInt(), any()))
+                .thenReturn(true);
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
         gd.orderedPlayerIds.add(player1Id);
@@ -109,6 +118,12 @@ class AiManaManagerTest {
     }
 
     // ── Helper methods ──────────────────────────────────────────────
+
+    /** Makes the engine refuse every ability of {@code permanent}, as a tax or a lock would. */
+    private void denyActivation(Permanent permanent) {
+        lenient().when(abilityActivationService.canActivateAbility(
+                any(), any(), eq(permanent), anyInt(), any())).thenReturn(false);
+    }
 
     private static Card createLand(String name, ManaColor color) {
         Card card = new Card();
@@ -421,7 +436,7 @@ class AiManaManagerTest {
         @DisplayName("skips a source whose activated abilities are taxed")
         void skipsTaxedManaSource() {
             Permanent taxed = addUntappedDualLand("Taxed Land", ManaColor.RED, ManaColor.GREEN);
-            when(castingCostService.getActivatedAbilityActivationTax(gd, taxed)).thenReturn(3);
+            denyActivation(taxed);
 
             // The engine demands the tax before the ability produces anything, so counting this
             // source would plan mana the AI can never actually produce.
@@ -433,9 +448,8 @@ class AiManaManagerTest {
         @DisplayName("includes an untaxed source alongside a taxed one")
         void includesUntaxedManaSourceOnly() {
             Permanent taxed = addUntappedDualLand("Taxed Land", ManaColor.RED, ManaColor.GREEN);
-            Permanent untaxed = addUntappedDualLand("Free Land", ManaColor.BLUE, ManaColor.WHITE);
-            when(castingCostService.getActivatedAbilityActivationTax(gd, taxed)).thenReturn(3);
-            when(castingCostService.getActivatedAbilityActivationTax(gd, untaxed)).thenReturn(0);
+            addUntappedDualLand("Free Land", ManaColor.BLUE, ManaColor.WHITE);
+            denyActivation(taxed);
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.get(ManaColor.RED)).isZero();
@@ -496,9 +510,14 @@ class AiManaManagerTest {
             assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
         }
 
+        /**
+         * Cavern of Souls' mana pays into the subtype-creature bucket, which an ordinary cost can
+         * never draw from. Counting it as generic told the AI it could afford a spell it then had
+         * no way to pay for, and the engine rejected the cast with the sources already tapped.
+         */
         @Test
-        @DisplayName("handles AwardAnyColorChosenSubtypeCreatureManaEffect as colorless")
-        void chosenSubtypeManaAsColorless() {
+        @DisplayName("ignores AwardAnyColorChosenSubtypeCreatureManaEffect — its mana is spend-restricted")
+        void chosenSubtypeManaIsNotCounted() {
             Card card = new Card();
             card.setName("Pillar of Origins");
             card.setType(CardType.ARTIFACT);
@@ -511,7 +530,7 @@ class AiManaManagerTest {
             when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
-            assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
+            assertThat(pool.getTotal()).isZero();
         }
 
         @Test
@@ -756,7 +775,7 @@ class AiManaManagerTest {
         @Test
         @DisplayName("excludes charge counter mana ability when permanent has zero counters")
         void excludesChargeCounterAbilityWithZeroCounters() {
-            addUntappedChargeCounterArtifact("Sphere of the Suns", 0);
+            denyActivation(addUntappedChargeCounterArtifact("Sphere of the Suns", 0));
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.getTotal()).isZero();
@@ -775,7 +794,7 @@ class AiManaManagerTest {
         @DisplayName("mix of lands and depleted charge counter artifact only counts lands")
         void mixOfLandsAndDepletedArtifact() {
             addUntappedLand("Forest", ManaColor.GREEN);
-            addUntappedChargeCounterArtifact("Sphere of the Suns", 0);
+            denyActivation(addUntappedChargeCounterArtifact("Sphere of the Suns", 0));
             addUntappedLand("Mountain", ManaColor.RED);
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
@@ -788,7 +807,7 @@ class AiManaManagerTest {
         @Test
         @DisplayName("excludes a counter-gated mana ability while the source lacks the counters")
         void excludesCounterGatedAbilityWithoutCounters() {
-            addUntappedBrickCounterArtifact("Pyramid of the Pantheon", 0);
+            denyActivation(addUntappedBrickCounterArtifact("Pyramid of the Pantheon", 0));
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.getTotal()).isZero();
@@ -815,7 +834,7 @@ class AiManaManagerTest {
         @Test
         @DisplayName("excludes colorless mana per charge counter ability with zero counters")
         void excludesColorlessManaPerChargeCounterWithZeroCounters() {
-            addUntappedChargeCounterColorlessManaArtifact("Shrine of Boundless Growth", 0);
+            denyActivation(addUntappedChargeCounterColorlessManaArtifact("Shrine of Boundless Growth", 0));
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.getTotal()).isZero();
@@ -836,8 +855,7 @@ class AiManaManagerTest {
         @Test
         @DisplayName("excludes Metalcraft mana ability when player controls fewer than 3 artifacts")
         void excludesMetalcraftAbilityWithoutEnoughArtifacts() {
-            addUntappedMetalcraftArtifact("Mox Opal");
-            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
+            denyActivation(addUntappedMetalcraftArtifact("Mox Opal"));
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.getTotal()).isZero();
@@ -847,7 +865,6 @@ class AiManaManagerTest {
         @DisplayName("includes Metalcraft mana ability when player controls 3 or more artifacts")
         void includesMetalcraftAbilityWithEnoughArtifacts() {
             addUntappedMetalcraftArtifact("Mox Opal");
-            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
@@ -857,9 +874,8 @@ class AiManaManagerTest {
         @DisplayName("mix of lands and Metalcraft artifact without Metalcraft only counts lands")
         void mixOfLandsAndMetalcraftArtifactWithoutMetalcraft() {
             addUntappedLand("Forest", ManaColor.GREEN);
-            addUntappedMetalcraftArtifact("Mox Opal");
+            denyActivation(addUntappedMetalcraftArtifact("Mox Opal"));
             addUntappedLand("Mountain", ManaColor.RED);
-            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1);
@@ -873,7 +889,6 @@ class AiManaManagerTest {
         void metalcraftArtifactWithMetalcraftMetAddsAlongsideLands() {
             addUntappedLand("Forest", ManaColor.GREEN);
             addUntappedMetalcraftArtifact("Mox Opal");
-            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1);
@@ -897,7 +912,7 @@ class AiManaManagerTest {
             lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
             lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
             lenient().when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
-            when(gameQueryService.isMorbidMet(gd)).thenReturn(false);
+            denyActivation(perm);
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.getTotal()).isZero();
@@ -919,7 +934,6 @@ class AiManaManagerTest {
             lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
             lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
             lenient().when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
-            when(gameQueryService.isMorbidMet(gd)).thenReturn(true);
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.get(ManaColor.BLACK)).isEqualTo(1);
@@ -944,6 +958,7 @@ class AiManaManagerTest {
             lenient().when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
             gd.activePlayerId = opponentId;
             gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+            denyActivation(perm);
 
             ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.getTotal()).isZero();
@@ -1155,7 +1170,7 @@ class AiManaManagerTest {
         @DisplayName("never taps a source whose only free mana ability is gated behind counters it lacks")
         void skipsCounterGatedManaSource() {
             addUntappedLand("Swamp", ManaColor.BLACK);
-            addUntappedBrickCounterArtifact("Pyramid of the Pantheon", 0);
+            denyActivation(addUntappedBrickCounterArtifact("Pyramid of the Pantheon", 0));
 
             AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
             manager.tapLandsForCost(gd, player1Id, "{4}{B}", 0, action);
@@ -1515,7 +1530,7 @@ class AiManaManagerTest {
         @Test
         @DisplayName("skips charge counter ability with zero counters during tapping")
         void skipsDepletedChargeCounterAbility() {
-            addUntappedChargeCounterArtifact("Sphere of the Suns", 0);
+            denyActivation(addUntappedChargeCounterArtifact("Sphere of the Suns", 0));
 
             AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
             manager.tapLandsForCost(gd, player1Id, "{1}", 0, action);
@@ -1561,9 +1576,8 @@ class AiManaManagerTest {
         @Test
         @DisplayName("skips Metalcraft mana ability without Metalcraft and taps land instead")
         void skipsMetalcraftAbilityWithoutMetalcraftTapsLandInstead() {
-            addUntappedMetalcraftArtifact("Mox Opal");
+            denyActivation(addUntappedMetalcraftArtifact("Mox Opal"));
             addUntappedLand("Forest", ManaColor.GREEN);
-            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
 
             AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
             lenient().doAnswer(invocation -> {
@@ -1582,7 +1596,6 @@ class AiManaManagerTest {
         @DisplayName("taps Metalcraft mana ability when Metalcraft is met")
         void tapsMetalcraftAbilityWhenMetalcraftMet() {
             addUntappedMetalcraftArtifact("Mox Opal");
-            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
 
             AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
             lenient().doAnswer(invocation -> {
@@ -1732,6 +1745,60 @@ class AiManaManagerTest {
             verify(action, never()).tap(eq(0), any());
             verify(action).tap(1, null);
             verify(action).tap(2, null);
+        }
+
+        /**
+         * Cavern of Souls, Ancient Ziggurat and Somberwald Sage pay into buckets an ordinary cost
+         * cannot draw from. Planning against them built plans that tapped every source and still
+         * left the cost unpaid, so the AI sent a cast the engine had to refuse — with the lands
+         * already spent.
+         */
+        @Nested
+        @DisplayName("spend-restricted mana sources")
+        class SpendRestrictedManaSources {
+
+            private void addSubtypeRestrictedSource(String name) {
+                Card card = new Card();
+                card.setName(name);
+                card.setType(CardType.LAND);
+                card.addActivatedAbility(new ActivatedAbility(
+                        true, null, List.of(new AwardAnyColorChosenSubtypeCreatureManaEffect()),
+                        "{T}: Add one mana of any color. Spend this mana only to cast a creature "
+                                + "spell of the chosen type."));
+                Permanent perm = new Permanent(card);
+                perm.setSummoningSick(false);
+                gd.playerBattlefields.get(player1Id).add(perm);
+                lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
+                lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
+                lenient().when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
+            }
+
+            @Test
+            @DisplayName("the plan spends basics rather than a subtype-restricted source")
+            void planSkipsSubtypeRestrictedSource() {
+                addSubtypeRestrictedSource("Cavern of Souls");
+                addUntappedLand("Forest", ManaColor.GREEN);
+                addUntappedLand("Plains", ManaColor.WHITE);
+
+                AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+                manager.tapLandsForCost(gd, player1Id, "{2}", 0, action);
+
+                verify(action).tap(1, null);
+                verify(action).tap(2, null);
+                verify(action, never()).tap(eq(0), any());
+            }
+
+            @Test
+            @DisplayName("a subtype-restricted source is not counted toward the virtual pool")
+            void virtualPoolSkipsSubtypeRestrictedSource() {
+                addSubtypeRestrictedSource("Cavern of Souls");
+                addUntappedLand("Forest", ManaColor.GREEN);
+
+                VirtualManaPool virtual = manager.buildVirtualManaPool(gd, player1Id);
+
+                assertThat(virtual.getTotal()).isEqualTo(1);
+                assertThat(virtual.get(ManaColor.COLORLESS)).isZero();
+            }
         }
     }
 
@@ -2037,6 +2104,7 @@ class AiManaManagerTest {
             assertThat(manager.calculateMaxAffordableX(xSpell, virtualPool, 0)).isEqualTo(1);
 
             channeler.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
+            denyActivation(channeler); // the counter its cost removes is gone
             virtualPool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(virtualPool.getTotal()).isEqualTo(2);
             assertThat(manager.calculateMaxAffordableX(xSpell, virtualPool, 0)).isZero();
@@ -2057,9 +2125,8 @@ class AiManaManagerTest {
         @Test
         @DisplayName("skips Metalcraft mana ability without Metalcraft for X spell")
         void skipsMetalcraftAbilityWithoutMetalcraftForXSpell() {
-            addUntappedMetalcraftArtifact("Mox Opal");
+            denyActivation(addUntappedMetalcraftArtifact("Mox Opal"));
             addUntappedLand("Mountain", ManaColor.RED);
-            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
 
             Card xSpell = new Card();
             xSpell.setManaCost("{X}{R}");
@@ -2372,8 +2439,8 @@ class AiManaManagerTest {
         }
 
         @Test
-        @DisplayName("adds AwardAnyColorChosenSubtypeCreatureManaEffect as colorless")
-        void addsChosenSubtypeManaAsColorless() {
+        @DisplayName("skips AwardAnyColorChosenSubtypeCreatureManaEffect — its mana is spend-restricted")
+        void skipsChosenSubtypeMana() {
             Card card = new Card();
             card.setName("Pillar of Origins");
             card.setType(CardType.ARTIFACT);
@@ -2382,7 +2449,7 @@ class AiManaManagerTest {
 
             manager.addCardManaToPool(card, pool);
 
-            assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
+            assertThat(pool.getTotal()).isZero();
         }
 
         @Test

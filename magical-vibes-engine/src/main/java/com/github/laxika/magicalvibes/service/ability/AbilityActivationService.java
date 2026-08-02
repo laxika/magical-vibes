@@ -42,7 +42,6 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaActivation;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -198,8 +197,7 @@ public class AbilityActivationService {
         if (permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty() && overriddenManaColors.isEmpty()) {
             throw new IllegalStateException("Permanent has no tap effects");
         }
-        if (permanent.isSummoningSick() && gameQueryService.isCreature(gameData, permanent) && !gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE)
-                && !gameQueryService.canActivateCreatureAbilitiesAsThoughHaste(gameData, playerId)) {
+        if (gameQueryService.isSummoningSickForTapCost(gameData, permanent, playerId)) {
             throw new IllegalStateException("Creature has summoning sickness");
         }
         if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
@@ -2440,8 +2438,7 @@ public class AbilityActivationService {
             if (permanent.isTapped()) {
                 throw new IllegalStateException("Permanent is already tapped");
             }
-            if (permanent.isSummoningSick() && gameQueryService.isCreature(gameData, permanent) && !gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE)
-                    && !gameQueryService.canActivateCreatureAbilitiesAsThoughHaste(gameData, playerId)) {
+            if (gameQueryService.isSummoningSickForTapCost(gameData, permanent, playerId)) {
                 throw new IllegalStateException("Creature has summoning sickness");
             }
         }
@@ -2452,8 +2449,7 @@ public class AbilityActivationService {
             if (!permanent.isTapped()) {
                 throw new IllegalStateException("Permanent is not tapped");
             }
-            if (permanent.isSummoningSick() && gameQueryService.isCreature(gameData, permanent) && !gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE)
-                    && !gameQueryService.canActivateCreatureAbilitiesAsThoughHaste(gameData, playerId)) {
+            if (gameQueryService.isSummoningSickForTapCost(gameData, permanent, playerId)) {
                 throw new IllegalStateException("Creature has summoning sickness");
             }
         }

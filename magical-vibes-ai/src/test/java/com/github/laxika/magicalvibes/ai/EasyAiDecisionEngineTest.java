@@ -118,7 +118,7 @@ class EasyAiDecisionEngineTest {
     }
 
     private EasyAiDecisionEngine createEngine() {
-        AiTestPlayabilityStub.install(actionAvailabilityService, castingCostService);
+        AiTestPlayabilityStub.install(actionAvailabilityService, castingCostService, gameQueryService);
         EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                 gd.id, aiPlayer, gameRegistry, messageHandler,
                 gameQueryService, blockLegalityService, combatAttackService, actionAvailabilityService,

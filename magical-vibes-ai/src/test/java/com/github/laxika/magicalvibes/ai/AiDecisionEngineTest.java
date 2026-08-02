@@ -2272,7 +2272,8 @@ class AiDecisionEngineTest {
     void virtualPoolIncludesDualLandMana() {
         addUntappedLand(aiPlayer, RootboundCrag.class);
 
-        AiManaManager manaManager = new AiManaManager(harness.getGameQueryService(), harness.getCastingCostService());
+        AiManaManager manaManager = new AiManaManager(harness.getGameQueryService(),
+                harness.getGameActionAvailabilityService().potentialManaService());
         ManaPool pool = manaManager.buildVirtualManaPool(gd, aiPlayer.getId());
 
         assertThat(pool.get(ManaColor.RED)).isGreaterThanOrEqualTo(1);
@@ -2285,7 +2286,8 @@ class AiDecisionEngineTest {
         addUntappedLand(aiPlayer, RootboundCrag.class);
         addUntappedLand(aiPlayer, RootboundCrag.class);
 
-        AiManaManager manaManager = new AiManaManager(harness.getGameQueryService(), harness.getCastingCostService());
+        AiManaManager manaManager = new AiManaManager(harness.getGameQueryService(),
+                harness.getGameActionAvailabilityService().potentialManaService());
         VirtualManaPool pool = manaManager.buildVirtualManaPool(gd, aiPlayer.getId());
 
         assertThat(pool.get(ManaColor.RED)).isEqualTo(2);
@@ -2300,7 +2302,8 @@ class AiDecisionEngineTest {
         addUntappedLand(aiPlayer, Mountain.class);
         addUntappedLand(aiPlayer, RootboundCrag.class);
 
-        AiManaManager manaManager = new AiManaManager(harness.getGameQueryService(), harness.getCastingCostService());
+        AiManaManager manaManager = new AiManaManager(harness.getGameQueryService(),
+                harness.getGameActionAvailabilityService().potentialManaService());
         VirtualManaPool pool = manaManager.buildVirtualManaPool(gd, aiPlayer.getId());
 
         assertThat(pool.get(ManaColor.RED)).isEqualTo(2); // Mountain + Crag
@@ -2313,7 +2316,8 @@ class AiDecisionEngineTest {
     void virtualPoolHandlesPainLands() {
         addUntappedLand(aiPlayer, YavimayaCoast.class);
 
-        AiManaManager manaManager = new AiManaManager(harness.getGameQueryService(), harness.getCastingCostService());
+        AiManaManager manaManager = new AiManaManager(harness.getGameQueryService(),
+                harness.getGameActionAvailabilityService().potentialManaService());
         VirtualManaPool pool = manaManager.buildVirtualManaPool(gd, aiPlayer.getId());
 
         // Yavimaya Coast: {C}, {G}+damage, {U}+damage
@@ -2516,7 +2520,8 @@ class AiDecisionEngineTest {
         Permanent crag = addUntappedLand(aiPlayer, RootboundCrag.class);
         crag.tap();
 
-        AiManaManager manaManager = new AiManaManager(harness.getGameQueryService(), harness.getCastingCostService());
+        AiManaManager manaManager = new AiManaManager(harness.getGameQueryService(),
+                harness.getGameActionAvailabilityService().potentialManaService());
         ManaPool pool = manaManager.buildVirtualManaPool(gd, aiPlayer.getId());
 
         assertThat(pool.get(ManaColor.RED)).isEqualTo(0);
