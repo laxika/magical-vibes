@@ -26,6 +26,7 @@ public class VirtualManaPool extends ManaPool {
 
     private int flexibleOvercount;
     private final EnumMap<ManaColor, Integer> perColorOvercount;
+    private int creatureManaOvercount;
 
     public VirtualManaPool() {
         super();
@@ -39,6 +40,7 @@ public class VirtualManaPool extends ManaPool {
         super(source);
         this.flexibleOvercount = source.flexibleOvercount;
         this.perColorOvercount = new EnumMap<>(source.perColorOvercount);
+        this.creatureManaOvercount = source.creatureManaOvercount;
     }
 
     public void addFlexibleOvercount(int amount) {
@@ -81,5 +83,23 @@ public class VirtualManaPool extends ManaPool {
     @Override
     public int getTotal() {
         return Math.max(0, super.getTotal() - flexibleOvercount);
+    }
+
+    public void addCreatureManaOvercount(int amount) {
+        if (amount <= 0) {
+            return;
+        }
+        creatureManaOvercount += amount;
+    }
+
+    /**
+     * The creature-mana counterpart of {@link #getTotal()}: a mana creature whose options are
+     * mutually exclusive (one tapping for a mana of any color) is tagged as creature mana in every
+     * color it could make, so the uncorrected sum would report a single tap as five mana.
+     * {@code canPayCreatureOnly} reads this total, so it needs the same correction.
+     */
+    @Override
+    public int getCreatureManaTotal() {
+        return Math.max(0, super.getCreatureManaTotal() - creatureManaOvercount);
     }
 }

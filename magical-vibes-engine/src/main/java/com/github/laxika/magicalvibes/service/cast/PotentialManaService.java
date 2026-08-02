@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -144,10 +145,7 @@ public class PotentialManaService {
                                 virtual.addCreatureMana(manaEffect.color(), amount);
                             }
                         } else if (effect instanceof AwardAnyColorManaEffect aace) {
-                            virtual.add(ManaColor.COLORLESS, aace.amount());
-                            if (isCreature) {
-                                virtual.addCreatureMana(ManaColor.COLORLESS, aace.amount());
-                            }
+                            addAnyColorManaToVirtualPool(virtual, aace.amount(), isCreature);
                         }
                     }
                 } else {
@@ -216,7 +214,7 @@ public class PotentialManaService {
                         if (effect instanceof AwardManaEffect manaEffect) {
                             virtual.add(manaEffect.color(), estimateManaAmount(manaEffect.amount(), perm, gameData));
                         } else if (effect instanceof AwardAnyColorManaEffect aace) {
-                            virtual.add(ManaColor.COLORLESS, aace.amount());
+                            addAnyColorManaToVirtualPool(virtual, aace.amount(), false);
                         }
                     }
                 } else {
@@ -331,6 +329,9 @@ public class PotentialManaService {
         int totalAdded = 0;
         int maxAbilityTotal = 0;
 
+        int creatureManaAdded = 0;
+        int maxCreatureManaOption = 0;
+
         List<ActivatedAbility> abilities = activatedAbilitiesFor(gameData, permanent, card);
         for (int abilityIndex = 0; abilityIndex < abilities.size(); abilityIndex++) {
             ActivatedAbility ability = abilities.get(abilityIndex);
@@ -338,36 +339,27 @@ public class PotentialManaService {
                 continue;
             }
 
-            EnumMap<ManaColor, Integer> abilityByColor = new EnumMap<>(ManaColor.class);
-            for (CardEffect effect : ability.getEffects()) {
-                if (effect instanceof AwardManaEffect manaEffect) {
-                    int amount = estimateManaAmount(manaEffect.amount(), permanent, gameData);
-                    if (amount > 0) {
-                        abilityByColor.merge(manaEffect.color(), amount, Integer::sum);
+            for (EnumMap<ManaColor, Integer> abilityByColor : manaOptionsFor(ability, permanent, gameData)) {
+                int abilityTotal = 0;
+                for (Map.Entry<ManaColor, Integer> e : abilityByColor.entrySet()) {
+                    ManaColor color = e.getKey();
+                    int amount = e.getValue();
+                    virtual.add(color, amount);
+                    if (isCreature) {
+                        virtual.addCreatureMana(color, amount);
                     }
-                } else if (effect instanceof AwardAnyColorManaEffect aace) {
-                    abilityByColor.merge(ManaColor.COLORLESS, aace.amount(), Integer::sum);
-                } else if (effect instanceof AwardChosenColorManaEffect
-                        && permanent != null && permanent.getChosenColor() != null) {
-                    abilityByColor.merge(ManaColor.valueOf(permanent.getChosenColor().name()), 1, Integer::sum);
+                    totalByColor.merge(color, amount, Integer::sum);
+                    maxPerAbilityByColor.merge(color, amount, Integer::max);
+                    abilityTotal += amount;
                 }
-            }
-
-            int abilityTotal = 0;
-            for (Map.Entry<ManaColor, Integer> e : abilityByColor.entrySet()) {
-                ManaColor color = e.getKey();
-                int amount = e.getValue();
-                virtual.add(color, amount);
+                totalAdded += abilityTotal;
+                if (abilityTotal > maxAbilityTotal) {
+                    maxAbilityTotal = abilityTotal;
+                }
                 if (isCreature) {
-                    virtual.addCreatureMana(color, amount);
+                    creatureManaAdded += abilityTotal;
+                    maxCreatureManaOption = Math.max(maxCreatureManaOption, abilityTotal);
                 }
-                totalByColor.merge(color, amount, Integer::sum);
-                maxPerAbilityByColor.merge(color, amount, Integer::max);
-                abilityTotal += amount;
-            }
-            totalAdded += abilityTotal;
-            if (abilityTotal > maxAbilityTotal) {
-                maxAbilityTotal = abilityTotal;
             }
         }
 
@@ -385,6 +377,76 @@ public class PotentialManaService {
                 if (perColorOvercount > 0) {
                     vmp.addPerColorOvercount(e.getKey(), perColorOvercount);
                 }
+            }
+            vmp.addCreatureManaOvercount(creatureManaAdded - maxCreatureManaOption);
+        }
+    }
+
+    /**
+     * The mutually exclusive mana outputs one activation of {@code ability} could yield, as one
+     * color→amount map per outcome. Fixed producers have a single outcome; "add one mana of any
+     * color" ({@link ManaProducingEffect#estimatedCountsAllColors()}) has five, one per color,
+     * which is what lets it pay a colored pip of any color. Booking it as colorless instead would
+     * cover generic costs but no colored pip at all, so a Birds of Paradise would never mark a
+     * {@code {G}} spell castable. Since the source still taps only once, the caller's over-count
+     * bookkeeping collapses the five outcomes back to the single mana it really produces.
+     */
+    private List<EnumMap<ManaColor, Integer>> manaOptionsFor(ActivatedAbility ability, Permanent permanent,
+                                                             GameData gameData) {
+        EnumMap<ManaColor, Integer> fixed = new EnumMap<>(ManaColor.class);
+        int anyColorAmount = 0;
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof AwardManaEffect manaEffect) {
+                int amount = estimateManaAmount(manaEffect.amount(), permanent, gameData);
+                if (amount > 0) {
+                    fixed.merge(manaEffect.color(), amount, Integer::sum);
+                }
+            } else if (effect instanceof ManaProducingEffect mana && mana.estimatedCountsAllColors()) {
+                anyColorAmount += Math.max(1, mana.estimatedWildcardMana());
+            } else if (effect instanceof AwardChosenColorManaEffect
+                    && permanent != null && permanent.getChosenColor() != null) {
+                fixed.merge(ManaColor.valueOf(permanent.getChosenColor().name()), 1, Integer::sum);
+            }
+        }
+        if (anyColorAmount == 0) {
+            return List.of(fixed);
+        }
+        List<EnumMap<ManaColor, Integer>> options = new ArrayList<>();
+        for (ManaColor color : ManaColor.values()) {
+            if (color == ManaColor.COLORLESS) {
+                continue;
+            }
+            EnumMap<ManaColor, Integer> option = new EnumMap<>(fixed);
+            option.merge(color, anyColorAmount, Integer::sum);
+            options.add(option);
+        }
+        return options;
+    }
+
+    /**
+     * Adds an ON_TAP "one mana of any color" producer to a virtual pool: every color is offered,
+     * and the inflation of the total is recorded so the source still counts as the single mana one
+     * tap yields. Mirrors {@link #manaOptionsFor} for the slot that has no per-ability bookkeeping.
+     */
+    private static void addAnyColorManaToVirtualPool(ManaPool virtual, int amount, boolean isCreature) {
+        if (amount <= 0) {
+            return;
+        }
+        int colors = 0;
+        for (ManaColor color : ManaColor.values()) {
+            if (color == ManaColor.COLORLESS) {
+                continue;
+            }
+            colors++;
+            virtual.add(color, amount);
+            if (isCreature) {
+                virtual.addCreatureMana(color, amount);
+            }
+        }
+        if (virtual instanceof VirtualManaPool vmp) {
+            vmp.addFlexibleOvercount(amount * (colors - 1));
+            if (isCreature) {
+                vmp.addCreatureManaOvercount(amount * (colors - 1));
             }
         }
     }
