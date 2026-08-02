@@ -107,6 +107,9 @@ class SpinalGraftTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Spinal Graft")
     void cannotTargetNonCreature() {
+        // A legal creature target must exist somewhere, or the aura is unplayable before targeting
+        // is ever validated (CR 601.2c) and the cast fails with the wrong message.
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new SpinalGraft()));
         harness.addMana(player1, ManaColor.BLACK, 1);

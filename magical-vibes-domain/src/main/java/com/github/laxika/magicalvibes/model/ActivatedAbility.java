@@ -425,6 +425,24 @@ public class ActivatedAbility {
     }
 
     /**
+     * Whether this activation targets a spell on the stack. An ability that can only ever target a
+     * spell (Spiketail Hatchling) has a single legal zone, so an activation may leave the zone unset
+     * and still mean the stack. A dual "target spell or permanent" ability (Eight-and-a-Half-Tails)
+     * carries a permanent target spec alongside the spell one, so only an explicit
+     * {@link Zone#STACK} tells us the spell half was chosen.
+     */
+    public boolean targetsSpellOnStack(Zone requestedZone) {
+        return isNeedsSpellTarget() && (requestedZone == Zone.STACK || isSpellOnlyTarget());
+    }
+
+    /** True when no effect offers a permanent target as an alternative to the spell target. */
+    private boolean isSpellOnlyTarget() {
+        return effects.stream()
+                .filter(EffectResolution::targetsSpellOnStack)
+                .allMatch(e -> e.targetSpec().category() == TargetCategory.SPELL_ON_STACK);
+    }
+
+    /**
      * Whether this is an embalm or eternalize ability. Both keywords are modelled as a
      * graveyard-activated ability that creates a token copy of its source
      * ({@link CreateTokenCopyOfSourceEffect}), so the presence of that effect is the structural

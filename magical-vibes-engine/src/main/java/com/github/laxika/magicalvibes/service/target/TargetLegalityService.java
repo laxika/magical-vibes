@@ -1285,9 +1285,14 @@ public class TargetLegalityService {
         if (indefinite != null) {
             return indefinite;
         }
-        return entry.getCard().getColors() == null
-                ? Set.of()
-                : Set.copyOf(entry.getCard().getColors());
+        // Mirrors Permanent.getEffectiveColors: the plural list is the Scryfall-loaded answer, but a
+        // card that only carries the singular colour must not read as colourless for protection.
+        List<CardColor> intrinsic = entry.getCard().getColors();
+        if (intrinsic != null && !intrinsic.isEmpty()) {
+            return Set.copyOf(intrinsic);
+        }
+        CardColor single = entry.getCard().getColor();
+        return single != null ? Set.of(single) : Set.of();
     }
 
     private boolean isNonColorSourceRestricted(GameData gameData, Permanent targetPerm, StackEntry entry) {

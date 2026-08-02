@@ -1764,7 +1764,7 @@ public class AbilityActivationService {
                 discardCardIndex != null && discardCardIndex < 0);
 
         // Validate spell target for abilities that counter spells
-        if (ability.isNeedsSpellTarget() && targetZone == Zone.STACK) {
+        if (ability.targetsSpellOnStack(targetZone)) {
             targetLegalityService.validateSpellTargetOnStack(gameData, targetId, ability.getTargetFilter(), playerId, permanent);
         }
 

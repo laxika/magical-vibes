@@ -1415,12 +1415,13 @@ class StepTriggerServiceTest {
         @DisplayName("Pending exile returns return cards from exile to battlefield")
         void pendingExileReturnsProcessed() {
             Card card = createCardWithName("Exiled Card");
-            gd.getPlayerExiledCards(player1Id).add(card);
+            gd.addToExile(player1Id, card);
             gd.queueDelayedAction(new PendingExileReturn(card, player1Id, false));
 
             sut.processPendingExileReturns(gd, TurnStep.END_STEP);
 
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player1Id), any(Permanent.class), any(), any());
             verify(battlefieldEntryService).handleCreatureEnteredBattlefield(eq(gd), eq(player1Id), eq(card), any(), eq(false));
             assertThat(gd.getPlayerExiledCards(player1Id)).doesNotContain(card);
             assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
@@ -1430,12 +1431,13 @@ class StepTriggerServiceTest {
         @DisplayName("Pending exile returns with returnTapped taps the permanent")
         void pendingExileReturnsTapped() {
             Card card = createCardWithName("Exiled Card");
-            gd.getPlayerExiledCards(player1Id).add(card);
+            gd.addToExile(player1Id, card);
             gd.queueDelayedAction(new PendingExileReturn(card, player1Id, true));
 
             sut.processPendingExileReturns(gd, TurnStep.END_STEP);
 
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player1Id), argThat(Permanent::isTapped), any(), any());
         }
 
         @Test
