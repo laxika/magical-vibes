@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.carddata;
 
+import com.github.laxika.magicalvibes.cards.CardScanner;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.r.RavagerOfTheFells;
@@ -48,14 +49,22 @@ class CardRegistryOnDemandTest {
         Pacifism first = new Pacifism();
         Pacifism second = new Pacifism();
 
-        assertThat(first.getName()).isEqualTo("MIR #32");
-        assertThat(second.getName()).isEqualTo("MIR #32");
-        assertThat(loader.loadedSetCodes).containsExactly("MIR");
+        // Which of Pacifism's printings the registry prefers is not this test's subject, and it
+        // moves every time the card gains a reprint in a newly added set. Both constructions must
+        // resolve through one set, loaded once.
+        assertThat(loader.loadedSetCodes).hasSize(1);
+        String preferredSet = loader.loadedSetCodes.getFirst();
+        String collectorNumber = CardScanner.collectorNumberOf(Pacifism.class, preferredSet).orElseThrow();
+        assertThat(first.getName()).isEqualTo(preferredSet + " #" + collectorNumber);
+        assertThat(second.getName()).isEqualTo(preferredSet + " #" + collectorNumber);
+
+        // The catalog lookup below only proves anything if it names a set construction did not load.
+        assertThat(preferredSet).isNotEqualTo(CardSet.SET_10E.getCode());
 
         registry.findByCollectorNumber(CardSet.SET_10E, "31");
         registry.findByCollectorNumber(CardSet.SET_10E, "31");
 
-        assertThat(loader.loadedSetCodes).containsExactly("MIR", "10E");
+        assertThat(loader.loadedSetCodes).containsExactly(preferredSet, "10E");
     }
 
     @Test
