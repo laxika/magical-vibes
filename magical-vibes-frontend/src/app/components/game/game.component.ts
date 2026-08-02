@@ -1094,6 +1094,35 @@ export class GameComponent implements OnInit, OnDestroy {
     return v ? `${v}px` : null;
   }
 
+  /* The summon dust (see .permanent-enter in shared-game-styles.css) is textured by a fixed
+     SVG noise field, so every creature would otherwise land with a byte-identical cloud.
+     These turn and mirror it per card, which moves the surviving clumps somewhere different
+     each time without needing a second noise field. Bound only for creatures, which are the
+     only permanents that raise dust.
+
+     Keyed on the permanent's id rather than a random number so a given permanent always
+     dusts the same way: change detection re-evaluates these on every cycle, and a random
+     value would jitter the cloud mid-animation. */
+
+  /** Per-creature rotation for the dust layers, -18deg to 18deg. */
+  dustTurn(permId: string): string {
+    return `${(GameComponent.dustHash(permId) % 37) - 18}deg`;
+  }
+
+  /** Per-creature mirror for the dust layers: 1 or -1, multiplied into their x scale. */
+  dustFlip(permId: string): number {
+    return GameComponent.dustHash(permId) & 1 ? -1 : 1;
+  }
+
+  /** FNV-1a, kept to 31 bits so the values above stay non-negative. */
+  private static dustHash(permId: string): number {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < permId.length; i++) {
+      h = Math.imul(h ^ permId.charCodeAt(i), 0x01000193);
+    }
+    return h & 0x7fffffff;
+  }
+
   /** Coalesces recomputes to one per frame, after layout has settled. */
   private scheduleCombatShiftUpdate(): void {
     if (this.combatShiftFrame != null) return;

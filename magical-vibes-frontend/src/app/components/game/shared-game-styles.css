@@ -497,12 +497,32 @@
 }
 
 /* Permanents used to appear and vanish between two frames, which made a board wipe
-   read as a rendering glitch rather than as something happening. They now grow into
-   place and shrink out.
+   read as a rendering glitch rather than as something happening. They now drop onto the
+   board and shrink out.
 
-   Animated on the .permanent-stack WRAPPER, not on the card: the card's own transform
-   is already carrying the tap rotation, the combat lift and the blocker alignment, and
-   an animation on it would replace all three. Scaling the wrapper touches none of that.
+   The arrival starts LARGER than rest size and settles down to it, with a shallow
+   undershoot at 70%. Read against a board being looked down on, shrinking is movement away
+   from the viewer: the card falls flat onto the table and rebounds a hair, rather than
+   growing up out of it. Growing from 0.8 read as the card rising onto its feet, which is
+   the opposite motion and fought with the dust burst below.
+
+   A CREATURE's arrival is animated on the card itself; a land's, and every departure, on
+   the .permanent-stack wrapper. That asymmetry is deliberate and fragile, so do not "tidy"
+   it into one rule. Animating opacity and scale on a creature's wrapper would make it a
+   stacking context, which traps the dust layers below inside it and puts them under every
+   card entering on the same frame — see the note on their z-index. Leaving that wrapper
+   alone lets the layers compete in the row's own stacking context, where they outrank all
+   cards at once. Lands raise no dust, have nothing to lift out, and so keep the simpler
+   arrangement.
+
+   Where the arrival is on the card, only the last card in the stack animates — the
+   permanent itself; attached auras and exiled cards do not move. Nothing is lost by that,
+   because a permanent has neither at the moment it arrives.
+
+   `scale` is used rather than `transform` for the same reason as hand-card-enter below: it
+   is the standalone property, so it composes with the card's own transform instead of
+   replacing the tap rotation, the combat lift and the blocker alignment that transform is
+   already carrying. The drop scale is uniform, so it commutes with the tap rotation.
 
    The leaving element keeps its layout slot until the animation ends (Angular holds it
    in the DOM for animate.leave), so the row does not snap closed underneath it. The fit
@@ -522,7 +542,8 @@
    LandStack keyed by slot, so playing a second Forest appends one item to the existing
    fan instead of rebuilding it, and only the new card is created.) */
 @keyframes permanent-enter {
-  from { opacity: 0; scale: 0.8; }
+  from { opacity: 0; scale: 1.22; }
+  70% { opacity: 1; scale: 0.99; }
   to { opacity: 1; scale: 1; }
 }
 
@@ -531,9 +552,219 @@
   to { opacity: 0; scale: 0.85; }
 }
 
-.creatures-row .permanent-stack.permanent-enter,
+/* Holds #summon-dust-noise. An <svg> is still a replaced element that would otherwise take
+   its default 300x150 box and push the board around, so it is pulled out of flow and given
+   no size — only the filter inside it is ever used. */
+.board-filter-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* A creature arriving kicks up dust, so a summon reads as something landing on the
+   battlefield rather than as a card that was suddenly just there. Creatures only, on
+   purpose: they are the arrivals worth punctuating, and giving every land drop the same
+   flourish would spend the effect on the most routine action in the game.
+
+   Modelled on a flat card slapping down on a table, which is what makes it read as dust
+   rather than as a puff: the air is squeezed out from UNDER the whole card, so the cloud
+   leaves from every edge at once and travels outward across the table, low and flat. It
+   decelerates hard — most of the travel is over in the first third — and settles back down
+   as it thins. It is also textured: the layers run through the #summon-dust-* filters in
+   game.component.html, which punch fractal-noise holes through the smooth gradient blobs
+   below. Smooth gradients alone only ever read as blurred circles, however they move.
+
+   Two layers, because a single one moving as a rigid body is the giveaway. ::before is the
+   heavy ring squeezed out from under the card; ::after is the finer motes that ride up and
+   outward faster. They scale, drift and rotate at different rates and in opposite
+   directions, so the cloud shears against itself.
+
+   Both are turned and mirrored per permanent by --dust-turn/--dust-flip, which
+   GameComponent hashes from the permanent's id. The noise field is fixed, so without this
+   every card on the board lands with the same clumps in the same places; turning the layers
+   moves the surviving clumps somewhere different each time, and costs nothing, whereas a
+   second noise field would mean duplicating the whole filter.
+
+   Both sit at `z-index: 30`, above every card on the board (cards are z-index 1), because
+   dust that stopped at the neighbouring card's edge read as a clipped rectangle whenever
+   several permanents landed on the same frame. Wanting it over other cards but under its
+   own is circular once two are entering at once — A's dust over B's card over B's dust over
+   A's card — so it goes over all of them, and the art is protected by GEOMETRY instead.
+
+   That makes blob placement load-bearing rather than decorative: within their boxes the
+   card spans 20%-80% across and 20%-84% down, and every blob below stays outside that
+   rectangle in at least one axis THROUGHOUT the burst. The layers' minimum scales (0.95 and
+   0.93) are set by that requirement, not by taste: they are the point at which the inward
+   pull of the opening frames stops dragging blob centres over the card. Lowering either,
+   or moving a blob inward, veils the art it is meant to frame — recheck the arithmetic
+   against the two figures above before touching them.
+
+   The blobs are `ellipse` gradients sized in explicit percentages, and EVERY ONE fits
+   wholly inside its layer's box — centre plus radius never reaches 0% or 100% on either
+   axis. That constraint is what stops the cloud reading as a rectangle. A background is
+   clipped to its box, so any gradient reaching the boundary is cut off along a dead-straight
+   line, and enough of those lines put a visible box edge around the dust that no amount of
+   noise can disguise. It is easy to reintroduce by accident, because `circle` gradients size
+   their stop percentages against the distance to the box's FARTHEST CORNER — a stop at 46%
+   is then far larger than the room actually available near an edge. Ellipses take their
+   radii as a share of the box's own width and height, so the arithmetic stays checkable, and
+   the final stop at 100% lands exactly on the ellipse's own edge, fading to nothing with
+   room to spare. Keep new blobs to the same rule.
+
+   Neither layer carries an animation of its own; both read --dust-spread/--dust-alpha,
+   which the WRAPPER animates. That split is load-bearing rather than stylistic. Angular's
+   animate.enter measures the longest animation via el.getAnimations() — which does not
+   report pseudo-element animations — and strips the `permanent-enter` class the moment that
+   one animation ends. Pseudo-elements animating themselves would therefore be cut off at
+   0.24s when the class went away. Driving them from registered custom properties on the
+   wrapper puts a real animation where Angular looks, so the class survives the whole burst
+   and the card's own grow-in still finishes in its original 0.24s. */
+@property --dust-spread {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --dust-alpha {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+/* Unitless so it can be multiplied into a length. Tracked apart from --dust-spread because
+   the heavy layer does not travel monotonically: it is kicked up and then falls back. */
+@property --dust-lift {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+/* Timing shaped here rather than by an easing function, so spread and alpha can follow
+   different curves under one linear animation. Spread covers 70% of its travel in the first
+   third and crawls the rest: that deceleration is the impact. Alpha snaps in over ~0.07s —
+   dust is thrown instantly — holds, then trails off.
+
+   Alpha peaking early is also why the whole thing is delayed 0.14s at the call site below.
+   The wrapper is concurrently running permanent-enter, whose opacity 0->1 multiplies down
+   into these layers; starting after it has largely finished both stops the burst being
+   faded away in its brightest frames and lands the dust as the card finishes growing into
+   place, instead of before it has arrived. */
+@keyframes summon-dust {
+  from { --dust-spread: 0; --dust-alpha: 0; --dust-lift: 0; }
+  8% { --dust-alpha: 1; }
+  30% { --dust-lift: -4; }
+  35% { --dust-spread: 0.72; }
+  60% { --dust-alpha: 0.5; }
+  to { --dust-spread: 1; --dust-alpha: 0; --dust-lift: 2; }
+}
+
+/* A creature's wrapper runs only the property track that drives the dust. Keeping opacity
+   and scale off it is what stops it becoming a stacking context — see the arrival note far
+   above. Angular still measures this animation to decide how long to keep the
+   .permanent-enter class, and at 1.06s including its delay it outlasts the drop below. */
+.creatures-row .permanent-stack.permanent-enter {
+  animation: summon-dust 0.9s linear 0.16s;
+}
+
+/* The delay lands the burst on contact — the card reaches its resting size at ~70% of its
+   0.26s drop — rather than while it is still falling. */
+.creatures-row .permanent-stack.permanent-enter > .card:last-child {
+  animation: permanent-enter 0.26s ease-out;
+}
+
+/* Lands drop but raise no dust, so their arrival stays on the wrapper exactly as it always
+   was. It is not merely simpler: with nothing to lift out of the wrapper there is no reason
+   to split the animation, and Angular sizes the .permanent-enter class from the animations
+   on the element it marked. Were the drop moved to the child here, the wrapper would have
+   no animation at all, the class would be dropped on the very next frame, and the land
+   would arrive with no animation whatsoever. */
 .lands-row .permanent-stack.permanent-enter {
-  animation: permanent-enter 0.24s ease-out;
+  animation: permanent-enter 0.26s ease-out;
+}
+
+/* Rows are flex items of .battlefield-area, so they take a z-index without needing to be
+   positioned. Lifting the whole row carries the dust over the opposing row too, which
+   otherwise paints its background over whatever crosses the divider. Keyed on an arriving
+   CREATURE specifically: a land raises no dust and so has nothing that needs to cross. */
+.battlefield-row:has(.creatures-row .permanent-stack.permanent-enter) {
+  z-index: 5;
+}
+
+.creatures-row .permanent-stack.permanent-enter::before,
+.creatures-row .permanent-stack.permanent-enter::after {
+  content: '';
+  position: absolute;
+  /* Percentages so the cloud tracks the card box through the density zoom. Near enough to
+     even on all four sides, since the card sheds dust from its whole perimeter, but the
+     bottom is trimmed: the box is absolutely positioned, so what hangs below the card
+     extends .battlefield-area's scroll range for the length of the burst, while what hangs
+     above is not scrollable at all and the sides are already clipped by its
+     overflow-x: hidden. Generous overall, because the blobs have to finish well inside it —
+     see the note above. The layers' scales are wound back to match, so the dust still
+     reaches the same distance as before; the box grew, not the cloud. */
+  inset: -30% -34% -22%;
+  z-index: 30;
+  pointer-events: none;
+  /* Warm and earthy against the parchment board, and darker than it: dust over a light
+     surface reads as a dulling haze, not as something bright. */
+  --dust-pale: 236, 219, 187;
+  --dust-mid: 178, 148, 106;
+  --dust-deep: 132, 106, 74;
+}
+
+/* The heavy ring: blobs all the way round the card's edges, pushed outward across the table
+   from underneath it. Spreads slightly wider than it does tall — it is travelling along a
+   surface — and is kicked up only briefly before settling back down, because heavy material
+   does not keep climbing. Its origin sits just below centre, where the card meets the
+   table, so the ring leaves from under the card rather than from its middle. */
+.creatures-row .permanent-stack.permanent-enter::before {
+  background-image:
+    radial-gradient(ellipse 15% 7% at 50% 91%, rgba(var(--dust-mid), 0.75) 0 22%, rgba(var(--dust-mid), 0) 100%),
+    radial-gradient(ellipse 12% 6.5% at 26% 89%, rgba(var(--dust-pale), 0.8) 0 20%, rgba(var(--dust-pale), 0) 100%),
+    radial-gradient(ellipse 11% 6% at 73% 90%, rgba(var(--dust-pale), 0.75) 0 20%, rgba(var(--dust-pale), 0) 100%),
+    radial-gradient(ellipse 9% 6% at 13% 86%, rgba(var(--dust-deep), 0.6) 0 18%, rgba(var(--dust-deep), 0) 100%),
+    radial-gradient(ellipse 9% 5.5% at 87% 87%, rgba(var(--dust-deep), 0.55) 0 18%, rgba(var(--dust-deep), 0) 100%),
+    radial-gradient(ellipse 8% 11% at 11% 58%, rgba(var(--dust-pale), 0.6) 0 20%, rgba(var(--dust-pale), 0) 100%),
+    radial-gradient(ellipse 8% 10% at 89% 54%, rgba(var(--dust-mid), 0.55) 0 20%, rgba(var(--dust-mid), 0) 100%),
+    radial-gradient(ellipse 7% 8% at 9% 33%, rgba(var(--dust-mid), 0.5) 0 18%, rgba(var(--dust-mid), 0) 100%),
+    radial-gradient(ellipse 7% 8% at 91% 31%, rgba(var(--dust-pale), 0.5) 0 18%, rgba(var(--dust-pale), 0) 100%),
+    radial-gradient(ellipse 11% 6% at 34% 11%, rgba(var(--dust-pale), 0.55) 0 20%, rgba(var(--dust-pale), 0) 100%),
+    radial-gradient(ellipse 10% 5.5% at 67% 10%, rgba(var(--dust-mid), 0.5) 0 20%, rgba(var(--dust-mid), 0) 100%);
+  transform-origin: 50% 62%;
+  scale: calc((0.95 + var(--dust-spread) * 0.25) * var(--dust-flip, 1))
+         calc(0.90 + var(--dust-spread) * 0.20);
+  translate: 0 calc(var(--dust-lift) * 1px);
+  rotate: calc(var(--dust-turn, 0deg) + var(--dust-spread) * 2deg);
+  opacity: var(--dust-alpha);
+  filter: url(#summon-dust-coarse);
+}
+
+/* The airborne motes: lighter and sparser, ringing the card further out. Keeps rising after
+   the heavy ring has fallen back, and counter-rotates, so the two layers shear against each
+   other instead of moving as one body. */
+.creatures-row .permanent-stack.permanent-enter::after {
+  background-image:
+    radial-gradient(ellipse 6% 9% at 7% 46%, rgba(var(--dust-pale), 0.6) 0 16%, rgba(var(--dust-pale), 0) 100%),
+    radial-gradient(ellipse 6% 9% at 93% 42%, rgba(var(--dust-pale), 0.55) 0 16%, rgba(var(--dust-pale), 0) 100%),
+    radial-gradient(ellipse 7% 7% at 16% 74%, rgba(var(--dust-mid), 0.5) 0 16%, rgba(var(--dust-mid), 0) 100%),
+    radial-gradient(ellipse 7% 7% at 84% 77%, rgba(var(--dust-mid), 0.45) 0 16%, rgba(var(--dust-mid), 0) 100%),
+    radial-gradient(ellipse 6% 7% at 10% 18%, rgba(var(--dust-mid), 0.45) 0 15%, rgba(var(--dust-mid), 0) 100%),
+    radial-gradient(ellipse 6% 7% at 90% 16%, rgba(var(--dust-pale), 0.4) 0 15%, rgba(var(--dust-pale), 0) 100%),
+    radial-gradient(ellipse 9% 5% at 40% 94%, rgba(var(--dust-pale), 0.5) 0 16%, rgba(var(--dust-pale), 0) 100%),
+    radial-gradient(ellipse 8% 4.5% at 62% 95%, rgba(var(--dust-mid), 0.45) 0 16%, rgba(var(--dust-mid), 0) 100%),
+    radial-gradient(ellipse 8% 5% at 22% 7%, rgba(var(--dust-pale), 0.45) 0 16%, rgba(var(--dust-pale), 0) 100%),
+    radial-gradient(ellipse 7% 4.5% at 78% 6%, rgba(var(--dust-mid), 0.4) 0 16%, rgba(var(--dust-mid), 0) 100%);
+  transform-origin: 50% 62%;
+  /* Mirrored and turned against the ring rather than with it, so one card's two layers do
+     not sit in a fixed relationship — otherwise the pair reads as a single rotated object
+     and the variation is easy to spot as a repeat. */
+  scale: calc((0.93 + var(--dust-spread) * 0.22) * var(--dust-flip, 1) * -1)
+         calc(0.93 + var(--dust-spread) * 0.22);
+  translate: 0 calc(var(--dust-spread) * -14px);
+  rotate: calc(var(--dust-turn, 0deg) * -1.35 + var(--dust-spread) * -3deg);
+  opacity: calc(var(--dust-alpha) * 0.68);
+  filter: url(#summon-dust-fine);
 }
 
 /* Out of hit-testing while it fades, so a creature on its way out cannot still be
@@ -562,10 +793,18 @@
 
 @media (prefers-reduced-motion: reduce) {
   .creatures-row .permanent-stack.permanent-enter,
+  .creatures-row .permanent-stack.permanent-enter > .card:last-child,
   .creatures-row .permanent-stack.permanent-leave,
   .lands-row .permanent-stack.permanent-enter,
   .hand-cards .card.hand-card-enter {
     animation: none;
+  }
+
+  /* Suppressed outright rather than just left unanimated, so no frame of the burst can be
+     left sitting on the board until Angular drops the class. */
+  .creatures-row .permanent-stack.permanent-enter::before,
+  .creatures-row .permanent-stack.permanent-enter::after {
+    content: none;
   }
 }
 
@@ -682,6 +921,7 @@
 .land-stack .land-stack-item:nth-child(2) { z-index: 2; }
 .land-stack .land-stack-item:nth-child(3) { z-index: 3; }
 .land-stack .land-stack-item:nth-child(4) { z-index: 4; }
+
 
 /* A tapped card's margin box is only 165px tall (the :host(.is-tapped)
    -33px margins), which would make it jump up against the stack's
