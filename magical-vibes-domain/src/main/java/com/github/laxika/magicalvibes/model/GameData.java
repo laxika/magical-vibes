@@ -304,9 +304,9 @@ public class GameData {
      */
     public final List<UUID> destroyDamagersUnlessPaysRemaining = new ArrayList<>();
     /**
-     * ReturnMatchingPermanentsUnlessControllerPays: ids of the matching permanents still to be
-     * offered the pay-or-be-bounced prompt after the one currently being decided. Cleared when the
-     * queue drains.
+     * ReturnMatchingPermanentsUnlessOwnerPays: ids of the matching permanents still to be
+     * offered the pay-or-be-bounced prompt (each to that permanent's owner) after the one
+     * currently being decided. Cleared when the queue drains.
      */
     public final List<UUID> bounceUnlessPaysRemaining = new ArrayList<>();
     public final GraveyardTargetOperationState graveyardTargetOperation = new GraveyardTargetOperationState();
