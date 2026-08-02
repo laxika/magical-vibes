@@ -421,7 +421,8 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.listPick(
                 interaction.options(),
                 interaction.prompt(),
-                isCardNameChoice(interaction.context()));
+                isCardNameChoice(interaction.context()),
+                interaction.disabledOptions());
     }
 
     private InteractionPromptMessage projectRevealedHandChoice(

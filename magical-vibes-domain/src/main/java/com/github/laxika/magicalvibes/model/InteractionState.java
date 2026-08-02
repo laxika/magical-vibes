@@ -52,6 +52,19 @@ public class InteractionState {
         this.activeDecisionId = decisionId;
     }
 
+    /**
+     * Swaps the active interaction for an equivalent record, keeping {@link #activeDecisionId()}.
+     * Only for presentation-only refinements made before the prompt is projected (the projector
+     * reads the live record at dispatch time), never for changing what is being decided — the
+     * decision identity must stay stable for reconnect replay and answer matching.
+     */
+    public void replaceActiveInteraction(PendingInteraction interaction) {
+        if (this.activeInteraction == null) {
+            throw new IllegalStateException("No active interaction to replace");
+        }
+        this.activeInteraction = interaction;
+    }
+
     /** The active registry-managed interaction, or {@code null} when none is active. */
     public PendingInteraction activeInteraction() {
         return this.activeInteraction;

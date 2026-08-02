@@ -173,8 +173,16 @@ public class GameData {
      *  (casting, non-mana ability activation, passing priority, step change); each entry is also
      *  re-validated against the pool at revert time. Deliberately NOT copied by
      *  {@link #simulationCopy()} — the AI never reverts, and the entries reference live
-     *  {@link StackEntry} objects from this game. */
+     *  {@link StackEntry} objects from this game (enforced by {@code SimulationCopyCompletenessTest}'s
+     *  deliberately-not-copied list, which is what keeps a bulk "copy everything" sweep from
+     *  quietly reinstating it). */
     public final List<ManaActivation> revertableManaActivations = Collections.synchronizedList(new ArrayList<>());
+    /** A revertable mana activation waiting on its colour choice; completed into
+     *  {@link #revertableManaActivations} once the chosen colour lands in the pool. Never outlives
+     *  that one prompt: the answer handler consumes it unconditionally, and a pending colour choice
+     *  blocks every other action, so nothing can intervene. Not copied by {@link #simulationCopy()}
+     *  — it is scratch state spanning a single prompt, and the AI never reverts. */
+    public PendingManaActivation pendingRevertableManaActivation;
     /** CR 603.2 / 603.3 — depth counter for nested mana-ability resolution. While > 0,
      *  triggered abilities that fire from effects resolving inside a mana ability (e.g. a life-gain
      *  effect triggering Sanguine Bond) route to {@link #pendingManaAbilityTriggers} instead of the
@@ -2545,7 +2553,6 @@ public class GameData {
                 copy.spellCastColorsSpent.put(k, java.util.EnumSet.copyOf(v)));
         this.spellCastManaSpentOnX.forEach((k, v) ->
                 copy.spellCastManaSpentOnX.put(k, new java.util.EnumMap<>(v)));
-        copy.revertableManaActivations.addAll(this.revertableManaActivations);
 
         // --- Until-end-of-turn casting permissions ---
         copy.cardsGrantedFlashbackUntilEndOfTurn.addAll(this.cardsGrantedFlashbackUntilEndOfTurn);

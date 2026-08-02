@@ -143,6 +143,22 @@ export class TargetingChoiceService {
   }
 
   /**
+   * True when priority has genuinely moved to someone else, as opposed to nobody holding it.
+   *
+   * The server reports `priorityPlayerId: null` for the whole time any interaction is awaiting
+   * input — including a prompt raised by the player's own payment, such as the colour choice from
+   * "{T}: Add one mana of any colour". Treating that as lost priority discarded the held-back cast
+   * the moment a Birds of Paradise was tapped to pay for it, stranding the mana in the pool. Only
+   * an explicitly different priority holder means the game moved on under us; a null holder means
+   * "wait", so payment mode survives it and the pump simply doesn't fire (the cast still needs
+   * strict playability, which the server withholds while the player is not acting).
+   */
+  private get priorityMovedOn(): boolean {
+    const g = this.gameSignal();
+    return g !== null && g.priorityPlayerId != null && !this.hasPriority;
+  }
+
+  /**
    * True while the player is partway through picking the target(s) for a spell or
    * ability they've started casting/activating. In the MTGO-style flow the mana is
    * tapped only *after* the target is locked in (payingForCast), so during target
@@ -912,7 +928,7 @@ export class TargetingChoiceService {
     const g = this.gameSignal();
     const card = g?.hand?.[this.pendingCastCardIndex];
     const cardChanged = !card || (this.pendingCastCardId != null && card.id !== this.pendingCastCardId);
-    if (!g || cardChanged || !this.hasPriority) {
+    if (!g || cardChanged || this.priorityMovedOn) {
       this.clearCastPayment();
       return;
     }
@@ -923,6 +939,39 @@ export class TargetingChoiceService {
       this.clearCastPayment();
       this.websocketService.send(msg);
     }
+  }
+
+  /**
+   * What the held-back message is waiting on, sent alongside every mana source tapped while
+   * paying. The server has no payment session of its own, so this is the only way an "add one
+   * mana of any colour" prompt can tell which colours would strand the payment and grey out the
+   * rest. Advisory only — every colour stays answerable.
+   *
+   * Kicker and buyback casts are deliberately omitted: the server prices the card's own cost, so
+   * an unmentioned optional cost could grey out a colour the player actually needs. Omitting the
+   * intent just leaves all colours enabled.
+   */
+  private paymentIntent(): { handCardIndex?: number; xValue?: number; abilityPermanentId?: string; abilityIndex?: number } | undefined {
+    if (this.payingForCast && this.pendingCastCardIndex >= 0) {
+      const msg = this.pendingCastMessage;
+      if (msg?.kicked || msg?.buyback) return undefined;
+      return { handCardIndex: this.pendingCastCardIndex, xValue: this.pendingCastXValue };
+    }
+    if (this.payingForAbility && this.pendingActivationPermanentId != null) {
+      const abilityIndex = this.pendingActivationMessage?.abilityIndex;
+      if (typeof abilityIndex !== 'number') return undefined;
+      return { abilityPermanentId: this.pendingActivationPermanentId, abilityIndex };
+    }
+    return undefined;
+  }
+
+  /** Sends a TAP_PERMANENT, tagged with the payment it is serving when one is in progress. */
+  private sendTapPermanent(permanentIndex: number): void {
+    this.websocketService.send({
+      type: MessageType.TAP_PERMANENT,
+      permanentIndex,
+      paymentIntent: this.paymentIntent()
+    });
   }
 
   /** Cancel button / Esc while paying: drop the pending cast and untap the mana
@@ -948,8 +997,11 @@ export class TargetingChoiceService {
   /** Sends an ACTIVATE_ABILITY message, or holds it back in payment mode when its mana
       cost isn't covered by the current pool (mirroring sendPlayCardMessage for casts). */
   private sendActivateAbilityMessage(msg: any): void {
+    // Read the intent before the call below can start a payment of its own, so a mana ability
+    // activated to pay for something is tagged with what it is paying for — not with itself.
+    const intent = this.paymentIntent();
     if (this.beginAbilityPaymentIfUnaffordable(msg)) return;
-    this.websocketService.send(msg);
+    this.websocketService.send(intent ? { ...msg, paymentIntent: intent } : msg);
   }
 
   /** Enters payment mode for the given ACTIVATE_ABILITY message when its mana cost isn't
@@ -980,7 +1032,7 @@ export class TargetingChoiceService {
     if (!this.payingForAbility) return;
     const g = this.gameSignal();
     const index = this.myBattlefieldFn().findIndex(p => p.id === this.pendingActivationPermanentId);
-    if (!g || index < 0 || !this.hasPriority) {
+    if (!g || index < 0 || this.priorityMovedOn) {
       this.clearAbilityPayment();
       return;
     }
@@ -1647,7 +1699,7 @@ export class TargetingChoiceService {
       const abilities = perm.card.activatedAbilities;
       if (abilities.length === 0) {
         // No activated abilities — just tap for mana (ON_TAP)
-        this.websocketService.send({ type: MessageType.TAP_PERMANENT, permanentIndex: index });
+        this.sendTapPermanent(index);
         return;
       }
 
@@ -1666,7 +1718,7 @@ export class TargetingChoiceService {
       if (usable.length === 0) {
         // Has abilities but none usable — fall back to tap for mana if ON_TAP
         if (canIntrinsicTap) {
-          this.websocketService.send({ type: MessageType.TAP_PERMANENT, permanentIndex: index });
+          this.sendTapPermanent(index);
         }
         return;
       }
@@ -1860,7 +1912,7 @@ export class TargetingChoiceService {
     const perm = this.myBattlefieldFn()[this.abilityChoicePermanentIndex];
     if (!perm) return;
     if (choice.index === TargetingChoiceService.INTRINSIC_TAP_INDEX) {
-      this.websocketService.send({ type: MessageType.TAP_PERMANENT, permanentIndex: this.abilityChoicePermanentIndex });
+      this.sendTapPermanent(this.abilityChoicePermanentIndex);
     } else {
       this.activateAbilityAtIndex(this.abilityChoicePermanentIndex, choice.index, perm);
     }

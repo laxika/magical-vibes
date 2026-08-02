@@ -68,6 +68,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingManaActivation;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -315,13 +316,17 @@ public class ActivatedAbilityExecutionService {
                 && snapshotEffects.stream().anyMatch(e -> e instanceof ManaProducingEffect);
 
         if (isManaAbility) {
-            // A "pure" mana activation (tap-only cost, only fixed-shape AwardManaEffect output)
-            // can be undone by the MTGO-style cancel-casting UI: snapshot the pool around
-            // resolution so the exact mana added (incl. Damping Sphere replacement) is recorded.
+            // A "pure" mana activation (tap-only cost, only fixed-shape mana output) can be undone
+            // by the MTGO-style cancel-casting UI: snapshot the pool around resolution so the exact
+            // mana added (incl. Damping Sphere replacement) is recorded. AwardAnyColorManaEffect
+            // qualifies even though it stops to ask for a colour — its output is still just N mana
+            // of one colour — but it produces that mana only once the answer arrives, so it parks
+            // the snapshot below instead of recording here.
             boolean revertable = ability.isRequiresTap()
                     && ability.getManaCost() == null
                     && abilityEffects.stream().noneMatch(e -> e instanceof CostEffect)
-                    && snapshotEffects.stream().allMatch(e -> e instanceof AwardManaEffect);
+                    && snapshotEffects.stream().allMatch(
+                            e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect);
             ManaPool pool = gameData.playerManaPools.get(playerId);
             java.util.EnumMap<ManaColor, Integer> poolBefore =
                     revertable ? AbilityActivationService.snapshotPoolColors(pool) : null;
@@ -342,12 +347,19 @@ public class ActivatedAbilityExecutionService {
             if (revertable) {
                 List<StackEntry> deferred = new ArrayList<>(gameData.pendingManaAbilityTriggers.subList(
                         pendingTriggersBefore, gameData.pendingManaAbilityTriggers.size()));
-                AbilityActivationService.recordRevertableManaActivation(
-                        gameData, playerId, permanent, poolBefore, creatureManaBefore, deferred);
+                if (AbilityActivationService.isAwaitingOwnManaColorChoice(gameData, playerId)) {
+                    // The mana has not been produced yet — park the snapshot for the colour-choice
+                    // answer to complete (ChoiceHandlerService.completeParkedManaActivation).
+                    gameData.pendingRevertableManaActivation = new PendingManaActivation(
+                            playerId, permanent.getId(), poolBefore, creatureManaBefore, List.copyOf(deferred));
+                } else {
+                    AbilityActivationService.recordRevertableManaActivation(
+                            gameData, playerId, permanent, poolBefore, creatureManaBefore, deferred);
+                }
             } else {
-                // A mana ability with side effects (pain-land damage, pool doubling, color choice,
-                // extra costs) can't be undone — and undoing earlier activations after it could
-                // interact with its result (e.g. doubled mana), so bar the whole window.
+                // A mana ability with side effects (pain-land damage, pool doubling, extra costs)
+                // can't be undone — and undoing earlier activations after it could interact with
+                // its result (e.g. doubled mana), so bar the whole window.
                 gameData.revertableManaActivations.clear();
             }
             return;

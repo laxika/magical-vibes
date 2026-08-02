@@ -44,6 +44,7 @@ export class GameChoiceService {
     // List choice
     this.choosingFromList = false;
     this.listChoices.set([]);
+    this.listChoiceDisabled.set(new Set());
     this.listChoicePrompt = '';
     this.listChoiceSearchable = false;
     this.listChoiceSearchQuery.set('');
@@ -108,6 +109,12 @@ export class GameChoiceService {
   // --- List choice state ---
   choosingFromList = false;
   listChoices = signal<string[]>([]);
+  /**
+   * Options the server greyed out because they would strand the payment in progress — e.g. every
+   * colour but red on a Birds of Paradise tapped to help cast a {3}{G}{R} spell. Presentation only:
+   * the server still accepts any option, so cancelling the cast makes the whole list clickable again.
+   */
+  listChoiceDisabled = signal(new Set<string>());
   listChoicePrompt = '';
   // When true the options are a large card-name list; render an autocomplete search box.
   listChoiceSearchable = false;
@@ -207,6 +214,7 @@ export class GameChoiceService {
       case 'LIST_PICK':
         this.choosingFromList = true;
         this.listChoices.set(msg.options ?? []);
+        this.listChoiceDisabled.set(new Set(msg.disabledOptions ?? []));
         this.listChoicePrompt = msg.prompt;
         this.listChoiceSearchable = msg.searchable ?? false;
         this.listChoiceSearchQuery.set('');
@@ -319,7 +327,7 @@ export class GameChoiceService {
   }
 
   chooseFromList(choice: string): void {
-    if (!this.choosingFromList) return;
+    if (!this.choosingFromList || this.listChoiceDisabled().has(choice)) return;
     this.websocketService.send({
       type: MessageType.INTERACTION_ANSWER,
       shape: 'LIST_PICK',
@@ -327,6 +335,7 @@ export class GameChoiceService {
     });
     this.choosingFromList = false;
     this.listChoices.set([]);
+    this.listChoiceDisabled.set(new Set());
     this.listChoicePrompt = '';
     this.listChoiceSearchable = false;
     this.listChoiceSearchQuery.set('');

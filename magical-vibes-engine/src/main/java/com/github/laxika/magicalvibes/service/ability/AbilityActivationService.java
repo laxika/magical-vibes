@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingAbilityActivation;
 import com.github.laxika.magicalvibes.model.PendingGraveyardAbilityActivation;
+import com.github.laxika.magicalvibes.model.PendingManaActivation;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
@@ -338,9 +339,40 @@ public class AbilityActivationService {
             gameData.pendingManaAbilityTriggers.addAll(deferred);
         }
 
-        recordRevertableManaActivation(gameData, playerId, permanent, poolBefore, creatureManaBefore, deferred);
+        if (isAwaitingOwnManaColorChoice(gameData, playerId)) {
+            // A land whose type was overridden into several basic types stops to ask which colour to
+            // add, so its mana does not exist yet. Recording now would log an activation with no
+            // mana, and reverting it would untap the land while leaving the colour it went on to
+            // produce floating in the pool.
+            gameData.pendingRevertableManaActivation = new PendingManaActivation(
+                    playerId, permanent.getId(), poolBefore, creatureManaBefore, List.copyOf(deferred));
+        } else {
+            recordRevertableManaActivation(gameData, playerId, permanent, poolBefore, creatureManaBefore, deferred);
+        }
 
         mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
+
+    /**
+     * True when the mana activation just performed stopped to ask this player which colour of
+     * ordinary mana to add, so its mana is still owed and the pool diff would measure nothing.
+     *
+     * <p>Restricted variants (flashback-only, creature-spells-only, subtype, fixed-colour menus) are
+     * excluded: they pay into buckets {@link #recordRevertableManaActivation} does not read, so a
+     * revert would untap the source without draining what it produced.
+     */
+    static boolean isAwaitingOwnManaColorChoice(GameData gameData, UUID playerId) {
+        PendingInteraction.ColorChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        return choice != null
+                && playerId.equals(choice.playerId())
+                && choice.context() instanceof ChoiceContext.ManaColorChoice manaChoice
+                && manaChoice.restrictedToCreatureSubtype() == null
+                && !manaChoice.flashbackOnly()
+                && !manaChoice.instantSorceryOnly()
+                && !manaChoice.spellOrAbilitySubtype()
+                && !manaChoice.creatureSpellOnly()
+                && manaChoice.fixedColorOptions() == null;
     }
 
     /** Per-color snapshot of the plain pool, for computing what a mana activation added. */
@@ -368,6 +400,24 @@ public class AbilityActivationService {
                                                EnumMap<ManaColor, Integer> poolBefore,
                                                EnumMap<ManaColor, Integer> creatureManaBefore,
                                                List<StackEntry> deferredTriggers) {
+        recordRevertableManaActivation(gameData, playerId, permanent.getId(), poolBefore,
+                creatureManaBefore, deferredTriggers);
+    }
+
+    /**
+     * Completes an activation that tapped its source and then stopped for a colour choice: the
+     * parked snapshot is diffed against the pool now that the chosen mana has landed. Called by the
+     * colour-choice answer handler, which is the first moment the produced mana exists.
+     */
+    public static void completeParkedManaActivation(GameData gameData, PendingManaActivation parked) {
+        recordRevertableManaActivation(gameData, parked.playerId(), parked.permanentId(),
+                parked.poolBefore(), parked.creatureManaBefore(), parked.deferredTriggers());
+    }
+
+    private static void recordRevertableManaActivation(GameData gameData, UUID playerId, UUID permanentId,
+                                                       EnumMap<ManaColor, Integer> poolBefore,
+                                                       EnumMap<ManaColor, Integer> creatureManaBefore,
+                                                       List<StackEntry> deferredTriggers) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         EnumMap<ManaColor, Integer> manaAdded = new EnumMap<>(ManaColor.class);
         EnumMap<ManaColor, Integer> creatureManaAdded = new EnumMap<>(ManaColor.class);
@@ -385,7 +435,7 @@ public class AbilityActivationService {
             return;
         }
         gameData.revertableManaActivations.add(new ManaActivation(
-                playerId, permanent.getId(), manaAdded, creatureManaAdded, List.copyOf(deferredTriggers)));
+                playerId, permanentId, manaAdded, creatureManaAdded, List.copyOf(deferredTriggers)));
     }
 
     /**
@@ -399,6 +449,13 @@ public class AbilityActivationService {
         UUID playerId = player.getId();
         ManaPool pool = gameData.playerManaPools.get(playerId);
         boolean revertedAny = false;
+
+        // An activation still waiting on its colour choice owes mana that does not exist yet, so it
+        // can neither be reverted nor left behind to attach itself to a later prompt.
+        if (gameData.pendingRevertableManaActivation != null
+                && playerId.equals(gameData.pendingRevertableManaActivation.playerId())) {
+            gameData.pendingRevertableManaActivation = null;
+        }
 
         List<ManaActivation> activations = gameData.revertableManaActivations;
         for (int i = activations.size() - 1; i >= 0; i--) {

@@ -688,8 +688,29 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * {@code context}. {@code permanentId} /
      * {@code etbTargetId} carry the plain ETB color-choice permanent context.
      */
+    /**
+     * A single-value "choose from a list" decision. {@code disabledOptions} is a presentation-only
+     * subset of {@code options} that the client greys out; every option stays legally answerable, so
+     * the engine never rejects one because of it. The mana-payment flow uses it to point the player
+     * at the only colour that keeps the spell they are paying for castable.
+     */
     record ColorChoice(UUID playerId, UUID permanentId, UUID etbTargetId, ChoiceContext context,
-                       java.util.List<String> options, String prompt) implements PendingInteraction {
+                       java.util.List<String> options, String prompt,
+                       java.util.List<String> disabledOptions) implements PendingInteraction {
+
+        public ColorChoice {
+            disabledOptions = disabledOptions == null ? java.util.List.of() : java.util.List.copyOf(disabledOptions);
+        }
+
+        public ColorChoice(UUID playerId, UUID permanentId, UUID etbTargetId, ChoiceContext context,
+                           java.util.List<String> options, String prompt) {
+            this(playerId, permanentId, etbTargetId, context, options, prompt, java.util.List.of());
+        }
+
+        /** Same decision with a new greyed-out subset; the decision's identity and options are unchanged. */
+        public ColorChoice withDisabledOptions(java.util.List<String> disabled) {
+            return new ColorChoice(playerId, permanentId, etbTargetId, context, options, prompt, disabled);
+        }
 
         @Override
         public UUID decidingPlayerId() {

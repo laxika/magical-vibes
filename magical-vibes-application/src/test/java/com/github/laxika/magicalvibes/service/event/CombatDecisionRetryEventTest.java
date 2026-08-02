@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.cast.ManaChoiceNarrowingService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
@@ -88,7 +89,8 @@ class CombatDecisionRetryEventTest {
                 mock(AbilityActivationService.class),
                 mock(MulliganService.class),
                 mock(GameOutcomeService.class),
-                coordinator);
+                coordinator,
+                mock(ManaChoiceNarrowingService.class));
     }
 
     @Test

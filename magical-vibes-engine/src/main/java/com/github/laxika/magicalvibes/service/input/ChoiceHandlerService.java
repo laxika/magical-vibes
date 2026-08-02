@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingManaActivation;
+import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -335,6 +337,11 @@ public class ChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
 
+        // Consumed unconditionally so a park can never outlive the prompt it was made for; only the
+        // ordinary-pool branch below can actually complete it (see PendingManaActivation).
+        PendingManaActivation parkedActivation = gameData.pendingRevertableManaActivation;
+        gameData.pendingRevertableManaActivation = null;
+
         ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
         int amount = ctx.amount();
         if (ctx.spellOrAbilitySubtype()) {
@@ -413,6 +420,11 @@ public class ChoiceHandlerService {
             manaPool.add(manaColor, amount);
             if (ctx.fromCreature()) {
                 manaPool.addCreatureMana(manaColor, amount);
+            }
+            // The mana this activation owed has now landed, so the parked snapshot can become a
+            // real revertable entry — this is what lets "cancel casting" untap a Birds of Paradise.
+            if (parkedActivation != null && parkedActivation.playerId().equals(ctx.playerId())) {
+                AbilityActivationService.completeParkedManaActivation(gameData, parkedActivation);
             }
         }
 

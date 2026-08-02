@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.KarnRestartGameEffect;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.cast.ManaChoiceNarrowingService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
@@ -145,7 +146,8 @@ class GameLifecycleEventSequenceTest {
                 mock(AbilityActivationService.class),
                 mock(MulliganService.class),
                 outcomeService,
-                coordinator);
+                coordinator,
+                mock(ManaChoiceNarrowingService.class));
 
         gameService.surrender(gameData, player1);
 

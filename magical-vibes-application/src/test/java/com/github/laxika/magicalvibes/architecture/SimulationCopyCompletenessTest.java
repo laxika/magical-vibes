@@ -46,7 +46,16 @@ class SimulationCopyCompletenessTest {
             "Creation metadata; final and assigned by the constructor the copy already calls.",
             "layeredBoardCache",
             "A simulation copy must start with a cold CR 613 board cache so a simulated board can "
-                    + "never be served for the real game or vice versa (documented on the field).");
+                    + "never be served for the real game or vice versa (documented on the field).",
+            "revertableManaActivations",
+            "The MTGO-style cancel-casting window belongs to a human client mid-payment. Nothing in "
+                    + "simulation reads it, and copying it aliased live-game StackEntry objects into "
+                    + "the copy — which could not even work there, since simulationCopy deep-copies "
+                    + "pendingManaAbilityTriggers into new instances and StackEntry uses identity "
+                    + "equality, so the copied entries' removeAll would match nothing.",
+            "pendingRevertableManaActivation",
+            "Scratch state spanning a single colour prompt, for the same cancel-casting window as "
+                    + "revertableManaActivations above; a simulation copy must start with none owed.");
 
     private static final String GAME_DATA_SRC =
             "magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/GameData.java";

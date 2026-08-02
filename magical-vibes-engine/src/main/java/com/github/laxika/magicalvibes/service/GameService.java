@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaPaymentIntent;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -20,6 +21,7 @@ import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
+import com.github.laxika.magicalvibes.service.cast.ManaChoiceNarrowingService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -52,6 +54,7 @@ public class GameService {
     private final MulliganService mulliganService;
     private final GameOutcomeService gameOutcomeService;
     private final GameMutationCoordinator mutationCoordinator;
+    private final ManaChoiceNarrowingService manaChoiceNarrowingService;
 
     private boolean runAsActionIfNeeded(GameData gameData, Runnable action) {
         if (mutationCoordinator.isInAction(gameData)) {
@@ -668,9 +671,17 @@ public class GameService {
     }
 
     public void tapPermanent(GameData gameData, Player player, int permanentIndex) {
+        tapPermanent(gameData, player, permanentIndex, null);
+    }
+
+    /**
+     * @param paymentIntent what the player is tapping this source for, so an "any colour" prompt can
+     *                      grey out the colours that would strand it; {@code null} when unknown.
+     */
+    public void tapPermanent(GameData gameData, Player player, int permanentIndex, ManaPaymentIntent paymentIntent) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
-                () -> tapPermanent(gameData, actionPlayer, permanentIndex))) return;
+                () -> tapPermanent(gameData, actionPlayer, permanentIndex, paymentIntent))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             if (!isAttackTaxManaPayment(gameData, player) && !isMayCostManaPayment(gameData, player)) {
@@ -678,6 +689,7 @@ public class GameService {
             }
             requireCanActivateAbilities(gameData, player);
             abilityActivationService.tapPermanent(gameData, player, permanentIndex);
+            manaChoiceNarrowingService.narrowActiveManaColorChoice(gameData, player.getId(), paymentIntent);
         }
     }
 
@@ -745,10 +757,19 @@ public class GameService {
     }
 
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds, Map<UUID, Integer> damageAssignments) {
+        activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments, null);
+    }
+
+    /**
+     * @param paymentIntent what the player is activating this mana ability for, so an "any colour"
+     *                      prompt can grey out the colours that would strand it; {@code null} when
+     *                      unknown or when the ability is not being activated to pay for something.
+     */
+    public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds, Map<UUID, Integer> damageAssignments, ManaPaymentIntent paymentIntent) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> activateAbility(gameData, actionPlayer, permanentIndex, abilityIndex, xValue,
-                        targetId, targetZone, targetIds, damageAssignments))) return;
+                        targetId, targetZone, targetIds, damageAssignments, paymentIntent))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             if (isAttackTaxManaPayment(gameData, player)) {
@@ -760,6 +781,7 @@ public class GameService {
                 requirePriority(gameData, player);
             }
             abilityActivationService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments);
+            manaChoiceNarrowingService.narrowActiveManaColorChoice(gameData, player.getId(), paymentIntent);
         }
     }
 
