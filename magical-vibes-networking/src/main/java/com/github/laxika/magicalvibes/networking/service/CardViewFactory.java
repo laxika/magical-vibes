@@ -236,6 +236,8 @@ public class CardViewFactory {
                         .map(RemoveXCountersFromSourceCost.class::cast)
                         .map(cost -> cost.counterType().name())
                         .findFirst()
-                        .orElse(null));
+                        .orElse(null),
+                ability.isRequiresXValue(),
+                ability.isXValueFromControlledCreatureCounters());
     }
 }

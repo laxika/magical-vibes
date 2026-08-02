@@ -49,6 +49,8 @@ public class PermanentChoiceHandlerService {
 
         if (context instanceof PermanentChoiceContext.CloneCopy) {
             battlefieldHandler.handleCloneCopy(gameData, permanentId);
+        } else if (context instanceof PermanentChoiceContext.CipherEncode) {
+            battlefieldHandler.handleCipherEncode(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.AttachEquipmentToCreature attachEquip) {
             battlefieldHandler.handleAttachEquipmentToCreature(gameData, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AuraGraft auraGraft) {

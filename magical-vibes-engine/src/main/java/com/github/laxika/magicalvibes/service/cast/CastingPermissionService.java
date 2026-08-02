@@ -86,6 +86,9 @@ public class CastingPermissionService {
         Set<String> forbidden = getForbiddenCardNames(gameData, playerId);
         if (forbidden.contains(card.getName())) return false;
         if (isNoncreatureSpellCastRestricted(gameData, card)) return false;
+        // Aurelia's Fury etc.: per-turn "can't cast noncreature spells" restriction on a player.
+        if (!card.hasType(CardType.CREATURE)
+                && gameData.playersCantCastNoncreatureSpellsThisTurn.contains(playerId)) return false;
         if (isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) return false;
         if (isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) return false;
         // MTG rule 714.1: legendary sorceries require controlling a legendary creature or planeswalker
@@ -404,6 +407,17 @@ public class CastingPermissionService {
             }
         }
         return false;
+    }
+
+    /**
+     * As {@link #isSpellRestricted(Card, Set, Set)}, plus the per-turn "this player can't cast
+     * noncreature spells" lock (Aurelia's Fury), which can't be expressed as a restricted type set.
+     */
+    public boolean isSpellRestricted(GameData gameData, UUID playerId, Card card,
+                                     Set<CardType> restrictedSpellTypes, Set<String> forbiddenCardNames) {
+        if (!card.hasType(CardType.CREATURE)
+                && gameData.playersCantCastNoncreatureSpellsThisTurn.contains(playerId)) return true;
+        return isSpellRestricted(card, restrictedSpellTypes, forbiddenCardNames);
     }
 
     public boolean isSpellRestricted(Card card, Set<CardType> restrictedSpellTypes, Set<String> forbiddenCardNames) {

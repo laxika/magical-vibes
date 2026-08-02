@@ -726,6 +726,18 @@ public class GameTestHarness {
                 xValue, targetId, targetIds);
     }
 
+    /**
+     * Cast a variable-count modal {@code {X}} sorcery ("choose one or more", e.g. Clan Defiance)
+     * with per-mode targets in chosen-mode order.
+     */
+    public void castModalSorceryWithModesForX(Player player, int cardIndex, int choicesMin, int choicesMax,
+                                              int[] modeIndices, int xValue, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playModalXCard(gameData, player, cardIndex,
+                ChooseOneEffect.encodeModeSelection(choicesMin, choicesMax, modeIndices),
+                xValue, null, targetIds);
+    }
+
     /** Cast a modal instant, choosing the mode at {@code modeIndex} and passing multiple targets. */
     public void castModalInstant(Player player, int cardIndex, int modeIndex, List<UUID> targetIds) {
         ensurePriority(player);

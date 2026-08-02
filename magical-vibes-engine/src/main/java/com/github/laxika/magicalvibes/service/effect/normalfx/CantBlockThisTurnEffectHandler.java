@@ -36,6 +36,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
         switch (e.scope()) {
             case TARGET -> resolveTarget(gameData, entry);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
+            case TARGET_CONTROLLERS_OTHER_CREATURES -> resolveTargetControllersOtherCreatures(gameData, entry, e);
             case ALL_CREATURES -> resolveAllCreatures(gameData, e);
             default -> throw new IllegalStateException("Unsupported can't-block scope: " + e.scope());
         }
@@ -100,6 +101,40 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
             String logEntry = "Creatures controlled by " + playerName + " can't block this turn.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} creatures controlled by {} can't block this turn", gameData.id, count, playerName);
+        }
+    }
+
+    /**
+     * "Other creatures that player controls can't block this turn" — the affected player is the
+     * target permanent's controller, and the target itself is deliberately left able to block.
+     */
+    private void resolveTargetControllersOtherCreatures(GameData gameData, StackEntry entry, CantBlockThisTurnEffect e) {
+        UUID targetId = entry.getTargetId();
+        if (targetId == null) return;
+
+        UUID affectedPlayerId = gameQueryService.findPermanentController(gameData, targetId);
+        if (affectedPlayerId == null) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(affectedPlayerId);
+        if (battlefield == null) return;
+
+        String playerName = gameData.playerIdToName.get(affectedPlayerId);
+        int count = 0;
+        for (Permanent p : battlefield) {
+            if (!p.getId().equals(targetId)
+                    && gameQueryService.isCreature(gameData, p)
+                    && (e.filter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))) {
+                p.setCantBlockThisTurn(true);
+                count++;
+            }
+        }
+
+        if (count > 0) {
+            gameLogService.append(gameData, GameLog.text(
+                    "Other creatures controlled by " + playerName + " can't block this turn."));
+            log.info("Game {} - {} other creatures controlled by {} can't block this turn",
+                    gameData.id, count, playerName);
         }
     }
 

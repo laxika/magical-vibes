@@ -3,6 +3,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -33,6 +35,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.UUID;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -667,6 +670,74 @@ class LandTapTriggerCollectorServiceTest {
                     EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("AddManaWhenLandOfSubtypeTappedForManaEffect")
+    class AddManaWhenLandOfSubtypeTappedForMana {
+
+        @Test
+        @DisplayName("controller-only form adds mana when the source controller taps a matching land")
+        void controllerOnlyAddsManaForController() {
+            Permanent triggerPerm = createPermanent("Crypt Ghast");
+            Card swampCard = createLandCardWithMana("Swamp", ManaColor.BLACK);
+            swampCard.setSubtypes(List.of(CardSubtype.SWAMP));
+            Permanent swamp = new Permanent(swampCard);
+            var effect = new AddManaWhenLandOfSubtypeTappedForManaEffect(
+                    CardSubtype.SWAMP, ManaColor.BLACK, true);
+            var ctx = new TriggerContext.LandTap(player1Id, swamp.getId());
+
+            when(gameQueryService.findPermanentById(gd, swamp.getId())).thenReturn(swamp);
+
+            boolean result = registry.dispatch(
+                    match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.BLACK)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("controller-only form ignores an opponent's matching land")
+        void controllerOnlyIgnoresOpponent() {
+            Permanent triggerPerm = createPermanent("Crypt Ghast");
+            Card swampCard = createLandCardWithMana("Swamp", ManaColor.BLACK);
+            swampCard.setSubtypes(List.of(CardSubtype.SWAMP));
+            Permanent swamp = new Permanent(swampCard);
+            var effect = new AddManaWhenLandOfSubtypeTappedForManaEffect(
+                    CardSubtype.SWAMP, ManaColor.BLACK, true);
+            var ctx = new TriggerContext.LandTap(player2Id, swamp.getId());
+
+            when(gameQueryService.findPermanentById(gd, swamp.getId())).thenReturn(swamp);
+
+            boolean result = registry.dispatch(
+                    match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.BLACK)).isZero();
+        }
+
+        @Test
+        @DisplayName("default form remains symmetric")
+        void defaultFormRemainsSymmetric() {
+            Permanent triggerPerm = createPermanent("Vernal Bloom");
+            Card swampCard = createLandCardWithMana("Swamp", ManaColor.BLACK);
+            swampCard.setSubtypes(List.of(CardSubtype.SWAMP));
+            Permanent swamp = new Permanent(swampCard);
+            var effect = new AddManaWhenLandOfSubtypeTappedForManaEffect(
+                    CardSubtype.SWAMP, ManaColor.BLACK);
+            var ctx = new TriggerContext.LandTap(player2Id, swamp.getId());
+
+            when(gameQueryService.findPermanentById(gd, swamp.getId())).thenReturn(swamp);
+
+            boolean result = registry.dispatch(
+                    match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.BLACK)).isEqualTo(1);
         }
     }
 

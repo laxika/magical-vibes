@@ -121,6 +121,11 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
 
             if (targetIsPlayer) {
                 damageSupport.dealDamageToPlayer(gameData, entry, targetId, rawDamage);
+                if (e.damagedPlayersCantCastNoncreatureSpells() && rawDamage > 0) {
+                    gameData.playersCantCastNoncreatureSpellsThisTurn.add(targetId);
+                    gameLogService.append(gameData, GameLog.text(
+                            gameData.playerIdToName.get(targetId) + " can't cast noncreature spells this turn."));
+                }
             } else if (gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard())) {
                 gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", targetPermanent.getCard(), " is prevented."));
@@ -129,6 +134,10 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
                 if (e.damagedCreaturesCantBlock() && rawDamage > 0) {
                     targetPermanent.setCantBlockThisTurn(true);
                     gameLogService.append(gameData, GameLog.cardThen(targetPermanent.getCard(), " can't block this turn."));
+                }
+                if (e.tapDamagedCreatures() && rawDamage > 0) {
+                    targetPermanent.tap();
+                    gameLogService.append(gameData, GameLog.cardThen(targetPermanent.getCard(), " becomes tapped."));
                 }
             }
         }

@@ -291,7 +291,7 @@ public class GameActionAvailabilityService {
         if (ctx.spellLimitReached() || ctx.cantCastDueToAttack()) {
             return false;
         }
-        if (castingPermissionService.isSpellRestricted(card, ctx.restrictedSpellTypes(), ctx.forbiddenCardNames())) {
+        if (castingPermissionService.isSpellRestricted(gameData, playerId, card, ctx.restrictedSpellTypes(), ctx.forbiddenCardNames())) {
             return false;
         }
         if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, card)) {

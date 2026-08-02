@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetCreaturePowerEffect;
+import com.github.laxika.magicalvibes.model.amount.TargetPower;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetCreatureStatEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -26,7 +27,7 @@ public class WallOfReverence extends Card {
                 )),
                 "Target must be a creature you control"
         )).addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new MayEffect(
-                new GainLifeEqualToTargetCreaturePowerEffect(),
+                new GainLifeEqualToTargetCreatureStatEffect(new TargetPower()),
                 "Gain life equal to the power of target creature you control?"
         ));
     }

@@ -24,5 +24,10 @@ public enum TargetLibraryAction {
      * The <em>target player</em> — not the controller — looks at the cards, puts one of them back
      * on top of their library, and the rest are exiled (Ashnod's Cylix).
      */
-    KEEP_ONE_ON_TOP_EXILE_REST
+    KEEP_ONE_ON_TOP_EXILE_REST,
+    /**
+     * The controller looks at the cards, puts one of them back on top of the target player's
+     * library, and the rest go into that player's graveyard (Dimir Charm). The pick is mandatory.
+     */
+    KEEP_ONE_ON_TOP_REST_TO_GRAVEYARD
 }

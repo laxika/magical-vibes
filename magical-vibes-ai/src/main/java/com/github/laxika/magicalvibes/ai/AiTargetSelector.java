@@ -531,6 +531,12 @@ class AiTargetSelector {
             trial.add(candidate.getId());
             return targetLegalityService.fitsAtMostTwoCreaturesAndTwoLands(gameData, trial);
         }
+        if (constraint == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER) {
+            UUID candidateControllerId = gameQueryService.findPermanentController(gameData, candidate.getId());
+            return chosenSoFar.stream()
+                    .map(id -> gameQueryService.findPermanentController(gameData, id))
+                    .noneMatch(candidateControllerId::equals);
+        }
         for (UUID chosenId : chosenSoFar) {
             Permanent other = gameQueryService.findPermanentById(gameData, chosenId);
             UUID candidateControllerId = gameQueryService.findPermanentController(gameData, candidate.getId());
@@ -551,7 +557,7 @@ class AiTargetSelector {
                         gameQueryService.sharesArtifactOrCreatureType(other, candidate);
                 case CONTROLLED_BY_FIRST_TARGET -> java.util.Objects.equals(candidateControllerId,
                         gameQueryService.findPermanentController(gameData, other.getId()));
-                case AT_MOST_TWO_CREATURES_AND_TWO_LANDS -> true; // handled above
+                case AT_MOST_TWO_CREATURES_AND_TWO_LANDS, AT_MOST_ONE_PER_CONTROLLER -> true; // handled above
             };
             if (!compatible) {
                 return false;

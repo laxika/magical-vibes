@@ -76,6 +76,17 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
             }
         }
 
+        if (validated.size() < interaction.minCount()) {
+            for (UUID id : interaction.validCardIds()) {
+                if (validated.size() >= interaction.minCount()) {
+                    break;
+                }
+                if (!validated.contains(id)) {
+                    validated.add(id);
+                }
+            }
+        }
+
         gameData.interaction.clearAwaitingInput();
 
         if (validated.isEmpty()) {

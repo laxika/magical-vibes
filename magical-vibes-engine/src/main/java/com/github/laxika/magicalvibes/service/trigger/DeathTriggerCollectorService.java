@@ -65,6 +65,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwne
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToSharedTypeCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapEquippedCreatureEffect;
@@ -601,24 +602,68 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CreateTokenEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    boolean handleEnchantedCreatureDeathTokenCount(TriggerMatchContext match,
+            CreateTokenEffect effect, TriggerContext ctx) {
+        if (!amountEvaluationService.referencesEventValue(effect.amount())) {
+            addEnchantedPermanentDeathEntry(match, effect);
+            return true;
+        }
+
+        TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
+        addEnchantedPermanentDeathEntry(match, effect.withAmount(Math.max(0, epd.dyingCreaturePower())));
+        return true;
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleEnchantedPermanentDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
-        addEnchantedPermanentDeathEntry(match, effect);
+        TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
+        Integer eventValue = effectReferencesEventValue(effect)
+                ? Math.max(0, epd.dyingCreaturePower())
+                : null;
+        addEnchantedPermanentDeathEntry(match, effect, eventValue);
         return true;
     }
 
     private void addEnchantedPermanentDeathEntry(TriggerMatchContext match, CardEffect effect) {
-        match.gameData().stack.add(new StackEntry(
+        addEnchantedPermanentDeathEntry(match, effect, null);
+    }
+
+    private void addEnchantedPermanentDeathEntry(TriggerMatchContext match, CardEffect effect,
+            Integer eventValue) {
+        if (effect.targetSpec().category().includesPermanents() || effect.targetSpec().category().includesPlayers()
+                || effect.targetSpec().category().isGraveyard()) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)), eventValue));
+            return;
+        }
+
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(effect))
-        ));
+        );
+        entry.setEventValue(eventValue);
+        match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 "'s ability triggers (enchanted permanent put into graveyard)."));
         log.info("Game {} - {} triggers (enchanted permanent put into graveyard)", match.gameData().id, match.permanent().getCard().getName());
+    }
+
+    private boolean effectReferencesEventValue(CardEffect effect) {
+        if (effect instanceof SequenceEffect sequence) {
+            return sequence.steps().stream().anyMatch(this::effectReferencesEventValue);
+        }
+        if (effect instanceof LoseLifeEffect loseLife) {
+            return amountEvaluationService.referencesEventValue(loseLife.amount());
+        }
+        if (effect instanceof GainLifeEffect gainLife) {
+            return amountEvaluationService.referencesEventValue(gainLife.amount());
+        }
+        return false;
     }
 
     // ── ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD ──────────────────────

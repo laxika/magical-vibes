@@ -144,6 +144,9 @@ public class StackEntry {
      * Not a target: it is never validated or fizzled.
      */
     @Setter private UUID triggeringPermanentId;
+    /** Power and toughness of the entering permanent when an evolve trigger was created. */
+    @Setter private Integer triggeringPermanentPowerAtTrigger;
+    @Setter private Integer triggeringPermanentToughnessAtTrigger;
     private final List<UUID> targetIds;
     /**
      * Whether {@link #targetIds} was derived from the controller-announced amount assignments
@@ -399,6 +402,8 @@ public class StackEntry {
         this.chosenPermanentId = source.chosenPermanentId;
         this.triggeringCardId = source.triggeringCardId;
         this.triggeringPermanentId = source.triggeringPermanentId;
+        this.triggeringPermanentPowerAtTrigger = source.triggeringPermanentPowerAtTrigger;
+        this.triggeringPermanentToughnessAtTrigger = source.triggeringPermanentToughnessAtTrigger;
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
         this.targetIdsFromAssignments = source.targetIdsFromAssignments;
         this.illegalTargetIndices.addAll(source.illegalTargetIndices);

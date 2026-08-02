@@ -137,6 +137,8 @@ export interface ActivatedAbilityView {
   variableLoyaltyCost: boolean;
   /** CounterType name whose counters the ability removes X of as a cost, or null. */
   variableCounterCostType: string | null;
+  requiresXValue?: boolean;
+  xValueFromControlledCreatureCounters?: boolean;
 }
 
 export interface Card {

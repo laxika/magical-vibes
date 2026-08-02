@@ -135,6 +135,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsNthSpellCastThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
@@ -947,6 +948,7 @@ public class PredicateEvaluationService {
                     controllerControlsMatchingStatic(permanent, p, context);
             case PermanentHasGreatestManaValueAmongAllCreaturesPredicate ignored ->
                     hasGreatestManaValueAmongAllCreaturesStatic(permanent, context);
+            case PermanentInCombatWithSourcePredicate ignored -> inCombatWithSourceStatic(permanent, context);
             case PermanentHasSourceChosenSubtypePredicate ignored -> {
                 CardSubtype chosen = sourceChosenSubtype(context);
                 yield chosen != null
@@ -1042,6 +1044,21 @@ public class PredicateEvaluationService {
         return battlefield.stream()
                 .filter(candidate -> !predicate.excludeSelf() || !candidate.getId().equals(target.getId()))
                 .anyMatch(candidate -> matchesStaticFilter(candidate, predicate.filter(), context));
+    }
+
+    /**
+     * Recursion-safe "blocking or blocked by the source" (Alms Beast's static lifelink grant).
+     * Block assignments live on the permanents themselves, so the answer needs no layered
+     * characteristic query; the source comes from the snapshot the static pass carries rather
+     * than a battlefield lookup.
+     */
+    private boolean inCombatWithSourceStatic(Permanent permanent, FilterContext context) {
+        Permanent source = context == null ? null : context.sourcePermanentSnapshot();
+        if (source == null) return false;
+        if (permanent.isBlocking() && permanent.getBlockingTargetIds().contains(source.getId())) {
+            return true;
+        }
+        return source.isBlocking() && source.getBlockingTargetIds().contains(permanent.getId());
     }
 
     /**
@@ -1335,6 +1352,7 @@ public class PredicateEvaluationService {
             // Targeting-only predicates: evaluated by TargetLegalityService, never in this context.
             case StackEntryIsSingleTargetPredicate ignored -> false;
             case StackEntryHasTargetPredicate ignored -> false;
+            case StackEntryHasXInManaCostPredicate ignored -> false;
             case StackEntryIsNthSpellCastThisTurnPredicate ignored -> false;
             case StackEntryManaValuePredicate ignored -> false;
             case StackEntryMaxManaValuePredicate ignored -> false;

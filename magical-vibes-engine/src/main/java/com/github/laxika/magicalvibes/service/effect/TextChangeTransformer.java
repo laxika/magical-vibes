@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -213,6 +214,12 @@ public final class TextChangeTransformer {
                 yield keywords == boost.grantedKeywords() && filter == boost.filter() ? boost
                         : new StaticBoostEffect(boost.powerBoost(), boost.toughnessBoost(),
                         keywords, boost.scope(), filter);
+            }
+            case DynamicStaticBoostEffect boost -> {
+                PermanentPredicate filter = apply(boost.filter(), substitution);
+                yield filter == boost.filter() ? boost
+                        : new DynamicStaticBoostEffect(boost.powerBoost(), boost.toughnessBoost(),
+                        boost.scope(), filter);
             }
             case GrantKeywordEffect grant -> {
                 Set<Keyword> keywords = replaceLandwalk(grant.keywords(), substitution);

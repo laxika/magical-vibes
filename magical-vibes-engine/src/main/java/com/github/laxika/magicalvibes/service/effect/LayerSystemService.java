@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesType
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantChosenBasicLandTypeToOwnLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
@@ -547,7 +548,15 @@ public class LayerSystemService {
         flags = flags << 1 | (p.isLosesAllAbilitiesUntilEndOfTurn() ? 1 : 0);
         flags = flags << 1 | (p.isLosesAllCreatureTypesUntilEndOfTurn() ? 1 : 0);
         flags = flags << 1 | (p.isTransformed() ? 1 : 0);
+        // Combat assignments feed static scopes ("creatures blocking or blocked by this creature
+        // have lifelink" — Alms Beast), so declaring attackers or blockers must invalidate the
+        // memoized board.
+        flags = flags << 1 | (p.isAttacking() ? 1 : 0);
+        flags = flags << 1 | (p.isBlocking() ? 1 : 0);
         h = mix(h, flags);
+        for (UUID blockingTargetId : p.getBlockingTargetIds()) {
+            h = mix(h, blockingTargetId.hashCode());
+        }
 
         h = mix(h, p.getAttachedTo() == null ? 0 : p.getAttachedTo().hashCode());
         h = mix(h, p.getPairedWithId() == null ? 0 : p.getPairedWithId().hashCode());
@@ -1163,6 +1172,18 @@ public class LayerSystemService {
                 CardSubtype chosen = instance.source().permanent().getChosenSubtype();
                 if (chosen == null) return;
                 for (PermanentSlot target : scopeTargets(instance, grant.scope(), null, slots, slotsById, board)) {
+                    states.get(target.permanent().getId()).addSubtype(chosen);
+                    record(board, instance, target, new L4Contribution(
+                            chosen, false, false, null, null));
+                }
+            }
+            case GrantChosenBasicLandTypeToOwnLandsEffect ignored -> {
+                manage(board, instance);
+                if (instance.source() == null) return;
+                CardSubtype chosen = instance.source().permanent().getChosenSubtype();
+                if (chosen == null) return;
+                for (PermanentSlot target : scopeTargets(instance, GrantScope.OWN_LANDS, null,
+                        slots, slotsById, board)) {
                     states.get(target.permanent().getId()).addSubtype(chosen);
                     record(board, instance, target, new L4Contribution(
                             chosen, false, false, null, null));

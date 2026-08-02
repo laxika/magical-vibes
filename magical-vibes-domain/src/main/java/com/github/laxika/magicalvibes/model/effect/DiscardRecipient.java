@@ -17,6 +17,11 @@ package com.github.laxika.magicalvibes.model.effect;
  *       companion "player or planeswalker" damage effect's {@code targetId}) and sets
  *       {@code discardCausedByOpponent = true}. Used by "deals damage to target player or planeswalker;
  *       that player or that planeswalker's controller discards" (Blightning).</li>
+ *   <li>{@link #DEFENDING_PLAYER} — the player being attacked (or the controller of the attacked
+ *       planeswalker) discards; read from the combat trigger's baked {@code attackedTargetId}, so
+ *       the effect adds no target of its own and sets {@code discardCausedByOpponent = true}. Used
+ *       by "whenever this creature becomes blocked, defending player discards a card" (Slate Street
+ *       Ruffian).</li>
  *   <li>{@link #EACH_PLAYER} — every player discards, in APNAP order.</li>
  *   <li>{@link #EACH_OPPONENT} — every opponent of the controller discards, in APNAP order.</li>
  * </ul>
@@ -26,6 +31,7 @@ public enum DiscardRecipient {
     TARGET_PLAYER,
     TARGET_PERMANENT_CONTROLLER,
     TARGET_PLAYER_OR_PERMANENT_CONTROLLER,
+    DEFENDING_PLAYER,
     EACH_PLAYER,
     EACH_OPPONENT
 }

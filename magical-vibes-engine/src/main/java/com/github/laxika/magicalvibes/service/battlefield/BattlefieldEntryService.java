@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
@@ -1289,7 +1290,9 @@ public class BattlefieldEntryService {
                 .filter(e -> e instanceof BattlefieldAndGraveyardCardChoosingEffect).toList();
         // Separate graveyard cast effects (need single-target selection at trigger time)
         List<CardEffect> graveyardCastEffects = mandatoryEffects.stream()
-                .filter(e -> e instanceof CastTargetInstantOrSorceryFromGraveyardEffect).toList();
+                .filter(e -> e instanceof CastTargetInstantOrSorceryFromGraveyardEffect)
+                .filter(e -> card.getEffectTargetIndex(e) < 0)
+                .toList();
         // Separate graveyard flashback-grant effects (need single-target selection at trigger time)
         List<CardEffect> graveyardFlashbackEffects = mandatoryEffects.stream()
                 .filter(e -> e instanceof GrantFlashbackToTargetGraveyardCardEffect).toList();
@@ -1298,7 +1301,8 @@ public class BattlefieldEntryService {
                 .filter(e -> e instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect).toList();
         // Separate opponent-graveyard steal effects (need single-target selection at trigger time)
         List<CardEffect> graveyardStealEffects = mandatoryEffects.stream()
-                .filter(e -> e instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect).toList();
+                .filter(e -> e instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect
+                        || e instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect).toList();
         // Separate graveyard return-to-hand effects (need multi-target selection at trigger time)
         List<CardEffect> graveyardReturnToHandEffects = mandatoryEffects.stream()
                 .filter(e -> e instanceof ReturnTargetCardsFromGraveyardToHandEffect).toList();
@@ -1314,6 +1318,7 @@ public class BattlefieldEntryService {
                 .filter(e -> e.targetSpec().category().isGraveyard())
                 .filter(e -> !graveyardExileEffects.contains(e))
                 .filter(e -> !graveyardCardsExileEffects.contains(e))
+                .filter(e -> !(e instanceof CastTargetInstantOrSorceryFromGraveyardEffect))
                 .filter(e -> !graveyardCastEffects.contains(e))
                 .filter(e -> !graveyardFlashbackEffects.contains(e))
                 .filter(e -> !graveyardMayPlayEffects.contains(e))
@@ -1323,10 +1328,10 @@ public class BattlefieldEntryService {
                 .toList();
         List<CardEffect> otherEffects = mandatoryEffects.stream()
                 .filter(e -> !(e instanceof ExileCardsFromGraveyardEffect))
-                .filter(e -> !(e instanceof CastTargetInstantOrSorceryFromGraveyardEffect))
+                .filter(e -> !graveyardCastEffects.contains(e))
                 .filter(e -> !(e instanceof GrantFlashbackToTargetGraveyardCardEffect))
                 .filter(e -> !(e instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect))
-                .filter(e -> !(e instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect))
+                .filter(e -> !graveyardStealEffects.contains(e))
                 .filter(e -> !(e instanceof ReturnTargetCardsFromGraveyardToHandEffect))
                 .filter(e -> !(e instanceof ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect))
                 .filter(e -> !graveyardTargetReturnEffects.contains(e))

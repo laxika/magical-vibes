@@ -6,12 +6,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfAllLandsTargetPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsTargetPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
 
@@ -30,7 +31,7 @@ public class GiltLeafArchdruid extends Card {
                 false, null,
                 List.of(
                         new TapMultiplePermanentsCost(7, new PermanentHasSubtypePredicate(CardSubtype.DRUID)),
-                        new GainControlOfAllLandsTargetPlayerControlsEffect()),
+                        new GainControlOfAllPermanentsTargetPlayerControlsEffect(new PermanentIsLandPredicate())),
                 "Tap seven untapped Druids you control: Gain control of all lands target player controls."));
     }
 }

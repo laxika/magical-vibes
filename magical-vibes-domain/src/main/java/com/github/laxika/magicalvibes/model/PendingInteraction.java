@@ -1194,12 +1194,13 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
-     * Choose up to {@code maxCount} cards from your own hand to put back on your library.
-     * {@code validCardIds}/{@code cards} are the current hand snapshot; with
+     * Choose between {@code minCount} and {@code maxCount} cards from your own hand to put back on
+     * your library. {@code validCardIds}/{@code cards} are the current hand snapshot; with
      * {@link HandToLibraryPlacement#PLAYER_CHOICE} the top/bottom destination is picked in the
      * follow-up {@link PutCardsFromHandOnLibraryDestinationChoice} (Dream Cache), while
      * {@code TOP} (Brainstorm) and {@code BOTTOM} (Amass the Components) place the chosen cards
-     * immediately.
+     * immediately. The {@link #putRequiredCardOnLibrary} factory models a mandatory single-card
+     * choice.
      *
      * <p>When {@code shuffleIn} is {@code true} the chosen cards are instead shuffled into the
      * library and the pick is mandatory (Lat-Nam's Legacy); {@code thenEffect} — if set — is pushed
@@ -1208,7 +1209,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * unused on that path.
      */
     record PutCardsFromHandOnLibraryCardChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                               java.util.List<Card> cards, int maxCount,
+                                               java.util.List<Card> cards, int minCount, int maxCount,
                                                HandToLibraryPlacement placement,
                                                boolean shuffleIn, Card thenEffectSourceCard,
                                                com.github.laxika.magicalvibes.model.effect.CardEffect thenEffect)
@@ -1223,7 +1224,15 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public static PutCardsFromHandOnLibraryCardChoice putOnLibrary(UUID playerId,
                 java.util.List<UUID> validCardIds, java.util.List<Card> cards, int maxCount,
                 HandToLibraryPlacement placement) {
-            return new PutCardsFromHandOnLibraryCardChoice(playerId, validCardIds, cards, maxCount, placement,
+            return new PutCardsFromHandOnLibraryCardChoice(playerId, validCardIds, cards, 0, maxCount, placement,
+                    false, null, null);
+        }
+
+        /** "Put a card from your hand on top of your library" (mandatory when the hand is nonempty). */
+        public static PutCardsFromHandOnLibraryCardChoice putRequiredCardOnLibrary(UUID playerId,
+                java.util.List<UUID> validCardIds, java.util.List<Card> cards,
+                HandToLibraryPlacement placement) {
+            return new PutCardsFromHandOnLibraryCardChoice(playerId, validCardIds, cards, 1, 1, placement,
                     false, null, null);
         }
 
@@ -1232,6 +1241,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                 java.util.List<UUID> validCardIds, java.util.List<Card> cards, int count,
                 Card sourceCard, com.github.laxika.magicalvibes.model.effect.CardEffect thenEffect) {
             return new PutCardsFromHandOnLibraryCardChoice(playerId, validCardIds, cards, count,
+                    count,
                     HandToLibraryPlacement.TOP, true, sourceCard, thenEffect);
         }
 
@@ -1242,7 +1252,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds, shuffleIn ? maxCount : 0, maxCount);
+            return new InteractionOptions.MultiCardPick(validCardIds, minCount, maxCount);
         }
     }
 

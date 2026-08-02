@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitel
 import com.github.laxika.magicalvibes.model.effect.SetSelfKeywordIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesMatchingCantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect;
@@ -604,6 +605,7 @@ public class GameQueryService {
     public boolean canPlayerGainLife(GameData gameData, UUID playerId) {
         if (!canPlayerLifeChange(gameData, playerId)) return false;
         if (gameData.playersWhoCantGainLifeRestOfGame.contains(playerId)) return false;
+        if (gameData.playersCantGainLifeThisTurn) return false;
         return !anyBattlefieldHasStaticEffect(gameData, PlayersCantGainLifeEffect.class);
     }
 
@@ -2521,6 +2523,9 @@ public class GameQueryService {
      * status (including animation).
      */
     public boolean hasProtectionFromSourceCardTypes(GameData gameData, Permanent target, Permanent source) {
+        if (hasProtectionFromMulticolored(gameData, target, getEffectiveColors(gameData, source))) {
+            return true;
+        }
         Set<CardType> protectedTypes = EnumSet.noneOf(CardType.class);
         protectedTypes.addAll(target.getProtectionFromCardTypes());
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
@@ -2569,6 +2574,42 @@ public class GameQueryService {
         if (protectedTypes.contains(sourceCard.getType())) return true;
         for (CardType type : sourceCard.getAdditionalTypes()) {
             if (protectedTypes.contains(type)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Card-source overload that also evaluates protection granted by continuous battlefield
+     * effects. The legacy overload remains for callers that only have a target and a card.
+     */
+    public boolean hasProtectionFromSourceCardTypes(GameData gameData, Permanent target, Card sourceCard) {
+        if (hasProtectionFromMulticolored(gameData, target, sourceCard)) {
+            return true;
+        }
+        return hasProtectionFromSourceCardTypes(target, sourceCard);
+    }
+
+    public boolean hasProtectionFromMulticolored(GameData gameData, Permanent target, Card sourceCard) {
+        if (sourceCard == null || sourceCard.getColors().size() < 2) {
+            return false;
+        }
+        return hasProtectionFromMulticoloredEffects(target.getCard().getEffects(EffectSlot.STATIC))
+                || hasProtectionFromMulticoloredEffects(computeStaticBonus(gameData, target).grantedEffects());
+    }
+
+    private boolean hasProtectionFromMulticolored(GameData gameData, Permanent target,
+                                                   Set<CardColor> sourceColors) {
+        return sourceColors.size() >= 2
+                && (hasProtectionFromMulticoloredEffects(target.getCard().getEffects(EffectSlot.STATIC))
+                || hasProtectionFromMulticoloredEffects(computeStaticBonus(gameData, target).grantedEffects()));
+    }
+
+    private boolean hasProtectionFromMulticoloredEffects(Iterable<CardEffect> effects) {
+        for (CardEffect effect : effects) {
+            if (effect instanceof ProtectionGrantingEffect protection
+                    && protection.protectionFromMulticolored()) {
+                return true;
+            }
         }
         return false;
     }
@@ -2745,7 +2786,7 @@ public class GameQueryService {
     /** Damage-path variant of {@link #hasProtectionFromSource(GameData, Permanent, Card)}. */
     public boolean hasProtectionFromDamageSource(GameData gameData, Permanent target, Card sourceCard) {
         return hasProtectionFrom(gameData, target, getDamageSourceColor(gameData, sourceCard.getColor()))
-                || hasProtectionFromSourceCardTypes(target, sourceCard)
+                || hasProtectionFromSourceCardTypes(gameData, target, sourceCard)
                 || hasProtectionFromSourceSubtypes(target, sourceCard)
                 || hasProtectionFromNonSubtypeCreatures(target, sourceCard)
                 || hasProtectionFromSourceManaValue(target, sourceCard);
@@ -2753,7 +2794,7 @@ public class GameQueryService {
 
     public boolean hasProtectionFromSource(GameData gameData, Permanent target, Card sourceCard) {
         return hasProtectionFrom(gameData, target, sourceCard.getColor())
-                || hasProtectionFromSourceCardTypes(target, sourceCard)
+                || hasProtectionFromSourceCardTypes(gameData, target, sourceCard)
                 || hasProtectionFromSourceSubtypes(target, sourceCard)
                 || hasProtectionFromNonSubtypeCreatures(target, sourceCard)
                 || hasProtectionFromSourceManaValue(target, sourceCard);
@@ -3373,6 +3414,33 @@ public class GameQueryService {
                         .anyMatch(e -> e instanceof AllLandsAreCreaturesEffect animateLands
                                 && (animateLands.requiredSubtype() == null
                                         || permanent.getCard().getSubtypes().contains(animateLands.requiredSubtype()))));
+    }
+
+    /**
+     * Smallest "can't be blocked by more than N creatures" cap that applies to {@code attacker},
+     * taking both its own static effects (Stalking Tiger) and the Auras attached to it
+     * (Alpha Authority) into account. Returns {@link Integer#MAX_VALUE} when unrestricted.
+     */
+    public int getMaxBlockersAllowed(GameData gameData, Permanent attacker) {
+        int maxBlockers = Integer.MAX_VALUE;
+        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CanBeBlockedByAtMostNCreaturesEffect restriction) {
+                maxBlockers = Math.min(maxBlockers, restriction.maxBlockers());
+            }
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent aura : battlefield) {
+                if (!aura.isAttached() || !attacker.getId().equals(aura.getAttachedTo())) continue;
+                for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof CanBeBlockedByAtMostNCreaturesEffect restriction) {
+                        maxBlockers = Math.min(maxBlockers, restriction.maxBlockers());
+                    }
+                }
+            }
+        }
+        return maxBlockers;
     }
 
     /**

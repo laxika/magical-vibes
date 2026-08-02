@@ -33,5 +33,7 @@ public enum MultiTargetConstraint {
      * ("Untap up to two target creatures and up to two target lands" — Nissa, Genesis Mage +2).
      * Dual-typed permanents (creature lands) may be assigned to either quota.
      */
-    AT_MOST_TWO_CREATURES_AND_TWO_LANDS
+    AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
+    /** At most one chosen target may belong to each player. */
+    AT_MOST_ONE_PER_CONTROLLER
 }

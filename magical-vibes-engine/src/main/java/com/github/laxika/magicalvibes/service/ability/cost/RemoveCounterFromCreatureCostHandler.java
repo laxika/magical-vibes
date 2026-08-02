@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromControlledCreaturesCost;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
@@ -15,14 +16,17 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Handles the {@link RemoveCounterFromControlledCreatureCost} — counters may come from among
+ * Handles the {@link RemoveCounterFromControlledCreatureCost} and its variable-count sibling
+ * {@link RemoveOneOrMoreCountersFromControlledCreaturesCost} — counters may come from among
  * creatures you control (split across creatures or all from one). Each interactive pick removes
  * one counter; when only one legal distribution remains, payment auto-completes (bulk-removing
  * from a single creature when needed).
  */
 public class RemoveCounterFromCreatureCostHandler implements PermanentChoiceCostHandler {
 
-    private final RemoveCounterFromControlledCreatureCost cost;
+    private final CardEffect cost;
+    private final CounterType counterType;
+    private final int requiredCount;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private int pendingBulkRemoval;
@@ -31,20 +35,39 @@ public class RemoveCounterFromCreatureCostHandler implements PermanentChoiceCost
     public RemoveCounterFromCreatureCostHandler(RemoveCounterFromControlledCreatureCost cost,
                                                  GameQueryService gameQueryService,
                                                  GameLogService gameLogService) {
+        this(cost, cost.counterType(), cost.count(), gameQueryService, gameLogService);
+    }
+
+    /** "Remove one or more counters from among creatures you control" — the count is the chosen X. */
+    public RemoveCounterFromCreatureCostHandler(RemoveOneOrMoreCountersFromControlledCreaturesCost cost,
+                                                 int xValue,
+                                                 GameQueryService gameQueryService,
+                                                 GameLogService gameLogService) {
+        this(cost, cost.counterType(), xValue, gameQueryService, gameLogService);
+    }
+
+    private RemoveCounterFromCreatureCostHandler(CardEffect cost, CounterType counterType, int requiredCount,
+                                                 GameQueryService gameQueryService,
+                                                 GameLogService gameLogService) {
         this.cost = cost;
+        this.counterType = counterType;
+        this.requiredCount = requiredCount;
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
     }
 
     @Override public CardEffect costEffect() { return cost; }
 
-    @Override public int requiredCount() { return cost.count(); }
+    @Override public int requiredCount() { return requiredCount; }
 
     @Override public int lastPaymentWeight() { return lastRemoved; }
 
     @Override
     public void validateCanPay(GameData gameData, UUID playerId) {
-        if (totalCounters(gameData, playerId) < cost.count()) {
+        if (requiredCount < 1) {
+            throw new IllegalStateException("Must remove at least one " + counterLabel() + " counter");
+        }
+        if (totalCounters(gameData, playerId) < requiredCount) {
             throw new IllegalStateException("No creature with enough " + counterLabel() + " counters to remove");
         }
     }
@@ -130,7 +153,7 @@ public class RemoveCounterFromCreatureCostHandler implements PermanentChoiceCost
     }
 
     private int getCounterCount(Permanent permanent) {
-        return switch (cost.counterType()) {
+        return switch (counterType) {
             case PLUS_ONE_PLUS_ONE -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
             case MINUS_ONE_MINUS_ONE -> permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
             case CHARGE -> permanent.getCounterCount(CounterType.CHARGE);
@@ -140,7 +163,7 @@ public class RemoveCounterFromCreatureCostHandler implements PermanentChoiceCost
     }
 
     private void removeCounters(Permanent permanent, int count) {
-        switch (cost.counterType()) {
+        switch (counterType) {
             case PLUS_ONE_PLUS_ONE -> permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - count);
             case MINUS_ONE_MINUS_ONE -> permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) - count);
             case CHARGE -> permanent.setCounterCount(CounterType.CHARGE, permanent.getCounterCount(CounterType.CHARGE) - count);
@@ -162,7 +185,7 @@ public class RemoveCounterFromCreatureCostHandler implements PermanentChoiceCost
     }
 
     private String counterLabel() {
-        return switch (cost.counterType()) {
+        return switch (counterType) {
             case PLUS_ONE_PLUS_ONE -> "+1/+1";
             case MINUS_ONE_MINUS_ONE -> "-1/-1";
             case CHARGE -> "charge";

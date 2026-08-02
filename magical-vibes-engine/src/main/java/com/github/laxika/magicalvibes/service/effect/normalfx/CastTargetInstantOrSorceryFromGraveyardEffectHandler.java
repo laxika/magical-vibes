@@ -34,53 +34,52 @@ public class CastTargetInstantOrSorceryFromGraveyardEffectHandler implements Nor
 
         UUID controllerId = entry.getControllerId();
 
-        // Get the targeted card ID from targetCardIds (set at ETB trigger time)
-        // Target card ID comes from targetCardIds (set at ETB trigger time) or, when cast as a
-        // spell (e.g. Memory Plunder), from the single spell target.
-        UUID targetCardId = !entry.getTargetCardIds().isEmpty()
-                ? entry.getTargetCardIds().getFirst()
-                : entry.getTargetId();
-        if (targetCardId == null) {
+        List<UUID> targetCardIds = !entry.getTargetCardIds().isEmpty()
+                ? entry.getTargetCardIds()
+                : entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
+        if (targetCardIds.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " — no target selected."));
             return;
         }
-        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
-        if (targetCard == null) {
-            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in graveyard)."));
-            return;
-        }
 
-        // Verify target is still in a graveyard matching the scope
-        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
-        if (graveyardOwnerId == null) {
-            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target not in any graveyard)."));
-            return;
-        }
-        boolean validScope = switch (e.scope()) {
-            case OPPONENT_GRAVEYARD -> !graveyardOwnerId.equals(controllerId);
-            case CONTROLLERS_GRAVEYARD -> graveyardOwnerId.equals(controllerId);
-            case ALL_GRAVEYARDS -> true;
-        };
-        if (!validScope) {
-            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target not in a valid graveyard)."));
-            return;
-        }
+        for (int i = targetCardIds.size() - 1; i >= 0; i--) {
+            UUID targetCardId = targetCardIds.get(i);
+            Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
+            if (targetCard == null) {
+                gameLogService.append(gameData, GameLog.text(entry.getDescription()
+                        + " fizzles (target no longer in graveyard)."));
+                continue;
+            }
 
-        // Verify target is still an instant or sorcery
-        if (!targetCard.hasType(CardType.INSTANT) && !targetCard.hasType(CardType.SORCERY)) {
-            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target is not an instant or sorcery)."));
-            return;
-        }
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
+            if (graveyardOwnerId == null) {
+                gameLogService.append(gameData, GameLog.text(entry.getDescription()
+                        + " fizzles (target not in any graveyard)."));
+                continue;
+            }
+            boolean validScope = switch (e.scope()) {
+                case OPPONENT_GRAVEYARD -> !graveyardOwnerId.equals(controllerId);
+                case CONTROLLERS_GRAVEYARD -> graveyardOwnerId.equals(controllerId);
+                case ALL_GRAVEYARDS -> true;
+            };
+            if (!validScope) {
+                gameLogService.append(gameData, GameLog.text(entry.getDescription()
+                        + " fizzles (target not in a valid graveyard)."));
+                continue;
+            }
 
-        // Queue may-cast choice
-        String prompt = e.withoutPayingManaCost()
-                ? entry.getCard().getName() + " — Cast " + targetCard.getName() + " without paying its mana cost?"
-                : entry.getCard().getName() + " — Cast " + targetCard.getName() + "?";
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                targetCard,
-                controllerId,
-                List.of(e),
-                prompt
-        ));
+            if (!targetCard.hasType(CardType.INSTANT) && !targetCard.hasType(CardType.SORCERY)) {
+                gameLogService.append(gameData, GameLog.text(entry.getDescription()
+                        + " fizzles (target is not an instant or sorcery)."));
+                continue;
+            }
+
+            String prompt = e.withoutPayingManaCost()
+                    ? entry.getCard().getName() + " — Cast " + targetCard.getName()
+                    + " without paying its mana cost?"
+                    : entry.getCard().getName() + " — Cast " + targetCard.getName() + "?";
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    targetCard, controllerId, List.of(e), prompt));
+        }
     }
 }

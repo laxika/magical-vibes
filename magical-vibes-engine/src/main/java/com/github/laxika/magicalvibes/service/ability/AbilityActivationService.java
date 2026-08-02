@@ -91,6 +91,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromControlledCreaturesCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceCost;
 import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
@@ -2031,6 +2033,24 @@ public class AbilityActivationService {
                     player.getUsername() + " removes " + counterWord + " from ", permanent.getCard(), "."));
         }
 
+        Optional<RemoveOneOrMoreCountersFromSourceCost> removeOneOrMoreCountersCost = abilityEffects.stream()
+                .filter(RemoveOneOrMoreCountersFromSourceCost.class::isInstance)
+                .map(RemoveOneOrMoreCountersFromSourceCost.class::cast)
+                .findFirst();
+        if (removeOneOrMoreCountersCost.isPresent()) {
+            CounterType counterType = removeOneOrMoreCountersCost.get().counterType();
+            int count = effectiveXValue;
+            int remaining = permanent.getCounterCount(counterType) - count;
+            if (count < 1 || remaining < 0) {
+                throw new IllegalStateException("Not enough counters to remove");
+            }
+            permanent.setCounterCount(counterType, remaining);
+            String counterLabel = counterType.name().toLowerCase().replace('_', ' ');
+            String counterWord = count == 1 ? "a " + counterLabel + " counter" : count + " " + counterLabel + " counters";
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " removes " + counterWord + " from ", permanent.getCard(), "."));
+        }
+
         // Pay remove-charge-counter cost
         if (removeChargeCost.isPresent()) {
             int required = removeChargeCost.get().count();
@@ -2215,6 +2235,7 @@ public class AbilityActivationService {
         if (effect instanceof TapTwoCreaturesSharingTypeCost c) return new TapTwoSharingCreatureTypeCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, chosenSoFar);
         if (effect instanceof CrewCost c) return new CrewCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof RemoveCounterFromControlledCreatureCost c) return new RemoveCounterFromCreatureCostHandler(c, gameQueryService, gameLogService);
+        if (effect instanceof RemoveOneOrMoreCountersFromControlledCreaturesCost c) return new RemoveCounterFromCreatureCostHandler(c, xValue, gameQueryService, gameLogService);
         if (effect instanceof PutCounterOnControlledCreatureCost c) return new PutCounterOnCreatureCostHandler(c, gameQueryService, gameLogService);
         return null;
     }
@@ -2796,6 +2817,17 @@ public class AbilityActivationService {
             int available = permanent.getCounterCount(removeXCounterCost.get().counterType());
             if (xValue < 0 || xValue > available) {
                 throw new IllegalStateException("Not enough counters to remove (need " + xValue + ", have " + available + ")");
+            }
+        }
+
+        Optional<RemoveOneOrMoreCountersFromSourceCost> removeOneOrMoreCountersCost = abilityEffects.stream()
+                .filter(RemoveOneOrMoreCountersFromSourceCost.class::isInstance)
+                .map(RemoveOneOrMoreCountersFromSourceCost.class::cast)
+                .findFirst();
+        if (removeOneOrMoreCountersCost.isPresent()) {
+            int available = permanent.getCounterCount(removeOneOrMoreCountersCost.get().counterType());
+            if (xValue < 1 || xValue > available) {
+                throw new IllegalStateException("Must remove between one and " + available + " counters");
             }
         }
 

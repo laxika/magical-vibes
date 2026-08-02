@@ -12,6 +12,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * targeted <em>permanent</em> and adds no target of its own, so pair it with a sibling effect that
  * owns the permanent target and list this effect first, while the permanent is still on the
  * battlefield — Destroy the Evidence ({@code landCount = 1}).
+ * {@link MillRecipient#EACH_OPPONENT} reveals for every player other than the effect's controller
+ * and adds no target of its own — Consuming Aberration ({@code landCount = 1}).
  */
 public record RevealUntilLandsMillTargetPlayerEffect(int landCount, MillRecipient recipient) implements CardEffect {
 

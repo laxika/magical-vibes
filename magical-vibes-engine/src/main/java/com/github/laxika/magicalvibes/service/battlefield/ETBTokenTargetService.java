@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.SpellTarget;
@@ -190,6 +191,16 @@ public class ETBTokenTargetService {
                         }
                     }
                 }
+            }
+
+            if (card.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
+                    && !pending.chosenTargetsSoFar().isEmpty()) {
+                List<UUID> selectedControllers = pending.chosenTargetsSoFar().stream()
+                        .map(id -> gameQueryService.findPermanentController(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                validPermanentTargets.removeIf(id ->
+                        selectedControllers.contains(gameQueryService.findPermanentController(gameData, id)));
             }
 
             boolean noLegalTargets = validPlayerTargets.isEmpty() && validPermanentTargets.isEmpty();

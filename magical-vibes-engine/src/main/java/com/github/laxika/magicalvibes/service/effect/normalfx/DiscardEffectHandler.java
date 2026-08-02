@@ -60,7 +60,7 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
 
         switch (e.recipient()) {
             case CONTROLLER, TARGET_PLAYER, TARGET_PERMANENT_CONTROLLER,
-                    TARGET_PLAYER_OR_PERMANENT_CONTROLLER ->
+                    TARGET_PLAYER_OR_PERMANENT_CONTROLLER, DEFENDING_PLAYER ->
                     resolveSinglePlayer(gameData, entry, e, amount);
             case EACH_PLAYER, EACH_OPPONENT -> resolveEachPlayer(gameData, entry, e, amount);
         }
@@ -95,6 +95,21 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
                     if (playerId == null) {
                         return;
                     }
+                }
+                opponentCaused = true;
+            }
+            case DEFENDING_PLAYER -> {
+                // The attacked player/planeswalker was baked onto the combat trigger as
+                // attackedTargetId; the discarder is that player or the planeswalker's controller.
+                UUID attackedTargetId = entry.getAttackedTargetId();
+                if (attackedTargetId == null) {
+                    return;
+                }
+                playerId = gameData.playerIds.contains(attackedTargetId)
+                        ? attackedTargetId
+                        : gameQueryService.findPermanentController(gameData, attackedTargetId);
+                if (playerId == null) {
+                    return;
                 }
                 opponentCaused = true;
             }

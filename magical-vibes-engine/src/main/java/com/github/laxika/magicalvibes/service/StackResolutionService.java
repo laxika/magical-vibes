@@ -756,6 +756,11 @@ public class StackResolutionService {
             countAbilityResolution(gameData, entry);
             effectResolutionService.resolveEffects(gameData, entry);
 
+            // A spell that pauses for input must remain undisposed until its effects finish.
+            if (gameData.pendingEffectResolutionEntry != null) {
+                return;
+            }
+
             // Rule 723.1b: "End the turn" exiles the resolving spell itself (copies cease to exist per rule 707.10a)
             if (gameData.endTurnRequested) {
                 gameData.endTurnRequested = false;
@@ -777,6 +782,11 @@ public class StackResolutionService {
             gameData.clearSpellCastColorsSpent(entry.getCard().getId());
             gameData.clearSpellCastManaSpentOnX(entry.getCard().getId());
         }
+    }
+
+    /** Completes disposition for a spell whose effect resolution resumed after player input. */
+    public void completeDeferredSpellResolution(GameData gameData, StackEntry entry) {
+        handleSpellDisposition(gameData, entry);
     }
 
     /**

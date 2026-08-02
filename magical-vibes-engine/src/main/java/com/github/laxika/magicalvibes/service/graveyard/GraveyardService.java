@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MadnessCast;
+import com.github.laxika.magicalvibes.model.OpponentGraveyardLifeLossWatcher;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -24,6 +25,8 @@ import com.github.laxika.magicalvibes.model.effect.ExilePermanentsInsteadOfGrave
 import com.github.laxika.magicalvibes.model.effect.OwnGraveyardExileReplacement;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MadnessMayCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RegeneratesIfWouldBeDestroyedEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardPutIntoGraveyardToHandEffect;
@@ -313,6 +316,7 @@ public class GraveyardService {
         updateFromAnywhereThisTurnTracking(gameData, ownerId, card);
         collectPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         collectEmblemPutIntoGraveyardTriggers(gameData, ownerId, card);
+        collectOpponentGraveyardLifeLossTriggers(gameData, ownerId);
         if (sourceZone == Zone.BATTLEFIELD) {
             collectPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, card);
         }
@@ -406,6 +410,32 @@ public class GraveyardService {
                         + "'s emblem triggers."));
                 log.info("Game {} - emblem graveyard-return trigger for {}", gameData.id, card.getName());
             }
+        }
+    }
+
+    /**
+     * Fires the turn-scoped "whenever a card is put into an opponent's graveyard from anywhere this
+     * turn, that player loses 1 life" delayed triggers (Duskmantle Guildmage). One trigger per active
+     * watcher whose controller is an opponent of the graveyard's owner, so repeated activations
+     * stack. Tokens count too — they are cards put into a graveyard before they cease to exist.
+     */
+    private void collectOpponentGraveyardLifeLossTriggers(GameData gameData, UUID ownerId) {
+        for (OpponentGraveyardLifeLossWatcher watcher : List.copyOf(gameData.opponentGraveyardLifeLossWatchers)) {
+            if (watcher.controllerId().equals(ownerId)) {
+                continue;
+            }
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    watcher.sourceCard(),
+                    watcher.controllerId(),
+                    watcher.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER))),
+                    ownerId,
+                    (UUID) null
+            ));
+            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
+            log.info("Game {} - {} triggers (card put into an opponent's graveyard)",
+                    gameData.id, watcher.sourceCard().getName());
         }
     }
 

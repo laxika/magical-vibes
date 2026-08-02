@@ -4,16 +4,16 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandElseMayGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "95")
 public class ArchghoulOfThraben extends Card {
 
-    private static final LookAtTopCardMayRevealMatchingToHandElseMayGraveyardEffect LOOK =
-            new LookAtTopCardMayRevealMatchingToHandElseMayGraveyardEffect(
-                    new CardSubtypePredicate(CardSubtype.ZOMBIE));
+    private static final LookAtTopCardMayRevealMatchingToHandEffect LOOK =
+            new LookAtTopCardMayRevealMatchingToHandEffect(
+                    new CardSubtypePredicate(CardSubtype.ZOMBIE), true);
 
     public ArchghoulOfThraben() {
         // Whenever this creature or another Zombie you control dies, look at the top card of your

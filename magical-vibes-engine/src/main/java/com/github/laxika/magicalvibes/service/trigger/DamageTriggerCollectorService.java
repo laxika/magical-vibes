@@ -531,6 +531,54 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE)
+    private boolean handleSelfDealsCombatDamage(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        TriggerContext.SourceDealsCombatDamage sd = (TriggerContext.SourceDealsCombatDamage) ctx;
+        if (sd.totalDamage() <= 0) return false;
+
+        Card sourceCard = sd.sourceCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                sd.sourceControllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                sd.sourcePermanentId());
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} ON_SELF_DEALS_COMBAT_DAMAGE trigger fires ({} damage)",
+                match.gameData().id, sourceCard.getName(), sd.totalDamage());
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE)
+    private boolean handleAllyCreatureDealsCombatDamage(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        TriggerContext.SourceDealsCombatDamage sd = (TriggerContext.SourceDealsCombatDamage) ctx;
+        if (sd.totalDamage() <= 0 || match.permanent() == null) return false;
+
+        Card watcherCard = match.permanent().getCard();
+        // The watcher, not the damage dealer, is the trigger's source permanent so a self-referencing
+        // effect (Five-Alarm Fire's blaze counter) lands on the watcher.
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcherCard,
+                match.controllerId(),
+                watcherCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        entry.setNonTargeting(true);
+        entry.setEventValue(sd.totalDamage());
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(watcherCard));
+        log.info("Game {} - {} ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE trigger fires ({} damage by {})",
+                match.gameData().id, watcherCard.getName(), sd.totalDamage(), sd.sourceCard().getName());
+        return true;
+    }
+
     private boolean sourceHasColor(Card card, CardColor color) {
         if (card == null || color == null) return false;
         if (card.getColor() == color) return true;

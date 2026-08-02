@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureSubtypeDeathsThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CreaturesBlockedBySource;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
 import com.github.laxika.magicalvibes.model.amount.CreaturesDevoured;
 import com.github.laxika.magicalvibes.model.amount.DevouredCreaturesOfSubtype;
@@ -205,6 +206,8 @@ public class AmountEvaluationService {
                     greatestPowerAmongControlled(gameData, ctx);
             case AttachmentsOnSource a ->
                     countAttachmentsOnSource(gameData, a, ctx);
+            case CreaturesBlockedBySource ignored ->
+                    countCreaturesBlockedBySource(ctx);
             case CreaturesBlockingSource ignored ->
                     countCreaturesBlockingSource(gameData, ctx);
             case OpponentPoisonCounters ignored ->
@@ -741,6 +744,11 @@ public class AmountEvaluationService {
             }
         });
         return count[0];
+    }
+
+    private int countCreaturesBlockedBySource(AmountContext ctx) {
+        Permanent source = ctx.sourcePermanent();
+        return source == null ? 0 : source.getBlockingTargets().size();
     }
 
     private int countCreatureDeathsThisTurn(GameData gameData, CreatureDeathsThisTurn count, AmountContext ctx) {

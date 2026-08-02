@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNext
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import java.util.List;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.Permanent;
 import lombok.RequiredArgsConstructor;
@@ -49,9 +50,13 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
         // Enters this path when targetIds has 2+ entries, or when targetIds has 1 entry but targetId is null
         // (multi-target ability with a single target selected). Skips non-creature UUIDs (e.g. player
         // targets from kicked spells) since those are handled by other effects like a group-aimed DealDamageToAnyTargetEffect.
-        if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()
-                && (entry.getTargetIds().size() > 1 || entry.getTargetId() == null)) {
-            for (UUID targetId : entry.getTargetIds()) {
+        // When this effect is bound to its own target group (e.g. a "choose one or more" modal spell
+        // where two chosen modes each damage a different creature), targetsForEffect narrows the flat
+        // list to that group; unbound effects get the whole list, as before.
+        List<UUID> effectTargets = entry.targetsForEffect(e);
+        if (effectTargets != null && !effectTargets.isEmpty()
+                && (effectTargets.size() > 1 || entry.getTargetId() == null)) {
+            for (UUID targetId : effectTargets) {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) continue;
                 if (e.unpreventable()) {

@@ -56,7 +56,7 @@ public class ExileCastTargetSupport {
     public List<UUID> firstSlotCandidates(GameData gameData, Card card, UUID controllerId) {
         return card.getMaxTargets() > 1
                 ? nextSlotCandidates(gameData, card, controllerId, List.of())
-                : flatSingleTargetCandidates(gameData, card);
+                : flatSingleTargetCandidates(gameData, card, controllerId);
     }
 
     /**
@@ -96,11 +96,11 @@ public class ExileCastTargetSupport {
 
     /**
      * Historical single-target candidate list (permanents matching the card's target filter, or all
-     * creatures when unfiltered, plus every player when the spell can target players). Kept verbatim
-     * so single-target exile casts (Knowledge Pool, Omen Machine, single-target Paradigm/Capstone)
-     * behave exactly as before.
+     * creatures when unfiltered, plus every player when the spell can target players, plus the legal
+     * graveyard cards when the spell targets a card in a graveyard — cipher copies of cards such as
+     * Midnight Recovery would otherwise never find a target).
      */
-    public List<UUID> flatSingleTargetCandidates(GameData gameData, Card card) {
+    public List<UUID> flatSingleTargetCandidates(GameData gameData, Card card, UUID controllerId) {
         Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(card);
         List<UUID> validTargets = new ArrayList<>();
 
@@ -124,6 +124,12 @@ public class ExileCastTargetSupport {
 
         if (allowedTargets.contains(TargetType.PLAYER)) {
             validTargets.addAll(gameData.orderedPlayerIds);
+        }
+
+        if (allowedTargets.contains(TargetType.GRAVEYARD)) {
+            validTargets.addAll(validTargetService
+                    .computeValidTargetsForSpell(gameData, card, controllerId, List.of())
+                    .validGraveyardCardIds());
         }
 
         return validTargets;

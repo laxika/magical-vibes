@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsNthSpellCastThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
@@ -785,8 +786,8 @@ public class TargetLegalityService {
     }
 
     /**
-     * Enforces a spell's cross-target restriction on the whole chosen set (CR 601.2c), beyond the
-     * per-position filters. Currently only "share no creature types" (Rivals' Duel).
+     * Enforces a spell's cross-target restriction on the whole chosen set beyond the per-position
+     * filters.
      */
     private void validateMultiTargetConstraint(GameData gameData, MultiTargetConstraint constraint, List<UUID> targetIds) {
         if (constraint == null) {
@@ -798,6 +799,10 @@ public class TargetLegalityService {
         }
         if (constraint == MultiTargetConstraint.AT_MOST_TWO_CREATURES_AND_TWO_LANDS) {
             validateAtMostTwoCreaturesAndTwoLands(gameData, targetIds);
+            return;
+        }
+        if (constraint == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER) {
+            validateAtMostOnePerController(gameData, targetIds);
             return;
         }
         List<Permanent> targets = targetIds.stream()
@@ -826,10 +831,24 @@ public class TargetLegalityService {
                                     "Chosen permanents must share an artifact or creature type");
                         }
                     }
-                    case CONTROLLED_BY_FIRST_TARGET, AT_MOST_TWO_CREATURES_AND_TWO_LANDS -> {
+                    case CONTROLLED_BY_FIRST_TARGET, AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
+                         AT_MOST_ONE_PER_CONTROLLER -> {
                         // Handled by early returns above.
                     }
                 }
+            }
+        }
+    }
+
+    private void validateAtMostOnePerController(GameData gameData, List<UUID> targetIds) {
+        Set<UUID> controllers = new HashSet<>();
+        for (UUID targetId : targetIds) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
+            if (controllerId == null) {
+                controllerId = gameQueryService.findGraveyardOwnerById(gameData, targetId);
+            }
+            if (controllerId != null && !controllers.add(controllerId)) {
+                throw new IllegalStateException("May target at most one permanent per controller");
             }
         }
     }
@@ -1172,7 +1191,7 @@ public class TargetLegalityService {
         }
         return (sourceCard.getColor() != null
                     && gameQueryService.hasProtectionFrom(gameData, target, sourceCard.getColor()))
-                || gameQueryService.hasProtectionFromSourceCardTypes(target, sourceCard)
+                || gameQueryService.hasProtectionFromSourceCardTypes(gameData, target, sourceCard)
                 || gameQueryService.hasProtectionFromSourceSubtypes(target, sourceCard);
     }
 
@@ -1460,7 +1479,7 @@ public class TargetLegalityService {
         if (gameQueryService.hasProtectionFrom(gameData, target, card.getColor())) {
             return target.getCard().getName() + " has protection from " + card.getColor().name().toLowerCase();
         }
-        if (gameQueryService.hasProtectionFromSourceCardTypes(target, card)) {
+        if (gameQueryService.hasProtectionFromSourceCardTypes(gameData, target, card)) {
             return target.getCard().getName() + " has protection from " + card.getType().getDisplayName().toLowerCase() + "s";
         }
         if (gameQueryService.hasProtectionFromSourceSubtypes(target, card)) {
@@ -1667,6 +1686,10 @@ public class TargetLegalityService {
             // Matches any spell or ability — per rules (e.g. Spellskite), activation is legal
             // even if the targeted spell/ability has no targets; resolution handles that case.
             return true;
+        }
+        if (predicate instanceof StackEntryHasXInManaCostPredicate) {
+            return stackEntry.getCard().getParsedManaCost() != null
+                    && stackEntry.getCard().getParsedManaCost().hasX();
         }
         if (predicate instanceof StackEntryIsNthSpellCastThisTurnPredicate nthSpell) {
             return gameData.getSpellCastOrdinalThisTurn(stackEntry.getCard().getId()) == nthSpell.spellNumber();

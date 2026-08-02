@@ -15,6 +15,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record CloneCopy() implements PermanentChoiceContext {}
 
+    record CipherEncode() implements PermanentChoiceContext {}
+
     record AuraGraft(UUID auraPermanentId) implements PermanentChoiceContext {}
 
     /** Glamer Spinners: move every Aura in {@code auraPermanentIds} onto the chosen permanent. */

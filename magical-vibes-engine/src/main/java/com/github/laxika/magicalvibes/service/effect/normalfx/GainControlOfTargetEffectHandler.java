@@ -65,16 +65,23 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
     }
 
     private void resolveEndOfTurn(GameData gameData, StackEntry entry, GainControlOfTargetEffect e) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) return;
+        List<UUID> targetIds = entry.targetsForEffect(e);
+        if (targetIds.isEmpty() && entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
+        }
 
-        creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
-                e, e.duration().toEffectDuration(), null, entry.getCard().getName());
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) continue;
 
-        // Magus of the Unseen: "When you lose control of the artifact, tap it." The stolen
-        // permanent is tapped when this until-end-of-turn control effect expires (cleanup step).
-        if (e.tapWhenControlLost()) {
-            gameData.permanentsToTapWhenControlLost.add(target.getId());
+            creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
+                    e, e.duration().toEffectDuration(), null, entry.getCard().getName());
+
+            // Magus of the Unseen: "When you lose control of the artifact, tap it." The stolen
+            // permanent is tapped when this until-end-of-turn control effect expires (cleanup step).
+            if (e.tapWhenControlLost()) {
+                gameData.permanentsToTapWhenControlLost.add(target.getId());
+            }
         }
     }
 

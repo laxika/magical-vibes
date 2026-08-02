@@ -672,6 +672,19 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.queueSourceDealsDamageReflections}. Used by El-Hajjâj
      *  ({@code GainLifeEffect(new EventValue())} — "you gain that much life"). */
     ON_SELF_DEALS_DAMAGE,
+    /** Triggers whenever this permanent itself deals combat damage to anything — a creature, a
+     *  player, or a planeswalker. All combat damage dealt by the source in one combat damage step
+     *  is summed into one trigger. */
+    ON_SELF_DEALS_COMBAT_DAMAGE,
+    /** Triggers whenever a creature its controller controls deals combat damage to anything — a
+     *  creature, a player, or a planeswalker. Fires on the watcher permanent (which need not be a
+     *  creature), once per damage-dealing creature per combat damage step; all damage that creature
+     *  deals simultaneously is one trigger. The trigger is non-targeting and binds the watcher as its
+     *  source permanent, so a self-referencing effect ({@code PutCountersOnSelfEffect}) acts on the
+     *  watcher. Dispatched from the same per-source batched choke point as
+     *  {@link #ON_SELF_DEALS_COMBAT_DAMAGE} ({@code CombatDamageService}) via
+     *  {@code TriggerCollectionService.queueSourceDealsCombatDamageTriggers}. Used by Five-Alarm Fire. */
+    ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE,
     /** Triggers whenever this permanent's controller is dealt damage (combat or non-combat, from any
      *  source — creatures, spells, abilities). Unlike {@link #ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU}
      *  (which reacts to the damage <em>source</em> and only fires for permanent sources), this fires

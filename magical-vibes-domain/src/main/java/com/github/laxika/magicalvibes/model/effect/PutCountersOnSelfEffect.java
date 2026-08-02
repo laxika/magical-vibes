@@ -8,24 +8,30 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * {@code count} or, when {@code amount} is non-null, a {@link DynamicAmount} resolved at
  * resolution time (e.g. {@code XValue} for "{X}: Put X tower counters on this enchantment").
  */
-public record PutCountersOnSelfEffect(CounterType counterType, int count, DynamicAmount amount)
+public record PutCountersOnSelfEffect(CounterType counterType, int count, DynamicAmount amount,
+                                      boolean targetsPlayer)
         implements CombatDamageTriggerContextEffect {
 
     public PutCountersOnSelfEffect(CounterType counterType) {
-        this(counterType, 1, null);
+        this(counterType, 1, null, false);
     }
 
     public PutCountersOnSelfEffect(CounterType counterType, int count) {
-        this(counterType, count, null);
+        this(counterType, count, null, false);
     }
 
     public PutCountersOnSelfEffect(CounterType counterType, DynamicAmount amount) {
-        this(counterType, 0, amount);
+        this(counterType, 0, amount, false);
+    }
+
+    public PutCountersOnSelfEffect(CounterType counterType, DynamicAmount amount, boolean targetsPlayer) {
+        this(counterType, 0, amount, targetsPlayer);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return new TargetSpec(TargetCategory.NONE, false, null, true, 1);
+        return targetsPlayer ? TargetSpec.benign(TargetCategory.PLAYER)
+                : new TargetSpec(TargetCategory.NONE, false, null, true, 1);
     }
 
     /**

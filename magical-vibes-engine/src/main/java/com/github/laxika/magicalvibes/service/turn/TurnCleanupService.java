@@ -217,8 +217,10 @@ public class TurnCleanupService {
         gameData.creaturesWithCombatDamagePrevented.clear();
         gameData.creaturesPreventedFromDealingCombatDamage.clear();
         gameData.damageCantBePreventedThisTurn = false;
+        gameData.playersCantGainLifeThisTurn = false;
         gameData.combatDamageToCreaturesDoublingsThisTurn = 0;
         gameData.controllerDamageDoublingsThisTurn.clear();
+        gameData.opponentGraveyardLifeLossWatchers.clear();
         gameData.drawReplacementTargetToController.clear();
         gameData.pendingNextDrawLookAtTop.clear();
         gameData.pendingNextDrawFromExiledPile.clear();
@@ -233,6 +235,7 @@ public class TurnCleanupService {
         gameData.allLandsFixedManaColorThisTurn = null;
         gameData.playersCantPlayLandsThisTurn.clear();
         gameData.playersCantCastCreatureSpellsThisTurn.clear();
+        gameData.playersCantCastNoncreatureSpellsThisTurn.clear();
         gameData.playersCantActivateAbilitiesThisTurn.clear();
         gameData.senControllerPlayerId = null;
         gameData.senControlledPlayerId = null;
@@ -364,7 +367,8 @@ public class TurnCleanupService {
 
     /**
      * Checks whether the given player's hand size is unlimited, either via
-     * the {@code playersWithNoMaximumHandSize} set on {@link GameData}, by
+     * the {@code playersWithNoMaximumHandSize} and
+     * {@code playersWithNoMaximumHandSizeUntilNextTurn} sets on {@link GameData}, by
      * controlling a permanent with {@link NoMaximumHandSizeEffect} (e.g. Spellbook),
      * or by any player controlling a permanent with
      * {@link PlayersHaveNoMaximumHandSizeEffect} (e.g. Anvil of Bogardan).
@@ -374,7 +378,8 @@ public class TurnCleanupService {
      * @return {@code true} if the player has no maximum hand size
      */
     public boolean hasNoMaximumHandSize(GameData gameData, UUID playerId) {
-        if (gameData.playersWithNoMaximumHandSize.contains(playerId)) {
+        if (gameData.playersWithNoMaximumHandSize.contains(playerId)
+                || gameData.playersWithNoMaximumHandSizeUntilNextTurn.contains(playerId)) {
             return true;
         }
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);

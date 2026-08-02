@@ -293,6 +293,22 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
+        @DisplayName("Preserves a blocked attacker's status when its blocker leaves")
+        void preservesBlockedStatusWhenBlockerLeaves() {
+            Permanent attacker = addPermanent(player1Id, createCreature("Attacker"));
+            attacker.setAttacking(true);
+            Permanent blocker = addPermanent(player2Id, createCreature("Blocker"));
+            blocker.setBlocking(true);
+            blocker.addBlockingTargetId(attacker.getId());
+            when(gameQueryService.findPermanentById(gd, attacker.getId())).thenReturn(attacker);
+            stubGraveyardForCreature(blocker, player2Id);
+
+            prs.removePermanentToGraveyard(gd, blocker);
+
+            assertThat(attacker.isBlockedWithoutBlockers()).isTrue();
+        }
+
+        @Test
         @DisplayName("Returns false when permanent is not on any battlefield")
         void returnsFalseWhenNotOnBattlefield() {
             Permanent bears = new Permanent(createCreature("Grizzly Bears"));

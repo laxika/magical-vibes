@@ -39,12 +39,12 @@ public class RevealUntilLandsMillTargetPlayerEffectHandler implements NormalEffe
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         RevealUntilLandsMillTargetPlayerEffect e = (RevealUntilLandsMillTargetPlayerEffect) effect;
 
-        UUID targetPlayerId = resolveRevealingPlayer(gameData, entry, e);
-        if (targetPlayerId == null) {
-            return;
+        for (UUID playerId : resolveRevealingPlayers(gameData, entry, e)) {
+            revealAndMill(gameData, playerId, e.landCount());
         }
+    }
 
-        int landCount = e.landCount();
+    private void revealAndMill(GameData gameData, UUID targetPlayerId, int landCount) {
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
         // Reveal cards from the top of the target player's library until landCount lands are revealed
@@ -80,14 +80,25 @@ public class RevealUntilLandsMillTargetPlayerEffectHandler implements NormalEffe
 
     /**
      * TARGET_PLAYER reveals for the entry's player target; TARGET_PERMANENT_CONTROLLER reveals for
-     * the controller of the targeted permanent (which must still be on the battlefield).
+     * the controller of the targeted permanent (which must still be on the battlefield);
+     * EACH_OPPONENT reveals for every player other than the effect's controller.
      */
-    private UUID resolveRevealingPlayer(GameData gameData, StackEntry entry, RevealUntilLandsMillTargetPlayerEffect effect) {
+    private List<UUID> resolveRevealingPlayers(GameData gameData, StackEntry entry, RevealUntilLandsMillTargetPlayerEffect effect) {
+        if (effect.recipient() == MillRecipient.EACH_OPPONENT) {
+            return gameData.orderedPlayerIds.stream()
+                    .filter(playerId -> !playerId.equals(entry.getControllerId()))
+                    .toList();
+        }
+
         if (effect.recipient() != MillRecipient.TARGET_PERMANENT_CONTROLLER) {
-            return entry.getTargetId();
+            return entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
         }
 
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        return target == null ? null : gameQueryService.findPermanentController(gameData, target.getId());
+        if (target == null) {
+            return List.of();
+        }
+        UUID controller = gameQueryService.findPermanentController(gameData, target.getId());
+        return controller == null ? List.of() : List.of(controller);
     }
 }

@@ -76,6 +76,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncrementTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.EvolveTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -1030,6 +1031,38 @@ public class TriggerCollectionService {
     }
 
     // ── Land-tap triggers ──────────────────────────────────────────────
+
+    /**
+     * Dispatches combat-damage-only self triggers from the source card. The source permanent ID is
+     * retained even when state-based actions removed the source before triggered abilities were put
+     * on the stack, so effects that require the source to have survived can check it at resolution.
+     */
+    public void queueSourceDealsCombatDamageTriggers(GameData gameData, Card sourceCard,
+                                                      UUID sourceControllerId, UUID sourcePermanentId,
+                                                      int totalDamage) {
+        if (sourceCard == null || sourceControllerId == null || sourcePermanentId == null || totalDamage <= 0) {
+            return;
+        }
+
+        var ctx = new TriggerContext.SourceDealsCombatDamage(
+                sourceCard, sourceControllerId, sourcePermanentId, totalDamage);
+        for (CardEffect effect : sourceCard.getEffects(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE)) {
+            var match = new TriggerMatchContext(gameData, null, sourceControllerId, effect);
+            registry.dispatch(match, EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE, effect, ctx);
+        }
+
+        // "Whenever a creature you control deals combat damage" watchers (Five-Alarm Fire). Scanned on
+        // the damage source's controller's battlefield only; the watcher itself needn't be a creature.
+        if (!sourceCard.hasType(CardType.CREATURE)) return;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+        if (battlefield == null) return;
+        for (Permanent watcher : List.copyOf(battlefield)) {
+            for (CardEffect effect : watcher.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE)) {
+                var match = new TriggerMatchContext(gameData, watcher, sourceControllerId, effect);
+                registry.dispatch(match, EffectSlot.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE, effect, ctx);
+            }
+        }
+    }
 
     public void checkLandTapTriggers(GameData gameData, UUID tappingPlayerId, UUID tappedLandId) {
         // Desolation et al.: track who tapped a land for mana this turn even if no land-tap
@@ -3370,6 +3403,7 @@ public class TriggerCollectionService {
     public void checkAllyCreatureEntersTriggers(GameData gameData, UUID controllerId, Card enteringCreature, int extraWizardTriggers) {
         if (enteringCreature.getToughness() == null) return;
 
+        Permanent enteringPermanent = findPermanentByCard(gameData, enteringCreature);
         int stackSizeBefore = gameData.stack.size();
         var ctx = new TriggerContext.PermanentEnters(enteringCreature, controllerId, null, 1, null);
 
@@ -3378,14 +3412,19 @@ public class TriggerCollectionService {
             if (perm.getCard() == enteringCreature) continue;
 
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD);
-            if (effects == null || effects.isEmpty()) continue;
+            if (effects != null) {
+                for (CardEffect effect : effects) {
+                    CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCreature, gameData, controllerId);
+                    if (resolved == null) continue;
+                    resolved = unwrapEnterCreatureConditional(gameData, enteringCreature, perm, resolved);
+                    if (resolved == null) continue;
+                    dispatchEnter(gameData, perm, controllerId, EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, resolved, ctx);
+                }
+            }
 
-            for (CardEffect effect : effects) {
-                CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCreature, gameData, controllerId);
-                if (resolved == null) continue;
-                resolved = unwrapEnterCreatureConditional(gameData, enteringCreature, perm, resolved);
-                if (resolved == null) continue;
-                dispatchEnter(gameData, perm, controllerId, EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, resolved, ctx);
+            if (enteringPermanent != null && !perm.isLosesAllAbilitiesUntilEndOfTurn()
+                    && gameQueryService.hasKeyword(gameData, perm, Keyword.EVOLVE)) {
+                collectEvolveTrigger(gameData, controllerId, perm, enteringPermanent);
             }
         }
 
@@ -4033,6 +4072,43 @@ public class TriggerCollectionService {
                               CardEffect effect, TriggerContext.PermanentEnters ctx) {
         var match = new TriggerMatchContext(gameData, perm, controllerId, effect);
         registry.dispatch(match, slot, effect, ctx);
+    }
+
+    private void collectEvolveTrigger(GameData gameData, UUID controllerId, Permanent source,
+                                      Permanent enteringPermanent) {
+        int enteringPower = gameQueryService.getEffectivePower(gameData, enteringPermanent);
+        int enteringToughness = gameQueryService.getEffectiveToughness(gameData, enteringPermanent);
+        if (enteringPower <= gameQueryService.getEffectivePower(gameData, source)
+                && enteringToughness <= gameQueryService.getEffectiveToughness(gameData, source)) {
+            return;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                source.getCard(),
+                controllerId,
+                source.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new EvolveTriggerEffect())),
+                0,
+                source.getId());
+        entry.setTriggeringPermanentId(enteringPermanent.getId());
+        entry.setTriggeringPermanentPowerAtTrigger(enteringPower);
+        entry.setTriggeringPermanentToughnessAtTrigger(enteringToughness);
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
+        log.info("Game {} - {} triggers evolve for {} entering", gameData.id,
+                source.getCard().getName(), enteringPermanent.getCard().getName());
+    }
+
+    private Permanent findPermanentByCard(GameData gameData, Card card) {
+        Permanent[] found = new Permanent[1];
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (found[0] == null && permanent.getCard() == card) {
+                found[0] = permanent;
+            }
+        });
+        return found[0];
     }
 
     /**

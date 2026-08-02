@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CipherSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
@@ -66,6 +67,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final GameQueryService gameQueryService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final CloneService cloneService;
+    private final CipherSupport cipherSupport;
     private final WarpWorldService warpWorldService;
     private final GameLogService gameLogService;
     private final AbilityActivationService abilityActivationService;
@@ -170,6 +172,10 @@ public class PermanentChoiceBattlefieldHandlerService {
             // epilogue must run to resume the parked entry.
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }
+    }
+
+    public void handleCipherEncode(GameData gameData, UUID permanentId) {
+        cipherSupport.encode(gameData, permanentId);
     }
 
     public void handleAttachEquipmentToCreature(GameData gameData, UUID creatureId,

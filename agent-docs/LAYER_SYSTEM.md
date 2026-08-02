@@ -885,6 +885,8 @@ and any deviations from this document.
    creature-type class; land-type setters (`EnchantedPermanentBecomes[Chosen]TypeEffect`,
    `NonbasicLandsBecomeTypeEffect`) clear the land types (incl. LOCUS per CR 305.7) and record
    the per-land override that now drives `getOverriddenLandManaColor`/`tapPermanent`;
+   `GrantChosenBasicLandTypeToOwnLandsEffect` is additive in layer 4 and contributes the matching
+   intrinsic mana ability in layer 6 only to lands carrying the source's final chosen subtype;
    `AnimateNoncreatureArtifactsEffect` adds CREATURE and records the animated set. Tideshaper's
    transient land override applies after all statics (legacy precedence), the
    `losesAllCreatureTypes` flag strips creature types last. Scope filters during the pass are

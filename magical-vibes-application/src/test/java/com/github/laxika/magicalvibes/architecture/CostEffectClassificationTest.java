@@ -54,6 +54,8 @@ class CostEffectClassificationTest {
             "RemoveChargeCountersFromSourceCost",
             "RemoveCounterFromControlledCreatureCost",
             "RemoveCounterFromSourceCost",
+            "RemoveOneOrMoreCountersFromControlledCreaturesCost",
+            "RemoveOneOrMoreCountersFromSourceCost",
             "RemoveXCountersFromSourceCost",
             "ReturnMultiplePermanentsToHandCost",
             "ReturnSelfToHandCost",

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerMayPayManaOrLifeE
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +54,8 @@ public class EffectResolutionService {
     // ObjectProvider breaks the construction-time cycle StateBasedActionService -> LegendRuleService
     // -> PlayerInputService -> (interaction handlers) -> EffectResolutionService.
     private final ObjectProvider<StateBasedActionService> stateBasedActionService;
+    // Resolution resumes from input handlers after StackResolutionService has returned.
+    private final ObjectProvider<StackResolutionService> stackResolutionService;
 
     /**
      * Resolves all effects on the given stack entry from the beginning.
@@ -93,6 +96,7 @@ public class EffectResolutionService {
             if (gameData.effectResolutionDepth == 0 && gameData.pendingEffectResolutionEntry == null) {
                 gameData.deferPlayerLossCheck = false;
                 if (gameData.currentlyResolvingControllerId == null) {
+                    stackResolutionService.getObject().completeDeferredSpellResolution(gameData, entry);
                     // Async-resumed resolution: the interaction handler that re-entered here ran the
                     // state-based check *before* resuming, so damage/counters dealt by the resumed
                     // effects (e.g. Flameblast Dragon's X, Roar of the Crowd's counted damage) have

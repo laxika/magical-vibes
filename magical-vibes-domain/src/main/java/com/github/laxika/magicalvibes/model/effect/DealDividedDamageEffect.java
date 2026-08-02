@@ -35,6 +35,9 @@ import java.util.List;
  * @param etbAssignments    if {@code true} (CHOSEN only), the assignments come from
  *                          {@code GameData.pendingETBDamageAssignments} and resolve outside the
  *                          standard targeting pipeline (ETB/attack divided damage).
+ * @param tapDamagedCreatures if {@code true}, each creature dealt damage this way is tapped.
+ * @param damagedPlayersCantCastNoncreatureSpells if {@code true}, each player dealt damage this way
+ *                          can't cast noncreature spells for the rest of the turn.
  */
 public record DealDividedDamageEffect(
         DynamicAmount totalDamage,
@@ -44,7 +47,36 @@ public record DealDividedDamageEffect(
         int maxTargets,
         boolean canTargetPlayers,
         boolean damagedCreaturesCantBlock,
-        boolean etbAssignments) implements CardEffect {
+        boolean etbAssignments,
+        boolean tapDamagedCreatures,
+        boolean damagedPlayersCantCastNoncreatureSpells) implements CardEffect {
+
+    /**
+     * Convenience constructor for the common case with neither of the two rider clauses (tapping
+     * damaged creatures, locking damaged players out of noncreature spells).
+     */
+    public DealDividedDamageEffect(
+            DynamicAmount totalDamage,
+            List<Integer> orderedAmounts,
+            DivisionMode mode,
+            PermanentPredicate targetRestriction,
+            int maxTargets,
+            boolean canTargetPlayers,
+            boolean damagedCreaturesCantBlock,
+            boolean etbAssignments) {
+        this(totalDamage, orderedAmounts, mode, targetRestriction, maxTargets, canTargetPlayers,
+                damagedCreaturesCantBlock, etbAssignments, false, false);
+    }
+
+    /**
+     * X damage divided as you choose among any number of targets; each creature dealt damage this
+     * way is tapped and each player dealt damage this way can't cast noncreature spells this turn
+     * (Aurelia's Fury).
+     */
+    public static DealDividedDamageEffect xAmongAnyTargetsTapAndLockNoncreature() {
+        return new DealDividedDamageEffect(
+                new XValue(), null, DivisionMode.CHOSEN, null, 0, true, false, false, true, true);
+    }
 
     /** Fixed total divided as you choose among any number of targets (creatures and/or players). */
     public static DealDividedDamageEffect chosenAmongAnyTargets(int totalDamage) {

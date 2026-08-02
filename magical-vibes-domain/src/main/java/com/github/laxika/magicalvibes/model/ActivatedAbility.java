@@ -87,6 +87,15 @@ public class ActivatedAbility {
      * Set via {@link #withXScaledTargets()}.
      */
     private boolean xScaledTargets;
+    /** Whether activation requires a player-chosen xValue even though the cost is not mana-based. */
+    private boolean requiresXValue;
+    /**
+     * Whether the chosen xValue is bounded by the +1/+1 counters on all creatures the activating
+     * player controls rather than by those on the source permanent ("Remove one or more +1/+1
+     * counters from among creatures you control" — Ooze Flux). Set via
+     * {@link #withXValueFromControlledCreatureCounters()}.
+     */
+    private boolean xValueFromControlledCreatureCounters;
     /**
      * Whole-game activation cap for "Activate only once" (e.g. Goblin Ski Patrol). Null = no such
      * cap. Counted per permanent object in {@code GameData.activatedAbilityUsesThisGame}, so a
@@ -215,6 +224,8 @@ public class ActivatedAbility {
         copy.maxActivationsPerTurnDescription = this.maxActivationsPerTurnDescription;
         copy.maxActivationsPerGame = this.maxActivationsPerGame;
         copy.xScaledTargets = this.xScaledTargets;
+        copy.requiresXValue = this.requiresXValue;
+        copy.xValueFromControlledCreatureCounters = this.xValueFromControlledCreatureCounters;
         return copy;
     }
 
@@ -379,6 +390,19 @@ public class ActivatedAbility {
      */
     public ActivatedAbility withXScaledTargets() {
         this.xScaledTargets = true;
+        return this;
+    }
+
+    /** Marks the ability as requiring a player-chosen xValue for a dynamic non-mana cost. */
+    public ActivatedAbility withXValue() {
+        this.requiresXValue = true;
+        return this;
+    }
+
+    /** As {@link #withXValue()}, but X is capped by the +1/+1 counters among all creatures you control. */
+    public ActivatedAbility withXValueFromControlledCreatureCounters() {
+        this.requiresXValue = true;
+        this.xValueFromControlledCreatureCounters = true;
         return this;
     }
 

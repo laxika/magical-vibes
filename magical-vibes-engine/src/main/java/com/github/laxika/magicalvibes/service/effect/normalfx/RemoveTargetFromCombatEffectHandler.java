@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -37,6 +39,12 @@ public class RemoveTargetFromCombatEffectHandler implements NormalEffectHandlerB
             target.setAttackTarget(null);
         }
         if (target.isBlocking()) {
+            for (UUID attackerId : target.getBlockingTargetIds()) {
+                Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
+                if (attacker != null && attacker.isAttacking()) {
+                    attacker.setBlockedWithoutBlockers(true);
+                }
+            }
             target.setBlocking(false);
             target.getBlockingTargets().clear();
             target.getBlockingTargetIds().clear();

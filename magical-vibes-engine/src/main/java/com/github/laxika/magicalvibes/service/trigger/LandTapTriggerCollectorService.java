@@ -312,8 +312,9 @@ public class LandTapTriggerCollectorService {
         Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
         if (tappedLand == null) return false;
         if (!tappedLand.getCard().getSubtypes().contains(trigger.subtype())) return false;
+        if (trigger.controllerOnly() && !match.controllerId().equals(lt.tappingPlayerId())) return false;
 
-        // "Its controller adds an additional {G}" — the tapping player is the land's controller.
+        // The tapping player is the land's controller and receives the additional mana.
         ManaPool pool = match.gameData().playerManaPools.get(lt.tappingPlayerId());
         pool.add(trigger.color());
 

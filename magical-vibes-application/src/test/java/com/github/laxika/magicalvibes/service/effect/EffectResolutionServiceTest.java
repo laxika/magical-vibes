@@ -82,6 +82,9 @@ class EffectResolutionServiceTest {
     @Mock
     private org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.state.StateBasedActionService> stateBasedActionServiceProvider;
 
+    @Mock
+    private org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.StackResolutionService> stackResolutionServiceProvider;
+
     private EffectResolutionService effectResolutionService;
 
     private GameData gd;
@@ -94,7 +97,7 @@ class EffectResolutionServiceTest {
         effectResolutionService = new EffectResolutionService(
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
                 registry, gameLogService, permanentRemovalService, damageSupport, gameOutcomeService,
-                stateBasedActionServiceProvider);
+                stateBasedActionServiceProvider, stackResolutionServiceProvider);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

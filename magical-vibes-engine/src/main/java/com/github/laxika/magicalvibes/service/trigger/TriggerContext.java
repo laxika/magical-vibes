@@ -227,6 +227,10 @@ public sealed interface TriggerContext {
      */
     record SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage) implements TriggerContext {}
 
+    /** Context for a source's combat-damage-only self trigger. */
+    record SourceDealsCombatDamage(Card sourceCard, UUID sourceControllerId,
+                                   UUID sourcePermanentId, int totalDamage) implements TriggerContext {}
+
     /**
      * Context for ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT triggers (Mangara's Equity).
      *

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>Non-targeted mass control gain. At resolution the controller gains control of each matching
  * permanent they do not already control, via a per-permanent {@link GainControlOfTargetEffect}
  * floating effect on the standard layer-2 control machinery — mirroring
- * {@link GainControlOfAllLandsTargetPlayerControlsEffect}, but selected by predicate rather than
+ * {@link GainControlOfAllPermanentsTargetPlayerControlsEffect}, but selected by predicate rather than
  * by a target player.
  *
  * @param predicate narrows which permanents (any controller) are seized

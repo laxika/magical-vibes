@@ -40,6 +40,7 @@ public enum CardSet {
     SET_DKA("DKA"),
     SET_AVR("AVR"),
     SET_RTR("RTR"),
+    SET_GTC("GTC"),
     SET_INR("INR"),
     SET_ICE("ICE"),
     SET_ALL("ALL"),

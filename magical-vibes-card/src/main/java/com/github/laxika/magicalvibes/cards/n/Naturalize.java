@@ -22,6 +22,7 @@ import java.util.List;
 @CardRegistration(set = "9ED", collectorNumber = "258")
 @CardRegistration(set = "8ED", collectorNumber = "270")
 @CardRegistration(set = "ALA", collectorNumber = "141")
+@CardRegistration(set = "GTC", collectorNumber = "127")
 public class Naturalize extends Card {
 
     public Naturalize() {

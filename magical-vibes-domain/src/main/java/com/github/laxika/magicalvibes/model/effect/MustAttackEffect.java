@@ -7,7 +7,9 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param scope determines which creatures are affected. {@code null} means the creature
  *              carrying this effect (SELF). Use {@link GrantScope#ENCHANTED_PLAYER_CREATURES}
- *              for curses like Curse of the Nightly Hunt.
+ *              for curses like Curse of the Nightly Hunt, or
+ *              {@link GrantScope#ALL_OWN_CREATURES} / {@link GrantScope#OWN_CREATURES} for
+ *              "creatures you control attack each combat if able" (Hellraiser Goblin).
  */
 public record MustAttackEffect(GrantScope scope) implements CardEffect {
 

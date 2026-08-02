@@ -1136,7 +1136,8 @@ export class TargetingChoiceService {
         this.choosingXValue = false;
         this.targetingCardIndex = this.xValueCardIndex;
         this.targetingCardName = this.xValueCardName;
-        this.sendValidTargetsRequest(null, this.xValueCardIndex, this.targetingAbilityIndex);
+        this.sendValidTargetsRequest(null, this.xValueCardIndex, this.targetingAbilityIndex,
+          [], this.pendingAbilityXValue);
         return;
       }
       // X value only, no target
@@ -1781,7 +1782,9 @@ export class TargetingChoiceService {
       maxTargets: 0,
       isManaAbility: true,
       variableLoyaltyCost: false,
-      variableCounterCostType: null
+      variableCounterCostType: null,
+      requiresXValue: false,
+      xValueFromControlledCreatureCounters: false
     };
   }
 
@@ -1815,9 +1818,19 @@ export class TargetingChoiceService {
       if (perm.tapped) return false;
       if (perm.summoningSick && isPermanentCreature(perm)) return false;
     }
+    if (ability.requiresXValue && this.availableXCounters(perm, ability) < 1) return false;
     if (ability.manaCost && !this.canPayManaCost(ability.manaCost)
         && !(allowPotentialMana && this.isPotentiallyPayableAbility(perm, ability))) return false;
     return true;
+  }
+
+  /** +1/+1 counters the ability's X may draw on: those on the source, or — for a
+      "from among creatures you control" cost — those on every creature the player controls. */
+  private availableXCounters(perm: Permanent, ability: ActivatedAbilityView): number {
+    if (!ability.xValueFromControlledCreatureCounters) return perm.counters?.['PLUS_ONE_PLUS_ONE'] ?? 0;
+    return this.myBattlefieldFn()
+      .filter(p => isPermanentCreature(p))
+      .reduce((sum, p) => sum + (p.counters?.['PLUS_ONE_PLUS_ONE'] ?? 0), 0);
   }
 
   /** MTGO-style: an ability whose cost exceeds the floating pool is still activatable when
@@ -1865,6 +1878,17 @@ export class TargetingChoiceService {
 
   activateAbilityAtIndex(permanentIndex: number, abilityIndex: number, perm: Permanent): void {
     const ability = perm.card.activatedAbilities[abilityIndex];
+
+    if (ability.requiresXValue) {
+      this.choosingXValue = true;
+      this.xValueCardIndex = permanentIndex;
+      this.xValueCardName = perm.card.name;
+      this.xValueInput = 1;
+      this.xValueMaximum = this.availableXCounters(perm, ability);
+      this.targetingForAbility = true;
+      this.targetingAbilityIndex = abilityIndex;
+      return;
+    }
 
     // Check for variable loyalty cost (-X)
     if (ability.variableLoyaltyCost) {

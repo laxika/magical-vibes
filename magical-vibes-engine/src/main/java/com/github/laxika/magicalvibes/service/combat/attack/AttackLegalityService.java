@@ -370,7 +370,7 @@ public class AttackLegalityService {
         int[] count = {0};
         UUID selfControllerId = gameQueryService.findPermanentController(gameData, creature.getId());
         for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof MustAttackEffect) {
+            if (effect instanceof MustAttackEffect mustAttack && mustAttack.scope() == null) {
                 count[0]++;
             } else if (effect instanceof ConditionalEffect conditional
                     && conditional.wrapped() instanceof MustAttackEffect
@@ -405,7 +405,16 @@ public class AttackLegalityService {
             if (permanent.isAttached()
                     && permanent.getAttachedTo().equals(creature.getId())) {
                 count[0] += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .filter(MustAttackEffect.class::isInstance)
+                        .filter(e -> e instanceof MustAttackEffect mae && mae.scope() == null)
+                        .count();
+            }
+            // "Creatures you control attack each combat if able" (e.g. Hellraiser Goblin)
+            if (creatureControllerId != null && creatureControllerId.equals(playerId)) {
+                count[0] += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(e -> e instanceof MustAttackEffect mae
+                                && (mae.scope() == GrantScope.ALL_OWN_CREATURES
+                                        || (mae.scope() == GrantScope.OWN_CREATURES
+                                                && !permanent.getId().equals(creature.getId()))))
                         .count();
             }
             // Check for curses on the creature's controller (e.g. Curse of the Nightly Hunt)

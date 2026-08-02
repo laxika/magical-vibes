@@ -65,6 +65,27 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (grant.scope() == GrantScope.OWN_PERMANENTS) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                    .withSourceControllerId(entry.getControllerId());
+            int count = 0;
+            for (Permanent permanent : battlefield) {
+                if (grant.filter() != null
+                        && !predicateEvaluationService.matchesPermanentPredicate(permanent, grant.filter(), filterContext)) {
+                    continue;
+                }
+                bucketFor(permanent, grant.duration()).addAll(grant.keywords());
+                count++;
+            }
+
+            String keywordNames = formatKeywords(grant.keywords());
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" gives " + keywordNames + " to " + count + " permanent(s) " + durationLabel(grant.duration()) + ".").build());
+            log.info("Game {} - {} grants {} to {} own permanent(s)", gameData.id, entry.getCard().getName(), grant.keywords(), count);
+            return;
+        }
+
         if (grant.scope() == GrantScope.TARGET_PLAYERS_CREATURES) {
             UUID targetPlayerId = entry.getTargetId();
             if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {

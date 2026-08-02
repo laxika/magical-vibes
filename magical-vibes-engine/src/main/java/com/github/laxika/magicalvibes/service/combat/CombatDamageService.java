@@ -280,6 +280,7 @@ public class CombatDamageService {
                 gameData.id, state.damageToDefendingPlayer, deadCreatureIds.size());
 
         int stackSizeBeforeDamageTriggers = gameData.stack.size();
+        processSelfDealsCombatDamageTriggers(gameData, state);
         processCombatDamageToCreatureTriggers(gameData, state.combatDamageDealtToCreatures, state.combatDamageDealerControllers);
 
         // Acidic Dagger's delayed "destroy the non-Wall creature that creature damaged" trigger.
@@ -986,6 +987,22 @@ public class CombatDamageService {
         }
     }
 
+    private void processSelfDealsCombatDamageTriggers(GameData gameData, CombatDamageState state) {
+        for (var entry : state.combatDamageDealt.entrySet()) {
+            Permanent source = entry.getKey();
+            int damageDealt = entry.getValue();
+            if (damageDealt <= 0) continue;
+
+            // The dealer's controller is only captured on the creature-damage path, so fall back to a
+            // live lookup for a creature whose damage went to a player or planeswalker only.
+            UUID controllerId = state.combatDamageDealerControllers.get(source);
+            if (controllerId == null) controllerId = gameData.findControllerOf(source);
+            if (controllerId == null) continue;
+            triggerCollectionService.queueSourceDealsCombatDamageTriggers(
+                    gameData, source.getCard(), controllerId, source.getId(), damageDealt);
+        }
+    }
+
     private void processCombatDamageToPlayerTriggers(GameData gameData, Map<Permanent, Integer> combatDamageDealtToPlayer, UUID attackerId, UUID defenderId) {
         for (var entry : combatDamageDealtToPlayer.entrySet()) {
             Permanent creature = entry.getKey();
@@ -1025,6 +1042,8 @@ public class CombatDamageService {
             // Combat-damage-to-player triggers granted until end of turn by one-shot effects
             // (e.g. Open into Wonder grants "deals combat damage to a player, draw a card").
             allDamageEffects.addAll(creature.getTemporaryTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
+            allDamageEffects.addAll(creature.getPersistentTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
+            allDamageEffects.addAll(creature.getPersistentTriggeredEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
             // Combat-damage-to-player triggers granted continuously by a static ability
             // (e.g. Tandem Lookout's soulbond grant), recomputed by the layer system.
             allDamageEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(

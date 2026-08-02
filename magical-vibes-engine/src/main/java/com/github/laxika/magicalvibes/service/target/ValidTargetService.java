@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ValidTargetService {
@@ -147,6 +148,15 @@ public class ValidTargetService {
                     return perm != null && selected.stream()
                             .anyMatch(sel -> gameQueryService.shareCreatureType(gameData, sel, perm));
                 });
+            }
+            if (card.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
+                    && !excludeIds.isEmpty()) {
+                Set<UUID> selectedControllers = excludeIds.stream()
+                        .map(id -> gameQueryService.findPermanentController(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .collect(Collectors.toSet());
+                validPermanentIds.removeIf(id ->
+                        selectedControllers.contains(gameQueryService.findPermanentController(gameData, id)));
             }
             }
         }
@@ -347,6 +357,15 @@ public class ValidTargetService {
                     trial.add(id);
                     return !targetLegalityService.fitsAtMostTwoCreaturesAndTwoLands(gameData, trial);
                 });
+            }
+            if (ability.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
+                    && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()) {
+                Set<UUID> selectedControllers = alreadySelectedIds.stream()
+                        .map(id -> gameQueryService.findPermanentController(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .collect(Collectors.toSet());
+                validPermanentIds.removeIf(id ->
+                        selectedControllers.contains(gameQueryService.findPermanentController(gameData, id)));
             }
 
             String prompt = "Select targets for " + sourceCard.getName() + " ability";
@@ -654,7 +673,7 @@ public class ValidTargetService {
             if (sourceCard.getColor() != null && gameQueryService.hasProtectionFrom(gameData, perm, sourceCard.getColor())) {
                 return false;
             }
-            if (gameQueryService.hasProtectionFromSourceCardTypes(perm, sourceCard)) {
+            if (gameQueryService.hasProtectionFromSourceCardTypes(gameData, perm, sourceCard)) {
                 return false;
             }
             if (gameQueryService.hasProtectionFromSourceSubtypes(perm, sourceCard)) {
@@ -765,6 +784,21 @@ public class ValidTargetService {
 
         List<UUID> validIds = new ArrayList<>();
         for (UUID playerId : searchPlayerIds) {
+            if (card.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
+                    && !excludeIds.isEmpty()) {
+                Set<UUID> selectedControllers = excludeIds.stream()
+                        .map(id -> {
+                            UUID permanentController = gameQueryService.findPermanentController(gameData, id);
+                            return permanentController != null
+                                    ? permanentController
+                                    : gameQueryService.findGraveyardOwnerById(gameData, id);
+                        })
+                        .filter(java.util.Objects::nonNull)
+                        .collect(Collectors.toSet());
+                if (selectedControllers.contains(playerId)) {
+                    continue;
+                }
+            }
             for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
                 if (excludeIds.contains(c.getId())) continue;
                 if (filter.predicate() != null

@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAnotherCreatureAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackControllerEffect;
@@ -422,6 +423,23 @@ public class CombatAttackService {
                     }
                 }
 
+                // "Whenever this creature attacks for the first time each turn" (Aurelia, the
+                // Warleader): drop the wrapped effects entirely once this permanent has already
+                // fired them this turn, otherwise unwrap and mark it after the trigger is queued.
+                // The gate is per permanent, so an extra combat phase it grants can't loop.
+                boolean firesOnceEachTurn = false;
+                if (allEffects.stream().anyMatch(e -> e instanceof OncePerTurnTriggerEffect)) {
+                    if (gameData.onceEachTurnAttackTriggersFiredThisTurn.contains(attacker.getId())) {
+                        allEffects.removeIf(e -> e instanceof OncePerTurnTriggerEffect);
+                    } else {
+                        firesOnceEachTurn = true;
+                        allEffects.replaceAll(e -> e instanceof OncePerTurnTriggerEffect once ? once.wrapped() : e);
+                    }
+                }
+                if (firesOnceEachTurn) {
+                    gameData.onceEachTurnAttackTriggersFiredThisTurn.add(attacker.getId());
+                }
+
                 // Filter out attacks-alone conditionals when not attacking alone (CR 506.5)
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof AttacksAlone
@@ -460,6 +478,14 @@ public class CombatAttackService {
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof MinimumAttackers
                         && !conditionEvaluationService.isMet(gameData, ce.condition(), attackCountCtx));
+
+                // Battalion-style attacker counts are part of the trigger event, not an intervening-if
+                // clause, so the surviving wrapper is unwrapped here: paths that route the trigger
+                // through a target-selection interaction (AttackTriggerTarget) build the stack entry
+                // later and would otherwise re-evaluate the condition without the attacker count.
+                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof MinimumAttackers
+                        ? ce.wrapped() : e);
 
                 if (!allEffects.isEmpty()) {
                     // Separate non-targeting "you may" effects (e.g. Primeval Titan's may-search) from

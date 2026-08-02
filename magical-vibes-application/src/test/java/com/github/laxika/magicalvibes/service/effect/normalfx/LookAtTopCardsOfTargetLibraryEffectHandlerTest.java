@@ -217,6 +217,31 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
     }
 
     @Nested
+    class KeepOneOnTopRestToGraveyard {
+
+        @Test
+        @DisplayName("The controller searches, keeps one on top and the rest go to the graveyard (Dimir Charm)")
+        void entersMandatorySearchForController() {
+            stubCardViewFactory();
+            gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears"));
+            gd.playerDecks.get(player2Id).add(createCard("Llanowar Elves"));
+            gd.playerDecks.get(player2Id).add(createCard("Island"));
+
+            LookAtTopCardsOfTargetLibraryEffect effect = new LookAtTopCardsOfTargetLibraryEffect(
+                    3, TargetLibraryAction.KEEP_ONE_ON_TOP_REST_TO_GRAVEYARD);
+            handler.resolve(gd, entryTargeting("Dimir Charm", effect), effect);
+
+            PendingInteraction.LibrarySearch search =
+                    gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+            assertThat(search.params().playerId()).isEqualTo(player1Id);
+            assertThat(search.params().targetPlayerId()).isEqualTo(player2Id);
+            assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.TOP_OF_LIBRARY);
+            assertThat(search.params().restToGraveyard()).isTrue();
+            assertThat(search.params().canFailToFind()).isFalse();
+        }
+    }
+
+    @Nested
     class ExileOne {
 
         @Test

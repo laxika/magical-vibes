@@ -30,7 +30,6 @@ import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByFewerThanNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
@@ -303,13 +302,13 @@ public class CombatBlockService {
                         + " can't be blocked by more than " + teamMaxBlockers
                         + " creature" + (teamMaxBlockers == 1 ? "" : "s"));
             }
+            int maxBlockers = gameQueryService.getMaxBlockersAllowed(gameData, attacker);
+            if (blockerCount > maxBlockers) {
+                throw new IllegalStateException(attacker.getCard().getName()
+                        + " can't be blocked by more than " + maxBlockers
+                        + " creature" + (maxBlockers == 1 ? "" : "s"));
+            }
             for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof CanBeBlockedByAtMostNCreaturesEffect restriction
-                        && blockerCount > restriction.maxBlockers()) {
-                    throw new IllegalStateException(attacker.getCard().getName()
-                            + " can't be blocked by more than " + restriction.maxBlockers()
-                            + " creature" + (restriction.maxBlockers() == 1 ? "" : "s"));
-                }
                 if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction
                         && blockerCount < restriction.minBlockers()) {
                     throw new IllegalStateException(attacker.getCard().getName()
@@ -394,6 +393,7 @@ public class CombatBlockService {
 
         // Collect all blocker-step triggers, then reorder per APNAP (CR 603.3b)
         int stackSizeBeforeBlockerTriggers = gameData.stack.size();
+        Set<Integer> blockersWithOncePerBlockTrigger = new HashSet<>();
 
         // Check for "when this creature blocks" triggers (defending player's / NAP's)
         for (BlockerAssignment assignment : blockerAssignments) {
@@ -401,7 +401,11 @@ public class CombatBlockService {
             List<CardEffect> blockEffects = new ArrayList<>(blocker.getCard().getEffects(EffectSlot.ON_BLOCK));
             blockEffects.addAll(blocker.getTemporaryTriggeredEffects(EffectSlot.ON_BLOCK));
             blockEffects.addAll(blocker.getPersistentTriggeredEffects(EffectSlot.ON_BLOCK));
-            if (!blockEffects.isEmpty()) {
+            boolean hasOncePerBlockEffect = blocker.getCard().getEffectRegistrations(EffectSlot.ON_BLOCK).stream()
+                    .anyMatch(registration -> registration.triggerMode() == TriggerMode.ONCE_PER_BLOCK);
+            boolean collectBlockTrigger = !hasOncePerBlockEffect
+                    || blockersWithOncePerBlockTrigger.add(assignment.blockerIndex());
+            if (collectBlockTrigger && !blockEffects.isEmpty()) {
                 Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
 
                 // Resolve conditional block effects (e.g. "when blocking a creature with flying")
@@ -526,24 +530,7 @@ public class CombatBlockService {
                         .toList());
                 regularEffects.addAll(grantedBecomesBlockedEffects);
 
-                if (!regularEffects.isEmpty()) {
-                    StackEntry becomesBlockedTrigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            attacker.getCard(),
-                            activeId,
-                            attacker.getCard().getName() + "'s becomes-blocked trigger",
-                            new ArrayList<>(regularEffects),
-                            attacker.getId(),
-                            attacker.getId()
-                    );
-                    // Capture the attacked player/planeswalker so effects acting on the defending
-                    // player (e.g. Vedalken Ghoul's DEFENDING_PLAYER life loss) can read it.
-                    becomesBlockedTrigger.setAttackedTargetId(attacker.getAttackTarget());
-                    gameData.stack.add(becomesBlockedTrigger);
-                    gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
-                            "'s becomes-blocked ability triggers."));
-                    log.info("Game {} - {} becomes-blocked trigger pushed onto stack", gameData.id, attacker.getCard().getName());
-                }
+                pushRegularBecomesBlockedTriggers(gameData, attacker, activeId, regularEffects);
 
                 if (!blockerSpecificEffects.isEmpty()) {
                     for (BlockerAssignment assignment : blockerAssignments) {
@@ -1132,24 +1119,59 @@ public class CombatBlockService {
                 .toList());
         regularEffects.addAll(attacker.getTemporaryTriggeredEffects(EffectSlot.ON_BECOMES_BLOCKED));
         regularEffects.addAll(attacker.getPersistentTriggeredEffects(EffectSlot.ON_BECOMES_BLOCKED));
-        if (!regularEffects.isEmpty()) {
-            StackEntry trigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    attacker.getCard(),
-                    controllerId,
-                    attacker.getCard().getName() + "'s becomes-blocked trigger",
-                    new ArrayList<>(regularEffects),
-                    attacker.getId(),
-                    attacker.getId()
-            );
-            trigger.setAttackedTargetId(attacker.getAttackTarget());
-            gameData.stack.add(trigger);
-            gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
-                    "'s becomes-blocked ability triggers."));
-        }
+        pushRegularBecomesBlockedTriggers(gameData, attacker, controllerId, regularEffects);
 
         combatTriggerService.checkAuraTriggersForCreature(gameData, attacker, EffectSlot.ON_BECOMES_BLOCKED);
         checkAllyBecomesBlockedTriggers(gameData, controllerId, attacker);
+    }
+
+    /**
+     * Pushes the non-PER_BLOCKER becomes-blocked effects of a blocked attacker.
+     *
+     * <p>Permanent-targeting "you may" effects (Rust Scarab's "you may destroy target artifact or
+     * enchantment defending player controls") go through {@code queueMayAbility} with a {@code null}
+     * target so the target is chosen after the controller accepts, honouring the card's target
+     * filter. Baking the attacker in as {@code targetId} — what the plain trigger entry does so
+     * self-scoped effects see their own source — would otherwise look like an already-chosen target.
+     * Everything else keeps the plain entry, whose {@code attackedTargetId} lets defending-player
+     * effects (Vedalken Ghoul's life loss) read the attacked player or planeswalker's controller.
+     */
+    private void pushRegularBecomesBlockedTriggers(GameData gameData, Permanent attacker, UUID controllerId,
+                                                   List<CardEffect> regularEffects) {
+        if (regularEffects.isEmpty()) {
+            return;
+        }
+        List<CardEffect> targetingMayEffects = regularEffects.stream()
+                .filter(e -> e instanceof MayEffect && e.targetSpec().category().includesPermanents())
+                .toList();
+        for (CardEffect effect : targetingMayEffects) {
+            gameData.queueMayAbility(attacker.getCard(), controllerId, (MayEffect) effect,
+                    null, attacker.getId());
+            gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
+                    "'s becomes-blocked ability triggers."));
+            log.info("Game {} - {} becomes-blocked targeting-may trigger pushed onto stack",
+                    gameData.id, attacker.getCard().getName());
+        }
+        List<CardEffect> otherEffects = regularEffects.stream()
+                .filter(e -> !targetingMayEffects.contains(e))
+                .toList();
+        if (otherEffects.isEmpty()) {
+            return;
+        }
+        StackEntry trigger = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                attacker.getCard(),
+                controllerId,
+                attacker.getCard().getName() + "'s becomes-blocked trigger",
+                new ArrayList<>(otherEffects),
+                attacker.getId(),
+                attacker.getId()
+        );
+        trigger.setAttackedTargetId(attacker.getAttackTarget());
+        gameData.stack.add(trigger);
+        gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
+                "'s becomes-blocked ability triggers."));
+        log.info("Game {} - {} becomes-blocked trigger pushed onto stack", gameData.id, attacker.getCard().getName());
     }
 
     /**

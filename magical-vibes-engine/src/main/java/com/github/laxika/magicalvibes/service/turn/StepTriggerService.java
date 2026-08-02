@@ -2926,6 +2926,30 @@ public class StepTriggerService {
                         gameLogService.append(gameData,
                                 GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
                         log.info("Game {} - {} end-step life-gain trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                    } else if (effect instanceof ConditionalEffect conditional
+                            && conditional.condition() instanceof ControlsPermanentCount) {
+                        // Intervening-if (CR 603.4): "at the beginning of the end step, if you control
+                        // N or more […]" — Biovisionary. "You" is the permanent's controller, not the
+                        // active player. The wrapper is pushed intact so resolution re-checks it.
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forPermanent(perm, playerId))) {
+                            log.info("Game {} - {} end-step trigger skipped ({})",
+                                    gameData.id, perm.getCard().getName(), conditional.conditionNotMetReason());
+                            continue;
+                        }
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s end step ability",
+                                new ArrayList<>(List.of(effect)),
+                                null,
+                                perm.getId()
+                        ));
+                        gameLogService.append(gameData,
+                                GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
+                        log.info("Game {} - {} end-step permanent-count trigger pushed onto stack",
+                                gameData.id, perm.getCard().getName());
                     } else {
                         // EndStepPlayerTargetedEffect ("... that player ...") reads the end-step
                         // player off targetId; every other end-step effect gets a null target id.

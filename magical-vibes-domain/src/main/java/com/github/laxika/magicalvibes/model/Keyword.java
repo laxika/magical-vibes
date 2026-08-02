@@ -67,7 +67,8 @@ public enum Keyword {
     DELIRIUM,
     PREPARED,
     PHASING,
-    BUYBACK;
+    BUYBACK,
+    EVOLVE;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport;
@@ -140,17 +141,29 @@ public class PermanentChoiceSpellHandlerService {
 
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
+        // A cipher copy of a graveyard-targeting spell (Midnight Recovery) targets a card in a
+        // graveyard, which is neither a permanent nor a player.
+        boolean isGraveyardTarget = gameQueryService.findCardInGraveyardById(gameData, permanentId) != null;
 
-        if (target != null || isPlayerTarget) {
-            StackEntry entry = new StackEntry(
-                    ect.spellType(),
-                    ect.cardToCast(),
-                    ect.controllerId(),
-                    ect.cardToCast().getName(),
-                    new ArrayList<>(ect.spellEffects()),
-                    0,
-                    permanentId,
-                    null
+        if (target != null || isPlayerTarget || isGraveyardTarget) {
+            StackEntry entry = isGraveyardTarget
+                    ? new StackEntry(
+                            ect.spellType(),
+                            ect.cardToCast(),
+                            ect.controllerId(),
+                            ect.cardToCast().getName(),
+                            new ArrayList<>(ect.spellEffects()),
+                            permanentId,
+                            Zone.GRAVEYARD)
+                    : new StackEntry(
+                            ect.spellType(),
+                            ect.cardToCast(),
+                            ect.controllerId(),
+                            ect.cardToCast().getName(),
+                            new ArrayList<>(ect.spellEffects()),
+                            0,
+                            permanentId,
+                            null
             );
             entry.setCopy(ect.copy());
             gameData.stack.add(entry);
@@ -158,10 +171,7 @@ public class PermanentChoiceSpellHandlerService {
             gameData.recordSpellCast(ect.controllerId(), ect.cardToCast());
             gameData.priorityPassedBy.clear();
 
-            String targetName = isPlayerTarget
-                    ? gameData.playerIdToName.get(permanentId)
-                    : target.getCard().getName();
-            
+            String targetName = getTargetDisplayName(gameData, permanentId);
             gameLogService.append(gameData, GameLog.builder().card(ect.cardToCast()).text(" targets " + targetName + " (Knowledge Pool).").build());
             log.info("Game {} - {} cast-from-exile targets {}", gameData.id, ect.cardToCast().getName(), targetName);
 

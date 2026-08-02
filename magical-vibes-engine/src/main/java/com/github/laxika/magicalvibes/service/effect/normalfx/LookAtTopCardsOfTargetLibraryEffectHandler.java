@@ -48,6 +48,8 @@ import org.springframework.stereotype.Component;
  *       if accepted, moved to the bottom of that player's library (Coral Fighters).</li>
  *   <li>{@code KEEP_ONE_ON_TOP_EXILE_REST} — the target player picks one card to put back on top of
  *       their library and the rest are exiled (Ashnod's Cylix).</li>
+ *   <li>{@code KEEP_ONE_ON_TOP_REST_TO_GRAVEYARD} — the controller picks one card to go back on top
+ *       of the target player's library; the rest go into that player's graveyard (Dimir Charm).</li>
  * </ul>
  */
 @Slf4j
@@ -108,6 +110,8 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
                     targetPlayerId, deck, controllerName, targetName);
             case KEEP_ONE_ON_TOP_EXILE_REST -> resolveKeepOneOnTopExileRest(gameData, entry,
                     targetPlayerId, deck, actual, targetName);
+            case KEEP_ONE_ON_TOP_REST_TO_GRAVEYARD -> resolveKeepOneOnTopRestToGraveyard(gameData, entry,
+                    controllerId, targetPlayerId, deck, actual, controllerName, targetName);
         }
     }
 
@@ -248,6 +252,35 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
                 false));
         log.info("Game {} - {} looks at the top {} cards of their library ({})",
                 gameData.id, targetName, actual, entry.getCard().getName());
+    }
+
+    /**
+     * Dimir Charm's mill mode: the controller looks at the cards, picks the one that goes back on
+     * top of the <em>target player's</em> library, and everything else is put into that player's
+     * graveyard. The pick is mandatory.
+     */
+    private void resolveKeepOneOnTopRestToGraveyard(GameData gameData, StackEntry entry, UUID controllerId,
+            UUID targetPlayerId, List<Card> deck, int actual, String controllerName, String targetName) {
+        List<Card> topCards = LibraryRevealSupport.takeTopCards(deck, actual);
+        gameLogService.append(gameData, GameLog.text(controllerName + " looks at the top "
+                + LibraryRevealSupport.pluralCards(actual) + " of " + targetName + "'s library."));
+        List<Card> sourceCards = new ArrayList<>(topCards);
+        String prompt = "Put one of these cards back on top of " + targetName
+                + "'s library. The rest will be put into that player's graveyard.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(controllerId, topCards)
+                        .canFailToFind(false)
+                        .targetPlayerId(targetPlayerId)
+                        .sourceCards(sourceCards)
+                        .restToGraveyard(true)
+                        .shuffleAfterSelection(false)
+                        .prompt(prompt)
+                        .destination(LibrarySearchDestination.TOP_OF_LIBRARY)
+                        .build(),
+                prompt,
+                false));
+        log.info("Game {} - {} looks at the top {} cards of {}'s library to keep one on top ({})",
+                gameData.id, controllerName, actual, targetName, entry.getCard().getName());
     }
 
     private void resolvePutOneIntoGraveyard(GameData gameData, StackEntry entry, UUID controllerId,

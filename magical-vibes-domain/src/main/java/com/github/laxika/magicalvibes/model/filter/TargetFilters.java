@@ -106,6 +106,15 @@ public final class TargetFilters {
                 "Target must be a nonland permanent an opponent controls");
     }
 
+    /** "Target must be a noncreature permanent an opponent controls" */
+    public static PermanentPredicateTargetFilter noncreaturePermanentAnOpponentControls() {
+        return new PermanentPredicateTargetFilter(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentNotPredicate(new PermanentIsCreaturePredicate()),
+                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
+                "Target must be a noncreature permanent an opponent controls");
+    }
+
     /** "Target must be a permanent you control" */
     public static ControlledPermanentPredicateTargetFilter permanentYouControl() {
         return new ControlledPermanentPredicateTargetFilter(

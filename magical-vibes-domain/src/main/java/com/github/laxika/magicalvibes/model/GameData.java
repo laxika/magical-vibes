@@ -506,6 +506,8 @@ public class GameData {
     public final Map<UUID, Set<UUID>> handsRevealedWhileSourceOnBattlefield = new ConcurrentHashMap<>();
     /** When true, damage can't be prevented this turn (Impractical Joke). Cleared at turn cleanup. */
     public boolean damageCantBePreventedThisTurn = false;
+    /** When true, no player can gain life this turn (Skullcrack). Cleared at turn cleanup. */
+    public boolean playersCantGainLifeThisTurn = false;
     /**
      * Number of active "if a creature would deal combat damage to a creature this turn, it deals
      * double that damage instead" replacement effects (Blind Fury). Each one doubles the damage, so
@@ -518,6 +520,13 @@ public class GameData {
      * multiplier is {@code 2^count}. Cleared at turn cleanup.
      */
     public final Map<UUID, Integer> controllerDamageDoublingsThisTurn = new ConcurrentHashMap<>();
+    /**
+     * Active "whenever a card is put into an opponent's graveyard from anywhere this turn, that
+     * player loses 1 life" delayed triggers (Duskmantle Guildmage). One entry per activation, so
+     * repeated activations stack. Cleared at turn cleanup.
+     */
+    public final List<OpponentGraveyardLifeLossWatcher> opponentGraveyardLifeLossWatchers =
+            Collections.synchronizedList(new ArrayList<>());
     /** Damage redirect shields (e.g. Vengeful Archon): prevention shields that redirect prevented damage to a target player. */
     public final List<DamageRedirectShield> damageRedirectShields = Collections.synchronizedList(new ArrayList<>());
     /** Pending redirect damage to deal after damage prevention (populated by DamagePreventionService, consumed by callers). */
@@ -543,6 +552,8 @@ public class GameData {
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
     /** Players who have been granted "no maximum hand size" for the rest of the game. */
     public final Set<UUID> playersWithNoMaximumHandSize = ConcurrentHashMap.newKeySet();
+    /** Players who have no maximum hand size until the beginning of their next turn. */
+    public final Set<UUID> playersWithNoMaximumHandSizeUntilNextTurn = ConcurrentHashMap.newKeySet();
     /** Players who can't gain life for the rest of the game (e.g. Stigma Lasher). */
     public final Set<UUID> playersWhoCantGainLifeRestOfGame = ConcurrentHashMap.newKeySet();
 
@@ -614,6 +625,9 @@ public class GameData {
 
     /** Players who can't cast creature spells this turn (e.g. Moonhold). Cleared at end of turn. */
     public final Set<UUID> playersCantCastCreatureSpellsThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Players who can't cast noncreature spells this turn (e.g. Aurelia's Fury). Cleared at end of turn. */
+    public final Set<UUID> playersCantCastNoncreatureSpellsThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Players who can't activate abilities this turn — including mana abilities (e.g. Sen Triplets).
      *  Cleared at end of turn. */
@@ -888,6 +902,13 @@ public class GameData {
     /** Tracks which permanents (by UUID) have already fired a {@code OncePerTurnTriggerEffect}
      *  this turn (e.g. Ghoulish Procession). Cleared at start of new turn. */
     public final Set<UUID> oncePerTurnTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Tracks which permanents (by UUID) have already fired a {@code OncePerTurnTriggerEffect} in the
+     *  {@code ON_ATTACK} slot this turn — "attacks for the first time each turn" (Aurelia, the
+     *  Warleader). Kept separate from {@link #oncePerTurnTriggersFiredThisTurn} so a permanent with
+     *  both a once-each-turn death watcher and a once-each-turn attack trigger doesn't gate one on the
+     *  other. Cleared at start of new turn. */
+    public final Set<UUID> onceEachTurnAttackTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
 
     /**
      * Creatures dying together in the current simultaneous-death event (CR 700.1 / destroy batch /
@@ -2285,8 +2306,10 @@ public class GameData {
             copy.handsRevealedWhileSourceOnBattlefield.put(sourceId, copied);
         });
         copy.damageCantBePreventedThisTurn = this.damageCantBePreventedThisTurn;
+        copy.playersCantGainLifeThisTurn = this.playersCantGainLifeThisTurn;
         copy.combatDamageToCreaturesDoublingsThisTurn = this.combatDamageToCreaturesDoublingsThisTurn;
         copy.controllerDamageDoublingsThisTurn.putAll(this.controllerDamageDoublingsThisTurn);
+        copy.opponentGraveyardLifeLossWatchers.addAll(this.opponentGraveyardLifeLossWatchers);
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
         copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);
@@ -2355,6 +2378,7 @@ public class GameData {
         copy.permanentsDealtDamageThisTurn.addAll(this.permanentsDealtDamageThisTurn);
         copy.freeCastPermanentUsedThisTurn.addAll(this.freeCastPermanentUsedThisTurn);
         copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);
+        copy.onceEachTurnAttackTriggersFiredThisTurn.addAll(this.onceEachTurnAttackTriggersFiredThisTurn);
         copy.simultaneousDyingCreatures.putAll(this.simultaneousDyingCreatures);
         copy.simultaneousDyingControllers.putAll(this.simultaneousDyingControllers);
         this.combatDamageSourceSubtypesThisTurn.forEach((k, v) ->
@@ -2521,6 +2545,7 @@ public class GameData {
 
         // --- Permanent no-max-hand-size grants ---
         copy.playersWithNoMaximumHandSize.addAll(this.playersWithNoMaximumHandSize);
+        copy.playersWithNoMaximumHandSizeUntilNextTurn.addAll(this.playersWithNoMaximumHandSizeUntilNextTurn);
 
         // --- Permanent "can't gain life" grants (Stigma Lasher) ---
         copy.playersWhoCantGainLifeRestOfGame.addAll(this.playersWhoCantGainLifeRestOfGame);
@@ -2551,6 +2576,7 @@ public class GameData {
         copy.playersWhoTappedLandForManaThisTurn.addAll(this.playersWhoTappedLandForManaThisTurn);
         copy.playersCantPlayLandsThisTurn.addAll(this.playersCantPlayLandsThisTurn);
         copy.playersCantCastCreatureSpellsThisTurn.addAll(this.playersCantCastCreatureSpellsThisTurn);
+        copy.playersCantCastNoncreatureSpellsThisTurn.addAll(this.playersCantCastNoncreatureSpellsThisTurn);
         copy.playersCantActivateAbilitiesThisTurn.addAll(this.playersCantActivateAbilitiesThisTurn);
         copy.senControllerPlayerId = this.senControllerPlayerId;
         copy.senControlledPlayerId = this.senControlledPlayerId;

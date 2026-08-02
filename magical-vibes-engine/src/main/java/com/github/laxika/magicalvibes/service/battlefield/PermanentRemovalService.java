@@ -643,10 +643,23 @@ public class PermanentRemovalService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
+                preserveBlockedStatusWhenBlockerLeaves(gameData, target);
                 return Optional.of(processRemovalCleanup(gameData, target, playerId));
             }
         }
         return Optional.empty();
+    }
+
+    private void preserveBlockedStatusWhenBlockerLeaves(GameData gameData, Permanent blocker) {
+        if (!blocker.isBlocking()) {
+            return;
+        }
+        for (UUID attackerId : blocker.getBlockingTargetIds()) {
+            Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
+            if (attacker != null && attacker.isAttacking()) {
+                attacker.setBlockedWithoutBlockers(true);
+            }
+        }
     }
 
     /**

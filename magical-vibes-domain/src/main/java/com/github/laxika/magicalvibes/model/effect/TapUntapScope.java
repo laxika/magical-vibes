@@ -30,6 +30,11 @@ public enum TapUntapScope {
     OTHER_CONTROLLED_CREATURES,
     /** Every permanent the target player controls that matches the predicate. */
     TARGET_PLAYERS_PERMANENTS,
+    /**
+     * Every creature controlled by the target permanent's controller <em>except</em> the target
+     * itself, matching the predicate ("Other creatures that player controls …" — Mark for Death).
+     */
+    TARGET_CONTROLLERS_OTHER_CREATURES,
     /** Every creature on every battlefield that matches the predicate. */
     ALL_CREATURES,
     /** Every permanent on every battlefield that matches the predicate (Curse of Marit Lage). */
