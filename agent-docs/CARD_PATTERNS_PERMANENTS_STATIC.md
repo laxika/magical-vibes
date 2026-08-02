@@ -41,6 +41,7 @@ All paths relative to `cards/`.
 | Must attack | `b/BloodrockCyclops.java` | STATIC MustAttackEffect |
 | Must attack unless you control a named creature | `m/MaraudingMaulhorn.java` | STATIC ConditionalEffect(NotCondition(ControlsPermanent(PermanentAllOfPredicate(PermanentIsCreaturePredicate, PermanentNamedPredicate("Advocate of the Beast")))), MustAttackEffect) |
 | Conditional must attack (alongside others) | `e/EkunduCyclops.java` | STATIC MustAttackIfAnotherCreatureAttacksEffect — must attack only when another creature you control is declared as an attacker |
+| Other subtype creatures you control must attack + combat token + scaling attack boost | `g/GoblinRabblemaster.java` | STATIC MatchingCreaturesMustAttackEffect(PermanentAllOfPredicate(IsCreature, HasSubtype(GOBLIN), PermanentControlledBySourceControllerPredicate, Not(PermanentIsSourceCardPredicate))) + BEGINNING_OF_COMBAT_TRIGGERED CreateTokenEffect(1/1 red Goblin, HASTE) + ON_ATTACK BoostSelfEffect(PermanentCount(AllOf(IsAttacking, HasSubtype(GOBLIN)), ANY_PLAYER, excludeSource=true), Fixed(0)) |
 | Subtype-wide must attack + upkeep token | `g/GoblinAssault.java` | EACH_UPKEEP_TRIGGERED CreateTokenEffect(1/1 red Goblin, HASTE) + STATIC MatchingCreaturesMustAttackEffect(PermanentHasSubtypePredicate(GOBLIN)) — all Goblins (any controller) attack each combat if able |
 | Evasion (blocked only by) | `e/ElvenRiders.java` | STATIC CanBeBlockedOnlyByFilterEffect |
 | Evasion (lesser power can't block) | `s/ShrillHowler.java` | STATIC CantBeBlockedByCreaturesWithLessPowerEffect â€” creatures with power < this creature's power can't block it |
@@ -173,6 +174,7 @@ All paths relative to `cards/`.
 | Grant flash to spell type | `s/ShimmerMyr.java` | STATIC GrantFlashToCardTypeEffect(ARTIFACT) — controller may cast artifact spells as though they had flash |
 | Grant flash to all spells + leyline | `l/LeylineOfAnticipation.java` | ON_OPENING_HAND_REVEAL MayEffect(LeylineStartOnBattlefieldEffect) + STATIC GrantFlashToCardTypeEffect(null) — may start on battlefield from opening hand, grants flash to all spells |
 | Grant conspire to your spells + ETB tokens | `w/WortTheRaidmother.java` | ON_ENTER_BATTLEFIELD CreateTokenEffect(2 Goblin Warrior) + STATIC GrantConspireToSpellsEffect(CardAllOfPredicate(type instant/sorcery, color red/green)) — red or green instant/sorcery spells you cast have conspire |
+| Grant convoke to artifact spells | `c/ChiefEngineer.java` | STATIC GrantConvokeToSpellsEffect(CardTypePredicate(ARTIFACT)) — artifact spells you cast can use convoke |
 | Conditional keywords while any creature has -1/-1 | `t/TenaciousHunter.java` | STATIC ConditionalEffect(AnyPlayerControlsPermanent(AllOf(IsCreature, HasCounters(MINUS_ONE_MINUS_ONE))), GrantKeywordEffect(Set.of(VIGILANCE, DEATHTOUCH), SELF)) |
 | Metalcraft keyword | `a/AuriokEdgewright.java` | STATIC ConditionalEffect(new Metalcraft(), GrantKeywordEffect(DOUBLE_STRIKE, SELF)) |
 | Metalcraft keyword + boost | `a/AuriokSunchaser.java` | STATIC ConditionalEffect(new Metalcraft(), GrantKeywordEffect) + ConditionalEffect(new Metalcraft(), StaticBoostEffect) |

@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,6 +44,12 @@ public class AttachAurasChoiceInteractionHandler
             throw new IllegalStateException("Not your choice to make");
         }
         List<UUID> chosen = ((InteractionAnswer.CardsChosen) answer).cardIds();
+        if (new HashSet<>(chosen).size() != chosen.size()) {
+            throw new IllegalStateException("Duplicate card ID");
+        }
+        if (chosen.size() > interaction.maxCount()) {
+            throw new IllegalStateException("Too many cards chosen");
+        }
         for (UUID id : chosen) {
             if (!interaction.validCardIds().contains(id)) {
                 throw new IllegalStateException("Invalid card ID: " + id);

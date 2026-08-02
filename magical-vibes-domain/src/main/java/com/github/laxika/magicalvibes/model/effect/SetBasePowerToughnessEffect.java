@@ -46,8 +46,10 @@ public record SetBasePowerToughnessEffect(Integer power, Integer toughness, Gran
 
     @Override
     public TargetSpec targetSpec() {
-        return scope == GrantScope.TARGET
-                ? TargetSpec.benign(TargetCategory.CREATURE)
-                : TargetSpec.NONE;
+        return switch (scope) {
+            case TARGET -> TargetSpec.benign(TargetCategory.CREATURE);
+            case TARGET_PLAYERS_CREATURES -> TargetSpec.benign(TargetCategory.PLAYER);
+            default -> TargetSpec.NONE;
+        };
     }
 }

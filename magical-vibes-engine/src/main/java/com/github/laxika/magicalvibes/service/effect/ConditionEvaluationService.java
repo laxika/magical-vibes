@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreLifeThanC
 import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreLifeThanAnOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
+import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeLastTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerOwnTurnCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
@@ -52,6 +53,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControlsCreatureWithGreatestPower;
+import com.github.laxika.magicalvibes.model.condition.ControlsEachCreatureWithGreatestPower;
 import com.github.laxika.magicalvibes.model.condition.Coven;
 import com.github.laxika.magicalvibes.model.condition.CreatureAttackingController;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
@@ -87,6 +89,7 @@ import com.github.laxika.magicalvibes.model.condition.NoPlayerHasCardsInHand;
 import com.github.laxika.magicalvibes.model.condition.TotalPermanentCountEven;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.DidntActivateLoyaltyAbilityThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
@@ -96,7 +99,9 @@ import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreLands;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentGraveyardAtLeast;
+import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeLastTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
+import com.github.laxika.magicalvibes.model.condition.OpponentOwnsCardInExile;
 import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
@@ -244,6 +249,8 @@ public class ConditionEvaluationService {
                     controlledCreaturesTotalPower(gameData, ctx) >= c.threshold();
             case ControlsCreatureWithGreatestPower ignored ->
                     controlsCreatureWithGreatestPower(gameData, ctx);
+            case ControlsEachCreatureWithGreatestPower ignored ->
+                    controlsEachCreatureWithGreatestPower(gameData, ctx);
             case SourceRegeneratedThisTurn ignored ->
                     sourcePermanent(gameData, ctx) != null
                             && sourcePermanent(gameData, ctx).getTimesRegeneratedThisTurn() > 0;
@@ -331,6 +338,11 @@ public class ConditionEvaluationService {
                     isAnyOpponentPoisoned(gameData, ctx.controllerId());
             case OpponentGraveyardAtLeast c ->
                     anyOpponentGraveyardAtLeast(gameData, ctx.controllerId(), c.threshold());
+            case OpponentOwnsCardInExile ignored ->
+                    opponentOwnsCardInExile(gameData, ctx.controllerId());
+            case DidntActivateLoyaltyAbilityThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && !gameData.playersWhoActivatedLoyaltyAbilityThisTurn.contains(ctx.controllerId());
             case DealtDamageByRedSpellThisTurn ignored ->
                     gameData.lastRedSpellDamagerThisTurn.containsKey(ctx.controllerId());
             case OpponentDealtDamageThisTurn c ->
@@ -345,6 +357,11 @@ public class ConditionEvaluationService {
                             && gameData.sourcesWhoseDamagedCreaturesDiedThisTurn.contains(ctx.sourcePermanentId());
             case OpponentLostLifeThisTurn c ->
                     didAnyOpponentLoseLifeThisTurn(gameData, ctx.controllerId(), c.minimumAmount());
+            case OpponentLostLifeLastTurn ignored ->
+                    didAnyOpponentLoseLifeLastTurn(gameData, ctx.controllerId());
+            case ControllerLostLifeLastTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.lifeLostLastTurn.getOrDefault(ctx.controllerId(), 0) > 0;
             case ActivationCount c ->
                     activationCountThisTurn(gameData, ctx, c.abilityIndex()) >= c.threshold();
             // Exact equality: "if this is the Nth time this ability has resolved this turn"
@@ -543,6 +560,32 @@ public class ConditionEvaluationService {
             }
         }
         return bestControlled != null && bestControlled.equals(bestOverall);
+    }
+
+    /**
+     * Whether every creature tied for the greatest effective power on the battlefield is controlled
+     * by the condition's controller. Vacuously true with no creatures anywhere.
+     */
+    private boolean controlsEachCreatureWithGreatestPower(GameData gameData, ConditionContext ctx) {
+        UUID controllerId = ctx.controllerId();
+        if (controllerId == null) return false;
+        Integer bestOverall = null;
+        boolean opponentHoldsBest = false;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (!isCreatureForCondition(gameData, permanent)) continue;
+                int power = gameQueryService.getEffectivePower(gameData, permanent);
+                if (bestOverall == null || power > bestOverall) {
+                    bestOverall = power;
+                    opponentHoldsBest = !playerId.equals(controllerId);
+                } else if (power == bestOverall && !playerId.equals(controllerId)) {
+                    opponentHoldsBest = true;
+                }
+            }
+        }
+        return !opponentHoldsBest;
     }
 
     private int countCreaturesControlled(GameData gameData, UUID playerId) {
@@ -1119,6 +1162,23 @@ public class ConditionEvaluationService {
             }
         }
         return false;
+    }
+
+    private boolean didAnyOpponentLoseLifeLastTurn(GameData gameData, UUID controllerId) {
+        if (controllerId == null) return false;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) continue;
+            if (gameData.lifeLostLastTurn.getOrDefault(playerId, 0) > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean opponentOwnsCardInExile(GameData gameData, UUID controllerId) {
+        if (controllerId == null) return false;
+        return gameData.exiledCards.stream()
+                .anyMatch(entry -> !controllerId.equals(entry.ownerId()));
     }
 
     private boolean anyLibraryAtMost(GameData gameData, int threshold) {

@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDamagePreventionE
 import com.github.laxika.magicalvibes.model.effect.PreventFixedDamagePerSourceToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToControllerAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventHalfDamageToControllerAndTheirPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllButOneDamageToControllerAndPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToCreaturesYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfAndSourceControllerDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToSelfAndExileFromLibraryEffect;
@@ -881,6 +882,15 @@ public class DamagePreventionService {
         return true;
     }
 
+    public boolean isColorDamagePreventedForTarget(GameData gameData, UUID targetId, Set<CardColor> sourceColors) {
+        if (!gameQueryService.isDamagePreventable(gameData) || targetId == null || sourceColors == null) return false;
+        Set<CardColor> preventedColors = gameData.colorDamagePreventionUntilEndOfTurn.get(targetId);
+        if (preventedColors == null || preventedColors.isEmpty()) return false;
+        return sourceColors.stream()
+                .map(color -> gameQueryService.getDamageSourceColor(gameData, color))
+                .anyMatch(preventedColors::contains);
+    }
+
     /**
      * Applies static damage reduction from permanents with {@link PreventDamageFromOpponentSourcesEffect}
      * on the receiving player's battlefield (e.g. Guardian Seraph).
@@ -970,6 +980,27 @@ public class DamagePreventionService {
                 .mapToInt(e -> ((PreventFixedDamagePerSourceToControllerEffect) e).amount())
                 .sum();
         return Math.min(damage, reduction);
+    }
+
+    /**
+     * Ajani Steadfast-style prevention: prevent all but 1 damage to the controller or one of their
+     * planeswalkers. The effect is recipient-scoped and applies once per damage event.
+     */
+    public int applyAllButOneDamagePrevention(GameData gameData, UUID recipientControllerId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return 0;
+        if (damage <= 1 || recipientControllerId == null) return 0;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(recipientControllerId);
+        boolean hasPrevention = battlefield != null && battlefield.stream()
+                .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(PreventAllButOneDamageToControllerAndPlaneswalkersEffect.class::isInstance);
+        if (!hasPrevention) {
+            hasPrevention = gameData.emblems.stream()
+                    .anyMatch(emblem -> recipientControllerId.equals(emblem.controllerId())
+                            && emblem.staticEffects().stream()
+                            .anyMatch(PreventAllButOneDamageToControllerAndPlaneswalkersEffect.class::isInstance));
+        }
+        return hasPrevention ? damage - 1 : 0;
     }
 
     /**

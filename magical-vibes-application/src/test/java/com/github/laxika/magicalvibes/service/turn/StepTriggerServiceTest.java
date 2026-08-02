@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
+import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeLastTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
@@ -641,6 +642,24 @@ class StepTriggerServiceTest {
             sut.handleUpkeepTriggers(gd);
 
             assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("EACH_UPKEEP_TRIGGERED with OpponentLostLifeLastTurn only counts opponents")
+        void opponentLostLifeLastTurnOnlyCountsOpponents() {
+            gd.turnNumber = 2;
+            Card card = createCardWithName("Feast on the Fallen");
+            card.addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
+                    new ConditionalEffect(new OpponentLostLifeLastTurn(), new GainLifeEffect(1)));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+
+            gd.lifeLostLastTurn.put(player1Id, 2);
+            sut.handleUpkeepTriggers(gd);
+            assertThat(gd.stack).isEmpty();
+
+            gd.lifeLostLastTurn.put(player2Id, 2);
+            sut.handleUpkeepTriggers(gd);
+            assertThat(gd.stack).hasSize(1);
         }
 
         @Test

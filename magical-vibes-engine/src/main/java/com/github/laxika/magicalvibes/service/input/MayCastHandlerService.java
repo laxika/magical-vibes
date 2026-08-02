@@ -777,9 +777,23 @@ public class MayCastHandlerService {
         String playerName = player.getUsername();
 
         if (!accepted) {
-            
-            gameLogService.append(gameData, GameLog.textCardText(playerName + " declines to cast " , cardToCast, "."));
-            log.info("Game {} - {} declines to cast {} from hand (Counterlash)", gameData.id, playerName, cardToCast.getName());
+            boolean revealCardOnDecline = ability.effects().stream()
+                    .filter(MayCastFromHandWithoutPayingManaCostEffect.class::isInstance)
+                    .map(MayCastFromHandWithoutPayingManaCostEffect.class::cast)
+                    .findFirst()
+                    .map(MayCastFromHandWithoutPayingManaCostEffect::revealCardOnDecline)
+                    .orElse(true);
+            if (revealCardOnDecline) {
+                gameLogService.append(gameData,
+                        GameLog.textCardText(playerName + " declines to cast ", cardToCast, "."));
+                log.info("Game {} - {} declines to cast {} from hand", gameData.id,
+                        playerName, cardToCast.getName());
+            } else {
+                gameLogService.append(gameData,
+                        GameLog.text(playerName + " declines to cast the chosen card."));
+                log.info("Game {} - {} declines to cast the chosen card from hand", gameData.id,
+                        playerName);
+            }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }

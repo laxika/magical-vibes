@@ -14,15 +14,23 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                         (e.g. Sphinx of the Chimes "Discard two nonland cards with the same name")
  * @param trackManaValue   when true, snapshot the discarded card's mana value into the stack entry's
  *                         {@code xValue} at payment (Mercurial Chemister)
+ * @param imprintOnSource  when true, imprint the discarded card on the source card so the ability's own
+ *                         effects can inspect it at resolution via the {@code ImprintedCardMatches}
+ *                         condition ("If the discarded card was a Zombie card" — Necromancer's Stockpile)
  */
 public record DiscardCardTypeCost(CardPredicate predicate, String label, boolean manaValueEqualsX, int count,
-                                  boolean sameName, boolean trackManaValue)
+                                  boolean sameName, boolean trackManaValue, boolean imprintOnSource)
         implements HandCardCost {
 
     public DiscardCardTypeCost {
         if (count < 1) {
             throw new IllegalArgumentException("discard count must be >= 1");
         }
+    }
+
+    public DiscardCardTypeCost(CardPredicate predicate, String label, boolean manaValueEqualsX, int count,
+                               boolean sameName, boolean trackManaValue) {
+        this(predicate, label, manaValueEqualsX, count, sameName, trackManaValue, false);
     }
 
     public DiscardCardTypeCost(CardPredicate predicate, String label, boolean manaValueEqualsX, int count,

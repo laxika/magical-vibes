@@ -16,6 +16,7 @@ import java.util.Set;
 @CardRegistration(set = "M12", collectorNumber = "69")
 @CardRegistration(set = "M13", collectorNumber = "62")
 @CardRegistration(set = "M14", collectorNumber = "64")
+@CardRegistration(set = "M15", collectorNumber = "71")
 @CardRegistration(set = "MOR", collectorNumber = "43")
 public class Negate extends Card {
 

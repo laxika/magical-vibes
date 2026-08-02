@@ -168,14 +168,19 @@ public class DeathTriggerCollectorService {
         if (dyingPermanent == null) {
             return false;
         }
-        // Snapshot the total counter count across every concrete counter type (ANY and SILVER are
-        // wildcard categories, not stored on a permanent) — one token is created per counter.
-        int counters = 0;
-        for (CounterType type : CounterType.values()) {
-            if (type == CounterType.ANY || type == CounterType.SILVER) {
-                continue;
+        int counters;
+        if (effect.counterType() != null) {
+            counters = dyingPermanent.getCounterCount(effect.counterType());
+        } else {
+            // Snapshot the total counter count across every concrete counter type (ANY and SILVER are
+            // wildcard categories, not stored on a permanent) — one token is created per counter.
+            counters = 0;
+            for (CounterType type : CounterType.values()) {
+                if (type == CounterType.ANY || type == CounterType.SILVER) {
+                    continue;
+                }
+                counters += dyingPermanent.getCounterCount(type);
             }
-            counters += dyingPermanent.getCounterCount(type);
         }
         if (counters < 1) {
             return false;

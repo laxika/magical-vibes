@@ -225,6 +225,11 @@ public class Permanent {
      *  {@code TurnCleanupService}. Absent keys mean nothing pending. */
     private final Map<CounterType, Integer> countersToRemoveAtNextCleanup = new EnumMap<>(CounterType.class);
     @Setter private int loyaltyActivationsThisTurn;
+    /** Extra loyalty activations granted to this planeswalker this turn on top of the normal
+     *  allowance ("you may activate one of its loyalty abilities once this turn as though none of its
+     *  loyalty abilities have been activated this turn" — The Chain Veil). Reset in the untap step
+     *  alongside {@link #loyaltyActivationsThisTurn}. */
+    @Setter private int extraLoyaltyActivationsThisTurn;
     /**
      * Siege battles: the opponent chosen to protect this battle as it entered. Only that player
      * may block attackers attacking this battle; everyone else (including the controller) may attack it.
@@ -553,6 +558,7 @@ public class Permanent {
         this.counters.putAll(source.counters);
         this.countersToRemoveAtNextCleanup.putAll(source.countersToRemoveAtNextCleanup);
         this.loyaltyActivationsThisTurn = source.loyaltyActivationsThisTurn;
+        this.extraLoyaltyActivationsThisTurn = source.extraLoyaltyActivationsThisTurn;
         this.protectorPlayerId = source.protectorPlayerId;
         this.enteredFromGraveyardOwnerId = source.enteredFromGraveyardOwnerId;
         this.grantedKeywords.addAll(source.grantedKeywords);

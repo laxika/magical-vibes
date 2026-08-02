@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "71")
+@CardRegistration(set = "M15", collectorNumber = "74")
 public class PeelFromReality extends Card {
 
     public PeelFromReality() {

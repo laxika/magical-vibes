@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 
 @CardRegistration(set = "DKA", collectorNumber = "14")
+@CardRegistration(set = "M15", collectorNumber = "20")
 public class MidnightGuard extends Card {
 
     public MidnightGuard() {

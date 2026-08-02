@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "207")
+@CardRegistration(set = "M15", collectorNumber = "216")
 public class GargoyleSentinel extends Card {
 
     public GargoyleSentinel() {

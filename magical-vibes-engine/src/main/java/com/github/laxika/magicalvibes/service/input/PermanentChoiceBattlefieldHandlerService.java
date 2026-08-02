@@ -207,6 +207,8 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", newTarget.getCard(), "."));
         log.info("Game {} - {} reattached to {}", gameData.id, aura.getCard().getName(), newTarget.getCard().getName());
 
+        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura.getCard(), permanentId);
+
         // Begun mid-resolution (Aura Graft's own spell entry is parked) — canonical epilogue resumes it.
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
@@ -228,6 +230,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
             aura.setTimestamp(gameData.nextTimestamp());
             gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", newTarget.getCard(), "."));
+            triggerCollectionService.checkAuraAttachedTriggers(gameData, aura.getCard(), permanentId);
         }
 
         // A moved control Aura (e.g. Control Magic) grants control of its new host to the Aura's controller.
@@ -264,6 +267,8 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", newTarget.getCard(), "."));
         log.info("Game {} - {} reattached to {} after sacrifice", gameData.id,
                 aura.getCard().getName(), newTarget.getCard().getName());
+
+        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura.getCard(), permanentId);
 
         permanentRemovalService.removeOrphanedAuras(gameData);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

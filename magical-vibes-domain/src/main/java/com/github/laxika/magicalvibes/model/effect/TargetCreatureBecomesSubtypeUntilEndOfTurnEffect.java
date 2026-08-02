@@ -12,10 +12,16 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  *
  * @param subtype the creature type the target becomes
  */
-public record TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype subtype) implements CardEffect {
+public record TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype subtype, GrantScope scope) implements CardEffect {
+
+    public TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype subtype) {
+        this(subtype, GrantScope.TARGET);
+    }
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.CREATURE);
+        return scope == GrantScope.TARGET_PLAYERS_CREATURES
+                ? TargetSpec.benign(TargetCategory.PLAYER)
+                : TargetSpec.benign(TargetCategory.CREATURE);
     }
 }

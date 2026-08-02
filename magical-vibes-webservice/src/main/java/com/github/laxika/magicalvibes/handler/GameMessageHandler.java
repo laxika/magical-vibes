@@ -468,7 +468,7 @@ public class GameMessageHandler implements MessageHandler {
 
         try {
             gameService.activateGraveyardAbility(gameData, player, request.graveyardCardIndex(), request.abilityIndex(),
-                    request.xValue(), request.targetId());
+                    request.xValue(), request.targetId(), request.graveyardCardIds());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -813,6 +813,24 @@ public class GameMessageHandler implements MessageHandler {
                     com.github.laxika.magicalvibes.model.ActivatedAbility ability = abilities.get(request.abilityIndex());
                     response = validTargetService.computeValidTargetsForAbility(
                             gameData, permanent.getCard(), ability, player.getId(), request.permanentIndex(),
+                            request.alreadySelectedIds() != null ? request.alreadySelectedIds() : java.util.List.of(),
+                            request.xValue());
+                } else if (request.graveyardCardIndex() != null && request.abilityIndex() != null) {
+                    // Graveyard activated ability announcing a battlefield/player target group
+                    java.util.List<com.github.laxika.magicalvibes.model.Card> graveyard = gameData.playerGraveyards.get(player.getId());
+                    if (graveyard == null || request.graveyardCardIndex() < 0 || request.graveyardCardIndex() >= graveyard.size()) {
+                        handleError(connection, "Invalid graveyard card index");
+                        return;
+                    }
+                    com.github.laxika.magicalvibes.model.Card card = graveyard.get(request.graveyardCardIndex());
+                    java.util.List<com.github.laxika.magicalvibes.model.ActivatedAbility> abilities =
+                            gameService.getEffectiveGraveyardAbilities(gameData, card, player.getId());
+                    if (request.abilityIndex() < 0 || request.abilityIndex() >= abilities.size()) {
+                        handleError(connection, "Invalid ability index");
+                        return;
+                    }
+                    response = validTargetService.computeValidTargetsForAbility(
+                            gameData, card, abilities.get(request.abilityIndex()), player.getId(), -1,
                             request.alreadySelectedIds() != null ? request.alreadySelectedIds() : java.util.List.of(),
                             request.xValue());
                 } else {

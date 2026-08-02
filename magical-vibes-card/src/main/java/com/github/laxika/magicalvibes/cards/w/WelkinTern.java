@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M13", collectorNumber = "79")
+@CardRegistration(set = "M15", collectorNumber = "84")
 public class WelkinTern extends Card {
 
     public WelkinTern() {

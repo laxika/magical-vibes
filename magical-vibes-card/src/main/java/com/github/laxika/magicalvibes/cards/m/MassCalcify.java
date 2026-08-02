@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "12")
+@CardRegistration(set = "M15", collectorNumber = "18")
 public class MassCalcify extends Card {
 
     public MassCalcify() {

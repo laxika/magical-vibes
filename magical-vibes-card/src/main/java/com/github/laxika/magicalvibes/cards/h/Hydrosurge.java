@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M13", collectorNumber = "54")
+@CardRegistration(set = "M15", collectorNumber = "58")
 public class Hydrosurge extends Card {
 
     public Hydrosurge() {

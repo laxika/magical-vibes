@@ -16,6 +16,12 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Emblem;
+import com.github.laxika.magicalvibes.model.effect.BoostAttackingCreatureOnAttacksYouEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
@@ -893,6 +899,41 @@ public class CombatAttackService {
                         GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
                 log.info("Game {} - {} ON_CREATURES_ATTACK_YOU trigger for player {}",
                         gameData.id, perm.getCard().getName(), attackedPlayerId);
+            }
+        }
+
+        // Emblem version of "whenever a creature attacks you" (Garruk, Apex Predator's emblem). The
+        // emblem wording lacks the "or a planeswalker you control" clause, so it only fires when the
+        // attacked target is the emblem's controller themselves.
+        for (int idx : attackerIndices) {
+            Permanent attacker = battlefield.get(idx);
+            UUID attackedTargetId = resolvedTargets.get(idx);
+            if (!gameData.playerIds.contains(attackedTargetId)) continue;
+            for (Emblem emblem : gameData.emblems) {
+                if (!emblem.controllerId().equals(attackedTargetId)) continue;
+                for (CardEffect emblemEffect : emblem.staticEffects()) {
+                    if (!(emblemEffect instanceof BoostAttackingCreatureOnAttacksYouEffect boost)) continue;
+
+                    Card source = emblem.sourceCard();
+                    String desc = (source != null ? source.getName() : "Emblem") + "'s emblem";
+                    StackEntry trigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            source,
+                            attackedTargetId,
+                            desc,
+                            new ArrayList<>(List.of(
+                                    new BoostTargetCreatureEffect(boost.powerBoost(), boost.toughnessBoost()),
+                                    new GrantKeywordEffect(boost.keywords(), GrantScope.TARGET, null,
+                                            GrantDuration.END_OF_TURN, null)
+                            )),
+                            attacker.getId(),
+                            (UUID) null
+                    );
+                    trigger.setNonTargeting(true);
+                    gameData.stack.add(trigger);
+                    gameLogService.append(gameData, GameLog.text(desc + " triggers."));
+                    log.info("Game {} - emblem attack trigger boosts {}", gameData.id, attacker.getCard().getName());
+                }
             }
         }
 

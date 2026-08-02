@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -26,9 +27,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Resolves {@link AttachAurasToSourceEffect} (Bruna, Light of Alabaster): the controller picks any
- * number of Auras out of one pool — every Aura permanent on the battlefield plus every Aura card in
- * their own graveyard and hand — and each pick is attached to the source creature.
+ * Resolves {@link AttachAurasToSourceEffect}: the controller picks Auras out of one pool and each
+ * pick is attached to the source permanent.
  *
  * <p>Only Auras that could legally enchant the source are offered, so no pick can fail to move
  * (CR 701.3a). Auras already attached to the source aren't offered: attaching something to what
@@ -46,6 +46,7 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
     private final BattlefieldEntryService battlefieldEntryService;
     private final CreatureControlService creatureControlService;
     private final GraveyardService graveyardService;
+    private final LibrarySearchSupport librarySearchSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -60,15 +61,21 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
         }
 
         UUID controllerId = entry.getControllerId();
-        List<UUID> choosableIds = choosableAuraCardIds(gameData, host, controllerId);
+        AttachAurasToSourceEffect auraEffect = (AttachAurasToSourceEffect) effect;
+        List<UUID> choosableIds = choosableAuraCardIds(gameData, host, controllerId,
+                auraEffect.includeBattlefield(), auraEffect.includeLibrary());
         if (choosableIds.isEmpty()) {
+            if (auraEffect.includeLibrary() && canSearchLibrary(gameData, controllerId)) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            }
             gameLogService.append(gameData,
                     GameLog.cardThen(host.getCard(), " has no Auras it could gain."));
             return;
         }
 
         playerInputService.beginAttachAurasChoice(gameData, new PendingInteraction.AttachAurasChoice(
-                controllerId, choosableIds, host.getId(), host.getCard().getName()));
+                controllerId, choosableIds, host.getId(), host.getCard().getName(),
+                auraEffect.maxCount()));
     }
 
     /**
@@ -91,7 +98,8 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
             }
             movedAny |= attachFromBattlefield(gameData, host, cardId)
                     || attachFromGraveyard(gameData, host, controllerId, cardId)
-                    || attachFromHand(gameData, host, controllerId, cardId);
+                    || attachFromHand(gameData, host, controllerId, cardId)
+                    || attachFromLibrary(gameData, host, controllerId, cardId);
         }
 
         if (movedAny) {
@@ -100,23 +108,34 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
         }
     }
 
-    /** Aura card ids that could enchant the host: battlefield first, then graveyard, then hand. */
-    private List<UUID> choosableAuraCardIds(GameData gameData, Permanent host, UUID controllerId) {
+    /** Aura card ids that could enchant the host, in battlefield, graveyard, hand, and library order. */
+    private List<UUID> choosableAuraCardIds(GameData gameData, Permanent host, UUID controllerId,
+            boolean includeBattlefield, boolean includeLibrary) {
         List<UUID> ids = new ArrayList<>();
-        gameData.forEachPermanent((playerId, permanent) -> {
-            if (!permanent.getCard().isAura() || host.getId().equals(permanent.getAttachedTo())) {
-                return;
-            }
-            UUID auraControllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
-            if (auraAttachmentService.canEnchant(gameData, permanent.getCard(), auraControllerId, host)) {
-                ids.add(permanent.getCard().getId());
-            }
-        });
+        if (includeBattlefield) {
+            gameData.forEachPermanent((playerId, permanent) -> {
+                if (!permanent.getCard().isAura() || host.getId().equals(permanent.getAttachedTo())) {
+                    return;
+                }
+                UUID auraControllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+                if (auraAttachmentService.canEnchant(gameData, permanent.getCard(), auraControllerId, host)) {
+                    ids.add(permanent.getCard().getId());
+                }
+            });
+        }
         addEnchantableAuraCards(gameData, host, controllerId,
                 gameData.playerGraveyards.getOrDefault(controllerId, List.of()), ids);
         addEnchantableAuraCards(gameData, host, controllerId,
                 gameData.playerHands.getOrDefault(controllerId, List.of()), ids);
+        if (includeLibrary && canSearchLibrary(gameData, controllerId)) {
+            addEnchantableAuraCards(gameData, host, controllerId,
+                    gameData.playerDecks.getOrDefault(controllerId, List.of()), ids);
+        }
         return ids;
+    }
+
+    private boolean canSearchLibrary(GameData gameData, UUID controllerId) {
+        return !librarySearchSupport.isSearchPrevented(gameData, controllerId);
     }
 
     private void addEnchantableAuraCards(GameData gameData, Permanent host, UUID controllerId,
@@ -169,6 +188,18 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
         }
         hand.remove(card);
         putAuraOntoBattlefieldAttached(gameData, host, controllerId, card, "hand");
+        return true;
+    }
+
+    private boolean attachFromLibrary(GameData gameData, Permanent host, UUID controllerId, UUID cardId) {
+        List<Card> library = gameData.playerDecks.get(controllerId);
+        Card card = findCard(library, cardId);
+        if (card == null) {
+            return false;
+        }
+        library.remove(card);
+        putAuraOntoBattlefieldAttached(gameData, host, controllerId, card, "library");
+        LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
         return true;
     }
 

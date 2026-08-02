@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeU
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M12", collectorNumber = "78")
+@CardRegistration(set = "M15", collectorNumber = "81")
 public class TurnToFrog extends Card {
 
     public TurnToFrog() {

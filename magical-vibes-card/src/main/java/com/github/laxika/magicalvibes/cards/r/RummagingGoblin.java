@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "160")
 @CardRegistration(set = "M13", collectorNumber = "146")
+@CardRegistration(set = "M15", collectorNumber = "159")
 public class RummagingGoblin extends Card {
 
     public RummagingGoblin() {

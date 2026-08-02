@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "60")
+@CardRegistration(set = "M15", collectorNumber = "63")
 public class JacesIngenuity extends Card {
 
     public JacesIngenuity() {

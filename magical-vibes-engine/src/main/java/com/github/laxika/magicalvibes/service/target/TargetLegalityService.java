@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOn
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
@@ -269,6 +270,34 @@ public class TargetLegalityService {
                 for (UUID cardId : targetCardIds) {
                     if (gameQueryService.findCardInGraveyardById(gameData, cardId) == null) {
                         throw new IllegalStateException("Target card not found in any graveyard");
+                    }
+                }
+                break;
+            }
+            if (effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnCardsEffect) {
+                // "Return up to N target [type] cards from your graveyard to your hand" (Soul of
+                // Innistrad) — no more than N distinct cards, each in the controller's own graveyard
+                // and matching the filter.
+                if (targetCardIds.size() > returnCardsEffect.maxTargets()) {
+                    throw new IllegalStateException("Cannot target more than "
+                            + returnCardsEffect.maxTargets() + " cards");
+                }
+                if (new HashSet<>(targetCardIds).size() != targetCardIds.size()) {
+                    throw new IllegalStateException("Cannot target the same card twice");
+                }
+                for (UUID cardId : targetCardIds) {
+                    Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                    if (card == null) {
+                        throw new IllegalStateException("Target card not found in any graveyard");
+                    }
+                    if (returnCardsEffect.filter() != null
+                            && !predicateEvaluationService.matchesCardPredicate(card, returnCardsEffect.filter(), null)) {
+                        throw new IllegalStateException("Target card must be a "
+                                + CardPredicateUtils.describeFilter(returnCardsEffect.filter()));
+                    }
+                    UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+                    if (graveyardOwnerId != null && !graveyardOwnerId.equals(playerId)) {
+                        throw new IllegalStateException("Target must be in your graveyard");
                     }
                 }
                 break;

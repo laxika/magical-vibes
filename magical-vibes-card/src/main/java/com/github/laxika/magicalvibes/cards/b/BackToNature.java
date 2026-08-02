@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "164")
+@CardRegistration(set = "M15", collectorNumber = "169")
 public class BackToNature extends Card {
 
     public BackToNature() {

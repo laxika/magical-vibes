@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "194")
+@CardRegistration(set = "M15", collectorNumber = "137")
 public class ConeOfFlame extends Card {
 
     public ConeOfFlame() {

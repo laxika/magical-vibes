@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "3")
+@CardRegistration(set = "M15", collectorNumber = "2")
 public class AjanisPridemate extends Card {
 
     public AjanisPridemate() {

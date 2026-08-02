@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -37,7 +38,8 @@ public record LibrarySearchParams(
         boolean manaValueExact,
         List<String> excludedCardNames,
         boolean grantHaste,
-        boolean exileAtEndStep
+        boolean exileAtEndStep,
+        AnimatePermanentsEffect animateFound
 ) {
     public LibrarySearchParams {
         if (followUp == null) {
@@ -61,7 +63,8 @@ public record LibrarySearchParams(
                 restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
-                manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep);
+                manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
+                animateFound);
     }
 
     public static class Builder {
@@ -93,6 +96,7 @@ public record LibrarySearchParams(
         private List<String> excludedCardNames = List.of();
         private boolean grantHaste;
         private boolean exileAtEndStep;
+        private AnimatePermanentsEffect animateFound;
 
         private Builder(UUID playerId, List<Card> cards) {
             this.playerId = playerId;
@@ -225,13 +229,19 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder animateFound(AnimatePermanentsEffect animateFound) {
+            this.animateFound = animateFound;
+            return this;
+        }
+
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                     restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, filterCardTypes,
                     accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                     filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
-                    manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep);
+                    manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
+                    animateFound);
         }
     }
 }

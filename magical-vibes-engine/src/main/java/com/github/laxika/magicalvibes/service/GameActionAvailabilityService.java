@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ public class GameActionAvailabilityService {
     private final CastingCostService castingCostService;
     private final CastingPermissionService castingPermissionService;
     private final PotentialManaService potentialManaService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     /**
      * The potential-mana model this service answers playability with. Exposed so AI planning shares
@@ -231,7 +233,7 @@ public class GameActionAvailabilityService {
                 && ctx.isActivePlayer() && ctx.isMainPhase()
                 && ctx.landsPlayed() < gameData.getMaxLandsThisTurn(playerId) && ctx.stackEmpty()
                 && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
-                && !castingPermissionService.isLandPlayRestrictedByWardOfBones(gameData, playerId)
+                && !castingPermissionService.isLandPlayRestricted(gameData, playerId)
                 && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card);
         boolean spellPlayable = isPlayableAsSpell(gameData, playerId, card, pool, extraConvokeMana, additionalGenericCost, ctx);
 
@@ -353,7 +355,8 @@ public class GameActionAvailabilityService {
             return true;
         }
 
-        if (card.getKeywords().contains(Keyword.CONVOKE)) {
+        if (card.getKeywords().contains(Keyword.CONVOKE)
+                || hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.CONVOKE)) {
             // Check if castable with convoke: mana pool + untapped creatures >= total cost
             int untappedCreatureCount = 0;
             if (ctx.battlefield() != null) {
@@ -426,6 +429,21 @@ public class GameActionAvailabilityService {
         return castingCostService.canPayAlternateHandCast(gameData, playerId, card);
     }
 
+    private boolean hasSpellCastingAbilityGrant(GameData gameData, UUID playerId, Card card, Keyword ability) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof SpellCastingAbilityGrantingEffect grant
+                        && grant.grantedAbility() == ability
+                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public List<Integer> getPlayableGraveyardLandIndices(GameData gameData, UUID playerId) {
         List<Integer> playable = new ArrayList<>();
         if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()) {
@@ -452,7 +470,7 @@ public class GameActionAvailabilityService {
 
         if (!isActivePlayer || !isMainPhase || landsPlayed >= gameData.getMaxLandsThisTurn(playerId) || !stackEmpty
                 || gameData.playersCantPlayLandsThisTurn.contains(playerId)
-                || castingPermissionService.isLandPlayRestrictedByWardOfBones(gameData, playerId)) {
+                || castingPermissionService.isLandPlayRestricted(gameData, playerId)) {
             return playable;
         }
 

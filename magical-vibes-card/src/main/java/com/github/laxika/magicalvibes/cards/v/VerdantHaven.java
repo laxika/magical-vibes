@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M14", collectorNumber = "199")
+@CardRegistration(set = "M15", collectorNumber = "206")
 public class VerdantHaven extends Card {
 
     public VerdantHaven() {

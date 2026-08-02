@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "DKA", collectorNumber = "106")
 @CardRegistration(set = "M13", collectorNumber = "151")
+@CardRegistration(set = "M15", collectorNumber = "166")
 public class TorchFiend extends Card {
 
     public TorchFiend() {

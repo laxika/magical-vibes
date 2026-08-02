@@ -273,6 +273,8 @@ public class GameData {
     public final Set<CardColor> preventDamageFromColors = ConcurrentHashMap.newKeySet();
     public UUID combatDamageRedirectTarget;
     public final Map<UUID, Map<CardColor, Integer>> playerColorDamagePreventionCount = new ConcurrentHashMap<>();
+    /** Target IDs to colors whose damage is prevented to that target until end of turn. */
+    public final Map<UUID, Set<CardColor>> colorDamagePreventionUntilEndOfTurn = new ConcurrentHashMap<>();
     public final List<PendingMayAbility> pendingMayAbilities = new ArrayList<>();
     /** Tariff: players (APNAP order) still to be processed after the one currently being resolved. */
     public final List<UUID> tariffRemainingPlayers = new ArrayList<>();
@@ -320,6 +322,7 @@ public class GameData {
     /** CR 603.5 — stores the StackEntry for resolution-time target selection so the target can be set on it. */
     public StackEntry resolvedMayTargetingEntry;
     public Integer chosenXValue;
+    public PendingAbilityCounterCostActivation pendingAbilityCounterCostActivation;
     /**
      * Resolution-time "choose a creature type" answer for a spell/ability that has no permanent
      * to hang the choice on (e.g. Coordinated Barrage). Set by the choice handler, read and
@@ -358,6 +361,8 @@ public class GameData {
     public final IllicitAuctionState illicitAuction = new IllicitAuctionState();
     /** Progress state for Torment of Hailfire's "repeat X times: each opponent loses life unless…" flow. */
     public final TormentState torment = new TormentState();
+    /** Progress state for Indulgent Tormentor's target-opponent choice. */
+    public final IndulgentTormentorState indulgentTormentor = new IndulgentTormentorState();
     /** Progress state for Forbidden Ritual's "sacrifice nontoken; opponent loses life unless…" loop. */
     public final ForbiddenRitualState forbiddenRitual = new ForbiddenRitualState();
     /** Progress state for Winter's Chill's per-target "may pay {1} or {2}" flow. */
@@ -391,6 +396,10 @@ public class GameData {
      *  cleared at end-of-turn cleanup. */
     public final Map<UUID, List<UUID>> pendingNextDrawFromExiledPile = new ConcurrentHashMap<>();
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisTurn = new ConcurrentHashMap<>();
+    /** Players who have activated a loyalty ability of a planeswalker this turn, backing the
+     *  {@code DidntActivateLoyaltyAbilityThisTurn} intervening-if (The Chain Veil). Recorded when the
+     *  loyalty cost is paid, so an activation whose ability is countered still counts. */
+    public final Set<UUID> playersWhoActivatedLoyaltyAbilityThisTurn = ConcurrentHashMap.newKeySet();
     /** Per-permanent, per-ability-index count of activations for the whole game, backing "Activate
      *  only once" ({@code ActivatedAbility.maxActivationsPerGame}, e.g. Goblin Ski Patrol). Keyed by
      *  permanent id, so a permanent that leaves and re-enters the battlefield is a new object and may
@@ -639,6 +648,11 @@ public class GameData {
      *  and cleared at end of turn. */
     public final Map<UUID, Integer> spellAdditionalEnterCounters = new ConcurrentHashMap<>();
 
+    /** Card ids of creature spells paid for with haste-granting mana (Generator Servant), so the
+     *  permanent they become enters with haste until end of turn. Consumed by
+     *  {@code BattlefieldEntryService} and cleared at end of turn. */
+    public final Set<UUID> spellsGrantedHasteOnEntry = ConcurrentHashMap.newKeySet();
+
     /** Player IDs that may tap lands they don't control for mana until end of turn (Piracy). The
      *  mana produced this way may only be spent to cast spells. Cleared at end of turn. */
     public final Set<UUID> mayTapLandsForSpellsUntilEndOfTurn = ConcurrentHashMap.newKeySet();
@@ -783,6 +797,9 @@ public class GameData {
      *  Used by Wound Reflection ("each opponent loses life equal to the life they lost this turn").
      *  Cleared at the start of each turn. */
     public final Map<UUID, Integer> lifeLostThisTurn = new ConcurrentHashMap<>();
+
+    /** Tracks how much life each player lost during the immediately preceding turn. */
+    public final Map<UUID, Integer> lifeLostLastTurn = new ConcurrentHashMap<>();
 
     /** Tracks which permanents dealt combat damage to which players this turn.
      *  Maps source permanent UUID → set of damaged player UUIDs. */
@@ -2177,6 +2194,7 @@ public class GameData {
                 ? copy.pendingEffectResolutionEntry
                 : (this.resolvedMayTargetingEntry != null ? new StackEntry(this.resolvedMayTargetingEntry) : null);
         copy.chosenXValue = this.chosenXValue;
+        copy.pendingAbilityCounterCostActivation = this.pendingAbilityCounterCostActivation;
         copy.chosenSpellSubtype = this.chosenSpellSubtype;
         copy.rerunCurrentEffectAfterInteraction = this.rerunCurrentEffectAfterInteraction;
         copy.deferPlayerLossCheck = this.deferPlayerLossCheck;
@@ -2203,6 +2221,9 @@ public class GameData {
         copy.torment.remaining.addAll(this.torment.remaining);
         copy.torment.currentOpponentId = this.torment.currentOpponentId;
         copy.torment.chosenMode = this.torment.chosenMode;
+        copy.indulgentTormentor.active = this.indulgentTormentor.active;
+        copy.indulgentTormentor.waitingForSacrifice = this.indulgentTormentor.waitingForSacrifice;
+        copy.indulgentTormentor.chosenMode = this.indulgentTormentor.chosenMode;
         copy.forbiddenRitual.active = this.forbiddenRitual.active;
         copy.forbiddenRitual.controllerSacrificed = this.forbiddenRitual.controllerSacrificed;
         copy.forbiddenRitual.lifeLoss = this.forbiddenRitual.lifeLoss;
@@ -2253,6 +2274,11 @@ public class GameData {
         copy.allDamagePreventionPredicates.addAll(this.allDamagePreventionPredicates);
         copy.creaturesWithCombatDamagePrevented.addAll(this.creaturesWithCombatDamagePrevented);
         copy.creaturesPreventedFromDealingCombatDamage.addAll(this.creaturesPreventedFromDealingCombatDamage);
+        this.colorDamagePreventionUntilEndOfTurn.forEach((targetId, colors) -> {
+            Set<CardColor> copied = ConcurrentHashMap.newKeySet();
+            copied.addAll(colors);
+            copy.colorDamagePreventionUntilEndOfTurn.put(targetId, copied);
+        });
         this.handsRevealedWhileSourceOnBattlefield.forEach((sourceId, playerIds) -> {
             Set<UUID> copied = ConcurrentHashMap.newKeySet();
             copied.addAll(playerIds);
@@ -2588,6 +2614,7 @@ public class GameData {
         // Read by ConditionEvaluationService / AmountEvaluationService / TurnProgressionService and
         // only reset at cleanup, so a copy taken mid-turn must carry them.
         copy.lifeLostThisTurn.putAll(this.lifeLostThisTurn);
+        copy.lifeLostLastTurn.putAll(this.lifeLostLastTurn);
         copy.skipNextCombatPhaseCount.putAll(this.skipNextCombatPhaseCount);
         copy.skipNextDrawStepCount.putAll(this.skipNextDrawStepCount);
         copy.skipNextTurnCount.putAll(this.skipNextTurnCount);
@@ -2613,6 +2640,7 @@ public class GameData {
         this.nextCreatureSpellEmpowermentsThisTurn.forEach((k, v) ->
                 copy.nextCreatureSpellEmpowermentsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         copy.spellAdditionalEnterCounters.putAll(this.spellAdditionalEnterCounters);
+        copy.spellsGrantedHasteOnEntry.addAll(this.spellsGrantedHasteOnEntry);
         copy.mayTapLandsForSpellsUntilEndOfTurn.addAll(this.mayTapLandsForSpellsUntilEndOfTurn);
         copy.mayPayLifeForColorlessManaUntilEndOfTurn.addAll(this.mayPayLifeForColorlessManaUntilEndOfTurn);
         copy.graveyardCreatureCastPermissionsUntilEndOfTurn.putAll(this.graveyardCreatureCastPermissionsUntilEndOfTurn);

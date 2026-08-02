@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
@@ -738,6 +739,20 @@ public class BattlefieldEntryService {
 
         applyGrantedBloodthirst(gameData, controllerId, permanent);
         applySpellAdditionalEnterCounters(gameData, permanent);
+        applySpellGrantedHaste(gameData, permanent);
+    }
+
+    /**
+     * Haste granted by the mana that paid for the creature spell (Generator Servant). The grant is
+     * keyed by card id and consumed here, so it applies only to the permanent that spell becomes; it
+     * wears off with the permanent's other until-end-of-turn keyword grants.
+     */
+    private void applySpellGrantedHaste(GameData gameData, Permanent permanent) {
+        if (gameData.spellsGrantedHasteOnEntry.remove(permanent.getCard().getId())) {
+            permanent.getGrantedKeywords().add(Keyword.HASTE);
+            log.info("Game {} - {} enters with haste (paid for with haste-granting mana)",
+                    gameData.id, permanent.getCard().getName());
+        }
     }
 
     /**
@@ -1108,7 +1123,18 @@ public class BattlefieldEntryService {
         // Naban, Dean of Iteration: extra triggers when a Wizard enters
         int extraWizardTriggers = gameQueryService.countETBExtraTriggers(gameData, controllerId, card);
 
-        List<CardEffect> triggeredEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        List<CardEffect> triggeredEffects = new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard() == card) {
+                    triggeredEffects.addAll(triggerCollectionService.grantedTriggeredEffects(
+                            gameData, permanent, EffectSlot.ON_ENTER_BATTLEFIELD));
+                    break;
+                }
+            }
+        }
+        triggeredEffects = triggeredEffects.stream()
                 .filter(e -> !(e instanceof ChooseColorEffect))
                 // "As enters, choose a creature type" is a replacement-style choice made during entry
                 // (handled via beginSubtypeChoice), not a triggered ability queued onto the stack.
@@ -1209,7 +1235,9 @@ public class BattlefieldEntryService {
         if (!wrappedCategory.includesPermanents() || wrappedCategory.includesPlayers() || wrappedCategory.isGraveyard()) {
             return false;
         }
-        if (!(card.getTargetFilter() instanceof PermanentPredicateTargetFilter filter)) {
+        PermanentPredicate effectPredicate = EffectResolution.targetPredicateOf(wrapped);
+        if (!(card.getTargetFilter() instanceof PermanentPredicateTargetFilter)
+                && effectPredicate == null) {
             return false;
         }
         FilterContext ctx = FilterContext.of(gameData)
@@ -1219,9 +1247,12 @@ public class BattlefieldEntryService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent p : battlefield) {
-                if (predicateEvaluationService.matchesPermanentPredicate(p, filter.predicate(), ctx)) {
-                    return false;
+                boolean matches = effectPredicate == null
+                        || predicateEvaluationService.matchesPermanentPredicate(p, effectPredicate, ctx);
+                if (matches && card.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
+                    matches = predicateEvaluationService.matchesPermanentPredicate(p, filter.predicate(), ctx);
                 }
+                if (matches) return false;
             }
         }
         return true;

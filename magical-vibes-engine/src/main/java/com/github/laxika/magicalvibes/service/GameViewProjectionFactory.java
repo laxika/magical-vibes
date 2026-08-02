@@ -478,7 +478,7 @@ public class GameViewProjectionFactory {
             if (card.hasType(CardType.LAND)) {
                 if (isActivePlayer && isMainPhase && landsPlayed < gameData.getMaxLandsThisTurn(playerId) && stackEmpty
                         && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
-                        && !castingPermissionService.isLandPlayRestrictedByWardOfBones(gameData, playerId)
+                        && !castingPermissionService.isLandPlayRestricted(gameData, playerId)
                         && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)) {
                     playable.add(cardViewFactory.create(card));
                 }

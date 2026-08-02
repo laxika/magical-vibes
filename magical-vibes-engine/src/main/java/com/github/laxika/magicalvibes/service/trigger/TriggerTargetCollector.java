@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -65,7 +66,7 @@ public class TriggerTargetCollector {
 
     /**
      * Options controlling trigger-slot–specific differences. Use the predefined constants:
-     * {@link #DEATH}, {@link #ATTACK}, {@link #END_STEP}.
+     * {@link #DEATH}, {@link #ATTACK}, {@link #END_STEP}, {@link #UPKEEP}.
      *
      * @param creaturesOnly            when {@code true}, permanent candidates are restricted to
      *                                 creatures. Used by death triggers such as Black Cat.
@@ -90,6 +91,7 @@ public class TriggerTargetCollector {
         public static final Options DEATH = new Options(true, true, false, false);
         public static final Options ATTACK = new Options(false, true, false, true);
         public static final Options END_STEP = new Options(false, false, true, true);
+        public static final Options UPKEEP = new Options(false, true, true, true);
     }
 
     /**
@@ -117,9 +119,7 @@ public class TriggerTargetCollector {
                 .map(e -> unwrap(e, options))
                 .anyMatch(e -> e.targetSpec().category().includesPermanents());
 
-        boolean opponentOnly = targetFilter instanceof PlayerPredicateTargetFilter ppf
-                && ppf.predicate() instanceof PlayerRelationPredicate prp
-                && prp.relation() == PlayerRelation.OPPONENT;
+        boolean opponentOnly = isOpponentRestricted(targetFilter);
 
         List<UUID> validTargets = new ArrayList<>();
 
@@ -156,9 +156,12 @@ public class TriggerTargetCollector {
 
             // An explicit PermanentPredicateTargetFilter fully governs which permanents are legal
             // targets, so the death pipeline's default "creatures only" narrowing must not intersect
-            // it away (e.g. Fire Snake's "destroy target land").
-            boolean creaturesOnly = options.creaturesOnly()
-                    && !(targetFilter instanceof PermanentPredicateTargetFilter);
+            // it away (e.g. Fire Snake's "destroy target land"). The permanent side of an
+            // AnyTargetPredicateTargetFilter governs in the same way (Scuttling Doom Engine's death
+            // trigger reaches planeswalkers, not creatures).
+            boolean explicitPermanentFilter = targetFilter instanceof PermanentPredicateTargetFilter
+                    || targetFilter instanceof AnyTargetPredicateTargetFilter;
+            boolean creaturesOnly = options.creaturesOnly() && !explicitPermanentFilter;
 
             // "Any target" = creature / planeswalker / player — never a land or other noncreature
             // permanent. Mirror ValidTargetService / TargetValidationService for true ANY_TARGET
@@ -168,7 +171,7 @@ public class TriggerTargetCollector {
                     .map(e -> unwrap(e, options))
                     .filter(e -> e.targetSpec().category().includesPermanents())
                     .toList();
-            boolean anyTargetPermanentsOnly = !(targetFilter instanceof PermanentPredicateTargetFilter)
+            boolean anyTargetPermanentsOnly = !explicitPermanentFilter
                     && !permanentEffects.isEmpty()
                     && permanentEffects.stream()
                             .allMatch(e -> e.targetSpec().category() == TargetCategory.ANY_TARGET);
@@ -206,6 +209,21 @@ public class TriggerTargetCollector {
         }
 
         return new Result(validTargets, canTargetPlayers, canTargetPermanents, opponentOnly);
+    }
+
+    /**
+     * Whether the card-level filter restricts player targets to opponents. Both a plain
+     * {@link PlayerPredicateTargetFilter} ("target opponent") and the player side of an
+     * {@link AnyTargetPredicateTargetFilter} ("target opponent or planeswalker") express this.
+     */
+    private static boolean isOpponentRestricted(TargetFilter targetFilter) {
+        PlayerPredicate playerPredicate = switch (targetFilter) {
+            case PlayerPredicateTargetFilter ppf -> ppf.predicate();
+            case AnyTargetPredicateTargetFilter anyFilter -> anyFilter.playerPredicate();
+            case null, default -> null;
+        };
+        return playerPredicate instanceof PlayerRelationPredicate prp
+                && prp.relation() == PlayerRelation.OPPONENT;
     }
 
     /**

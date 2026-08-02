@@ -416,11 +416,17 @@ public class AttackLegalityService {
                                 && mae.scope() == GrantScope.ENCHANTED_PLAYER_CREATURES)
                         .count();
             }
-            // Global "matching creatures attack each combat if able" (e.g. Goblin Assault)
+            // Global "matching creatures attack each combat if able" (e.g. Goblin Assault). The
+            // source ids let the matcher be source-relative ("other Goblin creatures you control",
+            // Goblin Rabblemaster).
+            FilterContext matcherContext = FilterContext.of(gameData)
+                    .withSourceCardId(permanent.getOriginalCard().getId())
+                    .withSourceControllerId(playerId);
             count[0] += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .filter(MatchingCreaturesMustAttackEffect.class::isInstance)
                     .map(MatchingCreaturesMustAttackEffect.class::cast)
-                    .filter(e -> predicateEvaluationService.matchesPermanentPredicate(gameData, creature, e.matcher()))
+                    .filter(e -> predicateEvaluationService.matchesPermanentPredicate(
+                            creature, e.matcher(), matcherContext))
                     .count();
         });
 

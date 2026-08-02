@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "24")
+@CardRegistration(set = "M15", collectorNumber = "16")
 public class KinsbaileSkirmisher extends Card {
 
     public KinsbaileSkirmisher() {

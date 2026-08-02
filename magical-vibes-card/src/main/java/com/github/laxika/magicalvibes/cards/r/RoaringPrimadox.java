@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "M13", collectorNumber = "188")
+@CardRegistration(set = "M15", collectorNumber = "196")
 public class RoaringPrimadox extends Card {
 
     public RoaringPrimadox() {

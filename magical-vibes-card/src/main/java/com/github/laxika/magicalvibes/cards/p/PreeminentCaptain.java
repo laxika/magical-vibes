@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "20")
+@CardRegistration(set = "M15", collectorNumber = "25")
 public class PreeminentCaptain extends Card {
 
     public PreeminentCaptain() {

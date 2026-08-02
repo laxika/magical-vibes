@@ -316,10 +316,26 @@ public class AnimationSupport {
         int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
         int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
 
+        animatePermanently(gameData, target, effect, power, toughness,
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
+    }
+
+    /**
+     * TARGET-less PERMANENT-duration animation of an already-identified permanent, for effects that
+     * animate permanents they just created rather than targeted — Nissa, Worldwaker's ultimate
+     * animates the basic lands its library search put onto the battlefield. The power/toughness are
+     * passed in already evaluated because there is no stack entry to build an
+     * {@link AmountContext} from.
+     */
+    public void animatePermanently(GameData gameData, Permanent target, AnimatePermanentsEffect effect,
+                                   int power, int toughness, String sourceName, UUID sourcePermanentId,
+                                   UUID controllerId) {
         target.setPermanentlyAnimated(true);
         target.setPermanentAnimatedPower(power);
         target.setPermanentAnimatedToughness(toughness);
-        addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness, EffectDuration.PERMANENT);
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
+                sourcePermanentId, controllerId, new SetBasePowerToughnessEffect(power, toughness),
+                target.getId(), null, null, EffectDuration.PERMANENT, 0));
 
         for (CardSubtype subtype : effect.grantedSubtypes()) {
             if (!target.getGrantedSubtypes().contains(subtype)) {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "DKA", collectorNumber = "54")
+@CardRegistration(set = "M15", collectorNumber = "86")
 public class BlackCat extends Card {
 
     public BlackCat() {

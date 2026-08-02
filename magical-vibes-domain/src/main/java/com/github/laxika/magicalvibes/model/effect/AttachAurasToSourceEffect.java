@@ -1,14 +1,28 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * "You may attach to this creature any number of Auras on the battlefield and you may put onto the
- * battlefield attached to it any number of Aura cards that could enchant it from your graveyard
- * and/or hand" (Bruna, Light of Alabaster).
- *
- * <p>Both halves are one selection: the controller picks any number of objects out of a single
- * pool holding every Aura permanent on the battlefield plus every Aura card in their own graveyard
- * and hand. Only Auras that could legally enchant the source are offered (CR 701.3a — an Aura
- * can't be attached to something it couldn't enchant), so nothing chosen can fail to move.
+ * Offers Auras from the configured zones and attaches the chosen cards to the source permanent.
+ * The no-argument form is Bruna's any-number battlefield/graveyard/hand effect; the parameterized
+ * form also supports one-card searches that include the controller's library.
  */
-public record AttachAurasToSourceEffect() implements CardEffect {
+public record AttachAurasToSourceEffect(boolean includeBattlefield, boolean includeLibrary,
+                                        int maxCount) implements CardEffect {
+
+    public AttachAurasToSourceEffect() {
+        this(true, false, Integer.MAX_VALUE);
+    }
+
+    public AttachAurasToSourceEffect(boolean includeLibrary, int maxCount) {
+        this(true, includeLibrary, maxCount);
+    }
+
+    public static AttachAurasToSourceEffect oneAuraSearch() {
+        return new AttachAurasToSourceEffect(false, true, 1);
+    }
+
+    public AttachAurasToSourceEffect {
+        if (maxCount < 1) {
+            throw new IllegalArgumentException("maxCount must be positive");
+        }
+    }
 }

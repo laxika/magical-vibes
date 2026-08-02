@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "30")
+@CardRegistration(set = "M15", collectorNumber = "31")
 public class SelflessCathar extends Card {
 
     public SelflessCathar() {

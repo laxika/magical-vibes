@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingAbilityActivation;
+import com.github.laxika.magicalvibes.model.PendingAbilityCounterCostActivation;
 import com.github.laxika.magicalvibes.model.PendingGraveyardAbilityActivation;
 import com.github.laxika.magicalvibes.model.PendingManaActivation;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -92,6 +93,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatur
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceCost;
+import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
@@ -784,6 +786,17 @@ public class AbilityActivationService {
 
     public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex,
                                          Integer xValue, UUID targetId) {
+        activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, xValue, targetId, null);
+    }
+
+    /**
+     * Graveyard ability activation whose targets are cards in graveyards (Soul of Innistrad). The ids
+     * are validated before any cost is paid (CR 601.2c) — so a self-exiling ability may legally target
+     * its own source card, which then fizzles once the exile cost is paid — and ride on the stack entry
+     * as {@code targetCardIds} for the graveyard handlers to resolve.
+     */
+    public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex,
+                                         Integer xValue, UUID targetId, List<UUID> graveyardTargetIds) {
         // Spell-only mana (Piracy) can't pay ability costs — hide it for the duration of this activation.
         ManaPool pool = gameData.playerManaPools.get(player.getId());
         if (pool != null) {
@@ -793,7 +806,7 @@ public class AbilityActivationService {
         Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();
         try {
             activateGraveyardAbilityImpl(gameData, player, graveyardCardIndex, abilityIndex,
-                    xValue != null ? xValue : 0, targetId);
+                    xValue != null ? xValue : 0, targetId, graveyardTargetIds);
         } finally {
             if (pool != null && !withheldSpellOnlyMana.isEmpty()) {
                 pool.restoreSpellOnlyMana(withheldSpellOnlyMana);
@@ -802,7 +815,8 @@ public class AbilityActivationService {
     }
 
     private void activateGraveyardAbilityImpl(GameData gameData, Player player, int graveyardCardIndex,
-                                              Integer abilityIndex, int xValue, UUID targetId) {
+                                              Integer abilityIndex, int xValue, UUID targetId,
+                                              List<UUID> graveyardTargetIds) {
         // Ashes of the Abhorrent etc.: players can't activate abilities of cards in graveyards
         if (!gameQueryService.canPlayersActivateGraveyardAbilities(gameData)) {
             throw new IllegalStateException("Abilities of cards in graveyards can't be activated");
@@ -830,8 +844,18 @@ public class AbilityActivationService {
 
         // Validate targeting before any cost is paid (CR 601.2c) — same contract as hand abilities.
         List<CardEffect> abilityEffects = ability.getEffects();
-        targetLegalityService.validateActivatedAbilityTargeting(
-                gameData, playerId, ability, abilityEffects, targetId, null, card, xValue);
+        if (isMultiTargetGraveyardAbility(ability)) {
+            // The ability announces a target group on the battlefield/players (Soul of Shandalar),
+            // so the id list carries those targets rather than graveyard cards.
+            targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability,
+                    graveyardTargetIds != null ? graveyardTargetIds : List.of(), card, xValue);
+        } else if (graveyardTargetIds != null && !graveyardTargetIds.isEmpty()) {
+            targetLegalityService.validateMultiTargetGraveyardAbility(gameData, playerId, abilityEffects,
+                    graveyardTargetIds);
+        } else {
+            targetLegalityService.validateActivatedAbilityTargeting(
+                    gameData, playerId, ability, abilityEffects, targetId, null, card, xValue);
+        }
 
         // Validate timing restrictions applicable to graveyard abilities (e.g. Raid, activation conditions)
         validateGraveyardTimingRestrictions(gameData, playerId, ability, card);
@@ -944,7 +968,17 @@ public class AbilityActivationService {
             return;
         }
 
-        completeGraveyardAbilityActivation(gameData, player, card, ability, xValue, targetId);
+        completeGraveyardAbilityActivation(gameData, player, card, ability, xValue, targetId, graveyardTargetIds);
+    }
+
+    /**
+     * Whether a graveyard-activated ability announces a target group of permanents/players rather
+     * than the single target or the graveyard-card list. Mirrors the battlefield activation
+     * dispatch, so such an ability's ids go through {@code validateMultiTargetAbility} and land in
+     * the stack entry's flat target list.
+     */
+    private boolean isMultiTargetGraveyardAbility(ActivatedAbility ability) {
+        return ability.isMultiTarget() || ability.getMaxTargets() > 1;
     }
 
     /**
@@ -953,7 +987,7 @@ public class AbilityActivationService {
      * battlefield (e.g. Sedris, the Traitor King grants unearth {2}{B}). Granted abilities are
      * appended after the card's own so indices stay aligned with the client's card view.
      */
-    private List<ActivatedAbility> effectiveGraveyardAbilities(GameData gameData, Card card, UUID ownerId) {
+    public List<ActivatedAbility> effectiveGraveyardAbilities(GameData gameData, Card card, UUID ownerId) {
         List<ActivatedAbility> abilities = new ArrayList<>(card.getGraveyardActivatedAbilities());
         if (card.hasType(CardType.CREATURE)) {
             abilities.addAll(gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCreatureCard(gameData, ownerId));
@@ -1051,6 +1085,12 @@ public class AbilityActivationService {
 
     private void completeGraveyardAbilityActivation(GameData gameData, Player player, Card card,
                                                     ActivatedAbility ability, int xValue, UUID targetId) {
+        completeGraveyardAbilityActivation(gameData, player, card, ability, xValue, targetId, null);
+    }
+
+    private void completeGraveyardAbilityActivation(GameData gameData, Player player, Card card,
+                                                    ActivatedAbility ability, int xValue, UUID targetId,
+                                                    List<UUID> graveyardTargetIds) {
         UUID playerId = player.getId();
 
         // Filter out cost effects for the snapshot
@@ -1061,17 +1101,50 @@ public class AbilityActivationService {
             }
         }
 
-        // Push ability onto the stack
-        StackEntry stackEntry = new StackEntry(
-                StackEntryType.ACTIVATED_ABILITY,
-                card,
-                playerId,
-                card.getName() + "'s ability",
-                snapshotEffects,
-                xValue,
-                targetId,
-                Map.of()
-        );
+        // Push ability onto the stack. Graveyard-card targets ride in targetCardIds (Zone.GRAVEYARD)
+        // so the graveyard handlers resolve them and removed targets fizzle individually. A
+        // battlefield/player target group instead rides in the flat targetIds list, exactly as it
+        // does for a battlefield activation.
+        boolean multiTarget = isMultiTargetGraveyardAbility(ability);
+        boolean hasGraveyardTargets = !multiTarget && graveyardTargetIds != null && !graveyardTargetIds.isEmpty();
+        StackEntry stackEntry = multiTarget
+                ? new StackEntry(
+                        StackEntryType.ACTIVATED_ABILITY,
+                        card,
+                        playerId,
+                        card.getName() + "'s ability",
+                        snapshotEffects,
+                        xValue,
+                        targetId,
+                        null,
+                        Map.of(),
+                        null,
+                        List.of(),
+                        graveyardTargetIds != null ? new ArrayList<>(graveyardTargetIds) : List.of())
+                : hasGraveyardTargets
+                ? new StackEntry(
+                        StackEntryType.ACTIVATED_ABILITY,
+                        card,
+                        playerId,
+                        card.getName() + "'s ability",
+                        snapshotEffects,
+                        xValue,
+                        targetId,
+                        null,
+                        Map.of(),
+                        Zone.GRAVEYARD,
+                        new ArrayList<>(graveyardTargetIds),
+                        List.of())
+                : new StackEntry(
+                        StackEntryType.ACTIVATED_ABILITY,
+                        card,
+                        playerId,
+                        card.getName() + "'s ability",
+                        snapshotEffects,
+                        xValue,
+                        targetId,
+                        Map.of()
+                );
         stackEntry.setTargetFilter(ability.getTargetFilter());
         gameData.stack.add(stackEntry);
 
@@ -1403,7 +1476,7 @@ public class AbilityActivationService {
 
         gameData.interaction.clearAwaitingInput();
         PaidHandCard paid = payDiscardCost(gameData, player, discardCost, cardIndex, pending.xValue(),
-                pending.discardCostRequiredName());
+                pending.discardCostRequiredName(), source.getCard());
         String requiredName = discardCost.sameName()
                 ? (pending.discardCostRequiredName() != null ? pending.discardCostRequiredName() : paid.name())
                 : null;
@@ -1457,6 +1530,47 @@ public class AbilityActivationService {
     }
 
     /**
+     * Resumes an activated ability after its controller chooses how many source counters to remove
+     * as an X-valued activation cost.
+     */
+    public void handleActivatedAbilityCounterCostChosen(GameData gameData, Player player, int chosenValue) {
+        PendingAbilityCounterCostActivation pending = gameData.pendingAbilityCounterCostActivation;
+        if (pending == null) {
+            throw new IllegalStateException("No pending counter-cost activation");
+        }
+
+        Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+        if (source == null) {
+            gameData.pendingAbilityCounterCostActivation = null;
+            gameData.interaction.clearAwaitingInput();
+            throw new IllegalStateException("Source permanent is no longer on the battlefield");
+        }
+
+        int available = source.getCounterCount(pending.counterType());
+        if (chosenValue < 0 || chosenValue > available) {
+            throw new IllegalArgumentException("Counter removal must be between 0 and " + available);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.pendingAbilityCounterCostActivation = null;
+        activateAbilityInternal(
+                gameData,
+                player,
+                -1,
+                pending.abilityIndex(),
+                chosenValue,
+                pending.targetId(),
+                pending.targetZone(),
+                null,
+                null,
+                null,
+                null,
+                source,
+                null
+        );
+    }
+
+    /**
      * Resumes a graveyard-activated ability suspended on its discard cost after the player picks a card.
      * Pays one discard; if more remain (e.g. Haunted Dead's "Discard two cards"), re-prompts; otherwise
      * pushes the ability onto the stack.
@@ -1480,7 +1594,7 @@ public class AbilityActivationService {
 
         gameData.interaction.clearAwaitingInput();
         PaidHandCard paid = payDiscardCost(gameData, player, discardCost, cardIndex, pending.xValue(),
-                pending.discardCostRequiredName());
+                pending.discardCostRequiredName(), card);
         String requiredName = discardCost.sameName()
                 ? (pending.discardCostRequiredName() != null ? pending.discardCostRequiredName() : paid.name())
                 : null;
@@ -1680,6 +1794,23 @@ public class AbilityActivationService {
                     gameData, playerId, ability, abilityEffects, targetId, targetZone, permanent.getCard(), effectiveXValue);
         }
 
+        RemoveXCountersFromSourceCost pendingVariableCounterCost = abilityEffects.stream()
+                .filter(RemoveXCountersFromSourceCost.class::isInstance)
+                .map(RemoveXCountersFromSourceCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (pendingVariableCounterCost != null && xValue == null) {
+            int maxCounters = permanent.getCounterCount(pendingVariableCounterCost.counterType());
+            gameData.pendingAbilityCounterCostActivation = new PendingAbilityCounterCostActivation(
+                    permanent.getId(), effectiveIndex, targetId, targetZone, pendingVariableCounterCost.counterType());
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.XValueChoice(
+                    playerId, maxCounters,
+                    "Choose how many " + pendingVariableCounterCost.counterType().name().toLowerCase().replace('_', ' ')
+                            + " counters to remove as an activation cost.",
+                    permanent.getCard().getName()));
+            return;
+        }
+
         // Pay the loyalty cost only now that full legality, including targets, is confirmed
         // (CR 601.2: an illegal activation rewinds with no cost paid)
         if (ability.getLoyaltyCost() != null) {
@@ -1758,8 +1889,8 @@ public class AbilityActivationService {
                 .findFirst();
 
         Optional<RemoveXCountersFromSourceCost> removeXCounterCost = abilityEffects.stream()
-                .filter(e -> e instanceof RemoveXCountersFromSourceCost)
-                .map(e -> (RemoveXCountersFromSourceCost) e)
+                .filter(RemoveXCountersFromSourceCost.class::isInstance)
+                .map(RemoveXCountersFromSourceCost.class::cast)
                 .findFirst();
 
         Optional<MillControllerCost> millControllerCost = abilityEffects.stream()
@@ -1809,7 +1940,8 @@ public class AbilityActivationService {
 
         // discardCardIndex < 0 means the interactive path already paid all required discards.
         if (discardCardTypeCost != null && discardCardIndex != null && discardCardIndex >= 0) {
-            PaidHandCard paid = payDiscardCost(gameData, player, discardCardTypeCost, discardCardIndex, effectiveXValue);
+            PaidHandCard paid = payDiscardCost(gameData, player, discardCardTypeCost, discardCardIndex, effectiveXValue,
+                    null, permanent.getCard());
             if (discardCardTypeCost.trackManaValue()) {
                 effectiveXValue = paid.manaValue();
             }
@@ -1883,15 +2015,20 @@ public class AbilityActivationService {
                     player.getUsername() + " removes " + counterWord + " from ", permanent.getCard(), "."));
         }
 
-        // Pay remove-X-counter cost (Night Dealings): X counters of the declared type, X being the
-        // activation's chosen X, which the ability's effects read back with an XValue amount.
+        // Pay remove-X-counter cost (Night Dealings, Cruel Sadist): X counters of the declared type,
+        // X being the activation's chosen X, which the ability's effects read back with an XValue amount.
         if (removeXCounterCost.isPresent()) {
-            CounterType ct = removeXCounterCost.get().counterType();
-            permanent.setCounterCount(ct, permanent.getCounterCount(ct) - effectiveXValue);
-            String counterLabel = ct.name().toLowerCase().replace('_', ' ');
+            CounterType counterType = removeXCounterCost.get().counterType();
+            int count = effectiveXValue;
+            int available = permanent.getCounterCount(counterType);
+            if (count < 0 || count > available) {
+                throw new IllegalStateException("Not enough counters to remove (need " + count + ", have " + available + ")");
+            }
+            permanent.setCounterCount(counterType, available - count);
+            String counterLabel = counterType.name().toLowerCase().replace('_', ' ');
+            String counterWord = count == 1 ? "a " + counterLabel + " counter" : count + " " + counterLabel + " counters";
             gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " removes " + effectiveXValue + " " + counterLabel + " counter(s) from ",
-                    permanent.getCard(), "."));
+                    player.getUsername() + " removes " + counterWord + " from ", permanent.getCard(), "."));
         }
 
         // Pay remove-charge-counter cost
@@ -1940,6 +2077,19 @@ public class AbilityActivationService {
                 String counterWord = placedCount == 1 ? "a " + counterLabel + " counter" : placedCount + " " + counterLabel + " counters";
                 gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " puts " + counterWord + " on ", permanent.getCard(), "."));
             }
+        }
+
+        // Pay put-typed-counter cost (e.g. "Put a verse counter on this creature: ...")
+        Optional<PutTypedCounterOnSourceCost> typedCounterCost = abilityEffects.stream()
+                .filter(e -> e instanceof PutTypedCounterOnSourceCost)
+                .map(e -> (PutTypedCounterOnSourceCost) e)
+                .findFirst();
+        if (typedCounterCost.isPresent() && !gameQueryService.cantHaveCounters(gameData, permanent)) {
+            PutTypedCounterOnSourceCost c = typedCounterCost.get();
+            permanent.setCounterCount(c.counterType(), permanent.getCounterCount(c.counterType()) + c.count());
+            String counterLabel = c.counterType().name().toLowerCase().replace('_', ' ');
+            String counterWord = c.count() == 1 ? "a " + counterLabel + " counter" : c.count() + " " + counterLabel + " counters";
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " puts " + counterWord + " on ", permanent.getCard(), "."));
         }
 
         // Pay "tap enchanted permanent" cost (Earthlore): the Aura's target, not the Aura, taps.
@@ -2639,17 +2789,13 @@ public class AbilityActivationService {
 
         // Remove-X-counter cost: the chosen X may not exceed the counters actually present
         Optional<RemoveXCountersFromSourceCost> removeXCounterCost = abilityEffects.stream()
-                .filter(e -> e instanceof RemoveXCountersFromSourceCost)
-                .map(e -> (RemoveXCountersFromSourceCost) e)
+                .filter(RemoveXCountersFromSourceCost.class::isInstance)
+                .map(RemoveXCountersFromSourceCost.class::cast)
                 .findFirst();
         if (removeXCounterCost.isPresent()) {
-            CounterType ct = removeXCounterCost.get().counterType();
-            if (xValue < 0) {
-                throw new IllegalStateException("X cannot be negative");
-            }
-            if (xValue > permanent.getCounterCount(ct)) {
-                throw new IllegalStateException("Not enough counters to remove (need " + xValue
-                        + ", have " + permanent.getCounterCount(ct) + ")");
+            int available = permanent.getCounterCount(removeXCounterCost.get().counterType());
+            if (xValue < 0 || xValue > available) {
+                throw new IllegalStateException("Not enough counters to remove (need " + xValue + ", have " + available + ")");
             }
         }
 
@@ -3066,8 +3212,10 @@ public class AbilityActivationService {
         if (!gameData.stack.isEmpty()) {
             throw new IllegalStateException("Loyalty abilities can only be activated when the stack is empty");
         }
-        // Once per turn (twice with AllowExtraLoyaltyActivationEffect, e.g. Oath of Teferi)
-        int maxActivations = gameQueryService.hasExtraLoyaltyActivation(gameData, playerId) ? 2 : 1;
+        // Once per turn (twice with AllowExtraLoyaltyActivationEffect, e.g. Oath of Teferi), plus any
+        // one-shot extra activations granted to this planeswalker this turn (The Chain Veil).
+        int maxActivations = (gameQueryService.hasExtraLoyaltyActivation(gameData, playerId) ? 2 : 1)
+                + permanent.getExtraLoyaltyActivationsThisTurn();
         if (permanent.getLoyaltyActivationsThisTurn() >= maxActivations) {
             throw new IllegalStateException("Only one loyalty ability per planeswalker per turn");
         }
@@ -3104,6 +3252,7 @@ public class AbilityActivationService {
         int loyaltyCost = validateLoyaltyCost(gameData, playerId, permanent, ability, effectiveXValue);
         permanent.setCounterCount(CounterType.LOYALTY, permanent.getCounterCount(CounterType.LOYALTY) + loyaltyCost);
         permanent.setLoyaltyActivationsThisTurn(permanent.getLoyaltyActivationsThisTurn() + 1);
+        gameData.playersWhoActivatedLoyaltyAbilityThisTurn.add(playerId);
     }
 
     private void payManaCost(GameData gameData, UUID playerId, String abilityCost, int effectiveXValue, boolean artifactContext, boolean myrContext) {
@@ -3282,15 +3431,23 @@ public class AbilityActivationService {
 
     private PaidHandCard payDiscardCost(GameData gameData, Player player, HandCardCost cost, Integer discardCardIndex,
                                         int xValue) {
-        return payDiscardCost(gameData, player, cost, discardCardIndex, xValue, null);
+        return payDiscardCost(gameData, player, cost, discardCardIndex, xValue, null, null);
+    }
+
+    private PaidHandCard payDiscardCost(GameData gameData, Player player, HandCardCost cost, Integer discardCardIndex,
+                                        int xValue, String requiredName) {
+        return payDiscardCost(gameData, player, cost, discardCardIndex, xValue, requiredName, null);
     }
 
     /**
      * Pays one card of a hand-card cost and returns the paid card's name and mana value, so a
      * same-name cost can pin its remaining picks and a trackManaValue cost can snapshot into xValue.
+     *
+     * <p>An {@code imprintOnSource} discard cost also remembers the paid card on {@code sourceCard},
+     * so the ability's own effects can ask what was discarded (Necromancer's Stockpile).
      */
     private PaidHandCard payDiscardCost(GameData gameData, Player player, HandCardCost cost, Integer discardCardIndex,
-                                        int xValue, String requiredName) {
+                                        int xValue, String requiredName, Card sourceCard) {
         if (discardCardIndex == null) {
             throw new IllegalStateException("Must choose a card to " + cost.payVerb());
         }
@@ -3305,6 +3462,9 @@ public class AbilityActivationService {
 
         Card paid = hand.remove((int) discardCardIndex);
         int manaValue = paid.getManaValue();
+        if (sourceCard != null && cost instanceof DiscardCardTypeCost discardCost && discardCost.imprintOnSource()) {
+            gameData.setImprintedCard(sourceCard, paid);
+        }
         if (cost.exilesPaidCards()) {
             exileService.exileCard(gameData, player.getId(), paid);
             gameLogService.append(gameData, GameLog.textCardText(

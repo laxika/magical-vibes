@@ -601,11 +601,19 @@ public class GraveyardTargetingService {
 
     public void handleGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
                                                StackEntryType entryType, int xValue) {
+        handleExactNGraveyardSpellTargeting(gameData, controllerId, card, entryType, xValue,
+                new com.github.laxika.magicalvibes.model.filter.CardTypePredicate(CardType.CREATURE),
+                "to exile");
+    }
+
+    public void handleExactNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                                     StackEntryType entryType, int targetCount,
+                                                     CardPredicate filter, String destination) {
         List<Card> matchingCards = new ArrayList<>();
         List<Card> graveyard = targetableGraveyard(gameData, controllerId);
         if (graveyard != null) {
             for (Card graveyardCard : graveyard) {
-                if (graveyardCard.hasType(CardType.CREATURE)) {
+                if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
                     matchingCards.add(graveyardCard);
                 }
             }
@@ -615,9 +623,11 @@ public class GraveyardTargetingService {
         gameData.graveyardTargetOperation.controllerId = controllerId;
         gameData.graveyardTargetOperation.effects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
         gameData.graveyardTargetOperation.entryType = entryType;
-        gameData.graveyardTargetOperation.xValue = xValue;
-        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, xValue,
-                "Choose " + xValue + " target creature card" + (xValue != 1 ? "s" : "") + " from your graveyard to exile.");
+        gameData.graveyardTargetOperation.xValue = targetCount;
+        gameData.graveyardTargetOperation.anyNumber = false;
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, targetCount,
+                "Choose " + targetCount + " target " + CardPredicateUtils.describeFilter(filter)
+                        + (targetCount != 1 ? "s" : "") + " from your graveyard " + destination + ".");
     }
 
     public void handleAnyNumberGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,

@@ -149,6 +149,8 @@ public class MultiPermanentChoiceHandlerService {
             handleSacrificeAttackingCreature(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.ExileAttackingCreatures) {
             handleExileAttackingCreatures(gameData, playerId, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.PutAttackingCreaturesOnLibrary ctx) {
+            handlePutAttackingCreaturesOnLibrary(gameData, permanentIds, multiPermanentChoice.validIds(), ctx);
         } else if (context instanceof MultiPermanentChoiceContext.DestroyCreaturesOpponentControls ctx) {
             handleDestroyCreaturesOpponentControls(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapChosenPermanents ctx) {
@@ -437,6 +439,81 @@ public class MultiPermanentChoiceHandlerService {
 
         // Resume resolving remaining effects on the same ability (e.g. the cycling draw)
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handlePutAttackingCreaturesOnLibrary(GameData gameData, List<UUID> topCreatureIds,
+            List<UUID> currentOwnerCreatureIds,
+            MultiPermanentChoiceContext.PutAttackingCreaturesOnLibrary context) {
+        List<UUID> topIds = new ArrayList<>(context.topCreatureIds());
+        topIds.addAll(topCreatureIds);
+        Set<UUID> selectedTopIds = new HashSet<>(topCreatureIds);
+        List<UUID> bottomIds = new ArrayList<>(context.bottomCreatureIds());
+        for (UUID creatureId : currentOwnerCreatureIds) {
+            if (!selectedTopIds.contains(creatureId)) {
+                bottomIds.add(creatureId);
+            }
+        }
+
+        continuePutAttackingCreaturesOnLibrary(gameData, context.remainingCreatureIds(), topIds,
+                bottomIds, context.sourceCardName());
+    }
+
+    private void continuePutAttackingCreaturesOnLibrary(GameData gameData, List<UUID> pendingIds,
+            List<UUID> topIds, List<UUID> bottomIds, String sourceCardName) {
+        List<UUID> remainingIds = pendingIds.stream()
+                .filter(creatureId -> gameQueryService.findPermanentById(gameData, creatureId) != null)
+                .toList();
+        if (!remainingIds.isEmpty()) {
+            Permanent first = gameQueryService.findPermanentById(gameData, remainingIds.getFirst());
+            UUID ownerId = ownerId(gameData, first);
+            List<UUID> ownerCreatureIds = new ArrayList<>();
+            List<UUID> laterCreatureIds = new ArrayList<>();
+            for (UUID creatureId : remainingIds) {
+                Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
+                if (ownerId.equals(ownerId(gameData, creature))) {
+                    ownerCreatureIds.add(creatureId);
+                } else {
+                    laterCreatureIds.add(creatureId);
+                }
+            }
+
+            MultiPermanentChoiceContext.PutAttackingCreaturesOnLibrary nextContext =
+                    new MultiPermanentChoiceContext.PutAttackingCreaturesOnLibrary(laterCreatureIds,
+                            topIds, bottomIds, sourceCardName);
+            playerInputService.beginMultiPermanentChoice(gameData, ownerId, ownerCreatureIds,
+                    ownerCreatureIds.size(), nextContext,
+                    sourceCardName + " — Choose attacking creatures to put on top of their owners' libraries. "
+                            + "The rest go on the bottom.");
+            return;
+        }
+
+        for (UUID creatureId : topIds.reversed()) {
+            Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
+            if (creature != null && permanentRemovalService.removePermanentToLibraryTop(gameData, creature)) {
+                gameLogService.append(gameData,
+                        GameLog.cardThen(creature.getCard(), " is put on top of its owner's library."));
+            }
+        }
+        for (UUID creatureId : bottomIds) {
+            Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
+            if (creature != null && permanentRemovalService.removePermanentToLibraryBottom(gameData, creature)) {
+                gameLogService.append(gameData,
+                        GameLog.cardThen(creature.getCard(), " is put on the bottom of its owner's library."));
+            }
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private UUID ownerId(GameData gameData, Permanent permanent) {
+        UUID ownerId = permanent.getCard().getOwnerId();
+        if (ownerId == null) {
+            ownerId = gameData.defaultControllerOf(permanent.getId());
+        }
+        if (ownerId == null) {
+            ownerId = gameData.currentlyResolvingControllerId;
+        }
+        return ownerId;
     }
 
     private void handleDestroyCreaturesOpponentControls(GameData gameData, UUID playerId, List<UUID> permanentIds,

@@ -244,6 +244,15 @@ public class PlayerInputService {
         beginProtectionColorChoice(gameData, playerId, List.of(targetId), includeArtifacts);
     }
 
+    public void beginPreventDamageToTargetFromChosenColorChoice(GameData gameData, UUID playerId, UUID targetId) {
+        ChoiceContext.PreventDamageToTargetFromChosenColorChoice context =
+                new ChoiceContext.PreventDamageToTargetFromChosenColorChoice(targetId);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, context,
+                List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN"),
+                "Choose a color."));
+    }
+
     /**
      * One protection pick shared by several targets (Prismatic Boon's "X target creatures gain
      * protection from the chosen color").

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "49")
+@CardRegistration(set = "M15", collectorNumber = "53")
 public class Encrust extends Card {
 
     public Encrust() {

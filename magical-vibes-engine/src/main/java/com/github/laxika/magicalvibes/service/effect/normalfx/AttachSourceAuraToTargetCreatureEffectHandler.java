@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetCreat
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,7 @@ public class AttachSourceAuraToTargetCreatureEffectHandler implements NormalEffe
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,5 +52,7 @@ public class AttachSourceAuraToTargetCreatureEffectHandler implements NormalEffe
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is now attached to " + target.getCard().getName() + "."));
         log.info("Game {} - {} attached to {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
+
+        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura.getCard(), target.getId());
     }
 }

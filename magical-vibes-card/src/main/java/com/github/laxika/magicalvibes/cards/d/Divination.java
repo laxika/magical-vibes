@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M12", collectorNumber = "50")
 @CardRegistration(set = "M13", collectorNumber = "47")
 @CardRegistration(set = "M14", collectorNumber = "52")
+@CardRegistration(set = "M15", collectorNumber = "52")
 public class Divination extends Card {
 
     public Divination() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "8ED", collectorNumber = "87")
+@CardRegistration(set = "M15", collectorNumber = "61")
 public class Invisibility extends Card {
 
     public Invisibility() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
@@ -55,12 +56,14 @@ public class MayCopyHandlerService {
         String typeLabel = copyEffect.typeLabel();
         if (accepted) {
             // Collect valid targets (the copying permanent is NOT on the battlefield yet)
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceControllerId(ability.controllerId());
             List<UUID> validIds = new ArrayList<>();
             for (UUID pid : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
-                    if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, copyEffect.filter())) {
+                    if (predicateEvaluationService.matchesPermanentPredicate(p, copyEffect.filter(), filterContext)) {
                         validIds.add(p.getId());
                     }
                 }

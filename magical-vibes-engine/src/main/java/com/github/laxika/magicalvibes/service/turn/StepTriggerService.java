@@ -52,12 +52,15 @@ import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
+import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeLastTurn;
+import com.github.laxika.magicalvibes.model.condition.ControlsEachCreatureWithGreatestPower;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
+import com.github.laxika.magicalvibes.model.condition.DidntActivateLoyaltyAbilityThisTurn;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHandEmpty;
@@ -68,6 +71,7 @@ import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
 import com.github.laxika.magicalvibes.model.condition.SourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
+import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeLastTurn;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.condition.Raid;
@@ -144,6 +148,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
@@ -261,6 +266,11 @@ public class StepTriggerService {
                         gameData.id, action.sourceCard().getName());
             }
         }
+
+        // Phytotitan: "return it to the battlefield tapped under its owner's control at the beginning
+        // of their next upkeep" — only at the owner's own upkeep.
+        resolveDelayedSelfReturns(gameData,
+                pending -> pending.atNextUpkeep() && pending.ownerId().equals(gameData.activePlayerId));
 
         // Delayed "draw N cards at the beginning of the next turn's upkeep" (e.g. Library of Lat-Nam).
         // Drained regardless of who the active player is — the scheduling player draws.
@@ -821,7 +831,9 @@ public class StepTriggerService {
                 // Intervening-if: werewolf transform conditions checked at trigger time
                 if (effect instanceof ConditionalEffect conditional
                         && (conditional.condition() instanceof NoSpellsCastLastTurn
-                                || conditional.condition() instanceof TwoOrMoreSpellsCastLastTurn)) {
+                                || conditional.condition() instanceof TwoOrMoreSpellsCastLastTurn
+                                || conditional.condition() instanceof ControllerLostLifeLastTurn
+                                || conditional.condition() instanceof OpponentLostLifeLastTurn)) {
                     if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                             ConditionContext.forPermanent(perm, playerId))) {
                         continue;
@@ -830,6 +842,9 @@ public class StepTriggerService {
 
                 if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(perm.getCard(), playerId, may, null, perm.getId());
+                } else if (effect.targetSpec().category().includesPermanents()) {
+                    gameData.queueInteraction(new PermanentChoiceContext.UpkeepPermanentTargetTrigger(
+                            perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId()));
                 } else {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -1174,7 +1189,7 @@ public class StepTriggerService {
                 targetFilter,
                 trigger.controllerId(),
                 trigger.sourceCard(),
-                TriggerTargetCollector.Options.END_STEP);
+                TriggerTargetCollector.Options.UPKEEP);
         List<UUID> validTargets = result.validTargets();
 
         if (validTargets.isEmpty()) {
@@ -1301,7 +1316,7 @@ public class StepTriggerService {
                 targetFilter,
                 trigger.controllerId(),
                 trigger.sourceCard(),
-                TriggerTargetCollector.Options.END_STEP);
+                TriggerTargetCollector.Options.UPKEEP);
         List<UUID> validTargets = result.validTargets();
 
         if (validTargets.isEmpty()) {
@@ -2093,6 +2108,59 @@ public class StepTriggerService {
      *
      * @param gameData the current game state to modify
      */
+    /**
+     * Resolves the queued {@link DelayedGraveyardToBattlefieldSelfReturn} actions matching
+     * {@code filter}: each card still in its owner's graveyard returns to the battlefield under that
+     * owner's control, tapped and/or with counters as the action requests. Shared by the end-step
+     * timing (Sand Golem, Ivory Gargoyle) and the owner's-next-upkeep timing (Phytotitan).
+     */
+    private void resolveDelayedSelfReturns(GameData gameData,
+                                           Predicate<DelayedGraveyardToBattlefieldSelfReturn> filter) {
+        if (!gameData.hasDelayedAction(DelayedGraveyardToBattlefieldSelfReturn.class, filter)) {
+            return;
+        }
+        List<DelayedGraveyardToBattlefieldSelfReturn> pendingReturns =
+                gameData.drainDelayedActions(DelayedGraveyardToBattlefieldSelfReturn.class, filter);
+        for (DelayedGraveyardToBattlefieldSelfReturn pending : pendingReturns) {
+            List<Card> graveyard = gameData.playerGraveyards.get(pending.ownerId());
+            if (graveyard == null) continue;
+            Card cardToReturn = null;
+            for (Card card : graveyard) {
+                if (card.getId().equals(pending.cardId())) {
+                    cardToReturn = card;
+                    break;
+                }
+            }
+            if (cardToReturn == null) {
+                log.info("Game {} - Delayed graveyard return for card {} skipped (no longer in graveyard)",
+                        gameData.id, pending.cardId());
+                continue;
+            }
+            if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, cardToReturn, com.github.laxika.magicalvibes.model.Zone.GRAVEYARD)) {
+                gameLogService.append(gameData,
+                        GameLog.cardThen(cardToReturn, " can't return from the graveyard; it stays in the graveyard."));
+                continue;
+            }
+
+            permanentRemovalService.removeCardFromGraveyardById(gameData, cardToReturn.getId());
+            Permanent permanent = new Permanent(cardToReturn);
+            permanent.setEnteredFromGraveyardOwnerId(pending.ownerId());
+            if (pending.counterType() != null && pending.counterAmount() > 0) {
+                permanent.setCounterCount(pending.counterType(), pending.counterAmount());
+            }
+            if (pending.tapped()) {
+                permanent.tap();
+            }
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, pending.ownerId(), permanent);
+
+            gameLogService.append(gameData, GameLog.cardThen(cardToReturn,
+                    " returns to the battlefield (delayed trigger)."));
+            log.info("Game {} - {} returns to the battlefield from the graveyard (delayed trigger)",
+                    gameData.id, cardToReturn.getName());
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, pending.ownerId(), cardToReturn, null, false);
+        }
+    }
+
     public void handleEndStepTriggers(GameData gameData) {
         // Elkin Lair: "At the beginning of the next end step, if the player hasn't played the card,
         // they put it into their graveyard." Chronological next end step — no active-player filter.
@@ -2436,46 +2504,9 @@ public class StepTriggerService {
             }
         }
 
-        // Process delayed graveyard-to-battlefield self returns (Sand Golem)
-        if (gameData.hasDelayedAction(DelayedGraveyardToBattlefieldSelfReturn.class)) {
-            List<DelayedGraveyardToBattlefieldSelfReturn> pendingReturns =
-                    gameData.drainDelayedActions(DelayedGraveyardToBattlefieldSelfReturn.class);
-            for (DelayedGraveyardToBattlefieldSelfReturn pending : pendingReturns) {
-                List<Card> graveyard = gameData.playerGraveyards.get(pending.ownerId());
-                if (graveyard == null) continue;
-                Card cardToReturn = null;
-                for (Card card : graveyard) {
-                    if (card.getId().equals(pending.cardId())) {
-                        cardToReturn = card;
-                        break;
-                    }
-                }
-                if (cardToReturn == null) {
-                    log.info("Game {} - Delayed graveyard return for card {} skipped (no longer in graveyard)",
-                            gameData.id, pending.cardId());
-                    continue;
-                }
-                if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, cardToReturn, com.github.laxika.magicalvibes.model.Zone.GRAVEYARD)) {
-                    gameLogService.append(gameData,
-                            GameLog.cardThen(cardToReturn, " can't return from the graveyard; it stays in the graveyard."));
-                    continue;
-                }
-
-                permanentRemovalService.removeCardFromGraveyardById(gameData, cardToReturn.getId());
-                Permanent permanent = new Permanent(cardToReturn);
-                permanent.setEnteredFromGraveyardOwnerId(pending.ownerId());
-                if (pending.counterType() != null && pending.counterAmount() > 0) {
-                    permanent.setCounterCount(pending.counterType(), pending.counterAmount());
-                }
-                battlefieldEntryService.putPermanentOntoBattlefield(gameData, pending.ownerId(), permanent);
-
-                gameLogService.append(gameData, GameLog.cardThen(cardToReturn,
-                        " returns to the battlefield (delayed trigger)."));
-                log.info("Game {} - {} returns to the battlefield from the graveyard (delayed end-step trigger)",
-                        gameData.id, cardToReturn.getName());
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, pending.ownerId(), cardToReturn, null, false);
-            }
-        }
+        // Process delayed graveyard-to-battlefield self returns (Sand Golem); the upkeep-scheduled
+        // ones (Phytotitan) are left in the queue for handleUpkeepTriggers.
+        resolveDelayedSelfReturns(gameData, pending -> !pending.atNextUpkeep());
 
         // Process delayed graveyard-to-battlefield-under-control returns (Seraph, Grave Betrayal)
         if (gameData.hasDelayedAction(DelayedGraveyardToBattlefieldUnderControl.class)) {
@@ -3090,6 +3121,30 @@ public class StepTriggerService {
                             log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                         }
                     } else if (effect instanceof ConditionalEffect conditional
+                            && conditional.condition() instanceof DidntActivateLoyaltyAbilityThisTurn) {
+                        // Intervening-if (CR 603.4): only trigger if the controller hasn't activated a
+                        // loyalty ability this turn — The Chain Veil. Re-checked at resolution, so the
+                        // whole ConditionalEffect goes on the stack.
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forPermanent(perm, activePlayerId))) {
+                            log.info("Game {} - {} end-step trigger skipped (a loyalty ability was activated this turn)",
+                                    gameData.id, perm.getCard().getName());
+                            continue;
+                        }
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                activePlayerId,
+                                perm.getCard().getName() + "'s end step ability",
+                                new ArrayList<>(List.of(effect)),
+                                null,
+                                perm.getId()
+                        ));
+
+                        gameLogService.append(gameData,
+                                GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
+                        log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                    } else if (effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof DidntAttack) {
                         // Intervening-if: only trigger if the creature didn't attack this turn
                         if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
@@ -3482,12 +3537,14 @@ public class StepTriggerService {
             if (effect instanceof MayEffect) {
                 continue;
             }
-            // Intervening-if (CR 603.4): AllOf / ControlsPermanentCount gate at trigger time
-            // (Graf Rats meld). Leave ConditionalEffect wrappers with other conditions
+            // Intervening-if (CR 603.4): AllOf / ControlsPermanentCount /
+            // ControlsEachCreatureWithGreatestPower gate at trigger time (Graf Rats meld,
+            // Might Makes Right). Leave ConditionalEffect wrappers with other conditions
             // (e.g. Odric ControlsPermanent) on the stack for resolution-time checks.
             if (effect instanceof ConditionalEffect conditional
                     && (conditional.condition() instanceof AllOf
-                        || conditional.condition() instanceof ControlsPermanentCount)) {
+                        || conditional.condition() instanceof ControlsPermanentCount
+                        || conditional.condition() instanceof ControlsEachCreatureWithGreatestPower)) {
                 if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                         ConditionContext.forPermanent(perm, controllerId))) {
                     log.info("Game {} - {} beginning-of-combat trigger skipped ({} not met)",

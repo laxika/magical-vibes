@@ -43,9 +43,10 @@ public class RegisterDelayedSelfReturnFromGraveyardEffectHandler implements Norm
         }
 
         gameData.queueDelayedAction(new DelayedGraveyardToBattlefieldSelfReturn(
-                card.getId(), ownerId, e.counterType(), e.counterAmount()));
-        gameLogService.append(gameData, GameLog.cardThen(card,
-                " will return to the battlefield at the beginning of the next end step."));
+                card.getId(), ownerId, e.counterType(), e.counterAmount(), e.atNextUpkeep(), e.tapped()));
+        gameLogService.append(gameData, GameLog.cardThen(card, e.atNextUpkeep()
+                ? " will return to the battlefield at the beginning of its owner's next upkeep."
+                : " will return to the battlefield at the beginning of the next end step."));
         log.info("Game {} - Delayed graveyard return registered for {} (owner {})",
                 gameData.id, card.getName(), ownerId);
     }

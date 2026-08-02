@@ -318,6 +318,7 @@ public class TurnProgressionService {
         gameData.creaturesAttackedCountThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();
         gameData.activatedAbilityUsesThisTurn.clear();
+        gameData.playersWhoActivatedLoyaltyAbilityThisTurn.clear();
         gameData.permanentAbilityResolutionsThisTurn.clear();
         gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.clear();
         gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.clear();
@@ -329,6 +330,8 @@ public class TurnProgressionService {
         gameData.cardsDrawnThisTurnIds.clear();
         gameData.cardsDiscardedThisTurn.clear();
         gameData.lifeGainedThisTurn.clear();
+        gameData.lifeLostLastTurn.clear();
+        gameData.lifeLostLastTurn.putAll(gameData.lifeLostThisTurn);
         gameData.lifeLostThisTurn.clear();
         gameData.combatDamageToPlayersThisTurn.clear();
         gameData.noncombatDamageToPlayersThisTurn.clear();

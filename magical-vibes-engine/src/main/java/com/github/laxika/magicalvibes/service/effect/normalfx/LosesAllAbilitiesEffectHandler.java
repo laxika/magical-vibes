@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -32,6 +34,26 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (LosesAllAbilitiesEffect) effect;
+        if (e.scope() == GrantScope.TARGET_PLAYERS_CREATURES) {
+            UUID targetPlayerId = entry.getTargetId();
+            if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+                return;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+            int count = 0;
+            if (battlefield != null) {
+                for (Permanent permanent : battlefield) {
+                    if (gameQueryService.isCreature(gameData, permanent)) {
+                        applyEffect(gameData, entry, e, permanent);
+                        count++;
+                    }
+                }
+            }
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
+                    .text(" makes " + count + " creature(s) lose all abilities until end of turn.").build());
+            return;
+        }
+
         UUID targetId = switch (e.scope()) {
             case SELF -> entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
             case TARGET -> entry.getTargetId();
@@ -46,6 +68,13 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        applyEffect(gameData, entry, e, target);
+
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " loses all abilities until end of turn."));
+        log.info("Game {} - {} loses all abilities until end of turn", gameData.id, target.getCard().getName());
+    }
+
+    private void applyEffect(GameData gameData, StackEntry entry, LosesAllAbilitiesEffect e, Permanent target) {
         // CR 613 layer engine: a one-shot "loses all abilities until end of turn" (Merfolk
         // Trickster) is a floating layer-6 effect with its own timestamp — a later-timestamp
         // keyword grant (Wings of Velis Vel) survives it. The legacy flag is still set for
@@ -55,8 +84,5 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), null, entry.getControllerId(), e,
                 target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
-
-        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " loses all abilities until end of turn."));
-        log.info("Game {} - {} loses all abilities until end of turn", gameData.id, target.getCard().getName());
     }
 }

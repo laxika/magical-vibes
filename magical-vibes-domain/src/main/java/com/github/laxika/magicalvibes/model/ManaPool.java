@@ -22,6 +22,14 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> spellOnlyMana = new EnumMap<>(ManaColor.class);
     /** Mana that doesn't drain at step/phase transitions until end of turn (e.g. Grand Warlord Radha). */
     private final EnumMap<ManaColor, Integer> persistentMana = new EnumMap<>(ManaColor.class);
+    /**
+     * Mana carrying the rider "if that mana is spent on a creature spell, it gains haste until end of
+     * turn" (Generator Servant). Like {@link #creatureMana} this is a tag on a subset of the regular
+     * {@link #pool} — the mana itself is unrestricted — and is never counted towards any total.
+     * {@link #remove(ManaColor)} spends the tagged mana first, so the caster always gets the rider
+     * when the pool holds both tagged and untagged mana of that color.
+     */
+    private final EnumMap<ManaColor, Integer> hasteGrantingMana = new EnumMap<>(ManaColor.class);
     private int artifactOnlyColorless;
     /** Colorless mana spendable only to activate abilities of artifacts (Soldevi Machinist). */
     private int artifactAbilityOnlyColorless;
@@ -92,6 +100,7 @@ public class ManaPool {
             creatureMana.put(color, 0);
             spellOnlyMana.put(color, 0);
             persistentMana.put(color, 0);
+            hasteGrantingMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
             instantSorceryOnlyColored.put(color, 0);
             cumulativeUpkeepOnlyColored.put(color, 0);
@@ -107,6 +116,7 @@ public class ManaPool {
         creatureMana.putAll(source.creatureMana);
         spellOnlyMana.putAll(source.spellOnlyMana);
         persistentMana.putAll(source.persistentMana);
+        hasteGrantingMana.putAll(source.hasteGrantingMana);
         flashbackOnlyMana.putAll(source.flashbackOnlyMana);
         this.artifactOnlyColorless = source.artifactOnlyColorless;
         this.artifactAbilityOnlyColorless = source.artifactAbilityOnlyColorless;
@@ -169,6 +179,7 @@ public class ManaPool {
             pool.put(color, 0);
             creatureMana.put(color, 0);
             spellOnlyMana.put(color, 0);
+            hasteGrantingMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
         }
         artifactOnlyColorless = 0;
@@ -322,6 +333,11 @@ public class ManaPool {
 
     public void remove(ManaColor color) {
         pool.merge(color, -1, Integer::sum);
+        // Haste-granting mana (Generator Servant) is spent before untagged mana of the same color.
+        int hasteGranting = hasteGrantingMana.getOrDefault(color, 0);
+        if (hasteGranting > 0) {
+            hasteGrantingMana.put(color, hasteGranting - 1);
+        }
         // Clamp creature mana so it never exceeds total for this color
         int total = pool.getOrDefault(color, 0);
         int creature = creatureMana.getOrDefault(color, 0);
@@ -332,6 +348,31 @@ public class ManaPool {
         if (spellOnly > total) {
             spellOnlyMana.put(color, total);
         }
+        if (hasteGrantingMana.getOrDefault(color, 0) > total) {
+            hasteGrantingMana.put(color, total);
+        }
+    }
+
+    /**
+     * Adds mana carrying the "spent on a creature spell → it gains haste" rider (Generator Servant).
+     * The caller must also add the same amount to the regular pool via {@link #add(ManaColor, int)};
+     * this only records the rider tag on that subset.
+     */
+    public void addHasteGrantingMana(ManaColor color, int amount) {
+        hasteGrantingMana.merge(color, amount, Integer::sum);
+    }
+
+    /** Total tagged haste-granting mana still in the pool, across all colors. */
+    public int getHasteGrantingManaTotal() {
+        int total = 0;
+        for (int value : hasteGrantingMana.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    public int getHasteGrantingMana(ManaColor color) {
+        return hasteGrantingMana.getOrDefault(color, 0);
     }
 
     /**
@@ -775,6 +816,7 @@ public class ManaPool {
             creatureMana.put(color, Math.min(creature, total));
             int spellOnly = spellOnlyMana.getOrDefault(color, 0);
             spellOnlyMana.put(color, Math.min(spellOnly, total));
+            hasteGrantingMana.put(color, Math.min(hasteGrantingMana.getOrDefault(color, 0), total));
         }
         artifactOnlyColorless = 0;
         artifactAbilityOnlyColorless = 0;

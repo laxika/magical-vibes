@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "M12", collectorNumber = "127")
+@CardRegistration(set = "M15", collectorNumber = "135")
 public class CircleOfFlame extends Card {
 
     public CircleOfFlame() {

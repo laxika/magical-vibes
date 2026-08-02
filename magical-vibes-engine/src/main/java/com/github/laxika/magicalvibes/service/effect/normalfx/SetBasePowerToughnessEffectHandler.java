@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -33,6 +34,27 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (SetBasePowerToughnessEffect) effect;
+        if (e.scope() == GrantScope.TARGET_PLAYERS_CREATURES) {
+            UUID targetPlayerId = entry.getTargetId();
+            if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+                return;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+            int count = 0;
+            if (battlefield != null) {
+                for (Permanent permanent : battlefield) {
+                    if (gameQueryService.isCreature(gameData, permanent)) {
+                        applyEffect(gameData, entry, e, permanent);
+                        count++;
+                    }
+                }
+            }
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
+                    .text(" sets the base power and toughness of " + count + " creature(s) to "
+                            + e.power() + "/" + e.toughness() + " until end of turn.").build());
+            return;
+        }
+
         // SELF scope ("this creature has base P/T X/Y until end of turn", e.g. Marsh Flitter)
         // resolves against the source; TARGET scope resolves against the chosen target.
         UUID id = e.scope() == GrantScope.SELF ? entry.getSourcePermanentId() : entry.getTargetId();
@@ -41,6 +63,19 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
+        applyEffect(gameData, entry, e, target);
+
+        String description = e.power() == null
+                ? " has base toughness " + e.toughness() + " until end of turn."
+                : e.toughness() == null
+                ? " has base power " + e.power() + " until end of turn."
+                : " has base power and toughness " + e.power() + "/" + e.toughness() + " until end of turn.";
+        gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(description).build());
+
+        log.info("Game {} - {}{}", gameData.id, target.getCard().getName(), description);
+    }
+
+    private void applyEffect(GameData gameData, StackEntry entry, SetBasePowerToughnessEffect e, Permanent target) {
         // CR 613 layer engine: a one-shot base-P/T setter is a floating layer-7b effect with
         // its own timestamp — of all applicable 7b setters (auras, animations, other one-shots)
         // the latest timestamp wins in the layered pass. The legacy fields are still written
@@ -57,14 +92,5 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 e, target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
-
-        String description = e.power() == null
-                ? " has base toughness " + e.toughness() + " until end of turn."
-                : e.toughness() == null
-                ? " has base power " + e.power() + " until end of turn."
-                : " has base power and toughness " + e.power() + "/" + e.toughness() + " until end of turn.";
-        gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(description).build());
-
-        log.info("Game {} - {}{}", gameData.id, target.getCard().getName(), description);
     }
 }

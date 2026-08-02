@@ -375,7 +375,7 @@ export class TargetingChoiceService {
 
   // ========== Play card / targeting / abilities ==========
 
-  private sendValidTargetsRequest(cardIndex: number | null, permanentIndex: number | null, abilityIndex: number | null, alreadySelectedIds: string[] = [], xValue: number | null = null): void {
+  private sendValidTargetsRequest(cardIndex: number | null, permanentIndex: number | null, abilityIndex: number | null, alreadySelectedIds: string[] = [], xValue: number | null = null, graveyardCardIndex: number | null = null): void {
     this.pendingTargetRequest = true;
     const msg: any = {
       type: MessageType.VALID_TARGETS_REQUEST,
@@ -384,6 +384,9 @@ export class TargetingChoiceService {
       abilityIndex,
       alreadySelectedIds
     };
+    if (graveyardCardIndex != null) {
+      msg.graveyardCardIndex = graveyardCardIndex;
+    }
     if (xValue != null) {
       msg.xValue = xValue;
     }
@@ -1073,6 +1076,13 @@ export class TargetingChoiceService {
     this.targetingAbilityIndex = 0;
     this.pendingAbilityXValue = null;
     this.pendingConvokeCard = null;
+    if (ability.maxTargets > 1) {
+      // Target group on the battlefield/players (Soul of Shandalar) — the backend enumerates each
+      // position, exactly as it does for a battlefield ability.
+      this.selectingTarget = false;
+      this.sendValidTargetsRequest(null, null, this.targetingAbilityIndex, [], null, graveyardCardIndex);
+      return;
+    }
     const allIds = new Set<string>();
     for (const p of this.myBattlefieldFn()) allIds.add(p.id);
     for (const p of this.opponentBattlefieldFn()) allIds.add(p.id);
@@ -1371,11 +1381,7 @@ export class TargetingChoiceService {
     this.multiTargetSelectedIds.set(newSelected);
     // Refresh valid targets for next position
     if (newSelected.length < this.multiTargetMaxCount) {
-      if (this.targetingForAbility) {
-        this.sendValidTargetsRequest(null, this.multiTargetCardIndex, this.targetingAbilityIndex, newSelected);
-      } else {
-        this.sendValidTargetsRequest(this.multiTargetCardIndex, null, null, newSelected);
-      }
+      this.refreshMultiTargets(newSelected);
     }
   }
 
@@ -1392,11 +1398,7 @@ export class TargetingChoiceService {
     this.multiTargetSelectedIds.set(newSelected);
     // Refresh valid targets for next position
     if (newSelected.length < this.multiTargetMaxCount) {
-      if (this.targetingForAbility) {
-        this.sendValidTargetsRequest(null, this.multiTargetCardIndex, this.targetingAbilityIndex, newSelected);
-      } else {
-        this.sendValidTargetsRequest(this.multiTargetCardIndex, null, null, newSelected);
-      }
+      this.refreshMultiTargets(newSelected);
     }
   }
 
@@ -1405,10 +1407,17 @@ export class TargetingChoiceService {
     const newSelected = this.multiTargetSelectedIds().filter(id => id !== permanentId);
     this.multiTargetSelectedIds.set(newSelected);
     // Request refreshed valid targets from backend with updated already-selected list
-    if (this.targetingForAbility) {
-      this.sendValidTargetsRequest(null, this.multiTargetCardIndex, this.targetingAbilityIndex, newSelected);
+    this.refreshMultiTargets(newSelected);
+  }
+
+  /** Re-enumerates the next position's legal targets for whichever zone the ability lives in. */
+  private refreshMultiTargets(selected: string[]): void {
+    if (this.targetingForGraveyardAbility) {
+      this.sendValidTargetsRequest(null, null, this.targetingAbilityIndex, selected, null, this.multiTargetCardIndex);
+    } else if (this.targetingForAbility) {
+      this.sendValidTargetsRequest(null, this.multiTargetCardIndex, this.targetingAbilityIndex, selected);
     } else {
-      this.sendValidTargetsRequest(this.multiTargetCardIndex, null, null, newSelected);
+      this.sendValidTargetsRequest(this.multiTargetCardIndex, null, null, selected);
     }
   }
 
@@ -1424,6 +1433,20 @@ export class TargetingChoiceService {
     this.multiTargetSelectedIds.set([]);
     this.validTargetIds.set(new Set());
     this.validTargetPlayerIds.set(new Set());
+
+    if (this.targetingForGraveyardAbility) {
+      // Multi-target graveyard activated ability (Soul of Shandalar) — the targets ride in the
+      // same list field the graveyard-card targeting flavour uses.
+      this.websocketService.send({
+        type: MessageType.ACTIVATE_GRAVEYARD_ABILITY,
+        graveyardCardIndex: this.multiTargetCardIndex,
+        abilityIndex: this.targetingAbilityIndex >= 0 ? this.targetingAbilityIndex : 0,
+        graveyardCardIds: this.pendingMultiTargetIds
+      });
+      this.resetTargetingState();
+      this.resetMultiTargetState();
+      return;
+    }
 
     if (this.targetingForAbility) {
       // Multi-target activated ability (e.g. Brass Squire)
@@ -1463,6 +1486,7 @@ export class TargetingChoiceService {
     this.validTargetPlayerIds.set(new Set());
     this.pendingConvokeCard = null;
     this.targetingForAbility = false;
+    this.targetingForGraveyardAbility = false;
     this.targetingAbilityIndex = -1;
     this.pendingPhyrexianLifeCount = null;
   }

@@ -293,6 +293,9 @@ public class CombatDamageService {
         // Process ON_DEALT_DAMAGE triggers (e.g. Nested Ghoul)
         processDealtDamageTriggers(gameData, dealtDamageTriggerData);
 
+        // Process combat-damage-received triggers (e.g. Wall of Essence)
+        processCombatDamageReceivedTriggers(gameData, dealtDamageTriggerData);
+
         // Process ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)
         processAnyCreatureDealtDamageTriggers(gameData, state);
 
@@ -1668,7 +1671,9 @@ public class CombatDamageService {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) continue;
                 List<CardEffect> effects = target.getCard().getEffects(EffectSlot.ON_DEALT_DAMAGE);
-                if (effects.isEmpty()) continue;
+                List<CardEffect> combatDamageReceivedEffects =
+                        target.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_SELF);
+                if (effects.isEmpty() && combatDamageReceivedEffects.isEmpty()) continue;
                 UUID controllerId = gameData.findControllerOf(target);
                 if (controllerId == null) continue;
                 int damageAmount = damageAmounts.getOrDefault(targetId, 0);
@@ -1747,6 +1752,30 @@ public class CombatDamageService {
                 gameData.stack.add(triggerEntry);
                 gameLogService.append(gameData, GameLog.abilityTriggers(data.card()));
                 log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger fires", gameData.id, data.card().getName());
+            }
+        }
+    }
+
+    private void processCombatDamageReceivedTriggers(GameData gameData,
+                                                      List<DealtDamageTriggerData> triggerData) {
+        for (DealtDamageTriggerData data : triggerData) {
+            if (data.damageDealt() <= 0) continue;
+
+            for (CardEffect effect : data.card().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_SELF)) {
+                StackEntry triggerEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        data.card(),
+                        data.controllerId(),
+                        data.card().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        data.permanentId()
+                );
+                triggerEntry.setEventValue(data.damageDealt());
+                gameData.stack.add(triggerEntry);
+                gameLogService.append(gameData, GameLog.abilityTriggers(data.card()));
+                log.info("Game {} - {} combat-damage-received trigger fires", gameData.id,
+                        data.card().getName());
             }
         }
     }
@@ -2085,8 +2114,13 @@ public class CombatDamageService {
             // Apply one-shot Sanctum Guardian / Honorable Passage shields (prevent the next damage from the chosen source to any target)
             damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage);
             processEyeForAnEyeReflections(gameData);
+            if (damagePreventionService.isColorDamagePreventedForTarget(
+                    gameData, pw.getId(), gameQueryService.getEffectiveColors(gameData, atk))) {
+                damage = 0;
+            }
             // Djeru, With Eyes Open: prevent N combat damage per attacker to a planeswalker you control.
             damage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, pwControllerId, damage);
+            damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, pwControllerId, damage);
             state.damageToPlaneswalkers.merge(attackTarget, damage, Integer::sum);
             state.combatDamageDealt.merge(atk, damage, Integer::sum);
             return;
@@ -2135,6 +2169,8 @@ public class CombatDamageService {
             // Ghostly Flame can make the attacker a colourless source of damage.
             CardColor attackerColor = gameQueryService.getDamageSourceColor(gameData, atkStats.color());
             if (damage > 0
+                    && !damagePreventionService.isColorDamagePreventedForTarget(
+                            gameData, defenderId, gameQueryService.getEffectiveColors(gameData, atk))
                     && !(gameQueryService.isDamagePreventable(gameData)
                             && gameQueryService.playerHasProtectionFromColor(gameData, defenderId, attackerColor))
                     && !(gameQueryService.isDamagePreventable(gameData)
@@ -2168,6 +2204,7 @@ public class CombatDamageService {
                     gameLogService.append(gameData, GameLog.textCardText(fixedPrevented + " of ", atk.getCard(), "'s combat damage to "
                                     + gameData.playerIdToName.get(defenderId) + " is prevented."));
                 }
+                damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, defenderId, damage);
                 if (atkHasInfect) {
                     state.poisonDamageToDefendingPlayer += damage;
                 } else {
@@ -2276,6 +2313,11 @@ public class CombatDamageService {
         // Shadowbane: the chosen source's next combat damage to the protected player's creatures.
         damage = damagePreventionService.applyControllerCreaturesNextSourceDamageShield(
                 gameData, targetControllerId, source.getId(), damage);
+        if (damagePreventionService.isColorDamagePreventedForTarget(
+                gameData, target.getId(), gameQueryService.getEffectiveColors(gameData, source))) {
+            gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
+            return;
+        }
         // Swans of Bryn Argoll: prevent all combat damage to this creature; the source's controller draws that many cards.
         UUID swansSourceControllerId = gameQueryService.findPermanentController(gameData, source.getId());
         if (damagePreventionService.applySwansSourceControllerDraw(gameData, target, damage, swansSourceControllerId)) {

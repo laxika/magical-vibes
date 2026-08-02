@@ -1485,7 +1485,8 @@ public class CombatBlockService {
      */
     private int blockTaxFor(GameData gameData, Permanent blocker, Permanent attacker) {
         int attackerPower = gameQueryService.getEffectivePower(gameData, attacker);
-        int tax = gameQueryService.getEnchantedCreatureBlockTax(gameData, attacker);
+        int tax = gameQueryService.getEnchantedCreatureBlockTax(gameData, attacker)
+                + gameQueryService.getEnchantedCreatureBlockerTax(gameData, blocker);
         for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof BlockCostEffect blockCost) {
                 tax += blockCost.blockCost(attackerPower);

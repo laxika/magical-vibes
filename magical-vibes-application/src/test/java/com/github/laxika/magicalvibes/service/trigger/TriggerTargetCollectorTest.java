@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -18,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +36,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
@@ -197,5 +202,28 @@ class TriggerTargetCollectorTest {
         assertThat(result.validTargets())
                 .contains(player1Id, player2Id, creature.getId())
                 .doesNotContain(land.getId());
+    }
+
+    @Test
+    @DisplayName("UPKEEP option honors creature-you-control filters")
+    void upkeepControlledPermanentFilter() {
+        Permanent ownCreature = new Permanent(new Card());
+        Permanent opponentCreature = new Permanent(new Card());
+        gd.playerBattlefields.get(player1Id).add(ownCreature);
+        gd.playerBattlefields.get(player2Id).add(opponentCreature);
+        lenient().when(predicateEvaluationService.matchesFilters(
+                        eq(ownCreature), anySet(), any(FilterContext.class)))
+                .thenReturn(true);
+        lenient().when(predicateEvaluationService.matchesFilters(
+                        eq(opponentCreature), anySet(), any(FilterContext.class)))
+                .thenReturn(false);
+
+        List<CardEffect> effects = List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
+
+        TriggerTargetCollector.Result result = collector.collect(
+                gd, effects, TargetFilters.creatureYouControl(), player1Id, sourceCard,
+                TriggerTargetCollector.Options.UPKEEP);
+
+        assertThat(result.validTargets()).contains(ownCreature.getId()).doesNotContain(opponentCreature.getId());
     }
 }

@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "LRW", collectorNumber = "121")
 @CardRegistration(set = "M10", collectorNumber = "102")
 @CardRegistration(set = "M11", collectorNumber = "102")
+@CardRegistration(set = "M15", collectorNumber = "103")
 public class LilianaVess extends Card {
 
     public LilianaVess() {

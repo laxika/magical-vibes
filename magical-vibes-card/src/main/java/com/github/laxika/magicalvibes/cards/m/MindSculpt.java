@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "M13", collectorNumber = "61")
+@CardRegistration(set = "M15", collectorNumber = "70")
 public class MindSculpt extends Card {
 
     public MindSculpt() {

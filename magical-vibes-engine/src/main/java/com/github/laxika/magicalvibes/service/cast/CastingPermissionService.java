@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsE
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastPermanentSpellsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardPermission;
+import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentControllerCantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
@@ -204,10 +205,12 @@ public class CastingPermissionService {
     }
 
     /**
-     * Ward of Bones (EVE): returns true if any opponent controls a Ward of Bones and this player
-     * controls more lands than that opponent, in which case this player can't play lands.
+     * Returns true if a static effect stops this player from playing lands: their own
+     * {@link ControllerCantPlayLandsEffect} permanent (Aggressive Mining), or an opponent's Ward of
+     * Bones (EVE) while this player controls more lands than that opponent.
      */
-    public boolean isLandPlayRestrictedByWardOfBones(GameData gameData, UUID playerId) {
+    public boolean isLandPlayRestricted(GameData gameData, UUID playerId) {
+        if (controlsStatic(gameData, playerId, ControllerCantPlayLandsEffect.class)) return true;
         for (UUID controllerId : gameData.orderedPlayerIds) {
             if (controllerId.equals(playerId) || !controlsWardOfBones(gameData, controllerId)) continue;
             if (countControlledOfType(gameData, playerId, CardType.LAND)
@@ -219,10 +222,14 @@ public class CastingPermissionService {
     }
 
     private boolean controlsWardOfBones(GameData gameData, UUID playerId) {
+        return controlsStatic(gameData, playerId, WardOfBonesEffect.class);
+    }
+
+    private boolean controlsStatic(GameData gameData, UUID playerId, Class<? extends CardEffect> effectType) {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return false;
         return bf.stream().anyMatch(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(WardOfBonesEffect.class::isInstance));
+                .anyMatch(effectType::isInstance));
     }
 
     private long countControlledOfType(GameData gameData, UUID playerId, CardType type) {

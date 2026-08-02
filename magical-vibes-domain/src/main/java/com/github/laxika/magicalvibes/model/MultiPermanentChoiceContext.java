@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -69,6 +70,22 @@ public sealed interface MultiPermanentChoiceContext {
 
     /** The controller exiles the chosen attacking creatures (Resounding Silence cycling trigger). */
     record ExileAttackingCreatures() implements MultiPermanentChoiceContext {
+    }
+
+    /**
+     * Aetherspouts: the current owner selects the attacking creatures that go on top; the other
+     * attacking creatures in that owner's group go on the bottom. The remaining and accumulated
+     * IDs carry the resolution through one owner at a time.
+     */
+    record PutAttackingCreaturesOnLibrary(List<UUID> remainingCreatureIds, List<UUID> topCreatureIds,
+                                          List<UUID> bottomCreatureIds, String sourceCardName)
+            implements MultiPermanentChoiceContext {
+
+        public PutAttackingCreaturesOnLibrary {
+            remainingCreatureIds = List.copyOf(remainingCreatureIds);
+            topCreatureIds = List.copyOf(topCreatureIds);
+            bottomCreatureIds = List.copyOf(bottomCreatureIds);
+        }
     }
 
     /**

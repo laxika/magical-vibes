@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "M14", collectorNumber = "37")
+@CardRegistration(set = "M15", collectorNumber = "35")
 public class Soulmender extends Card {
 
     public Soulmender() {

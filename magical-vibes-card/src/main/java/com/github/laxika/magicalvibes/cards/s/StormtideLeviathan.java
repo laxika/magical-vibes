@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "74")
 @CardRegistration(set = "M13", collectorNumber = "70")
+@CardRegistration(set = "M15", collectorNumber = "80")
 public class StormtideLeviathan extends Card {
 
     public StormtideLeviathan() {

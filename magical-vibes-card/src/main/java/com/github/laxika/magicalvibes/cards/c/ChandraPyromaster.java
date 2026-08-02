@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import java.util.List;
 
 @CardRegistration(set = "M14", collectorNumber = "132")
+@CardRegistration(set = "M15", collectorNumber = "134")
 public class ChandraPyromaster extends Card {
 
     public ChandraPyromaster() {

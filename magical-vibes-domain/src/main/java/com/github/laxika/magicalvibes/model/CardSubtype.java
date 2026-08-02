@@ -71,6 +71,7 @@ public enum CardSubtype {
     FUNGUS("Fungus"),
     MERFOLK("Merfolk"),
     OCTOPUS("Octopus"),
+    SQUID("Squid"),
     OOZE("Ooze"),
     OGRE("Ogre"),
     ORB("Orb"),

@@ -200,7 +200,10 @@ public class CastingCostService {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof ActivatedAbilityCostIncreasingEffect taxEffect
                             && predicateEvaluationService.matchesPermanentPredicate(
-                                    gameData, sourcePermanent, taxEffect.affectedPermanents())) {
+                                    sourcePermanent, taxEffect.affectedPermanents(),
+                                    FilterContext.of(gameData)
+                                            .withSourceCardId(perm.getOriginalCard().getId())
+                                            .withSourceControllerId(pid))) {
                         tax += taxEffect.additionalGenericCost();
                     }
                 }

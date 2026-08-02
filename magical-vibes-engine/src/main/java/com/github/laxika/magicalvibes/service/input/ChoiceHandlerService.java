@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
@@ -152,6 +153,10 @@ public class ChoiceHandlerService {
             handleProtectionColorChoice(gameData, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.PreventDamageToTargetFromChosenColorChoice ctx) {
+            handlePreventDamageToTargetFromChosenColorChoice(gameData, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.MassProtectionColorChoice ctx) {
             handleMassProtectionColorChoice(gameData, colorName, ctx);
             return;
@@ -244,6 +249,10 @@ public class ChoiceHandlerService {
             handleSphinxAmbassadorNameChoice(gameData, colorName);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.MasterOfPredicamentsGuessChoice ctx) {
+            handleMasterOfPredicamentsGuessChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.StorageMatrixUntapChoice ctx) {
             handleStorageMatrixUntapChoice(gameData, colorName, ctx);
             return;
@@ -316,6 +325,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.ForgottenLorePaymentChoice ctx) {
             handleForgottenLorePaymentChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.IndulgentTormentorChoice ctx) {
+            handleIndulgentTormentorChoice(gameData, player, colorName, ctx);
             return;
         }
         CardColor color = CardColor.valueOf(colorName);
@@ -964,6 +977,16 @@ public class ChoiceHandlerService {
         // CR 704.5n/704.5q — the new protection can make an attached aura or equipment illegal
         stateBasedActionService.performStateBasedActions(gameData);
 
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handlePreventDamageToTargetFromChosenColorChoice(GameData gameData, String chosenValue,
+                                                                   ChoiceContext.PreventDamageToTargetFromChosenColorChoice ctx) {
+        CardColor chosenColor = CardColor.valueOf(chosenValue);
+        gameData.interaction.clearAwaitingInput();
+        gameData.colorDamagePreventionUntilEndOfTurn
+                .computeIfAbsent(ctx.targetId(), ignored -> ConcurrentHashMap.newKeySet())
+                .add(chosenColor);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -2317,6 +2340,54 @@ public class ChoiceHandlerService {
 
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }
+    }
+
+    private void handleMasterOfPredicamentsGuessChoice(
+            GameData gameData, Player player, String guess,
+            ChoiceContext.MasterOfPredicamentsGuessChoice ctx) {
+        boolean guessedGreater;
+        if ("Greater than 4".equals(guess)) {
+            guessedGreater = true;
+        } else if ("4 or less".equals(guess)) {
+            guessedGreater = false;
+        } else {
+            throw new IllegalStateException("Invalid guess: " + guess);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " guesses whether the chosen card's mana value is greater than 4."));
+
+        boolean actualGreater = ctx.selectedCard().getManaValue() > 4;
+        if (actualGreater != guessedGreater && !ctx.selectedCard().hasType(CardType.LAND)) {
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    ctx.selectedCard(),
+                    ctx.controllerId(),
+                    List.of(new MayCastFromHandWithoutPayingManaCostEffect(false)),
+                    "Cast the chosen card without paying its mana cost?"));
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleIndulgentTormentorChoice(GameData gameData, Player player, String chosen,
+            ChoiceContext.IndulgentTormentorChoice ctx) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active == null || !active.options().contains(chosen)) {
+            throw new IllegalArgumentException("Invalid Indulgent Tormentor choice: " + chosen);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.indulgentTormentor.chosenMode = chosen;
+
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
+        log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), chosen, ctx.sourceCardName());
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleMultiZoneExileCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {

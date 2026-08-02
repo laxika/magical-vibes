@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNam
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantBlockUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
@@ -3485,6 +3486,25 @@ public class GameQueryService {
     }
 
     /**
+     * Returns the additional generic mana the enchanted creature's controller must pay for each
+     * block declared by that creature, summed over every matching Aura attached to it.
+     */
+    public int getEnchantedCreatureBlockerTax(GameData gameData, Permanent creature) {
+        int[] total = {0};
+        gameData.forEachPermanent((playerId, aura) -> {
+            if (!aura.isAttached() || !aura.getAttachedTo().equals(creature.getId())) {
+                return;
+            }
+            for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof EnchantedCreatureCantBlockUnlessPaysEffect tax) {
+                    total[0] += tax.amount();
+                }
+            }
+        });
+        return total[0];
+    }
+
+    /**
      * Life the defending player must pay for this blocker to block this attacker under every
      * board-wide {@link GlobalBlockLifeCostEffect} (Heat Wave). Summed over matching sources;
      * charge once per unique blocker in {@code CombatBlockService.declareBlockers}.
@@ -3526,6 +3546,9 @@ public class GameQueryService {
      * granted subtypes, and the intrinsic Changeling keyword.
      */
     public static boolean permanentHasSubtype(Permanent permanent, CardSubtype subtype) {
+        if (!NON_CREATURE_SUBTYPES.contains(subtype) && permanent.getTransientCreatureTypeOverride() != null) {
+            return permanent.getTransientCreatureTypeOverride() == subtype;
+        }
         // "Loses all creature types" (e.g. Amoeboid Changeling): every creature subtype is treated as absent.
         // hasKeyword already suppresses the Changeling grant while this flag is set.
         if (permanent.isLosesAllCreatureTypesUntilEndOfTurn() && !NON_CREATURE_SUBTYPES.contains(subtype)) {
@@ -3630,6 +3653,9 @@ public class GameQueryService {
 
     /** Effective creature subtypes of a permanent (named types only; Changeling handled separately). */
     public Set<CardSubtype> effectiveCreatureSubtypes(GameData gameData, Permanent permanent) {
+        if (permanent.getTransientCreatureTypeOverride() != null) {
+            return Set.of(permanent.getTransientCreatureTypeOverride());
+        }
         if (permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
             return Set.of();
         }

@@ -141,6 +141,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkCreatureCardPutIntoGraveyardFromAnywhereTriggers}.
      *  Used by Soulcipher Board. */
     ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+    /** Triggers whenever a creature card is put into an opponent's graveyard from anywhere
+     *  (battlefield, hand, library, stack, exile). Fires on permanents controlled by an opponent of
+     *  the graveyard owner. Uses the card's printed types, so tokens never trigger. Checked in
+     *  {@code GraveyardService.addCardToGraveyard} via
+     *  {@code TriggerCollectionService.checkCreatureCardPutIntoGraveyardFromAnywhereTriggers}.
+     *  Used by Profane Memento. */
+    ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE,
     /** Triggers whenever a land (any player's) is put into a graveyard from the battlefield. Fires
      *  for destroy, sacrifice, etc. Checked in {@code PermanentRemovalService} via
      *  {@code TriggerCollectionService.checkAnyLandPutIntoGraveyardFromBattlefieldTriggers}. Used by
@@ -153,6 +160,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkBlackCardPutIntoOpponentGraveyardFromAnywhereTriggers}.
      *  Used by Compost. */
     ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE,
+    /** Triggers on a permanent whenever an Aura becomes attached to it — both when an Aura spell
+     *  resolves onto it and when an already-resolved Aura is moved onto it. Queued as a
+     *  non-targeting triggered ability whose {@code sourcePermanentId} is the enchanted permanent,
+     *  controlled by that permanent's controller (so it fires for an opponent's Aura too).
+     *  Checked in {@code TriggerCollectionService.checkAuraAttachedTriggers}. Used by Brood Keeper. */
+    ON_AURA_ATTACHED_TO_SELF,
     ON_ENCHANTED_PERMANENT_TAPPED,
     /** Triggers whenever a permanent the controller controls becomes tapped. Fires on every
      *  permanent with this slot on the tapped permanent's controller's battlefield. Wrap the
@@ -220,9 +233,20 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_LAND_ENTERS_BATTLEFIELD,
     ON_OPPONENT_CREATURE_DIES,
     ON_DEALT_DAMAGE,
+    /** Triggers whenever this creature is dealt combat damage. The amount of combat damage dealt
+     *  is snapshotted onto the triggered ability's event value. */
+    ON_COMBAT_DAMAGE_TO_SELF,
     ON_OPENING_HAND_REVEAL,
     ON_OPPONENT_LOSES_LIFE,
     ON_OPPONENT_SHUFFLES_LIBRARY,
+    /** Triggers whenever an opponent of this permanent's controller searches their own library
+     *  ("Whenever an opponent searches their library"). Fired from the unified library-search choke
+     *  point ({@code LibrarySearchSupport.performLibrarySearch}) by
+     *  {@code LibrarySearchTriggerHelper}, which bakes the searching player as the triggered
+     *  ability's {@code targetId} so {@code TARGET_PLAYER}-scoped effects act on them. A search
+     *  prevented by Leonin Arbiter never happens and does not trigger this. Used by
+     *  Ob Nixilis, Unshackled. */
+    ON_OPPONENT_SEARCHES_LIBRARY,
     ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
     /** Triggers during the draw step of the enchanted permanent's controller ("At the beginning of
      *  the draw step of enchanted creature's controller, that player draws an additional card").

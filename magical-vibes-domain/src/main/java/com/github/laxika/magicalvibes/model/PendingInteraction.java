@@ -46,6 +46,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.AlternatingHandExileChoice,
         PendingInteraction.GraveyardChoice, PendingInteraction.GraveyardExileCostChoice,
         PendingInteraction.HandCardChoice, PendingInteraction.TargetedHandCardChoice,
+        PendingInteraction.MasterOfPredicamentsCardChoice,
         PendingInteraction.PutCardsFromHandOnLibraryCardChoice,
         PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice,
         PendingInteraction.CounteredSpellLibraryDestinationChoice,
@@ -649,7 +650,17 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * {@code hostPermanentId} at begin time; the selection is entirely optional.
      */
     record AttachAurasChoice(UUID playerId, java.util.List<UUID> validCardIds, UUID hostPermanentId,
-                             String sourceName) implements PendingInteraction {
+                             String sourceName, int maxCount) implements PendingInteraction {
+
+        public AttachAurasChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                 UUID hostPermanentId, String sourceName) {
+            this(playerId, validCardIds, hostPermanentId, sourceName, validCardIds.size());
+        }
+
+        public AttachAurasChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+            maxCount = Math.min(maxCount, validCardIds.size());
+        }
 
         @Override
         public UUID decidingPlayerId() {
@@ -658,7 +669,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds, 0, validCardIds.size());
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
         }
     }
 
@@ -1130,6 +1141,30 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.CardIndexPick(validIndices, true);
+        }
+    }
+
+    /**
+     * Master of Predicaments: the controller separates one card from their hand before the
+     * damaged player guesses its mana-value range. The selected card stays in the hand until it
+     * is actually cast.
+     */
+    record MasterOfPredicamentsCardChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                          String prompt, UUID guessingPlayerId, Card sourceCard)
+            implements PendingInteraction, HandChoice {
+
+        public MasterOfPredicamentsCardChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
         }
     }
 

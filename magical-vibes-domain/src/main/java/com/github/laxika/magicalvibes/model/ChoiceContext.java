@@ -131,6 +131,8 @@ public sealed interface ChoiceContext {
         }
     }
 
+    record PreventDamageToTargetFromChosenColorChoice(UUID targetId) implements ChoiceContext {}
+
     /**
      * The controller chooses a color at resolution; the target permanent then becomes that color
      * until end of turn (CR 105.3 / layer 5). Used by Distorting Lens.
@@ -287,6 +289,10 @@ public sealed interface ChoiceContext {
      * the queued {@code PendingSphinxAmbassadorChoice} interaction.
      */
     record SphinxAmbassadorNameChoice(UUID namingPlayerId, UUID controllerId) implements ChoiceContext {}
+
+    /** The damaged player guesses the mana-value range of a card chosen from the controller's hand. */
+    record MasterOfPredicamentsGuessChoice(UUID controllerId, Card sourceCard, Card selectedCard)
+            implements ChoiceContext {}
 
     /**
      * Lammastide Weave: the controller names a card, then the target player mills one card. If the
@@ -539,5 +545,17 @@ public sealed interface ChoiceContext {
 
         public static final String PAY = "Pay {G}";
         public static final String DECLINE = "Don't pay";
+    }
+
+    /** Indulgent Tormentor: the targeted opponent chooses sacrifice, payment, or a draw. */
+    record IndulgentTormentorChoice(UUID affectedPlayerId, int lifeCost, String sourceCardName)
+            implements ChoiceContext {
+
+        public static final String SACRIFICE = "Sacrifice a creature";
+        public static final String DRAW = "Draw a card";
+
+        public static String payLife(int lifeCost) {
+            return "Pay " + lifeCost + " life";
+        }
     }
 }

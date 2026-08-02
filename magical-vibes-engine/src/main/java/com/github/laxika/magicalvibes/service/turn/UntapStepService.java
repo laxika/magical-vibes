@@ -134,6 +134,7 @@ public class UntapStepService {
                     }
                     p.setSummoningSick(false);
                     p.setLoyaltyActivationsThisTurn(0);
+                    p.setExtraLoyaltyActivationsThisTurn(0);
                 });
             }
             String skipLog = activePlayerName + " skips their untap step.";
@@ -222,6 +223,7 @@ public class UntapStepService {
                 }
                 p.setSummoningSick(false);
                 p.setLoyaltyActivationsThisTurn(0);
+                p.setExtraLoyaltyActivationsThisTurn(0);
             });
         }
 

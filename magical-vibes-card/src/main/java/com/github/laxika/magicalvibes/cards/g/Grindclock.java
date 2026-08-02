@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "163")
+@CardRegistration(set = "M15", collectorNumber = "217")
 public class Grindclock extends Card {
 
     public Grindclock() {

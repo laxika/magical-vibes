@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AVR", collectorNumber = "115")
+@CardRegistration(set = "M15", collectorNumber = "105")
 public class Necrobite extends Card {
 
     public Necrobite() {

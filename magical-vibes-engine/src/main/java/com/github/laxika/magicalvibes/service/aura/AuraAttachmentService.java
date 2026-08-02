@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -260,15 +261,20 @@ public class AuraAttachmentService {
     }
 
     /**
-     * Ward of Lights-style Auras: "Enchanted creature has protection from the chosen color. This
-     * effect doesn't remove this Aura." Choosing the Aura's own colour would otherwise make it
-     * illegally attached the moment it enters, so attachment legality skips the protection check for
-     * it. Coarse by design: it also ignores protection the host happens to have from another source,
-     * which no current card combination makes reachable.
+     * Auras whose protection grant explicitly keeps the Aura attached even when the Aura's own
+     * color is protected. The fixed-color form is used by Spectra Ward and the chosen-color form
+     * by Ward of Lights.
      */
     private boolean grantsSelfExemptProtection(Permanent attachment) {
         return attachment.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(effect -> effect instanceof ProtectionFromChosenColorEffect protection
-                        && protection.scope() == GrantScope.ENCHANTED_CREATURE);
+                .anyMatch(effect -> {
+                    if (effect instanceof ProtectionFromChosenColorEffect chosenProtection) {
+                        return chosenProtection.scope() == GrantScope.ENCHANTED_CREATURE;
+                    }
+                    if (effect instanceof ProtectionFromColorsEffect fixedProtection) {
+                        return fixedProtection.scope() == GrantScope.ENCHANTED_CREATURE;
+                    }
+                    return false;
+                });
     }
 }

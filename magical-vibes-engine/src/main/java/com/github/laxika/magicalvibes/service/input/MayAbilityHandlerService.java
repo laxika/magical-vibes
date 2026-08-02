@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -37,6 +38,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -53,6 +55,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -355,6 +358,17 @@ public class MayAbilityHandlerService {
         List<UUID> validTargets = new ArrayList<>();
         Card sourceCard = ability.sourceCard();
         TargetFilter targetFilter = mayAbilityTargetFilter(sourceCard, ability);
+        PermanentPredicate effectPredicate = ability.effects().stream()
+                .filter(e -> e.targetSpec().category().includesPermanents()
+                        && EffectResolution.targetPredicateOf(e) != null)
+                .map(EffectResolution::targetPredicateOf)
+                .findFirst()
+                .orElse(null);
+        TargetCategory permanentTargetCategory = ability.effects().stream()
+                .map(e -> e.targetSpec().category())
+                .filter(TargetCategory::includesPermanents)
+                .findFirst()
+                .orElse(TargetCategory.NONE);
         boolean canTargetPermanent = ability.effects().stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
         if (canTargetPermanent) {
             FilterContext ctx = FilterContext.of(gameData)
@@ -364,11 +378,22 @@ public class MayAbilityHandlerService {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
-                    if (targetFilter instanceof PermanentPredicateTargetFilter filter) {
-                        if (predicateEvaluationService.matchesPermanentPredicate(p, filter.predicate(), ctx)) {
-                            validTargets.add(p.getId());
-                        }
-                    } else if (gameQueryService.isCreature(gameData, p)) {
+                    boolean matches = targetFilter == null
+                            || predicateEvaluationService.matchesFilters(p, Set.of(targetFilter), ctx);
+                    if (matches && effectPredicate != null) {
+                        matches = predicateEvaluationService.matchesPermanentPredicate(p, effectPredicate, ctx);
+                    }
+                    if (matches && targetFilter == null && effectPredicate == null) {
+                        matches = switch (permanentTargetCategory) {
+                            case CREATURE -> gameQueryService.isCreature(gameData, p);
+                            case CREATURE_OR_PLANESWALKER, ANY_TARGET ->
+                                    gameQueryService.isCreature(gameData, p)
+                                            || p.getCard().hasType(com.github.laxika.magicalvibes.model.CardType.PLANESWALKER);
+                            case PLAYER_OR_PERMANENT, PERMANENT -> true;
+                            default -> false;
+                        };
+                    }
+                    if (matches) {
                         validTargets.add(p.getId());
                     }
                 }
@@ -742,7 +767,44 @@ public class MayAbilityHandlerService {
         List<UUID> validTargets = new ArrayList<>();
         Card sourceCard = ability.sourceCard();
         TargetFilter targetFilter = mayAbilityTargetFilter(sourceCard, ability);
-        if (canTargetPermanent) { FilterContext ctx = FilterContext.of(gameData).withSourceCardId(sourceCard.getId()).withSourceControllerId(ability.controllerId()); for (UUID pid : gameData.orderedPlayerIds) { List<Permanent> battlefield = gameData.playerBattlefields.get(pid); if (battlefield == null) continue; for (Permanent p : battlefield) { if (targetFilter instanceof PermanentPredicateTargetFilter filter) { if (predicateEvaluationService.matchesPermanentPredicate(p, filter.predicate(), ctx)) { validTargets.add(p.getId()); } } else if (gameQueryService.isCreature(gameData, p)) { validTargets.add(p.getId()); } } } }
+        PermanentPredicate effectPredicate = ability.effects().stream()
+                .filter(e -> e.targetSpec().category().includesPermanents()
+                        && EffectResolution.targetPredicateOf(e) != null)
+                .map(EffectResolution::targetPredicateOf)
+                .findFirst()
+                .orElse(null);
+        TargetCategory permanentTargetCategory = ability.effects().stream()
+                .map(e -> e.targetSpec().category())
+                .filter(TargetCategory::includesPermanents)
+                .findFirst()
+                .orElse(TargetCategory.NONE);
+        if (canTargetPermanent) {
+            FilterContext ctx = FilterContext.of(gameData)
+                    .withSourceCardId(sourceCard.getId())
+                    .withSourceControllerId(ability.controllerId());
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) continue;
+                for (Permanent p : battlefield) {
+                    boolean matches = targetFilter == null
+                            || predicateEvaluationService.matchesFilters(p, Set.of(targetFilter), ctx);
+                    if (matches && effectPredicate != null) {
+                        matches = predicateEvaluationService.matchesPermanentPredicate(p, effectPredicate, ctx);
+                    }
+                    if (matches && targetFilter == null && effectPredicate == null) {
+                        matches = switch (permanentTargetCategory) {
+                            case CREATURE -> gameQueryService.isCreature(gameData, p);
+                            case CREATURE_OR_PLANESWALKER, ANY_TARGET ->
+                                    gameQueryService.isCreature(gameData, p)
+                                            || p.getCard().hasType(com.github.laxika.magicalvibes.model.CardType.PLANESWALKER);
+                            case PLAYER_OR_PERMANENT, PERMANENT -> true;
+                            default -> false;
+                        };
+                    }
+                    if (matches) validTargets.add(p.getId());
+                }
+            }
+        }
         if (canTargetPlayer) { validTargets.addAll(validTargetService.filterValidPlayerTargets(gameData, targetFilter, gameData.orderedPlayerIds, ability.controllerId())); }
         if (validTargets.isEmpty()) {
             gameLogService.append(gameData,

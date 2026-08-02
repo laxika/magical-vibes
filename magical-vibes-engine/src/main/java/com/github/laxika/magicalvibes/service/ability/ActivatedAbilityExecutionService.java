@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaToChosenPlayerEffect
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.AddNotedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddNotedManaForLastExiledCardEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardHasteGrantingManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
@@ -665,6 +666,8 @@ public class ActivatedAbilityExecutionService {
                 log.info("Game {} - Awaiting {} to choose a flashback-only mana color", gameData.id, player.getUsername());
             } else if (effect instanceof AwardRestrictedManaEffect arm) {
                 arm.applyTo(gameData.playerManaPools.get(playerId));
+            } else if (effect instanceof AwardHasteGrantingManaEffect ahg) {
+                ahg.applyTo(gameData.playerManaPools.get(playerId));
             } else if (effect instanceof AddNotedManaForLastExiledCardEffect) {
                 addNotedManaForLastExiledCard(gameData, player, permanent);
             } else if (effect instanceof AddNotedManaEffect) {
@@ -967,6 +970,8 @@ public class ActivatedAbilityExecutionService {
                         AmountContext.forManaAbility(permanent, playerId, xValue));
             } else if (effect instanceof AwardRestrictedManaEffect arm) {
                 total += arm.amount();
+            } else if (effect instanceof AwardHasteGrantingManaEffect ahg) {
+                total += ahg.amount();
             } else if (effect instanceof AwardFlashbackOnlyAnyColorManaEffect fba) {
                 total += fba.amount();
             } else if (effect instanceof AwardAnyColorSubtypeSpellOrAbilityManaEffect soa) {

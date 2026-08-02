@@ -175,6 +175,10 @@ public class DamageSupport {
         Set<CardColor> sourceColors = damageSource != null
                 ? gameQueryService.getEffectiveColors(gameData, damageSource)
                 : sourceCardColors(entry.getEffectiveDamageSourceCard());
+        if (damagePreventionService.isColorDamagePreventedForTarget(gameData, target.getId(), sourceColors)) {
+            gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
+            return;
+        }
         if (gameQueryService.isColorDamageToEnchantedCreaturePrevented(gameData, target, sourceColors)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
             return;
@@ -201,6 +205,7 @@ public class DamageSupport {
         // reduced amount; the loyalty branch below then removes the reduced amount.
         if (target.getCard().hasType(CardType.PLANESWALKER)) {
             damage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, targetControllerId, damage);
+            damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, targetControllerId, damage);
         }
 
         if (damageSource != null) {
@@ -499,7 +504,18 @@ public class DamageSupport {
                 int loyaltyDamage = Math.max(0, rawDamage);
                 // Djeru, With Eyes Open: prevent N of the damage dealt to a planeswalker you control.
                 UUID pwControllerId = gameQueryService.findPermanentController(gameData, targetPermanent.getId());
+                Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                        ? null
+                        : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+                Set<CardColor> sourceColors = sourcePermanent == null
+                        ? sourceCardColors(source)
+                        : gameQueryService.getEffectiveColors(gameData, sourcePermanent);
+                if (damagePreventionService.isColorDamagePreventedForTarget(gameData, targetPermanent.getId(), sourceColors)) {
+                    gameLogService.append(gameData, GameLog.textCardText("Damage to ", targetPermanent.getCard(), " is prevented."));
+                    return;
+                }
                 loyaltyDamage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, pwControllerId, loyaltyDamage);
+                loyaltyDamage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, pwControllerId, loyaltyDamage);
                 if (loyaltyDamage > 0) {
                     accumulateSourceDamageForReflection(gameData, source, entry.getControllerId(), loyaltyDamage);
                     targetPermanent.setCounterCount(CounterType.LOYALTY,
@@ -578,6 +594,17 @@ public class DamageSupport {
         }
         // Benevolent Unicorn: a spell dealing damage to a player deals that much damage minus N.
         rawDamage = Math.max(0, rawDamage - gameQueryService.getSpellDamageReduction(gameData, entry));
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Set<CardColor> sourceColors = sourcePermanent == null
+                ? sourceCardColors(source)
+                : gameQueryService.getEffectiveColors(gameData, sourcePermanent);
+        if (damagePreventionService.isColorDamagePreventedForTarget(gameData, playerId, sourceColors)) {
+            gameLogService.append(gameData, GameLog.cardThen(source,
+                    "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
+            return;
+        }
         if (damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, entry.getSourcePermanentId())
                 || damagePreventionService.isNoncombatDamageFromAttackerPreventedForPlayer(gameData, playerId, entry.getSourcePermanentId())
                 || isSourcePermanentPreventedFromDealingDamage(gameData, entry)) {
@@ -647,6 +674,13 @@ public class DamageSupport {
             if (fixedPrevented > 0) {
                 effectiveDamage -= fixedPrevented;
                 gameLogService.append(gameData, GameLog.textCardText(fixedPrevented + " of ", source,
+                        "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
+            }
+
+            int allButOnePrevented = damagePreventionService.applyAllButOneDamagePrevention(gameData, playerId, effectiveDamage);
+            if (allButOnePrevented > 0) {
+                effectiveDamage -= allButOnePrevented;
+                gameLogService.append(gameData, GameLog.textCardText(allButOnePrevented + " of ", source,
                         "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
             }
 
@@ -749,9 +783,9 @@ public class DamageSupport {
                         effectiveDamage);
                 // Source's own ON_DAMAGE_TO_PLAYER (e.g. Niv-Mizzet, Dracogenius ping → may draw).
                 if (entry.getSourcePermanentId() != null) {
-                    Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-                    if (sourcePermanent != null) {
-                        triggerCollectionService.checkSourceDealsDamageToPlayerTriggers(gameData, sourcePermanent,
+                    Permanent triggerSourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+                    if (triggerSourcePermanent != null) {
+                        triggerCollectionService.checkSourceDealsDamageToPlayerTriggers(gameData, triggerSourcePermanent,
                                 entry.getControllerId(), playerId, effectiveDamage);
                     }
                 }

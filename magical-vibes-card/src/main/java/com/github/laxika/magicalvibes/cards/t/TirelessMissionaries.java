@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "36")
+@CardRegistration(set = "M15", collectorNumber = "39")
 public class TirelessMissionaries extends Card {
 
     public TirelessMissionaries() {

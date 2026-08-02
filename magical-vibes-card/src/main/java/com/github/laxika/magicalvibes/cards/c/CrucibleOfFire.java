@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import java.util.Set;
 
 @CardRegistration(set = "ALA", collectorNumber = "96")
+@CardRegistration(set = "M15", collectorNumber = "139")
 public class CrucibleOfFire extends Card {
 
     public CrucibleOfFire() {

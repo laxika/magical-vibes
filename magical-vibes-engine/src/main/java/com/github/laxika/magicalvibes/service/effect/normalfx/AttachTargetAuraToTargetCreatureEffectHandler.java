@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToTargetCreat
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,7 @@ public class AttachTargetAuraToTargetCreatureEffectHandler implements NormalEffe
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -56,6 +58,8 @@ public class AttachTargetAuraToTargetCreatureEffectHandler implements NormalEffe
         
         gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", creature.getCard(), "."));
         log.info("Game {} - {} attached to {} via {}", gameData.id, aura.getCard().getName(), creature.getCard().getName(), entry.getCard().getName());
+
+        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura.getCard(), creature.getId());
     }
 
     private void fizzle(GameData gameData, StackEntry entry, String reason) {

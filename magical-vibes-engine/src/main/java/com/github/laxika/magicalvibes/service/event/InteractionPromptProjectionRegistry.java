@@ -92,6 +92,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectGraveyardExileCostChoice);
         register(PendingInteraction.HandCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, true));
+        register(PendingInteraction.MasterOfPredicamentsCardChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.TargetedHandCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, true));
         register(PendingInteraction.DiscardChoice.class,
@@ -412,9 +414,13 @@ public class InteractionPromptProjectionRegistry {
                 gameData.playerGraveyards.getOrDefault(playerId, List.of()), interaction.validCardIds());
         addMatchingCardViews(cardViews,
                 gameData.playerHands.getOrDefault(playerId, List.of()), interaction.validCardIds());
+        addMatchingCardViews(cardViews,
+                gameData.playerDecks.getOrDefault(playerId, List.of()), interaction.validCardIds());
         return InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()), cardViews, interaction.validCardIds().size(),
-                "Choose any number of Auras to attach to " + interaction.sourceName() + ".");
+                new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
+                interaction.maxCount() == 1
+                        ? "Choose an Aura to attach to " + interaction.sourceName() + "."
+                        : "Choose any number of Auras to attach to " + interaction.sourceName() + ".");
     }
 
     private InteractionPromptMessage projectMultiPermanentChoice(

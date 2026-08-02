@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AVR", collectorNumber = "62")
+@CardRegistration(set = "M15", collectorNumber = "60")
 public class IntoTheVoid extends Card {
 
     public IntoTheVoid() {

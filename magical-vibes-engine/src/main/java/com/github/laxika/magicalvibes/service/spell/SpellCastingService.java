@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHa
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
@@ -92,7 +93,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCo
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantConspireToSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSourceActivatedAbilitiesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -152,15 +153,16 @@ public class SpellCastingService {
 
     /**
      * Whether a permanent the casting player controls grants conspire (CR 702.78) to {@code card} via a
-     * {@link GrantConspireToSpellsEffect} static ability (e.g. Wort, the Raidmother). Lets the conspire
+     * {@link SpellCastingAbilityGrantingEffect} static ability (e.g. Wort, the Raidmother). Lets the conspire
      * cost be paid on spells that lack the innate {@code CONSPIRE} keyword.
      */
-    private boolean hasConspireGrantForCard(GameData gameData, UUID playerId, Card card) {
+    private boolean hasSpellCastingAbilityGrantForCard(GameData gameData, UUID playerId, Card card, Keyword ability) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof GrantConspireToSpellsEffect grant
+                if (effect instanceof SpellCastingAbilityGrantingEffect grant
+                        && grant.grantedAbility() == ability
                         && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
                     return true;
                 }
@@ -807,7 +809,9 @@ public class SpellCastingService {
             Card cardCheck = handCheck.get(cardIndex);
             if (usingAlternateCost && cardCheck.getCastingOption(AlternateHandCast.class).isPresent()) {
                 // Allow — alternate cost bypasses mana check; validated below
-            } else if (cardCheck.getKeywords().contains(Keyword.CONVOKE) && !convokeCreatureIds.isEmpty()) {
+            } else if ((cardCheck.getKeywords().contains(Keyword.CONVOKE)
+                    || hasSpellCastingAbilityGrantForCard(gameData, playerId, cardCheck, Keyword.CONVOKE))
+                    && !convokeCreatureIds.isEmpty()) {
                 // Allow convoke-assisted casting even if not in basic playable list
                 List<Integer> convokePlayable = actionAvailabilityService.getPlayableCardIndices(gameData, playerId, convokeCreatureIds.size());
                 if (!convokePlayable.contains(cardIndex)) {
@@ -1075,7 +1079,14 @@ public class SpellCastingService {
                         int perTargetCost = card.getAdditionalCostPerExtraTarget() * Math.max(0, targetIds.size() - 1);
                         int totalAdditionalCost = additionalCost + perTargetCost;
                         ManaRestrictionFlags flags = computeManaRestrictionFlags(gameData, playerId, card, kicked);
-                        if (card.hasXColorRestriction()) {
+                        List<ManaColor> plannedConvoke = planConvokeContributions(gameData, playerId, card, convokeCreatureIds);
+                        if (!plannedConvoke.isEmpty()) {
+                            // Convoke on an {X} spell (Chord of Calling): tapped creatures pay part of
+                            // the colored cost and of X, so the plain pool check would reject it.
+                            if (!cost.canPayWithConvoke(pool, effectiveXValue + totalAdditionalCost, plannedConvoke)) {
+                                throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
+                            }
+                        } else if (card.hasXColorRestriction()) {
                             if (!cost.canPay(pool, effectiveXValue, card.getXColorRestrictions(), totalAdditionalCost)) {
                                 throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
                             }
@@ -1240,39 +1251,14 @@ public class SpellCastingService {
 
         // Validate and apply convoke
         List<ManaColor> convokeContributions = List.of();
-        if (!convokeCreatureIds.isEmpty() && card.getKeywords().contains(Keyword.CONVOKE)) {
-            List<ManaColor> contributions = new ArrayList<>();
+        if (!convokeCreatureIds.isEmpty()
+                && (card.getKeywords().contains(Keyword.CONVOKE)
+                || hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.CONVOKE))) {
+            List<ManaColor> contributions = collectConvokeContributions(gameData, playerId, convokeCreatureIds);
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            List<Permanent> validatedCreatures = new ArrayList<>();
-            for (UUID creatureId : convokeCreatureIds) {
-                Permanent creature = battlefield.stream()
-                        .filter(p -> p.getId().equals(creatureId))
-                        .findFirst()
-                        .orElse(null);
-                if (creature == null) {
-                    throw new IllegalStateException("Convoke creature not found on your battlefield");
-                }
-                if (!gameQueryService.isCreature(gameData, creature)) {
-                    throw new IllegalStateException(creature.getCard().getName() + " is not a creature");
-                }
-                if (creature.isTapped()) {
-                    throw new IllegalStateException(creature.getCard().getName() + " is already tapped");
-                }
-                Set<CardColor> creatureColors = gameQueryService.getEffectiveColors(gameData, creature);
-                ManaColor contribution = creatureColors == null || creatureColors.isEmpty()
-                        ? null
-                        : creatureColors.stream()
-                                .map(color -> ManaColor.fromCode(color.getCode()))
-                                .filter(java.util.Objects::nonNull)
-                                .findFirst()
-                                .orElse(null);
-                if (contribution == null) {
-                    CardColor creatureColor = gameQueryService.getEffectiveColor(gameData, creature);
-                    contribution = creatureColor != null ? ManaColor.fromCode(creatureColor.getCode()) : null;
-                }
-                contributions.add(contribution);
-                validatedCreatures.add(creature);
-            }
+            List<Permanent> validatedCreatures = convokeCreatureIds.stream()
+                    .map(creatureId -> battlefield.stream().filter(p -> p.getId().equals(creatureId)).findFirst().orElseThrow())
+                    .toList();
             // Tap all convoke creatures (after validation to ensure atomic failure).
             // CR 603.2 + 603.3: any "whenever enchanted permanent becomes tapped" triggers
             // are deferred so they don't sit on the stack mid-cast; finishSpellCast()
@@ -1297,7 +1283,8 @@ public class SpellCastingService {
         // "copy it, you may choose a new target for the copy" trigger is queued above the spell when
         // spell-cast triggers are collected in finishSpellCast().
         if (!conspireCreatureIds.isEmpty()
-                && (card.getKeywords().contains(Keyword.CONSPIRE) || hasConspireGrantForCard(gameData, playerId, card))) {
+                && (card.getKeywords().contains(Keyword.CONSPIRE)
+                || hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.CONSPIRE))) {
             if (conspireCreatureIds.size() != 2 || conspireCreatureIds.get(0).equals(conspireCreatureIds.get(1))) {
                 throw new IllegalStateException("Conspire requires two different untapped creatures you control");
             }
@@ -1345,12 +1332,27 @@ public class SpellCastingService {
         // Validate graveyard targets for spells that target creature cards in graveyard
         boolean needsGraveyardCreatureTargeting = card.getEffects(EffectSlot.SPELL).stream()
                 .anyMatch(e -> e instanceof ExileCreaturesFromGraveyardAndCreateTokensEffect);
+        ReturnTargetCardsFromGraveyardToBattlefieldEffect returnToBattlefieldEffect =
+                card.getEffects(EffectSlot.SPELL).stream()
+                        .filter(ReturnTargetCardsFromGraveyardToBattlefieldEffect.class::isInstance)
+                        .map(ReturnTargetCardsFromGraveyardToBattlefieldEffect.class::cast)
+                        .findFirst().orElse(null);
         if (needsGraveyardCreatureTargeting && effectiveXValue > 0) {
             long creatureCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
                     .filter(c -> c.hasType(CardType.CREATURE))
                     .count();
             if (effectiveXValue > creatureCount) {
                 throw new IllegalStateException("Not enough creature cards in graveyard (need " + effectiveXValue + ", have " + creatureCount + ")");
+            }
+        }
+        if (returnToBattlefieldEffect != null && effectiveXValue > 0) {
+            long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                    .filter(c -> predicateEvaluationService.matchesCardPredicate(
+                            c, returnToBattlefieldEffect.filter(), card.getId()))
+                    .count();
+            if (effectiveXValue > matchingCount) {
+                throw new IllegalStateException("Not enough matching creature cards in graveyard (need "
+                        + effectiveXValue + ", have " + matchingCount + ")");
             }
         }
 
@@ -1743,6 +1745,17 @@ public class SpellCastingService {
                 return; // finishSpellCast handled in graveyard targeting callback
             } else if (needsGraveyardCreatureTargeting) {
                 // X=0: no targets needed, put spell on stack directly (resolves doing nothing)
+                gameData.stack.add(new StackEntry(
+                        entryType, card, playerId, card.getName(),
+                        filteredSpellEffects, 0, null,
+                        null, null, null, List.of(), List.of()
+                ));
+            } else if (returnToBattlefieldEffect != null && resolvedXValue > 0) {
+                graveyardTargetingService.handleExactNGraveyardSpellTargeting(
+                        gameData, playerId, card, entryType, resolvedXValue,
+                        returnToBattlefieldEffect.filter(), "to the battlefield");
+                return;
+            } else if (returnToBattlefieldEffect != null) {
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, 0, null,
@@ -3450,10 +3463,12 @@ public class SpellCastingService {
     }
 
     public void paySpellManaCost(GameData gameData, UUID playerId, Card card, int effectiveXValue, List<ManaColor> convokeContributions, Integer phyrexianLifeCount, boolean kicked, int extraCostReduction, int targetingTax, String escalateManaSuffix) {
+        int hasteGrantingBefore = hasteGrantingManaAvailable(gameData, playerId);
         gameData.addSpellCastManaSpent(card.getId(),
                 computeSpellManaPayment(gameData, playerId, card, effectiveXValue, convokeContributions,
                         phyrexianLifeCount, kicked, extraCostReduction, targetingTax, escalateManaSuffix, true));
         applyUncounterableGrantingMana(gameData, playerId, card);
+        applyHasteGrantingMana(gameData, playerId, card, hasteGrantingBefore);
     }
 
     /**
@@ -3462,10 +3477,32 @@ public class SpellCastingService {
      * that a hand-only battlefield free-cast source (Omniscience) does not apply.
      */
     public void paySpellManaCostFromNonHandZone(GameData gameData, UUID playerId, Card card, int effectiveXValue) {
+        int hasteGrantingBefore = hasteGrantingManaAvailable(gameData, playerId);
         gameData.addSpellCastManaSpent(card.getId(),
                 computeSpellManaPayment(gameData, playerId, card, effectiveXValue, List.of(),
                         null, false, 0, 0, "", false));
         applyUncounterableGrantingMana(gameData, playerId, card);
+        applyHasteGrantingMana(gameData, playerId, card, hasteGrantingBefore);
+    }
+
+    private int hasteGrantingManaAvailable(GameData gameData, UUID playerId) {
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        return pool != null ? pool.getHasteGrantingManaTotal() : 0;
+    }
+
+    /**
+     * Generator Servant: mana carrying the haste rider makes the creature spell it was spent on enter
+     * the battlefield with haste until end of turn. The pool spends tagged mana before untagged mana
+     * of the same color, so any drop in the tagged total between the two snapshots means this spell
+     * was (at least partly) paid for with it.
+     */
+    private void applyHasteGrantingMana(GameData gameData, UUID playerId, Card card, int hasteGrantingBefore) {
+        if (!card.hasType(CardType.CREATURE)) {
+            return;
+        }
+        if (hasteGrantingManaAvailable(gameData, playerId) < hasteGrantingBefore) {
+            gameData.spellsGrantedHasteOnEntry.add(card.getId());
+        }
     }
 
     /**
@@ -3477,6 +3514,58 @@ public class SpellCastingService {
         if (pool != null && pool.consumeSpentUncounterableGrantingMana()) {
             gameData.spellsMadeUncounterable.add(card.getId());
         }
+    }
+
+    /**
+     * The mana colors the given creatures would contribute via convoke, validating that each is an
+     * untapped creature the player controls. A {@code null} entry is a colorless creature (generic
+     * only). Throws if any creature is missing, not a creature, or already tapped.
+     */
+    private List<ManaColor> collectConvokeContributions(GameData gameData, UUID playerId, List<UUID> convokeCreatureIds) {
+        List<ManaColor> contributions = new ArrayList<>();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        for (UUID creatureId : convokeCreatureIds) {
+            Permanent creature = battlefield.stream()
+                    .filter(p -> p.getId().equals(creatureId))
+                    .findFirst()
+                    .orElse(null);
+            if (creature == null) {
+                throw new IllegalStateException("Convoke creature not found on your battlefield");
+            }
+            if (!gameQueryService.isCreature(gameData, creature)) {
+                throw new IllegalStateException(creature.getCard().getName() + " is not a creature");
+            }
+            if (creature.isTapped()) {
+                throw new IllegalStateException(creature.getCard().getName() + " is already tapped");
+            }
+            Set<CardColor> creatureColors = gameQueryService.getEffectiveColors(gameData, creature);
+            ManaColor contribution = creatureColors == null || creatureColors.isEmpty()
+                    ? null
+                    : creatureColors.stream()
+                            .map(color -> ManaColor.fromCode(color.getCode()))
+                            .filter(java.util.Objects::nonNull)
+                            .findFirst()
+                            .orElse(null);
+            if (contribution == null) {
+                CardColor creatureColor = gameQueryService.getEffectiveColor(gameData, creature);
+                contribution = creatureColor != null ? ManaColor.fromCode(creatureColor.getCode()) : null;
+            }
+            contributions.add(contribution);
+        }
+        return contributions;
+    }
+
+    /**
+     * Convoke contributions previewed before the cast is committed, for affordability checks. Returns
+     * an empty list when the card has no convoke or no creatures were offered.
+     */
+    private List<ManaColor> planConvokeContributions(GameData gameData, UUID playerId, Card card, List<UUID> convokeCreatureIds) {
+        if (convokeCreatureIds == null || convokeCreatureIds.isEmpty()) return List.of();
+        if (!card.getKeywords().contains(Keyword.CONVOKE)
+                && !hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.CONVOKE)) {
+            return List.of();
+        }
+        return collectConvokeContributions(gameData, playerId, convokeCreatureIds);
     }
 
     private int computeSpellManaPayment(GameData gameData, UUID playerId, Card card, int effectiveXValue,
@@ -3549,7 +3638,8 @@ public class SpellCastingService {
         }
 
         if (convokeContributions != null && !convokeContributions.isEmpty()) {
-            cost.payWithConvoke(pool, additionalCost, convokeContributions);
+            // X is part of the generic demand convoke can help pay (Chord of Calling).
+            cost.payWithConvoke(pool, additionalCost + (cost.hasX() ? effectiveXValue : 0), convokeContributions);
         } else if (cost.hasX() && card.hasXColorRestriction()) {
             var spentOnX = cost.pay(pool, effectiveXValue, card.getXColorRestrictions(), additionalCost);
             gameData.setSpellCastManaSpentOnX(card.getId(), spentOnX);

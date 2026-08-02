@@ -9,16 +9,23 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * the card it exiled.
  *
  * @param description human-readable card description used in log messages ("a snow land")
+ * @param subject     how the imprinted card is referred to in log messages; "exiled card" by
+ *                    default, "discarded card" for a discard cost that imprints what it paid with
+ *                    (Necromancer's Stockpile)
  */
-public record ImprintedCardMatches(CardPredicate filter, String description) implements Condition {
+public record ImprintedCardMatches(CardPredicate filter, String description, String subject) implements Condition {
+
+    public ImprintedCardMatches(CardPredicate filter, String description) {
+        this(filter, description, "exiled card");
+    }
 
     @Override
     public String conditionName() {
-        return "exiled card is " + description;
+        return subject + " is " + description;
     }
 
     @Override
     public String conditionNotMetReason() {
-        return "the exiled card is not " + description;
+        return "the " + subject + " is not " + description;
     }
 }

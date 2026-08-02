@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -795,16 +796,25 @@ public class GameService {
 
     public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex,
                                          Integer xValue, UUID targetId) {
+        activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, xValue, targetId, null);
+    }
+
+    /**
+     * Activates a graveyard ability, optionally targeting cards in graveyards (e.g. Soul of Innistrad's
+     * "Return up to three target creature cards from your graveyard to your hand").
+     */
+    public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex,
+                                         Integer xValue, UUID targetId, List<UUID> graveyardTargetIds) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> activateGraveyardAbility(gameData, actionPlayer, graveyardCardIndex, abilityIndex,
-                        xValue, targetId))) return;
+                        xValue, targetId, graveyardTargetIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             requireCanActivateAbilities(gameData, player);
             abilityActivationService.activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, xValue,
-                    targetId);
+                    targetId, graveyardTargetIds);
         }
     }
 
@@ -876,6 +886,13 @@ public class GameService {
     public List<ActivatedAbility> getEffectiveActivatedAbilities(GameData gameData, Permanent permanent) {
         synchronized (gameData) {
             return abilityActivationService.getEffectiveActivatedAbilities(gameData, permanent);
+        }
+    }
+
+    /** The graveyard activated abilities a card in the given owner's graveyard currently offers. */
+    public List<ActivatedAbility> getEffectiveGraveyardAbilities(GameData gameData, Card card, UUID ownerId) {
+        synchronized (gameData) {
+            return abilityActivationService.effectiveGraveyardAbilities(gameData, card, ownerId);
         }
     }
 

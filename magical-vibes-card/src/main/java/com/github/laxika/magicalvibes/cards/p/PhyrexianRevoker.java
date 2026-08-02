@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import java.util.List;
 
 @CardRegistration(set = "MBS", collectorNumber = "122")
+@CardRegistration(set = "M15", collectorNumber = "225")
 public class PhyrexianRevoker extends Card {
 
     public PhyrexianRevoker() {

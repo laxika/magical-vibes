@@ -122,6 +122,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                         .manaValueBound(boundValue, bound != null && bound.exact())
                         .grantHaste(effect.grantHaste())
                         .exileAtEndStep(effect.exileAtEndStep())
+                        .animateFound(effect.animateFound())
                         .build(),
                 prompt, restricted);
 

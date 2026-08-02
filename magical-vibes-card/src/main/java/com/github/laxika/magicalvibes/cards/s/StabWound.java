@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RTR", collectorNumber = "78")
+@CardRegistration(set = "M15", collectorNumber = "116")
 public class StabWound extends Card {
 
     public StabWound() {

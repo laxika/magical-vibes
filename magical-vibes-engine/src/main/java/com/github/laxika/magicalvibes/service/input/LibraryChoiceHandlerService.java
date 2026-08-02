@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -86,6 +87,8 @@ public class LibraryChoiceHandlerService {
     private final TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
     private final DrawService drawService;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport animationSupport;
+    private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.NaturalBalanceSupport naturalBalanceSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport guildFeudSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler returnCardExiledWithSourceToBattlefieldEffectHandler;
@@ -136,6 +139,7 @@ public class LibraryChoiceHandlerService {
         List<String> excludedCardNames = new ArrayList<>(librarySearch.excludedCardNames());
         boolean grantHaste = librarySearch.grantHaste();
         boolean exileAtEndStep = librarySearch.exileAtEndStep();
+        AnimatePermanentsEffect animateFound = librarySearch.animateFound();
 
         UUID deckOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
         UUID handOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
@@ -369,7 +373,7 @@ public class LibraryChoiceHandlerService {
             // CR 608.2f: Place any accumulated battlefield cards before finishing
             if (!accumulatedCards.isEmpty() && toBattlefield) {
                 placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, handOwnerId, toBattlefieldTapped,
-                        grantHaste, exileAtEndStep);
+                        grantHaste, exileAtEndStep, animateFound);
             }
             if (shuffleAfterSelection) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
@@ -825,7 +829,7 @@ public class LibraryChoiceHandlerService {
                 List<Card> allCards = new ArrayList<>(accumulatedCards);
                 allCards.add(chosenCard);
                 placeCardsOnBattlefieldSimultaneously(gameData, allCards, handOwnerId, toBattlefieldTapped,
-                        grantHaste, exileAtEndStep);
+                        grantHaste, exileAtEndStep, animateFound);
             }
         }
 
@@ -861,7 +865,7 @@ public class LibraryChoiceHandlerService {
                 // CR 608.2f: Place any accumulated battlefield cards before finishing
                 if (!accumulatedCards.isEmpty() && toBattlefield) {
                     placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, handOwnerId, toBattlefieldTapped,
-                        grantHaste, exileAtEndStep);
+                        grantHaste, exileAtEndStep, animateFound);
                 }
                 // No more matching cards — shuffle and finish
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
@@ -910,6 +914,7 @@ public class LibraryChoiceHandlerService {
                     .excludedCardNames(excludedCardNames)
                     .grantHaste(grantHaste)
                     .exileAtEndStep(exileAtEndStep)
+                    .animateFound(animateFound)
                     .build(),
                     prompt, toGraveyard || canFailToFind));
 
@@ -1040,10 +1045,16 @@ public class LibraryChoiceHandlerService {
     /**
      * Places multiple cards onto the battlefield simultaneously per CR 608.2f.
      * All permanents are added first, then ETB triggers are processed after all are on the battlefield.
+     *
+     * <p>{@code animateFound} (Nissa, Worldwaker) animates each placed permanent once every one of
+     * them is on the battlefield: the cards enter as what they are printed as — so a basic land does
+     * not fire creature-entered triggers — and only then become creatures. Its power/toughness are
+     * evaluated without a stack entry, so they must be constant amounts.</p>
      */
     private void placeCardsOnBattlefieldSimultaneously(GameData gameData, List<Card> cards,
                                                         UUID ownerId, boolean tapped,
-                                                        boolean grantHaste, boolean exileAtEndStep) {
+                                                        boolean grantHaste, boolean exileAtEndStep,
+                                                        AnimatePermanentsEffect animateFound) {
         List<Permanent> permanents = new ArrayList<>();
         List<Card> placedCards = new ArrayList<>();
         String ownerName = gameData.playerIdToName.get(ownerId);
@@ -1091,6 +1102,19 @@ public class LibraryChoiceHandlerService {
 
         if (anyBlocked) {
             java.util.Collections.shuffle(gameData.playerDecks.get(ownerId));
+        }
+
+        if (animateFound != null && !permanents.isEmpty()) {
+            StackEntry parked = gameData.pendingEffectResolutionEntry;
+            String sourceName = parked != null && parked.getCard() != null ? parked.getCard().getName() : "";
+            UUID sourcePermanentId = parked != null ? parked.getSourcePermanentId() : null;
+            var ctx = com.github.laxika.magicalvibes.service.effect.AmountContext.forEstimation(ownerId);
+            int power = amountEvaluationService.evaluate(gameData, animateFound.power(), ctx);
+            int toughness = amountEvaluationService.evaluate(gameData, animateFound.toughness(), ctx);
+            for (Permanent perm : permanents) {
+                animationSupport.animatePermanently(gameData, perm, animateFound, power, toughness,
+                        sourceName, sourcePermanentId, ownerId);
+            }
         }
 
         // Phase 2: Process ETB triggers after all permanents are on the battlefield (CR 608.2f)

@@ -1029,6 +1029,24 @@ public class GameTestHarness {
         gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, null, null, Zone.GRAVEYARD, graveyardCardIds);
     }
 
+    /** Activates a graveyard ability whose targets are cards in the player's graveyard (Soul of Innistrad). */
+    public void activateGraveyardAbilityWithGraveyardTargets(Player player, int graveyardCardIndex, int abilityIndex,
+                                                             List<UUID> graveyardCardIds) {
+        ensurePriority(player);
+        gameService.activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, null, null,
+                graveyardCardIds);
+    }
+
+    /**
+     * Activates a multi-target graveyard ability whose target group is on the battlefield or is a
+     * player (Soul of Shandalar). The ids are the announced targets in group order.
+     */
+    public void activateGraveyardAbilityWithTargets(Player player, int graveyardCardIndex, int abilityIndex,
+                                                    List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, null, null, targetIds);
+    }
+
     public void activateGraveyardAbility(Player player, int graveyardCardIndex) {
         ensurePriority(player);
         gameService.activateGraveyardAbility(gameData, player, graveyardCardIndex, 0);

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentSearchesTopCardsInsteadEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -454,6 +455,9 @@ public class LibrarySearchSupport {
         String playerName = gameData.playerIdToName.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
+            // Searching an empty library is still a search, so opponent-search triggers fire here too
+            // (the interaction-starting path fires them in sendLibrarySearchToPlayer).
+            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
             String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
             gameLogService.append(gameData, GameLog.text(logMsg));
             return false;
@@ -462,6 +466,7 @@ public class LibrarySearchSupport {
         List<Card> matchingCards = deck.stream().filter(filter).toList();
 
         if (matchingCards.isEmpty()) {
+            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             String logMsg = playerName + " searches their library but finds no " + noMatchDescription + ". Library is shuffled.";
             gameLogService.append(gameData, GameLog.text(logMsg));
@@ -544,6 +549,13 @@ public class LibrarySearchSupport {
 
     public void sendLibrarySearchToPlayer(GameData gameData, UUID playerId, LibrarySearchParams params,
                                             String prompt, boolean canFailToFind, String logMessage) {
+        // Universal choke point for every library search that presents cards: fire
+        // ON_OPPONENT_SEARCHES_LIBRARY (Ob Nixilis, Unshackled) for a player searching their OWN
+        // library. A search of someone else's library (targetPlayerId set) is not "their library".
+        if (params.targetPlayerId() == null || params.targetPlayerId().equals(params.playerId())) {
+            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, params.playerId());
+        }
+
         // Aven Mindcensor & friends: an opponent's search is limited to the top N cards of that library.
         int topLimit = opponentSearchTopCardsLimit(gameData, params.playerId());
         if (topLimit != Integer.MAX_VALUE) {

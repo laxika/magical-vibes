@@ -71,6 +71,7 @@ public enum CounterType {
     TRAINING,
     TREASURE,
     VELOCITY,
+    VERSE,
     VITALITY,
     VORTEX,
     WAGE

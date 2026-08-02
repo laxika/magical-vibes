@@ -8,7 +8,11 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
@@ -271,6 +275,50 @@ public class DiscardTriggerCollectorService {
                 match.permanent().getId()));
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on cycle/discard (may pay {})", gameData.id, sourceCard.getName(), trigger.manaCost());
+        return true;
+    }
+
+    /**
+     * "Whenever an opponent discards a creature card, create a 2/2 black Zombie creature token."
+     * The card-type gate is applied upstream by {@code TriggeringCardConditionalEffect}; here the
+     * trigger simply goes on the stack under the watching permanent's controller. (Waste Not)
+     */
+    @CollectsTrigger(value = CreateTokenEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    private boolean handleCreateTokenOnDiscard(TriggerMatchContext match, CreateTokenEffect trigger, TriggerContext ctx) {
+        return enqueueOpponentDiscardTrigger(match, trigger, "create token");
+    }
+
+    /**
+     * "Whenever an opponent discards a land card, add {B}{B}." Not a mana ability — it does not
+     * trigger off a mana ability, so it uses the stack (CR 605.1b) and the mana lands in the
+     * controller's pool when it resolves. (Waste Not)
+     */
+    @CollectsTrigger(value = AwardManaEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    private boolean handleAwardManaOnDiscard(TriggerMatchContext match, AwardManaEffect trigger, TriggerContext ctx) {
+        return enqueueOpponentDiscardTrigger(match, trigger, "add mana");
+    }
+
+    /**
+     * "Whenever an opponent discards a noncreature, nonland card, draw a card." (Waste Not)
+     */
+    @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    private boolean handleDrawOnDiscard(TriggerMatchContext match, DrawCardEffect trigger, TriggerContext ctx) {
+        return enqueueOpponentDiscardTrigger(match, trigger, "draw");
+    }
+
+    private boolean enqueueOpponentDiscardTrigger(TriggerMatchContext match, CardEffect trigger, String what) {
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on opponent discard ({})", gameData.id, sourceCard.getName(), what);
         return true;
     }
 

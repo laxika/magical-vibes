@@ -34,7 +34,8 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        boolean withoutPaying = ((ExileTopCardMayPlayThisTurnEffect) effect).withoutPayingManaCost();
+        ExileTopCardMayPlayThisTurnEffect exileEffect = (ExileTopCardMayPlayThisTurnEffect) effect;
+        boolean withoutPaying = exileEffect.withoutPayingManaCost();
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String controllerName = gameData.playerIdToName.get(controllerId);
@@ -45,23 +46,26 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
             return;
         }
 
-        Card topCard = deck.removeFirst();
-        exileService.exileCard(gameData, controllerId, topCard);
-
-        // Play permission (any card type) expiring at end of turn.
-        gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
-        if (withoutPaying) {
-            gameData.exilePlayWithoutPayingManaCost.add(topCard.getId());
-        }
-
         String playNote = withoutPaying
                 ? " (may play it without paying its mana cost this turn)"
                 : " (may play it this turn)";
-        gameLogService.append(gameData, GameLog.builder()
-                .text(controllerName + " exiles ").card(topCard)
-                .text(" from the top of their library" + playNote + ".").build());
-        log.info("Game {} - {} exiles {} from library top (withoutPaying={})",
-                gameData.id, controllerName, topCard.getName(), withoutPaying);
+
+        for (int i = 0; i < exileEffect.count() && !deck.isEmpty(); i++) {
+            Card topCard = deck.removeFirst();
+            exileService.exileCard(gameData, controllerId, topCard);
+
+            // Play permission (any card type) expiring at end of turn.
+            gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
+            gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
+            if (withoutPaying) {
+                gameData.exilePlayWithoutPayingManaCost.add(topCard.getId());
+            }
+
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(controllerName + " exiles ").card(topCard)
+                    .text(" from the top of their library" + playNote + ".").build());
+            log.info("Game {} - {} exiles {} from library top (withoutPaying={})",
+                    gameData.id, controllerName, topCard.getName(), withoutPaying);
+        }
     }
 }

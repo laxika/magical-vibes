@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M13", collectorNumber = "85")
+@CardRegistration(set = "M15", collectorNumber = "92")
 public class CripplingBlight extends Card {
 
     public CripplingBlight() {

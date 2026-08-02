@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.f.ForcedWorship;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FormOfTheDragon;
 import com.github.laxika.magicalvibes.cards.g.GoblinAssault;
+import com.github.laxika.magicalvibes.cards.g.GoblinRabblemaster;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.InstillEnergy;
@@ -382,6 +383,20 @@ class AttackLegalityServiceTest extends BaseCardTest {
         // A taunt adds a second requirement, but only while the taunter is attackable.
         gd.tauntedThisTurn.put(player1.getId(), player2.getId());
         assertThat(als.getMustAttackRequirementCount(gd, okk)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A source-relative matcher only forces the source controller's other matching creatures")
+    void sourceRelativeMatcherIsScopedToTheSourceController() {
+        // Goblin Rabblemaster's matcher is "other Goblin creatures you control", so it must see the
+        // source permanent's card id and controller when it is evaluated.
+        Permanent ownGoblin = addCreatureReady(player1, new Okk());
+        Permanent opponentGoblin = addCreatureReady(player2, new Okk());
+        Permanent rabblemaster = harness.addToBattlefieldAndReturn(player1, new GoblinRabblemaster());
+
+        assertThat(als.getMustAttackRequirementCount(gd, ownGoblin)).isEqualTo(1);
+        assertThat(als.getMustAttackRequirementCount(gd, opponentGoblin)).isZero();
+        assertThat(als.getMustAttackRequirementCount(gd, rabblemaster)).isZero();
     }
 
     @Test

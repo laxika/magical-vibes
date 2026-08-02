@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DKA", collectorNumber = "91")
+@CardRegistration(set = "M15", collectorNumber = "140")
 public class ForgeDevil extends Card {
 
     public ForgeDevil() {

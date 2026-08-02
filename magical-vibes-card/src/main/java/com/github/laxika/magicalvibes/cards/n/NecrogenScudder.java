@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "71")
+@CardRegistration(set = "M15", collectorNumber = "106")
 public class NecrogenScudder extends Card {
 
     public NecrogenScudder() {

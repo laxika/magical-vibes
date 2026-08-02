@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -56,9 +57,10 @@ public class CloneService {
                 .findFirst().orElse(null);
         if (copyEffect == null) return false;
 
+        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(controllerId);
         List<UUID> validIds = new ArrayList<>();
         gameData.forEachPermanent((pid, p) -> {
-            if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, copyEffect.filter())) {
+            if (predicateEvaluationService.matchesPermanentPredicate(p, copyEffect.filter(), filterContext)) {
                 validIds.add(p.getId());
             }
         });
