@@ -294,12 +294,9 @@ public class PotentialManaService {
                             if (isCreature) {
                                 virtual.addCreatureMana(manaEffect.color(), amount);
                             }
-                        } else if (effect instanceof AwardAnyColorManaEffect aace) {
-                            virtual.add(ManaColor.COLORLESS, aace.amount());
-                            if (isCreature) {
-                                virtual.addCreatureMana(ManaColor.COLORLESS, aace.amount());
-                            }
                         }
+                        // An ON_TAP "add one mana of any color" prompts for the color just as the
+                        // activated-ability form does, so it is skipped here for the same reason.
                     }
                 } else {
                     // Skip activated mana abilities that would trigger a color choice
@@ -428,7 +425,7 @@ public class PotentialManaService {
      * and the inflation of the total is recorded so the source still counts as the single mana one
      * tap yields. Mirrors {@link #manaOptionsFor} for the slot that has no per-ability bookkeeping.
      */
-    private static void addAnyColorManaToVirtualPool(ManaPool virtual, int amount, boolean isCreature) {
+    public static void addAnyColorManaToVirtualPool(ManaPool virtual, int amount, boolean isCreature) {
         if (amount <= 0) {
             return;
         }

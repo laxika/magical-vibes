@@ -830,7 +830,10 @@ public class AiManaManager {
                         pool.add(mp.estimatedManaColor(),
                                 potentialManaService.estimateManaAmount(mp.estimatedManaAmount(), null, null));
                     } else if (mp.estimatedCountsAllColors()) {
-                        pool.add(ManaColor.COLORLESS, Math.max(1, mp.estimatedWildcardMana()));
+                        // Every color, not colorless: the point of comparing land plays is which
+                        // colored costs each one unlocks, and colorless unlocks none of them.
+                        PotentialManaService.addAnyColorManaToVirtualPool(
+                                pool, Math.max(1, mp.estimatedWildcardMana()), false);
                     }
                 }
             }
