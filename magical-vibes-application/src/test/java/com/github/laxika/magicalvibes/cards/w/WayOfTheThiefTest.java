@@ -55,8 +55,12 @@ class WayOfTheThiefTest extends BaseCardTest {
     @DisplayName("Way of the Thief can target only a creature")
     void cannotEnchantALand() {
         Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        // A legal creature target must exist somewhere, or the aura is unplayable before targeting
+        // is ever validated (CR 601.2c).
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new WayOfTheThief()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class)

@@ -72,6 +72,9 @@ class VigilanceTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature permanent with Vigilance")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player1, new FountainOfYouth());
+        // A legal creature target must exist somewhere, or the aura is unplayable before targeting
+        // is ever validated (CR 601.2c).
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Vigilance()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 

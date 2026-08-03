@@ -169,7 +169,12 @@ public class TargetPolarityClassifier {
             return skip.scope() == TapUntapScope.TARGET ? TargetPolarity.HARMFUL : null;
         }
         if (effect instanceof CantBlockThisTurnEffect cantBlock) {
-            return cantBlock.scope() == TapUntapScope.TARGET ? TargetPolarity.HARMFUL : null;
+            // TARGET_CONTROLLERS_OTHER_CREATURES (Mark for Death) shuts down the rest of the
+            // target's controller's defence, so it aims at the opponent just like TARGET does.
+            return cantBlock.scope() == TapUntapScope.TARGET
+                    || cantBlock.scope() == TapUntapScope.TARGET_CONTROLLERS_OTHER_CREATURES
+                    ? TargetPolarity.HARMFUL
+                    : null;
         }
         if (effect instanceof UntapPermanentsEffect untap) {
             return untap.scope() == TapUntapScope.TARGET || untap.scope() == TapUntapScope.ALL_TARGETS
@@ -331,6 +336,9 @@ public class TargetPolarityClassifier {
             entry("MakeTargetAttackingCreatureBlockedEffect", TargetPolarity.HARMFUL),
             entry("MustBlockSourceEffect", TargetPolarity.HARMFUL),
             entry("MustBlockTargetCreatureEffect", TargetPolarity.HARMFUL),
+            // Mark for Death: forcing a block is a punisher aimed at an opponent's creature, the
+            // mirror image of the BENEFICIAL "must BE blocked" lure below.
+            entry("MustBlockThisTurnIfAbleEffect", TargetPolarity.HARMFUL),
             entry("PreventTargetCreatureRegenerationThisTurnEffect", TargetPolarity.HARMFUL),
             entry("RemoveKeywordEffect", TargetPolarity.HARMFUL),
             entry("RemoveTargetFromCombatEffect", TargetPolarity.HARMFUL),
@@ -344,6 +352,8 @@ public class TargetPolarityClassifier {
             entry("AttachSourceEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("BuffTargetCreatureIndefinitelyEffect", TargetPolarity.BENEFICIAL),
             entry("FlickerEffect", TargetPolarity.BENEFICIAL),
+            // Predator's Rapport: targets a creature you control and only reads its stats.
+            entry("GainLifeEqualToTargetCreatureStatEffect", TargetPolarity.BENEFICIAL),
             entry("GrantActivatedAbilityEffect", TargetPolarity.BENEFICIAL),
             entry("GrantAdditionalBlockToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantChosenKeywordToTargetEffect", TargetPolarity.BENEFICIAL),

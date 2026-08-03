@@ -91,11 +91,10 @@ class ArachnusWebTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.passBothPriorities();
+        gs.advanceStep(gd);
+
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
-
-        harness.passBothPriorities();
-
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Arachnus Web");
     }
 }
