@@ -60,7 +60,9 @@ class DarkBargainTest extends BaseCardTest {
     @Test
     @DisplayName("Dark Bargain goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        setupTopCards(List.of(new GrizzlyBears(), new Shock(), new GrizzlyBears()));
+        Card card0 = new GrizzlyBears();
+        Card card1 = new Shock();
+        setupTopCards(List.of(card0, card1, new GrizzlyBears()));
 
         harness.setHand(player1, List.of(new DarkBargain()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -70,6 +72,9 @@ class DarkBargainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
+        // The spell only reaches the graveyard once its resolution finishes
+        harness.handleMultipleCardsChosen(player1, List.of(card0.getId(), card1.getId()));
+
         harness.assertInGraveyard(player1, "Dark Bargain");
         assertThat(gd.stack).isEmpty();
     }

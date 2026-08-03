@@ -187,13 +187,9 @@ class LeadTheStampedeTest extends BaseCardTest {
     @Test
     @DisplayName("Lead the Stampede goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        setupTopFive(List.of(
-                new LlanowarElves(),
-                new Shock(),
-                new GrizzlyBears(),
-                new Plains(),
-                new Swamp()
-        ));
+        LlanowarElves elves = new LlanowarElves();
+        GrizzlyBears bears = new GrizzlyBears();
+        setupTopFive(List.of(elves, new Shock(), bears, new Plains(), new Swamp()));
         harness.setHand(player1, List.of(new LeadTheStampede()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
@@ -201,6 +197,10 @@ class LeadTheStampedeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
+        // The spell only reaches the graveyard once its resolution finishes
+        harness.handleMultipleCardsChosen(player1, List.of(elves.getId(), bears.getId()));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
+
         harness.assertInGraveyard(player1, "Lead the Stampede");
         assertThat(gd.stack).isEmpty();
     }

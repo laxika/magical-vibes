@@ -180,6 +180,10 @@ class AdventurousImpulseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
+        // The spell only reaches the graveyard once its resolution finishes
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1)));
+
         harness.assertInGraveyard(player1, "Adventurous Impulse");
         assertThat(gd.stack).isEmpty();
     }

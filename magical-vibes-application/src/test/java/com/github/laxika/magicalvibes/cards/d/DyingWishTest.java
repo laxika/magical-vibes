@@ -27,6 +27,9 @@ class DyingWishTest extends BaseCardTest {
 
         spider.setMarkedDamage(4);
         harness.runStateBasedActions();
+        // The death trigger is queued as a pending target choice; it only becomes the active
+        // interaction when a player would next receive priority.
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -41,7 +44,9 @@ class DyingWishTest extends BaseCardTest {
 
     @Test
     void canEnchantOnlyCreatureYouControl() {
-        harness.addToBattlefield(player2, new GiantSpider());
+        // A creature the caster controls must exist, or the aura is unplayable before targeting is
+        // ever validated (CR 601.2c) and the cast fails with the generic message.
+        harness.addToBattlefield(player1, new GiantSpider());
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new DyingWish()));
         harness.addMana(player1, ManaColor.BLACK, 1);

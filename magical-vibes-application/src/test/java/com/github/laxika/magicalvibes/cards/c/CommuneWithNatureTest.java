@@ -181,6 +181,10 @@ class CommuneWithNatureTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
+        // The spell only reaches the graveyard once its resolution finishes
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3)));
+
         harness.assertInGraveyard(player1, "Commune with Nature");
         assertThat(gd.stack).isEmpty();
     }

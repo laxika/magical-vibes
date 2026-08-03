@@ -58,6 +58,9 @@ class ForbiddenAlchemyTest extends BaseCardTest {
     @Test
     @DisplayName("Forbidden Alchemy goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
+        Card card0 = new GrizzlyBears();
+        setupTopCards(List.of(card0, new Shock(), new GrizzlyBears(), new Shock()));
+
         harness.setHand(player1, List.of(new ForbiddenAlchemy()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -66,6 +69,9 @@ class ForbiddenAlchemyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
+        // The spell only reaches the graveyard once its resolution finishes
+        harness.handleMultipleCardsChosen(player1, List.of(card0.getId()));
+
         harness.assertInGraveyard(player1, "Forbidden Alchemy");
         assertThat(gd.stack).isEmpty();
     }

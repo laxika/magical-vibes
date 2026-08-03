@@ -524,7 +524,7 @@ class TargetLegalityServiceTest {
         void throwsWhenTargetHasProtectionFromSourceCardType() {
             Permanent target = addPermanent(player2Id, createCreature("Protected", CardColor.WHITE));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
-            when(gameQueryService.hasProtectionFromSourceCardTypes(target, spell)).thenReturn(true);
+            when(gameQueryService.hasProtectionFromSourceCardTypes(gd, target, spell)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)

@@ -67,6 +67,9 @@ class TellingTimeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
+        // The spell only reaches the graveyard once its resolution finishes
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.HandTopBottom(0, 1));
+
         harness.assertInGraveyard(player1, "Telling Time");
         assertThat(gd.stack).isEmpty();
     }

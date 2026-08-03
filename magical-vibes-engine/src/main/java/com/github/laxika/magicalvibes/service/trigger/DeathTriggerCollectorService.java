@@ -646,7 +646,11 @@ public class DeathTriggerCollectorService {
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(effect))
         );
-        entry.setEventValue(eventValue);
+        // Only effects that read the death event's numeric payload (e.g. the dying creature's
+        // last-known power) bake one; the field is a primitive, so a null would unbox and throw.
+        if (eventValue != null) {
+            entry.setEventValue(eventValue);
+        }
         match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 "'s ability triggers (enchanted permanent put into graveyard)."));

@@ -51,7 +51,7 @@ class BountyHunterTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 1, null, bears.getId());
+        harness.activateAbility(player1, 0, 1, null, bears.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
@@ -67,7 +67,8 @@ class BountyHunterTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, bears.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Target must be a creature with a bounty counter on it");
     }
 }

@@ -83,6 +83,9 @@ class EffectResolutionServiceTest {
     private org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.state.StateBasedActionService> stateBasedActionServiceProvider;
 
     @Mock
+    private com.github.laxika.magicalvibes.service.StackResolutionService stackResolutionService;
+
+    @Mock
     private org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.StackResolutionService> stackResolutionServiceProvider;
 
     private EffectResolutionService effectResolutionService;
@@ -94,6 +97,7 @@ class EffectResolutionServiceTest {
     @BeforeEach
     void setUp() {
         lenient().when(stateBasedActionServiceProvider.getObject()).thenReturn(stateBasedActionService);
+        lenient().when(stackResolutionServiceProvider.getObject()).thenReturn(stackResolutionService);
         effectResolutionService = new EffectResolutionService(
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
                 registry, gameLogService, permanentRemovalService, damageSupport, gameOutcomeService,
