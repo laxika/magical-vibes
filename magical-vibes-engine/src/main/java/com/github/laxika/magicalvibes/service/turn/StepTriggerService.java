@@ -2605,6 +2605,7 @@ public class StepTriggerService {
 
                 for (CardEffect effect : endStepEffects) {
                     if (effect instanceof ConditionalEffect conditional
+                            && conditional.interveningIf()
                             && !conditionEvaluationService.isMet(gameData, conditional.condition(),
                             ConditionContext.forPermanent(perm, playerId))) {
                         log.info("Game {} - {} end-step trigger skipped ({})",
@@ -3024,15 +3025,20 @@ public class StepTriggerService {
                 if (controllerEndStepEffects == null || controllerEndStepEffects.isEmpty()) continue;
 
                 for (CardEffect effect : controllerEndStepEffects) {
+                    // CR 603.4: an intervening-"if" ability does not trigger at all when its
+                    // condition is false as the trigger event occurs. Checked once here for every
+                    // condition, so the branches below only have to decide how to put the trigger
+                    // on the stack. "Unless" clauses opt out and always trigger.
+                    if (effect instanceof ConditionalEffect conditional
+                            && conditional.interveningIf()
+                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forPermanent(perm, activePlayerId))) {
+                        log.info("Game {} - {} controller end-step trigger skipped ({})",
+                                gameData.id, perm.getCard().getName(), conditional.conditionNotMetReason());
+                        continue;
+                    }
                     if (effect instanceof ConditionalEffect raidEffect
                             && raidEffect.condition() instanceof Raid) {
-                        // Intervening-if: only trigger if the controller attacked this turn
-                        if (!conditionEvaluationService.isMet(gameData, raidEffect.condition(),
-                                ConditionContext.forPermanent(perm, activePlayerId))) {
-                            log.info("Game {} - {} end-step raid trigger skipped (didn't attack this turn)",
-                                    gameData.id, perm.getCard().getName());
-                            continue;
-                        }
                         CardEffect wrapped = raidEffect.wrapped();
                         if (wrapped instanceof MayEffect may) {
                             gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
@@ -3107,18 +3113,7 @@ public class StepTriggerService {
                                 GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
                         log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else if (effect instanceof ConditionalEffect conditional
-                            && conditional.condition() instanceof ControlsPermanentCount countCheck) {
-                        // Intervening-if: only trigger if controller has enough matching permanents
-                        List<Permanent> controllerBf = gameData.playerBattlefields.get(activePlayerId);
-                        long matchCount = controllerBf == null ? 0 : controllerBf.stream()
-                                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, countCheck.filter()))
-                                .count();
-                        if (!conditionEvaluationService.isMet(gameData, countCheck,
-                                ConditionContext.forPermanent(perm, activePlayerId))) {
-                            log.info("Game {} - {} end-step trigger skipped (only {} matching permanents, need {})",
-                                    gameData.id, perm.getCard().getName(), matchCount, countCheck.minCount());
-                            continue;
-                        }
+                            && conditional.condition() instanceof ControlsPermanentCount) {
                         CardEffect countWrapped = conditional.wrapped();
                         if (countWrapped.targetSpec().category().includesPermanents()
                                 || countWrapped.targetSpec().category().includesPlayers()) {
@@ -3146,15 +3141,8 @@ public class StepTriggerService {
                         }
                     } else if (effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof DidntActivateLoyaltyAbilityThisTurn) {
-                        // Intervening-if (CR 603.4): only trigger if the controller hasn't activated a
-                        // loyalty ability this turn — The Chain Veil. Re-checked at resolution, so the
-                        // whole ConditionalEffect goes on the stack.
-                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                ConditionContext.forPermanent(perm, activePlayerId))) {
-                            log.info("Game {} - {} end-step trigger skipped (a loyalty ability was activated this turn)",
-                                    gameData.id, perm.getCard().getName());
-                            continue;
-                        }
+                        // The Chain Veil. The condition is re-checked at resolution, so the whole
+                        // ConditionalEffect goes on the stack.
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
@@ -3170,13 +3158,6 @@ public class StepTriggerService {
                         log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else if (effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof DidntAttack) {
-                        // Intervening-if: only trigger if the creature didn't attack this turn
-                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                ConditionContext.forPermanent(perm, activePlayerId))) {
-                            log.info("Game {} - {} end-step trigger skipped (attacked this turn)",
-                                    gameData.id, perm.getCard().getName());
-                            continue;
-                        }
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
@@ -3192,14 +3173,6 @@ public class StepTriggerService {
                         log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else if (effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof AllOf) {
-                        // Intervening-if (CR 603.4): only trigger if every sub-condition holds
-                        // (Erg Raiders — "didn't attack this turn" and "not came under your control this turn")
-                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                ConditionContext.forPermanent(perm, activePlayerId))) {
-                            log.info("Game {} - {} end-step trigger skipped ({} not met)",
-                                    gameData.id, perm.getCard().getName(), conditional.condition().conditionName());
-                            continue;
-                        }
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
@@ -3248,13 +3221,7 @@ public class StepTriggerService {
                                 new ArrayList<>(List.of(new GainControlOfTargetEffect(ControlDuration.PERMANENT))),
                                 perm.getId()));
                     } else if (effect instanceof ConditionalEffect conditional
-                            && conditional.condition() instanceof GainedLifeThisTurn gainedLife) {
-                        // Intervening-if: only trigger if the controller gained life this turn (CR 603.4)
-                        if (gameData.getLifeGainedThisTurn(activePlayerId) < gainedLife.minimumAmount()) {
-                            log.info("Game {} - {} end-step trigger skipped (didn't gain life this turn)",
-                                    gameData.id, perm.getCard().getName());
-                            continue;
-                        }
+                            && conditional.condition() instanceof GainedLifeThisTurn) {
                         CardEffect wrapped = conditional.wrapped();
                         if (wrapped.targetSpec().category().isGraveyard()) {
                             // Graveyard-targeting trigger (e.g. Moseo) — queue for graveyard target selection
@@ -3283,13 +3250,6 @@ public class StepTriggerService {
                     } else if (effect instanceof ConditionalEffect conditional
                             && (conditional.condition() instanceof CreatureDiedUnderYourControlThisTurn
                                 || conditional.condition() instanceof CardsLeftGraveyardThisTurn)) {
-                        // Intervening-if (CR 603.4): only trigger if the controller-scoped condition holds this turn
-                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                ConditionContext.forPermanent(perm, activePlayerId))) {
-                            log.info("Game {} - {} end-step trigger skipped ({} not met)",
-                                    gameData.id, perm.getCard().getName(), conditional.condition().conditionName());
-                            continue;
-                        }
                         CardEffect wrapped = conditional.wrapped();
                         if (wrapped.targetSpec().category().includesPermanents() || wrapped.targetSpec().category().includesPlayers()) {
                             gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(

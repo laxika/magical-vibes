@@ -22,7 +22,7 @@ public class TragedyFeaster extends Card {
 
         // Infusion — At the beginning of your end step, sacrifice a permanent unless you gained
         // life this turn. The sacrifice only happens at resolution if you didn't gain life.
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, ConditionalEffect.unless(
                 new DidntGainLifeThisTurn(),
                 new SacrificePermanentThenEffect(new PermanentTruePredicate(), null, "a permanent")));
     }
