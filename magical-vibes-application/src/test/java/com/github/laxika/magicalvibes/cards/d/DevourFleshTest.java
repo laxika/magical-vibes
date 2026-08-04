@@ -21,6 +21,7 @@ class DevourFleshTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new DevourFlesh()));
         harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
@@ -37,6 +38,7 @@ class DevourFleshTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new DevourFlesh()));
         harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 

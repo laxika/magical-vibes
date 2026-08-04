@@ -39,7 +39,9 @@ class GrappleWithThePastTest extends BaseCardTest {
         castAndResolveToMay();
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4); // 3 milled + Grapple
+        // CR 608.2n: the spell is put into its owner's graveyard only as the final part of its
+        // resolution, so while the "you may return" choice is open only the 3 milled cards are there.
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
@@ -54,7 +56,7 @@ class GrappleWithThePastTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        // Graveyard order: milled cards then Grapple; bears is index 0 among legal picks
+        // The graveyard holds only the milled cards at this point; bears is index 0 among legal picks
         harness.handleGraveyardCardChosen(player1, 0);
 
         harness.assertInHand(player1, "Grizzly Bears");

@@ -251,7 +251,8 @@ public class GameActionAvailabilityService {
         boolean allTargetsOptional = !card.getSpellTargets().isEmpty() && card.getMinTargets() == 0;
         if (!allTargetsOptional
                 && EffectResolution.needsSpellCastTarget(card)
-                && !validTargetService.hasValidTargetsForSpell(gameData, card, playerId)) {
+                && !validTargetService.hasValidTargetsForSpell(gameData, card, playerId,
+                        maxAnnounceableX(card, pool))) {
             return false;
         }
 
@@ -277,6 +278,21 @@ public class GameActionAvailabilityService {
         }
 
         return true;
+    }
+
+    /**
+     * The largest X this player could announce for an {@code {X}} spell paid from {@code pool}. X is
+     * announced in CR 601.2b, before targets are chosen in CR 601.2c, so a target filter that reads X
+     * (Killing Glare's "creature with power X or less") has to be evaluated at that maximum —
+     * evaluating it at X = 0 would report a castable spell as unplayable. Returns {@code null} for
+     * spells with no {@code {X}} in their cost, which leaves the filter at its X = 0 default.
+     *
+     * <p>Cast-cost modifiers are ignored here, which can only make the pre-check more permissive;
+     * cast-time validation still enforces the real X.</p>
+     */
+    private Integer maxAnnounceableX(Card card, ManaPool pool) {
+        ManaCost cost = card.getParsedManaCost();
+        return cost != null && cost.hasX() ? cost.calculateMaxX(pool) : null;
     }
 
     private boolean isPlayableAsSpell(GameData gameData, UUID playerId, Card card, ManaPool pool,

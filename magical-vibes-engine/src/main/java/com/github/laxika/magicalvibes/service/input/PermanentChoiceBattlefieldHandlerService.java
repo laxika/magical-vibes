@@ -480,8 +480,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, target.getCard().getName());
 
-        // Controller gains life equal to the sacrificed creature's toughness
-        lifeSupport.applyGainLife(gameData, context.controllerId(), toughness, context.sourceCardName());
+        lifeSupport.applyGainLife(gameData, context.lifeGainerId(), toughness, context.sourceCardName());
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

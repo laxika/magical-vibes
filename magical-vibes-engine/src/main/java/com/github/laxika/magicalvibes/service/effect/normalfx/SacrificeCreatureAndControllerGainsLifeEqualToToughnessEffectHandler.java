@@ -35,12 +35,12 @@ public class SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffectHandle
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-                boolean sacrificerIsController =
-                        ((SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect) effect).sacrificerIsController();
-                UUID targetPlayerId = sacrificerIsController ? controllerId : entry.getTargetId();
+                var e = (SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect) effect;
+                UUID targetPlayerId = e.sacrificerIsController() ? controllerId : entry.getTargetId();
                 if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
                     return;
                 }
+                UUID lifeGainerId = e.sacrificerGainsLife() ? targetPlayerId : controllerId;
 
                 String cardName = entry.getCard().getName();
 
@@ -59,7 +59,7 @@ public class SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffectHandle
                     if (creature != null) {
                         int toughness = gameQueryService.getEffectiveToughness(gameData, creature);
                         destructionSupport.sacrificeAndLog(gameData, creature, targetPlayerId);
-                        lifeSupport.applyGainLife(gameData, controllerId, toughness, cardName);
+                        lifeSupport.applyGainLife(gameData, lifeGainerId, toughness, cardName);
                     }
                     return;
                 }
@@ -67,7 +67,7 @@ public class SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffectHandle
                 // Multiple creatures — prompt player to choose
                 gameData.interaction.setPermanentChoiceContext(
                         new PermanentChoiceContext.SacrificeCreatureControllerGainsLifeEqualToToughness(
-                                targetPlayerId, controllerId, cardName));
+                                targetPlayerId, lifeGainerId, cardName));
                 playerInputService.beginPermanentChoice(gameData, targetPlayerId, creatureIds,
                         "Choose a creature to sacrifice.");
     }

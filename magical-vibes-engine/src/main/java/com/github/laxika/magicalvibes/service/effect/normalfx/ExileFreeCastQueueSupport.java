@@ -179,8 +179,19 @@ public class ExileFreeCastQueueSupport {
         castNextFromQueue(gameData, playerId);
     }
 
+    /**
+     * Ends the free-cast process. The shared input epilogue resumes the entry parked in
+     * {@code GameData.pendingEffectResolutionEntry} — right when the queue was driven from an input
+     * handler, wrong when it ran inside a live effect-resolution frame (a cipher trigger's "you may
+     * cast a copy", CR 702.99a). That frame still sits on the parked index, so re-entering it re-runs
+     * the same {@code MayEffect} and prompts a second time — casting a second copy if accepted. The
+     * active frame completes the resolution itself, so skip the epilogue while one is running.
+     */
     private void finishFreeCastProcess(GameData gameData) {
         putRemainderIntoOwnersGraveyards(gameData);
+        if (gameData.effectResolutionDepth > 0 && gameData.pendingEffectResolutionEntry != null) {
+            return;
+        }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

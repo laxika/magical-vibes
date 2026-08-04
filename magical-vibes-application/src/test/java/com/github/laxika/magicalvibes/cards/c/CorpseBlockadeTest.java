@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -57,9 +58,14 @@ class CorpseBlockadeTest extends BaseCardTest {
     @DisplayName("The source cannot be sacrificed to its own ability")
     void cannotSacrificeItself() {
         Permanent blockade = addBlockadeReady(player1);
+        // Two other creatures, so the sacrifice cost actually prompts instead of auto-paying.
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .doesNotContain(blockade.getId());
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, blockade.getId()))
                 .isInstanceOf(IllegalStateException.class);
 

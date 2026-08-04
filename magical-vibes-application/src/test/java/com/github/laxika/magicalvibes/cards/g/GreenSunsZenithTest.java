@@ -163,8 +163,12 @@ class GreenSunsZenithTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals(chosenName));
 
-        // Library lost one card
-        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
+        // Library lost the chosen card but gained Green Sun's Zenith, which shuffles itself in
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName)
+                .doesNotContain(chosenName)
+                .contains("Green Sun's Zenith");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
 
         // Awaiting state is cleared
         assertThat(gd.interaction.activeInteraction()).isNull();

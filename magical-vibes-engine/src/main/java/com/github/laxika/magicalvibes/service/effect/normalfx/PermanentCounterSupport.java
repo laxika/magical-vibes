@@ -298,6 +298,7 @@ public class PermanentCounterSupport {
             case VORTEX -> { target.setCounterCount(CounterType.VORTEX, target.getCounterCount(CounterType.VORTEX) + count); yield "vortex"; }
             case VELOCITY -> { target.setCounterCount(CounterType.VELOCITY, target.getCounterCount(CounterType.VELOCITY) + count); yield "velocity"; }
             case TRAINING -> { target.setCounterCount(CounterType.TRAINING, target.getCounterCount(CounterType.TRAINING) + count); yield "training"; }
+            case THEFT -> { target.setCounterCount(CounterType.THEFT, target.getCounterCount(CounterType.THEFT) + count); yield "theft"; }
             default -> throw new IllegalStateException("Unsupported counter type: " + counterType);
         };
         if (counterName == null) return;

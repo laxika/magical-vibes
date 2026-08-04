@@ -107,7 +107,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ForcedCostOrElse(UUID controllerId, UUID sourcePermanentId, Card sourceCard,
                             com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect effect) implements PermanentChoiceContext {}
 
-    record SacrificeCreatureControllerGainsLifeEqualToToughness(UUID sacrificingPlayerId, UUID controllerId, String sourceCardName) implements PermanentChoiceContext {}
+    /** {@code lifeGainerId} is the sacrificing player for Devour Flesh, the controller otherwise. */
+    record SacrificeCreatureControllerGainsLifeEqualToToughness(UUID sacrificingPlayerId, UUID lifeGainerId, String sourceCardName) implements PermanentChoiceContext {}
 
     record ActivatedAbilityCostChoice(UUID activatingPlayerId,
                                       UUID sourcePermanentId,

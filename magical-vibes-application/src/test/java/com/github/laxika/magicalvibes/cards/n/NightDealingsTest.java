@@ -25,7 +25,8 @@ class NightDealingsTest extends BaseCardTest {
     @DisplayName("Combat damage to the opponent adds that many theft counters")
     void combatDamageAddsTheftCounters() {
         Permanent dealings = harness.addToBattlefieldAndReturn(player1, new NightDealings());
-        addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setAttacking(true);
 
         resolveCombat();
         harness.passBothPriorities();

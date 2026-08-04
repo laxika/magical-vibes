@@ -109,6 +109,10 @@ class DiscombobulateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
+        // CR 608.2n: the spell is put into its owner's graveyard as the FINAL part of its resolution
+        // — answer the "look at the top four cards" reorder before checking the zone.
+        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3)));
+
         harness.assertInGraveyard(player2, "Discombobulate");
         assertThat(gd.stack).isEmpty();
     }

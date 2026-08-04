@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.f.FlameJavelin;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -24,8 +24,8 @@ class KeigaTheTideStarTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         setupPlayer2Active();
-        harness.setHand(player2, List.of(new FlameJavelin()));
-        harness.addMana(player2, ManaColor.RED, 6);
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
 
         UUID keigaId = harness.getPermanentId(player1, "Keiga, the Tide Star");
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
@@ -55,8 +55,8 @@ class KeigaTheTideStarTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
 
         setupPlayer2Active();
-        harness.setHand(player2, List.of(new FlameJavelin()));
-        harness.addMana(player2, ManaColor.RED, 6);
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
 
         UUID keigaId = harness.getPermanentId(player1, "Keiga, the Tide Star");
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");

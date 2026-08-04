@@ -59,6 +59,8 @@ class RapidHybridizationTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
+        // A legal target has to exist or the spell could not be cast at all (CR 601.2c).
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new Forest());
         harness.setHand(player1, List.of(new RapidHybridization()));
         harness.addMana(player1, ManaColor.BLUE, 1);

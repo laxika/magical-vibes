@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
@@ -1017,6 +1018,20 @@ public class BattlefieldEntryService {
             Permanent justEntered = bf.get(bf.size() - 1);
             playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), targetId,
                     colorChoice);
+            return;
+        }
+
+        // "As this creature enters, choose a basic land type" — a choice made during entry
+        // (CR 614.1c), before ETB triggers; the choice handler resumes them once made. Realmwright.
+        ChooseBasicLandTypeOnEnterEffect landTypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(e -> e instanceof ChooseBasicLandTypeOnEnterEffect)
+                .map(e -> (ChooseBasicLandTypeOnEnterEffect) e)
+                .findFirst().orElse(null);
+        if (landTypeChoice != null) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = bf.get(bf.size() - 1);
+            playerInputService.beginBasicLandTypeChoice(gameData, controllerId, justEntered.getId(),
+                    false, landTypeChoice.choicesRequired() > 1, landTypeChoice.allowedTypes());
             return;
         }
 

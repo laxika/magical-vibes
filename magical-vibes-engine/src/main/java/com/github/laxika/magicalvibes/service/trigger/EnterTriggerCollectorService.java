@@ -80,9 +80,15 @@ public class EnterTriggerCollectorService {
     })
     private boolean handleEnterDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        // A permanent-targeting effect (e.g. Reaper King's "destroy target permanent") can't be pushed
-        // straight onto the stack with a pre-set target — queue a pending choice so the controller picks it.
-        if (effect.targetSpec().category().includesPermanents()) {
+        // A targeting effect can't be pushed straight onto the stack with a pre-set target — queue a
+        // pending choice so the controller picks one as the ability goes on the stack (CR 603.3d).
+        // Permanent-targeting effects (e.g. Reaper King's "destroy target permanent") always route
+        // through the choice; player-targeting ones only when the scan left the player unset — the
+        // opponent-enters scans bake in the entering permanent's controller, while the ally scans
+        // leave it null (Sage's Row Denizen's "target player mills two cards").
+        boolean needsTargetChoice = effect.targetSpec().category().includesPermanents()
+                || (effect.targetSpec().category().includesPlayers() && pe.defaultTargetPlayerId() == null);
+        if (needsTargetChoice) {
             Card sourceCard = match.permanent().getCard();
             match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
                     sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), match.permanent().getId()));

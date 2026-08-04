@@ -10,6 +10,6 @@ public class DevourFlesh extends Card {
 
     public DevourFlesh() {
         addEffect(EffectSlot.SPELL,
-                new SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect(false));
+                new SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect(false, true));
     }
 }

@@ -52,15 +52,14 @@ class DragonWhelpTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        // Move to end step — conditional trigger should fire but condition not met
+        // Move to end step — the intervening-"if" fails, so the ability never triggers (CR 603.4)
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
 
-        // End step trigger resolves but condition not met — Dragon Whelp survives
+        gs.advanceStep(gd);
+
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
-        harness.passBothPriorities();
-
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Dragon Whelp");
     }
 

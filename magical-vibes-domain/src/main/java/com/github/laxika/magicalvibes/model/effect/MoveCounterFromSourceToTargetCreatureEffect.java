@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 /**
  * "Move a [type] counter from this permanent onto target creature" (e.g. Afiya Grove).
@@ -15,6 +14,6 @@ public record MoveCounterFromSourceToTargetCreatureEffect(CounterType counterTyp
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PERMANENT, new PermanentIsCreaturePredicate());
+        return TargetSpec.benign(TargetCategory.CREATURE);
     }
 }

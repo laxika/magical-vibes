@@ -12,6 +12,6 @@ public class Doomgape extends Card {
         // At the beginning of your upkeep, sacrifice a creature. You gain life equal to that
         // creature's toughness. (Trample is auto-loaded from Scryfall.)
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
-                new SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect(true));
+                new SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect(true, true));
     }
 }

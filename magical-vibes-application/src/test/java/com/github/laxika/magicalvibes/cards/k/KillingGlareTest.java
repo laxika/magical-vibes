@@ -42,7 +42,7 @@ class KillingGlareTest extends BaseCardTest {
         Permanent target = addCreature(player2, 2, 2);
 
         castKillingGlare(2, target);
-        target.getCard().setPower(3);
+        target.setPowerModifier(target.getPowerModifier() + 1);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))

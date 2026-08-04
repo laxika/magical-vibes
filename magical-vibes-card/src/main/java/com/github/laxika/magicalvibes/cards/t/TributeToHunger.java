@@ -15,6 +15,6 @@ public class TributeToHunger extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL, new SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect(false));
+        )).addEffect(EffectSlot.SPELL, new SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect(false, false));
     }
 }

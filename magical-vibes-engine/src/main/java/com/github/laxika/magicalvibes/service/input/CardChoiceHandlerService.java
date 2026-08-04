@@ -1029,16 +1029,23 @@ public class CardChoiceHandlerService {
 
     private void checkPendingReturnToHandOnDiscard(GameData gameData, Card discardedCard) {
         PendingReturnToHandOnDiscardType pending = gameData.pendingReturnToHandOnDiscardType;
-        if (pending == null) {
+        if (pending == null || !discardedCard.hasType(pending.requiredType())) {
             return;
         }
-        if (discardedCard.hasType(pending.requiredType())) {
-            gameData.addCardToHand(pending.controllerId(), pending.card());
-            gameLogService.append(gameData,
-                    GameLog.cardThen(pending.card(), " is returned to its owner's hand."));
-            log.info("Game {} - {} returned to hand (land discarded)", gameData.id, pending.card().getName());
-            gameData.pendingReturnToHandOnDiscardType = null;
+        gameData.pendingReturnToHandOnDiscardType = null;
+        // CR 608.2n: the spell leaves the stack only as the final part of its resolution, so record
+        // the destination on the parked entry and let the single disposition site in
+        // StackResolutionService move it. Moving it here as well would put it into the hand and then
+        // let the deferred disposition drop a second copy into the graveyard.
+        StackEntry parked = gameData.pendingEffectResolutionEntry;
+        if (parked != null && parked.getCard() == pending.card()) {
+            parked.setReturnToHandAfterResolving(true);
+            return;
         }
+        gameData.addCardToHand(pending.controllerId(), pending.card());
+        gameLogService.append(gameData,
+                GameLog.cardThen(pending.card(), " is returned to its owner's hand."));
+        log.info("Game {} - {} returned to hand (matching card discarded)", gameData.id, pending.card().getName());
     }
 
     private void checkPendingTransformOnCreatureDiscard(GameData gameData, Card discardedCard) {
@@ -1103,9 +1110,15 @@ public class CardChoiceHandlerService {
         if (pending == null) {
             return;
         }
-        // No matching card type was discarded — spell goes to graveyard as normal
-        graveyardService.addCardToGraveyard(gameData, pending.controllerId(), pending.card());
         gameData.pendingReturnToHandOnDiscardType = null;
+        // No matching card type was discarded — the spell takes its default graveyard disposition as
+        // the final part of its resolution (CR 608.2n). Only dispose of it here when no parked entry
+        // is still going to; otherwise the graveyard would end up with two copies of the card.
+        StackEntry parked = gameData.pendingEffectResolutionEntry;
+        if (parked != null && parked.getCard() == pending.card()) {
+            return;
+        }
+        graveyardService.addCardToGraveyard(gameData, pending.controllerId(), pending.card());
     }
 }
 

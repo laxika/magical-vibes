@@ -474,6 +474,12 @@ public class ValidTargetService {
      * protection from card types, cant-be-targeted-by-spell-color, and the spell's TargetFilter.
      */
     public boolean canPermanentBeTargetedBySpell(GameData gameData, Permanent perm, Card spellCard, UUID castingPlayerId) {
+        return canPermanentBeTargetedBySpell(gameData, perm, spellCard, castingPlayerId, null);
+    }
+
+    /** As above, evaluating an X-dependent target filter at {@code xValue} ({@code null} means X = 0). */
+    private boolean canPermanentBeTargetedBySpell(GameData gameData, Permanent perm, Card spellCard,
+                                                  UUID castingPlayerId, Integer xValue) {
         // Structural targeting rules (protection, can't-be-targeted, shroud, hexproof, hexproof-from-color)
         // are owned by the shared spell-target core; enumeration adds only the card's TargetFilter.
         if (!targetLegalityService.checkSpellPermanentTargetableReason(gameData, perm, spellCard, castingPlayerId).isEmpty()) {
@@ -481,7 +487,7 @@ public class ValidTargetService {
         }
 
         // Card's TargetFilter
-        if (!passesTargetFilter(gameData, spellCard.getTargetFilter(), perm, spellCard.getId(), castingPlayerId)) {
+        if (!passesTargetFilter(gameData, spellCard.getTargetFilter(), perm, spellCard.getId(), castingPlayerId, xValue)) {
             return false;
         }
 
@@ -497,6 +503,13 @@ public class ValidTargetService {
     private boolean isValidPermanentTarget(GameData gameData, Card card, Permanent perm, UUID controllerId,
                                             boolean isMultiTarget, TargetFilter positionFilter,
                                             List<CardEffect> spellEffects) {
+        return isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, positionFilter,
+                spellEffects, null);
+    }
+
+    private boolean isValidPermanentTarget(GameData gameData, Card card, Permanent perm, UUID controllerId,
+                                            boolean isMultiTarget, TargetFilter positionFilter,
+                                            List<CardEffect> spellEffects, Integer xValue) {
         // For multi-target spells with per-position filters, use protection/hexproof checks
         // but skip the global targetFilter from canPermanentBeTargetedBySpell, since the
         // per-position filter below handles type restriction for each target group.
@@ -505,13 +518,13 @@ public class ValidTargetService {
                 return false;
             }
         } else {
-            if (!canPermanentBeTargetedBySpell(gameData, perm, card, controllerId)) {
+            if (!canPermanentBeTargetedBySpell(gameData, perm, card, controllerId, xValue)) {
                 return false;
             }
         }
 
         // Per-position filter for multi-target spells
-        if (!passesTargetFilter(gameData, positionFilter, perm, card.getId(), controllerId)) {
+        if (!passesTargetFilter(gameData, positionFilter, perm, card.getId(), controllerId, xValue)) {
             return false;
         }
 
@@ -541,7 +554,8 @@ public class ValidTargetService {
         // (validators for multi-target effects are intentionally out of scope — see refactor step 3).
         if (positionFilter == null && !isMultiTarget
                 && targetValidationService.checkEffectTargets(spellEffects,
-                        new TargetValidationContext(gameData, perm.getId(), null, card)).isPresent()) {
+                        new TargetValidationContext(gameData, perm.getId(), null, card,
+                                xValue != null ? xValue : 0)).isPresent()) {
             return false;
         }
 
@@ -707,13 +721,24 @@ public class ValidTargetService {
      * Per MTG rule 601.2c, a spell can't be cast unless a legal set of targets can be chosen for it.
      */
     public boolean hasValidTargetsForSpell(GameData gameData, Card card, UUID controllerId) {
+        return hasValidTargetsForSpell(gameData, card, controllerId, null);
+    }
+
+    /**
+     * As above, evaluating X-dependent target filters at {@code xValue}. X is announced in CR 601.2b,
+     * before targets are chosen in CR 601.2c, so a castability pre-check for an {@code {X}} spell has
+     * to ask whether a legal target exists at the X the caster could announce — asking at X = 0 would
+     * report Killing Glare as unplayable whenever every creature has power 1 or more.
+     */
+    public boolean hasValidTargetsForSpell(GameData gameData, Card card, UUID controllerId, Integer xValue) {
         Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(card);
         boolean isMultiTarget = card.getMaxTargets() > 1;
 
         if (allowedTargets.contains(TargetType.PERMANENT)) {
             for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
                 for (Permanent perm : battlefield) {
-                    if (isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, null)) {
+                    if (isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, null,
+                            card.getEffects(EffectSlot.SPELL), xValue)) {
                         return true;
                     }
                 }
@@ -992,6 +1017,15 @@ public class ValidTargetService {
      * Validates a target filter against a permanent. Returns true if the filter is null or the permanent passes.
      */
     private boolean passesTargetFilter(GameData gameData, TargetFilter filter, Permanent perm, UUID sourceCardId, UUID controllerId) {
+        return passesTargetFilter(gameData, filter, perm, sourceCardId, controllerId, null);
+    }
+
+    /**
+     * As above, evaluating an X-dependent filter (Killing Glare's "creature with power X or less") at
+     * {@code xValue}. {@code null} leaves the context's default of X = 0.
+     */
+    private boolean passesTargetFilter(GameData gameData, TargetFilter filter, Permanent perm, UUID sourceCardId,
+                                       UUID controllerId, Integer xValue) {
         if (filter == null) {
             return true;
         }
@@ -999,6 +1033,9 @@ public class ValidTargetService {
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceCardId(sourceCardId)
                     .withSourceControllerId(controllerId);
+            if (xValue != null) {
+                filterContext = filterContext.withXValue(xValue);
+            }
             predicateEvaluationService.validateTargetFilter(filter, perm, filterContext);
             return true;
         } catch (IllegalStateException e) {

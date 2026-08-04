@@ -77,6 +77,13 @@ class ThievesFortuneTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(top[1].getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(top[1]);
+
+        // CR 608.2n: the spell reaches the graveyard only as the final part of its resolution, so the
+        // "rest on the bottom in any order" step has to be answered before it leaves the stack.
+        List<Card> reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(
+                List.of(reorder.indexOf(top[0]), reorder.indexOf(top[2]), reorder.indexOf(top[3]))));
+
         harness.assertInGraveyard(player1, "Thieves' Fortune");
     }
 
