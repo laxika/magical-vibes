@@ -32,5 +32,6 @@ public sealed interface StackEntryPredicate permits
         StackEntryTargetsYouPredicate,
         StackEntryTargetsYourPermanentPredicate,
         StackEntrySubtypeInPredicate,
+        StackEntryTruePredicate,
         StackEntryTypeInPredicate {
 }

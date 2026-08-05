@@ -135,6 +135,13 @@ Fine-grained narrowing (artifact-only, nonland, a subtype) is the spec's `Perman
 NOT a new category. Conditional effects (a `scope` / `recipient` that sometimes targets nothing)
 compute a per-instance spec, e.g. `recipient == TARGET_PLAYER ? benign(PLAYER) : NONE`.
 
+> **Migration in progress.** `TargetCategory` is being replaced by the composable `TargetPredicate`
+> (`model/effect/`, built via the `TargetPredicates` factories — one per constant above). The enum is
+> still the source of truth and this table is still the spec; `TargetSpec.targetPredicate()` is
+> derived from it and nothing reads it yet. Write new effects against `TargetCategory` until the plan
+> says otherwise — `agent-docs/TARGET_PREDICATE_PLAN.md` tracks the state and
+> `PREDICATES_REFERENCE.md` documents the new type.
+
 ### Worked example � a new "deal N damage to target creature" effect
 
 ```java

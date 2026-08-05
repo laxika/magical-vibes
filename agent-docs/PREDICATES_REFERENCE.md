@@ -174,9 +174,47 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntryTargetsYouPredicate` | `()` | spells/abilities targeting you (the player only, not your permanents). "... spell that targets you" — Mirror Sheen |
 | `StackEntryTargetsAnyPlayerPredicate` | `()` | spells/abilities targeting at least one player (any player, not just you). "counter target spell that targets a player" — Outwit |
 | `StackEntryTargetsPermanentPredicate` | `(PermanentPredicate filter)` | spells/abilities targeting at least one permanent matching `filter` (any controller; filter evaluated with the evaluating source's controller as `sourceControllerId`). Used as `SpellCastTriggerEffect.castSpellTargetCondition` — e.g. Repartee ("cast an instant or sorcery spell that targets a creature") with `new PermanentIsCreaturePredicate()` |
+| `StackEntryTruePredicate` | `()` | always matches (no restriction). Stack counterpart of `PermanentTruePredicate` / `CardTruePredicate`; use it where "any spell on the stack" must be spelled as a predicate rather than as a `null` filter — notably inside `TargetPredicate.Spells`, whose inner predicate is never null |
 | `StackEntryAllOfPredicate` | `(List<StackEntryPredicate>)` | AND composition |
 | `StackEntryAnyOfPredicate` | `(List<StackEntryPredicate>)` | OR composition |
 | `StackEntryNotPredicate` | `(StackEntryPredicate)` | NOT inversion |
+
+## TargetPredicate — which predicate hierarchy applies
+
+`TargetPredicate` (`model/effect/`) sits one level above the four hierarchies above: it says which
+candidate **domain** a target is drawn from, and carries that domain's predicate as its payload. It
+is the successor to `TargetCategory` and is being adopted one call site at a time — see
+`agent-docs/TARGET_PREDICATE_PLAN.md` for the migration state. `TargetCategory` is still the source
+of truth today; `TargetSpec.targetPredicate()` is derived from it.
+
+| Leaf | Payload | Evaluated by |
+|------|---------|--------------|
+| `TargetPredicate.Permanents` | `PermanentPredicate` | `PredicateEvaluationService.matchesPermanentPredicate` |
+| `TargetPredicate.Players` | `PlayerPredicate` | `TargetLegalityService.matchesPlayerPredicate` |
+| `TargetPredicate.GraveyardCards` | `CardPredicate` + `GraveyardSearchScope` | `PredicateEvaluationService.matchesCardPredicate` + the scope |
+| `TargetPredicate.ExiledCards` | `CardPredicate` | `PredicateEvaluationService.matchesCardPredicate` |
+| `TargetPredicate.Spells` | `StackEntryPredicate` | `TargetLegalityService.matchesStackEntryPredicate` |
+| `TargetPredicate.AnyOf` | ≥2 leaves, at most one per kind | dispatches to the leaf of the asked-for kind |
+
+Build them with the `TargetPredicates` factories (one per `TargetCategory` constant), never by hand.
+Three rules are enforced structurally, not documented:
+
+- **No `AllOf`, no `Not` at this level.** A kind-mismatched leaf is `false`, so a top-level `Not`
+  would be true for every candidate of every other kind — over-permissive targeting. Conjunction and
+  negation belong inside a kind (`PermanentAllOfPredicate`, `CardNotPredicate`, …), where they are
+  sound.
+- **`AnyOf` holds at most one leaf per kind**, flattened and sorted by kind, so it is a canonical
+  `kind -> predicate` map. Two restrictions on the same kind must be merged into one
+  `PermanentAnyOfPredicate` (or the card / stack equivalent).
+- **No leaf carries a `null` inner predicate** — use the `*TruePredicate` of that kind. `null` means
+  "matches nothing" to the permanent evaluator and "matches everything" to the card evaluator, and a
+  target restriction must not depend on which convention a reader assumes.
+
+Evaluate one through `TargetPredicateEvaluationService` (`service/target/`), which has one method per
+kind and delegates to the service that already owns that hierarchy — it adds no evaluation logic and
+never reaches `PredicateEvaluationService.matchesStaticFilter`. Its permanent/graveyard/exile/spell
+methods require a `FilterContext` carrying `GameData`: without it the creature and land leaves fall
+back to raw card types and mis-handle an animated land (CR 613.1d).
 
 ## PlayerPredicate compositions
 

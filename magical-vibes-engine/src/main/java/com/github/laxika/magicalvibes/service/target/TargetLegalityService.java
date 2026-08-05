@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredica
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsNthSpellCastThisTurnPredicate;
@@ -1667,6 +1668,9 @@ public class TargetLegalityService {
 
     public boolean matchesStackEntryPredicate(GameData gameData, StackEntry stackEntry, StackEntryPredicate predicate,
                                               UUID controllerId, Permanent source, Integer xValue) {
+        if (predicate instanceof StackEntryTruePredicate) {
+            return true;
+        }
         if (predicate instanceof StackEntrySharesChosenNameWithSourcePredicate) {
             return source != null && source.getChosenName() != null
                     && source.getChosenName().equals(stackEntry.getCard().getName());
@@ -1915,7 +1919,14 @@ public class TargetLegalityService {
         validatePlayerTargetable(gameData, targetPlayerId, controllerId);
     }
 
-    private boolean matchesPlayerPredicate(GameData gameData, UUID controllerId, UUID targetPlayerId, PlayerPredicate predicate) {
+    /**
+     * Whether {@code targetPlayerId} satisfies {@code predicate} relative to {@code controllerId}.
+     * This service owns player-predicate evaluation on the targeting path; other targeting code
+     * (including {@code TargetPredicateEvaluationService}) delegates here rather than re-deriving
+     * the relation. A {@code null} controller matches no relation, which is what a source with no
+     * known controller should do.
+     */
+    public boolean matchesPlayerPredicate(GameData gameData, UUID controllerId, UUID targetPlayerId, PlayerPredicate predicate) {
         return switch (predicate) {
             case PlayerRelationPredicate relationPredicate -> switch (relationPredicate.relation()) {
                 case ANY -> true;

@@ -237,8 +237,8 @@ mechanical high-churn. Phase 4 is deletion.
 
 | # | Step | Risk | Status |
 |---|---|---|---|
-| 1 | Introduce `TargetPredicate` + `TargetPredicates` factories + adapter evaluator. `TargetSpec` gains a derived `targetPredicate()` computed from the existing `category`+`predicate`; **no call site changes**. Fix the stale Jackson javadoc. Add the equivalence harness: for each of the 14 factories, assert it accepts/rejects exactly the candidate set the category does. | LOW | TODO |
-| 2 | Move `TargetValidationService.validateSpec` and `ValidTargetService` enumeration onto `targetPredicate()`. Delete the inferred `allAnyTarget` block. **Confirm or refute defect 2** against Fire Juggler, Spoils of War, Blessings of Nature, Contagion before claiming a fix; record the finding here. | MED | TODO |
+| 1 | Introduce `TargetPredicate` + `TargetPredicates` factories + adapter evaluator. `TargetSpec` gains a derived `targetPredicate()` computed from the existing `category`+`predicate`; **no call site changes**. Fix the stale Jackson javadoc. Add the equivalence harness: for each of the 14 factories, assert it accepts/rejects exactly the candidate set the category does. | LOW | **DONE** — see "Step 1 outcome" below. Two deliberate divergences found and pinned; `StackEntryTruePredicate` added. |
+| 2 | Move `TargetValidationService.validateSpec` and `ValidTargetService` enumeration onto `targetPredicate()`. Delete the inferred `allAnyTarget` block. **Confirm or refute defect 2** against Fire Juggler, Spoils of War, Blessings of Nature, Contagion before claiming a fix; record the finding here. **Also decide the two Step 1 divergences** (LAND / planeswalker layer-awareness) — they land the moment the interpreter moves. | MED | TODO |
 | 3 | Route `MayAbilityHandlerService` through the shared evaluator; delete both copies of the open-coded switch (defect 3). Add a regression test for a `LAND`-spec may-ability. | MED | TODO |
 | 4 | Migrate the ~400 effect records' `targetSpec()` to the factories. Mechanical and scriptable; the Step 1 equivalence harness is the safety net. Batch by category, smallest first (`EXILE_CARD` 2, `CONTROLLERS_GRAVEYARD_CARD` 2, `LAND` 4, `PLAYER_OR_PLANESWALKER` 4 … `PLAYER` 155 last). | MED | TODO |
 | 5 | Collapse the three graveyard categories onto `GraveyardCards.scope`; delete the five hand-copied scope mappings. | LOW | TODO |
@@ -248,6 +248,56 @@ mechanical high-churn. Phase 4 is deletion.
 
 Steps 1-3 are independently valuable and can be shipped without 4-8. If the plan is abandoned
 after Step 3, the codebase is strictly better than it is today and `TargetCategory` still exists.
+
+---
+
+## Step 1 outcome
+
+What landed: `TargetPredicate` + `TargetPredicates` (domain, `model/effect/`),
+`TargetPredicateEvaluationService` (engine, `service/target/`), a derived `TargetSpec.targetPredicate()`,
+the corrected `TargetSpec` javadoc, and `TargetPredicateEquivalenceTest`
+(`magical-vibes-application/.../service/target/`). No call site reads the new type yet.
+
+**Every premise in this document was re-verified and held**, including the two hand-copied graveyard
+scope mappings and `MayAbilityHandlerService`'s duplicated `default -> false` switch.
+
+Three things a later step needs to know:
+
+**1. Two deliberate divergences, both in the rules-correct direction.** They are pinned by their own
+tests in `TargetPredicateEquivalenceTest` (named `KNOWN DIVERGENCE: …`) rather than hidden inside the
+sweep, and they take effect the moment **Step 2** moves `validateSpec` onto `targetPredicate()`:
+
+| Category | Today | Under the predicate |
+|---|---|---|
+| `LAND` | `target.getCard().hasType(LAND)` — the *printed* type | `gameQueryService.isLand` — layer-aware |
+| `ANY_TARGET` / `CREATURE_OR_PLANESWALKER` | `target.getCard().hasType(PLANESWALKER)` — printed | `gameQueryService.isPlaneswalker` — layer-aware |
+
+Only a type-**replacing** effect (Imprisoned in the Moon; `StaticBonus.cardTypeOverriding`) can tell
+them apart — an *animated* land is a land under both, which is why the harness's animated-land case
+stays an equality assertion. Both new answers are correct per CR 613.1d (verified: "Layer 4:
+Type-changing effects are applied"): a creature turned into a land *is* a legal "target land", and a
+planeswalker that stopped being one is *not* a legal "any target" (CR 115.4, verified). `CREATURE`
+does **not** diverge — both halves already went through `gameQueryService.isCreature`. Step 2 should
+adopt both and cover them with a card-level test, not paper over them.
+
+**2. `StackEntryTruePredicate` is new.** `SPELL_ON_STACK` maps to `spells(TRUE)` and no true-predicate
+existed for the stack hierarchy, unlike `PermanentTruePredicate` / `CardTruePredicate`. Added to the
+sealed `permits`, to `PredicateEvaluationService.matchesStackEntryPredicate` (exhaustive switch,
+`-> true`) and to `TargetLegalityService.matchesStackEntryPredicate` (the `if/instanceof` chain,
+early `return true`). It is deliberately NOT admitted by `predicateAdmitsAbilityTarget`: "a spell on
+the stack" does not include abilities. The alternative — a nullable inner predicate — was rejected
+because `null` already means "matches nothing" for permanents and "matches everything" for cards.
+
+**3. `TargetSpecRatchetTest` invariant 1 forbids a method named `targetPredicate` under
+`model/effect/` — but only with return type `boolean|int|PermanentPredicate`.** `TargetSpec`'s new
+`public TargetPredicate targetPredicate()` does not match and the guard still passes. Step 7 must
+keep that in mind when it rewrites the ratchet: the deleted legacy `CardEffect.targetPredicate()`
+returned `PermanentPredicate`, and the name is now legitimately in use for something else.
+
+Also worth carrying forward: `TargetLegalityService.matchesPlayerPredicate` was made public (it is
+the null-controller-safe copy; `ValidTargetService` still has a private duplicate that NPEs on a null
+controller — Step 6 territory). And the zone-wide `canGraveyardCardsBeTargeted` gate (Ground Seal) is
+*not* part of the predicate and must stay in `validateSpec`.
 
 ---
 
