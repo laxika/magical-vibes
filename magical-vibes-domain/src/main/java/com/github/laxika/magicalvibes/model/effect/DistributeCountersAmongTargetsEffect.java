@@ -66,9 +66,10 @@ public record DistributeCountersAmongTargetsEffect(
         boolean harmful = counterType == CounterType.MINUS_ONE_MINUS_ONE
                 || counterType == CounterType.MINUS_TWO_MINUS_ONE;
         // CHOSEN-mode targets ride on StackEntry.damageAssignments, so targetId is null on that path.
-        // PLAYER_OR_PERMANENT is a no-op in the spec interpreter, which preserves that null tolerance;
-        // the kept @ValidatesTarget validator (CreatureModTargetValidators) enforces creature-only
-        // legality, as does the cast-time assignment loop in SpellCastingService.
+        // PLAYER_OR_PERMANENT is a no-op in the spec interpreter, which preserves that null tolerance.
+        // It declares nothing about which permanents are legal, and no @ValidatesTarget validator
+        // covers this effect either — enumeration's "any target" inference is the only narrowing
+        // (see agent-docs/TARGET_PREDICATE_PLAN.md, Step 2b).
         TargetCategory category = mode == DivisionMode.CHOSEN
                 ? TargetCategory.PLAYER_OR_PERMANENT
                 : TargetCategory.CREATURE;

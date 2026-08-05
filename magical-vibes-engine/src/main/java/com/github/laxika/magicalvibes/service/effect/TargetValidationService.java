@@ -1,18 +1,25 @@
 package com.github.laxika.magicalvibes.service.effect;
 
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -49,7 +56,7 @@ public class TargetValidationService {
             try {
                 boolean spellTargetPath = context.targetZone() == Zone.STACK
                         && EffectResolution.targetsSpellOnStack(effectToValidate);
-                if (spec.category() != TargetCategory.NONE && !spellTargetPath) {
+                if (spec.targetPredicate() != null && !spellTargetPath) {
                     validateSpec(context, spec);
                 }
                 if (validator != null) {
@@ -64,77 +71,127 @@ public class TargetValidationService {
 
     /**
      * Interprets a declarative {@link TargetSpec} into the same structural target checks the
-     * hand-written {@code @ValidatesTarget} validators perform. Called only when the spec's
-     * category is not {@code NONE}. Semantics mirror the corresponding validators exactly (see
-     * {@code DamageTargetValidators} / {@code DestructionTargetValidators}); predicate narrowing
-     * and the harmful protection check apply to permanent targets only.
+     * hand-written {@code @ValidatesTarget} validators perform. Called only when the spec targets
+     * something. Semantics mirror the corresponding validators exactly (see
+     * {@code DamageTargetValidators} / {@code DestructionTargetValidators}).
+     *
+     * <p>Everything about <em>which</em> permanent is legal comes from the spec's
+     * {@link TargetSpec#targetPredicate()}: the category's own restriction and the spec's narrowing
+     * predicate are one composed {@code PermanentPredicate} there, evaluated by the service that
+     * owns that hierarchy. Two consequences, both rules-correct and both deliberate (CR 613.1d,
+     * layer 4 — type-changing effects are applied before targeting legality is judged): "target
+     * land" now accepts a permanent a type-<em>replacing</em> effect turned into a land, and "any
+     * target" now rejects a planeswalker that stopped being one.</p>
+     *
+     * <p>The zone-wide graveyard gate (Ground Seal) stays here rather than in the predicate: it is
+     * a property of the board, not of the candidate. So is the CR 702.16b protection check, which
+     * rides on the orthogonal {@link TargetSpec#harmful()} axis.</p>
      */
     private void validateSpec(TargetValidationContext ctx, TargetSpec spec) {
-        switch (spec.category()) {
-            case CREATURE -> {
-                Permanent target = requireBattlefieldTarget(ctx);
-                requireCreature(ctx, target);
-            }
-            case CREATURE_OR_PLANESWALKER -> {
-                Permanent target = requireBattlefieldTarget(ctx);
-                boolean valid = gameQueryService.isCreature(ctx.gameData(), target)
-                        || target.getCard().hasType(CardType.PLANESWALKER);
-                if (!valid) {
-                    throw new IllegalStateException("Target must be a creature or planeswalker");
-                }
-            }
-            case ANY_TARGET -> {
-                requireTarget(ctx);
-                if (!ctx.gameData().playerIds.contains(ctx.targetId())) {
-                    Permanent target = requireBattlefieldTarget(ctx);
-                    boolean valid = gameQueryService.isCreature(ctx.gameData(), target)
-                            || target.getCard().hasType(CardType.PLANESWALKER);
-                    if (!valid) {
-                        throw new IllegalStateException("Target must be a creature, planeswalker, or player");
-                    }
-                }
-            }
-            case PLAYER_OR_PLANESWALKER -> {
-                requireTarget(ctx);
-                if (!ctx.gameData().playerIds.contains(ctx.targetId())) {
-                    Permanent target = requireBattlefieldTarget(ctx);
-                    if (!target.getCard().hasType(CardType.PLANESWALKER)) {
-                        throw new IllegalStateException("Target must be a player or planeswalker");
-                    }
-                }
-            }
-            case PERMANENT -> requireBattlefieldTarget(ctx);
-            case LAND -> {
-                Permanent target = requireBattlefieldTarget(ctx);
-                if (!target.getCard().hasType(CardType.LAND)) {
-                    throw new IllegalStateException("Target must be a land");
-                }
-            }
-            // Player and zone categories perform NO permanent-type check here: players are
-            // validated on the player path, and spell/graveyard/exile targets are guarded by
-            // their own zone paths.
-            case GRAVEYARD_CARD, ANY_GRAVEYARD_CARD, CONTROLLERS_GRAVEYARD_CARD -> {
-                if (!gameQueryService.canGraveyardCardsBeTargeted(ctx.gameData())) {
-                    throw new IllegalStateException("Cards in graveyards can't be the targets of spells or abilities");
-                }
-            }
-            case PLAYER, PLAYER_OR_PERMANENT, SPELL_ON_STACK, EXILE_CARD, NONE -> { }
+        TargetPredicate predicate = spec.targetPredicate();
+
+        if (predicate.admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                && !gameQueryService.canGraveyardCardsBeTargeted(ctx.gameData())) {
+            throw new IllegalStateException("Cards in graveyards can't be the targets of spells or abilities");
         }
 
-        // Predicate narrowing and the harmful protection check apply to a permanent target only.
+        PermanentPredicate restriction = predicate.permanentRestriction().orElse(null);
+        if (restriction != null && demandsPermanentTarget(predicate, restriction)) {
+            requireTarget(ctx);
+            boolean playerTarget = predicate.admits(TargetPredicate.Kind.PLAYER)
+                    && ctx.gameData().playerIds.contains(ctx.targetId());
+            if (!playerTarget) {
+                requireBattlefieldTarget(ctx);
+            }
+        }
+
         Permanent target = ctx.targetId() == null
                 ? null
                 : gameQueryService.findPermanentById(ctx.gameData(), ctx.targetId());
         if (target == null) {
             return;
         }
-        if (spec.predicate() != null
-                && !predicateEvaluationService.matchesPermanentPredicate(target, spec.predicate(), sourceFilterContext(ctx))) {
-            throw new IllegalStateException("Target does not match the required predicate");
+        if (restriction != null) {
+            FilterContext filterContext = sourceFilterContext(ctx);
+            if (!predicateEvaluationService.matchesPermanentPredicate(target, restriction, filterContext)) {
+                throw new IllegalStateException(rejectionMessage(predicate, restriction, target, filterContext));
+            }
         }
         if (spec.harmful()) {
             checkProtection(ctx, target);
         }
+    }
+
+    /**
+     * Whether the spec insists that a target be supplied at all. A predicate that accepts every
+     * player <em>and</em> every permanent restricts nothing, so there is nothing for it to demand —
+     * which is what the divided-damage and distributed-counter effects rely on: their per-target
+     * amounts ride on the stack entry's assignment map, so the validated {@code targetId} is null.
+     * Every other shape either narrows the domain ("a permanent, not a player") or narrows within
+     * it, and can only judge a target that exists.
+     */
+    private static boolean demandsPermanentTarget(TargetPredicate predicate, PermanentPredicate restriction) {
+        return !predicate.admits(TargetPredicate.Kind.PLAYER)
+                || !(restriction instanceof PermanentTruePredicate);
+    }
+
+    /**
+     * Why {@code target} is not legal under {@code restriction}. A conjunction blames the first
+     * component that actually failed, so "target artifact creature" still reports "must be a
+     * creature" for a land while a bespoke narrowing keeps the generic wording.
+     */
+    private String rejectionMessage(TargetPredicate predicate, PermanentPredicate restriction,
+                                    Permanent target, FilterContext filterContext) {
+        if (restriction instanceof PermanentAllOfPredicate allOf) {
+            for (PermanentPredicate part : allOf.predicates()) {
+                if (!predicateEvaluationService.matchesPermanentPredicate(target, part, filterContext)) {
+                    return rejectionMessage(predicate, part, target, filterContext);
+                }
+            }
+        }
+        List<String> kinds = new ArrayList<>(describe(restriction));
+        if (kinds.isEmpty()) {
+            return "Target does not match the required predicate";
+        }
+        if (predicate.admits(TargetPredicate.Kind.PLAYER)) {
+            kinds.add("player");
+        }
+        return "Target must be a " + joinKinds(kinds);
+    }
+
+    /**
+     * The nouns {@code restriction} accepts, or empty when it has no natural phrasing — a
+     * disjunction only phrases when every branch does, otherwise the sentence would understate
+     * what is legal.
+     */
+    private static List<String> describe(PermanentPredicate restriction) {
+        return switch (restriction) {
+            case PermanentIsCreaturePredicate ignored -> List.of("creature");
+            case PermanentIsLandPredicate ignored -> List.of("land");
+            case PermanentIsPlaneswalkerPredicate ignored -> List.of("planeswalker");
+            case PermanentAnyOfPredicate anyOf -> {
+                List<String> kinds = new ArrayList<>();
+                for (PermanentPredicate branch : anyOf.predicates()) {
+                    List<String> branchKinds = describe(branch);
+                    if (branchKinds.isEmpty()) {
+                        yield List.of();
+                    }
+                    kinds.addAll(branchKinds);
+                }
+                yield List.copyOf(kinds);
+            }
+            default -> List.of();
+        };
+    }
+
+    private static String joinKinds(List<String> kinds) {
+        if (kinds.size() == 1) {
+            return kinds.getFirst();
+        }
+        if (kinds.size() == 2) {
+            return kinds.getFirst() + " or " + kinds.getLast();
+        }
+        return String.join(", ", kinds.subList(0, kinds.size() - 1)) + ", or " + kinds.getLast();
     }
 
     /**

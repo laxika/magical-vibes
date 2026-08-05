@@ -106,8 +106,13 @@ class ValidTargetServiceTest {
         // structural + "any target" enumeration behaviour under test is isolated from validator coverage.
         TargetLegalityService targetLegalityService = new TargetLegalityService(
                 gameQueryService, predicateEvaluationService, targetValidationService);
+        // The "any target" narrowing evaluates TargetPredicates.anyTarget() for real, so it gets a
+        // real PredicateEvaluationService over the same mocked GameQueryService the rest of the
+        // structural core uses — the mocked one would reject every candidate.
         validTargetService = new ValidTargetService(
-                gameQueryService, predicateEvaluationService, targetLegalityService, targetValidationService);
+                gameQueryService, predicateEvaluationService, targetLegalityService, targetValidationService,
+                new TargetPredicateEvaluationService(
+                        new PredicateEvaluationService(gameQueryService), targetLegalityService));
         lenient().when(targetValidationService.checkEffectTargets(any(), any())).thenReturn(Optional.empty());
         // Ground Seal gate — default open so graveyard enumeration tests are not emptied by the mock.
         lenient().when(gameQueryService.canGraveyardCardsBeTargeted(any())).thenReturn(true);
@@ -1565,6 +1570,7 @@ class ValidTargetServiceTest {
 
             // isCreature returns false for planeswalker, but isPlaneswalker should allow it
             when(gameQueryService.isCreature(eq(gameData), any(Permanent.class))).thenReturn(false);
+            when(gameQueryService.isPlaneswalker(eq(gameData), any(Permanent.class))).thenReturn(true);
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
                     gameData, spell, player1Id, null);

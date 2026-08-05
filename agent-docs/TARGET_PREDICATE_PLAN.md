@@ -75,14 +75,20 @@ if (allAnyTarget) {
 *any* permanent". The two categories are semantically distinct and the enumerator cannot tell them
 apart.
 
-> **Status: latent, NOT a confirmed shipped bug.** Both producers of `PLAYER_OR_PERMANENT` were
-> checked. `DistributeCountersAmongTargetsEffect` selects it deliberately as a documented
-> null-tolerance escape hatch (its own comment says "PLAYER_OR_PERMANENT is a no-op in the spec
-> interpreter"), and creature-only legality is enforced downstream by
-> `CreatureModTargetValidators` plus the cast-time assignment loop in `SpellCastingService`.
-> `ClashEffect` only computes `PLAYER_OR_PERMANENT` when its child effects target both kinds — e.g.
-> Fire Juggler ("creature or player"), where narrowing to creature/planeswalker is correct.
-> **Step 2 must confirm or refute this against real cards before claiming a fix.**
+> **REFUTED by Step 2 — read "Step 2 outcome" instead of this paragraph.** The claim below (two
+> producers; `ClashEffect` reaching `PLAYER_OR_PERMANENT` for Fire Juggler;
+> `CreatureModTargetValidators` covering `DistributeCountersAmongTargetsEffect`) is wrong on every
+> particular, and the direction of the defect is inverted: `PLAYER_OR_PERMANENT` is an *unchecked
+> escape hatch*, and the `allAnyTarget` inference is the only thing narrowing eight real cards.
+> Deleting it is Step 2b, and it is blocked. Original text, kept for the record:
+>
+> ~~Both producers of `PLAYER_OR_PERMANENT` were checked. `DistributeCountersAmongTargetsEffect`
+> selects it deliberately as a documented null-tolerance escape hatch (its own comment says
+> "PLAYER_OR_PERMANENT is a no-op in the spec interpreter"), and creature-only legality is enforced
+> downstream by `CreatureModTargetValidators` plus the cast-time assignment loop in
+> `SpellCastingService`. `ClashEffect` only computes `PLAYER_OR_PERMANENT` when its child effects
+> target both kinds — e.g. Fire Juggler ("creature or player"), where narrowing to
+> creature/planeswalker is correct.~~
 
 **3. `MayAbilityHandlerService` open-codes the category switch and gets it wrong.** Duplicated
 verbatim at lines 367-399 **and** 776-805:
@@ -238,7 +244,8 @@ mechanical high-churn. Phase 4 is deletion.
 | # | Step | Risk | Status |
 |---|---|---|---|
 | 1 | Introduce `TargetPredicate` + `TargetPredicates` factories + adapter evaluator. `TargetSpec` gains a derived `targetPredicate()` computed from the existing `category`+`predicate`; **no call site changes**. Fix the stale Jackson javadoc. Add the equivalence harness: for each of the 14 factories, assert it accepts/rejects exactly the candidate set the category does. | LOW | **DONE** — see "Step 1 outcome" below. Two deliberate divergences found and pinned; `StackEntryTruePredicate` added. |
-| 2 | Move `TargetValidationService.validateSpec` and `ValidTargetService` enumeration onto `targetPredicate()`. Delete the inferred `allAnyTarget` block. **Confirm or refute defect 2** against Fire Juggler, Spoils of War, Blessings of Nature, Contagion before claiming a fix; record the finding here. **Also decide the two Step 1 divergences** (LAND / planeswalker layer-awareness) — they land the moment the interpreter moves. | MED | TODO |
+| 2 | Move `TargetValidationService.validateSpec` and `ValidTargetService` enumeration onto `targetPredicate()`. Delete the inferred `allAnyTarget` block. **Confirm or refute defect 2** against Fire Juggler, Spoils of War, Blessings of Nature, Contagion before claiming a fix; record the finding here. **Also decide the two Step 1 divergences** (LAND / planeswalker layer-awareness) — they land the moment the interpreter moves. | MED | **DONE** — see "Step 2 outcome". Both divergences adopted. **Defect 2 refuted as written**: the `allAnyTarget` block was NOT deleted, and a new Step 2b owns that. |
+| 2b | **Delete the `allAnyTarget` inference for real.** Blocked on making eight cards' effects declare honestly instead of using `PLAYER_OR_PERMANENT` as an unchecked escape hatch — see "Step 2 outcome" for the list, the two tiers, and the two mechanisms that must be replaced first (null-target tolerance, and the fact that validators are skipped for multi-target positions). Also covers the ability twin of the same inference (`ValidTargetService.isAnyTargetAbility`, read by `TargetLegalityService.validateMultiTargetAbility:391`), which must change in the same step or enumeration and cast-time validation will disagree. | HIGH | TODO |
 | 3 | Route `MayAbilityHandlerService` through the shared evaluator; delete both copies of the open-coded switch (defect 3). Add a regression test for a `LAND`-spec may-ability. | MED | TODO |
 | 4 | Migrate the ~400 effect records' `targetSpec()` to the factories. Mechanical and scriptable; the Step 1 equivalence harness is the safety net. Batch by category, smallest first (`EXILE_CARD` 2, `CONTROLLERS_GRAVEYARD_CARD` 2, `LAND` 4, `PLAYER_OR_PLANESWALKER` 4 … `PLAYER` 155 last). | MED | TODO |
 | 5 | Collapse the three graveyard categories onto `GraveyardCards.scope`; delete the five hand-copied scope mappings. | LOW | TODO |
@@ -298,6 +305,92 @@ Also worth carrying forward: `TargetLegalityService.matchesPlayerPredicate` was 
 the null-controller-safe copy; `ValidTargetService` still has a private duplicate that NPEs on a null
 controller — Step 6 territory). And the zone-wide `canGraveyardCardsBeTargeted` gate (Ground Seal) is
 *not* part of the predicate and must stay in `validateSpec`.
+
+---
+
+## Step 2 outcome
+
+What landed: `TargetValidationService.validateSpec` is now one predicate interpretation instead of a
+14-arm category switch; `ValidTargetService` reads `TargetSpec.admits(Kind)` everywhere it used to
+read `includesPermanents()` / `includesPlayers()` / `isGraveyard()`, and its "any target" narrowing
+now evaluates `TargetPredicates.anyTarget()` instead of an open-coded `isCreature || printed
+PLANESWALKER`. Two small additions carry it: `TargetPredicate.permanentRestriction()` and
+`TargetSpec.admits(Kind)`.
+
+**Both Step 1 divergences adopted, in the layer-aware direction.** `validateSpec` no longer reads a
+printed type line anywhere: "target land" accepts a permanent a type-*replacing* effect turned into
+a land, and "any target" rejects a planeswalker that stopped being one (CR 613.1d and CR 115.4, both
+verified). Covered behaviourally by `ImprisonedInTheMoonTest` (Field of Ruin destroys a moon'd
+creature; Lightning Bolt can no longer be pointed at a moon'd Jace) and pinned in
+`TargetPredicateEquivalenceTest`, whose two `KNOWN DIVERGENCE` tests are now equality tests.
+
+Error messages are generated from the predicate rather than hard-coded per category. A conjunction
+blames the first component that actually failed, so "target artifact creature" still reports "Target
+must be a creature" for a land and keeps the generic wording for the artifact half. One wording
+changed: `PLAYER_OR_PLANESWALKER` now reads "a planeswalker or player" (player last, matching
+`ANY_TARGET`); no test asserted it.
+
+### Defect 2 is refuted as written — the `allAnyTarget` block stays for now
+
+The premise in "Why this is worth doing" is **stale on every particular**:
+
+- It says `PLAYER_OR_PERMANENT` has **two** producers. It has **eighteen** effect records.
+- It says `ClashEffect` computes it "e.g. Fire Juggler". `ClashEffect` never reaches
+  `PLAYER_OR_PERMANENT` for any implemented card — all twelve filterless clash cards have
+  single-category children. And Fire Juggler (MOR 90) is "4 damage to each creature blocking it",
+  not an any-target burn spell.
+- `DistributeCountersAmongTargetsEffect`'s own comment claims `CreatureModTargetValidators` enforces
+  creature-only legality. It does not: that validator registers only `StaticBoostEffect` and
+  `AttachedBoostEffect`, and no `@ValidatesTarget` for the distribute effect exists anywhere.
+
+The real shape of the problem is the opposite of the one described. `PLAYER_OR_PERMANENT` is not a
+*declaration* that any permanent is legal — it is an **unchecked escape hatch**, chosen precisely
+because it is a no-op in the interpreter, and the `allAnyTarget` inference is what silently supplies
+the narrowing those effects decline to declare. Deleting it widens targeting on eight real cards:
+
+| Tier | Cards | What breaks |
+|---|---|---|
+| A | Stomping Slabs, Blessings of Nature, Bounty of the Hunt, Spoils of War | single-target, no validator → **every** permanent (lands, artifacts, enchantments) becomes a legal target |
+| B | Arc Trail, Cone of Flame, Fireball, Jaya's Immolating Inferno | filterless multi-target → falls to the `isMultiTarget && !isCreature` branch, so planeswalkers stop being offered for an "any target" spell |
+
+Every other filterless `PLAYER_OR_PERMANENT` card (Rock Slide, Remedy, Aurelia's Fury, Fire Covenant,
+Flames of the Firebrand, Hail of Arrows, Infernal Harvest, Jaws of Stone, Meteor Shower, Pyrokinesis,
+Pyrotechnics, Fight with Fire) is already covered by `DamageTargetValidators.validateDealDividedDamage`
+or `PreventionTargetValidators.validatePreventDividedDamage`, so the inference is dead weight there.
+
+**Step 2b must therefore replace two mechanisms before it can delete anything:**
+
+1. **Null-target tolerance.** These effects' per-target amounts ride on
+   `StackEntry.damageAssignments`, so the `targetId` validated at cast time is null. Today that is
+   bought by picking a category the interpreter no-ops on, which `validateSpec.demandsPermanentTarget`
+   reproduces exactly: a predicate that accepts every player *and* every permanent restricts nothing,
+   so it demands nothing. An honest `anyTarget()` predicate would demand a target and break the cast
+   path. The honest fix is to move "a target is required" off the spec and onto the declared target
+   count (`TargetLegalityService.checkAbilityTargeting:475` is the one caller that relies on the spec
+   throwing; `checkSpellTargeting` already rejects a null target before the spec is consulted).
+2. **Validators are skipped for multi-target positions** (`ValidTargetService.isValidPermanentTarget`
+   runs `checkEffectTargets` only when `positionFilter == null && !isMultiTarget`), which is why
+   Tier B has no second line of defence. Either give those four cards real
+   `AnyTargetPredicateTargetFilter`s (Injury already does) or extend the validator pass to
+   multi-target positions.
+
+Until then the inference stays, but it is now honest about what it is: it *recognises* the slot with
+the same lossy `admits(PLAYER)` test, and gets the restriction itself from `TargetPredicates.anyTarget()`.
+The comment at the call site says so and points here.
+
+### Two other things a later step needs
+
+- **`TargetValidationService` deliberately does not use `TargetPredicateEvaluationService`.**
+  Injecting it closes a Spring constructor cycle (`TargetValidationService` →
+  `TargetPredicateEvaluationService` → `TargetLegalityService` → `TargetValidationService`), so it
+  reads `permanentRestriction()` and calls `PredicateEvaluationService.matchesPermanentPredicate`
+  itself — the same call the adapter makes. `ValidTargetService` does take the adapter; its 5-arg
+  constructor is built by hand in `AiTargetSelector` and in `ValidTargetServiceTest`.
+- **Mocked-`PredicateEvaluationService` tests now need a real one.** Both
+  `TargetValidationServiceSpecTest` and `ValidTargetServiceTest` construct a genuine
+  `PredicateEvaluationService` over their mocked `GameQueryService`, because the type restrictions
+  the interpreter used to open-code are now real predicate evaluations. Any future test that mocks
+  predicate evaluation and expects targeting to work will silently reject every candidate.
 
 ---
 

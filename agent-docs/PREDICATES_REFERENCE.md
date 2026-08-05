@@ -184,8 +184,11 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 `TargetPredicate` (`model/effect/`) sits one level above the four hierarchies above: it says which
 candidate **domain** a target is drawn from, and carries that domain's predicate as its payload. It
 is the successor to `TargetCategory` and is being adopted one call site at a time — see
-`agent-docs/TARGET_PREDICATE_PLAN.md` for the migration state. `TargetCategory` is still the source
-of truth today; `TargetSpec.targetPredicate()` is derived from it.
+`agent-docs/TARGET_PREDICATE_PLAN.md` for the migration state. `TargetCategory` is still what an
+effect *declares*; `TargetSpec.targetPredicate()` derives the predicate from that category plus the
+spec's narrowing predicate, and it is what the spec interpreter (`TargetValidationService`) and
+target enumeration (`ValidTargetService`) actually evaluate. `TargetSpec.admits(Kind)` is the
+null-safe "can this kind ever be legal?" query — a spec that targets nothing has no predicate at all.
 
 | Leaf | Payload | Evaluated by |
 |------|---------|--------------|
@@ -215,6 +218,11 @@ kind and delegates to the service that already owns that hierarchy — it adds n
 never reaches `PredicateEvaluationService.matchesStaticFilter`. Its permanent/graveyard/exile/spell
 methods require a `FilterContext` carrying `GameData`: without it the creature and land leaves fall
 back to raw card types and mis-handle an animated land (CR 613.1d).
+
+`TargetValidationService` is the exception that does NOT go through that adapter: injecting it would
+close the cycle `TargetValidationService → TargetPredicateEvaluationService → TargetLegalityService →
+TargetValidationService`. It reads `TargetPredicate.permanentRestriction()` and evaluates that one
+`PermanentPredicate` through `PredicateEvaluationService` directly — the same call the adapter makes.
 
 ## PlayerPredicate compositions
 

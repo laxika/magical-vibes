@@ -68,4 +68,14 @@ public record TargetSpec(
     public TargetPredicate targetPredicate() {
         return TargetPredicates.narrowPermanents(TargetPredicates.forCategory(category), predicate);
     }
+
+    /**
+     * Whether a target of {@code kind} can ever be legal for this spec — the null-safe form of
+     * {@link TargetPredicate#admits(TargetPredicate.Kind)}, since a spec that targets nothing has
+     * no predicate at all.
+     */
+    public boolean admits(TargetPredicate.Kind kind) {
+        TargetPredicate targetPredicate = targetPredicate();
+        return targetPredicate != null && targetPredicate.admits(kind);
+    }
 }

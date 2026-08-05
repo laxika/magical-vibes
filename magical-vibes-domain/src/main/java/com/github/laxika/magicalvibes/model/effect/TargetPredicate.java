@@ -205,4 +205,13 @@ public sealed interface TargetPredicate permits TargetPredicate.Leaf, TargetPred
     default boolean admits(Kind kind) {
         return leaf(kind).isPresent();
     }
+
+    /**
+     * The restriction this predicate places on a battlefield permanent, or empty when it admits no
+     * permanent at all. Spelled out rather than left as a {@link #leaf(Kind)} lookup plus a cast
+     * because it is the question both the spec interpreter and target enumeration ask.
+     */
+    default Optional<PermanentPredicate> permanentRestriction() {
+        return leaf(Kind.PERMANENT).map(leaf -> ((Permanents) leaf).inner());
+    }
 }

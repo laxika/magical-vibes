@@ -58,8 +58,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *       layer-aware creature check is the production one.</li>
  * </ul>
  *
- * <p>Two categories deliberately do NOT stay equivalent under a type-<em>replacing</em> effect;
- * those are pinned by their own tests at the bottom rather than smuggled into the sweep.</p>
+ * <p>Since Step 2 the interpreter <em>is</em> the predicate, so the sweep now guards the admission
+ * axis — which kinds a category offers at all. The two type-<em>replacing</em> cases that used to
+ * diverge (LAND, and the planeswalker half of ANY_TARGET) were adopted in the layer-aware direction
+ * and are pinned by their own tests at the bottom.</p>
  */
 class TargetPredicateEquivalenceTest extends BaseCardTest {
 
@@ -322,14 +324,13 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
     }
 
     /**
-     * The one place {@code LAND} stops being equivalent: today it reads the printed card type, so a
-     * permanent that a type-<em>replacing</em> effect turned into a land (CR 613.1d, layer 4) is not
-     * a legal "target land". The predicate is layer-aware and accepts it, which is the rules-correct
-     * answer. Deliberate, and adopted the moment Step 2 moves the interpreter onto the predicate.
+     * {@code LAND} used to read the <em>printed</em> card type, so a permanent that a
+     * type-<em>replacing</em> effect turned into a land (CR 613.1d, layer 4) was not a legal
+     * "target land". Step 2 adopted the layer-aware answer, so both halves now agree that it is.
      */
     @Test
-    @DisplayName("KNOWN DIVERGENCE: LAND becomes layer-aware for a permanent turned into a land")
-    void landDivergesForATypeReplacedPermanent() {
+    @DisplayName("LAND is layer-aware in both halves for a permanent turned into a land")
+    void landIsLayerAwareForATypeReplacedPermanent() {
         Permanent bears = new Permanent(new GrizzlyBears());
         gd.playerBattlefields.get(player2.getId()).add(bears);
         Permanent aura = new Permanent(new ImprisonedInTheMoon());
@@ -339,23 +340,21 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
         assertThat(gqs.isLand(gd, bears)).isTrue();
         assertThat(bears.getCard().hasType(CardType.LAND)).isFalse();
 
-        assertThat(specInterpreterAccepts(TargetCategory.LAND, bears.getId())).isFalse();
+        assertThat(specInterpreterAccepts(TargetCategory.LAND, bears.getId())).isTrue();
         assertThat(matchesPermanent(TargetCategory.LAND, bears)).isTrue();
 
-        // CREATURE does not diverge — both halves are already layer-aware.
         assertThat(specInterpreterAccepts(TargetCategory.CREATURE, bears.getId())).isFalse();
         assertThat(matchesPermanent(TargetCategory.CREATURE, bears)).isFalse();
     }
 
     /**
-     * The mirror case: today {@code ANY_TARGET} and {@code CREATURE_OR_PLANESWALKER} read the
-     * printed planeswalker type, so a planeswalker that stopped being one still passes. The
-     * predicate is layer-aware and rejects it — again the rules-correct answer (CR 115.4 lists what
-     * "any target" may be, evaluated after layer 4).
+     * The mirror case: {@code ANY_TARGET} used to read the printed planeswalker type, so a
+     * planeswalker that stopped being one still passed. Step 2 adopted the layer-aware answer —
+     * CR 115.4 lists what "any target" may be, judged after layer 4.
      */
     @Test
-    @DisplayName("KNOWN DIVERGENCE: ANY_TARGET becomes layer-aware for a de-typed planeswalker")
-    void anyTargetDivergesForATypeReplacedPlaneswalker() {
+    @DisplayName("ANY_TARGET is layer-aware in both halves for a de-typed planeswalker")
+    void anyTargetIsLayerAwareForATypeReplacedPlaneswalker() {
         Permanent walker = permanents.get("planeswalker");
         Permanent aura = new Permanent(new ImprisonedInTheMoon());
         aura.setAttachedTo(walker.getId());
@@ -364,7 +363,7 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
         assertThat(gqs.isPlaneswalker(gd, walker)).isFalse();
         assertThat(walker.getCard().hasType(CardType.PLANESWALKER)).isTrue();
 
-        assertThat(specInterpreterAccepts(TargetCategory.ANY_TARGET, walker.getId())).isTrue();
+        assertThat(specInterpreterAccepts(TargetCategory.ANY_TARGET, walker.getId())).isFalse();
         assertThat(matchesPermanent(TargetCategory.ANY_TARGET, walker)).isFalse();
     }
 

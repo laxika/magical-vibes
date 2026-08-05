@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.f.FieldOfRuin;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -12,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -121,6 +125,53 @@ class ImprisonedInTheMoonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, auraTarget.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    /**
+     * CR 613.1d (layer 4, type-changing effects) is applied before target legality is judged, so a
+     * creature this aura turned into a land <em>is</em> a legal "target land" — even though its
+     * printed type line says otherwise. Field of Ruin's "destroy target nonbasic land an opponent
+     * controls" is the reader.
+     */
+    @Test
+    @DisplayName("Enchanted creature is a legal target for 'destroy target land'")
+    void enchantedCreatureIsALegalLandTarget() {
+        harness.addToBattlefield(player1, new FieldOfRuin());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        Permanent aura = new Permanent(new ImprisonedInTheMoon());
+        aura.setAttachedTo(bearsId);
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, bearsId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    /**
+     * The mirror case: "any target" is a creature, planeswalker, player or battle (CR 115.4), judged
+     * after layer 4. A planeswalker this aura turned into a colorless land is none of those, so
+     * Lightning Bolt can no longer be pointed at it.
+     */
+    @Test
+    @DisplayName("Enchanted planeswalker is no longer a legal 'any target'")
+    void enchantedPlaneswalkerIsNotAnAnyTarget() {
+        harness.addToBattlefield(player2, new JaceBeleren());
+        UUID jaceId = harness.getPermanentId(player2, "Jace Beleren");
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        Permanent aura = new Permanent(new ImprisonedInTheMoon());
+        aura.setAttachedTo(jaceId);
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+
+        assertThat(gqs.isPlaneswalker(gd, gqs.findPermanentById(gd, jaceId))).isFalse();
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, jaceId))
                 .isInstanceOf(IllegalStateException.class);
     }
 

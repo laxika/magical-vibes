@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
@@ -59,16 +61,19 @@ public class ValidTargetService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final TargetLegalityService targetLegalityService;
     private final TargetValidationService targetValidationService;
+    private final TargetPredicateEvaluationService targetPredicateEvaluationService;
 
     @Autowired
     public ValidTargetService(GameQueryService gameQueryService,
                               PredicateEvaluationService predicateEvaluationService,
                               TargetLegalityService targetLegalityService,
-                              TargetValidationService targetValidationService) {
+                              TargetValidationService targetValidationService,
+                              TargetPredicateEvaluationService targetPredicateEvaluationService) {
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.targetLegalityService = targetLegalityService;
         this.targetValidationService = targetValidationService;
+        this.targetPredicateEvaluationService = targetPredicateEvaluationService;
     }
 
     /**
@@ -79,7 +84,7 @@ public class ValidTargetService {
      */
     public ValidTargetService(GameQueryService gameQueryService,
                               PredicateEvaluationService predicateEvaluationService) {
-        this(gameQueryService, predicateEvaluationService, null, null);
+        this(gameQueryService, predicateEvaluationService, null, null, null);
     }
 
     public ValidTargetsResponse computeValidTargetsForSpell(GameData gameData, Card card, UUID controllerId, List<UUID> alreadySelectedIds) {
@@ -372,9 +377,12 @@ public class ValidTargetService {
             return new ValidTargetsResponse(validPermanentIds, validPlayerIds, ability.getMinTargets(), ability.getMaxTargets(), prompt);
         }
 
-        boolean targetsPlayer = ability.getEffects().stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
-        boolean targetsPermanent = ability.getEffects().stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
-        boolean targetsGraveyard = ability.getEffects().stream().anyMatch(e -> e.targetSpec().category().isGraveyard());
+        boolean targetsPlayer = ability.getEffects().stream()
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+        boolean targetsPermanent = ability.getEffects().stream()
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        boolean targetsGraveyard = ability.getEffects().stream()
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         boolean targetsBlockingThis = ability.getEffects().stream()
                 .anyMatch(e -> e instanceof DestroyCreatureBlockingThisEffect);
 
@@ -442,10 +450,10 @@ public class ValidTargetService {
             return false;
         }
         List<CardEffect> permanentEffects = ability.getEffects().stream()
-                .filter(e -> e.targetSpec().category().includesPermanents())
+                .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                 .toList();
         return !permanentEffects.isEmpty()
-                && permanentEffects.stream().allMatch(e -> e.targetSpec().category().includesPlayers());
+                && permanentEffects.stream().allMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
     }
 
     /**
@@ -528,17 +536,27 @@ public class ValidTargetService {
             return false;
         }
 
-        // "Any target" in MTG means creature, planeswalker, or player — not all permanents.
-        // When all permanent-targeting spell effects also target players (i.e. "any target"),
-        // restrict valid permanent targets to creatures and planeswalkers.
+        // An unfiltered slot whose permanent-targeting spell effects also accept players is an
+        // "any target" slot: CR 115.4 restricts it to a creature, player, planeswalker or battle,
+        // never to any other permanent (battles are not modelled yet). What "any target" admits
+        // comes from TargetPredicates.anyTarget() rather than an open-coded type check, so the
+        // definition lives in one place and is layer-aware (CR 613.1d).
+        //
+        // The slot is still *recognised* by asking whether every permanent-targeting effect also
+        // accepts players, which cannot tell "any target" apart from "a player or any permanent".
+        // That inference cannot be dropped yet: eight cards declare PLAYER_OR_PERMANENT purely as
+        // an unchecked escape hatch and this is their only narrowing — see
+        // agent-docs/TARGET_PREDICATE_PLAN.md, "Step 2 outcome".
         if (card.getTargetFilter() == null && positionFilter == null) {
             List<CardEffect> permanentEffects = spellEffects.stream()
-                    .filter(e -> e.targetSpec().category().includesPermanents())
+                    .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                     .toList();
-            boolean allAnyTarget = !permanentEffects.isEmpty()
-                    && permanentEffects.stream().allMatch(e -> e.targetSpec().category().includesPlayers());
-            if (allAnyTarget) {
-                if (!gameQueryService.isCreature(gameData, perm) && !isPlaneswalker(perm)) {
+            boolean anyTargetSlot = !permanentEffects.isEmpty()
+                    && permanentEffects.stream()
+                            .allMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+            if (anyTargetSlot) {
+                if (!targetPredicateEvaluationService.matchesPermanent(TargetPredicates.anyTarget(), perm,
+                        targetFilterContext(gameData, card.getId(), controllerId, xValue))) {
                     return false;
                 }
             } else if (isMultiTarget && !gameQueryService.isCreature(gameData, perm)) {
@@ -682,7 +700,7 @@ public class ValidTargetService {
 
         // Protection from source color/type/subtype (for abilities that deal damage or destroy)
         boolean dealsDamageOrDestroys = ability.getEffects().stream().anyMatch(e ->
-                e.targetSpec().category().includesPermanents() && e.targetSpec().harmful());
+                e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) && e.targetSpec().harmful());
         if (dealsDamageOrDestroys) {
             if (sourceCard.getColor() != null && gameQueryService.hasProtectionFrom(gameData, perm, sourceCard.getColor())) {
                 return false;
@@ -861,7 +879,7 @@ public class ValidTargetService {
         List<UUID> validIds = new ArrayList<>();
 
         for (CardEffect effect : spellEffects) {
-            if (!effect.targetSpec().category().isGraveyard()) continue;
+            if (!effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) continue;
 
             if (effect instanceof ReturnCardFromGraveyardEffect rge) {
                 List<UUID> searchPlayerIds = switch (rge.source()) {
@@ -932,7 +950,7 @@ public class ValidTargetService {
                 }
                 break;
             }
-            if (effect.targetSpec().category().isGraveyard()) {
+            if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
                 boolean anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
                 List<UUID> searchPlayerIds = anyGraveyard
                         ? gameData.orderedPlayerIds
@@ -1047,17 +1065,25 @@ public class ValidTargetService {
             return true;
         }
         try {
-            FilterContext filterContext = FilterContext.of(gameData)
-                    .withSourceCardId(sourceCardId)
-                    .withSourceControllerId(controllerId);
-            if (xValue != null) {
-                filterContext = filterContext.withXValue(xValue);
-            }
-            predicateEvaluationService.validateTargetFilter(filter, perm, filterContext);
+            predicateEvaluationService.validateTargetFilter(filter, perm,
+                    targetFilterContext(gameData, sourceCardId, controllerId, xValue));
             return true;
         } catch (IllegalStateException e) {
             return false;
         }
+    }
+
+    /**
+     * The context a targeting predicate is evaluated in: the game state plus the source card and
+     * its controller, which source-relative predicates ("another creature you control") need, and
+     * the announced X for X-dependent ones ({@code null} leaves the default of X = 0).
+     */
+    private static FilterContext targetFilterContext(GameData gameData, UUID sourceCardId,
+                                                     UUID controllerId, Integer xValue) {
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(sourceCardId)
+                .withSourceControllerId(controllerId);
+        return xValue != null ? filterContext.withXValue(xValue) : filterContext;
     }
 
     private boolean isPlaneswalker(Permanent perm) {

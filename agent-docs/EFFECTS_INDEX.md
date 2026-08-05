@@ -121,10 +121,10 @@ targeted"). Counters, bounces, control-changes, boosts, taps, text changes are `
 | `PLAYER_OR_PERMANENT` | a player or any permanent |
 | `PERMANENT` | any permanent |
 | `CREATURE` | a creature (layer-aware) |
-| `LAND` | a land |
-| `CREATURE_OR_PLANESWALKER` | a creature or planeswalker |
-| `PLAYER_OR_PLANESWALKER` | a player or planeswalker |
-| `ANY_TARGET` | any target (player / creature / planeswalker) |
+| `LAND` | a land (layer-aware) |
+| `CREATURE_OR_PLANESWALKER` | a creature or planeswalker (layer-aware) |
+| `PLAYER_OR_PLANESWALKER` | a player or planeswalker (layer-aware) |
+| `ANY_TARGET` | any target (player / creature / planeswalker), layer-aware |
 | `SPELL_ON_STACK` | a spell on the stack (validated on the stack path) |
 | `GRAVEYARD_CARD` | a card in a graveyard (opponent's, the default) |
 | `ANY_GRAVEYARD_CARD` | a card in any graveyard |
@@ -135,12 +135,21 @@ Fine-grained narrowing (artifact-only, nonland, a subtype) is the spec's `Perman
 NOT a new category. Conditional effects (a `scope` / `recipient` that sometimes targets nothing)
 compute a per-instance spec, e.g. `recipient == TARGET_PLAYER ? benign(PLAYER) : NONE`.
 
+"Layer-aware" means the type test is `GameQueryService.isCreature` / `isLand` / `isPlaneswalker`
+after the CR 613 pass, never the printed type line: an animated land is a legal "target creature",
+a creature a type-**replacing** effect turned into a land is a legal "target land", and a
+planeswalker that stopped being one is not a legal "any target" (CR 613.1d, CR 115.4). The
+interpreter reaches all of them through one composed `PermanentPredicate` — the category's own
+restriction and the spec's narrowing predicate folded together by `TargetSpec.targetPredicate()`.
+
 > **Migration in progress.** `TargetCategory` is being replaced by the composable `TargetPredicate`
 > (`model/effect/`, built via the `TargetPredicates` factories — one per constant above). The enum is
-> still the source of truth and this table is still the spec; `TargetSpec.targetPredicate()` is
-> derived from it and nothing reads it yet. Write new effects against `TargetCategory` until the plan
-> says otherwise — `agent-docs/TARGET_PREDICATE_PLAN.md` tracks the state and
-> `PREDICATES_REFERENCE.md` documents the new type.
+> still the source of truth and this table is still the spec, but it is no longer what the engine
+> reads: `TargetValidationService`'s spec interpreter and `ValidTargetService`'s enumeration both run
+> on `TargetSpec.targetPredicate()`, derived from the category plus the narrowing predicate. Write
+> new effects against `TargetCategory` until the plan says otherwise —
+> `agent-docs/TARGET_PREDICATE_PLAN.md` tracks the state and `PREDICATES_REFERENCE.md` documents the
+> new type.
 
 ### Worked example � a new "deal N damage to target creature" effect
 

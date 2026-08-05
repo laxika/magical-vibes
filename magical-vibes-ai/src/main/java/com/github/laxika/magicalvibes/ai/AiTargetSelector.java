@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 
 import java.util.ArrayList;
@@ -89,7 +90,8 @@ class AiTargetSelector {
         this.targetValidationService = targetValidationService;
         this.targetLegalityService = targetLegalityService;
         this.validTargetService = new ValidTargetService(gameQueryService, predicateEvaluationService,
-                targetLegalityService, targetValidationService);
+                targetLegalityService, targetValidationService,
+                new TargetPredicateEvaluationService(predicateEvaluationService, targetLegalityService));
         this.amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
         this.polarityClassifier = new TargetPolarityClassifier(amountEvaluationService);
         this.boardEvaluator = boardEvaluator;

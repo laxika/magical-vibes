@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -25,8 +24,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 /**
@@ -39,8 +36,6 @@ class TargetValidationServiceSpecTest {
 
     @Mock
     private GameQueryService gameQueryService;
-    @Mock
-    private PredicateEvaluationService predicateEvaluationService;
 
     private TargetValidatorRegistry registry;
     private TargetValidationService sut;
@@ -53,7 +48,11 @@ class TargetValidationServiceSpecTest {
     @BeforeEach
     void setUp() {
         registry = new TargetValidatorRegistry();
-        sut = new TargetValidationService(gameQueryService, predicateEvaluationService, registry);
+        // The interpreter composes the category restriction and the spec's narrowing predicate into
+        // one PermanentPredicate and evaluates it for real, so predicate evaluation is the genuine
+        // service over the mocked GameQueryService rather than a second mock.
+        sut = new TargetValidationService(gameQueryService,
+                new PredicateEvaluationService(gameQueryService), registry);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -87,6 +86,20 @@ class TargetValidationServiceSpecTest {
         @Override
         public TargetSpec targetSpec() {
             return TargetSpec.benign(TargetCategory.PERMANENT, predicate);
+        }
+    }
+
+    private record CreatureBenignWithPredicateEffect(PermanentPredicate predicate) implements CardEffect {
+        @Override
+        public TargetSpec targetSpec() {
+            return TargetSpec.benign(TargetCategory.CREATURE, predicate);
+        }
+    }
+
+    private record LandBenignEffect() implements CardEffect {
+        @Override
+        public TargetSpec targetSpec() {
+            return TargetSpec.benign(TargetCategory.LAND);
         }
     }
 
@@ -164,11 +177,8 @@ class TargetValidationServiceSpecTest {
     @DisplayName("predicate narrowing rejects a permanent that does not match")
     void predicateNarrowingRejectsNonMatch() {
         Permanent perm = permanentOnBattlefield("Runeclaw Bear", CardType.CREATURE);
-        PermanentPredicate predicate = new PermanentIsArtifactPredicate();
-        when(predicateEvaluationService.matchesPermanentPredicate(eq(perm), eq(predicate), any(FilterContext.class)))
-                .thenReturn(false);
 
-        assertThat(check(new PermanentBenignWithPredicateEffect(predicate), perm.getId()))
+        assertThat(check(new PermanentBenignWithPredicateEffect(new PermanentIsArtifactPredicate()), perm.getId()))
                 .contains("Target does not match the required predicate");
     }
 
@@ -176,11 +186,29 @@ class TargetValidationServiceSpecTest {
     @DisplayName("predicate narrowing accepts a permanent that matches")
     void predicateNarrowingAcceptsMatch() {
         Permanent perm = permanentOnBattlefield("Ornithopter", CardType.ARTIFACT);
-        PermanentPredicate predicate = new PermanentIsArtifactPredicate();
-        when(predicateEvaluationService.matchesPermanentPredicate(eq(perm), eq(predicate), any(FilterContext.class)))
-                .thenReturn(true);
+        when(gameQueryService.isArtifact(gd, perm)).thenReturn(true);
 
-        assertThat(check(new PermanentBenignWithPredicateEffect(predicate), perm.getId())).isEmpty();
+        assertThat(check(new PermanentBenignWithPredicateEffect(new PermanentIsArtifactPredicate()), perm.getId()))
+                .isEmpty();
+    }
+
+    @Test
+    @DisplayName("a narrowed CREATURE spec still blames the creature half for a land")
+    void narrowedCreatureSpecBlamesTheCreatureHalf() {
+        Permanent land = permanentOnBattlefield("Forest", CardType.LAND);
+        when(gameQueryService.isCreature(gd, land)).thenReturn(false);
+
+        assertThat(check(new CreatureBenignWithPredicateEffect(new PermanentIsArtifactPredicate()), land.getId()))
+                .contains("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("LAND spec is layer-aware: a permanent turned into a land is a legal target")
+    void landSpecIsLayerAware() {
+        Permanent bears = permanentOnBattlefield("Grizzly Bears", CardType.CREATURE);
+        when(gameQueryService.isLand(gd, bears)).thenReturn(true);
+
+        assertThat(check(new LandBenignEffect(), bears.getId())).isEmpty();
     }
 
     @Test
