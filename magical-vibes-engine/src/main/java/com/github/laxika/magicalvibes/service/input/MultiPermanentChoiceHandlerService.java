@@ -155,6 +155,8 @@ public class MultiPermanentChoiceHandlerService {
             handleDestroyCreaturesOpponentControls(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapChosenPermanents ctx) {
             handleTapChosenPermanents(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.UntapChosenPermanents ctx) {
+            handleUntapChosenPermanents(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ReturnTargetPermanentsToHand) {
             handleReturnTargetPermanentsToHand(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.CombatDamageBounce ctx) {
@@ -550,6 +552,28 @@ public class MultiPermanentChoiceHandlerService {
             gameLogService.append(gameData, GameLog.text(
                     ctx.sourceName() + " taps " + tapped + " permanent(s)."));
             log.info("Game {} - {} taps {} chosen permanent(s)", gameData.id, ctx.sourceName(), tapped);
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleUntapChosenPermanents(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                             MultiPermanentChoiceContext.UntapChosenPermanents ctx) {
+        if (permanentIds.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(
+                    gameData.playerIdToName.get(playerId) + " chooses not to untap any permanents."));
+        } else {
+            int untapped = 0;
+            for (UUID permId : permanentIds) {
+                Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+                if (perm != null) {
+                    tapUntapSupport.untapPermanent(gameData, perm);
+                    untapped++;
+                }
+            }
+            gameLogService.append(gameData, GameLog.text(
+                    ctx.sourceName() + " untaps " + untapped + " permanent(s)."));
+            log.info("Game {} - {} untaps {} chosen permanent(s)", gameData.id, ctx.sourceName(), untapped);
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);

@@ -105,6 +105,13 @@ public sealed interface MultiPermanentChoiceContext {
     record TapChosenPermanents(String sourceName) implements MultiPermanentChoiceContext {
     }
 
+    /**
+     * The controller untaps the chosen permanents they control (Rewind's "Untap up to four lands").
+     * {@code sourceName} names the source in the game log.
+     */
+    record UntapChosenPermanents(String sourceName) implements MultiPermanentChoiceContext {
+    }
+
     /** The controller returns the chosen permanents to their owners' hands (Resounding Wave cycling trigger). */
     record ReturnTargetPermanentsToHand() implements MultiPermanentChoiceContext {
     }

@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.cards.f.Fleshtaker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -59,6 +61,51 @@ class ImpalerShrikeTest extends BaseCardTest {
 
         // Controller should have drawn 3 cards
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 3);
+    }
+
+    @Test
+    @DisplayName("Sacrificing Impaler Shrike fires ally-sacrifice triggers")
+    void sacrificeFiresAllySacrificeTriggers() {
+        Permanent shrike = addReadyCreature(player1, new ImpalerShrike());
+        shrike.setAttacking(true);
+        addReadyCreature(player1, new Fleshtaker());
+
+        resolveCombat();
+
+        GameData gd = harness.getGameData();
+        int lifeBefore = gd.getLife(player1.getId());
+
+        // Resolve the combat-damage trigger so the "you may sacrifice it" choice opens.
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Impaler Shrike");
+
+        // Fleshtaker's "whenever you sacrifice another creature, you gain 1 life and scry 1".
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Auras attached to Impaler Shrike go to the graveyard when it is sacrificed")
+    void sacrificeCleansUpOrphanedAuras() {
+        Permanent shrike = addReadyCreature(player1, new ImpalerShrike());
+        shrike.setAttacking(true);
+
+        GameData gd = harness.getGameData();
+        Permanent aura = new Permanent(new HolyStrength());
+        aura.setAttachedTo(shrike.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+
+        resolveCombat();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Impaler Shrike");
+        harness.assertNotOnBattlefield(player1, "Holy Strength");
+        harness.assertInGraveyard(player1, "Holy Strength");
     }
 
     @Test

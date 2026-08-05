@@ -37,7 +37,7 @@ public class StormCopyEffectHandler implements NormalEffectHandlerBean {
         UUID castingPlayerId = e.castingPlayerId();
         Card spellCard = spellSnapshot.getCard();
 
-        // CR 706.2 — a spell that "can't be copied" is not copied.
+        // CR 707.10 — a spell that "can't be copied" is not copied.
         if (spellCard.isCantBeCopied()) {
             log.info("Game {} - {} can't be copied", gameData.id, spellCard.getName());
             return;

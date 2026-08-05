@@ -1,24 +1,15 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyPermanentsTargetPlayerControlsEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
@@ -28,13 +19,9 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class DestroyPermanentsTargetPlayerControlsEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameLogService gameLogService;
-    private final GameQueryService gameQueryService;
-    private final GraveyardService graveyardService;
-    private final PermanentRemovalService permanentRemovalService;
+    private final DestructionSupport destructionSupport;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -63,26 +50,8 @@ public class DestroyPermanentsTargetPlayerControlsEffectHandler implements Norma
             }
         }
 
-        // Snapshot indestructible before any removals
-        Set<Permanent> indestructible = new HashSet<>();
-        for (Permanent perm : toDestroy) {
-            if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
-                indestructible.add(perm);
-            }
-        }
-
-        String sourceName = entry.getCard().getName();
-        for (Permanent perm : toDestroy) {
-            if (indestructible.contains(perm)) {
-                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " is indestructible."));
-                continue;
-            }
-            if (graveyardService.tryRegenerate(gameData, perm)) {
-                continue;
-            }
-            permanentRemovalService.removePermanentToGraveyard(gameData, perm);
-            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " is destroyed."));
-            log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), sourceName);
-        }
+        // One effect destroys them all simultaneously; destroyBatchCollecting owns the indestructible
+        // snapshot, regeneration and the simultaneous-death bookkeeping.
+        destructionSupport.destroyBatchCollecting(gameData, toDestroy, entry.getCard().getName(), false);
     }
 }

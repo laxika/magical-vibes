@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.d.Deathgreeter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,6 +37,46 @@ class PhyrexianPurgeTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Hill Giant");
         assertThat(gd.getLife(player1.getId())).isEqualTo(14);
+    }
+
+    @Test
+    @DisplayName("Targets are destroyed simultaneously, so each dying watcher sees the others die")
+    void destroysTargetsSimultaneously() {
+        // Both Deathgreeters are destroyed by the same spell. Because the destruction is
+        // simultaneous, each one still sees the other die and its "whenever another creature dies"
+        // trigger fires — destroying them one at a time would only fire the second one's trigger.
+        harness.addToBattlefield(player2, new Deathgreeter());
+        harness.addToBattlefield(player2, new Deathgreeter());
+        harness.setHand(player1, List.of(new PhyrexianPurge()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        List<UUID> deathgreeterIds = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Deathgreeter"))
+                .map(Permanent::getId)
+                .toList();
+
+        harness.castSorcery(player1, 0, deathgreeterIds);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Deathgreeter");
+
+        // One "may gain 1 life" trigger per Deathgreeter, each watching the other die.
+        int accepted = 0;
+        for (int i = 0; i < 10; i++) {
+            if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+                harness.handleMayAbilityChosen(player2, true);
+                accepted++;
+            } else if (gd.stack.isEmpty()) {
+                break;
+            }
+            harness.passBothPriorities();
+        }
+
+        assertThat(accepted).isEqualTo(2);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(22);
     }
 
     @Test

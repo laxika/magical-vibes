@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqualToChosenTypeCountEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
@@ -31,6 +32,7 @@ public class DealDamageToTargetCreatureEqualToChosenTypeCountEffectHandler imple
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final DamageSupport damageSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -64,6 +66,7 @@ public class DealDamageToTargetCreatureEqualToChosenTypeCountEffectHandler imple
             }
         }
 
-        damageSupport.resolveCreatureTargetDamage(gameData, entry, count);
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, count, entry);
+        damageSupport.resolveCreatureTargetDamage(gameData, entry, rawDamage);
     }
 }

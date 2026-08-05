@@ -65,8 +65,7 @@ public class AttachTargetEquipmentToTargetCreatureEffectHandler implements Norma
         // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
         equipment.setTimestamp(gameData.nextTimestamp());
 
-        
-        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (equipment no longer on the battlefield)."));
+        gameLogService.append(gameData, GameLog.cardTextCard(equipment.getCard(), " is now attached to ", creature.getCard(), "."));
         log.info("Game {} - {} attached to {} via {}", gameData.id, equipment.getCard().getName(), creature.getCard().getName(), entry.getCard().getName());
 
         equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, creature.getId());

@@ -47,7 +47,7 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        // CR 706.2 — "This spell can't be copied": the copy is simply not created.
+        // CR 707.10 — "This spell can't be copied": the copy is simply not created.
         if (targetEntry.getCard().isCantBeCopied()) {
             gameLogService.append(gameData, GameLog.cardThen(targetEntry.getCard(), " can't be copied."));
             log.info("Game {} - {} can't be copied", gameData.id, targetEntry.getCard().getName());

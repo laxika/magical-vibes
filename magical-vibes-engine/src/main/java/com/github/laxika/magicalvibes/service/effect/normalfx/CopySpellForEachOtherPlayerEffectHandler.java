@@ -38,7 +38,7 @@ public class CopySpellForEachOtherPlayerEffectHandler implements NormalEffectHan
         UUID castingPlayerId = e.castingPlayerId();
         Card spellCard = spellSnapshot.getCard();
 
-        // CR 706.2 — a spell that "can't be copied" is not copied by these effects either.
+        // CR 707.10 — a spell that "can't be copied" is not copied by these effects either.
         if (spellCard.isCantBeCopied()) {
             log.info("Game {} - {} can't be copied", gameData.id, spellCard.getName());
             return;

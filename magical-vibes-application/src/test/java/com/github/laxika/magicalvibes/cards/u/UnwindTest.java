@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -68,8 +70,17 @@ class UnwindTest extends BaseCardTest {
 
     // ===== Resolving =====
 
+    private List<UUID> tappedIslandIds(int limit) {
+        return harness.getGameData().playerBattlefields.get(player2.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Island"))
+                .filter(Permanent::isTapped)
+                .limit(limit)
+                .map(Permanent::getId)
+                .toList();
+    }
+
     @Test
-    @DisplayName("Resolving counters a noncreature spell and untaps up to three lands")
+    @DisplayName("Resolving counters a noncreature spell and untaps the three chosen lands")
     void countersSpellAndUntapsLands() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.addToBattlefield(player1, bears);
@@ -104,7 +115,10 @@ class UnwindTest extends BaseCardTest {
         // Countered spell goes to owner's graveyard
         harness.assertInGraveyard(player1, "Might of Oaks");
 
-        // All 3 islands should be untapped
+        harness.handleMultiplePermanentsChosen(player2, tappedIslandIds(3));
+
+        // All 3 chosen islands should be untapped
+        gd = harness.getGameData();
         long untappedIslands = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Island"))
                 .filter(p -> !p.isTapped())
@@ -113,7 +127,7 @@ class UnwindTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Only untaps up to three lands even if more are tapped")
+    @DisplayName("Offers a choice of at most three lands even if more are tapped")
     void untapsAtMostThreeLands() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.addToBattlefield(player1, bears);
@@ -139,6 +153,13 @@ class UnwindTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, might.getId());
         harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice = harness.getGameData()
+                .interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(3);
+
+        harness.handleMultiplePermanentsChosen(player2, tappedIslandIds(3));
 
         gd = harness.getGameData();
         long untappedIslands = gd.playerBattlefields.get(player2.getId()).stream()
@@ -181,14 +202,16 @@ class UnwindTest extends BaseCardTest {
         harness.castInstant(player2, 0, might.getId());
         harness.passBothPriorities();
 
-        gd = harness.getGameData();
-        // Island should be untapped
-        Permanent island = findPermanent(player2, "Island");
-        assertThat(island.isTapped()).isFalse();
+        // Only the land is offered as an untap choice; the tapped creature is not.
+        PendingInteraction.MultiPermanentChoice choice = harness.getGameData()
+                .interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(findPermanent(player2, "Island").getId());
 
-        // Creature should still be tapped
-        Permanent creature = findPermanent(player2, "Grizzly Bears");
-        assertThat(creature.isTapped()).isTrue();
+        harness.handleMultiplePermanentsChosen(player2, choice.validIds());
+
+        assertThat(findPermanent(player2, "Island").isTapped()).isFalse();
+        assertThat(findPermanent(player2, "Grizzly Bears").isTapped()).isTrue();
     }
 
     @Test

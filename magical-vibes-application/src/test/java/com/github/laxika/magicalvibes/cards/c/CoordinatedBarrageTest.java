@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
+import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -46,6 +47,24 @@ class CoordinatedBarrageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player2, "BEAR");
 
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Air Elemental") && p.getMarkedDamage() == 2);
+    }
+
+    @Test
+    @DisplayName("Furnace of Rath doubles the chosen-type count damage")
+    void furnaceOfRathDoublesDamage() {
+        harness.addToBattlefield(player2, new FurnaceOfRath());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        Permanent target = setupAttackerAndSpell(new Permanent(new AirElemental()));
+
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "BEAR");
+
+        // One Bear -> 1 damage, doubled to 2 by Furnace of Rath.
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Air Elemental") && p.getMarkedDamage() == 2);
