@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextUp
 import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.TransformSourceAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
@@ -445,7 +446,7 @@ public class StepTriggerService {
             // route through the any-target pipeline so the controller may pick a permanent as well as a
             // player. Creature-only targeted upkeep effects (e.g. become-a-copy) keep their own pipelines.
             boolean hasAnyTarget = upkeepEffects.stream()
-                    .anyMatch(e -> e.targetSpec().category().includesPlayers() && e.targetSpec().category().includesPermanents());
+                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER) && e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
             if (hasAnyTarget) {
                 gameData.queueInteraction(new PermanentChoiceContext.UpkeepAnyTargetTrigger(
                         perm.getCard(), activePlayerId, new ArrayList<>(upkeepEffects), perm.getId()));
@@ -457,8 +458,8 @@ public class StepTriggerService {
             // abilities on the same permanent (e.g. Cumulative upkeep alongside Corrosion's rust
             // trigger) stay separate triggered abilities and fall through to the per-effect loop.
             List<CardEffect> playerTargetEffects = upkeepEffects.stream()
-                    .filter(e -> e.targetSpec().category().includesPlayers()
-                            && !e.targetSpec().category().includesPermanents())
+                    .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                            && !e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                     .toList();
             if (!playerTargetEffects.isEmpty()) {
                 int maxPlayerTargets = playerTargetEffects.stream()
@@ -471,8 +472,8 @@ public class StepTriggerService {
                     gameData.queueInteraction(new PermanentChoiceContext.UpkeepPlayerTargetTrigger(
                             perm.getCard(), activePlayerId, new ArrayList<>(playerTargetEffects), perm.getId()));
                 }
-                upkeepEffects.removeIf(e -> e.targetSpec().category().includesPlayers()
-                        && !e.targetSpec().category().includesPermanents());
+                upkeepEffects.removeIf(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        && !e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
                 if (upkeepEffects.isEmpty()) continue;
             }
 
@@ -745,7 +746,7 @@ public class StepTriggerService {
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: {}+ matching cards in graveyard)",
                                 gameData.id, perm.getCard().getName(), graveyardCheck.threshold());
                     }
-                } else if (effect.targetSpec().category().includesPermanents()) {
+                } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     // Generic targeted-permanent upkeep trigger (e.g. Weed-Pruner Poplar's
                     // "target creature other than this creature gets -1/-1"). Target is chosen
                     // at trigger time (CR 603.3d) via a permanent choice.
@@ -840,7 +841,7 @@ public class StepTriggerService {
 
                 if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(perm.getCard(), playerId, may, null, perm.getId());
-                } else if (effect.targetSpec().category().includesPermanents()) {
+                } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     gameData.queueInteraction(new PermanentChoiceContext.UpkeepPermanentTargetTrigger(
                             perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId()));
                 } else {
@@ -2001,8 +2002,8 @@ public class StepTriggerService {
                 default -> String.valueOf(newLoreCount);
             };
 
-            boolean needsPermanentTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
-            boolean needsGraveyardTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec().category().isGraveyard());
+            boolean needsPermanentTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+            boolean needsGraveyardTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
             if (needsPermanentTarget) {
                 gameData.queueInteraction(
                         new PermanentChoiceContext.SagaChapterTarget(card, activePlayerId,
@@ -2861,7 +2862,7 @@ public class StepTriggerService {
                             continue;
                         }
                         CardEffect wrapped = morbid.wrapped();
-                        if (wrapped.targetSpec().category().includesPermanents() || wrapped.targetSpec().category().includesPlayers()) {
+                        if (wrapped.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || wrapped.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                             // Targeting triggered ability — queue for target selection
                             gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
                                     perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId()));
@@ -3040,7 +3041,7 @@ public class StepTriggerService {
                         CardEffect wrapped = raidEffect.wrapped();
                         if (wrapped instanceof MayEffect may) {
                             gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
-                        } else if (wrapped.targetSpec().category().includesPermanents() || wrapped.targetSpec().category().includesPlayers()) {
+                        } else if (wrapped.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || wrapped.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                             // Raid condition met, targeting required — queue for target selection
                             gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
                                     perm.getCard(), activePlayerId, new ArrayList<>(List.of(wrapped)), perm.getId()));
@@ -3060,8 +3061,8 @@ public class StepTriggerService {
                             log.info("Game {} - {} controller end-step raid trigger pushed onto stack", gameData.id, perm.getCard().getName());
                         }
                     } else if (effect instanceof MayEffect may) {
-                        if (may.targetSpec().category().includesPermanents()
-                                || may.targetSpec().category().includesPlayers()) {
+                        if (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                || may.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                             // Targeted "you may" end-step trigger (Goblin Razerunners, Wall of Reverence,
                             // Conjurer's Closet). Targets are chosen as the trigger is put onto the stack and
                             // the trigger is skipped entirely when no legal target exists (CR 603.3d); the
@@ -3113,8 +3114,8 @@ public class StepTriggerService {
                     } else if (effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof ControlsPermanentCount) {
                         CardEffect countWrapped = conditional.wrapped();
-                        if (countWrapped.targetSpec().category().includesPermanents()
-                                || countWrapped.targetSpec().category().includesPlayers()) {
+                        if (countWrapped.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                || countWrapped.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                             // Condition met and the inner effect targets (e.g. Exuberant Firestoker's
                             // "deal 2 damage to target player or planeswalker") — queue for target selection.
                             gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
@@ -3221,14 +3222,14 @@ public class StepTriggerService {
                     } else if (effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof GainedLifeThisTurn) {
                         CardEffect wrapped = conditional.wrapped();
-                        if (wrapped.targetSpec().category().isGraveyard()) {
+                        if (wrapped.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
                             // Graveyard-targeting trigger (e.g. Moseo) — queue for graveyard target selection
                             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                                     perm.getCard(), activePlayerId, new ArrayList<>(List.of(wrapped))));
                             gameLogService.append(gameData,
                                     GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
                             log.info("Game {} - {} controller end-step graveyard-target trigger queued", gameData.id, perm.getCard().getName());
-                        } else if (wrapped.targetSpec().category().includesPermanents() || wrapped.targetSpec().category().includesPlayers()) {
+                        } else if (wrapped.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || wrapped.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                             gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
                                     perm.getCard(), activePlayerId, new ArrayList<>(List.of(wrapped)), perm.getId()));
                         } else {
@@ -3249,7 +3250,7 @@ public class StepTriggerService {
                             && (conditional.condition() instanceof CreatureDiedUnderYourControlThisTurn
                                 || conditional.condition() instanceof CardsLeftGraveyardThisTurn)) {
                         CardEffect wrapped = conditional.wrapped();
-                        if (wrapped.targetSpec().category().includesPermanents() || wrapped.targetSpec().category().includesPlayers()) {
+                        if (wrapped.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || wrapped.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                             gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
                                     perm.getCard(), activePlayerId, new ArrayList<>(List.of(wrapped)), perm.getId()));
                         } else {
@@ -3266,7 +3267,7 @@ public class StepTriggerService {
                                     GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
                             log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                         }
-                    } else if (effect.targetSpec().category().includesPermanents() || effect.targetSpec().category().includesPlayers()) {
+                    } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                         // Targeting triggered ability — queue for target selection
                         gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
                                 perm.getCard(), activePlayerId, new ArrayList<>(List.of(effect)), perm.getId()));
@@ -3546,9 +3547,9 @@ public class StepTriggerService {
         }
 
         boolean needsPermanentTarget = mandatoryEffects.stream()
-                .anyMatch(e -> e.targetSpec().category().includesPermanents() || e.targetSpec().category().includesPlayers());
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
         boolean needsGraveyardTarget = mandatoryEffects.stream()
-                .anyMatch(e -> e.targetSpec().category().isGraveyard());
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         if (needsGraveyardTarget) {
             ExileGraveyardCardsEffect exileEffect = mandatoryEffects.stream()
                     .filter(e -> e instanceof ExileGraveyardCardsEffect ge

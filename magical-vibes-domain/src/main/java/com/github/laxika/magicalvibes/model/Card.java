@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
@@ -586,7 +587,7 @@ public class Card {
             if (expandedPosition < cumulative) {
                 int groupIndex = st.getIndex();
                 for (Map.Entry<CardEffect, Integer> entry : effectTargetIndexMap.entrySet()) {
-                    if (entry.getValue() == groupIndex && entry.getKey().targetSpec().category().includesPlayers()) {
+                    if (entry.getValue() == groupIndex && entry.getKey().targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                         return true;
                     }
                 }

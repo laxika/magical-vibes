@@ -218,11 +218,11 @@ public class MayAbilityHandlerService {
 
         // Targeted may ability (e.g. "you may deal 3 damage to target creature", "you may destroy target Equipment")
         boolean isTargetedPermanentEffect = ability.effects().stream()
-                .anyMatch(e -> e.targetSpec().category().includesPermanents());
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
         boolean isTargetedPlayerEffect = ability.effects().stream()
-                .anyMatch(e -> e.targetSpec().category().includesPlayers());
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
         boolean isTargetedGraveyardEffect = ability.effects().stream()
-                .anyMatch(e -> e.targetSpec().category().isGraveyard());
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         boolean isTargetedEffect = isTargetedPermanentEffect || isTargetedPlayerEffect || isTargetedGraveyardEffect;
 
         // Pre-targeted may ability — target was already chosen (e.g. "You may tap or untap that creature", "you may have that player lose 1 life")
@@ -363,14 +363,14 @@ public class MayAbilityHandlerService {
         List<UUID> validTargets = new ArrayList<>();
         Card sourceCard = ability.sourceCard();
         TargetFilter targetFilter = mayAbilityTargetFilter(sourceCard, ability);
-        boolean canTargetPermanent = ability.effects().stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
+        boolean canTargetPermanent = ability.effects().stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
         if (canTargetPermanent) {
             validTargets.addAll(mayAbilityPermanentTargets(gameData, ability, targetFilter));
         }
 
         // Add player IDs for effects that can target players (e.g. DealDamageToAnyTargetEffect, MillEffect),
         // honoring the card's player target filter (e.g. "target opponent") so the controller is excluded.
-        boolean canTargetPlayer = ability.effects().stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
+        boolean canTargetPlayer = ability.effects().stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
         if (canTargetPlayer) {
             validTargets.addAll(validTargetService.filterValidPlayerTargets(
                     gameData, targetFilter, gameData.orderedPlayerIds, ability.controllerId()));
@@ -556,9 +556,9 @@ public class MayAbilityHandlerService {
                     player.getUsername() + " accepts — resolving ", ability.sourceCard(), "'s ability."));
             CardEffect innerEffect = extractInnerEffect(ability);
             StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-            boolean isTargetedPermanent = innerEffect != null && innerEffect.targetSpec().category().includesPermanents();
-            boolean isTargetedPlayer = innerEffect != null && innerEffect.targetSpec().category().includesPlayers();
-            boolean isTargetedGraveyard = innerEffect != null && innerEffect.targetSpec().category().isGraveyard();
+            boolean isTargetedPermanent = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
+            boolean isTargetedPlayer = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER);
+            boolean isTargetedGraveyard = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD);
             boolean targetAlreadySet = pendingEntry != null
                     && (pendingEntry.getTargetId() != null || !pendingEntry.getTargetIds().isEmpty());
             if ((isTargetedPermanent || isTargetedPlayer) && pendingEntry != null && !targetAlreadySet) {

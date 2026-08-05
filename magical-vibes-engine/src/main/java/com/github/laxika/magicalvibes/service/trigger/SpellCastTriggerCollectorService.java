@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
@@ -559,7 +560,7 @@ public class SpellCastTriggerCollectorService {
         if (sc.castFromHand()) return false;
 
         boolean needsAnyTarget = trigger.resolvedEffects().stream()
-                .anyMatch(e -> e.targetSpec().category().includesPlayers() || e.targetSpec().category().includesPermanents());
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER) || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
 
         if (needsAnyTarget) {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
@@ -976,9 +977,9 @@ public class SpellCastTriggerCollectorService {
         // the counter count as the ability triggered, not as it resolves).
         resolved = snapshotCountersOnSourceDamage(resolved, match.permanent());
         boolean selfTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).selfTargeting());
-        boolean needsPlayerTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).category().includesPlayers());
-        boolean needsPermanentTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).category().includesPermanents());
-        boolean needsGraveyardTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).category().isGraveyard());
+        boolean needsPlayerTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).admits(TargetPredicate.Kind.PLAYER));
+        boolean needsPermanentTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).admits(TargetPredicate.Kind.PERMANENT));
+        boolean needsGraveyardTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         boolean needsTargeting = needsPlayerTarget || needsPermanentTarget;
         boolean playerTargetOnly = needsPlayerTarget && !needsPermanentTarget;
         boolean needsSpellManaSpentX = resolved.stream().anyMatch(this::effectNeedsSpellManaSpentX);

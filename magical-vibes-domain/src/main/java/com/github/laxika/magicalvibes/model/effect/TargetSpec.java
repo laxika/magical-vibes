@@ -91,18 +91,25 @@ public record TargetSpec(
      * Whether a target of {@code kind} can ever be legal for this spec — the null-safe form of
      * {@link TargetPredicate#admits(TargetPredicate.Kind)}, since a spec that targets nothing has
      * no predicate at all.
+     *
+     * <p>Answered from {@link #declaredTarget()} rather than {@link #targetPredicate()}: the
+     * {@link #predicate()} narrowing only ever replaces the permanent leaf's inner predicate, so it
+     * cannot add or remove a kind. Reading the declared target directly keeps this allocation-free
+     * — it is the question the trigger collectors, {@code StepTriggerService} and the AI ask in
+     * per-effect loops, and folding the narrowing in would rebuild an {@code AnyOf} (sort and
+     * copy included) on every call.</p>
      */
     public boolean admits(TargetPredicate.Kind kind) {
-        TargetPredicate targetPredicate = targetPredicate();
-        return targetPredicate != null && targetPredicate.admits(kind);
+        return declaredTarget != null && declaredTarget.admits(kind);
     }
 
     /**
      * Which graveyards a card target is drawn from — the null-safe form of
      * {@link TargetPredicate#graveyardScope()}, empty when this spec targets no graveyard card.
+     * Read from {@link #declaredTarget()} for the same reason as {@link #admits}: the narrowing is
+     * over a permanent target and never touches the graveyard leaf.
      */
     public Optional<GraveyardSearchScope> graveyardScope() {
-        TargetPredicate targetPredicate = targetPredicate();
-        return targetPredicate == null ? Optional.empty() : targetPredicate.graveyardScope();
+        return declaredTarget == null ? Optional.empty() : declaredTarget.graveyardScope();
     }
 }

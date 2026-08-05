@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetAttackingCreatureBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -75,7 +76,7 @@ class TargetPolarityGuardTest {
                 }
                 for (EffectSlot slot : new EffectSlot[]{EffectSlot.SPELL, EffectSlot.ON_ENTER_BATTLEFIELD}) {
                     for (CardEffect effect : card.getEffects(slot)) {
-                        if (!effect.targetSpec().category().includesPermanents()) {
+                        if (!effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                             continue;
                         }
                         if (classifier.classify(gd, effect, aiPlayerId) == null) {

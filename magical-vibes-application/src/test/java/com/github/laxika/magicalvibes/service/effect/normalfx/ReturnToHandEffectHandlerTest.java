@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -414,7 +415,7 @@ class ReturnToHandEffectHandlerTest {
 
             ReturnToHandEffect effect = ReturnToHandEffect.permanentsTargetPlayerControls(
                     new PermanentNotPredicate(new PermanentIsLandPredicate()));
-            assertThat(effect.targetSpec().category().includesPlayers()).isTrue();
+            assertThat(effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)).isTrue();
 
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), player2Id);
 
@@ -459,7 +460,7 @@ class ReturnToHandEffectHandlerTest {
             gd.playerBattlefields.get(player2Id).add(creature);
 
             ReturnToHandEffect effect = ReturnToHandEffect.permanentsTargetPlayerOwns(new PermanentIsArtifactPredicate());
-            assertThat(effect.targetSpec().category().includesPlayers()).isTrue();
+            assertThat(effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)).isTrue();
 
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), player2Id);
 

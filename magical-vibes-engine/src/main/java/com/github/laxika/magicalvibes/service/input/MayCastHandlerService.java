@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.MayCastForMadnessCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastForMiracleCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -264,7 +265,7 @@ public class MayCastHandlerService {
      */
     List<UUID> buildValidSpellTargets(GameData gameData, Card card, List<CardEffect> spellEffects) {
         List<UUID> validTargets = new ArrayList<>();
-        boolean canTargetPermanent = spellEffects.stream().anyMatch(e -> e.targetSpec().category().includesPermanents())
+        boolean canTargetPermanent = spellEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                 || card.getTargetFilter() instanceof PermanentPredicateTargetFilter;
         if (canTargetPermanent) {
             for (UUID pid : gameData.orderedPlayerIds) {
@@ -281,7 +282,7 @@ public class MayCastHandlerService {
                 }
             }
         }
-        boolean canTargetPlayer = spellEffects.stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
+        boolean canTargetPlayer = spellEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
         if (canTargetPlayer) {
             validTargets.addAll(gameData.orderedPlayerIds);
         }

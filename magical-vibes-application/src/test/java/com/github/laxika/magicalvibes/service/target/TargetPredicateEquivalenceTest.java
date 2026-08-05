@@ -251,6 +251,54 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("admits(Kind) answers exactly what the legacy derived booleans answered")
+    void admitsMatchesTheLegacyDerivedBooleans() {
+        List<String> mismatches = new ArrayList<>();
+        for (TargetCategory category : TargetCategory.values()) {
+            TargetSpec spec = TargetSpec.benign(TargetPredicates.forCategory(category));
+            record Pair(String legacy, boolean expected, boolean actual) {
+            }
+            List<Pair> pairs = List.of(
+                    new Pair("includesPermanents", category.includesPermanents(),
+                            spec.admits(TargetPredicate.Kind.PERMANENT)),
+                    new Pair("includesPlayers", category.includesPlayers(),
+                            spec.admits(TargetPredicate.Kind.PLAYER)),
+                    new Pair("isGraveyard", category.isGraveyard(),
+                            spec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)),
+                    new Pair("== EXILE_CARD", category == TargetCategory.EXILE_CARD,
+                            spec.admits(TargetPredicate.Kind.EXILED_CARD)),
+                    new Pair("== SPELL_ON_STACK", category == TargetCategory.SPELL_ON_STACK,
+                            spec.admits(TargetPredicate.Kind.SPELL)));
+            for (Pair pair : pairs) {
+                if (pair.expected() != pair.actual()) {
+                    mismatches.add(category + "." + pair.legacy() + ": category=" + pair.expected()
+                            + " admits=" + pair.actual());
+                }
+            }
+        }
+        assertThat(mismatches).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A narrowing predicate cannot add or remove a kind, so admits(Kind) ignores it")
+    void narrowingDoesNotDisturbWhichKindsAreAdmitted() {
+        for (TargetCategory category : TargetCategory.values()) {
+            TargetPredicate declared = TargetPredicates.forCategory(category);
+            TargetSpec bare = TargetSpec.benign(declared);
+            TargetSpec narrowed = TargetSpec.benign(declared, new PermanentIsArtifactPredicate());
+
+            for (TargetPredicate.Kind kind : TargetPredicate.Kind.values()) {
+                assertThat(narrowed.admits(kind))
+                        .as("%s narrowed to artifacts still admits %s the same way", category, kind)
+                        .isEqualTo(bare.admits(kind));
+            }
+            assertThat(narrowed.graveyardScope())
+                    .as("narrowing does not disturb %s's graveyard scope", category)
+                    .isEqualTo(bare.graveyardScope());
+        }
+    }
+
+    @Test
     @DisplayName("A declared target no category can express fails loudly rather than being rounded")
     void anUnmappableDeclaredTargetThrows() {
         TargetPredicate artifactOrPlayer = TargetPredicates.anyOf(

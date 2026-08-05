@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -172,7 +173,7 @@ public class TriggeredAbilityQueueService {
             // Graveyard-targeting self-leaves trigger (e.g. Offalsnout): choose a target card in a
             // graveyard to exile, at the time the trigger is put on the stack.
             ExileGraveyardCardsEffect gyExile = pending.effects().stream()
-                    .filter(e -> e instanceof ExileGraveyardCardsEffect ege && ege.targetSpec().category().isGraveyard())
+                    .filter(e -> e instanceof ExileGraveyardCardsEffect ege && ege.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
                     .map(e -> (ExileGraveyardCardsEffect) e)
                     .findFirst().orElse(null);
             if (gyExile != null) {
@@ -1001,7 +1002,7 @@ public class TriggeredAbilityQueueService {
                                                   PermanentChoiceContext.SagaChapterTarget pending) {
         // Extract target predicate from the first targeting effect that declares one
         PermanentPredicate targetPredicate = pending.effects().stream()
-                .filter(e -> e.targetSpec().category().includesPermanents()
+                .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                         && EffectResolution.targetPredicateOf(e) != null)
                 .map(EffectResolution::targetPredicateOf)
                 .findFirst().orElse(null);

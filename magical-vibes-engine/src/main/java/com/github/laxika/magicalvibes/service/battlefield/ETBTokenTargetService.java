@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -81,8 +82,8 @@ public class ETBTokenTargetService {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)) {
             PermanentChoiceContext.ETBTokenTargetTrigger pending = gameData.peekPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
 
-            boolean canTargetPlayer = pending.effects().stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
-            boolean canTargetPermanent = pending.effects().stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
+            boolean canTargetPlayer = pending.effects().stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+            boolean canTargetPermanent = pending.effects().stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
 
             List<UUID> validPlayerTargets = new ArrayList<>();
             if (canTargetPlayer) {
@@ -165,8 +166,8 @@ public class ETBTokenTargetService {
                 continue;
             }
 
-            boolean canTargetPlayer = groupEffects.stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
-            boolean canTargetPermanent = groupEffects.stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
+            boolean canTargetPlayer = groupEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+            boolean canTargetPermanent = groupEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
 
             List<UUID> validPlayerTargets = new ArrayList<>();
             if (canTargetPlayer) {

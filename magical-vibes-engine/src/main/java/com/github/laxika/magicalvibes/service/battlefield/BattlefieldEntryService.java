@@ -28,7 +28,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
@@ -44,6 +43,8 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceE
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
@@ -1247,8 +1248,10 @@ public class BattlefieldEntryService {
     private boolean mayEtbTargetsPermanentButHasNoLegalTarget(GameData gameData, UUID controllerId,
                                                               Card card, MayEffect may) {
         CardEffect wrapped = may.wrapped();
-        TargetCategory wrappedCategory = wrapped.targetSpec().category();
-        if (!wrappedCategory.includesPermanents() || wrappedCategory.includesPlayers() || wrappedCategory.isGraveyard()) {
+        TargetSpec wrappedSpec = wrapped.targetSpec();
+        if (!wrappedSpec.admits(TargetPredicate.Kind.PERMANENT)
+                || wrappedSpec.admits(TargetPredicate.Kind.PLAYER)
+                || wrappedSpec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             return false;
         }
         PermanentPredicate effectPredicate = EffectResolution.targetPredicateOf(wrapped);
@@ -1296,7 +1299,7 @@ public class BattlefieldEntryService {
         // opponent's graveyard"). Distinct from the whole-set ExileCardsFromGraveyardEffect above: the
         // scope decides which graveyards are searched, and targets are chosen at trigger time.
         List<CardEffect> graveyardCardsExileEffects = mandatoryEffects.stream()
-                .filter(e -> e instanceof ExileGraveyardCardsEffect ege && ege.targetSpec().category().isGraveyard())
+                .filter(e -> e instanceof ExileGraveyardCardsEffect ege && ege.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
                 .toList();
         // Separate mixed-zone exile effects (Angel of Serenity: "up to three other target creatures
         // from the battlefield and/or creature cards from graveyards"): one card pool spanning both
@@ -1330,7 +1333,7 @@ public class BattlefieldEntryService {
         // stack via the shared SpellGraveyardTargetTrigger flow (identified by target category, not by
         // concrete effect type, so a new graveyard-target effect needs no branch here).
         List<CardEffect> graveyardTargetReturnEffects = mandatoryEffects.stream()
-                .filter(e -> e.targetSpec().category().isGraveyard())
+                .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
                 .filter(e -> !graveyardExileEffects.contains(e))
                 .filter(e -> !graveyardCardsExileEffects.contains(e))
                 .filter(e -> !(e instanceof CastTargetInstantOrSorceryFromGraveyardEffect))
@@ -1385,15 +1388,15 @@ public class BattlefieldEntryService {
             // from the cast is deliberately ignored — the engine never asked for it.
             boolean gateConditionalNeedsTarget = otherEffects.stream()
                     .anyMatch(e -> e instanceof ConditionalEffect ce && ce.condition().isEtbTriggerGate()
-                            && (ce.targetSpec().category().includesPlayers() || ce.targetSpec().category().includesPermanents()));
+                            && (ce.targetSpec().admits(TargetPredicate.Kind.PLAYER) || ce.targetSpec().admits(TargetPredicate.Kind.PERMANENT)));
 
             // MayPayManaEffect ETBs never take a cast-time target (see EffectResolution), so a
             // targeting pay/else ability (Knight of the Mists) must choose as the trigger goes
             // on the stack — including the just-entered permanent as a legal choice.
             boolean mayPayManaNeedsTarget = otherEffects.stream()
                     .anyMatch(e -> e instanceof MayPayManaEffect
-                            && (e.targetSpec().category().includesPlayers()
-                            || e.targetSpec().category().includesPermanents()));
+                            && (e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                            || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)));
 
             if (gateConditionalNeedsTarget
                     || mayPayManaNeedsTarget

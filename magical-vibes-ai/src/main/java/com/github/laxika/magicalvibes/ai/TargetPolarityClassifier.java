@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerChosenTypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -142,7 +143,7 @@ public class TargetPolarityClassifier {
         // kind-less configurations (multi-target/X-target removal) are equally harmful to any
         // permanent they do target.
         if (effect instanceof RemovalEffect removal) {
-            if (removal.removalKind() != null || effect.targetSpec().category().includesPermanents()) {
+            if (removal.removalKind() != null || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                 return TargetPolarity.HARMFUL_REMOVAL;
             }
             return null;
@@ -154,7 +155,7 @@ public class TargetPolarityClassifier {
         // permanent in its target spec carries no permanent polarity — the player-targeting
         // branch handles it.
         if (effect instanceof DamageDealingEffect damage) {
-            if (!effect.targetSpec().category().includesPermanents()) {
+            if (!effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                 return null;
             }
             return damage.canDamageCreatures() ? TargetPolarity.HARMFUL_DAMAGE : TargetPolarity.HARMFUL;

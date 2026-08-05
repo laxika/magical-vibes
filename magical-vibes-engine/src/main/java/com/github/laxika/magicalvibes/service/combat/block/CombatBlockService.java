@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationCont
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerPowerDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerUntapRemoveFromCombat;
 import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
@@ -431,7 +432,7 @@ public class CombatBlockService {
                 // route these through the shared attack-trigger targeting pipeline, which honours the
                 // card's PermanentPredicateTargetFilter and drains via the pending-interaction queue.
                 boolean targetsChosenPermanent = blocker.getCard().getTargetFilter() != null
-                        && resolvedBlockEffects.stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
+                        && resolvedBlockEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
                 if (targetsChosenPermanent) {
                     gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                             blocker.getCard(), defenderId, new ArrayList<>(resolvedBlockEffects), blocker.getId()));
@@ -892,7 +893,7 @@ public class CombatBlockService {
                 // and mandatory effects keep the defending player as targetId.
                 List<CardEffect> targetingMayEffects = effects.stream()
                         .filter(e -> e instanceof MayEffect
-                                && e.targetSpec().category().includesPermanents())
+                                && e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                         .toList();
                 List<CardEffect> otherEffects = effects.stream()
                         .filter(e -> !targetingMayEffects.contains(e))
@@ -1142,7 +1143,7 @@ public class CombatBlockService {
             return;
         }
         List<CardEffect> targetingMayEffects = regularEffects.stream()
-                .filter(e -> e instanceof MayEffect && e.targetSpec().category().includesPermanents())
+                .filter(e -> e instanceof MayEffect && e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                 .toList();
         for (CardEffect effect : targetingMayEffects) {
             gameData.queueMayAbility(attacker.getCard(), controllerId, (MayEffect) effect,

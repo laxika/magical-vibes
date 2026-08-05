@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffec
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -1026,11 +1027,11 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (ctx.thenEffect() != null) {
             List<CardEffect> thenEffects = new ArrayList<>(List.of(ctx.thenEffect()));
             var targetSpec = ctx.thenEffect().targetSpec();
-            boolean needsTarget = targetSpec.category().includesPermanents()
-                    || targetSpec.category().includesPlayers();
+            boolean needsTarget = targetSpec.admits(TargetPredicate.Kind.PERMANENT)
+                    || targetSpec.admits(TargetPredicate.Kind.PLAYER);
             if (needsTarget) {
                 List<UUID> validPermanentTargets = new ArrayList<>();
-                if (targetSpec.category().includesPermanents()) {
+                if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {
                     for (UUID pid : gameData.orderedPlayerIds) {
                         List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                         if (battlefield == null) {
@@ -1044,7 +1045,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                         }
                     }
                 }
-                List<UUID> validPlayerTargets = targetSpec.category().includesPlayers()
+                List<UUID> validPlayerTargets = targetSpec.admits(TargetPredicate.Kind.PLAYER)
                         ? new ArrayList<>(gameData.orderedPlayerIds)
                         : List.of();
                 if (validPermanentTargets.isEmpty() && validPlayerTargets.isEmpty()) {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -42,7 +43,7 @@ public class PermanentControlTargetValidators {
 
     @ValidatesTarget(PutTargetOnTopOfLibraryEffect.class)
     public void validatePutTargetOnTopOfLibrary(TargetValidationContext ctx, PutTargetOnTopOfLibraryEffect effect) {
-        if (effect.targetSpec().category().includesPermanents()) {
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
             tvs.requireBattlefieldTarget(ctx);
         }
     }

@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReflectAllyDamageToDamagedCreatureControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringSpellReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -550,9 +551,9 @@ public class TriggerCollectionService {
             // Multi-target ("up to N target permanents", Elder Deep-Fiend) reuses the ETB
             // multi-target slot walker with a null source permanent id.
             boolean needsPlayerTarget = selfCastTriggeredEffects.stream()
-                    .anyMatch(e -> e.targetSpec().category().includesPlayers());
+                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
             boolean needsPermanentTarget = selfCastTriggeredEffects.stream()
-                    .anyMatch(e -> e.targetSpec().category().includesPermanents());
+                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
             if (needsPlayerTarget || needsPermanentTarget) {
                 boolean multiTarget = spellCard.getSpellTargets().size() > 1
                         || etbTokenTargetService.needsSlotBySlotTargetSelection(spellCard);
@@ -689,8 +690,8 @@ public class TriggerCollectionService {
             List<CardEffect> anyDiscardTriggers = discardedCard.getEffects(EffectSlot.ON_SELF_DISCARDED);
             if (!anyDiscardTriggers.isEmpty()) {
                 boolean needsAnyTarget = anyDiscardTriggers.stream()
-                        .anyMatch(e -> e.targetSpec().category().includesPermanents()
-                                || e.targetSpec().category().includesPlayers());
+                        .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
                 if (needsAnyTarget) {
                     gameData.queueInteraction(new PermanentChoiceContext.DiscardTriggerAnyTarget(
                             discardedCard, discardingPlayerId, new ArrayList<>(anyDiscardTriggers)
@@ -717,8 +718,8 @@ public class TriggerCollectionService {
                         .toList();
                 if (!selfTriggers.isEmpty()) {
                     boolean needsAnyTarget = selfTriggers.stream()
-                            .anyMatch(e -> e.targetSpec().category().includesPermanents()
-                                    || e.targetSpec().category().includesPlayers());
+                            .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                    || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
                     if (needsAnyTarget) {
                         gameData.queueInteraction(new PermanentChoiceContext.DiscardTriggerAnyTarget(
                                 discardedCard, discardingPlayerId, new ArrayList<>(selfTriggers)
@@ -789,7 +790,7 @@ public class TriggerCollectionService {
             int mayEventValue = may.wrapped() instanceof DrawCardEffect draw
                     && draw.amount() instanceof com.github.laxika.magicalvibes.model.amount.EventValue
                     ? damageDealt : 0;
-            UUID mayTargetId = may.wrapped().targetSpec().category().includesPermanents()
+            UUID mayTargetId = may.wrapped().targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                     ? null : damagedPlayerId;
             gameData.queueMayAbility(source.getCard(), controllerId, may, mayTargetId, source.getId(), mayEventValue);
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s damage trigger fires."));
@@ -2123,7 +2124,7 @@ public class TriggerCollectionService {
             // Targeted phase-in (Shimmering Efreet): choose the target when the ability is put on the
             // stack. Queued here during the untap-step phasing action and drained at upkeep start.
             if (slot == EffectSlot.ON_SELF_PHASES_IN
-                    && effect.targetSpec().category().includesPermanents()) {
+                    && effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                 gameData.queueInteraction(new PermanentChoiceContext.PhasesInTriggerTarget(
                         permanent.getCard(), controllerId, new ArrayList<>(List.of(effect)), permanent.getId()));
                 gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
@@ -2533,7 +2534,7 @@ public class TriggerCollectionService {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES);
             if (effects == null || effects.isEmpty()) continue;
 
-            boolean anyTargeting = effects.stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
+            boolean anyTargeting = effects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
             if (anyTargeting) {
                 gameData.queueInteraction(
                         new PermanentChoiceContext.ExploreTriggerTarget(
@@ -2698,7 +2699,7 @@ public class TriggerCollectionService {
             // interaction to pick an opponent's creature; non-targeting ones (Rebellion of the
             // Flamekin) go straight onto the stack as a triggered ability.
             boolean needsTarget = resolvedEffects.stream()
-                    .anyMatch(e -> e.targetSpec().category().includesPermanents() || e.targetSpec().category().includesPlayers());
+                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
             if (needsTarget) {
                 gameData.queueInteraction(new PermanentChoiceContext.ClashTriggerTarget(
                         perm.getCard(), clashingPlayerId, resolvedEffects, perm.getId()));
@@ -2781,7 +2782,7 @@ public class TriggerCollectionService {
                     var match = new TriggerMatchContext(gameData, perm, dyingCreatureControllerId, resolvedEffect);
                     registry.dispatch(match, EffectSlot.ON_ALLY_CREATURE_DIES, resolvedEffect, ctx);
                     anyEffectFired = true;
-                } else if (resolvedEffect.targetSpec().category().includesPlayers() || resolvedEffect.targetSpec().category().includesPermanents()) {
+                } else if (resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER) || resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     // Targeted "another creature you control dies" trigger (e.g. Diregraf Captain):
                     // route through the death target pipeline so the controller picks a target as the
                     // ability is put on the stack (CR 603.3d). The source card here is the watching
@@ -3826,7 +3827,7 @@ public class TriggerCollectionService {
                 // A permanent-targeting effect (Oath of the Ancient Wood's "+1/+1 counter on target
                 // creature") can't go on the stack without a target — queue the choice instead
                 // (CR 603.3d: targets are chosen as the ability is put on the stack).
-                if (resolved.targetSpec().category().includesPermanents()) {
+                if (resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     gameData.queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
                             perm.getCard(), controllerId, new ArrayList<>(List.of(resolved)), perm.getId()));
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
@@ -4040,8 +4041,8 @@ public class TriggerCollectionService {
         }
 
         for (CardEffect effect : effects) {
-            boolean targets = effect.targetSpec().category().includesPlayers()
-                    || effect.targetSpec().category().includesPermanents();
+            boolean targets = effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                    || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
             if (targets) {
                 gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
                         enteringCard, enteringControllerId, new ArrayList<>(List.of(effect)),

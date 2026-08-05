@@ -30,7 +30,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
@@ -42,6 +41,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -386,8 +387,8 @@ class AiTargetSelector {
         for (SpellTarget st : spellTargets) {
             List<CardEffect> groupEffects = findEffectsForTargetGroup(card, st.getIndex());
 
-            boolean wantsPlayer = groupEffects.stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
-            boolean wantsPermanent = groupEffects.stream().anyMatch(e -> e.targetSpec().category().includesPermanents())
+            boolean wantsPlayer = groupEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+            boolean wantsPermanent = groupEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                     || st.getFilter() != null;
 
             if (wantsPlayer && !wantsPermanent) {
@@ -619,17 +620,17 @@ class AiTargetSelector {
             if (e instanceof ConditionalReplacementEffect replacement) {
                 effectToCheck = replacement.baseEffect();
             }
-            TargetCategory category = effectToCheck.targetSpec().category();
-            if (category.includesPlayers()) result.add(TargetType.PLAYER);
-            if (category.includesPermanents()) result.add(TargetType.PERMANENT);
+            TargetSpec spec = effectToCheck.targetSpec();
+            if (spec.admits(TargetPredicate.Kind.PLAYER)) result.add(TargetType.PLAYER);
+            if (spec.admits(TargetPredicate.Kind.PERMANENT)) result.add(TargetType.PERMANENT);
             if (EffectResolution.targetsSpellOnStack(effectToCheck)) result.add(TargetType.SPELL_ON_STACK);
-            if (category.isGraveyard()) result.add(TargetType.GRAVEYARD);
-            if (category == TargetCategory.EXILE_CARD) result.add(TargetType.EXILE);
+            if (spec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) result.add(TargetType.GRAVEYARD);
+            if (spec.admits(TargetPredicate.Kind.EXILED_CARD)) result.add(TargetType.EXILE);
         }
         for (CardEffect e : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-            TargetCategory category = e.targetSpec().category();
-            if (category.includesPlayers()) result.add(TargetType.PLAYER);
-            if (category.includesPermanents()) result.add(TargetType.PERMANENT);
+            TargetSpec spec = e.targetSpec();
+            if (spec.admits(TargetPredicate.Kind.PLAYER)) result.add(TargetType.PLAYER);
+            if (spec.admits(TargetPredicate.Kind.PERMANENT)) result.add(TargetType.PERMANENT);
         }
         return result;
     }
@@ -716,7 +717,7 @@ class AiTargetSelector {
     List<Card> findValidGraveyardTargets(GameData gameData, Card card, UUID aiPlayerId, int maxAffordableX) {
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (!effect.targetSpec().category().isGraveyard()) continue;
+            if (!effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) continue;
 
             List<Card> candidates;
             if (effect instanceof ReturnCardFromGraveyardEffect rge) {
@@ -1032,8 +1033,8 @@ class AiTargetSelector {
                 .filter(e -> !(e instanceof CostEffect))
                 .toList();
 
-        boolean canTargetPlayer = nonCostEffects.stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
-        boolean canTargetPermanent = nonCostEffects.stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
+        boolean canTargetPlayer = nonCostEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+        boolean canTargetPermanent = nonCostEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
 
         // Classify: is this ability beneficial to the target or harmful?
         boolean isBeneficial = nonCostEffects.stream().anyMatch(e ->

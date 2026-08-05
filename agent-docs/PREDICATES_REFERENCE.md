@@ -186,9 +186,16 @@ candidate **domain** a target is drawn from, and carries that domain's predicate
 is the successor to `TargetCategory` and is now what every effect *declares*: `TargetSpec.declaredTarget()`
 holds one, and `TargetSpec.targetPredicate()` folds the spec's narrowing predicate into its permanent leaf.
 That composed value is what the spec interpreter (`TargetValidationService`) and target enumeration
-(`ValidTargetService`) evaluate. `TargetCategory` survives only as the compatibility bridge behind
-`TargetSpec.category()`, for readers not yet migrated — see `agent-docs/TARGET_PREDICATE_PLAN.md`. `TargetSpec.admits(Kind)` is the
-null-safe "can this kind ever be legal?" query — a spec that targets nothing has no predicate at all.
+(`ValidTargetService`) evaluate.
+
+`TargetSpec.admits(Kind)` is the null-safe "can this kind ever be legal?" query — a spec that targets
+nothing has no predicate at all. It answers from `declaredTarget()` rather than the composed
+`targetPredicate()`, because the narrowing predicate only ever replaces the permanent leaf's inner
+predicate and so cannot add or remove a kind; that keeps it allocation-free for the trigger
+collectors, `StepTriggerService` and the AI, which ask it per effect in loops. **Use it instead of
+reaching for the legacy enum** — `TargetCategory` now survives only behind the `TargetSpec.category()`
+bridge, read by a handful of remaining identity comparisons (`== NONE`, `== ANY_TARGET`,
+`== SPELL_ON_STACK`) that Step 7 deletes; see `agent-docs/TARGET_PREDICATE_PLAN.md`.
 
 | Leaf | Payload | Evaluated by |
 |------|---------|--------------|

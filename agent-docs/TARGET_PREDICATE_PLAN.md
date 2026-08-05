@@ -254,7 +254,7 @@ mechanical high-churn. Phase 4 is deletion.
 | 3 | Route `MayAbilityHandlerService` through the shared evaluator; delete both copies of the open-coded switch (defect 3). Add a regression test for a `LAND`-spec may-ability. | MED | **DONE** — see "Step 3 outcome". Defect 3 confirmed verbatim; both copies collapsed into one helper. No implemented card has a `LAND` may-ability, so that regression is a service test; `PLAYER_OR_PLANESWALKER` had a real card (Boggart Shenanigans) and got a card test. |
 | 4 | Migrate the ~400 effect records' `targetSpec()` to the factories. Mechanical and scriptable; the Step 1 equivalence harness is the safety net. Batch by category, smallest first (`EXILE_CARD` 2, `CONTROLLERS_GRAVEYARD_CARD` 2, `LAND` 4, `PLAYER_OR_PLANESWALKER` 4 … `PLAYER` 155 last). | MED | **DONE** — see "Step 4 outcome". Batching was unnecessary (one scripted sweep, no import churn); `TargetSpec` now *stores* the declared target and `category()` became a bridge. |
 | 5 | Collapse the three graveyard categories onto `GraveyardCards.scope`; delete the five hand-copied scope mappings. | LOW | **DONE** — see "Step 5 outcome". Not LOW and not five: there were **fourteen** copies and they disagreed, so six effects were declaring a scope they did not mean. Six rules-visible fixes. |
-| 6 | Migrate the derived-boolean readers (`includesPermanents` / `includesPlayers` / `isGraveyard`) in the trigger collectors, `StepTriggerService`, AI, and `EffectResolution.collectTargetTypes`. ~30 call sites across engine + AI. | MED | TODO |
+| 6 | Migrate the derived-boolean readers (`includesPermanents` / `includesPlayers` / `isGraveyard`) in the trigger collectors, `StepTriggerService`, AI, and `EffectResolution.collectTargetTypes`. ~30 call sites across engine + AI. | MED | **DONE** — see "Step 6 outcome". 152 call sites, not ~30, across 31 files; `TargetSpec.admits` was changed to read `declaredTarget()` so it stops allocating. |
 | 7 | Delete `TargetCategory`; update `TargetSpecRatchetTest`, `scripts/targetspec-audit.py`, and the `EFFECTS_INDEX.md` category table. | LOW | TODO |
 | 8 | **Optional, separate decision.** Add `PermanentIsBattlePredicate` and include battles in the `ANY_TARGET` factory per CR 115.4 (defect 4). Needs a rules review of the battle-damage path first — do not bundle into Step 7. | MED | TODO |
 
@@ -554,7 +554,8 @@ Two things a later step should know:
 - **`MayAbilityHandlerService` still has legacy category reads** (`includesPermanents()` /
   `includesPlayers()` / `isGraveyard()`): the `isTargeted*Effect` triples at the top of
   `handleMayAbilityChosen` and in `handleResolutionTimeMayChoice`, and the two `canTargetPermanent` /
-  `canTargetPlayer` guards around the new helper. Step 6 territory. *(The graveyard-scope
+  `canTargetPlayer` guards around the new helper. Step 6 territory. *(Step 6 migrated all eight onto
+  `admits(Kind)`.)* *(The graveyard-scope
   comparisons that were duplicated across `handleGraveyardTargetedMayAbility` and
   `handleResolutionTimeGraveyardTargetSelection` are gone — Step 5 collapsed both loops into one
   `graveyardTargetOf` helper.)*
@@ -620,7 +621,8 @@ Two things a later step needs:
   "simplify" it to `declaredTarget() == null`.
 - **`ClashEffect` still reads `category().includesPermanents()` / `includesPlayers()` on its child
   effects** to compute its own spec. That is a Step 6 reader like any other, but it is the only one
-  inside `model/effect/`, so a grep scoped to the engine will miss it.
+  inside `model/effect/`, so a grep scoped to the engine will miss it. *(Step 6 found it and collapsed
+  the four reads into one `admitsAny(Kind)` helper.)*
 
 ---
 
@@ -689,6 +691,69 @@ spell effect reaches the controller's graveyard and no opponent's) and `AiTarget
 - **`GraveyardTargetingService.handleBeginningOfCombatGraveyardTargeting` has a dead scope branch.**
   `StepTriggerService:3553` only ever hands it a `TARGET_CARDS_ANY_GRAVEYARD` effect
   (`.orElseThrow()` on that filter), so its non-`ALL_GRAVEYARDS` path was and is unreachable.
+
+---
+
+## Step 6 outcome
+
+Every derived-boolean reader is gone. `TargetSpec.admits(TargetPredicate.Kind)` is now the single way
+to ask "which kinds can this spec target", across 154 call sites in 31 files — not the ~30 the Step
+Index guessed. The three booleans map onto the five kinds exactly:
+`includesPermanents()` → `admits(PERMANENT)`, `includesPlayers()` → `admits(PLAYER)`,
+`isGraveyard()` → `admits(GRAVEYARD_CARD)`.
+
+**No behaviour change, and the equivalence is structural rather than case-by-case.** Two facts carry
+it, both re-verified against the code rather than taken from this document:
+
+1. Each of the fourteen categories admits exactly the kinds its booleans reported — the graveyard
+   trio admits only `GRAVEYARD_CARD`, `SPELL_ON_STACK` and `EXILE_CARD` admit neither permanents nor
+   players, and `PLAYER_OR_PERMANENT` / `PLAYER_OR_PLANESWALKER` / `ANY_TARGET` admit both.
+2. `TargetPredicates.narrowPermanents` cannot add or remove a kind: it returns its base untouched
+   unless the base has a permanent leaf, and otherwise swaps that leaf for another permanent leaf.
+
+Both are pinned by two new sweeps in `TargetPredicateEquivalenceTest`
+(`admitsMatchesTheLegacyDerivedBooleans`, `narrowingDoesNotDisturbWhichKindsAreAdmitted`), which
+compare `admits(Kind)` against the legacy booleans for every category, bare and narrowed.
+
+### `admits` stopped allocating
+
+It read `targetPredicate()`, which rebuilds the composed predicate on every call — for a narrowed
+`AnyOf` that means an `EnumSet`, an `ArrayList`, a sort and a `List.copyOf` per question. Fact 2
+above says the narrowing is irrelevant to the answer, so `admits` and `graveyardScope()` now read
+`declaredTarget()` directly. That matters because these readers sit in per-effect loops in the
+trigger collectors, `StepTriggerService` and target enumeration — the step would otherwise have made
+those loops measurably more expensive than the enum lookup they replaced.
+
+### Two arms migrated beyond the literal three booleans
+
+`EffectResolution.collectTargetTypes` and `AiTargetSelector.computeBaseAllowedTargets` each ended in
+`category == TargetCategory.EXILE_CARD`. `EXILE_CARD` is the only category with an exiled leaf, so
+that is `admits(EXILED_CARD)` — the same question, spelled as an identity comparison only because the
+enum never grew an `isExile()`. Both blocks were being rewritten anyway and keeping one enum read in
+each would have left the import alive for no reason.
+
+### What Step 7 inherits
+
+Six production readers still name the enum, all genuine identity comparisons, all needing a decision
+rather than a rename:
+
+| Site | Comparison | Note |
+|---|---|---|
+| `EffectResolution.targetsSpellOnStack:214` | `== SPELL_ON_STACK` | `admits(Kind.SPELL)`, but the four `instanceof` special cases beside it are the "Risk hotspots" entry |
+| `ActivatedAbility:446` | `allMatch(== SPELL_ON_STACK)` | same |
+| `DrawService:738` | `== ANY_TARGET` | must NOT become `admits(PLAYER) && admits(PERMANENT)` — that is the lossy test the whole plan exists to kill; compare against `TargetPredicates.anyTarget()` |
+| `TriggerTargetCollector:178` | `allMatch(== ANY_TARGET)` | same |
+| `TriggerCollectionService:1389` | `== NONE` | `declaredTarget() == null` |
+| `PermanentCounterSupport:507` | `!= NONE` | `declaredTarget() != null`, as `FlipCoinWinEffect` already does |
+
+**One lossy shape-sniff survives and is not a Step 7 rename.** `StepTriggerService:448` recognises an
+"any target" upkeep trigger as `admits(PLAYER) && admits(PERMANENT)` and names the result
+`hasAnyTarget`. That is exactly the inference Step 2b deleted from `ValidTargetService`, still alive
+on the upkeep path: it cannot tell `anyTarget()` from `playerOrPermanent()`. It is a *routing*
+decision (which pending-interaction record to queue) rather than a narrowing, so nothing is currently
+mis-targeted by it — `TriggerTargetCollector` applies the real narrowing afterwards, via the
+`== ANY_TARGET` comparison two rows above. Deliberately left alone; whoever fixes the
+`TriggerTargetCollector` row should fix this one in the same breath, because the two must agree.
 
 ---
 

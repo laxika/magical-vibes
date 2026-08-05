@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -677,7 +678,7 @@ public class TargetLegalityService {
     public void validateGraveyardEffectTargetOnly(GameData gameData, Card card, List<CardEffect> effects,
                                                   UUID targetId, int xValue) {
         List<CardEffect> graveyardEffects = effects.stream()
-                .filter(e -> e.targetSpec().category().isGraveyard())
+                .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
                 // Unwrap conditional reanimation (e.g. Torrent of Souls' "if {B} was spent") so the
                 // inner effect's card-type filter is enforced when the graveyard target is chosen.
                 .map(e -> e instanceof ConditionalEffect conditional ? conditional.wrapped() : e)

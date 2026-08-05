@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -197,7 +198,7 @@ public class DiscardTriggerCollectorService {
         // both. (Zenith Seeker)
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
-        if (trigger.targetSpec().category().includesPermanents()) {
+        if (trigger.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
             // Targeted grant: queue a target choice so the controller picks the creature before the
             // ability goes on the stack (resolves above the cycling draw). Serviced by
             // TriggeredAbilityQueueService.processNextDiscardControllerTriggerTarget.

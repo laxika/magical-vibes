@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.DefendingPlayerMayDrawCardEff
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -493,7 +494,7 @@ public class CombatAttackService {
                     // like Cyclops Gladiator's may-fight).
                     List<CardEffect> nonTargetingMayEffects = allEffects.stream()
                             .filter(e -> e instanceof com.github.laxika.magicalvibes.model.effect.MayEffect
-                                    && !e.targetSpec().category().includesPermanents() && !e.targetSpec().category().includesPlayers()).toList();
+                                    && !e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) && !e.targetSpec().admits(TargetPredicate.Kind.PLAYER)).toList();
                     List<CardEffect> otherEffects = allEffects.stream()
                             .filter(e -> !nonTargetingMayEffects.contains(e)).toList();
 
@@ -510,9 +511,9 @@ public class CombatAttackService {
                         // pipeline collects only one target, so route to the bespoke two-step flow.
                         boolean isCounterMove = otherEffects.stream().anyMatch(e -> e instanceof AttackCounterMoveEffect);
                         boolean needsGraveyardTarget = otherEffects.stream()
-                                .anyMatch(e -> e.targetSpec().category().isGraveyard());
+                                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
                         boolean needsTarget = otherEffects.stream()
-                                .anyMatch(e -> e.targetSpec().category().includesPermanents() || e.targetSpec().category().includesPlayers());
+                                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
                         UUID attackedTargetId = attacker.getAttackTarget();
                         UUID defendingPlayerId = attackedTargetId == null ? null
                                 : gameData.playerIds.contains(attackedTargetId)

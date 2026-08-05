@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -36,6 +35,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToEnteringPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TransformEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -86,8 +87,8 @@ public class EnterTriggerCollectorService {
         // through the choice; player-targeting ones only when the scan left the player unset — the
         // opponent-enters scans bake in the entering permanent's controller, while the ally scans
         // leave it null (Sage's Row Denizen's "target player mills two cards").
-        boolean needsTargetChoice = effect.targetSpec().category().includesPermanents()
-                || (effect.targetSpec().category().includesPlayers() && pe.defaultTargetPlayerId() == null);
+        boolean needsTargetChoice = effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER) && pe.defaultTargetPlayerId() == null);
         if (needsTargetChoice) {
             Card sourceCard = match.permanent().getCard();
             match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
@@ -629,10 +630,10 @@ public class EnterTriggerCollectorService {
     }
 
     private static boolean isTargeting(CardEffect effect) {
-        TargetCategory category = effect.targetSpec().category();
-        return category.includesPlayers()
-                || category.includesPermanents()
+        TargetSpec spec = effect.targetSpec();
+        return spec.admits(TargetPredicate.Kind.PLAYER)
+                || spec.admits(TargetPredicate.Kind.PERMANENT)
                 || EffectResolution.targetsSpellOnStack(effect)
-                || category.isGraveyard();
+                || spec.admits(TargetPredicate.Kind.GRAVEYARD_CARD);
     }
 }

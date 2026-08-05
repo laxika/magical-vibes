@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -114,10 +115,10 @@ public class TriggerTargetCollector {
 
         boolean canTargetPlayers = effects.stream()
                 .map(e -> unwrap(e, options))
-                .anyMatch(e -> e.targetSpec().category().includesPlayers());
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
         boolean canTargetPermanents = effects.stream()
                 .map(e -> unwrap(e, options))
-                .anyMatch(e -> e.targetSpec().category().includesPermanents());
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
 
         boolean opponentOnly = isOpponentRestricted(targetFilter);
 
@@ -145,7 +146,7 @@ public class TriggerTargetCollector {
             if (options.useEffectTargetPredicate()) {
                 effectPredicate = effects.stream()
                         .map(e -> e instanceof ConditionalEffect ce ? ce.wrapped() : e)
-                        .filter(e -> e.targetSpec().category().includesPermanents()
+                        .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                                 && EffectResolution.targetPredicateOf(e) != null)
                         .map(EffectResolution::targetPredicateOf)
                         .findFirst().orElse(null);
@@ -169,7 +170,7 @@ public class TriggerTargetCollector {
             // explicit PermanentPredicateTargetFilter fully governs instead (e.g. destroy land).
             List<CardEffect> permanentEffects = effects.stream()
                     .map(e -> unwrap(e, options))
-                    .filter(e -> e.targetSpec().category().includesPermanents())
+                    .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                     .toList();
             boolean anyTargetPermanentsOnly = !explicitPermanentFilter
                     && !permanentEffects.isEmpty()

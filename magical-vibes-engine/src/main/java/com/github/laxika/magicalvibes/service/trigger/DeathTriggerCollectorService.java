@@ -68,6 +68,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGrave
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.UntapEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
@@ -344,7 +345,7 @@ public class DeathTriggerCollectorService {
         // the "you may pay" happens on resolution (Drainpipe Vermin). Untargeted may-pay death
         // triggers (the Spellbomb cycle) skip the stack and prompt directly.
         var wrappedSpec = mayPay.wrapped().targetSpec();
-        if (wrappedSpec.category().includesPermanents() || wrappedSpec.category().includesPlayers()) {
+        if (wrappedSpec.admits(TargetPredicate.Kind.PERMANENT) || wrappedSpec.admits(TargetPredicate.Kind.PLAYER)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(mayPay))
             ));
@@ -373,7 +374,7 @@ public class DeathTriggerCollectorService {
             MayEffect may, TriggerContext ctx) {
         TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
         // CR 603.3d: targeted "may" abilities need the target chosen when stacking
-        if (may.targetSpec().category().includesPermanents() || may.targetSpec().category().includesPlayers()) {
+        if (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || may.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(may))
             ));
@@ -411,8 +412,8 @@ public class DeathTriggerCollectorService {
         // Graveyard-targeting death triggers (e.g. Ruin Rat: "exile target card from an opponent's
         // graveyard") also queue as a DeathTriggerTarget; processNextDeathTriggerTarget routes them
         // to a graveyard card choice made as the trigger goes on the stack.
-        if (effect.targetSpec().category().includesPermanents() || effect.targetSpec().category().includesPlayers()
-                || effect.targetSpec().category().isGraveyard()) {
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(effect))
             ));
@@ -467,7 +468,7 @@ public class DeathTriggerCollectorService {
     boolean handleEquippedCreatureDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         GameData gameData = match.gameData();
-        if (effect.targetSpec().category().includesPermanents() || effect.targetSpec().category().includesPlayers()) {
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect))
             ));
@@ -632,8 +633,8 @@ public class DeathTriggerCollectorService {
 
     private void addEnchantedPermanentDeathEntry(TriggerMatchContext match, CardEffect effect,
             Integer eventValue) {
-        if (effect.targetSpec().category().includesPermanents() || effect.targetSpec().category().includesPlayers()
-                || effect.targetSpec().category().isGraveyard()) {
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)), eventValue));
             return;
@@ -1023,7 +1024,7 @@ public class DeathTriggerCollectorService {
             MayEffect may, TriggerContext ctx) {
         // CR 603.3d: a targeted "may" ability (e.g. Vicious Shadows' "you may have this deal damage
         // to target player") needs its target chosen when the trigger is put on the stack.
-        if (may.targetSpec().category().includesPermanents() || may.targetSpec().category().includesPlayers()) {
+        if (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || may.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(may))
             ));
@@ -1111,7 +1112,7 @@ public class DeathTriggerCollectorService {
     boolean handleAnyCreatureDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         GameData gameData = match.gameData();
-        if (effect.targetSpec().category().includesPermanents() || effect.targetSpec().category().includesPlayers()) {
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect))
             ));
@@ -1506,8 +1507,8 @@ public class DeathTriggerCollectorService {
         TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
         // Graveyard-targeting self-leaves triggers (e.g. Offalsnout) also queue as a
         // SelfLeavesTriggerTarget; the queue processor routes them to a graveyard card choice.
-        if (effect.targetSpec().category().includesPermanents() || effect.targetSpec().category().includesPlayers()
-                || effect.targetSpec().category().isGraveyard()) {
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.SelfLeavesTriggerTarget(
                     match.permanent().getCard(), sl.controllerId(), new ArrayList<>(List.of(effect))
             ));

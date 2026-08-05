@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import lombok.Getter;
 
 import java.util.List;
@@ -373,8 +375,10 @@ public class ActivatedAbility {
     public boolean isNeedsTarget() {
         return !multiTargetFilters.isEmpty()
                 || effects.stream().anyMatch(e -> {
-                    TargetCategory category = e.targetSpec().category();
-                    return category.includesPlayers() || category.includesPermanents() || category.isGraveyard();
+                    TargetSpec spec = e.targetSpec();
+                    return spec.admits(TargetPredicate.Kind.PLAYER)
+                            || spec.admits(TargetPredicate.Kind.PERMANENT)
+                            || spec.admits(TargetPredicate.Kind.GRAVEYARD_CARD);
                 });
     }
 

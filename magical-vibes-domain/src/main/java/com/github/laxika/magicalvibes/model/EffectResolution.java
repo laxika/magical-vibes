@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentInto
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByConvergeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -151,9 +152,9 @@ public final class EffectResolution {
             // (CR 603.3d) via the ETBTokenTargetTrigger path — and never chosen at all when
             // the gate isn't met.
             if (e instanceof ConditionalEffect ce && ce.condition().isEtbTriggerGate()) continue;
-            TargetCategory category = e.targetSpec().category();
-            if (category.includesPlayers()) result.add(TargetType.PLAYER);
-            if (category.includesPermanents()) result.add(TargetType.PERMANENT);
+            TargetSpec spec = e.targetSpec();
+            if (spec.admits(TargetPredicate.Kind.PLAYER)) result.add(TargetType.PLAYER);
+            if (spec.admits(TargetPredicate.Kind.PERMANENT)) result.add(TargetType.PERMANENT);
         }
         return result;
     }
@@ -416,15 +417,15 @@ public final class EffectResolution {
      * target is the graveyard card, so the default battlefield-permanent target must not be added.
      */
     private static boolean enchantsGraveyardCard(List<CardEffect> spellEffects) {
-        return spellEffects.stream().anyMatch(e -> e.targetSpec().category().isGraveyard());
+        return spellEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
     }
 
     private static void collectTargetTypes(CardEffect e, Set<TargetType> out) {
-        TargetCategory category = e.targetSpec().category();
-        if (category.includesPlayers()) out.add(TargetType.PLAYER);
-        if (category.includesPermanents()) out.add(TargetType.PERMANENT);
+        TargetSpec spec = e.targetSpec();
+        if (spec.admits(TargetPredicate.Kind.PLAYER)) out.add(TargetType.PLAYER);
+        if (spec.admits(TargetPredicate.Kind.PERMANENT)) out.add(TargetType.PERMANENT);
         if (targetsSpellOnStack(e)) out.add(TargetType.SPELL_ON_STACK);
-        if (category.isGraveyard()) out.add(TargetType.GRAVEYARD);
-        if (category == TargetCategory.EXILE_CARD) out.add(TargetType.EXILE);
+        if (spec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) out.add(TargetType.GRAVEYARD);
+        if (spec.admits(TargetPredicate.Kind.EXILED_CARD)) out.add(TargetType.EXILE);
     }
 }

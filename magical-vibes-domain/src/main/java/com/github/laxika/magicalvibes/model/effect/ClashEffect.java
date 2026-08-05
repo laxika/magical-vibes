@@ -36,10 +36,10 @@ public record ClashEffect(List<CardEffect> beforeClash, CardEffect onWin, boolea
 
     @Override
     public TargetSpec targetSpec() {
-        boolean perm = (onWin != null && onWin.targetSpec().category().includesPermanents())
-                || beforeClash.stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
-        boolean player = (onWin != null && onWin.targetSpec().category().includesPlayers())
-                || beforeClash.stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
+        boolean perm = (onWin != null && onWin.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                || beforeClash.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        boolean player = (onWin != null && onWin.targetSpec().admits(TargetPredicate.Kind.PLAYER))
+                || beforeClash.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
         TargetPredicate declaredTarget = perm
                 ? (player ? TargetPredicates.playerOrPermanent() : TargetPredicates.permanent())
                 : (player ? TargetPredicates.player() : null);

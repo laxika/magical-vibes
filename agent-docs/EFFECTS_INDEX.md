@@ -172,12 +172,15 @@ planeswalker that stopped being one is not a legal "any target" (CR 613.1d, CR 1
 interpreter reaches all of them through one composed `PermanentPredicate` — the declared target's
 own restriction and the spec's narrowing predicate folded together by `TargetSpec.targetPredicate()`.
 
-> **Migration in progress.** Every effect now declares a `TargetPredicate`; `TargetCategory` survives
-> only as a compatibility bridge behind `TargetSpec.category()` for the readers that still switch on
-> the enum (the trigger collectors, `StepTriggerService`, the AI,
-> `EffectResolution.collectTargetTypes`). Write new effects against the `TargetPredicates` factories
-> above and never against the enum — `agent-docs/TARGET_PREDICATE_PLAN.md` tracks the state and
-> `PREDICATES_REFERENCE.md` documents the type.
+> **Migration in progress.** Every effect declares a `TargetPredicate` and every "which kinds does
+> this target?" reader asks `TargetSpec.admits(TargetPredicate.Kind.X)` — the successor to the enum's
+> `includesPermanents()` / `includesPlayers()` / `isGraveyard()`. `TargetCategory` survives only
+> behind the `TargetSpec.category()` bridge for a handful of identity comparisons (`== NONE`,
+> `== ANY_TARGET`, `== SPELL_ON_STACK`, `PermanentCounterSupport`, `DrawService`,
+> `TriggerTargetCollector`) that Step 7 deletes. Write new effects and new readers against the
+> `TargetPredicates` factories and `admits(Kind)`, never against the enum —
+> `agent-docs/TARGET_PREDICATE_PLAN.md` tracks the state and `PREDICATES_REFERENCE.md` documents the
+> type.
 
 ### Worked example � a new "deal N damage to target creature" effect
 

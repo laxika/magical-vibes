@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanent
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -1442,7 +1443,7 @@ public class GameSimulator {
 
     private UUID findBestGraveyardTarget(GameData gd, Card card, UUID playerId, UUID opponentId) {
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (!effect.targetSpec().category().isGraveyard()) continue;
+            if (!effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) continue;
 
             List<Card> candidates;
             if (effect instanceof ReturnCardFromGraveyardEffect rge) {

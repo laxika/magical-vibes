@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamag
 import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -1125,7 +1126,7 @@ public class CombatDamageService {
                     // on target creature" — is queued with a null target so its target is chosen at
                     // resolution. Effects that instead act on a creature the damaged player controls have
                     // a NONE target spec and keep the baked-in defender context.
-                    UUID mayTargetId = may.wrapped().targetSpec().category().includesPermanents()
+                    UUID mayTargetId = may.wrapped().targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                             ? null : defenderId;
                     gameData.queueMayAbility(creature.getCard(), attackerId, may, mayTargetId, creature.getId(), mayEventValue);
                     gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger fires."));
@@ -1201,7 +1202,7 @@ public class CombatDamageService {
                 // stack via the shared SpellGraveyardTargetTrigger flow (drained by AutoPassService).
                 // The trigger path allows an empty selection, so "you may return target" reads as
                 // up-to-one (decline = choose 0) with no MayEffect wrapper.
-                if (effect.targetSpec().category().isGraveyard()) {
+                if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
                     gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                             creature.getCard(), attackerId, new ArrayList<>(List.of(effect))));
                     gameLogService.append(gameData, GameLog.text(creature.getCard().getName() + "'s combat damage trigger fires."));

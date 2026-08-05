@@ -51,7 +51,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
@@ -95,6 +94,8 @@ import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSourceActivatedAbilitiesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -892,8 +893,10 @@ public class SpellCastingService {
         // the permanent enters, so isNeedsSpellCastTarget() (which excludes ETB effects) is correct.
         boolean unwrappedNeedsTarget = deriveTargetingFromResolvedEffects
                 ? filteredSpellEffects.stream().anyMatch(e -> {
-                    TargetCategory category = e.targetSpec().category();
-                    return category.includesPermanents() || category.includesPlayers() || category.isGraveyard();
+                    TargetSpec spec = e.targetSpec();
+                    return spec.admits(TargetPredicate.Kind.PERMANENT)
+                            || spec.admits(TargetPredicate.Kind.PLAYER)
+                            || spec.admits(TargetPredicate.Kind.GRAVEYARD_CARD);
                 })
                 : EffectResolution.needsSpellCastTarget(card);
         // Targets multiple distinct spells on the stack. Two shapes qualify:
@@ -1143,7 +1146,7 @@ public class SpellCastingService {
 
         // Detect any effect that targets a graveyard card (e.g. PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect)
         boolean needsGraveyardEffectTargeting = !needsSingleGraveyardTargeting
-                && graveyardTargetingSource.stream().anyMatch(e -> e.targetSpec().category().isGraveyard());
+                && graveyardTargetingSource.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         Set<GraveyardSearchScope> graveyardScopes = graveyardTargetingSource.stream()
                 .flatMap(e -> e.targetSpec().graveyardScope().stream())
                 .collect(java.util.stream.Collectors.toSet());
@@ -2990,7 +2993,7 @@ public class SpellCastingService {
                 .orElse(null);
         boolean needsSingleGraveyardTargeting = graveyardReturnEffect != null;
         boolean needsGraveyardEffectTargeting = !needsSingleGraveyardTargeting
-                && spellEffects.stream().anyMatch(e -> e.targetSpec().category().isGraveyard());
+                && spellEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         boolean hasGraveyardTarget = needsSingleGraveyardTargeting || needsGraveyardEffectTargeting;
         // Multi-target flashback (incl. "up to N" with zero chosen: maxTargets > 0, minTargets == 0,
         // empty targetIds). Mirrors the hand-cast gate that allows empty targetIds when maxTargets > 0.
@@ -3233,7 +3236,7 @@ public class SpellCastingService {
                 .orElse(null);
         boolean needsSingleGraveyardTargeting = graveyardReturnEffect != null;
         boolean needsGraveyardEffectTargeting = !needsSingleGraveyardTargeting
-                && effectsToResolve.stream().anyMatch(e -> e.targetSpec().category().isGraveyard());
+                && effectsToResolve.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
 
         ReturnTargetCardFromExileToHandEffect exileReturnEffect = effectsToResolve.stream()
                 .filter(e -> e instanceof ReturnTargetCardFromExileToHandEffect)
