@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -19,11 +20,8 @@ public record ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        // ownGraveyardOnly is enforced by the kept validator's controller-compare, not by
-        // targetsControllersGraveyardOnly (which stayed false); so ownGraveyardOnly=true reproduces
-        // (graveyard=T, any=F) = GRAVEYARD_CARD, not CONTROLLERS_GRAVEYARD_CARD.
-        return ownGraveyardOnly
-                ? TargetSpec.benign(TargetPredicates.graveyardCard())
-                : TargetSpec.benign(TargetPredicates.anyGraveyardCard());
+        return TargetSpec.benign(TargetPredicates.graveyardCard(ownGraveyardOnly
+                ? GraveyardSearchScope.CONTROLLERS_GRAVEYARD
+                : GraveyardSearchScope.ALL_GRAVEYARDS));
     }
 }

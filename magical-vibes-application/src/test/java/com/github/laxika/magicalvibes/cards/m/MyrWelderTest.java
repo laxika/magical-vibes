@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -83,6 +84,24 @@ class MyrWelderTest extends BaseCardTest {
         // Should be in opponent's exiled cards (cards are owned by their graveyard owner)
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Rod of Ruin"));
+    }
+
+    @Test
+    @DisplayName("Offers artifacts in both graveyards — the imprint targets 'a graveyard', not an opponent's")
+    void offersArtifactsFromEitherGraveyard() {
+        Permanent welder = addWelderReady(player1);
+        Card ownRod = new RodOfRuin();
+        Card opponentRod = new RodOfRuin();
+        Card ownBears = new GrizzlyBears();
+        harness.setGraveyard(player1, new ArrayList<>(List.of(ownRod, ownBears)));
+        harness.setGraveyard(player2, new ArrayList<>(List.of(opponentRod)));
+
+        ValidTargetsResponse response = harness.getValidTargetService().computeValidTargetsForAbility(
+                gd, welder.getCard(), welder.getCard().getActivatedAbilities().getFirst(),
+                player1.getId(), 0);
+
+        assertThat(response.validGraveyardCardIds())
+                .containsExactlyInAnyOrder(ownRod.getId(), opponentRod.getId());
     }
 
     @Test

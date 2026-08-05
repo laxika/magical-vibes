@@ -19,5 +19,5 @@ public record CastTargetInstantOrSorceryFromGraveyardEffect(
         this(scope, withoutPayingManaCost, false);
     }
 
-    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.graveyardCard()); }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.graveyardCard(scope)); }
 }

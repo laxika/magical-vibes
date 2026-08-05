@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+
 /**
  * "Exile target creature card from a graveyard, then create X copies of {@code tokenTemplate},
  * where X is the exiled card's toughness."
@@ -20,6 +22,6 @@ public record ExileTargetCreatureCardCreateTokensEqualToToughnessEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.anyGraveyardCard());
+        return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.ALL_GRAVEYARDS));
     }
 }

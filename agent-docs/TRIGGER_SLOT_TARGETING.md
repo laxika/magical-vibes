@@ -304,14 +304,14 @@ controller with a `MultiGraveyardChoice` (maxCount 1) as the trigger goes on the
 lands on the entry's `targetCardIds` and the effect handler's pre-targeted path resolves it. Because
 the trigger path allows an empty selection, a "you may return target …" reads correctly as up-to-one
 (choose 0 to decline) with no `MayEffect` wrapper. `BecomeAuraReanimateFromGraveyardEffect` (Necromancy)
-uses the same flow with `ANY_GRAVEYARD_CARD` — any player's graveyard, creature cards only.
+uses the same flow with `ALL_GRAVEYARDS` — any player's graveyard, creature cards only.
 
 **Graveyard-targeting death triggers** ("When ~ dies, exile target card from an opponent's graveyard" —
 Ruin Rat) use the same trigger-time graveyard selection, but on the `ON_DEATH` path. `handleDeathDefault`
 routes any death effect whose `targetSpec().category().isGraveyard()` to a `DeathTriggerTarget` (alongside
 the permanent/player routing), and `TriggeredAbilityQueueService.processNextDeathTriggerTarget` detects the
-`ExileGraveyardCardsEffect` and calls `beginDeathGraveyardTarget`, which searches opponents' graveyards
-(opponent scope, `GRAVEYARD_CARD`) or every graveyard (`ANY_GRAVEYARD_CARD`) and prompts a
+`ExileGraveyardCardsEffect` and calls `beginDeathGraveyardTarget`, which searches the graveyards the
+effect's declared `GraveyardSearchScope` names (`TargetSpec.graveyardScope()`) and prompts a
 `MultiGraveyardChoice`. With no legal target the death trigger is skipped, never put on the stack (CR
 603.3c). Use `ON_DEATH`, never `ON_SELF_LEAVES_BATTLEFIELD` (Offalsnout), for a "dies" trigger — the latter
 also fires on exile/bounce.

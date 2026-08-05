@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+
+import java.util.Optional;
 
 /**
  * The declarative targeting descriptor for a {@link CardEffect}: one immutable value that
@@ -92,5 +95,14 @@ public record TargetSpec(
     public boolean admits(TargetPredicate.Kind kind) {
         TargetPredicate targetPredicate = targetPredicate();
         return targetPredicate != null && targetPredicate.admits(kind);
+    }
+
+    /**
+     * Which graveyards a card target is drawn from — the null-safe form of
+     * {@link TargetPredicate#graveyardScope()}, empty when this spec targets no graveyard card.
+     */
+    public Optional<GraveyardSearchScope> graveyardScope() {
+        TargetPredicate targetPredicate = targetPredicate();
+        return targetPredicate == null ? Optional.empty() : targetPredicate.graveyardScope();
     }
 }

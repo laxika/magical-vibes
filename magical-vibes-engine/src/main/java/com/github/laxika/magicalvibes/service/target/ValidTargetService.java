@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
@@ -818,12 +818,7 @@ public class ValidTargetService {
         if (!gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
             return List.of();
         }
-        List<UUID> searchPlayerIds = switch (filter.scope()) {
-            case CONTROLLERS_GRAVEYARD -> List.of(controllerId);
-            case OPPONENT_GRAVEYARD -> gameData.orderedPlayerIds.stream()
-                    .filter(id -> !id.equals(controllerId)).toList();
-            case ALL_GRAVEYARDS -> gameData.orderedPlayerIds;
-        };
+        List<UUID> searchPlayerIds = filter.scope().graveyardOwners(gameData.orderedPlayerIds, controllerId);
 
         List<UUID> validIds = new ArrayList<>();
         for (UUID playerId : searchPlayerIds) {
@@ -862,15 +857,11 @@ public class ValidTargetService {
         List<UUID> validIds = new ArrayList<>();
 
         for (CardEffect effect : spellEffects) {
-            if (!effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) continue;
+            GraveyardSearchScope scope = effect.targetSpec().graveyardScope().orElse(null);
+            if (scope == null) continue;
 
             if (effect instanceof ReturnCardFromGraveyardEffect rge) {
-                List<UUID> searchPlayerIds = switch (rge.source()) {
-                    case CONTROLLERS_GRAVEYARD -> List.of(controllerId);
-                    case OPPONENT_GRAVEYARD -> gameData.orderedPlayerIds.stream()
-                            .filter(id -> !id.equals(controllerId)).toList();
-                    case ALL_GRAVEYARDS -> gameData.orderedPlayerIds;
-                };
+                List<UUID> searchPlayerIds = scope.graveyardOwners(gameData.orderedPlayerIds, controllerId);
 
                 for (UUID playerId : searchPlayerIds) {
                     for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
@@ -893,10 +884,7 @@ public class ValidTargetService {
                 }
             } else {
                 // Generic graveyard-targeting effects (e.g. PutCreatureFromOpponentGraveyard)
-                boolean anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
-                List<UUID> searchPlayerIds = anyGraveyard
-                        ? gameData.orderedPlayerIds
-                        : gameData.orderedPlayerIds.stream().filter(id -> !id.equals(controllerId)).toList();
+                List<UUID> searchPlayerIds = scope.graveyardOwners(gameData.orderedPlayerIds, controllerId);
 
                 for (UUID playerId : searchPlayerIds) {
                     for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
@@ -933,11 +921,9 @@ public class ValidTargetService {
                 }
                 break;
             }
-            if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
-                boolean anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
-                List<UUID> searchPlayerIds = anyGraveyard
-                        ? gameData.orderedPlayerIds
-                        : gameData.orderedPlayerIds.stream().filter(id -> !id.equals(controllerId)).toList();
+            GraveyardSearchScope scope = effect.targetSpec().graveyardScope().orElse(null);
+            if (scope != null) {
+                List<UUID> searchPlayerIds = scope.graveyardOwners(gameData.orderedPlayerIds, controllerId);
                 for (UUID playerId : searchPlayerIds) {
                     for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
                         if (!excludeIds.contains(c.getId()) && matchesGraveyardEffectTypeFilter(effect, c, null)) {

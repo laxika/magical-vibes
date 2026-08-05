@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+
 /**
  * Exiles a targeted instant or sorcery card from an opponent's graveyard, then grants its
  * controller permission to cast it this turn, spending mana of any type; if that spell would be
@@ -13,8 +15,6 @@ public record ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect() im
 
     @Override
     public TargetSpec targetSpec() {
-        // (graveyard=T, any=T): the opponent-graveyard restriction is enforced by the kept
-        // validator's opponent-relation check, not by these booleans.
-        return TargetSpec.benign(TargetPredicates.anyGraveyardCard());
+        return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.OPPONENT_GRAVEYARD));
     }
 }

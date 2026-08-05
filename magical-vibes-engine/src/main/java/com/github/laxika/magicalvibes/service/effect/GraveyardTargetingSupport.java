@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import org.springframework.stereotype.Component;
 
@@ -30,14 +29,11 @@ public class GraveyardTargetingSupport {
     }
 
     private Target targetOf(CardEffect effect) {
-        if (effect instanceof ExileGraveyardCardsEffect exile
-                && effect.targetSpec().category().isGraveyard()) {
-            return new Target(
-                    exile.filter(),
-                    effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD
-                            ? GraveyardSearchScope.ALL_GRAVEYARDS
-                            : GraveyardSearchScope.OPPONENT_GRAVEYARD,
-                    "to exile");
+        if (effect instanceof ExileGraveyardCardsEffect exile) {
+            GraveyardSearchScope scope = effect.targetSpec().graveyardScope().orElse(null);
+            if (scope != null) {
+                return new Target(exile.filter(), scope, "to exile");
+            }
         }
         if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
             String destination = switch (returnEffect.destination()) {

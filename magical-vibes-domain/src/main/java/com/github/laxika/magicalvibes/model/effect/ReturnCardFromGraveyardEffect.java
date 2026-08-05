@@ -221,10 +221,9 @@ public record ReturnCardFromGraveyardEffect(
     @Override
     public TargetSpec targetSpec() {
         // Only the targeted-graveyard variant participates in cast/activation-time targeting; the
-        // resolution-time variants pick their card later. Reproduces the old conditional
-        // canTargetGraveyard() exactly. The own/opponent/all scope narrowing lives on the kept
-        // validator (via source()), never in these booleans (canTargetAnyGraveyard stayed false
-        // for this effect regardless of source), so GRAVEYARD_CARD is correct for every source.
-        return targetGraveyard ? TargetSpec.benign(TargetPredicates.graveyardCard()) : TargetSpec.NONE;
+        // resolution-time variants pick their card later. The declared scope is source(): it is the
+        // one place the own/opponent/all narrowing lives, so the kept validator and every
+        // enumeration path read the same value.
+        return targetGraveyard ? TargetSpec.benign(TargetPredicates.graveyardCard(source)) : TargetSpec.NONE;
     }
 }

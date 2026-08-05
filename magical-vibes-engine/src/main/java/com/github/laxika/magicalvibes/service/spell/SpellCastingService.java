@@ -1144,10 +1144,12 @@ public class SpellCastingService {
         // Detect any effect that targets a graveyard card (e.g. PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect)
         boolean needsGraveyardEffectTargeting = !needsSingleGraveyardTargeting
                 && graveyardTargetingSource.stream().anyMatch(e -> e.targetSpec().category().isGraveyard());
-        boolean canTargetAnyGraveyard = graveyardTargetingSource.stream()
-                .anyMatch(e -> e.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD);
-        boolean targetsControllersGraveyardOnly = graveyardTargetingSource.stream()
-                .anyMatch(e -> e.targetSpec().category() == TargetCategory.CONTROLLERS_GRAVEYARD_CARD);
+        Set<GraveyardSearchScope> graveyardScopes = graveyardTargetingSource.stream()
+                .flatMap(e -> e.targetSpec().graveyardScope().stream())
+                .collect(java.util.stream.Collectors.toSet());
+        boolean canTargetAnyGraveyard = graveyardScopes.contains(GraveyardSearchScope.ALL_GRAVEYARDS);
+        boolean targetsControllersGraveyardOnly =
+                graveyardScopes.contains(GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
 
         // Detect exile targeting effects (e.g. ReturnTargetCardFromExileToHandEffect)
         ReturnTargetCardFromExileToHandEffect exileReturnEffect = (ReturnTargetCardFromExileToHandEffect) card.getEffects(EffectSlot.SPELL).stream()

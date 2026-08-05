@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -50,6 +49,15 @@ public class GraveyardTargetingService {
      * graveyards through here, so the restriction applies uniformly and an emptied pool makes the
      * trigger fizzle or the spell find no legal target.
      */
+    /** How a prompt names the graveyards {@code scope} searches. */
+    private String zoneLabel(GraveyardSearchScope scope) {
+        return switch (scope) {
+            case ALL_GRAVEYARDS -> "a graveyard";
+            case OPPONENT_GRAVEYARD -> "an opponent's graveyard";
+            case CONTROLLERS_GRAVEYARD -> "your graveyard";
+        };
+    }
+
     private List<Card> targetableGraveyard(GameData gameData, UUID playerId) {
         if (!gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
             return null;
@@ -160,18 +168,17 @@ public class GraveyardTargetingService {
      * ({@code TARGET_CARDS_ANY_GRAVEYARD}). Graveyard-targeting ETBs never target at cast time, so the
      * card is chosen as the trigger goes on the stack; the chosen ids land on the triggered ability's
      * {@code targetCardIds} and {@code ExileGraveyardCardsEffectHandler} exiles them at resolution.
-     * Opponent scope ({@code GRAVEYARD_CARD}) searches only opponents' graveyards; any scope
-     * ({@code ANY_GRAVEYARD_CARD}) searches every graveyard. With no legal target the trigger is still
-     * pushed onto the stack with 0 targets and fizzles harmlessly.
+     * Which graveyards are searched comes from the effect's declared {@link GraveyardSearchScope}.
+     * With no legal target the trigger is still pushed onto the stack with 0 targets and fizzles
+     * harmlessly.
      */
     public void handleGraveyardCardsExileETBTargeting(GameData gameData, UUID controllerId, Card card,
                                                       List<CardEffect> allEffects, ExileGraveyardCardsEffect exile) {
         CardPredicate filter = exile.filter();
-        boolean anyGraveyard = exile.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
+        GraveyardSearchScope scope = exile.targetSpec().graveyardScope().orElseThrow();
 
         List<Card> matchingCards = new ArrayList<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!anyGraveyard && playerId.equals(controllerId)) continue; // opponent's graveyard only
+        for (UUID playerId : scope.graveyardOwners(gameData.orderedPlayerIds, controllerId)) {
             List<Card> graveyard = targetableGraveyard(gameData, playerId);
             if (graveyard == null) continue;
             for (Card graveyardCard : graveyard) {
@@ -201,7 +208,7 @@ public class GraveyardTargetingService {
         gameData.graveyardTargetOperation.card = card;
         gameData.graveyardTargetOperation.controllerId = controllerId;
         gameData.graveyardTargetOperation.effects = new ArrayList<>(allEffects);
-        String zoneLabel = anyGraveyard ? "a graveyard" : "an opponent's graveyard";
+        String zoneLabel = zoneLabel(scope);
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
                 "Choose " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "") + " from " + zoneLabel + " to exile.");
     }
@@ -326,31 +333,28 @@ public class GraveyardTargetingService {
     /**
      * Attack-trigger targeting for "Whenever this creature attacks, exile target card from defending
      * player's graveyard" (Graven Abomination). Chooses the graveyard card as the trigger goes on the
-     * stack. Prefer {@code defendingPlayerId} when known; otherwise search all opponents' graveyards
-     * ({@link TargetCategory#GRAVEYARD_CARD}) or every graveyard ({@link TargetCategory#ANY_GRAVEYARD_CARD}).
-     * No legal target ⇒ trigger skipped (CR 603.3c). Routes by {@code targetSpec()} so callers need no
-     * concrete-effect {@code instanceof}.
+     * stack. Prefer {@code defendingPlayerId} when known; otherwise search the graveyards the
+     * effect's declared {@link GraveyardSearchScope} names. No legal target ⇒ trigger skipped
+     * (CR 603.3c). Routes by {@code targetSpec()} so callers need no concrete-effect
+     * {@code instanceof}.
      */
     public void handleAttackGraveyardTargeting(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, UUID sourcePermanentId, UUID defendingPlayerId) {
-        CardEffect gyEffect = effects.stream()
-                .filter(e -> e.targetSpec().category().isGraveyard())
+        GraveyardSearchScope scope = effects.stream()
+                .map(e -> e.targetSpec().graveyardScope().orElse(null))
+                .filter(java.util.Objects::nonNull)
                 .findFirst()
                 .orElse(null);
-        if (gyEffect == null) {
+        if (scope == null) {
             return;
         }
 
-        TargetCategory category = gyEffect.targetSpec().category();
-        boolean anyGraveyard = category == TargetCategory.ANY_GRAVEYARD_CARD;
+        List<UUID> searchPlayerIds = defendingPlayerId != null
+                ? List.of(defendingPlayerId)
+                : scope.graveyardOwners(gameData.orderedPlayerIds, controllerId);
 
         List<Card> matchingCards = new ArrayList<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (defendingPlayerId != null) {
-                if (!playerId.equals(defendingPlayerId)) continue;
-            } else if (!anyGraveyard && playerId.equals(controllerId)) {
-                continue; // opponent's graveyard only
-            }
+        for (UUID playerId : searchPlayerIds) {
             List<Card> graveyard = targetableGraveyard(gameData, playerId);
             if (graveyard == null) continue;
             matchingCards.addAll(graveyard);
@@ -371,7 +375,7 @@ public class GraveyardTargetingService {
 
         String zoneLabel = defendingPlayerId != null
                 ? "defending player's graveyard"
-                : (anyGraveyard ? "a graveyard" : "an opponent's graveyard");
+                : zoneLabel(scope);
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, 1,
                 card.getName() + "'s ability — Choose target card from " + zoneLabel + " to exile.");
 
@@ -385,10 +389,10 @@ public class GraveyardTargetingService {
             List<CardEffect> effects, UUID sourcePermanentId,
             ExileGraveyardCardsEffect exileEffect) {
         CardPredicate filter = exileEffect.filter();
-        boolean anyGraveyard = exileEffect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
 
         List<Card> matchingCards = new ArrayList<>();
-        List<UUID> searchPlayerIds = anyGraveyard ? gameData.orderedPlayerIds : List.of(controllerId);
+        List<UUID> searchPlayerIds = exileEffect.targetSpec().graveyardScope().orElseThrow()
+                .graveyardOwners(gameData.orderedPlayerIds, controllerId);
         for (UUID playerId : searchPlayerIds) {
             List<Card> graveyard = targetableGraveyard(gameData, playerId);
             if (graveyard == null) continue;
@@ -510,10 +514,10 @@ public class GraveyardTargetingService {
                 .map(e -> (ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect) e)
                 .findFirst().orElseThrow();
         CardPredicate filter = mayPlayEffect.filter();
-        boolean anyGraveyard = mayPlayEffect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
 
         List<Card> matchingCards = new ArrayList<>();
-        List<UUID> searchPlayerIds = anyGraveyard ? gameData.orderedPlayerIds : List.of(controllerId);
+        List<UUID> searchPlayerIds = mayPlayEffect.targetSpec().graveyardScope().orElseThrow()
+                .graveyardOwners(gameData.orderedPlayerIds, controllerId);
         for (UUID playerId : searchPlayerIds) {
             List<Card> graveyard = targetableGraveyard(gameData, playerId);
             if (graveyard == null) continue;

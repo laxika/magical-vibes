@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+
 /**
  * "Exile target instant or sorcery card from a graveyard. Copy that card. Cast the copy if able
  * without paying its mana cost." — applied to every target of the spell (Spelltwine exiles one card
@@ -13,6 +15,6 @@ public record ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect() implements 
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.anyGraveyardCard());
+        return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.ALL_GRAVEYARDS));
     }
 }

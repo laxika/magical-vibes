@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+
 /**
  * Targets a card in a graveyard (other than a basic land card), then searches its owner's
  * graveyard, hand, and library for any number of cards with the same name and exiles them.
@@ -11,6 +13,6 @@ public record ExileTargetGraveyardCardAndSameNameFromZonesEffect() implements Ca
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.anyGraveyardCard());
+        return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.ALL_GRAVEYARDS));
     }
 }

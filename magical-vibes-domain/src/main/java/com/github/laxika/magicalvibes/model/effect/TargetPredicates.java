@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTruePredicate;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,10 @@ import java.util.Map;
  * {@link #playerOrPermanent()} is "a player or <em>any</em> permanent" while {@link #anyTarget()}
  * is CR 115.4's "any target" — a creature, planeswalker or player. Both were
  * {@code (includesPermanents=true, includesPlayers=true)} before.</p>
+ *
+ * <p>Conversely the enum's three graveyard constants collapse onto a single
+ * {@link #graveyardCard(GraveyardSearchScope)}, because the zone state they encoded is one
+ * {@link GraveyardSearchScope} component on the leaf.</p>
  */
 public final class TargetPredicates {
 
@@ -57,12 +62,8 @@ public final class TargetPredicates {
     private static final TargetPredicate PLAYER_OR_PLANESWALKER = anyOf(PLAYER, permanents(IS_PLANESWALKER));
     private static final TargetPredicate ANY_TARGET = anyOf(PLAYER, CREATURE_OR_PLANESWALKER);
     private static final TargetPredicate SPELL_ON_STACK = spells(ANY_SPELL);
-    private static final TargetPredicate GRAVEYARD_CARD =
-            graveyardCards(ANY_CARD, GraveyardSearchScope.OPPONENT_GRAVEYARD);
-    private static final TargetPredicate ANY_GRAVEYARD_CARD =
-            graveyardCards(ANY_CARD, GraveyardSearchScope.ALL_GRAVEYARDS);
-    private static final TargetPredicate CONTROLLERS_GRAVEYARD_CARD =
-            graveyardCards(ANY_CARD, GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
+    private static final Map<GraveyardSearchScope, TargetPredicate> GRAVEYARD_CARD_BY_SCOPE =
+            buildGraveyardCardIndex();
     private static final TargetPredicate EXILE_CARD = exiledCards(ANY_CARD);
 
     /** Inverse of {@link #forCategory(TargetCategory)}; see {@link #categoryOf(TargetPredicate)}. */
@@ -153,19 +154,19 @@ public final class TargetPredicates {
         return SPELL_ON_STACK;
     }
 
-    /** {@link TargetCategory#GRAVEYARD_CARD} — the opponent-scoped default. */
-    public static TargetPredicate graveyardCard() {
-        return GRAVEYARD_CARD;
-    }
-
-    /** {@link TargetCategory#ANY_GRAVEYARD_CARD}. */
-    public static TargetPredicate anyGraveyardCard() {
-        return ANY_GRAVEYARD_CARD;
-    }
-
-    /** {@link TargetCategory#CONTROLLERS_GRAVEYARD_CARD}. */
-    public static TargetPredicate controllersGraveyardCard() {
-        return CONTROLLERS_GRAVEYARD_CARD;
+    /**
+     * A card in a graveyard within {@code scope}, with no card restriction — the single factory the
+     * three graveyard {@link TargetCategory} constants collapsed onto
+     * ({@link TargetCategory#GRAVEYARD_CARD} is {@code OPPONENT_GRAVEYARD},
+     * {@link TargetCategory#ANY_GRAVEYARD_CARD} is {@code ALL_GRAVEYARDS},
+     * {@link TargetCategory#CONTROLLERS_GRAVEYARD_CARD} is {@code CONTROLLERS_GRAVEYARD}).
+     *
+     * <p>Declare the scope the card's oracle text actually names; every reader takes its search
+     * scope from here via {@code TargetSpec.graveyardScope()}, so a wrong scope widens or narrows
+     * the target list directly.</p>
+     */
+    public static TargetPredicate graveyardCard(GraveyardSearchScope scope) {
+        return GRAVEYARD_CARD_BY_SCOPE.get(scope);
     }
 
     /** {@link TargetCategory#EXILE_CARD}. */
@@ -189,9 +190,9 @@ public final class TargetPredicates {
             case PLAYER_OR_PLANESWALKER -> playerOrPlaneswalker();
             case ANY_TARGET -> anyTarget();
             case SPELL_ON_STACK -> spellOnStack();
-            case GRAVEYARD_CARD -> graveyardCard();
-            case ANY_GRAVEYARD_CARD -> anyGraveyardCard();
-            case CONTROLLERS_GRAVEYARD_CARD -> controllersGraveyardCard();
+            case GRAVEYARD_CARD -> graveyardCard(GraveyardSearchScope.OPPONENT_GRAVEYARD);
+            case ANY_GRAVEYARD_CARD -> graveyardCard(GraveyardSearchScope.ALL_GRAVEYARDS);
+            case CONTROLLERS_GRAVEYARD_CARD -> graveyardCard(GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
             case EXILE_CARD -> exileCard();
         };
     }
@@ -219,6 +220,14 @@ public final class TargetPredicates {
                             + "put any further restriction on TargetSpec.predicate() instead.");
         }
         return category;
+    }
+
+    private static Map<GraveyardSearchScope, TargetPredicate> buildGraveyardCardIndex() {
+        Map<GraveyardSearchScope, TargetPredicate> index = new EnumMap<>(GraveyardSearchScope.class);
+        for (GraveyardSearchScope scope : GraveyardSearchScope.values()) {
+            index.put(scope, graveyardCards(ANY_CARD, scope));
+        }
+        return index;
     }
 
     private static Map<TargetPredicate, TargetCategory> buildCategoryIndex() {

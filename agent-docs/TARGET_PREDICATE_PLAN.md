@@ -205,16 +205,17 @@ All 14 constants become factories on a `TargetPredicates` helper. Migration is m
 | `PLAYER_OR_PLANESWALKER` | `anyOf(players(ANY), permanents(isPlaneswalker))` |
 | `ANY_TARGET` | `anyOf(players(ANY), permanents(anyOf(isCreature, isPlaneswalker)))` |
 | `SPELL_ON_STACK` | `spells(TRUE)` |
-| `GRAVEYARD_CARD` | `graveyardCards(TRUE, OPPONENT_GRAVEYARD)` |
-| `ANY_GRAVEYARD_CARD` | `graveyardCards(TRUE, ALL_GRAVEYARDS)` |
-| `CONTROLLERS_GRAVEYARD_CARD` | `graveyardCards(TRUE, CONTROLLERS_GRAVEYARD)` |
+| `GRAVEYARD_CARD` | `graveyardCard(OPPONENT_GRAVEYARD)` |
+| `ANY_GRAVEYARD_CARD` | `graveyardCard(ALL_GRAVEYARDS)` |
+| `CONTROLLERS_GRAVEYARD_CARD` | `graveyardCard(CONTROLLERS_GRAVEYARD)` |
 | `EXILE_CARD` | `exiledCards(TRUE)` |
 
 Two wins fall out of the table itself: `ANY_TARGET` and `PLAYER_OR_PERMANENT` become structurally
 distinct (defect 2), and the three graveyard constants collapse onto the `GraveyardSearchScope`
 enum that `GraveyardCardPredicateTargetFilter` already carries — deleting the hand-copied mapping
-in `GraveyardTargetingSupport:37`, `ValidTargetService:895`, `AiTargetSelector:740`,
-`SpellCastingService:1148`, and `TriggeredAbilityQueueService:236`.
+in `GraveyardTargetingSupport`, `ValidTargetService`, `AiTargetSelector`, `SpellCastingService`,
+`TriggeredAbilityQueueService` and elsewhere. *(Step 5 did this. There were fourteen copies, not
+five, and they disagreed with each other — see "Step 5 outcome".)*
 
 `TargetSpec` keeps `harmful`, `selfTargeting`, and `playerTargetCount` unchanged — those are
 orthogonal axes, not targeting domains. `harmful` in particular drives the CR 702.16b protection
@@ -252,7 +253,7 @@ mechanical high-churn. Phase 4 is deletion.
 | 2b | **Delete the `allAnyTarget` inference for real.** Blocked on making eight cards' effects declare honestly instead of using `PLAYER_OR_PERMANENT` as an unchecked escape hatch — see "Step 2 outcome" for the list, the two tiers, and the two mechanisms that must be replaced first (null-target tolerance, and the fact that validators are skipped for multi-target positions). Also covers the ability twin of the same inference (`ValidTargetService.isAnyTargetAbility`, read by `TargetLegalityService.validateMultiTargetAbility:391`), which must change in the same step or enumeration and cast-time validation will disagree. | HIGH | **DONE** — see "Step 2b outcome". Inference and its ability twin deleted; null tolerance now comes from `EffectResolution.distributesAmountsAmongTargets`, not from the target count. |
 | 3 | Route `MayAbilityHandlerService` through the shared evaluator; delete both copies of the open-coded switch (defect 3). Add a regression test for a `LAND`-spec may-ability. | MED | **DONE** — see "Step 3 outcome". Defect 3 confirmed verbatim; both copies collapsed into one helper. No implemented card has a `LAND` may-ability, so that regression is a service test; `PLAYER_OR_PLANESWALKER` had a real card (Boggart Shenanigans) and got a card test. |
 | 4 | Migrate the ~400 effect records' `targetSpec()` to the factories. Mechanical and scriptable; the Step 1 equivalence harness is the safety net. Batch by category, smallest first (`EXILE_CARD` 2, `CONTROLLERS_GRAVEYARD_CARD` 2, `LAND` 4, `PLAYER_OR_PLANESWALKER` 4 … `PLAYER` 155 last). | MED | **DONE** — see "Step 4 outcome". Batching was unnecessary (one scripted sweep, no import churn); `TargetSpec` now *stores* the declared target and `category()` became a bridge. |
-| 5 | Collapse the three graveyard categories onto `GraveyardCards.scope`; delete the five hand-copied scope mappings. | LOW | TODO |
+| 5 | Collapse the three graveyard categories onto `GraveyardCards.scope`; delete the five hand-copied scope mappings. | LOW | **DONE** — see "Step 5 outcome". Not LOW and not five: there were **fourteen** copies and they disagreed, so six effects were declaring a scope they did not mean. Six rules-visible fixes. |
 | 6 | Migrate the derived-boolean readers (`includesPermanents` / `includesPlayers` / `isGraveyard`) in the trigger collectors, `StepTriggerService`, AI, and `EffectResolution.collectTargetTypes`. ~30 call sites across engine + AI. | MED | TODO |
 | 7 | Delete `TargetCategory`; update `TargetSpecRatchetTest`, `scripts/targetspec-audit.py`, and the `EFFECTS_INDEX.md` category table. | LOW | TODO |
 | 8 | **Optional, separate decision.** Add `PermanentIsBattlePredicate` and include battles in the `ANY_TARGET` factory per CR 115.4 (defect 4). Needs a rules review of the battle-damage path first — do not bundle into Step 7. | MED | TODO |
@@ -550,13 +551,13 @@ Two things a later step should know:
   `TargetValidationService.rejectionMessage`, but it is `private` and reusing it would add a
   `MayAbilityHandlerService → TargetValidationService` edge. Left alone deliberately; it is
   pre-existing (a bare `PERMANENT` spec said "creature" too), not introduced here.
-- **`MayAbilityHandlerService` still has 18 legacy category reads** (`includesPermanents()` /
-  `includesPlayers()` / `isGraveyard()` / `== TargetCategory.ANY_GRAVEYARD_CARD`): the
-  `isTargeted*Effect` triples at the top of `handleMayAbilityChosen` and in
-  `handleResolutionTimeMayChoice`, the two `canTargetPermanent` / `canTargetPlayer` guards around the
-  new helper, and the graveyard-scope comparisons duplicated across
-  `handleGraveyardTargetedMayAbility` and `handleResolutionTimeGraveyardTargetSelection`. Those are
-  Step 5/6 territory and were left untouched; only the new helper uses `TargetSpec.admits(Kind)`.
+- **`MayAbilityHandlerService` still has legacy category reads** (`includesPermanents()` /
+  `includesPlayers()` / `isGraveyard()`): the `isTargeted*Effect` triples at the top of
+  `handleMayAbilityChosen` and in `handleResolutionTimeMayChoice`, and the two `canTargetPermanent` /
+  `canTargetPlayer` guards around the new helper. Step 6 territory. *(The graveyard-scope
+  comparisons that were duplicated across `handleGraveyardTargetedMayAbility` and
+  `handleResolutionTimeGraveyardTargetSelection` are gone — Step 5 collapsed both loops into one
+  `graveyardTargetOf` helper.)*
 
 ---
 
@@ -620,6 +621,74 @@ Two things a later step needs:
 - **`ClashEffect` still reads `category().includesPermanents()` / `includesPlayers()` on its child
   effects** to compute its own spec. That is a Step 6 reader like any other, but it is the only one
   inside `model/effect/`, so a grep scoped to the engine will miss it.
+
+---
+
+## Step 5 outcome
+
+`TargetPredicates` has one graveyard factory now — `graveyardCard(GraveyardSearchScope)` — instead of
+three named ones, and the scope is read back through `TargetPredicate.graveyardScope()` /
+`TargetSpec.graveyardScope()`. The expansion "which players' graveyards does this search" is a single
+method, `GraveyardSearchScope.graveyardOwners(orderedPlayerIds, controllerId)`, on the domain enum.
+
+### The premise was wrong in two ways, and the second one is the whole step
+
+**There were fourteen copies, not five**, spread over `GraveyardTargetingSupport`, `ValidTargetService`
+(×3), `SpellCastingService`, `TriggeredAbilityQueueService` (×3, including an `isInScope` helper the
+plan never mentioned), `GraveyardTargetingService` (×4), `MayAbilityHandlerService` (×2, the two
+duplicated `handleGraveyard*` loops), `AiTargetSelector` and `GameSimulator`. All are gone.
+
+**And they did not agree with each other.** Six of them expanded "not `ANY_GRAVEYARD_CARD`" to the
+**controller's** graveyard; the other eight expanded it to **opponents'** graveyards — while
+`TargetCategory.GRAVEYARD_CARD` documents itself as opponent-scoped. A mechanical collapse onto the
+leaf's scope would therefore have silently broken every card on the controller's-graveyard side. The
+step could only be done by first making each effect declare the scope its oracle text names:
+
+| Effect | Was | Now |
+|---|---|---|
+| `ReturnCardFromGraveyardEffect` | `OPPONENT_GRAVEYARD` for all 216 construction sites | its own `source()` component (191 sites `CONTROLLERS_GRAVEYARD`, 25 `ALL_GRAVEYARDS`, 0 opponent) |
+| `CastTargetInstantOrSorceryFromGraveyardEffect` | `OPPONENT_GRAVEYARD` always | its own `scope()` component |
+| `ExileTargetCardFromGraveyardAndImprintOnSourceEffect` | `OPPONENT_GRAVEYARD` always | a new `scope` record component — Myr Welder is "from a graveyard", Rona is "from your graveyard" (both verified on Scryfall), so one constant could not serve both |
+| `ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect` | `ownGraveyardOnly` → `OPPONENT_GRAVEYARD` | `ownGraveyardOnly` → `CONTROLLERS_GRAVEYARD` |
+| `ExileTargetCardFromGraveyardAndCreateTokenCopyEffect` | `ownGraveyardOnly` → `OPPONENT_GRAVEYARD` | `ownGraveyardOnly` → `CONTROLLERS_GRAVEYARD` |
+| `ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect` | `ALL_GRAVEYARDS` | `OPPONENT_GRAVEYARD` |
+
+The three `// reproduces the legacy (graveyard=T, any=F) booleans exactly` comments that justified the
+inverted declarations are deleted with them. The pattern they encoded — declare a wrong scope, let a
+`@ValidatesTarget` validator carry the real one — is now called out as forbidden in
+`EFFECTS_INDEX.md`.
+
+### Behaviour changes, all rules-correct
+
+| Card(s) | Before | Now |
+|---|---|---|
+| Myr Welder | imprint enumerated opponents' graveyards only (its validator has no scope check, so your own artifacts were simply unreachable) | "from a graveyard" — both graveyards |
+| Snapcaster Mage, Flashback, Horde of Notions | enumeration offered opponents' graveyards; the validator then rejected the pick | the controller's own graveyard |
+| Coffin Queen, Nomad Mythmaker, Liliana Vess −8, Grazing Kelpie, Nighteyes, Grimoire of the Dead, and every other `ReturnCardFromGraveyardEffect` **activated ability** | `computeValidGraveyardTargetsForAbility` offered opponents' graveyards regardless of `source()` | the declared `source()` |
+| Nita, Forum Conciliator | enumerated every graveyard, validator rejected your own | opponents' graveyards only |
+| Séance, Practiced Scrollsmith | unchanged (the readers on those paths already used the controller's graveyard) | unchanged, now honestly declared |
+| A `CONTROLLERS_GRAVEYARD`-scoped prompt | said "an opponent's graveyard" / "a graveyard" | says "your graveyard" |
+
+Pinned by two card tests confirmed to fail against a restored copy of the old declaration —
+`MyrWelderTest.offersArtifactsFromEitherGraveyard` and
+`CoffinQueenTest.offersCreatureCardsFromEitherGraveyard`, both asserting through
+`ValidTargetService.computeValidTargetsForAbility` — plus `ValidTargetServiceTest` (a controller-scoped
+spell effect reaches the controller's graveyard and no opponent's) and `AiTargetSelectorTest`.
+
+### Three things a later step should know
+
+- **Enumeration for an ability does not apply `ReturnCardFromGraveyardEffect.filter()`.**
+  `ValidTargetService.matchesGraveyardEffectTypeFilter` has no arm for it, so Coffin Queen's
+  activated ability offers noncreature cards too; the `@ValidatesTarget` validator rejects them on
+  activation. Pre-existing and orthogonal to scope — the Coffin Queen test deliberately seeds only
+  creature cards rather than asserting the gap.
+- **`PutTargetCardsFromGraveyardOnTopOfLibraryEffect` declares `TargetSpec.NONE`** and keeps its scope
+  in its own `source` component; its cards (Lodestone Bauble, Misinformation) target through a
+  card-level `GraveyardCardPredicateTargetFilter`. Giving it a declared target is a behaviour change
+  beyond this step.
+- **`GraveyardTargetingService.handleBeginningOfCombatGraveyardTargeting` has a dead scope branch.**
+  `StepTriggerService:3553` only ever hands it a `TARGET_CARDS_ANY_GRAVEYARD` effect
+  (`.orElseThrow()` on that filter), so its non-`ALL_GRAVEYARDS` path was and is unreachable.
 
 ---
 

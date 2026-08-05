@@ -214,4 +214,14 @@ public sealed interface TargetPredicate permits TargetPredicate.Leaf, TargetPred
     default Optional<PermanentPredicate> permanentRestriction() {
         return leaf(Kind.PERMANENT).map(leaf -> ((Permanents) leaf).inner());
     }
+
+    /**
+     * Which graveyards a card target is drawn from, or empty when this predicate admits no
+     * graveyard card at all. This is the single source of truth for graveyard scope: the three
+     * mutually-exclusive zone states the old {@code TargetCategory} spelled as three constants are
+     * one {@link GraveyardSearchScope} component here, so no reader hand-copies the mapping.
+     */
+    default Optional<GraveyardSearchScope> graveyardScope() {
+        return leaf(Kind.GRAVEYARD_CARD).map(leaf -> ((GraveyardCards) leaf).scope());
+    }
 }

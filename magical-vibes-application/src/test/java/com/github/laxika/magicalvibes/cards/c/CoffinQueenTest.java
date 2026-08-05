@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -111,6 +112,23 @@ class CoffinQueenTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, idx, 0, null, shock.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature card");
+    }
+
+    @Test
+    @DisplayName("Offers creature cards in both graveyards — the ability targets 'a graveyard'")
+    void offersCreatureCardsFromEitherGraveyard() {
+        Permanent queen = addReadyQueen();
+        Card ownBears = new GrizzlyBears();
+        Card opponentBears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(ownBears));
+        harness.setGraveyard(player2, List.of(opponentBears));
+
+        ValidTargetsResponse response = harness.getValidTargetService().computeValidTargetsForAbility(
+                gd, queen.getCard(), queen.getCard().getActivatedAbilities().getFirst(),
+                player1.getId(), gd.playerBattlefields.get(player1.getId()).indexOf(queen));
+
+        assertThat(response.validGraveyardCardIds())
+                .containsExactlyInAnyOrder(ownBears.getId(), opponentBears.getId());
     }
 
     private Permanent addReadyQueen() {

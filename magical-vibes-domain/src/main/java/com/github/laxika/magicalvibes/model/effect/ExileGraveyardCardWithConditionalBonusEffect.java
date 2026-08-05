@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+
 /**
  * Exiles a targeted card from any graveyard. If the exiled card is a creature card, the controller
  * gains {@code creatureLifeGain} life and the source permanent gets {@code creatureCountersOnSource}
@@ -24,5 +26,5 @@ public record ExileGraveyardCardWithConditionalBonusEffect(
     }
 
     @Override
-    public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.anyGraveyardCard()); }
+    public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.ALL_GRAVEYARDS)); }
 }

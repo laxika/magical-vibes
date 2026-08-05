@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 import java.util.List;
@@ -45,12 +46,8 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        // ownGraveyardOnly narrows the search but was NEVER expressed through
-        // targetsControllersGraveyardOnly (which stayed false) — it is the kept validator's
-        // controller-compare. So ownGraveyardOnly=true reproduces (graveyard=T, any=F) = GRAVEYARD_CARD,
-        // not CONTROLLERS_GRAVEYARD_CARD.
-        return ownGraveyardOnly
-                ? TargetSpec.benign(TargetPredicates.graveyardCard())
-                : TargetSpec.benign(TargetPredicates.anyGraveyardCard());
+        return TargetSpec.benign(TargetPredicates.graveyardCard(ownGraveyardOnly
+                ? GraveyardSearchScope.CONTROLLERS_GRAVEYARD
+                : GraveyardSearchScope.ALL_GRAVEYARDS));
     }
 }

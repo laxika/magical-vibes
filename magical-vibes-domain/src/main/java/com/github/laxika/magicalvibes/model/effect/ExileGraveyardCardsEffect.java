@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 import java.util.UUID;
@@ -49,8 +50,8 @@ public record ExileGraveyardCardsEffect(
         //   TARGET_PLAYER_ENTIRE            -> (player=T)              -> PLAYER
         //   OWN / ALL_PLAYERS / ALL_OPPONENTS -> no single validated target -> NONE
         return switch (scope) {
-            case TARGET_CARDS_ANY_GRAVEYARD -> TargetSpec.benign(TargetPredicates.anyGraveyardCard());
-            case TARGET_CARDS_OPPONENT_GRAVEYARD -> TargetSpec.benign(TargetPredicates.graveyardCard());
+            case TARGET_CARDS_ANY_GRAVEYARD -> TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.ALL_GRAVEYARDS));
+            case TARGET_CARDS_OPPONENT_GRAVEYARD -> TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.OPPONENT_GRAVEYARD));
             case TARGET_PLAYER_ENTIRE -> TargetSpec.benign(TargetPredicates.player());
             default -> TargetSpec.NONE;
         };

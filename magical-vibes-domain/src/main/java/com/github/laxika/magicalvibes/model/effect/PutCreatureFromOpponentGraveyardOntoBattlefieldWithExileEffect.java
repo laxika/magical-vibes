@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+
 /**
  * Puts target creature card from an opponent's graveyard onto the battlefield under your control.
  * It gains haste. Exile it at the beginning of the next end step.
@@ -14,6 +16,6 @@ public record PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect() i
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.graveyardCard());
+        return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.OPPONENT_GRAVEYARD));
     }
 }

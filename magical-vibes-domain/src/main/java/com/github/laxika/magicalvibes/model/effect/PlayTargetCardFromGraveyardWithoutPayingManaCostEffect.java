@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -9,5 +10,5 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * without paying its mana cost). Used by Horde of Notions (Elemental cards).
  */
 public record PlayTargetCardFromGraveyardWithoutPayingManaCostEffect(CardPredicate filter) implements CardEffect {
-    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.controllersGraveyardCard()); }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.CONTROLLERS_GRAVEYARD)); }
 }

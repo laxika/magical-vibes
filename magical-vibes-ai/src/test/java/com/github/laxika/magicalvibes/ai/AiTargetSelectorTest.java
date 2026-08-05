@@ -708,8 +708,15 @@ class AiTargetSelectorTest {
                 ),
                 Arguments.of(
                         "ExileTargetCardFromGraveyardAndImprint(ARTIFACT) filters to artifacts only",
-                        new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(new CardTypePredicate(CardType.ARTIFACT)),
+                        new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(
+                                new CardTypePredicate(CardType.ARTIFACT), GraveyardSearchScope.ALL_GRAVEYARDS),
                         Set.of("GY Artifact")
+                ),
+                Arguments.of(
+                        "ExileTargetCardFromGraveyardAndImprint ignores the opponent's graveyard when controller-scoped",
+                        new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(
+                                new CardTypePredicate(CardType.ARTIFACT), GraveyardSearchScope.CONTROLLERS_GRAVEYARD),
+                        Set.of()
                 ),
                 Arguments.of(
                         "PutCardFromOpponentGraveyard filters to artifacts and creatures",

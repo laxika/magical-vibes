@@ -339,15 +339,15 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
                 .isEqualTo(TargetPredicates.permanents(new PermanentTruePredicate()));
         assertThat(TargetPredicates.spellOnStack())
                 .isEqualTo(TargetPredicates.spells(new StackEntryTruePredicate()));
-        assertThat(TargetPredicates.graveyardCard().leaf(TargetPredicate.Kind.GRAVEYARD_CARD))
+        assertThat(TargetPredicates.graveyardCard(GraveyardSearchScope.OPPONENT_GRAVEYARD).leaf(TargetPredicate.Kind.GRAVEYARD_CARD))
                 .get()
                 .extracting(leaf -> ((TargetPredicate.GraveyardCards) leaf).scope())
                 .isEqualTo(GraveyardSearchScope.OPPONENT_GRAVEYARD);
-        assertThat(TargetPredicates.anyGraveyardCard().leaf(TargetPredicate.Kind.GRAVEYARD_CARD))
+        assertThat(TargetPredicates.graveyardCard(GraveyardSearchScope.ALL_GRAVEYARDS).leaf(TargetPredicate.Kind.GRAVEYARD_CARD))
                 .get()
                 .extracting(leaf -> ((TargetPredicate.GraveyardCards) leaf).scope())
                 .isEqualTo(GraveyardSearchScope.ALL_GRAVEYARDS);
-        assertThat(TargetPredicates.controllersGraveyardCard().leaf(TargetPredicate.Kind.GRAVEYARD_CARD))
+        assertThat(TargetPredicates.graveyardCard(GraveyardSearchScope.CONTROLLERS_GRAVEYARD).leaf(TargetPredicate.Kind.GRAVEYARD_CARD))
                 .get()
                 .extracting(leaf -> ((TargetPredicate.GraveyardCards) leaf).scope())
                 .isEqualTo(GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
@@ -425,19 +425,15 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
     }
 
     /**
-     * The category → {@link GraveyardSearchScope} mapping the engine hand-copies today, in
-     * {@code SpellCastingService:1148}, {@code AiTargetSelector:740} and
-     * {@code GraveyardTargetingSupport:37}. Step 5 deletes those copies in favour of the leaf's own
-     * scope; this is the reference they must agree with until then.
+     * Whether {@code category}'s declared {@link GraveyardSearchScope} reaches the graveyard of
+     * {@code graveyardOwnerId}, expressed through the scope itself rather than through a
+     * hand-copied category comparison — the engine has no such copy left to mirror.
      */
     private boolean inScopeToday(TargetCategory category, UUID graveyardOwnerId) {
-        boolean own = graveyardOwnerId.equals(player1.getId());
-        return switch (category) {
-            case CONTROLLERS_GRAVEYARD_CARD -> own;
-            case ANY_GRAVEYARD_CARD -> true;
-            case GRAVEYARD_CARD -> !own;
-            default -> false;
-        };
+        return TargetSpec.benign(TargetPredicates.forCategory(category)).graveyardScope()
+                .map(scope -> scope.graveyardOwners(gd.orderedPlayerIds, player1.getId()))
+                .orElse(List.of())
+                .contains(graveyardOwnerId);
     }
 
     private FilterContext filterContext() {

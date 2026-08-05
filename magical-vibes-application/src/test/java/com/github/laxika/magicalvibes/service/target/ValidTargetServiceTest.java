@@ -1411,7 +1411,7 @@ class ValidTargetServiceTest {
             spell.setColor(CardColor.RED);
             CardEffect graveyardEffect = new CardEffect() {
                 @Override
-                public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.graveyardCard()); }
+                public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.OPPONENT_GRAVEYARD)); }
             };
             spell.addEffect(EffectSlot.SPELL, graveyardEffect);
 
@@ -1733,14 +1733,21 @@ class ValidTargetServiceTest {
                             Set.of("GY Creature", "GY Instant", "GY Sorcery", "GY Artifact", "GY Enchantment", "GY Basic Land")
                     ),
                     Arguments.of(
-                            "GrantFlashbackToTargetGraveyardCard filters to matching card types",
+                            "GrantFlashbackToTargetGraveyardCard reaches no opponent's graveyard (controller-scoped)",
                             new GrantFlashbackToTargetGraveyardCardEffect(Set.of(CardType.INSTANT, CardType.SORCERY)),
-                            Set.of("GY Instant", "GY Sorcery")
+                            Set.of()
                     ),
                     Arguments.of(
                             "ExileTargetCardFromGraveyardAndImprint(ARTIFACT) filters to artifacts only",
-                            new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(new CardTypePredicate(CardType.ARTIFACT)),
+                            new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(
+                                    new CardTypePredicate(CardType.ARTIFACT), GraveyardSearchScope.ALL_GRAVEYARDS),
                             Set.of("GY Artifact")
+                    ),
+                    Arguments.of(
+                            "ExileTargetCardFromGraveyardAndImprint reaches no opponent's graveyard when controller-scoped",
+                            new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(
+                                    new CardTypePredicate(CardType.ARTIFACT), GraveyardSearchScope.CONTROLLERS_GRAVEYARD),
+                            Set.of()
                     ),
                     Arguments.of(
                             "PutCardFromOpponentGraveyard filters to artifacts and creatures",
@@ -1778,6 +1785,22 @@ class ValidTargetServiceTest {
                             .findFirst().map(Card::getName).orElse("unknown"))
                     .collect(Collectors.toSet());
             assertThat(resultNames).isEqualTo(expectedNames);
+        }
+
+        @Test
+        @DisplayName("a controller-scoped effect enumerates the controller's own graveyard, not an opponent's")
+        void spellGraveyardTargets_controllerScopedReachesOwnGraveyard() {
+            Card ownInstant = makeGraveyardCard("Own Instant", CardType.INSTANT);
+            gameData.playerGraveyards.get(player1Id).add(ownInstant);
+
+            Card spell = createCard();
+            spell.addEffect(EffectSlot.SPELL,
+                    new GrantFlashbackToTargetGraveyardCardEffect(Set.of(CardType.INSTANT, CardType.SORCERY)));
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
+                    gameData, spell, player1Id, null);
+
+            assertThat(response.validGraveyardCardIds()).containsExactly(ownInstant.getId());
         }
 
         @Test

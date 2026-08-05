@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 
 import java.util.Set;
 
@@ -11,5 +12,5 @@ import java.util.Set;
  * (e.g. Snapcaster Mage — CR 702.33)
  */
 public record GrantFlashbackToTargetGraveyardCardEffect(Set<CardType> cardTypes) implements CardEffect {
-    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.controllersGraveyardCard()); }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.CONTROLLERS_GRAVEYARD)); }
 }

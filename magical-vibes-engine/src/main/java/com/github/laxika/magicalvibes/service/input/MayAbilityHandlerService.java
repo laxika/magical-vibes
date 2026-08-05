@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
@@ -36,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardA
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -409,35 +409,11 @@ public class MayAbilityHandlerService {
     private void handleGraveyardTargetedMayAbility(GameData gameData, Player player, PendingMayAbility ability) {
         UUID controllerId = ability.controllerId();
 
-        // Determine filter from the graveyard-targeting effect
-        CardPredicate filter = null;
-        boolean anyGraveyard = false;
-        for (CardEffect effect : ability.effects()) {
-            if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect imprint) {
-                filter = imprint.filter();
-                anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
-                break;
-            }
-            if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect exileCopy) {
-                filter = exileCopy.filter();
-                anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
-                break;
-            }
-            if (effect instanceof ReturnCardFromGraveyardEffect ret) {
-                filter = ret.filter();
-                anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
-                break;
-            }
-            if (effect.targetSpec().category().isGraveyard()) {
-                anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
-                break;
-            }
-        }
+        GraveyardTarget target = graveyardTargetOf(ability.effects());
 
         // Collect matching graveyard cards
-        List<UUID> searchPlayerIds = anyGraveyard
-                ? gameData.orderedPlayerIds
-                : List.of(controllerId);
+        CardPredicate filter = target.filter();
+        List<UUID> searchPlayerIds = target.scope().graveyardOwners(gameData.orderedPlayerIds, controllerId);
         UUID graveyardOwnerId = null;
         List<Integer> matchingIndices = new ArrayList<>();
         for (UUID pid : searchPlayerIds) {
@@ -706,38 +682,41 @@ public class MayAbilityHandlerService {
         }
     }
 
+    /**
+     * The card restriction and search scope of the first graveyard-targeting effect in
+     * {@code effects}, shared by the accept path and the CR 603.5 resolution-time path. The scope
+     * is the effect's declared {@link GraveyardSearchScope}; the filter has to come from the
+     * concrete record because it is not part of the declared target. An ability with no
+     * graveyard-targeting effect falls back to the controller's own graveyard and no restriction.
+     */
+    private GraveyardTarget graveyardTargetOf(List<CardEffect> effects) {
+        for (CardEffect effect : effects) {
+            GraveyardSearchScope scope = effect.targetSpec().graveyardScope().orElse(null);
+            if (scope == null) {
+                continue;
+            }
+            CardPredicate filter = switch (effect) {
+                case ExileTargetCardFromGraveyardAndImprintOnSourceEffect imprint -> imprint.filter();
+                case ExileTargetCardFromGraveyardAndCreateTokenCopyEffect exileCopy -> exileCopy.filter();
+                case ReturnCardFromGraveyardEffect ret -> ret.filter();
+                default -> null;
+            };
+            return new GraveyardTarget(filter, scope);
+        }
+        return new GraveyardTarget(null, GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
+    }
+
+    private record GraveyardTarget(CardPredicate filter, GraveyardSearchScope scope) {
+    }
+
     private void handleResolutionTimeGraveyardTargetSelection(GameData gameData, Player player,
                                                               PendingMayAbility ability, StackEntry pendingEntry) {
         UUID controllerId = ability.controllerId();
 
-        // Determine filter from the graveyard-targeting effect
-        CardPredicate filter = null;
-        boolean anyGraveyard = false;
-        for (CardEffect effect : ability.effects()) {
-            if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect imprint) {
-                filter = imprint.filter();
-                anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
-                break;
-            }
-            if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect exileCopy) {
-                filter = exileCopy.filter();
-                anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
-                break;
-            }
-            if (effect instanceof ReturnCardFromGraveyardEffect ret) {
-                filter = ret.filter();
-                anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
-                break;
-            }
-            if (effect.targetSpec().category().isGraveyard()) {
-                anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
-                break;
-            }
-        }
+        GraveyardTarget target = graveyardTargetOf(ability.effects());
 
-        List<UUID> searchPlayerIds = anyGraveyard
-                ? gameData.orderedPlayerIds
-                : List.of(controllerId);
+        CardPredicate filter = target.filter();
+        List<UUID> searchPlayerIds = target.scope().graveyardOwners(gameData.orderedPlayerIds, controllerId);
         UUID graveyardOwnerId = null;
         List<Integer> matchingIndices = new ArrayList<>();
         for (UUID pid : searchPlayerIds) {
