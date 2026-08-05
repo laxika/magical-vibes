@@ -725,24 +725,18 @@ public class ValidTargetService {
     }
 
     /**
-     * As above, evaluating X-dependent target filters at {@code xValue}. X is announced in CR 601.2b,
-     * before targets are chosen in CR 601.2c, so a castability pre-check for an {@code {X}} spell has
-     * to ask whether a legal target exists at the X the caster could announce — asking at X = 0 would
-     * report Killing Glare as unplayable whenever every creature has power 1 or more.
+     * As above for an {@code {X}} spell whose caster could announce X up to {@code maxXValue}. X is
+     * announced in CR 601.2b, before targets are chosen in CR 601.2c, so a castability pre-check has
+     * to ask whether any announceable X leaves a legal target — asking only at X = 0 would report
+     * Killing Glare as unplayable whenever every creature has power 1 or more.
      */
-    public boolean hasValidTargetsForSpell(GameData gameData, Card card, UUID controllerId, Integer xValue) {
+    public boolean hasValidTargetsForSpell(GameData gameData, Card card, UUID controllerId, Integer maxXValue) {
         Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(card);
         boolean isMultiTarget = card.getMaxTargets() > 1;
 
-        if (allowedTargets.contains(TargetType.PERMANENT)) {
-            for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
-                for (Permanent perm : battlefield) {
-                    if (isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, null,
-                            card.getEffects(EffectSlot.SPELL), xValue)) {
-                        return true;
-                    }
-                }
-            }
+        if (allowedTargets.contains(TargetType.PERMANENT)
+                && anyAnnounceableXHasPermanentTarget(gameData, card, controllerId, isMultiTarget, maxXValue)) {
+            return true;
         }
 
         if (allowedTargets.contains(TargetType.PLAYER)) {
@@ -783,6 +777,29 @@ public class ValidTargetService {
             return true;
         }
 
+        return false;
+    }
+
+    /**
+     * Whether some X the caster could announce leaves a legal permanent target for the spell. The
+     * caster picks the X that makes their targets legal, so an equality-based filter — Entrancing
+     * Melody's "creature with mana value X" — is satisfiable by a 1-drop as long as X = 1 is
+     * affordable, however much more mana is available. {@code maxXValue} is null for spells with no
+     * {@code {X}}, which are checked once at the filter's default X = 0.
+     */
+    private boolean anyAnnounceableXHasPermanentTarget(GameData gameData, Card card, UUID controllerId,
+                                                       boolean isMultiTarget, Integer maxXValue) {
+        for (int x = maxXValue == null ? 0 : maxXValue; x >= 0; x--) {
+            Integer xValue = maxXValue == null ? null : x;
+            for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+                for (Permanent perm : battlefield) {
+                    if (isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, null,
+                            card.getEffects(EffectSlot.SPELL), xValue)) {
+                        return true;
+                    }
+                }
+            }
+        }
         return false;
     }
 

@@ -151,8 +151,16 @@ public abstract class BaseCardTest {
     /**
      * Advances from declare-blockers through combat damage with neither player responding. Note that
      * this resolves the damage itself but not any ability it triggers — pass priority again for that.
+     *
+     * <p>Does nothing while a player is being asked something. Declaring attackers auto-passes
+     * through the damage step when the defender has no possible blocker, and it stops mid-step if a
+     * combat-damage trigger prompts its controller; rewinding to declare blockers there would deal
+     * combat damage a second time once the prompt is answered.</p>
      */
     protected void resolveCombat(Player activePlayer) {
+        if (gd.interaction.isAwaitingInput()) {
+            return;
+        }
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();

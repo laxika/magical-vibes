@@ -14,8 +14,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EntrancingMelodyTest extends BaseCardTest {
 
-    
-
     @Test
     @DisplayName("Gains control of target creature with mana value equal to X")
     void gainsControlWithMatchingManaValue() {
@@ -48,8 +46,9 @@ class EntrancingMelodyTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         harness.setHand(player1, List.of(new EntrancingMelody()));
-        // X=1, plus {U}{U} = 3 total mana
-        harness.addMana(player1, ManaColor.BLUE, 3);
+        // 4 mana so X=2 is affordable and the spell has a legal target to be cast at all;
+        // the announced X=1 is what makes this particular target illegal.
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, bearsId))
                 .isInstanceOf(IllegalStateException.class)
@@ -63,8 +62,9 @@ class EntrancingMelodyTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         harness.setHand(player1, List.of(new EntrancingMelody()));
-        // X=0, plus {U}{U} = 2 total mana
-        harness.addMana(player1, ManaColor.BLUE, 2);
+        // 4 mana so X=2 is affordable and the spell has a legal target to be cast at all;
+        // the announced X=0 is what makes this particular target illegal.
+        harness.addMana(player1, ManaColor.BLUE, 4);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, bearsId))
                 .isInstanceOf(IllegalStateException.class)
@@ -90,6 +90,24 @@ class EntrancingMelodyTest extends BaseCardTest {
                 .anyMatch(p -> p.getId().equals(vanguardId));
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(vanguardId));
+    }
+
+    @Test
+    @DisplayName("Castable at a smaller X than the caster could afford")
+    void castableAtSmallerXThanAffordable() {
+        // Only a 1-MV creature is around, so X=1 is the announcement that has a legal target even
+        // though 4 mana would pay for X=2.
+        harness.addToBattlefield(player2, new EliteVanguard());
+        UUID vanguardId = harness.getPermanentId(player2, "Elite Vanguard");
+
+        harness.setHand(player1, List.of(new EntrancingMelody()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castSorcery(player1, 0, 1, vanguardId);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getId().equals(vanguardId));
     }
 
     @Test
