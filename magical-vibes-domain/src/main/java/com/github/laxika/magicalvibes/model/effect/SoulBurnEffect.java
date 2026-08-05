@@ -15,7 +15,7 @@ public record SoulBurnEffect() implements DamageDealingEffect, LifeGainEffect {
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.ANY_TARGET);
+        return TargetSpec.harmful(TargetPredicates.anyTarget());
     }
 
     @Override

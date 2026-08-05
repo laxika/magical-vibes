@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -31,7 +31,7 @@ public class NewPrahvGuildmage extends Card {
                 false,
                 "{3}{W}{U}",
                 List.of(new LockTargetPermanentEffect(
-                        true, true, true, EffectDuration.UNTIL_YOUR_NEXT_TURN, TargetCategory.PERMANENT)),
+                        true, true, true, EffectDuration.UNTIL_YOUR_NEXT_TURN, TargetPredicates.permanent())),
                 "{3}{W}{U}: Detain target nonland permanent an opponent controls.",
                 TargetFilters.nonlandPermanentAnOpponentControls()
         ));

@@ -199,7 +199,7 @@ public class ExampleCard extends Card {
 ## Targeting checklist
 
 - Targeting is computed automatically from effects — both for spells (`Card`) and activated abilities (`ActivatedAbility`).
-- Override `targetSpec()` on your effect record to return a non-NONE `TargetSpec` — `TargetSpec.harmful(TargetCategory.CREATURE)`, `benign(PERMANENT)`, `harmful(ANY_TARGET)`, `benign(SPELL_ON_STACK)`, `benign(GRAVEYARD_CARD)`, etc. (`harmful` = damage/fight/destroy/exile/sacrifice; add a `PermanentPredicate` argument to narrow). This is the ONE targeting declaration; the deleted legacy `canTarget*` booleans derived from it. See `EFFECTS_INDEX.md` § "Effect targeting declarations" for the category table and a worked example.
+- Override `targetSpec()` on your effect record to return a non-NONE `TargetSpec` built from a `TargetPredicates` factory — `TargetSpec.harmful(TargetPredicates.creature())`, `benign(TargetPredicates.permanent())`, `harmful(TargetPredicates.anyTarget())`, `benign(TargetPredicates.spellOnStack())`, `benign(TargetPredicates.graveyardCard())`, etc. (`harmful` = damage/fight/destroy/exile/sacrifice; add a `PermanentPredicate` argument to narrow). This is the ONE targeting declaration; the deleted legacy `canTarget*` booleans derived from it. See `EFFECTS_INDEX.md` § "Effect targeting declarations" for the factory table and a worked example.
 - `EffectResolution.needsTarget(card)`, `EffectResolution.needsSpellTarget(card)`, `EffectResolution.computeAllowedTargets(card)` compute targeting from effects. `ActivatedAbility.isNeedsTarget()` and `ActivatedAbility.isNeedsSpellTarget()` are derived getters on the ability.
 - For kicker/modal spells, use `EffectResolution.resolveEffects(effects, kicked, modeIndex)` to get the resolved effect list before computing targets.
 - For non-battlefield targets on stack entries, use `Zone` (`Zone.GRAVEYARD`, `Zone.STACK`), not `TargetZone`.
@@ -253,7 +253,7 @@ Create a new `CardEffect` record only if both are true:
 
 Then do all of:
 - Add effect record in `magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/`
-  - If it targets, override `targetSpec()` to return a non-NONE `TargetSpec` (category + `harmful` flag + optional `PermanentPredicate`; see `EFFECTS_INDEX.md`). This drives `EffectResolution.needsTarget()`/`needsSpellTarget()` computation, the cast-time type check, and the `targetsPlayer` flag in `CardViewFactory`.
+  - If it targets, override `targetSpec()` to return a non-NONE `TargetSpec` (a `TargetPredicates` factory + `harmful` flag + optional `PermanentPredicate`; see `EFFECTS_INDEX.md`). This drives `EffectResolution.needsTarget()`/`needsSpellTarget()` computation, the cast-time type check, and the `targetsPlayer` flag in `CardViewFactory`.
 - Add a handler in `magical-vibes-engine/.../service/effect/normalfx/`:
   ```java
   @Component

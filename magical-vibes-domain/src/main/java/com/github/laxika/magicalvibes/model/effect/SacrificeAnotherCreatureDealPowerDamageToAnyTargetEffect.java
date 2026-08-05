@@ -11,7 +11,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * 510.1a) is captured before it leaves the battlefield and the source permanent deals that much
  * damage to the chosen target. Declining, or controlling no other creature, deals no damage.
  *
- * <p>Targeting is declared as {@link TargetCategory#ANY_TARGET}; the resolution-time may-ability
+ * <p>Targeting is declared as {@link TargetPredicates#anyTarget()}; the resolution-time may-ability
  * pipeline reads {@code targetSpec()} to offer creatures and players (the same any-target scope as
  * every other resolution-time "may" ability).
  */
@@ -19,6 +19,6 @@ public record SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect() impleme
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.ANY_TARGET);
+        return TargetSpec.harmful(TargetPredicates.anyTarget());
     }
 }

@@ -16,6 +16,6 @@ package com.github.laxika.magicalvibes.model.effect;
 public record MustAttackThisTurnEffect(boolean forceAttackController) implements CardEffect {
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.CREATURE);
+        return TargetSpec.benign(TargetPredicates.creature());
     }
 }

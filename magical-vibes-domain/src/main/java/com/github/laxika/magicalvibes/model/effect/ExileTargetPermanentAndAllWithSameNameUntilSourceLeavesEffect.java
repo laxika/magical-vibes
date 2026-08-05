@@ -12,7 +12,7 @@ public record ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect() im
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.PERMANENT,
+        return TargetSpec.harmful(TargetPredicates.permanent(),
                 new PermanentNotPredicate(new PermanentIsLandPredicate()));
     }
 }

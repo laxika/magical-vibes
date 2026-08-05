@@ -34,7 +34,7 @@ public record GrantColorUntilEndOfTurnEffect(CardColor color, boolean additive, 
     @Override
     public TargetSpec targetSpec() {
         return scope == GrantScope.TARGET_PLAYERS_CREATURES
-                ? TargetSpec.benign(TargetCategory.PLAYER)
-                : TargetSpec.benign(TargetCategory.PERMANENT);
+                ? TargetSpec.benign(TargetPredicates.player())
+                : TargetSpec.benign(TargetPredicates.permanent());
     }
 }

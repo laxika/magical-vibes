@@ -13,5 +13,5 @@ public record ChangeTargetOfTargetSpellWithSingleTargetEffect(boolean creatureTa
         this(false);
     }
 
-    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.SPELL_ON_STACK); }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.spellOnStack()); }
 }

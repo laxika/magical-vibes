@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -172,7 +173,7 @@ class MayAbilityHandlerServiceTest {
         return new CardEffect() {
             @Override
             public TargetSpec targetSpec() {
-                return TargetSpec.benign(category);
+                return TargetSpec.benign(TargetPredicates.forCategory(category));
             }
         };
     }

@@ -54,7 +54,7 @@ public record RegisterDrawCardsAtNextUpkeepEffect(int count, UpkeepDrawRecipient
     @Override
     public TargetSpec targetSpec() {
         return recipient == UpkeepDrawRecipient.TARGET_PLAYER
-                ? TargetSpec.benign(TargetCategory.PLAYER)
+                ? TargetSpec.benign(TargetPredicates.player())
                 : TargetSpec.NONE;
     }
 

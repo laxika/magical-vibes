@@ -34,10 +34,10 @@ public record RemoveKeywordEffect(Keyword keyword, GrantScope scope, PermanentPr
     @Override
     public TargetSpec targetSpec() {
         if (scope == GrantScope.TARGET) {
-            return TargetSpec.benign(TargetCategory.PERMANENT);
+            return TargetSpec.benign(TargetPredicates.permanent());
         }
         if (scope == GrantScope.SELF) {
-            return new TargetSpec(TargetCategory.NONE, false, null, true, 1);
+            return new TargetSpec(null, false, null, true, 1);
         }
         return TargetSpec.NONE;
     }

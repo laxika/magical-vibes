@@ -4,15 +4,15 @@ package com.github.laxika.magicalvibes.model.effect;
 public record DestroyAttachmentsOnTargetCreatureEffect(
         boolean auras,
         boolean equipment,
-        TargetCategory targetCategory
+        TargetPredicate declaredTarget
 ) implements CardEffect {
 
     public DestroyAttachmentsOnTargetCreatureEffect(boolean auras, boolean equipment) {
-        this(auras, equipment, TargetCategory.CREATURE);
+        this(auras, equipment, TargetPredicates.creature());
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(targetCategory);
+        return TargetSpec.harmful(declaredTarget);
     }
 }

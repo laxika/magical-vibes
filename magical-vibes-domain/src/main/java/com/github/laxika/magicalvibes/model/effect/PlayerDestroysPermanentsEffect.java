@@ -32,6 +32,6 @@ public record PlayerDestroysPermanentsEffect(DynamicAmount count, PermanentPredi
     @Override
     public TargetSpec targetSpec() {
         return recipient == DestroyRecipient.TARGET_PLAYER
-                ? TargetSpec.benign(TargetCategory.PLAYER) : TargetSpec.NONE;
+                ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
     }
 }

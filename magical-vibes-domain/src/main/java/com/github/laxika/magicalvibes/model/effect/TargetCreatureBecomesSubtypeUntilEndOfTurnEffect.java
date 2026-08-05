@@ -21,7 +21,7 @@ public record TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype subty
     @Override
     public TargetSpec targetSpec() {
         return scope == GrantScope.TARGET_PLAYERS_CREATURES
-                ? TargetSpec.benign(TargetCategory.PLAYER)
-                : TargetSpec.benign(TargetCategory.CREATURE);
+                ? TargetSpec.benign(TargetPredicates.player())
+                : TargetSpec.benign(TargetPredicates.creature());
     }
 }

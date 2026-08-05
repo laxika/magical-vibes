@@ -6,6 +6,6 @@ public record GainControlOfTargetAuraEffect() implements CardEffect {
     public TargetSpec targetSpec() {
         // The kept validator additionally requires the target to be an Aura that is attached — an
         // attachment-state check the PERMANENT category cannot express.
-        return TargetSpec.benign(TargetCategory.PERMANENT);
+        return TargetSpec.benign(TargetPredicates.permanent());
     }
 }

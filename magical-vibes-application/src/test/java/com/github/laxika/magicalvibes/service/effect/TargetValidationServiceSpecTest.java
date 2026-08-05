@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -71,35 +71,35 @@ class TargetValidationServiceSpecTest {
     private record CreatureHarmfulEffect() implements CardEffect {
         @Override
         public TargetSpec targetSpec() {
-            return TargetSpec.harmful(TargetCategory.CREATURE);
+            return TargetSpec.harmful(TargetPredicates.creature());
         }
     }
 
     private record AnyTargetHarmfulEffect() implements CardEffect {
         @Override
         public TargetSpec targetSpec() {
-            return TargetSpec.harmful(TargetCategory.ANY_TARGET);
+            return TargetSpec.harmful(TargetPredicates.anyTarget());
         }
     }
 
     private record PermanentBenignWithPredicateEffect(PermanentPredicate predicate) implements CardEffect {
         @Override
         public TargetSpec targetSpec() {
-            return TargetSpec.benign(TargetCategory.PERMANENT, predicate);
+            return TargetSpec.benign(TargetPredicates.permanent(), predicate);
         }
     }
 
     private record CreatureBenignWithPredicateEffect(PermanentPredicate predicate) implements CardEffect {
         @Override
         public TargetSpec targetSpec() {
-            return TargetSpec.benign(TargetCategory.CREATURE, predicate);
+            return TargetSpec.benign(TargetPredicates.creature(), predicate);
         }
     }
 
     private record LandBenignEffect() implements CardEffect {
         @Override
         public TargetSpec targetSpec() {
-            return TargetSpec.benign(TargetCategory.LAND);
+            return TargetSpec.benign(TargetPredicates.land());
         }
     }
 

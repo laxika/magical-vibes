@@ -12,5 +12,5 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *               {@code null} means any card
  */
 public record ExileTargetCardFromGraveyardAndImprintOnSourceEffect(CardPredicate filter) implements CardEffect {
-    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.GRAVEYARD_CARD); }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.graveyardCard()); }
 }

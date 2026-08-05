@@ -26,7 +26,7 @@ public record DealDamageToEachMatchingPermanentEffect(DynamicAmount damage, Perm
     public TargetSpec targetSpec() {
         // Always harmful (deals damage) — canTargetPlayer only for the TARGET_PLAYER scope.
         return scope == EachPermanentScope.TARGET_PLAYER
-                ? TargetSpec.harmful(TargetCategory.PLAYER)
-                : new TargetSpec(TargetCategory.NONE, true, null, false, 1);
+                ? TargetSpec.harmful(TargetPredicates.player())
+                : new TargetSpec(null, true, null, false, 1);
     }
 }

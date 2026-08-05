@@ -12,7 +12,7 @@ public record DestroyTargetWallDealManaValueDamageToControllerEffect() implement
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.PERMANENT, new PermanentHasSubtypePredicate(CardSubtype.WALL));
+        return TargetSpec.harmful(TargetPredicates.permanent(), new PermanentHasSubtypePredicate(CardSubtype.WALL));
     }
 
     @Override

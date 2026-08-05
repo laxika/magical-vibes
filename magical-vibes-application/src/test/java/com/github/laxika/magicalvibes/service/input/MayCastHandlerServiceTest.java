@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -202,7 +202,7 @@ class MayCastHandlerServiceTest {
             PermanentPredicateTargetFilter filter =
                     new PermanentPredicateTargetFilter(new PermanentIsArtifactPredicate(), "Target must be an artifact");
             CardEffect effect = new CardEffect() {
-                @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.PERMANENT); }
+                @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.permanent()); }
             };
             card.target(filter).addEffect(EffectSlot.SPELL, effect);
             List<CardEffect> effects = List.of(effect);
@@ -227,7 +227,7 @@ class MayCastHandlerServiceTest {
         void returnsEmptyWhenNoValidTargets() {
             Card card = createInstant("Lightning Bolt");
             CardEffect effect = new CardEffect() {
-                @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.PERMANENT); }
+                @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.permanent()); }
             };
             List<CardEffect> effects = List.of(effect);
 
@@ -242,7 +242,7 @@ class MayCastHandlerServiceTest {
         void onlyAddsCreaturesInDefaultFallback() {
             Card card = createInstant("Bolt");
             CardEffect effect = new CardEffect() {
-                @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.PERMANENT); }
+                @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.permanent()); }
             };
             List<CardEffect> effects = List.of(effect);
 
@@ -382,7 +382,7 @@ class MayCastHandlerServiceTest {
         void targetedSpellNoTargetsPutsCardBack() {
             Card card = createInstant("Targeted Spell");
             CardEffect permanentOnly = new CardEffect() {
-                @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.PERMANENT); }
+                @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.permanent()); }
             };
             card.addEffect(EffectSlot.SPELL, permanentOnly);
             gd.playerDecks.get(PLAYER1_ID).add(card);
@@ -507,7 +507,7 @@ class MayCastHandlerServiceTest {
         void targetedSpellNoTargetsExilesCard() {
             Card card = createInstant("No Targets");
             CardEffect permanentOnly = new CardEffect() {
-                @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.PERMANENT); }
+                @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.permanent()); }
             };
             card.addEffect(EffectSlot.SPELL, permanentOnly);
             gd.playerDecks.get(PLAYER1_ID).add(card);
@@ -735,7 +735,7 @@ class MayCastHandlerServiceTest {
             allowGraveyardCasting();
             Card card = createInstant("No Targets");
             CardEffect permanentOnly = new CardEffect() {
-                @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.PERMANENT); }
+                @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.permanent()); }
             };
             card.addEffect(EffectSlot.SPELL, permanentOnly);
             PendingMayAbility ability = abilityFor(card);

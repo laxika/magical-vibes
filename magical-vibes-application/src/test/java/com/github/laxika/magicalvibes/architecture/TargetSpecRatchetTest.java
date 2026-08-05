@@ -87,6 +87,8 @@ class TargetSpecRatchetTest {
             Pattern.compile("\\b(?:benign|harmful)\\s*\\(");
     private static final Pattern SPEC_CATEGORY_RE =
             Pattern.compile("\\bTargetCategory\\.(\\w+)");
+    private static final Pattern SPEC_TARGET_RE =
+            Pattern.compile("\\bTargetPredicates\\.\\w+\\s*\\(");
 
     @Test
     @DisplayName("No effect file declares any of the eleven deleted legacy targeting methods")
@@ -107,7 +109,7 @@ class TargetSpecRatchetTest {
                             "%s declares deleted legacy targeting method(s): %s. These were removed in "
                                     + "TargetSpec migration step 10 — do NOT reintroduce them. Declare targeting "
                                     + "purely through targetSpec() (override it to return "
-                                    + "TargetSpec.harmful(...)/benign(...) for the right TargetCategory).",
+                                    + "TargetSpec.harmful(...)/benign(...) for the right TargetPredicates factory).",
                             rel, String.join(", ", overridden)));
                 }
             }
@@ -153,7 +155,7 @@ class TargetSpecRatchetTest {
                 messages.add(String.format(
                         "%s has a @ValidatesTarget validator but no non-NONE targetSpec(). A validator is now "
                                 + "only an escape hatch for non-structural rules; the effect must STILL declare its "
-                                + "structural spec (override targetSpec() to a benign(...)/harmful(...) category) so "
+                                + "structural spec (override targetSpec() to a benign(...)/harmful(...) target) so "
                                 + "the declarative interpreter offers and type-checks it. If it genuinely targets "
                                 + "outside the single-target pipeline (equip/attach), add it to "
                                 + "EQUIP_ATTACH_VALIDATED_EFFECTS here and in scripts/targetspec-audit.py.",
@@ -182,9 +184,10 @@ class TargetSpecRatchetTest {
 
     /**
      * True iff the file overrides {@code targetSpec()} with a body that can return a non-NONE spec —
-     * i.e. it uses a {@code benign(} / {@code harmful(} factory (both take a non-NONE category) or
-     * names a {@code TargetCategory} value other than {@code NONE}. A conditional body with at least
-     * one non-NONE branch (per-recipient / per-scope specs) counts as declaring a structural spec.
+     * i.e. it uses a {@code benign(} / {@code harmful(} factory (both take a non-{@code null}
+     * declared target), names a {@code TargetPredicates} factory, or names a {@code TargetCategory}
+     * value other than {@code NONE}. A conditional body with at least one non-NONE branch
+     * (per-recipient / per-scope specs) counts as declaring a structural spec.
      * Mirrors {@code targetspec-audit.py}'s brace-matched detection exactly.
      */
     private static boolean declaresNonNoneTargetSpec(String text) {
@@ -193,7 +196,7 @@ class TargetSpecRatchetTest {
             return false;
         }
         String body = braceMatchedBody(text, m.end() - 1);
-        if (SPEC_FACTORY_RE.matcher(body).find()) {
+        if (SPEC_FACTORY_RE.matcher(body).find() || SPEC_TARGET_RE.matcher(body).find()) {
             return true;
         }
         Matcher cat = SPEC_CATEGORY_RE.matcher(body);

@@ -9,6 +9,6 @@ public record ExileTargetPermanentAndTrackWithSourceEffect() implements CardEffe
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.PERMANENT);
+        return TargetSpec.harmful(TargetPredicates.permanent());
     }
 }

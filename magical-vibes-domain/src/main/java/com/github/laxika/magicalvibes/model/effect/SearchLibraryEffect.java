@@ -105,7 +105,7 @@ public record SearchLibraryEffect(
     public TargetSpec targetSpec() {
         // Tithe: count scales off whether the targeted opponent controls more lands.
         return count instanceof FixedIfTargetPlayerControlsMoreLands
-                ? TargetSpec.benign(TargetCategory.PLAYER)
+                ? TargetSpec.benign(TargetPredicates.player())
                 : TargetSpec.NONE;
     }
 }

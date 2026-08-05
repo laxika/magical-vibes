@@ -54,7 +54,7 @@ public record CounterUnlessPaysEffect(int amount, boolean useXValue, boolean exi
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.SPELL_ON_STACK);
+        return TargetSpec.benign(TargetPredicates.spellOnStack());
     }
 
     @Override

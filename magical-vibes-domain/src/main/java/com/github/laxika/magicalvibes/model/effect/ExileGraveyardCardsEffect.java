@@ -49,9 +49,9 @@ public record ExileGraveyardCardsEffect(
         //   TARGET_PLAYER_ENTIRE            -> (player=T)              -> PLAYER
         //   OWN / ALL_PLAYERS / ALL_OPPONENTS -> no single validated target -> NONE
         return switch (scope) {
-            case TARGET_CARDS_ANY_GRAVEYARD -> TargetSpec.benign(TargetCategory.ANY_GRAVEYARD_CARD);
-            case TARGET_CARDS_OPPONENT_GRAVEYARD -> TargetSpec.benign(TargetCategory.GRAVEYARD_CARD);
-            case TARGET_PLAYER_ENTIRE -> TargetSpec.benign(TargetCategory.PLAYER);
+            case TARGET_CARDS_ANY_GRAVEYARD -> TargetSpec.benign(TargetPredicates.anyGraveyardCard());
+            case TARGET_CARDS_OPPONENT_GRAVEYARD -> TargetSpec.benign(TargetPredicates.graveyardCard());
+            case TARGET_PLAYER_ENTIRE -> TargetSpec.benign(TargetPredicates.player());
             default -> TargetSpec.NONE;
         };
     }

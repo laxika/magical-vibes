@@ -63,9 +63,9 @@ public record GrantKeywordEffect(Set<Keyword> keywords, GrantScope scope, Perman
     @Override
     public TargetSpec targetSpec() {
         return switch (scope) {
-            case TARGET -> TargetSpec.benign(TargetCategory.PERMANENT, filter);
-            case TARGET_PLAYERS_CREATURES -> TargetSpec.benign(TargetCategory.PLAYER);
-            case SELF -> new TargetSpec(TargetCategory.NONE, false, null, true, 1);
+            case TARGET -> TargetSpec.benign(TargetPredicates.permanent(), filter);
+            case TARGET_PLAYERS_CREATURES -> TargetSpec.benign(TargetPredicates.player());
+            case SELF -> new TargetSpec(null, false, null, true, 1);
             default -> TargetSpec.NONE;
         };
     }

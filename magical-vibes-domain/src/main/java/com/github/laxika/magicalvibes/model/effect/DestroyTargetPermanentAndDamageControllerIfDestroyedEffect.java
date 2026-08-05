@@ -10,6 +10,6 @@ public record DestroyTargetPermanentAndDamageControllerIfDestroyedEffect(int dam
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.PERMANENT);
+        return TargetSpec.harmful(TargetPredicates.permanent());
     }
 }

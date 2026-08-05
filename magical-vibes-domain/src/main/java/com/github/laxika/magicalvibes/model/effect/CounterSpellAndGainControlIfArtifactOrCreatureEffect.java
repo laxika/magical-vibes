@@ -5,5 +5,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * card onto the battlefield under your control instead of into its owner's graveyard."
  */
 public record CounterSpellAndGainControlIfArtifactOrCreatureEffect() implements CardEffect {
-    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.SPELL_ON_STACK); }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.spellOnStack()); }
 }

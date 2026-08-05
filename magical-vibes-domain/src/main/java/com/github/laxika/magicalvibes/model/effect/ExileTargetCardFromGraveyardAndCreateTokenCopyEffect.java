@@ -50,7 +50,7 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
         // controller-compare. So ownGraveyardOnly=true reproduces (graveyard=T, any=F) = GRAVEYARD_CARD,
         // not CONTROLLERS_GRAVEYARD_CARD.
         return ownGraveyardOnly
-                ? TargetSpec.benign(TargetCategory.GRAVEYARD_CARD)
-                : TargetSpec.benign(TargetCategory.ANY_GRAVEYARD_CARD);
+                ? TargetSpec.benign(TargetPredicates.graveyardCard())
+                : TargetSpec.benign(TargetPredicates.anyGraveyardCard());
     }
 }

@@ -9,6 +9,6 @@ import java.util.UUID;
 public record CantBlockSourceEffect(UUID sourcePermanentId) implements CardEffect {
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.CREATURE);
+        return TargetSpec.benign(TargetPredicates.creature());
     }
 }

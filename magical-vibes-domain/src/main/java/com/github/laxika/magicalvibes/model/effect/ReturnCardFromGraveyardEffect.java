@@ -225,6 +225,6 @@ public record ReturnCardFromGraveyardEffect(
         // canTargetGraveyard() exactly. The own/opponent/all scope narrowing lives on the kept
         // validator (via source()), never in these booleans (canTargetAnyGraveyard stayed false
         // for this effect regardless of source), so GRAVEYARD_CARD is correct for every source.
-        return targetGraveyard ? TargetSpec.benign(TargetCategory.GRAVEYARD_CARD) : TargetSpec.NONE;
+        return targetGraveyard ? TargetSpec.benign(TargetPredicates.graveyardCard()) : TargetSpec.NONE;
     }
 }

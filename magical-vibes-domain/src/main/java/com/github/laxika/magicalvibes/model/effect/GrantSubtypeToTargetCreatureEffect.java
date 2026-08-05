@@ -16,6 +16,6 @@ public record GrantSubtypeToTargetCreatureEffect(CardSubtype subtype) implements
     public TargetSpec targetSpec() {
         // The validator enforces only a battlefield permanent (PERMANENT); the creature restriction
         // is the card's own target filter, so this preserves the old canTargetPermanent boolean.
-        return TargetSpec.benign(TargetCategory.PERMANENT);
+        return TargetSpec.benign(TargetPredicates.permanent());
     }
 }

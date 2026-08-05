@@ -6,7 +6,7 @@ public record SacrificeSelfEffect() implements CombatDamageTriggerContextEffect 
     public TargetSpec targetSpec() {
         // Implicitly acts on its own source permanent — so trigger collectors that key off
         // selfTargeting() (e.g. the spell-cast collector) carry the source id onto the stack entry.
-        return new TargetSpec(TargetCategory.NONE, false, null, true, 1);
+        return new TargetSpec(null, false, null, true, 1);
     }
 
     @Override

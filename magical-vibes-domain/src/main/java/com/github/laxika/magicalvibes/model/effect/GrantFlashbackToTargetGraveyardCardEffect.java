@@ -11,5 +11,5 @@ import java.util.Set;
  * (e.g. Snapcaster Mage — CR 702.33)
  */
 public record GrantFlashbackToTargetGraveyardCardEffect(Set<CardType> cardTypes) implements CardEffect {
-    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.CONTROLLERS_GRAVEYARD_CARD); }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.controllersGraveyardCard()); }
 }

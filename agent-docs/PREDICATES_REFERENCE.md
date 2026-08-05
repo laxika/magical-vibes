@@ -183,11 +183,11 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 
 `TargetPredicate` (`model/effect/`) sits one level above the four hierarchies above: it says which
 candidate **domain** a target is drawn from, and carries that domain's predicate as its payload. It
-is the successor to `TargetCategory` and is being adopted one call site at a time — see
-`agent-docs/TARGET_PREDICATE_PLAN.md` for the migration state. `TargetCategory` is still what an
-effect *declares*; `TargetSpec.targetPredicate()` derives the predicate from that category plus the
-spec's narrowing predicate, and it is what the spec interpreter (`TargetValidationService`) and
-target enumeration (`ValidTargetService`) actually evaluate. `TargetSpec.admits(Kind)` is the
+is the successor to `TargetCategory` and is now what every effect *declares*: `TargetSpec.declaredTarget()`
+holds one, and `TargetSpec.targetPredicate()` folds the spec's narrowing predicate into its permanent leaf.
+That composed value is what the spec interpreter (`TargetValidationService`) and target enumeration
+(`ValidTargetService`) evaluate. `TargetCategory` survives only as the compatibility bridge behind
+`TargetSpec.category()`, for readers not yet migrated — see `agent-docs/TARGET_PREDICATE_PLAN.md`. `TargetSpec.admits(Kind)` is the
 null-safe "can this kind ever be legal?" query — a spec that targets nothing has no predicate at all.
 
 | Leaf | Payload | Evaluated by |
@@ -199,7 +199,8 @@ null-safe "can this kind ever be legal?" query — a spec that targets nothing h
 | `TargetPredicate.Spells` | `StackEntryPredicate` | `TargetLegalityService.matchesStackEntryPredicate` |
 | `TargetPredicate.AnyOf` | ≥2 leaves, at most one per kind | dispatches to the leaf of the asked-for kind |
 
-Build them with the `TargetPredicates` factories (one per `TargetCategory` constant), never by hand.
+Build them with the `TargetPredicates` factories (one per `TargetCategory` constant), never by hand —
+`TargetSpec.category()` throws on a declared target no category can express.
 Three rules are enforced structurally, not documented:
 
 - **No `AllOf`, no `Not` at this level.** A kind-mismatched leaf is `false`, so a top-level `Not`

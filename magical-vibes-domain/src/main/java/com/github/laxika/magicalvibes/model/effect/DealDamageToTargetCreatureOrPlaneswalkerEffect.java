@@ -28,7 +28,7 @@ public record DealDamageToTargetCreatureOrPlaneswalkerEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.CREATURE_OR_PLANESWALKER, targetRestriction);
+        return TargetSpec.harmful(TargetPredicates.creatureOrPlaneswalker(), targetRestriction);
     }
 
     @Override

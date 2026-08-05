@@ -10,6 +10,6 @@ public record PutTargetPermanentIntoLibraryNFromTopEffect(int position) implemen
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PERMANENT);
+        return TargetSpec.benign(TargetPredicates.permanent());
     }
 }

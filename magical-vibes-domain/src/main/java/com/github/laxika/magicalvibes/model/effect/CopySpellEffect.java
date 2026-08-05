@@ -22,5 +22,5 @@ public record CopySpellEffect(StackEntryPredicate spellFilter, boolean tokenWith
     /** Filter-only form — used by ETB copy triggers like Naru Meha. */
     public CopySpellEffect(StackEntryPredicate spellFilter) { this(spellFilter, false, false); }
 
-    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.SPELL_ON_STACK); }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.spellOnStack()); }
 }

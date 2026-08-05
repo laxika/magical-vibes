@@ -16,7 +16,7 @@ public record ExileTargetPermanentEffect(CreateTokenEffect tokenForController)
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.PERMANENT);
+        return TargetSpec.harmful(TargetPredicates.permanent());
     }
 
     @Override

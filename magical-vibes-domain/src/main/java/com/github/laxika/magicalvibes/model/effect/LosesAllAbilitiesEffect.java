@@ -25,9 +25,9 @@ public record LosesAllAbilitiesEffect(GrantScope scope, EffectDuration duration)
     @Override
     public TargetSpec targetSpec() {
         if (scope == GrantScope.TARGET_PLAYERS_CREATURES) {
-            return TargetSpec.benign(TargetCategory.PLAYER);
+            return TargetSpec.benign(TargetPredicates.player());
         }
         return duration == EffectDuration.UNTIL_END_OF_TURN
-                ? TargetSpec.benign(TargetCategory.PERMANENT) : TargetSpec.NONE;
+                ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
     }
 }

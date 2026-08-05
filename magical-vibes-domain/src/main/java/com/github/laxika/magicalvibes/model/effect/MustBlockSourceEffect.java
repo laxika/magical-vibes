@@ -17,6 +17,6 @@ public record MustBlockSourceEffect(UUID sourcePermanentId) implements CardEffec
      */
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.CREATURE, new PermanentIsCreaturePredicate());
+        return TargetSpec.benign(TargetPredicates.creature(), new PermanentIsCreaturePredicate());
     }
 }

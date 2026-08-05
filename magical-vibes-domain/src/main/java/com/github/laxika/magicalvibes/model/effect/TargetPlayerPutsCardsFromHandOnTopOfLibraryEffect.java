@@ -11,6 +11,6 @@ public record TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect(int count) imple
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.PLAYER);
+        return TargetSpec.harmful(TargetPredicates.player());
     }
 }

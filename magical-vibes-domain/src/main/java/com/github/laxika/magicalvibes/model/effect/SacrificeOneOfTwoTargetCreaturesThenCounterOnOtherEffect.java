@@ -16,7 +16,7 @@ public record SacrificeOneOfTwoTargetCreaturesThenCounterOnOtherEffect() impleme
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.CREATURE);
+        return TargetSpec.harmful(TargetPredicates.creature());
     }
 
     /** Not single-target removal — two creatures are targeted and only one of them is sacrificed. */

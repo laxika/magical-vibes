@@ -10,5 +10,5 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public record ExileTargetSpellWithDelayCountersEffect() implements CardEffect {
 
-    @Override public TargetSpec targetSpec() { return TargetSpec.harmful(TargetCategory.SPELL_ON_STACK); }
+    @Override public TargetSpec targetSpec() { return TargetSpec.harmful(TargetPredicates.spellOnStack()); }
 }

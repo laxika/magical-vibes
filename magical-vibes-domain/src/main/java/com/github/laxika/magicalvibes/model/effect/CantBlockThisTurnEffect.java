@@ -28,9 +28,9 @@ public record CantBlockThisTurnEffect(TapUntapScope scope, PermanentPredicate fi
     @Override
     public TargetSpec targetSpec() {
         return switch (scope) {
-            case TARGET -> TargetSpec.benign(TargetCategory.CREATURE);
-            case TARGET_PLAYERS_PERMANENTS -> TargetSpec.benign(TargetCategory.PLAYER);
-            case TARGET_CONTROLLERS_OTHER_CREATURES -> TargetSpec.benign(TargetCategory.CREATURE);
+            case TARGET -> TargetSpec.benign(TargetPredicates.creature());
+            case TARGET_PLAYERS_PERMANENTS -> TargetSpec.benign(TargetPredicates.player());
+            case TARGET_CONTROLLERS_OTHER_CREATURES -> TargetSpec.benign(TargetPredicates.creature());
             default -> TargetSpec.NONE;
         };
     }

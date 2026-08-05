@@ -14,7 +14,7 @@ public record ReturnTargetAndAttachedMatchingToHandEffect(PermanentPredicate att
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.CREATURE);
+        return TargetSpec.benign(TargetPredicates.creature());
     }
 
     @Override

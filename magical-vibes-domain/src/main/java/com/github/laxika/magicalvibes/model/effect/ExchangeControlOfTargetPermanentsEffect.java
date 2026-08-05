@@ -63,7 +63,7 @@ public record ExchangeControlOfTargetPermanentsEffect(
     @Override
     public TargetSpec targetSpec() {
         return sourceIsFirstTarget
-                ? TargetSpec.benign(TargetCategory.PERMANENT, targetPredicate)
+                ? TargetSpec.benign(TargetPredicates.permanent(), targetPredicate)
                 : TargetSpec.NONE;
     }
 }

@@ -30,7 +30,7 @@ public record DrawCardEffect(DynamicAmount amount) implements CardDrawingEffect 
         // Only target-relative amounts require a player target on the stack entry (e.g. Dream
         // Salvage draws equal to the number of cards target opponent discarded this turn; Tamiyo,
         // the Moon Sage draws for each tapped creature target player controls).
-        return isTargetRelative() ? TargetSpec.benign(TargetCategory.PLAYER) : TargetSpec.NONE;
+        return isTargetRelative() ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
     }
 
     private boolean isTargetRelative() {

@@ -51,6 +51,6 @@ public record ExileCreaturesFromGraveyardAndCreateTokensEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        return targetPlayerGraveyard ? TargetSpec.benign(TargetCategory.PLAYER) : TargetSpec.NONE;
+        return targetPlayerGraveyard ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
     }
 }

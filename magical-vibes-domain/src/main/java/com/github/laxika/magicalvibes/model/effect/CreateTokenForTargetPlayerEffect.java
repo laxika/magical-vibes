@@ -7,6 +7,6 @@ package com.github.laxika.magicalvibes.model.effect;
 public record CreateTokenForTargetPlayerEffect(CreateTokenEffect tokenEffect) implements CardEffect {
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PLAYER);
+        return TargetSpec.benign(TargetPredicates.player());
     }
 }

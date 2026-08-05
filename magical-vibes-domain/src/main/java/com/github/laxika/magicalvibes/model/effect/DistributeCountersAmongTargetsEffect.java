@@ -70,7 +70,7 @@ public record DistributeCountersAmongTargetsEffect(
         // from EffectResolution.distributesAmountsAmongTargets rather than from declaring a
         // category the spec interpreter no-ops on.
         return harmful
-                ? TargetSpec.harmful(TargetCategory.CREATURE)
-                : TargetSpec.benign(TargetCategory.CREATURE);
+                ? TargetSpec.harmful(TargetPredicates.creature())
+                : TargetSpec.benign(TargetPredicates.creature());
     }
 }

@@ -46,7 +46,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PLAYER);
+        return TargetSpec.benign(TargetPredicates.player());
     }
 
     @Override

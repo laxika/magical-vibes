@@ -12,6 +12,6 @@ public record SwapExclusiveBlockersBetweenTwoBlockedAttackersEffect() implements
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.CREATURE, new PermanentIsBlockedPredicate());
+        return TargetSpec.benign(TargetPredicates.creature(), new PermanentIsBlockedPredicate());
     }
 }

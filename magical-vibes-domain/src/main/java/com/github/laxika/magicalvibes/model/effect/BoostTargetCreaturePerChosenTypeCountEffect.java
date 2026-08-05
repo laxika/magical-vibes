@@ -15,6 +15,6 @@ public record BoostTargetCreaturePerChosenTypeCountEffect(int powerPer, int toug
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.CREATURE);
+        return TargetSpec.benign(TargetPredicates.creature());
     }
 }

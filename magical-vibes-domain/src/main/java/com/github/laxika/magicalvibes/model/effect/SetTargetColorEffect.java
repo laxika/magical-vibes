@@ -25,6 +25,6 @@ public record SetTargetColorEffect(CardColor color, boolean spellOnly) implement
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(spellOnly ? TargetCategory.SPELL_ON_STACK : TargetCategory.PERMANENT);
+        return TargetSpec.benign(spellOnly ? TargetPredicates.spellOnStack() : TargetPredicates.permanent());
     }
 }

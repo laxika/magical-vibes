@@ -13,6 +13,6 @@ public record MakeTargetAttackingCreatureBlockedEffect() implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.CREATURE, new PermanentIsUnblockedAttackingPredicate());
+        return TargetSpec.harmful(TargetPredicates.creature(), new PermanentIsUnblockedAttackingPredicate());
     }
 }

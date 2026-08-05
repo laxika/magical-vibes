@@ -19,6 +19,6 @@ public record BecomeChosenColorsIndefinitelyEffect(boolean targeted) implements 
 
     @Override
     public TargetSpec targetSpec() {
-        return targeted ? TargetSpec.benign(TargetCategory.PERMANENT) : TargetSpec.NONE;
+        return targeted ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
     }
 }

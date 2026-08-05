@@ -25,6 +25,6 @@ public record SearchZonesForCardNamedToBattlefieldEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        return attachToTarget ? TargetSpec.harmful(TargetCategory.CREATURE) : TargetSpec.NONE;
+        return attachToTarget ? TargetSpec.harmful(TargetPredicates.creature()) : TargetSpec.NONE;
     }
 }

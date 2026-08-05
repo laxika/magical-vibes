@@ -25,7 +25,7 @@ public record PreventNextDamageToTargetAndAddToughnessCountersEffect(int amount,
     @Override
     public TargetSpec targetSpec() {
         return anyTarget
-                ? TargetSpec.benign(TargetCategory.ANY_TARGET)
-                : TargetSpec.benign(TargetCategory.CREATURE);
+                ? TargetSpec.benign(TargetPredicates.anyTarget())
+                : TargetSpec.benign(TargetPredicates.creature());
     }
 }

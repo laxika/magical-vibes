@@ -22,8 +22,8 @@ public record PutTargetOnTopOfLibraryEffect(PutOnTopOfLibraryScope scope) implem
         // pipeline target. The kept validator still reads canTargetPermanent() (derived from this
         // spec) until step 10 rewrites the reader.
         return switch (scope) {
-            case TARGET -> TargetSpec.benign(TargetCategory.PERMANENT);
-            case SELF_AND_TARGET -> TargetSpec.benign(TargetCategory.CREATURE);
+            case TARGET -> TargetSpec.benign(TargetPredicates.permanent());
+            case SELF_AND_TARGET -> TargetSpec.benign(TargetPredicates.creature());
             case SELF -> TargetSpec.NONE;
         };
     }

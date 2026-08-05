@@ -14,6 +14,6 @@ public record PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect() i
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.GRAVEYARD_CARD);
+        return TargetSpec.benign(TargetPredicates.graveyardCard());
     }
 }

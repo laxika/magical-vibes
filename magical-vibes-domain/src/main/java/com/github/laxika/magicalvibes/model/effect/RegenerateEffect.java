@@ -39,7 +39,7 @@ public record RegenerateEffect(
     @Override
     public TargetSpec targetSpec() {
         return targetsPermanent
-                ? TargetSpec.benign(TargetCategory.PERMANENT)
-                : new TargetSpec(TargetCategory.NONE, false, null, true, 1);
+                ? TargetSpec.benign(TargetPredicates.permanent())
+                : new TargetSpec(null, false, null, true, 1);
     }
 }

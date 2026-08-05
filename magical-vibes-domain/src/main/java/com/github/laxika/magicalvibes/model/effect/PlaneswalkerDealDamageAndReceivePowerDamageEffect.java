@@ -15,6 +15,6 @@ public record PlaneswalkerDealDamageAndReceivePowerDamageEffect(int damage) impl
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.CREATURE);
+        return TargetSpec.harmful(TargetPredicates.creature());
     }
 }

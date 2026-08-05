@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -1411,7 +1411,7 @@ class ValidTargetServiceTest {
             spell.setColor(CardColor.RED);
             CardEffect graveyardEffect = new CardEffect() {
                 @Override
-                public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.GRAVEYARD_CARD); }
+                public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.graveyardCard()); }
             };
             spell.addEffect(EffectSlot.SPELL, graveyardEffect);
 
@@ -1427,7 +1427,7 @@ class ValidTargetServiceTest {
             spell.setColor(CardColor.RED);
             CardEffect exileEffect = new CardEffect() {
                 @Override
-                public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.EXILE_CARD); }
+                public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.exileCard()); }
             };
             spell.addEffect(EffectSlot.SPELL, exileEffect);
 

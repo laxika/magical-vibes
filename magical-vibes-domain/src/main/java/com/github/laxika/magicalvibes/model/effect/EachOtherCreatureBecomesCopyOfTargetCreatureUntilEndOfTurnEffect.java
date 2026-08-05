@@ -9,6 +9,6 @@ public record EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect()
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.CREATURE);
+        return TargetSpec.benign(TargetPredicates.creature());
     }
 }

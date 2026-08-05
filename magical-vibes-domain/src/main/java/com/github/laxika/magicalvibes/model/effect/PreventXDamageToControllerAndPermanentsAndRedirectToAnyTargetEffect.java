@@ -12,6 +12,6 @@ package com.github.laxika.magicalvibes.model.effect;
 public record PreventXDamageToControllerAndPermanentsAndRedirectToAnyTargetEffect() implements CardEffect {
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.ANY_TARGET);
+        return TargetSpec.harmful(TargetPredicates.anyTarget());
     }
 }

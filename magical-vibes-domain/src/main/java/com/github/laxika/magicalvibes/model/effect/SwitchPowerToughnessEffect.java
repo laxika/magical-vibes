@@ -16,7 +16,7 @@ public record SwitchPowerToughnessEffect(boolean self) implements CardEffect {
     @Override
     public TargetSpec targetSpec() {
         return self
-                ? new TargetSpec(TargetCategory.NONE, false, null, true, 1)
-                : TargetSpec.benign(TargetCategory.CREATURE);
+                ? new TargetSpec(null, false, null, true, 1)
+                : TargetSpec.benign(TargetPredicates.creature());
     }
 }

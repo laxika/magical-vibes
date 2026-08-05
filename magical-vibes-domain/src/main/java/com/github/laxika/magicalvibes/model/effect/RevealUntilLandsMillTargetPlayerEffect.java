@@ -24,7 +24,7 @@ public record RevealUntilLandsMillTargetPlayerEffect(int landCount, MillRecipien
     @Override
     public TargetSpec targetSpec() {
         return recipient == MillRecipient.TARGET_PLAYER
-                ? TargetSpec.harmful(TargetCategory.PLAYER)
+                ? TargetSpec.harmful(TargetPredicates.player())
                 : TargetSpec.NONE;
     }
 }

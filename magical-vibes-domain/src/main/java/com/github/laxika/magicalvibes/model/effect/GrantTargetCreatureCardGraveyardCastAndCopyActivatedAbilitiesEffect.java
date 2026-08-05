@@ -6,5 +6,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * activated abilities of that card until end of turn.
  */
 public record GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect() implements CardEffect {
-    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.ANY_GRAVEYARD_CARD); }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.anyGraveyardCard()); }
 }

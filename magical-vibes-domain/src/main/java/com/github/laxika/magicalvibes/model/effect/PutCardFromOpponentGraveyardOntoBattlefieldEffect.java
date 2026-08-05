@@ -29,5 +29,5 @@ public record PutCardFromOpponentGraveyardOntoBattlefieldEffect(
                 true);
     }
 
-    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.GRAVEYARD_CARD); }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.graveyardCard()); }
 }

@@ -53,6 +53,6 @@ public record GainControlOfTargetEffect(ControlDuration duration, CardSubtype gr
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PERMANENT);
+        return TargetSpec.benign(TargetPredicates.permanent());
     }
 }

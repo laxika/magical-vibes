@@ -10,6 +10,6 @@ package com.github.laxika.magicalvibes.model.effect;
 public record AttachAllAurasToAnotherPermanentEffect() implements CardEffect {
 
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PERMANENT);
+        return TargetSpec.benign(TargetPredicates.permanent());
     }
 }

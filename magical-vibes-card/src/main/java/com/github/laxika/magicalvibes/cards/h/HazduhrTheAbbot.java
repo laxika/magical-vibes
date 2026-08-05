@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectRole;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -30,7 +30,7 @@ public class HazduhrTheAbbot extends Card {
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE))));
         addActivatedAbility(new ActivatedAbility(true, "{X}",
                 List.of(new RedirectNextDamageEffect(RedirectRole.TARGET, RedirectRole.SOURCE_PERMANENT,
-                        new XValue(), TargetCategory.CREATURE, whiteCreature)),
+                        new XValue(), TargetPredicates.creature(), whiteCreature)),
                 "{X}, {T}: The next X damage that would be dealt this turn to target white creature you control is dealt to Hazduhr the Abbot instead.",
                 new ControlledPermanentPredicateTargetFilter(whiteCreature,
                         "Target must be a white creature you control")));

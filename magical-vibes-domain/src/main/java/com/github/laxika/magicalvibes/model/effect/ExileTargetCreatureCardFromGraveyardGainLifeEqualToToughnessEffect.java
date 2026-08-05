@@ -15,6 +15,6 @@ public record ExileTargetCreatureCardFromGraveyardGainLifeEqualToToughnessEffect
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.ANY_GRAVEYARD_CARD);
+        return TargetSpec.benign(TargetPredicates.anyGraveyardCard());
     }
 }

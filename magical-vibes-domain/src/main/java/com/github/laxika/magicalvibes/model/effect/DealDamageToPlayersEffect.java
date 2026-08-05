@@ -44,9 +44,9 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
     @Override
     public TargetSpec targetSpec() {
         return switch (recipient) {
-            case TARGET_PLAYER -> TargetSpec.benign(TargetCategory.PLAYER);
-            case TARGET_PERMANENT_CONTROLLER -> TargetSpec.benign(TargetCategory.PERMANENT);
-            case TARGET_SPELL_CONTROLLER -> TargetSpec.benign(TargetCategory.SPELL_ON_STACK);
+            case TARGET_PLAYER -> TargetSpec.benign(TargetPredicates.player());
+            case TARGET_PERMANENT_CONTROLLER -> TargetSpec.benign(TargetPredicates.permanent());
+            case TARGET_SPELL_CONTROLLER -> TargetSpec.benign(TargetPredicates.spellOnStack());
             default -> TargetSpec.NONE;
         };
     }

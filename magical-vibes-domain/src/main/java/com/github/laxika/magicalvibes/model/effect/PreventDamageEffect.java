@@ -209,12 +209,12 @@ public record PreventDamageEffect(
     @Override
     public TargetSpec targetSpec() {
         return switch (scope) {
-            case NEXT_TO_TARGET -> TargetSpec.benign(TargetCategory.ANY_TARGET);
-            case ALL_COMBAT_EXCEPT_TARGET -> TargetSpec.benign(TargetCategory.CREATURE);
-            case NEXT_TO_TARGET_CREATURE -> TargetSpec.benign(TargetCategory.CREATURE);
-            case NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER -> TargetSpec.benign(TargetCategory.PLAYER_OR_PLANESWALKER);
-            case ALL_TO_TARGET_CREATURES, ALL_BY_TARGET_CREATURES -> TargetSpec.benign(TargetCategory.CREATURE);
-            case ALL_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN -> TargetSpec.benign(TargetCategory.PERMANENT);
+            case NEXT_TO_TARGET -> TargetSpec.benign(TargetPredicates.anyTarget());
+            case ALL_COMBAT_EXCEPT_TARGET -> TargetSpec.benign(TargetPredicates.creature());
+            case NEXT_TO_TARGET_CREATURE -> TargetSpec.benign(TargetPredicates.creature());
+            case NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER -> TargetSpec.benign(TargetPredicates.playerOrPlaneswalker());
+            case ALL_TO_TARGET_CREATURES, ALL_BY_TARGET_CREATURES -> TargetSpec.benign(TargetPredicates.creature());
+            case ALL_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN -> TargetSpec.benign(TargetPredicates.permanent());
             default -> TargetSpec.NONE;
         };
     }

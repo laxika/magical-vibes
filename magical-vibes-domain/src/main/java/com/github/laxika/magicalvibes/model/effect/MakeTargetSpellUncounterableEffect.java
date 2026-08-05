@@ -9,6 +9,6 @@ public record MakeTargetSpellUncounterableEffect() implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.SPELL_ON_STACK);
+        return TargetSpec.benign(TargetPredicates.spellOnStack());
     }
 }

@@ -13,6 +13,6 @@ public record RegisterDelayedDestroyCreatureDamagedByTargetEffect() implements C
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.CREATURE);
+        return TargetSpec.benign(TargetPredicates.creature());
     }
 }

@@ -28,7 +28,7 @@ public record ExileTargetPermanentUntilSourceLeavesEffect(boolean imprint,
     @Override
     public TargetSpec targetSpec() {
         return targetPredicate == null
-                ? TargetSpec.harmful(TargetCategory.PERMANENT)
-                : TargetSpec.harmful(TargetCategory.PERMANENT, targetPredicate);
+                ? TargetSpec.harmful(TargetPredicates.permanent())
+                : TargetSpec.harmful(TargetPredicates.permanent(), targetPredicate);
     }
 }

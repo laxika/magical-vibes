@@ -21,7 +21,7 @@ public record DealDamageToCombatOpponentControllerEffect(DynamicAmount amount)
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.PERMANENT);
+        return TargetSpec.harmful(TargetPredicates.permanent());
     }
 
     @Override

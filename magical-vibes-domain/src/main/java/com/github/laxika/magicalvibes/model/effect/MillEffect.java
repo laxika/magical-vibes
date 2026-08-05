@@ -20,7 +20,7 @@ public record MillEffect(DynamicAmount count, MillRecipient recipient)
     @Override
     public TargetSpec targetSpec() {
         return recipient == MillRecipient.TARGET_PLAYER
-                ? TargetSpec.benign(TargetCategory.PLAYER)
+                ? TargetSpec.benign(TargetPredicates.player())
                 : TargetSpec.NONE;
     }
 

@@ -52,7 +52,7 @@ public record SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate 
         // Only the target-player recipient targets a player; the kept validator enforces the
         // requireTargetPlayer guard the no-op PLAYER category cannot reproduce.
         return recipient == SacrificeRecipient.TARGET_PLAYER
-                ? TargetSpec.benign(TargetCategory.PLAYER)
+                ? TargetSpec.benign(TargetPredicates.player())
                 : TargetSpec.NONE;
     }
 }

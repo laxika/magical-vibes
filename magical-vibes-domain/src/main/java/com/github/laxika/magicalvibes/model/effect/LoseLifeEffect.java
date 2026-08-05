@@ -46,7 +46,7 @@ public record LoseLifeEffect(DynamicAmount amount, LoseLifeRecipient recipient,
     @Override
     public TargetSpec targetSpec() {
         return recipient == LoseLifeRecipient.TARGET_PLAYER
-                ? TargetSpec.benign(TargetCategory.PLAYER)
+                ? TargetSpec.benign(TargetPredicates.player())
                 : TargetSpec.NONE;
     }
 }

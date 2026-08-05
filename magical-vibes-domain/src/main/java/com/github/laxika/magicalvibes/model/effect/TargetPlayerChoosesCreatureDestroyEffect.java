@@ -9,5 +9,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * with exactly 1 it is destroyed automatically.
  */
 public record TargetPlayerChoosesCreatureDestroyEffect() implements CardEffect {
-    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.PLAYER); }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.player()); }
 }

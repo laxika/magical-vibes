@@ -25,7 +25,7 @@ public record FlipCoinWinEffect(CardEffect wrapped, CardEffect lost) implements 
     @Override
     public TargetSpec targetSpec() {
         TargetSpec wonSpec = wrapped == null ? TargetSpec.NONE : wrapped.targetSpec();
-        if (wonSpec.category() != TargetCategory.NONE) {
+        if (wonSpec.declaredTarget() != null) {
             return wonSpec;
         }
         return lost == null ? TargetSpec.NONE : lost.targetSpec();

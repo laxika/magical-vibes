@@ -20,7 +20,7 @@ public record CreateTokenCopyAndLinkToSourceEffect() implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PERMANENT, new PermanentAllOfPredicate(List.of(
+        return TargetSpec.benign(TargetPredicates.permanent(), new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentIsTokenPredicate())
         )));

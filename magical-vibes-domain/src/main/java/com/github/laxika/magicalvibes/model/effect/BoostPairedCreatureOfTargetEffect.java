@@ -22,6 +22,6 @@ public record BoostPairedCreatureOfTargetEffect(DynamicAmount powerBoost, Dynami
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.CREATURE, null);
+        return TargetSpec.benign(TargetPredicates.creature(), null);
     }
 }

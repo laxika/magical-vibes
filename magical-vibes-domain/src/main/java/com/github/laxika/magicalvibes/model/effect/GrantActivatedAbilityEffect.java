@@ -23,6 +23,6 @@ public record GrantActivatedAbilityEffect(
     /** TARGET scope grants the ability to the spell/ability's target permanent (e.g. Banishing Knack). */
     @Override
     public TargetSpec targetSpec() {
-        return scope == GrantScope.TARGET ? TargetSpec.benign(TargetCategory.PERMANENT) : TargetSpec.NONE;
+        return scope == GrantScope.TARGET ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
     }
 }

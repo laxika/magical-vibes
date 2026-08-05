@@ -22,7 +22,7 @@ public record RevealHandChooseCardFromItAndExileAllCopiesEffect(List<CardType> e
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.PLAYER);
+        return TargetSpec.harmful(TargetPredicates.player());
     }
 
     @Override

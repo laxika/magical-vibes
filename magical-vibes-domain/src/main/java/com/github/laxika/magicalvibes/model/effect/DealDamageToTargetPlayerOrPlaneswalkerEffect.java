@@ -21,6 +21,6 @@ public record DealDamageToTargetPlayerOrPlaneswalkerEffect(DynamicAmount amount)
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.PLAYER_OR_PLANESWALKER);
+        return TargetSpec.harmful(TargetPredicates.playerOrPlaneswalker());
     }
 }

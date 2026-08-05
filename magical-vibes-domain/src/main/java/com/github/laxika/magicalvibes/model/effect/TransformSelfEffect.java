@@ -10,6 +10,6 @@ public record TransformSelfEffect() implements CardEffect {
     public TargetSpec targetSpec() {
         // Marks the ability as self-affecting so trigger collectors stamp sourcePermanentId
         // (needed when TransformSelf is nested under SpellCastTriggerEffect / SequenceEffect).
-        return new TargetSpec(TargetCategory.NONE, false, null, true, 1);
+        return new TargetSpec(null, false, null, true, 1);
     }
 }

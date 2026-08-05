@@ -14,6 +14,6 @@ public record BecomeColorlessIndefinitelyEffect(boolean targeted) implements Car
 
     @Override
     public TargetSpec targetSpec() {
-        return targeted ? TargetSpec.benign(TargetCategory.PERMANENT) : TargetSpec.NONE;
+        return targeted ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
     }
 }

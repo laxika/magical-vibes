@@ -18,6 +18,6 @@ public record AddCardTypeToTargetPermanentEffect(CardType cardType, boolean pers
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PERMANENT);
+        return TargetSpec.benign(TargetPredicates.permanent());
     }
 }

@@ -27,6 +27,6 @@ public record TimmerianFiendsAnteExchangeEffect() implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.PERMANENT, new PermanentIsArtifactPredicate());
+        return TargetSpec.harmful(TargetPredicates.permanent(), new PermanentIsArtifactPredicate());
     }
 }

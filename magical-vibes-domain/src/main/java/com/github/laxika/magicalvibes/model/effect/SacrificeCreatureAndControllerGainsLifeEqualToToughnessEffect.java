@@ -18,6 +18,6 @@ public record SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect(
         boolean sacrificerGainsLife
 ) implements CardEffect {
     @Override public TargetSpec targetSpec() {
-        return !sacrificerIsController ? TargetSpec.benign(TargetCategory.PLAYER) : TargetSpec.NONE;
+        return !sacrificerIsController ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
     }
 }

@@ -19,6 +19,6 @@ public record ReturnTargetCardFromExileToHandEffect(CardPredicate filter, boolea
     public TargetSpec targetSpec() {
         // The kept validator enforces the exile zone and the card filter, which the EXILE_CARD
         // category (a no-op in the interpreter) cannot express.
-        return TargetSpec.benign(TargetCategory.EXILE_CARD);
+        return TargetSpec.benign(TargetPredicates.exileCard());
     }
 }

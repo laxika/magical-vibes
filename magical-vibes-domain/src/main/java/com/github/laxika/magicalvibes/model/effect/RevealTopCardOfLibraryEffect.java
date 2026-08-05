@@ -17,7 +17,7 @@ public record RevealTopCardOfLibraryEffect(int lifeGainIfLand) implements LifeGa
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PLAYER);
+        return TargetSpec.benign(TargetPredicates.player());
     }
 
     @Override

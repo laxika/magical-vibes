@@ -15,6 +15,6 @@ public record CantAttackNextTurnCombatOpponentEffect() implements CardEffect, Co
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.PERMANENT);
+        return TargetSpec.harmful(TargetPredicates.permanent());
     }
 }

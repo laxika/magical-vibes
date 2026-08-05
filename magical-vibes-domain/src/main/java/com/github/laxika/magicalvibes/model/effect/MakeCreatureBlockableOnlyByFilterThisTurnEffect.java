@@ -32,7 +32,7 @@ public record MakeCreatureBlockableOnlyByFilterThisTurnEffect(
     @Override
     public TargetSpec targetSpec() {
         return selfTargeting
-                ? new TargetSpec(TargetCategory.NONE, false, null, true, 1)
-                : TargetSpec.benign(TargetCategory.PERMANENT);
+                ? new TargetSpec(null, false, null, true, 1)
+                : TargetSpec.benign(TargetPredicates.permanent());
     }
 }

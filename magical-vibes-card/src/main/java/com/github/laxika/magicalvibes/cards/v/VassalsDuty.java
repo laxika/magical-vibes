@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectRole;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -23,7 +23,7 @@ public class VassalsDuty extends Card {
                 false,
                 "{1}",
                 List.of(new RedirectNextDamageEffect(RedirectRole.TARGET, RedirectRole.CONTROLLER,
-                        new Fixed(1), TargetCategory.CREATURE)),
+                        new Fixed(1), TargetPredicates.creature())),
                 "{1}: The next 1 damage that would be dealt to target legendary creature you control this turn is dealt to you instead.",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

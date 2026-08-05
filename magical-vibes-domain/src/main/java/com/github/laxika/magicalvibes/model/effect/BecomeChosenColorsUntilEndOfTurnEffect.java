@@ -28,6 +28,6 @@ public record BecomeChosenColorsUntilEndOfTurnEffect(Set<CardColor> colors) impl
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PERMANENT);
+        return TargetSpec.benign(TargetPredicates.permanent());
     }
 }

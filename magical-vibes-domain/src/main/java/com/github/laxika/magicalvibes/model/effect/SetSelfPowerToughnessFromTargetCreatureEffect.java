@@ -24,6 +24,6 @@ public record SetSelfPowerToughnessFromTargetCreatureEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.CREATURE, targetPredicate);
+        return TargetSpec.benign(TargetPredicates.creature(), targetPredicate);
     }
 }

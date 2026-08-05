@@ -21,7 +21,7 @@ public record NthSpellCastTriggerEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        return new TargetSpec(TargetCategory.NONE, false, null,
+        return new TargetSpec(null, false, null,
                 resolvedEffects.stream().anyMatch(e -> e.targetSpec().selfTargeting()), 1);
     }
 }

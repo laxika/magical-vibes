@@ -14,6 +14,6 @@ public record DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEff
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.PLAYER_OR_PERMANENT);
+        return TargetSpec.harmful(TargetPredicates.playerOrPermanent());
     }
 }

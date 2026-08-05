@@ -12,6 +12,6 @@ public record RemoveCounterFromSourceEffect(CounterType counterType, int amount)
 
     @Override
     public TargetSpec targetSpec() {
-        return new TargetSpec(TargetCategory.NONE, false, null, true, 1);
+        return new TargetSpec(null, false, null, true, 1);
     }
 }

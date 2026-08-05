@@ -113,10 +113,10 @@ public record FlickerEffect(
     @Override
     public TargetSpec targetSpec() {
         if (scope == FlickerScope.TARGET) {
-            return TargetSpec.benign(TargetCategory.PERMANENT);
+            return TargetSpec.benign(TargetPredicates.permanent());
         }
         if (scope == FlickerScope.TARGET_PLAYERS_PERMANENTS) {
-            return TargetSpec.benign(TargetCategory.PLAYER);
+            return TargetSpec.benign(TargetPredicates.player());
         }
         return TargetSpec.NONE;
     }

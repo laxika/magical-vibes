@@ -20,7 +20,7 @@ public record PayXManaDealXDamageToAnyTargetEffect(String manaCost) implements D
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.ANY_TARGET);
+        return TargetSpec.harmful(TargetPredicates.anyTarget());
     }
 
     @Override

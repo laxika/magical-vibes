@@ -21,6 +21,6 @@ public record TargetDealsPowerDamageToTargetEffect(int sourceTargetGroup, int vi
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PLAYER_OR_PERMANENT);
+        return TargetSpec.benign(TargetPredicates.playerOrPermanent());
     }
 }

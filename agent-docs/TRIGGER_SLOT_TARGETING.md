@@ -37,7 +37,8 @@ If an effect's targeting (read from its `targetSpec()`: `category().includesPerm
 trigger goes directly onto the stack with no target choice. **An effect must declare a non-NONE
 `targetSpec()`** or it will silently skip target selection — this invariant is guarded by
 `CardEffectTargetingConsistencyTest`. (The eleven legacy `canTarget*` booleans were deleted in the
-TargetSpec migration; the collectors now read the derived accessors on `targetSpec().category()`.)
+TargetSpec migration; the collectors now read the derived accessors on `targetSpec().category()`, the compatibility bridge over the effect's
+declared `TargetPredicate`.)
 
 ---
 

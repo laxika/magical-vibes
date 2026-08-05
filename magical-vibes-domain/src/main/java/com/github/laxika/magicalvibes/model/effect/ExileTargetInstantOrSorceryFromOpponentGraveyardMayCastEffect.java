@@ -15,6 +15,6 @@ public record ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect() im
     public TargetSpec targetSpec() {
         // (graveyard=T, any=T): the opponent-graveyard restriction is enforced by the kept
         // validator's opponent-relation check, not by these booleans.
-        return TargetSpec.benign(TargetCategory.ANY_GRAVEYARD_CARD);
+        return TargetSpec.benign(TargetPredicates.anyGraveyardCard());
     }
 }

@@ -21,6 +21,6 @@ public record BuffTargetCreatureIndefinitelyEffect(int powerBoost, int toughness
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.CREATURE);
+        return TargetSpec.benign(TargetPredicates.creature());
     }
 }

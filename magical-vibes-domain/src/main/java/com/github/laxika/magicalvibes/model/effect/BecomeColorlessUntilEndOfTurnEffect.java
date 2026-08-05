@@ -18,6 +18,6 @@ public record BecomeColorlessUntilEndOfTurnEffect(boolean targeted) implements C
 
     @Override
     public TargetSpec targetSpec() {
-        return targeted ? TargetSpec.benign(TargetCategory.PERMANENT) : TargetSpec.NONE;
+        return targeted ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
     }
 }

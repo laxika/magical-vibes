@@ -161,7 +161,8 @@ public record DealDividedDamageEffect(
         // targetId is null; that tolerance comes from
         // EffectResolution.distributesAmountsAmongTargets, not from picking a category the spec
         // interpreter happens to no-op on.
-        TargetCategory category = canTargetPlayers ? TargetCategory.ANY_TARGET : TargetCategory.CREATURE;
-        return new TargetSpec(category, true, targetRestriction, false, 1);
+        TargetPredicate declaredTarget =
+                canTargetPlayers ? TargetPredicates.anyTarget() : TargetPredicates.creature();
+        return new TargetSpec(declaredTarget, true, targetRestriction, false, 1);
     }
 }

@@ -28,7 +28,7 @@ public record RemoveCounterFromTargetPermanentEffect(CounterType counterType,
     @Override
     public TargetSpec targetSpec() {
         return targetPredicate != null
-                ? TargetSpec.benign(TargetCategory.CREATURE, targetPredicate)
-                : TargetSpec.benign(TargetCategory.PERMANENT);
+                ? TargetSpec.benign(TargetPredicates.creature(), targetPredicate)
+                : TargetSpec.benign(TargetPredicates.permanent());
     }
 }

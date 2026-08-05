@@ -13,23 +13,23 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>"Until your next turn, target creature can't attack or block and its activated abilities
  *       can't be activated." (Detain) — {@code (true, true, true, UNTIL_YOUR_NEXT_TURN)}</li>
  *   <li>Detain on nonland permanents (Archon of the Triumvirate) — same lock flags with
- *       {@link TargetCategory#PERMANENT}</li>
+ *       {@link TargetPredicates#permanent()}</li>
  * </ul>
  *
  * @param locksAttacking          the target can't attack
  * @param locksBlocking           the target can't block
  * @param locksActivatedAbilities the target's activated abilities can't be activated
  * @param duration                how long the lock lasts
- * @param targetCategory          structural target category ({@link TargetCategory#CREATURE} for
- *                                classic Detain / Edifice; {@link TargetCategory#PERMANENT} when
- *                                the card targets any nonland permanent)
+ * @param declaredTarget          what the ability targets ({@link TargetPredicates#creature()} for
+ *                                classic Detain / Edifice; {@link TargetPredicates#permanent()}
+ *                                when the card targets any nonland permanent)
  */
 public record LockTargetPermanentEffect(
         boolean locksAttacking,
         boolean locksBlocking,
         boolean locksActivatedAbilities,
         EffectDuration duration,
-        TargetCategory targetCategory) implements CardEffect, PermanentLockEffect {
+        TargetPredicate declaredTarget) implements CardEffect, PermanentLockEffect {
 
     /** Creature-targeting lock (Edifice of Authority, classic Detain). */
     public LockTargetPermanentEffect(
@@ -37,11 +37,11 @@ public record LockTargetPermanentEffect(
             boolean locksBlocking,
             boolean locksActivatedAbilities,
             EffectDuration duration) {
-        this(locksAttacking, locksBlocking, locksActivatedAbilities, duration, TargetCategory.CREATURE);
+        this(locksAttacking, locksBlocking, locksActivatedAbilities, duration, TargetPredicates.creature());
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(targetCategory != null ? targetCategory : TargetCategory.CREATURE);
+        return TargetSpec.harmful(declaredTarget != null ? declaredTarget : TargetPredicates.creature());
     }
 }

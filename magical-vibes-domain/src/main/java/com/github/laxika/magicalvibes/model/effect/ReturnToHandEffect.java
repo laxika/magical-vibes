@@ -112,10 +112,10 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect 
         // requireBattlefieldTarget guard); the target-players scopes target a player (the old
         // validator imposed no guard there); the self / all-matching scopes target nothing.
         if (scope == BounceScope.TARGET || scope == BounceScope.AURAS_ATTACHED_TO_TARGET) {
-            return TargetSpec.benign(TargetCategory.PERMANENT);
+            return TargetSpec.benign(TargetPredicates.permanent());
         }
         if (scope == BounceScope.TARGET_PLAYERS_PERMANENTS || scope == BounceScope.TARGET_PLAYERS_OWNED) {
-            return TargetSpec.benign(TargetCategory.PLAYER);
+            return TargetSpec.benign(TargetPredicates.player());
         }
         return TargetSpec.NONE;
     }

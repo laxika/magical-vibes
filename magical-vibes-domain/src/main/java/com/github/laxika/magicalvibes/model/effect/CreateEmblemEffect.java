@@ -20,7 +20,7 @@ import java.util.List;
  * @param staticEffects the emblem's static/marker effects, stored verbatim
  * @param reminderText  the emblem's rules text, unquoted, used for the game log
  * @param recipient     who gets the emblem; {@link EmblemRecipient#TARGET_PLAYER} makes the effect
- *                      declare a benign {@link TargetCategory#PLAYER} target
+ *                      declare a benign {@link TargetPredicates#player()} target
  */
 public record CreateEmblemEffect(List<CardEffect> staticEffects,
                                  String reminderText,
@@ -38,7 +38,7 @@ public record CreateEmblemEffect(List<CardEffect> staticEffects,
     @Override
     public TargetSpec targetSpec() {
         return recipient == EmblemRecipient.TARGET_PLAYER
-                ? TargetSpec.benign(TargetCategory.PLAYER)
+                ? TargetSpec.benign(TargetPredicates.player())
                 : TargetSpec.NONE;
     }
 }

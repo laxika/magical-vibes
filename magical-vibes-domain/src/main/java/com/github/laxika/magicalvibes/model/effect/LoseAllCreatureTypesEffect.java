@@ -20,10 +20,10 @@ public record LoseAllCreatureTypesEffect(GrantScope scope) implements CardEffect
     @Override
     public TargetSpec targetSpec() {
         if (scope == GrantScope.TARGET) {
-            return TargetSpec.benign(TargetCategory.PERMANENT);
+            return TargetSpec.benign(TargetPredicates.permanent());
         }
         if (scope == GrantScope.TARGET_PLAYERS_CREATURES) {
-            return TargetSpec.benign(TargetCategory.PLAYER);
+            return TargetSpec.benign(TargetPredicates.player());
         }
         return TargetSpec.NONE;
     }

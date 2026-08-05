@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 public class DenyReality extends Card {
 
     public DenyReality() {
-        // Return target permanent to its owner's hand (any-permanent bounce; TargetCategory.PERMANENT
-        // comes from ReturnToHandEffect.target()'s targetSpec, same as Boomerang).
+        // Return target permanent to its owner's hand (any-permanent bounce; the "any permanent"
+        // restriction comes from ReturnToHandEffect.target()'s targetSpec, same as Boomerang).
         addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
 
         // Cascade: when you cast this spell, dig the library until a nonland card with lesser mana

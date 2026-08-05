@@ -251,7 +251,7 @@ mechanical high-churn. Phase 4 is deletion.
 | 2 | Move `TargetValidationService.validateSpec` and `ValidTargetService` enumeration onto `targetPredicate()`. Delete the inferred `allAnyTarget` block. **Confirm or refute defect 2** against Fire Juggler, Spoils of War, Blessings of Nature, Contagion before claiming a fix; record the finding here. **Also decide the two Step 1 divergences** (LAND / planeswalker layer-awareness) — they land the moment the interpreter moves. | MED | **DONE** — see "Step 2 outcome". Both divergences adopted. **Defect 2 refuted as written**: the `allAnyTarget` block was NOT deleted, and a new Step 2b owns that. |
 | 2b | **Delete the `allAnyTarget` inference for real.** Blocked on making eight cards' effects declare honestly instead of using `PLAYER_OR_PERMANENT` as an unchecked escape hatch — see "Step 2 outcome" for the list, the two tiers, and the two mechanisms that must be replaced first (null-target tolerance, and the fact that validators are skipped for multi-target positions). Also covers the ability twin of the same inference (`ValidTargetService.isAnyTargetAbility`, read by `TargetLegalityService.validateMultiTargetAbility:391`), which must change in the same step or enumeration and cast-time validation will disagree. | HIGH | **DONE** — see "Step 2b outcome". Inference and its ability twin deleted; null tolerance now comes from `EffectResolution.distributesAmountsAmongTargets`, not from the target count. |
 | 3 | Route `MayAbilityHandlerService` through the shared evaluator; delete both copies of the open-coded switch (defect 3). Add a regression test for a `LAND`-spec may-ability. | MED | **DONE** — see "Step 3 outcome". Defect 3 confirmed verbatim; both copies collapsed into one helper. No implemented card has a `LAND` may-ability, so that regression is a service test; `PLAYER_OR_PLANESWALKER` had a real card (Boggart Shenanigans) and got a card test. |
-| 4 | Migrate the ~400 effect records' `targetSpec()` to the factories. Mechanical and scriptable; the Step 1 equivalence harness is the safety net. Batch by category, smallest first (`EXILE_CARD` 2, `CONTROLLERS_GRAVEYARD_CARD` 2, `LAND` 4, `PLAYER_OR_PLANESWALKER` 4 … `PLAYER` 155 last). | MED | TODO |
+| 4 | Migrate the ~400 effect records' `targetSpec()` to the factories. Mechanical and scriptable; the Step 1 equivalence harness is the safety net. Batch by category, smallest first (`EXILE_CARD` 2, `CONTROLLERS_GRAVEYARD_CARD` 2, `LAND` 4, `PLAYER_OR_PLANESWALKER` 4 … `PLAYER` 155 last). | MED | **DONE** — see "Step 4 outcome". Batching was unnecessary (one scripted sweep, no import churn); `TargetSpec` now *stores* the declared target and `category()` became a bridge. |
 | 5 | Collapse the three graveyard categories onto `GraveyardCards.scope`; delete the five hand-copied scope mappings. | LOW | TODO |
 | 6 | Migrate the derived-boolean readers (`includesPermanents` / `includesPlayers` / `isGraveyard`) in the trigger collectors, `StepTriggerService`, AI, and `EffectResolution.collectTargetTypes`. ~30 call sites across engine + AI. | MED | TODO |
 | 7 | Delete `TargetCategory`; update `TargetSpecRatchetTest`, `scripts/targetspec-audit.py`, and the `EFFECTS_INDEX.md` category table. | LOW | TODO |
@@ -560,15 +560,78 @@ Two things a later step should know:
 
 ---
 
+## Step 4 outcome
+
+The direction of the dependency is now flipped: `TargetSpec` **stores** a `TargetPredicate` and
+`TargetCategory` is derived from it, not the other way round. Every one of the ~475 spec construction
+sites (411 effect records, 12 card classes, `CounterAbilityAndLockSourceEffectHandler`, six test
+classes) names a `TargetPredicates` factory. The 14 production files that still name a
+`TargetCategory` constant are all *readers* — the graveyard-scope comparisons Step 5 collapses and
+the derived-boolean / identity-comparison sites Step 6 migrates. Nothing *declares* a category.
+
+**`TargetSpec`'s shape.** `TargetCategory category` became `TargetPredicate declaredTarget`
+(`null` = targets nothing, replacing `TargetCategory.NONE`); `harmful`, `predicate`, `selfTargeting`
+and `playerTargetCount` are untouched, and `targetPredicate()` still derives
+`narrowPermanents(declaredTarget, predicate)` exactly as before. `TargetSpec.NONE` is
+`new TargetSpec(null, false, null, false, 1)`.
+
+**`predicate` deliberately stays a separate component rather than being folded into
+`declaredTarget`.** Two readers need the narrowing *on its own*: `EffectResolution.targetPredicateOf`
+and `PermanentCounterSupport`. Folding would change what they see — `targetPredicateOf` on a bare
+`benign(creature())` would start returning `PermanentIsCreaturePredicate` where it returns `null`
+today, and on `benign(creature(), artifact)` it would return the conjunction where it returns the
+artifact half. That is arguably the *more* correct answer (Step 3 documented that an effect-level
+predicate **replaces** the spec's type restriction in may-ability enumeration rather than stacking
+with it), but it is a behaviour change and belongs to whoever revisits that precedence, not here.
+
+**`category()` is a lookup, not a structural match — and it throws.** `TargetPredicates.categoryOf`
+inverts `forCategory` through a `Map` built from `TargetCategory.values()`, so a declared target no
+category can express (say `anyOf(player(), permanents(isArtifact))`) fails loudly instead of being
+rounded to the nearest constant and silently widening or narrowing a card. Nothing constructs such a
+target today; the throw is the tripwire that keeps that true until Step 7 deletes the bridge. Pinned
+by three new tests in `TargetPredicateEquivalenceTest` (round-trip of all 14, narrowing does not
+disturb the reported category, unmappable target throws).
+
+The 14 canonical values are now interned `private static final`s behind the factories. `targetSpec()`
+is rebuilt on every call and enumeration calls it in a loop, so the factories must not allocate.
+
+**The ratchet had to move early.** "Risk hotspots" scheduled `TargetSpecRatchetTest` +
+`scripts/targetspec-audit.py` for Step 7, but their invariant-2 detection recognises a non-NONE spec
+by `benign(`/`harmful(` **or** a non-`NONE` `TargetCategory.X` — and `DealDividedDamageEffect` (a
+`@ValidatesTarget` effect) declares its spec through the canonical constructor, so it stopped
+matching the moment the enum left its body. Both files learned `\bTargetPredicates\.\w+\s*\(` in
+lockstep. The remaining Step 7 work there is deleting the now-dead `TargetCategory` arm.
+
+**No behaviour change.** No rules-visible arm moved; the whole step is a change of vocabulary.
+`ClashEffect`, `FlipCoinWinEffect` and the four effects that carry the target as a record component
+(`RedirectNextDamageEffect`, `DestroyAttachmentsOnTargetCreatureEffect`,
+`GrantProtectionFromColorUntilEndOfTurnEffect`, `LockTargetPermanentEffect` — the four flagged under
+"Do not regress these") were migrated by hand; the other 405 effect files were a scripted
+constant→factory rewrite with no import churn, since `model/effect/` is the package both types live
+in. `FlipCoinWinEffect` now asks `declaredTarget() != null` where it compared against
+`TargetCategory.NONE`.
+
+Two things a later step needs:
+
+- **`SequenceEffect` compares `spec != TargetSpec.NONE` by identity**, and a self-targeting effect
+  returns `new TargetSpec(null, false, null, true, 1)` — equal to `NONE` but not identical, which is
+  what makes that comparison mean "declares something". Pre-existing and load-bearing; do not
+  "simplify" it to `declaredTarget() == null`.
+- **`ClashEffect` still reads `category().includesPermanents()` / `includesPlayers()` on its child
+  effects** to compute its own spec. That is a Step 6 reader like any other, but it is the only one
+  inside `model/effect/`, so a grep scoped to the engine will miss it.
+
+---
+
 ## Do not regress these
 
 - `TargetSpec.harmful` drives `checkProtection` (CR 702.16b). `ExileTargetPermanentAndImprintEffect`
   is `harmful`, not `benign` — this was fixed in commit `9b8147333`.
 - `RedirectNextDamageEffect` derives harmfulness from `destinationRole == TARGET` (CR 702.16b), set
-  in commit `9933614c2`. Its `TargetCategory` is a genuine record component; so is
+  in commit `9933614c2`. Its declared target is a genuine record component; so is
   `DestroyAttachmentsOnTargetCreatureEffect`'s, `GrantProtectionFromColorUntilEndOfTurnEffect`'s,
-  and `LockTargetPermanentEffect`'s. Those four need their component migrated too, and they are
-  constructed from card classes (`StreetSweeper`, `EightAndAHalfTails`, `ArchonOfTheTriumvirate`,
+  and `LockTargetPermanentEffect`'s. Step 4 migrated all four from `TargetCategory targetCategory`
+  to `TargetPredicate declaredTarget`, together with the card classes that construct them (`StreetSweeper`, `EightAndAHalfTails`, `ArchonOfTheTriumvirate`,
   `LyevSkyknight`, `NewPrahvGuildmage`, `Martyrdom`, `DaughterOfAutumn`, `HazduhrTheAbbot`,
   `VassalsDuty`, `ZhalfirinCrusader`, `ZealousInquisitor`, `PersonalIncarnation`) and from
   `CounterAbilityAndLockSourceEffectHandler:68`.

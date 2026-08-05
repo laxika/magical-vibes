@@ -11,6 +11,6 @@ public record DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect() i
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.LAND);
+        return TargetSpec.harmful(TargetPredicates.land());
     }
 }

@@ -12,6 +12,6 @@ public record RevealTargetPlayerLibraryUntilCreatureStealRestToGraveyardEffect()
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.PLAYER);
+        return TargetSpec.harmful(TargetPredicates.player());
     }
 }

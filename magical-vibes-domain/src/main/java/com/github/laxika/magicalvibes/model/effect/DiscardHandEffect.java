@@ -19,7 +19,7 @@ public record DiscardHandEffect(DiscardRecipient recipient)
     @Override
     public TargetSpec targetSpec() {
         return recipient == DiscardRecipient.TARGET_PLAYER
-                ? TargetSpec.benign(TargetCategory.PLAYER) : TargetSpec.NONE;
+                ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
     }
 
     @Override

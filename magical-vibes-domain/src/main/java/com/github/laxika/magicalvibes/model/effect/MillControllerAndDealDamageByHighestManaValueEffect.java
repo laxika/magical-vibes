@@ -9,6 +9,6 @@ public record MillControllerAndDealDamageByHighestManaValueEffect(int count) imp
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.ANY_TARGET);
+        return TargetSpec.harmful(TargetPredicates.anyTarget());
     }
 }

@@ -32,10 +32,10 @@ public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter
     @Override
     public TargetSpec targetSpec() {
         if (scope == TapUntapScope.TARGET) {
-            return TargetSpec.benign(TargetCategory.PERMANENT);
+            return TargetSpec.benign(TargetPredicates.permanent());
         }
         if (scope == TapUntapScope.TARGET_PLAYERS_PERMANENTS) {
-            return TargetSpec.benign(TargetCategory.PLAYER);
+            return TargetSpec.benign(TargetPredicates.player());
         }
         return TargetSpec.NONE;
     }

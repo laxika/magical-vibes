@@ -5,7 +5,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * Aura with 'enchant creature put onto the battlefield with [this].' Put target creature card from
  * a graveyard onto the battlefield under your control and attach this enchantment to it."
  *
- * <p>Place in {@code ON_ENTER_BATTLEFIELD}. Targets any graveyard ({@link TargetCategory#ANY_GRAVEYARD_CARD});
+ * <p>Place in {@code ON_ENTER_BATTLEFIELD}. Targets any graveyard ({@link TargetPredicates#anyGraveyardCard()});
  * the shared ETB graveyard-target flow chooses the card as the trigger goes on the stack. Resolution
  * re-checks that the source is still on the battlefield (intervening-if), turns it into an Aura,
  * reanimates the targeted creature under the controller, and attaches the source to it.</p>
@@ -14,6 +14,6 @@ public record BecomeAuraReanimateFromGraveyardEffect() implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.ANY_GRAVEYARD_CARD);
+        return TargetSpec.benign(TargetPredicates.anyGraveyardCard());
     }
 }

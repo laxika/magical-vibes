@@ -17,6 +17,6 @@ public record PreventDividedDamageEffect(int amount) implements CardEffect {
     // that tolerance comes from EffectResolution.distributesAmountsAmongTargets.
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.ANY_TARGET);
+        return TargetSpec.benign(TargetPredicates.anyTarget());
     }
 }

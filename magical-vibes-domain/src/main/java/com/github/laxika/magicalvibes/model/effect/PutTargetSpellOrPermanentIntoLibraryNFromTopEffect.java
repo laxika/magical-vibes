@@ -19,7 +19,7 @@ public record PutTargetSpellOrPermanentIntoLibraryNFromTopEffect(int position) i
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PERMANENT,
+        return TargetSpec.benign(TargetPredicates.permanent(),
                 new PermanentNotPredicate(new PermanentIsLandPredicate()));
     }
 }

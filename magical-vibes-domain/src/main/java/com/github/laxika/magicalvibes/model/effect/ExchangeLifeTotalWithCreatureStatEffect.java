@@ -28,7 +28,7 @@ public record ExchangeLifeTotalWithCreatureStatEffect(Stat stat, Recipient recip
     @Override
     public TargetSpec targetSpec() {
         return recipient == Recipient.TARGET_PLAYER
-                ? TargetSpec.benign(TargetCategory.PLAYER)
+                ? TargetSpec.benign(TargetPredicates.player())
                 : TargetSpec.NONE;
     }
 }

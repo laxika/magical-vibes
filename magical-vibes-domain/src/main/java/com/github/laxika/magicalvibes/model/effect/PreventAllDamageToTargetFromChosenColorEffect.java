@@ -5,6 +5,6 @@ public record PreventAllDamageToTargetFromChosenColorEffect() implements CardEff
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.ANY_TARGET);
+        return TargetSpec.benign(TargetPredicates.anyTarget());
     }
 }

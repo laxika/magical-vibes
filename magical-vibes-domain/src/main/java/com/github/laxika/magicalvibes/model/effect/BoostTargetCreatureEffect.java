@@ -35,6 +35,6 @@ public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount 
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.CREATURE, filter);
+        return TargetSpec.benign(TargetPredicates.creature(), filter);
     }
 }

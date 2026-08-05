@@ -25,6 +25,6 @@ public record MoveDyingSourceCountersToTargetCreatureEffect(Map<CounterType, Int
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PERMANENT, new PermanentIsCreaturePredicate());
+        return TargetSpec.benign(TargetPredicates.permanent(), new PermanentIsCreaturePredicate());
     }
 }

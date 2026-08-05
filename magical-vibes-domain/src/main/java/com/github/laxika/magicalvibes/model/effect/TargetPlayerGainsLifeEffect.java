@@ -15,6 +15,6 @@ public record TargetPlayerGainsLifeEffect(DynamicAmount amount) implements CardE
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PLAYER);
+        return TargetSpec.benign(TargetPredicates.player());
     }
 }

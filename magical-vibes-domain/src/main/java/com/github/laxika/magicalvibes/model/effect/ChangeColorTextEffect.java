@@ -30,6 +30,6 @@ public record ChangeColorTextEffect(boolean colorWordsAllowed, boolean landTypes
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PERMANENT);
+        return TargetSpec.benign(TargetPredicates.permanent());
     }
 }

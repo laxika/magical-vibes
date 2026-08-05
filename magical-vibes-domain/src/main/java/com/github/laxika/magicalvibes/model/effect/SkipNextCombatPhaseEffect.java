@@ -24,7 +24,7 @@ public record SkipNextCombatPhaseEffect(boolean targetsPlayer)
 
     @Override
     public TargetSpec targetSpec() {
-        return targetsPlayer ? TargetSpec.benign(TargetCategory.PLAYER) : TargetSpec.NONE;
+        return targetsPlayer ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
     }
 
     @Override

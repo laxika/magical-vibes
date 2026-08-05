@@ -14,6 +14,6 @@ public record RevealHandChooseCreatureGainLifeDiscardEffect(List<CardColor> colo
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PLAYER);
+        return TargetSpec.benign(TargetPredicates.player());
     }
 }

@@ -18,6 +18,6 @@ public record GrantAdditionalBlockToTargetUntilEndOfTurnEffect(int additionalBlo
 
     @Override
     public TargetSpec targetSpec() {
-        return scope == GrantScope.TARGET ? TargetSpec.benign(TargetCategory.CREATURE) : TargetSpec.NONE;
+        return scope == GrantScope.TARGET ? TargetSpec.benign(TargetPredicates.creature()) : TargetSpec.NONE;
     }
 }

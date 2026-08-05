@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectRole;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class Martyrdom extends Card {
                 false,
                 "{0}",
                 List.of(new RedirectNextDamageEffect(RedirectRole.TARGET, RedirectRole.SOURCE_PERMANENT,
-                        1, TargetCategory.ANY_TARGET)),
+                        1, TargetPredicates.anyTarget())),
                 "{0}: The next 1 damage that would be dealt to target creature, planeswalker, or player this turn is dealt to this creature instead."
         );
 

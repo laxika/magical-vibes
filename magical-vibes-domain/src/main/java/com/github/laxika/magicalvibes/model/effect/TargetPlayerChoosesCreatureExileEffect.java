@@ -9,5 +9,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * nothing happens; with exactly 1 it is exiled automatically; with 2+ the target player picks.
  */
 public record TargetPlayerChoosesCreatureExileEffect() implements CardEffect {
-    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.PLAYER); }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.player()); }
 }

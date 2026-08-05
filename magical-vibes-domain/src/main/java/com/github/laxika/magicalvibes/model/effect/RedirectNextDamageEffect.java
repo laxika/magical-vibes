@@ -23,25 +23,25 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param protectedRole   whose incoming damage is redirected
  * @param destinationRole who the redirected damage is dealt to instead
  * @param amount          how much damage is redirected before the shield is consumed
- * @param targetCategory  what the ability targets, or {@link TargetCategory#NONE} when both roles
- *                        are derivable without a target (Personal Incarnation)
+ * @param declaredTarget  what the ability targets, or {@code null} when both roles are derivable
+ *                        without a target (Personal Incarnation)
  * @param targetPredicate an optional narrowing predicate on a permanent target ("target white
- *                        creature"), or {@code null} when the category alone suffices
+ *                        creature"), or {@code null} when the declared target alone suffices
  */
 public record RedirectNextDamageEffect(RedirectRole protectedRole,
                                        RedirectRole destinationRole,
                                        DynamicAmount amount,
-                                       TargetCategory targetCategory,
+                                       TargetPredicate declaredTarget,
                                        PermanentPredicate targetPredicate) implements CardEffect {
 
     public RedirectNextDamageEffect(RedirectRole protectedRole, RedirectRole destinationRole,
-                                    DynamicAmount amount, TargetCategory targetCategory) {
-        this(protectedRole, destinationRole, amount, targetCategory, null);
+                                    DynamicAmount amount, TargetPredicate declaredTarget) {
+        this(protectedRole, destinationRole, amount, declaredTarget, null);
     }
 
     public RedirectNextDamageEffect(RedirectRole protectedRole, RedirectRole destinationRole,
-                                    int amount, TargetCategory targetCategory) {
-        this(protectedRole, destinationRole, new Fixed(amount), targetCategory, null);
+                                    int amount, TargetPredicate declaredTarget) {
+        this(protectedRole, destinationRole, new Fixed(amount), declaredTarget, null);
     }
 
     /**
@@ -52,11 +52,11 @@ public record RedirectNextDamageEffect(RedirectRole protectedRole,
      */
     @Override
     public TargetSpec targetSpec() {
-        if (targetCategory == TargetCategory.NONE) {
+        if (declaredTarget == null) {
             return TargetSpec.NONE;
         }
         return destinationRole == RedirectRole.TARGET
-                ? TargetSpec.harmful(targetCategory, targetPredicate)
-                : TargetSpec.benign(targetCategory, targetPredicate);
+                ? TargetSpec.harmful(declaredTarget, targetPredicate)
+                : TargetSpec.benign(declaredTarget, targetPredicate);
     }
 }

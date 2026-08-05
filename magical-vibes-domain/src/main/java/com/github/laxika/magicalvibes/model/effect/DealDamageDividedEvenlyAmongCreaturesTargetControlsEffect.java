@@ -16,6 +16,6 @@ public record DealDamageDividedEvenlyAmongCreaturesTargetControlsEffect(DynamicA
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PLAYER);
+        return TargetSpec.benign(TargetPredicates.player());
     }
 }

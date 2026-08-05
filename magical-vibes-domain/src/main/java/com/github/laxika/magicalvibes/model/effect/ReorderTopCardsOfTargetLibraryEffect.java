@@ -10,6 +10,6 @@ public record ReorderTopCardsOfTargetLibraryEffect(int count) implements CardEff
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PLAYER);
+        return TargetSpec.benign(TargetPredicates.player());
     }
 }

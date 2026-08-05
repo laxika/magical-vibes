@@ -40,9 +40,9 @@ public record ClashEffect(List<CardEffect> beforeClash, CardEffect onWin, boolea
                 || beforeClash.stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
         boolean player = (onWin != null && onWin.targetSpec().category().includesPlayers())
                 || beforeClash.stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
-        TargetCategory category = perm
-                ? (player ? TargetCategory.PLAYER_OR_PERMANENT : TargetCategory.PERMANENT)
-                : (player ? TargetCategory.PLAYER : TargetCategory.NONE);
-        return new TargetSpec(category, false, null, false, 1);
+        TargetPredicate declaredTarget = perm
+                ? (player ? TargetPredicates.playerOrPermanent() : TargetPredicates.permanent())
+                : (player ? TargetPredicates.player() : null);
+        return new TargetSpec(declaredTarget, false, null, false, 1);
     }
 }

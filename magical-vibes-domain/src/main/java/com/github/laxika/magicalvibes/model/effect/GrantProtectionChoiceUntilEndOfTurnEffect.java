@@ -49,8 +49,8 @@ public record GrantProtectionChoiceUntilEndOfTurnEffect(boolean includeArtifacts
     @Override
     public TargetSpec targetSpec() {
         return switch (scope) {
-            case TARGET -> TargetSpec.benign(TargetCategory.PERMANENT);
-            case SELF -> new TargetSpec(TargetCategory.NONE, false, null, true, 1);
+            case TARGET -> TargetSpec.benign(TargetPredicates.permanent());
+            case SELF -> new TargetSpec(null, false, null, true, 1);
             default -> TargetSpec.NONE;
         };
     }

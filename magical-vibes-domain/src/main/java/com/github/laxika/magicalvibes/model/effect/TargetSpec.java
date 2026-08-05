@@ -15,58 +15,73 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * sends resolved UUID lists and derived booleans, and {@code magical-vibes-networking} references
  * neither {@link TargetCategory} nor the predicate hierarchy.)</p>
  *
- * @param category         which kind of target is legal (see {@link TargetCategory})
+ * @param declaredTarget   which targets are legal, as a composable {@link TargetPredicate} built
+ *                         from a {@link TargetPredicates} factory; {@code null} when the effect
+ *                         targets nothing. This is the declaration <em>before</em> the orthogonal
+ *                         {@link #predicate()} narrowing is folded in — read
+ *                         {@link #targetPredicate()} for the full restriction.
  * @param harmful          {@code true} when the effect deals damage / destroys / exiles /
  *                         sacrifices / fights its target — i.e. protection from the source must
  *                         be honoured (mirrors the old {@code isDamageOrDestruction()} and the
  *                         validator's {@code checkProtection} call)
  * @param predicate        an optional narrowing predicate over a permanent target (artifact-only,
- *                         nonland, a subtype, …); {@code null} when the category alone suffices
+ *                         nonland, a subtype, …); {@code null} when the declared target alone
+ *                         suffices. Kept as its own component because readers such as
+ *                         {@code EffectResolution.targetPredicateOf} need the narrowing on its
+ *                         own, not conjoined with the declared type restriction.
  * @param selfTargeting    {@code true} when the effect implicitly targets its own source
  *                         permanent (boost-self, regenerate-self, …)
  * @param playerTargetCount how many distinct player targets the effect requires (default 1)
  */
 public record TargetSpec(
-        TargetCategory category,
+        TargetPredicate declaredTarget,
         boolean harmful,
         PermanentPredicate predicate,
         boolean selfTargeting,
         int playerTargetCount) {
 
     /** The spec for an effect that targets nothing — every derived legacy value is its default. */
-    public static final TargetSpec NONE = new TargetSpec(TargetCategory.NONE, false, null, false, 1);
+    public static final TargetSpec NONE = new TargetSpec(null, false, null, false, 1);
 
-    /** A harmful (protection-honouring) spec for the given category, no predicate. */
-    public static TargetSpec harmful(TargetCategory category) {
-        return new TargetSpec(category, true, null, false, 1);
+    /** A harmful (protection-honouring) spec for the given target, no narrowing predicate. */
+    public static TargetSpec harmful(TargetPredicate declaredTarget) {
+        return new TargetSpec(declaredTarget, true, null, false, 1);
     }
 
-    /** A benign (no protection check) spec for the given category, no predicate. */
-    public static TargetSpec benign(TargetCategory category) {
-        return new TargetSpec(category, false, null, false, 1);
+    /** A benign (no protection check) spec for the given target, no narrowing predicate. */
+    public static TargetSpec benign(TargetPredicate declaredTarget) {
+        return new TargetSpec(declaredTarget, false, null, false, 1);
     }
 
-    /** A harmful spec for the given category narrowed by the given permanent predicate. */
-    public static TargetSpec harmful(TargetCategory category, PermanentPredicate predicate) {
-        return new TargetSpec(category, true, predicate, false, 1);
+    /** A harmful spec for the given target narrowed by the given permanent predicate. */
+    public static TargetSpec harmful(TargetPredicate declaredTarget, PermanentPredicate predicate) {
+        return new TargetSpec(declaredTarget, true, predicate, false, 1);
     }
 
-    /** A benign spec for the given category narrowed by the given permanent predicate. */
-    public static TargetSpec benign(TargetCategory category, PermanentPredicate predicate) {
-        return new TargetSpec(category, false, predicate, false, 1);
+    /** A benign spec for the given target narrowed by the given permanent predicate. */
+    public static TargetSpec benign(TargetPredicate declaredTarget, PermanentPredicate predicate) {
+        return new TargetSpec(declaredTarget, false, predicate, false, 1);
     }
 
     /**
-     * The composable equivalent of {@link #category()} plus {@link #predicate()}, or {@code null}
-     * when the spec targets nothing.
-     *
-     * <p>Derived, not stored: {@code category} remains the source of truth and every call site
-     * still reads it. This exists so the enum's two lossy derived booleans
-     * ({@code includesPermanents()} / {@code includesPlayers()}) can be replaced one call site at
-     * a time — see {@code agent-docs/TARGET_PREDICATE_PLAN.md}.</p>
+     * The full restriction this spec places on a target: {@link #declaredTarget()} with its
+     * permanent leaf additionally narrowed by {@link #predicate()}, or {@code null} when the spec
+     * targets nothing.
      */
     public TargetPredicate targetPredicate() {
-        return TargetPredicates.narrowPermanents(TargetPredicates.forCategory(category), predicate);
+        return TargetPredicates.narrowPermanents(declaredTarget, predicate);
+    }
+
+    /**
+     * The legacy {@link TargetCategory} equivalent of {@link #declaredTarget()}.
+     *
+     * <p>Transitional bridge for the readers that still switch on the enum (trigger collectors,
+     * {@code StepTriggerService}, the AI, {@code EffectResolution.collectTargetTypes}); it is
+     * deleted together with {@code TargetCategory} — see
+     * {@code agent-docs/TARGET_PREDICATE_PLAN.md}.</p>
+     */
+    public TargetCategory category() {
+        return TargetPredicates.categoryOf(declaredTarget);
     }
 
     /**

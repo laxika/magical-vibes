@@ -13,7 +13,7 @@ public record DestroyTargetArtifactDealManaValueDamageToSourceEffect() implement
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.PERMANENT, new PermanentIsArtifactPredicate());
+        return TargetSpec.harmful(TargetPredicates.permanent(), new PermanentIsArtifactPredicate());
     }
 
     @Override

@@ -13,6 +13,6 @@ public record RemoveCounterFromSourceAndGainLifeEffect(CounterType counterType, 
 
     @Override
     public TargetSpec targetSpec() {
-        return new TargetSpec(TargetCategory.NONE, false, null, true, 1);
+        return new TargetSpec(null, false, null, true, 1);
     }
 }

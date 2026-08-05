@@ -13,6 +13,6 @@ public record DestroySelfAtEndOfCombatEffect() implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {
-        return new TargetSpec(TargetCategory.NONE, true, null, false, 1);
+        return new TargetSpec(null, true, null, false, 1);
     }
 }

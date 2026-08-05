@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectRole;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 
 import java.util.List;
 
@@ -23,7 +22,7 @@ public class PersonalIncarnation extends Card {
         // by the controller, who is the owner in this engine, so no extra restriction is needed.
         addActivatedAbility(new ActivatedAbility(false, "{0}",
                 List.of(new RedirectNextDamageEffect(RedirectRole.SOURCE_PERMANENT, RedirectRole.CONTROLLER,
-                        1, TargetCategory.NONE)),
+                        1, null)),
                 "{0}: The next 1 damage that would be dealt to this creature this turn is dealt to its owner instead. Only this creature's owner may activate this ability."));
 
         // When this creature dies, its owner loses half their life, rounded up.

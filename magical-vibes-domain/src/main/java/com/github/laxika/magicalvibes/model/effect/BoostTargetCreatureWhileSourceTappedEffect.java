@@ -37,6 +37,6 @@ public record BoostTargetCreatureWhileSourceTappedEffect(int power, int toughnes
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.CREATURE);
+        return TargetSpec.benign(TargetPredicates.creature());
     }
 }

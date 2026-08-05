@@ -33,6 +33,6 @@ public record PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType coun
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PERMANENT, new PermanentIsCreaturePredicate());
+        return TargetSpec.benign(TargetPredicates.permanent(), new PermanentIsCreaturePredicate());
     }
 }

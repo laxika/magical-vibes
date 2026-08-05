@@ -216,7 +216,7 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
         Permanent creature = permanents.get("creature");
 
         TargetPredicate narrowed = TargetSpec
-                .benign(TargetCategory.PERMANENT, new PermanentIsArtifactPredicate())
+                .benign(TargetPredicates.permanent(), new PermanentIsArtifactPredicate())
                 .targetPredicate();
 
         assertThat(narrowed).isEqualTo(TargetPredicates.permanents(new PermanentIsArtifactPredicate()));
@@ -229,6 +229,36 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
     void noneSpecHasNoTargetPredicate() {
         assertThat(TargetSpec.NONE.targetPredicate()).isNull();
         assertThat(TargetPredicates.forCategory(TargetCategory.NONE)).isNull();
+    }
+
+    @Test
+    @DisplayName("Every category round-trips through the declared target a spec now stores")
+    void everyCategoryRoundTripsThroughTheDeclaredTarget() {
+        for (TargetCategory category : TargetCategory.values()) {
+            assertThat(TargetSpec.benign(TargetPredicates.forCategory(category)).category())
+                    .as("round-trip of %s", category)
+                    .isEqualTo(category);
+        }
+    }
+
+    @Test
+    @DisplayName("A narrowing predicate does not disturb the category a spec reports")
+    void narrowingDoesNotDisturbTheReportedCategory() {
+        TargetSpec spec = TargetSpec.benign(TargetPredicates.creature(), new PermanentIsArtifactPredicate());
+
+        assertThat(spec.category()).isEqualTo(TargetCategory.CREATURE);
+        assertThat(spec.predicate()).isEqualTo(new PermanentIsArtifactPredicate());
+    }
+
+    @Test
+    @DisplayName("A declared target no category can express fails loudly rather than being rounded")
+    void anUnmappableDeclaredTargetThrows() {
+        TargetPredicate artifactOrPlayer = TargetPredicates.anyOf(
+                TargetPredicates.player(), TargetPredicates.permanents(new PermanentIsArtifactPredicate()));
+
+        assertThatThrownBy(() -> TargetSpec.benign(artifactOrPlayer).category())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("No TargetCategory expresses");
     }
 
     @Test
@@ -432,7 +462,7 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
     private record CategoryStubEffect(TargetCategory category) implements CardEffect {
         @Override
         public TargetSpec targetSpec() {
-            return TargetSpec.benign(category);
+            return TargetSpec.benign(TargetPredicates.forCategory(category));
         }
     }
 }

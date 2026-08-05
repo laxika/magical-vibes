@@ -12,5 +12,5 @@ public record CounterSpellEffect(CounteredSpellDestination destination) implemen
         this(CounteredSpellDestination.GRAVEYARD);
     }
 
-    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.SPELL_ON_STACK); }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.spellOnStack()); }
 }

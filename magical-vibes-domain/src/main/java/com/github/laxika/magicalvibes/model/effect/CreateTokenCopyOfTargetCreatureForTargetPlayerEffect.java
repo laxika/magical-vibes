@@ -8,6 +8,6 @@ public record CreateTokenCopyOfTargetCreatureForTargetPlayerEffect() implements 
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PLAYER_OR_PERMANENT);
+        return TargetSpec.benign(TargetPredicates.playerOrPermanent());
     }
 }

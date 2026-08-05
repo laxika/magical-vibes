@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterAbilityAndLockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -65,7 +65,7 @@ public class CounterAbilityAndLockSourceEffectHandler implements NormalEffectHan
         }
 
         LockTargetPermanentEffect lock = new LockTargetPermanentEffect(
-                false, false, true, effect.lockDuration(), TargetCategory.PERMANENT);
+                false, false, true, effect.lockDuration(), TargetPredicates.permanent());
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                 entry.getControllerId(), lock, source.getId(), null, null, lock.duration(), 0));

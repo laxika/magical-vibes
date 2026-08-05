@@ -23,6 +23,6 @@ public record DealDamageToTargetOpponentOrPlaneswalkerEffect(DynamicAmount amoun
     // relation for player targets, which the declarative spec cannot express.
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.PLAYER_OR_PLANESWALKER);
+        return TargetSpec.harmful(TargetPredicates.playerOrPlaneswalker());
     }
 }

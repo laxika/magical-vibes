@@ -17,6 +17,6 @@ public record DiscardOwnHandThenDrawEffect(DynamicAmount amount) implements Card
     public TargetSpec targetSpec() {
         // Only target-relative amounts require a player target on the stack entry.
         return amount instanceof DamageDealtToTargetPlayerThisTurn
-                ? TargetSpec.benign(TargetCategory.PLAYER) : TargetSpec.NONE;
+                ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
     }
 }

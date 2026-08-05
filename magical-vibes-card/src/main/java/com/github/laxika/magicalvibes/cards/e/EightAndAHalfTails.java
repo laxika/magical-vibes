@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -24,7 +24,7 @@ public class EightAndAHalfTails extends Card {
                         CardColor.WHITE,
                         new PermanentControlledBySourceControllerPredicate(),
                         GrantScope.TARGET,
-                        TargetCategory.PERMANENT)),
+                        TargetPredicates.permanent())),
                 "{1}{W}: Target permanent you control gains protection from white until end of turn.",
                 TargetFilters.permanentYouControl()
         ));

@@ -14,6 +14,6 @@ public record TargetLandBecomesForestUntilSourceLeavesEffect() implements CardEf
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.LAND);
+        return TargetSpec.benign(TargetPredicates.land());
     }
 }
