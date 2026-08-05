@@ -8,9 +8,13 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.LilianaOfTheDarkRealmsEmblemEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -55,7 +59,15 @@ public class LilianaOfTheDarkRealms extends Card {
         // −6: You get an emblem with "Swamps you control have '{T}: Add {B}{B}{B}{B}.'"
         addActivatedAbility(new ActivatedAbility(
                 -6,
-                List.of(new LilianaOfTheDarkRealmsEmblemEffect()),
+                List.of(new CreateEmblemEffect(
+                        List.of(new GrantActivatedAbilityEffect(
+                                new ActivatedAbility(
+                                        true, null,
+                                        List.of(new AwardManaEffect(ManaColor.BLACK, 4)),
+                                        "{T}: Add {B}{B}{B}{B}."),
+                                GrantScope.OWN_PERMANENTS,
+                                new PermanentHasSubtypePredicate(CardSubtype.SWAMP))),
+                        "Swamps you control have '{T}: Add {B}{B}{B}{B}.'")),
                 "−6: You get an emblem with \"Swamps you control have '{T}: Add {B}{B}{B}{B}.'\""
         ));
     }

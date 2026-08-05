@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -102,6 +103,19 @@ class SorinLordOfInnistradTest extends BaseCardTest {
         assertThat(emblem.controllerId()).isEqualTo(player1.getId());
         assertThat(emblem.staticEffects()).hasSize(1);
         assertThat(emblem.staticEffects().getFirst()).isEqualTo(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES));
+    }
+
+    @Test
+    @DisplayName("-2 logs the emblem against the activating player's name")
+    void minusTwoLogsEmblemAgainstController() {
+        Permanent sorin = addReadySorin(player1);
+        sorin.setCounterCount(CounterType.LOYALTY, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().gameLog.stream().map(GameLogEntry::plainText))
+                .contains(player1.getUsername() + " gets an emblem with \"Creatures you control get +1/+0.\".");
     }
 
     @Test

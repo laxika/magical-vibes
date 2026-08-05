@@ -6,11 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.GarrukCallerOfBeastsEmblemEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchCreatureToBattlefieldOnControllerCastsCreatureSpellEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -50,7 +51,10 @@ public class GarrukCallerOfBeasts extends Card {
         // library for a creature card, put it onto the battlefield, then shuffle."
         addActivatedAbility(new ActivatedAbility(
                 -7,
-                List.of(new GarrukCallerOfBeastsEmblemEffect()),
+                List.of(new CreateEmblemEffect(
+                        List.of(new SearchCreatureToBattlefieldOnControllerCastsCreatureSpellEffect.Marker()),
+                        "Whenever you cast a creature spell, you may search your library for a "
+                                + "creature card, put it onto the battlefield, then shuffle.")),
                 "−7: You get an emblem with \"Whenever you cast a creature spell, you may search your library for a creature card, put it onto the battlefield, then shuffle.\""
         ));
     }

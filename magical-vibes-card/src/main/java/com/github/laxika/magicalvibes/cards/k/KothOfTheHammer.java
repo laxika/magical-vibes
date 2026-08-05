@@ -12,7 +12,10 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.KothEmblemEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -49,7 +52,15 @@ public class KothOfTheHammer extends Card {
         // −5: You get an emblem with "Mountains you control have '{T}: This land deals 1 damage to any target.'"
         addActivatedAbility(new ActivatedAbility(
                 -5,
-                List.of(new KothEmblemEffect()),
+                List.of(new CreateEmblemEffect(
+                        List.of(new GrantActivatedAbilityEffect(
+                                new ActivatedAbility(
+                                        true, null,
+                                        List.of(new DealDamageToAnyTargetEffect(1)),
+                                        "{T}: This land deals 1 damage to any target."),
+                                GrantScope.OWN_PERMANENTS,
+                                new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN))),
+                        "Mountains you control have '{T}: This land deals 1 damage to any target.'")),
                 "\u22125: You get an emblem with \"Mountains you control have '{T}: This land deals 1 damage to any target.'\"."
         ));
     }

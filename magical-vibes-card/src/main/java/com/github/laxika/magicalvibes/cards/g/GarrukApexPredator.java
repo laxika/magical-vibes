@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
+import com.github.laxika.magicalvibes.model.effect.BoostAttackingCreatureOnAttacksYouEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GarrukApexPredatorEmblemEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -67,7 +69,10 @@ public class GarrukApexPredator extends Card {
         // and gains trample until end of turn."
         addActivatedAbility(new ActivatedAbility(
                 -8,
-                List.of(new GarrukApexPredatorEmblemEffect()),
+                List.of(new CreateEmblemEffect(
+                        List.of(new BoostAttackingCreatureOnAttacksYouEffect(5, 5, Set.of(Keyword.TRAMPLE))),
+                        "Whenever a creature attacks you, it gets +5/+5 and gains trample until end of turn.",
+                        EmblemRecipient.TARGET_PLAYER)),
                 "−8: Target opponent gets an emblem with \"Whenever a creature attacks you, it "
                         + "gets +5/+5 and gains trample until end of turn.\"",
                 new PlayerPredicateTargetFilter(

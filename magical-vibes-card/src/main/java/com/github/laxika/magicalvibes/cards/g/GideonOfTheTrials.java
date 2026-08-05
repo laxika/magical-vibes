@@ -5,9 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.GideonOfTheTrialsEmblemEffect;
+import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -41,7 +45,12 @@ public class GideonOfTheTrials extends Card {
         // game and your opponents can't win the game."
         addActivatedAbility(new ActivatedAbility(
                 0,
-                List.of(new GideonOfTheTrialsEmblemEffect()),
+                List.of(new CreateEmblemEffect(
+                        List.of(new ConditionalEffect(
+                                new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.GIDEON)),
+                                new CantLoseGameEffect())),
+                        "As long as you control a Gideon planeswalker, you can't lose the game and "
+                                + "your opponents can't win the game.")),
                 "0: You get an emblem with \"As long as you control a Gideon planeswalker, you can't lose the game and your opponents can't win the game.\""
         ));
     }

@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ChandraDressedToKillEmblemEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToManaSpentToCastToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayCastMatchingThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -51,7 +52,11 @@ public class ChandraDressedToKill extends Card {
                 List.of(
                         new ExileTopCardsMayCastMatchingThisTurnEffect(
                                 5, new CardColorPredicate(CardColor.RED)),
-                        new ChandraDressedToKillEmblemEffect()
+                        new CreateEmblemEffect(
+                                List.of(new DealDamageEqualToManaSpentToCastToAnyTargetEffect(
+                                        new CardColorPredicate(CardColor.RED))),
+                                "Whenever you cast a red spell, this emblem deals X damage to any "
+                                        + "target, where X is the amount of mana spent to cast that spell.")
                 ),
                 "\u22127: Exile the top five cards of your library. You may cast red spells from among "
                         + "them this turn. You get an emblem with \"Whenever you cast a red spell, this "

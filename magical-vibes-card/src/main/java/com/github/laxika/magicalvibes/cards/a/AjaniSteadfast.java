@@ -5,9 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.AjaniSteadfastEmblemEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PreventAllButOneDamageToControllerAndPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -55,7 +56,10 @@ public class AjaniSteadfast extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -7,
-                List.of(new AjaniSteadfastEmblemEffect()),
+                List.of(new CreateEmblemEffect(
+                        List.of(new PreventAllButOneDamageToControllerAndPlaneswalkersEffect()),
+                        "If a source would deal damage to you or a planeswalker you control, "
+                                + "prevent all but 1 of that damage.")),
                 "-7: You get an emblem with \"If a source would deal damage to you or a planeswalker you control, prevent all but 1 of that damage.\""
         ));
     }

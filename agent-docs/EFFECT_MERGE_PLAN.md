@@ -68,7 +68,7 @@ high-churn or needs a design call and is optional.
 
 | # | Step | Classes deleted | Risk | Status |
 |---|---|---|---|---|
-| 1 | Emblem effects → `CreateEmblemEffect` | 16 | LOW | TODO |
+| 1 | Emblem effects → `CreateEmblemEffect` | 16 | LOW | **DONE** — premise held (all 16 records zero-component, all 16 handlers identical bar Garruk's `getTargetId()`); two deliberate deltas: the `playerIds.contains` guard now runs on the controller path too, and Garruk's emblem log gains the trailing `.` the other 15 already had |
 | 2 | Outright deletions (compose from existing effects) | 5 | LOW | TODO |
 | 3 | Redirect-next-damage family | 5 | LOW | TODO |
 | 4 | Any-color mana family | 7 | LOW | TODO |

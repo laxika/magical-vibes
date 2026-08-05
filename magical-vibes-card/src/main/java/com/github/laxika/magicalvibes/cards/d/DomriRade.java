@@ -4,8 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.DomriRadeEmblemEffect;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -46,9 +49,19 @@ public class DomriRade extends Card {
         // and haste."
         addActivatedAbility(new ActivatedAbility(
                 -7,
-                List.of(new DomriRadeEmblemEffect()),
+                List.of(new CreateEmblemEffect(
+                        List.of(
+                                grantToCreatures(Keyword.DOUBLE_STRIKE),
+                                grantToCreatures(Keyword.TRAMPLE),
+                                grantToCreatures(Keyword.HEXPROOF),
+                                grantToCreatures(Keyword.HASTE)),
+                        "Creatures you control have double strike, trample, hexproof, and haste.")),
                 "−7: You get an emblem with \"Creatures you control have double strike, trample, "
                         + "hexproof, and haste.\""
         ));
+    }
+
+    private static GrantKeywordEffect grantToCreatures(Keyword keyword) {
+        return new GrantKeywordEffect(keyword, GrantScope.OWN_PERMANENTS, new PermanentIsCreaturePredicate());
     }
 }

@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeAllCreaturesUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.VenserEmblemEffect;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
@@ -37,7 +38,9 @@ public class VenserTheSojourner extends Card {
         // −8: You get an emblem with "Whenever you cast a spell, exile target permanent."
         addActivatedAbility(new ActivatedAbility(
                 -8,
-                List.of(new VenserEmblemEffect()),
+                List.of(new CreateEmblemEffect(
+                        List.of(new ExileTargetOnControllerSpellCastEffect()),
+                        "Whenever you cast a spell, exile target permanent.")),
                 "\u22128: You get an emblem with \"Whenever you cast a spell, exile target permanent.\""
         ));
     }

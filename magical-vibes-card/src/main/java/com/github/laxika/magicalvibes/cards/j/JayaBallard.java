@@ -6,9 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
-import com.github.laxika.magicalvibes.model.effect.JayaBallardEmblemEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -35,7 +36,10 @@ public class JayaBallard extends Card {
         // If a spell cast this way would be put into your graveyard, exile it instead."
         addActivatedAbility(new ActivatedAbility(
                 -8,
-                List.of(new JayaBallardEmblemEffect()),
+                List.of(new CreateEmblemEffect(
+                        List.of(new EmblemGrantsFlashbackEffect(Set.of(CardType.INSTANT, CardType.SORCERY))),
+                        "You may cast instant and sorcery spells from your graveyard. If a spell "
+                                + "cast this way would be put into your graveyard, exile it instead.")),
                 "\u22128: You get an emblem with \"You may cast instant and sorcery spells from your graveyard. If a spell cast this way would be put into your graveyard, exile it instead.\""
         ));
     }

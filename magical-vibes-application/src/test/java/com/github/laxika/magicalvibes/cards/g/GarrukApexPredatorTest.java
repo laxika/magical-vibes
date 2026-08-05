@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.l.LilianaOfTheVeil;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -95,6 +96,19 @@ class GarrukApexPredatorTest extends BaseCardTest {
 
         assertThat(gd.emblems).hasSize(1);
         assertThat(gd.emblems.getFirst().controllerId()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("-8 logs the emblem against the target opponent's name")
+    void minusEightLogsEmblemAgainstTargetOpponent() {
+        addReadyGarruk(player1, 9);
+
+        harness.activateAbility(player1, 0, 3, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).contains(
+                player2.getUsername() + " gets an emblem with \"Whenever a creature attacks you, "
+                        + "it gets +5/+5 and gains trample until end of turn.\".");
     }
 
     @Test

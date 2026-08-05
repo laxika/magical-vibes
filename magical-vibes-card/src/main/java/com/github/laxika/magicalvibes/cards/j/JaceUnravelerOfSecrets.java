@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.CounterOpponentFirstSpellEachTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.JaceUnravelerOfSecretsEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -33,7 +34,9 @@ public class JaceUnravelerOfSecrets extends Card {
         // −8: You get an emblem with "Whenever an opponent casts their first spell each turn, counter that spell."
         addActivatedAbility(new ActivatedAbility(
                 -8,
-                List.of(new JaceUnravelerOfSecretsEmblemEffect()),
+                List.of(new CreateEmblemEffect(
+                        List.of(new CounterOpponentFirstSpellEachTurnEffect.Marker()),
+                        "Whenever an opponent casts their first spell each turn, counter that spell.")),
                 "\u22128: You get an emblem with \"Whenever an opponent casts their first spell each turn, counter that spell.\""
         ));
     }

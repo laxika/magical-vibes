@@ -5,10 +5,11 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantPermanentNoMaxHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardPutIntoGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TamiyoMoonSageEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -47,7 +48,12 @@ public class TamiyoTheMoonSage extends Card {
         // rest-of-game grant; the emblem itself carries only the graveyard-return trigger.
         addActivatedAbility(new ActivatedAbility(
                 -8,
-                List.of(new GrantPermanentNoMaxHandSizeEffect(), new TamiyoMoonSageEmblemEffect()),
+                List.of(
+                        new GrantPermanentNoMaxHandSizeEffect(),
+                        new CreateEmblemEffect(
+                                List.of(new ReturnCardPutIntoGraveyardToHandEffect()),
+                                "Whenever a card is put into your graveyard from anywhere, you may "
+                                        + "return it to your hand.")),
                 "−8: You get an emblem with \"You have no maximum hand size\" and \"Whenever a card is"
                         + " put into your graveyard from anywhere, you may return it to your hand.\""
         ));
