@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.cards.b.BlackKnight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ZealousInquisitorTest extends BaseCardTest {
 
@@ -98,7 +100,36 @@ class ZealousInquisitorTest extends BaseCardTest {
         assertThat(gd.creatureDamageRedirectShields).isEmpty();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("No shield is installed when the protected creature leaves before the ability resolves")
+    void noShieldWhenInquisitorLeavesBeforeResolution() {
+        Permanent inquisitor = addReadyPermanent(player1, new ZealousInquisitor());
+        Permanent destination = addReadyStats(player2, 3, 3);
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, indexOf(player1, inquisitor), null, destination.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(inquisitor);
+        harness.passBothPriorities();
+
+        assertThat(gd.creatureDamageRedirectShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature with protection from white can't be chosen as the redirect destination")
+    void cannotTargetCreatureWithProtectionFromWhite() {
+        Permanent inquisitor = addReadyPermanent(player1, new ZealousInquisitor());
+        Permanent knight = addReadyPermanent(player2, new BlackKnight());
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        // The destination is the object that ends up taking the damage, so protection from the
+        // ability's (white) source stops it being targeted — CR 702.16b.
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, indexOf(player1, inquisitor), null, knight.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.creatureDamageRedirectShields).isEmpty();
+    }
 
     private Permanent addReadyPermanent(Player player, com.github.laxika.magicalvibes.model.Card card) {
         Permanent perm = new Permanent(card);

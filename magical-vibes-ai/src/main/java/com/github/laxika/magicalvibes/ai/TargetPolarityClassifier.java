@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectRole;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
@@ -185,6 +187,15 @@ public class TargetPolarityClassifier {
             return TargetPolarity.NEUTRAL;
         }
 
+        // Redirect-next-damage: the target is either the object the redirected damage lands on
+        // (Zhalfirin Crusader — aim at the opponent) or the object being shielded (Martyrdom,
+        // Hazduhr the Abbot — aim at the AI's own board).
+        if (effect instanceof RedirectNextDamageEffect redirect) {
+            return redirect.destinationRole() == RedirectRole.TARGET
+                    ? TargetPolarity.HARMFUL_DAMAGE
+                    : TargetPolarity.BENEFICIAL;
+        }
+
         // Conjured Currency's source-mode exchange hands the source away but takes the target, so
         // the target should be an opponent's permanent.
         if (effect instanceof ExchangeControlOfTargetPermanentsEffect) {
@@ -312,7 +323,6 @@ public class TargetPolarityClassifier {
             // Divine Deflection prevents damage to its controller, but the target is who the
             // prevented damage is then dealt to.
             entry("PreventXDamageToControllerAndPermanentsAndRedirectToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
-            entry("RedirectNextDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RevealTopCardsBottomThenDamageIfCopyRevealedEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("TargetCreatureDealsPowerDamageToSelfEffect", TargetPolarity.HARMFUL_DAMAGE),

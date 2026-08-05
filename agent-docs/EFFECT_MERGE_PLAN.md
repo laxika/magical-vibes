@@ -70,7 +70,7 @@ high-churn or needs a design call and is optional.
 |---|---|---|---|---|
 | 1 | Emblem effects → `CreateEmblemEffect` | 16 | LOW | **DONE** — premise held (all 16 records zero-component, all 16 handlers identical bar Garruk's `getTargetId()`); two deliberate deltas: the `playerIds.contains` guard now runs on the controller path too, and Garruk's emblem log gains the trailing `.` the other 15 already had |
 | 2 | Outright deletions (compose from existing effects) | 6 | LOW | **DONE** — rows 1–4 held; the `SacrificeSelf*` row did **not** (`SequenceEffect` has no "if you do" gate, so composing it would have reverted a `9b8147333` fix) and was replaced with a new `SacrificeSelfThenEffect(CardEffect)`, which also absorbs `SacrificeSelfThenDealDamageToTargetPlayerEffect` — that class was **not** unused |
-| 3 | Redirect-next-damage family | 5 | LOW | TODO |
+| 3 | Redirect-next-damage family | 6 | LOW | **DONE** — premise held for all six handlers; the audit missed a third axis (`TargetSpec.harmful`), which is now derived from `destinationRole == TARGET` and makes Zealous Inquisitor harmful like its Zhalfirin Crusader twin (CR 702.16b). The `PermanentPredicate` moved out of the effect onto the two white-creature cards |
 | 4 | Any-color mana family | 7 | LOW | TODO |
 | 5 | Combat-requirement / must-attack | 5 | LOW | TODO |
 | 6 | `SetLifeTotalEffect` | 3 | LOW | TODO |
@@ -199,32 +199,56 @@ Net: 7 records and 5 handlers deleted, 1 record and 1 handler added.
 
 ---
 
-### Step 3 — Redirect-next-damage family
+### Step 3 — Redirect-next-damage family — **DONE**
 
-**Target**
+**Shipped**
 ```java
 public record RedirectNextDamageEffect(RedirectRole protectedRole,   // SOURCE_PERMANENT | TARGET
                                        RedirectRole destinationRole, // TARGET | SOURCE_PERMANENT | CONTROLLER
                                        DynamicAmount amount,
                                        TargetCategory targetCategory, // NONE | CREATURE | ANY_TARGET
                                        PermanentPredicate targetPredicate) implements CardEffect
+// + (…, DynamicAmount, TargetCategory) and (…, int, TargetCategory) convenience ctors
+// enum RedirectRole { SOURCE_PERMANENT, TARGET, CONTROLLER }
 ```
 
-**Absorbs** (7 cards total): `RedirectNextDamageToAnyTargetEffect` (1),
-`RedirectNextDamageToTargetCreatureEffect` (1), `RedirectNextDamageToAnyTargetToSourceEffect` (1),
-`RedirectNextDamageToTargetCreatureToSourceEffect` (2),
-`RedirectNextDamageToTargetCreatureToControllerEffect` (1),
-`RedirectNextDamageToSelfToOwnerEffect` (1).
+Six records and six handlers deleted, one record + one enum + one handler added. Cards:
+Zhalfirin Crusader, Zealous Inquisitor, Personal Incarnation, Martyrdom, Hazduhr the Abbot,
+Daughter of Autumn, Vassal's Duty.
 
-**Evidence** — all six handlers reduce to one statement:
-`gameData.creatureDamageRedirectShields.add(new CreatureDamageRedirectShield(protectedId, null, amount, destinationId))`.
-The only variation is which of `entry.getSourcePermanentId()` / `entry.getTargetId()` /
-`entry.getControllerId()` fills each slot, `int` vs `DynamicAmount` (two already evaluate), and the
-`targetSpec()` category.
+**What held** — all six handlers really do reduce to one shield insert varying only in which of
+`getSourcePermanentId()` / `getTargetId()` / `getControllerId()` fills each slot. The
+`playerNextDamageRedirectShields` branch was a strict superset and is kept: it now fires whenever the
+resolved *protected* id is a player, which is reachable only from Martyrdom's any-target grant.
 
-**Gotcha** — `RedirectNextDamageToAnyTargetToSourceEffectHandler` has one extra branch
-(`playerNextDamageRedirectShields` when the protected object is a player). It is a strict superset;
-keep it.
+**What the audit missed — a third axis.** `targetSpec()` varied in **polarity**, not just category:
+Zhalfirin Crusader declared `harmful(ANY_TARGET)` while Zealous Inquisitor — the same shape narrowed
+to a creature — declared `benign(CREATURE)`. Rather than carry a `boolean harmful` component, polarity
+is now derived: `harmful` exactly when `destinationRole == TARGET`, because that object is the one
+that takes the redirected damage. Verified against CR 702.16b ("can't be targeted by abilities from a
+source with the stated quality"). **Deliberate delta**: Zealous Inquisitor can no longer target a
+creature with protection from white; covered by
+`ZealousInquisitorTest.cannotTargetCreatureWithProtectionFromWhite`.
+
+**Other deliberate deltas**
+- The `TargetSpec` white-creature `PermanentPredicate` was baked into
+  `RedirectNextDamageToTargetCreatureToSourceEffect`; it is now the `targetPredicate` component,
+  built once per card and shared with the card's own `TargetFilter`. The "you control" half still
+  rides only on Hazduhr's `ControlledPermanentPredicateTargetFilter` — the spec is evaluated
+  without a source permanent, so a controller predicate cannot work there.
+- The `amount <= 0` early return, previously on only the two `DynamicAmount` handlers, is now
+  universal (no-op for the five `Fixed` cards).
+- The protected object must still exist: the three protected-by-source handlers used to install a
+  shield keyed to a departed permanent, with a `"the creature"` log fallback. That shield was inert;
+  it is no longer created. Covered by
+  `ZealousInquisitorTest.noShieldWhenInquisitorLeavesBeforeResolution`.
+- The amount now evaluates against the ability's own source permanent in every case (the
+  to-controller handler passed the *target*). No observable change — all seven cards use `Fixed` or
+  `XValue`, neither of which reads the context permanent.
+- One log phrasing replaces two ("… dealt to X this turn is dealt to Y instead"), with a card chip
+  for permanents on both ends rather than a plain name on the protected side. No test asserted these.
+- `TargetPolarityClassifier` swaps its single name-keyed entry for an `instanceof` branch keyed on
+  `destinationRole`, so all seven cards classify instead of one.
 
 ---
 
