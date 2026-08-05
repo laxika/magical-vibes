@@ -388,6 +388,26 @@ predicate on the card's `TargetFilter` instead. The end-step pipeline will also 
 `ConditionalEffect` (morbid / metalcraft / raid / …) wrappers before inspecting the wrapped effect's
 targeting (`targetSpec()` category + predicate).
 
+### May-ability target enumeration (`MayAbilityHandlerService`)
+
+A `MayEffect`-wrapped targeting effect resolves its "may" on the stack and *then* chooses a target,
+so its legal-permanent list is built by `MayAbilityHandlerService.mayAbilityPermanentTargets` rather
+than by a `TriggerTargetCollector` pipeline. Both entry points — the accept path
+(`handleTargetedMayAbilityAccepted`) and the CR 603.5 resolution-time path
+(`handleResolutionTimeTargetSelection`) — share that one helper, with this precedence:
+
+1. the card-level `TargetFilter` (`mayAbilityTargetFilter`, which prefers the effect's own declared
+   target group over the card's primary filter), **and**
+2. the effect's own `PermanentPredicate` (`EffectResolution.targetPredicateOf`), if it carries one;
+3. only when the ability declares **neither** does the effect's `TargetSpec` restrict anything — and
+   then it is evaluated by `TargetPredicateEvaluationService`, the same shared evaluator cast-time
+   validation uses.
+
+A card-level filter therefore *replaces* the spec's own type restriction here; it does not stack with
+it. Arm 3 used to be an open-coded `TargetCategory` switch whose `default` rejected every permanent,
+so a bare `LAND` or `PLAYER_OR_PLANESWALKER` spec found no legal target at all (Boggart Shenanigans
+never offered a planeswalker).
+
 ---
 
 ## Common pitfalls

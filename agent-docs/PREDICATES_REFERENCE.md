@@ -217,7 +217,10 @@ Evaluate one through `TargetPredicateEvaluationService` (`service/target/`), whi
 kind and delegates to the service that already owns that hierarchy — it adds no evaluation logic and
 never reaches `PredicateEvaluationService.matchesStaticFilter`. Its permanent/graveyard/exile/spell
 methods require a `FilterContext` carrying `GameData`: without it the creature and land leaves fall
-back to raw card types and mis-handle an animated land (CR 613.1d).
+back to raw card types and mis-handle an animated land (CR 613.1d). `ValidTargetService` and
+`MayAbilityHandlerService` both take the adapter; the latter uses it for the one arm where a
+may-ability's `TargetSpec` is its only target restriction (see
+`agent-docs/TRIGGER_SLOT_TARGETING.md` for that precedence).
 
 `TargetValidationService` is the exception that does NOT go through that adapter: injecting it would
 close the cycle `TargetValidationService → TargetPredicateEvaluationService → TargetLegalityService →

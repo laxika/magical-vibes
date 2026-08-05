@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LilianaVess;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SkirkProspector;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -62,6 +65,39 @@ class BoggartShenanigansTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player1.getId());
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(p1LifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("An opposing planeswalker is offered as a target and loses a loyalty counter")
+    void canTargetPlaneswalker() {
+        harness.addToBattlefield(player1, new BoggartShenanigans());
+        harness.addToBattlefield(player1, new SkirkProspector());
+        Permanent liliana = harness.addToBattlefieldAndReturn(player2, new LilianaVess());
+        liliana.setCounterCount(CounterType.LOYALTY, 5);
+
+        killWithShock("Skirk Prospector");
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(liliana.getId());
+
+        harness.handlePermanentChosen(player1, liliana.getId());
+
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A creature is not a legal target for a player-or-planeswalker ability")
+    void cannotTargetCreature() {
+        harness.addToBattlefield(player1, new BoggartShenanigans());
+        harness.addToBattlefield(player1, new SkirkProspector());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        killWithShock("Skirk Prospector");
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .doesNotContain(bears.getId());
     }
 
     @Test

@@ -107,6 +107,9 @@ matches = switch (permanentTargetCategory) {
 would accept the same target. The `default` arm defeats the sealed-switch exhaustiveness that
 protects the rest of the codebase.
 
+> **CONFIRMED and fixed by Step 3** — see "Step 3 outcome". Boggart Shenanigans (LRW 155) was a live
+> victim: its `PLAYER_OR_PLANESWALKER` may-trigger never offered a planeswalker.
+
 **4. "Any target" omits battles.** CR 115.4 (verified): *"These targets may be creatures, players,
 planeswalkers, or battles."* `CardType.BATTLE` exists and is handled in combat code, but
 `grep Battle` over `model/filter/` returns zero hits — there is no battle predicate, and
@@ -246,7 +249,7 @@ mechanical high-churn. Phase 4 is deletion.
 | 1 | Introduce `TargetPredicate` + `TargetPredicates` factories + adapter evaluator. `TargetSpec` gains a derived `targetPredicate()` computed from the existing `category`+`predicate`; **no call site changes**. Fix the stale Jackson javadoc. Add the equivalence harness: for each of the 14 factories, assert it accepts/rejects exactly the candidate set the category does. | LOW | **DONE** — see "Step 1 outcome" below. Two deliberate divergences found and pinned; `StackEntryTruePredicate` added. |
 | 2 | Move `TargetValidationService.validateSpec` and `ValidTargetService` enumeration onto `targetPredicate()`. Delete the inferred `allAnyTarget` block. **Confirm or refute defect 2** against Fire Juggler, Spoils of War, Blessings of Nature, Contagion before claiming a fix; record the finding here. **Also decide the two Step 1 divergences** (LAND / planeswalker layer-awareness) — they land the moment the interpreter moves. | MED | **DONE** — see "Step 2 outcome". Both divergences adopted. **Defect 2 refuted as written**: the `allAnyTarget` block was NOT deleted, and a new Step 2b owns that. |
 | 2b | **Delete the `allAnyTarget` inference for real.** Blocked on making eight cards' effects declare honestly instead of using `PLAYER_OR_PERMANENT` as an unchecked escape hatch — see "Step 2 outcome" for the list, the two tiers, and the two mechanisms that must be replaced first (null-target tolerance, and the fact that validators are skipped for multi-target positions). Also covers the ability twin of the same inference (`ValidTargetService.isAnyTargetAbility`, read by `TargetLegalityService.validateMultiTargetAbility:391`), which must change in the same step or enumeration and cast-time validation will disagree. | HIGH | TODO |
-| 3 | Route `MayAbilityHandlerService` through the shared evaluator; delete both copies of the open-coded switch (defect 3). Add a regression test for a `LAND`-spec may-ability. | MED | TODO |
+| 3 | Route `MayAbilityHandlerService` through the shared evaluator; delete both copies of the open-coded switch (defect 3). Add a regression test for a `LAND`-spec may-ability. | MED | **DONE** — see "Step 3 outcome". Defect 3 confirmed verbatim; both copies collapsed into one helper. No implemented card has a `LAND` may-ability, so that regression is a service test; `PLAYER_OR_PLANESWALKER` had a real card (Boggart Shenanigans) and got a card test. |
 | 4 | Migrate the ~400 effect records' `targetSpec()` to the factories. Mechanical and scriptable; the Step 1 equivalence harness is the safety net. Batch by category, smallest first (`EXILE_CARD` 2, `CONTROLLERS_GRAVEYARD_CARD` 2, `LAND` 4, `PLAYER_OR_PLANESWALKER` 4 … `PLAYER` 155 last). | MED | TODO |
 | 5 | Collapse the three graveyard categories onto `GraveyardCards.scope`; delete the five hand-copied scope mappings. | LOW | TODO |
 | 6 | Migrate the derived-boolean readers (`includesPermanents` / `includesPlayers` / `isGraveyard`) in the trigger collectors, `StepTriggerService`, AI, and `EffectResolution.collectTargetTypes`. ~30 call sites across engine + AI. | MED | TODO |
@@ -391,6 +394,64 @@ The comment at the call site says so and points here.
   `PredicateEvaluationService` over their mocked `GameQueryService`, because the type restrictions
   the interpreter used to open-code are now real predicate evaluations. Any future test that mocks
   predicate evaluation and expects targeting to work will silently reject every candidate.
+
+---
+
+## Step 3 outcome
+
+**Defect 3 held exactly as written.** Both switches were still there verbatim (lines 387-394 and
+795-802), both with `default -> false` swallowing `LAND` and `PLAYER_OR_PLANESWALKER`, and both
+reading the *printed* planeswalker type line.
+
+They are now one private helper, `MayAbilityHandlerService.mayAbilityPermanentTargets`, shared by the
+accept path (`handleTargetedMayAbilityAccepted`) and the CR 603.5 resolution-time path
+(`handleResolutionTimeTargetSelection`). The service takes `TargetPredicateEvaluationService` as a new
+constructor dependency — no cycle risk, since it already depended on `ValidTargetService`, which takes
+the same adapter.
+
+**The three-way precedence is unchanged**, and it is worth writing down because it is not what a
+reader expects: a card-level `TargetFilter` or an effect-level `PermanentPredicate`
+(`EffectResolution.targetPredicateOf`) *replaces* the spec's type restriction rather than stacking
+with it. Only when the ability declares neither does the spec restrict anything — and that is the arm
+that now evaluates `targetSpec().targetPredicate()` through the shared evaluator. Documented in
+`TRIGGER_SLOT_TARGETING.md` under "May-ability target enumeration".
+
+Behaviour changes, both in the rules-correct direction and both pinned by a failing-before test:
+
+| Spec | Before | Now |
+|---|---|---|
+| `LAND` | no legal permanent at all | layer-aware `isLand` |
+| `PLAYER_OR_PLANESWALKER` | no legal permanent at all (players only) | layer-aware `isPlaneswalker` |
+| `ANY_TARGET` / `CREATURE_OR_PLANESWALKER` | `isCreature \|\| printed PLANESWALKER` | `isCreature \|\| isPlaneswalker` (CR 613.1d, verified) |
+
+`CREATURE`, `PERMANENT` and `PLAYER_OR_PERMANENT` are unchanged.
+
+**No implemented card has a `LAND`-spec may-ability** (checked: the four `LAND` producers are
+`DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect`, `GrantBasicLandTypeToTargetEffect`,
+`TargetLandBecomesForestUntilSourceLeavesEffect`, `DestroyAttachmentsOnTargetCreatureEffect(…, LAND)`,
+and no card combines one with a `MayEffect`). That regression therefore lives in a new
+`MayAbilityHandlerServiceTest` (`service/input/`), which builds the service by hand over a **real**
+`PredicateEvaluationService` + `TargetPredicateEvaluationService` — the Step 2 note applies here too,
+a mocked predicate evaluator silently rejects every candidate. `PLAYER_OR_PLANESWALKER` *did* have a
+real card: `BoggartShenanigansTest` now covers a planeswalker being offered and losing a loyalty
+counter, plus a creature staying illegal. Both new tests were confirmed to fail against a restored
+copy of the old switch.
+
+Two things a later step should know:
+
+- **The prompt label is still hard-coded and now visibly wrong for the widened cases.**
+  `handleTargetedMayAbilityAccepted` ends with `targetDescription = … else "creature"`, so a `LAND`
+  may-ability would prompt "Choose target creature." Step 2 built real predicate-derived wording in
+  `TargetValidationService.rejectionMessage`, but it is `private` and reusing it would add a
+  `MayAbilityHandlerService → TargetValidationService` edge. Left alone deliberately; it is
+  pre-existing (a bare `PERMANENT` spec said "creature" too), not introduced here.
+- **`MayAbilityHandlerService` still has 18 legacy category reads** (`includesPermanents()` /
+  `includesPlayers()` / `isGraveyard()` / `== TargetCategory.ANY_GRAVEYARD_CARD`): the
+  `isTargeted*Effect` triples at the top of `handleMayAbilityChosen` and in
+  `handleResolutionTimeMayChoice`, the two `canTargetPermanent` / `canTargetPlayer` guards around the
+  new helper, and the graveyard-scope comparisons duplicated across
+  `handleGraveyardTargetedMayAbility` and `handleResolutionTimeGraveyardTargetSelection`. Those are
+  Step 5/6 territory and were left untouched; only the new helper uses `TargetSpec.admits(Kind)`.
 
 ---
 
