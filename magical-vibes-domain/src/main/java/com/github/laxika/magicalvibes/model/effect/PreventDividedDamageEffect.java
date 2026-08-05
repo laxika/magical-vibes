@@ -12,11 +12,11 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public record PreventDividedDamageEffect(int amount) implements CardEffect {
 
-    // PLAYER_OR_PERMANENT is a no-op in the spec interpreter, so it preserves this effect's
-    // null-targetId tolerance (CHOSEN-mode targets ride on StackEntry.damageAssignments). The kept
-    // @ValidatesTarget validator (PreventionTargetValidators) performs the real per-target checks.
+    // "Any number of targets" is "any target" (CR 115.4): a creature, player or planeswalker. The
+    // per-target amounts ride on StackEntry.damageAssignments, so the validated targetId is null;
+    // that tolerance comes from EffectResolution.distributesAmountsAmongTargets.
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PLAYER_OR_PERMANENT);
+        return TargetSpec.benign(TargetCategory.ANY_TARGET);
     }
 }

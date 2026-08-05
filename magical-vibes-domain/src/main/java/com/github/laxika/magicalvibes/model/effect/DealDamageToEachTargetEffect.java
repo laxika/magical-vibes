@@ -20,8 +20,14 @@ public record DealDamageToEachTargetEffect(DynamicAmount damage, PermanentPredic
         this(damage, null);
     }
 
+    /**
+     * "Each of up to N targets" is "any target" (CR 115.4): a creature, player or planeswalker,
+     * never another permanent type. Harmful, so protection from the source blocks targeting
+     * (CR 702.16b) — {@link #filter} is a resolution-time filter over the already-chosen targets
+     * (Winter Blast's "with flying"), never a targeting restriction.
+     */
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetCategory.PLAYER_OR_PERMANENT);
+        return TargetSpec.harmful(TargetCategory.ANY_TARGET);
     }
 }

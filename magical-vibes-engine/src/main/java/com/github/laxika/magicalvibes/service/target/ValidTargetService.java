@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerLostLifeThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
@@ -316,11 +317,16 @@ public class ValidTargetService {
                 });
                 }
             } else {
-                // "Each of up to N targets" (Chandra, the Firebrand −6): an unfiltered position whose
-                // effects target both players and permanents is an "any target" slot, so it offers
-                // players alongside creatures and planeswalkers — never other permanent types.
-                boolean anyTargetPosition = positionFilter == null && isAnyTargetAbility(ability);
-                if (anyTargetPosition && !gameQueryService.isPeaceTalksActive(gameData)) {
+                // An unfiltered position is restricted by what the ability's own effects declare —
+                // "each of up to N targets" (Chandra, the Firebrand −6) declares "any target"
+                // (CR 115.4), so it offers players alongside creatures and planeswalkers and never
+                // another permanent type.
+                boolean unfiltered = positionFilter == null;
+                PermanentPredicate declared = unfiltered
+                        ? EffectResolution.declaredPermanentRestriction(ability.getEffects()).orElse(null)
+                        : null;
+                if (unfiltered && EffectResolution.allowsPlayerTargets(ability.getEffects())
+                        && !gameQueryService.isPeaceTalksActive(gameData)) {
                     for (UUID playerId : gameData.playerIds) {
                         if (excludeIds.contains(playerId)) continue;
                         if (isValidPlayerTarget(gameData, ability.getTargetFilter(), playerId, controllerId)) {
@@ -331,8 +337,9 @@ public class ValidTargetService {
                 if (!gameQueryService.isPeaceTalksActive(gameData)) {
                 gameData.forEachPermanent((playerId, perm) -> {
                     if (excludeIds.contains(perm.getId())) return;
-                    if (anyTargetPosition
-                            && !gameQueryService.isCreature(gameData, perm) && !isPlaneswalker(perm)) {
+                    if (declared != null && !targetPredicateEvaluationService.matchesPermanent(
+                            TargetPredicates.permanents(declared), perm,
+                            targetFilterContext(gameData, sourceCard.getId(), controllerId, xValue))) {
                         return;
                     }
                     if (isValidAbilityPermanentTarget(gameData, sourceCard, ability, perm, controllerId, false, permanentIndex, positionFilter)) {
@@ -442,21 +449,6 @@ public class ValidTargetService {
     }
 
     /**
-     * True when a multi-target ability's target slots are "any target" — it declares no global or
-     * per-position filter and every permanent-targeting effect also targets players.
-     */
-    public static boolean isAnyTargetAbility(ActivatedAbility ability) {
-        if (ability.getTargetFilter() != null) {
-            return false;
-        }
-        List<CardEffect> permanentEffects = ability.getEffects().stream()
-                .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
-                .toList();
-        return !permanentEffects.isEmpty()
-                && permanentEffects.stream().allMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-    }
-
-    /**
      * Full permanent-target validation for a spell — the same logic used by
      * {@link #computeValidTargetsForSpell} (and therefore the frontend UI).
      * Includes protection/hexproof/shroud, the spell's TargetFilter, and the
@@ -536,30 +528,21 @@ public class ValidTargetService {
             return false;
         }
 
-        // An unfiltered slot whose permanent-targeting spell effects also accept players is an
-        // "any target" slot: CR 115.4 restricts it to a creature, player, planeswalker or battle,
-        // never to any other permanent (battles are not modelled yet). What "any target" admits
-        // comes from TargetPredicates.anyTarget() rather than an open-coded type check, so the
-        // definition lives in one place and is layer-aware (CR 613.1d).
-        //
-        // The slot is still *recognised* by asking whether every permanent-targeting effect also
-        // accepts players, which cannot tell "any target" apart from "a player or any permanent".
-        // That inference cannot be dropped yet: eight cards declare PLAYER_OR_PERMANENT purely as
-        // an unchecked escape hatch and this is their only narrowing — see
-        // agent-docs/TARGET_PREDICATE_PLAN.md, "Step 2 outcome".
+        // An unfiltered slot is restricted by what the spell's effects themselves declare. "Any
+        // target" (CR 115.4: a creature, player, planeswalker or battle — battles are not modelled
+        // yet) is one such declaration, evaluated layer-aware through the shared predicate
+        // hierarchy (CR 613.1d).
         if (card.getTargetFilter() == null && positionFilter == null) {
-            List<CardEffect> permanentEffects = spellEffects.stream()
-                    .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
-                    .toList();
-            boolean anyTargetSlot = !permanentEffects.isEmpty()
-                    && permanentEffects.stream()
-                            .allMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-            if (anyTargetSlot) {
-                if (!targetPredicateEvaluationService.matchesPermanent(TargetPredicates.anyTarget(), perm,
-                        targetFilterContext(gameData, card.getId(), controllerId, xValue))) {
+            PermanentPredicate declared =
+                    EffectResolution.declaredPermanentRestriction(spellEffects).orElse(null);
+            if (declared != null) {
+                if (!targetPredicateEvaluationService.matchesPermanent(TargetPredicates.permanents(declared),
+                        perm, targetFilterContext(gameData, card.getId(), controllerId, xValue))) {
                     return false;
                 }
             } else if (isMultiTarget && !gameQueryService.isCreature(gameData, perm)) {
+                // Legacy default for a multi-target slot no effect restricts (Karn's Temporal
+                // Sundering's bare "target player" group, whose permanents no effect claims).
                 return false;
             }
         }
@@ -1084,9 +1067,5 @@ public class ValidTargetService {
                 .withSourceCardId(sourceCardId)
                 .withSourceControllerId(controllerId);
         return xValue != null ? filterContext.withXValue(xValue) : filterContext;
-    }
-
-    private boolean isPlaneswalker(Permanent perm) {
-        return perm.getCard().hasType(CardType.PLANESWALKER);
     }
 }

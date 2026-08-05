@@ -23,11 +23,15 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByConvergeEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -228,19 +232,68 @@ public final class EffectResolution {
     }
 
     /**
-     * Returns true if the given effects require damage distribution (divided damage spells).
+     * The restriction a target slot that carries no {@code TargetFilter} of its own inherits from
+     * the effects that will use it: every permanent restriction those effects declare, conjoined.
+     * Empty when none of them declares one — a bare {@code PERMANENT} spec, and one that accepts
+     * every player <em>and</em> every permanent, say nothing about which permanent is legal.
+     *
+     * <p>This is what "any target" (CR 115.4 — a creature, player, planeswalker or battle) is
+     * expressed by now. It used to be <em>inferred</em> in target enumeration, from every
+     * permanent-targeting effect also accepting players; that test could not tell "any target"
+     * apart from "a player or any permanent", so the effects that declared the latter as an
+     * unchecked escape hatch silently received the former's creature/planeswalker narrowing while
+     * their real restriction ("among any number of target creatures") went unexpressed. See
+     * {@code agent-docs/TARGET_PREDICATE_PLAN.md}, Step 2b.</p>
      */
-    public static boolean needsDamageDistribution(List<CardEffect> effects) {
-        return effects.stream().anyMatch(EffectResolution::needsAmountDistribution);
+    public static Optional<PermanentPredicate> declaredPermanentRestriction(List<CardEffect> effects) {
+        List<PermanentPredicate> declared = new ArrayList<>();
+        for (CardEffect e : effects) {
+            TargetPredicate predicate = e.targetSpec().targetPredicate();
+            if (predicate == null) {
+                continue;
+            }
+            PermanentPredicate restriction = predicate.permanentRestriction().orElse(null);
+            if (restriction == null || restriction instanceof PermanentTruePredicate) {
+                continue;
+            }
+            declared.add(restriction);
+        }
+        if (declared.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(declared.size() == 1 ? declared.getFirst() : new PermanentAllOfPredicate(declared));
     }
 
     /**
-     * An effect whose per-target integer amounts are announced by the controller (CR 601.2b) and
+     * Whether a player may be chosen for a target slot that carries no {@code TargetFilter} of its
+     * own — true when some effect that will use the slot accepts one. Mirrors
+     * {@code Card.doesPositionAllowPlayerTargets}, which asks the same question of a spell's
+     * declared target groups.
+     */
+    public static boolean allowsPlayerTargets(List<CardEffect> effects) {
+        return effects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+    }
+
+    /**
+     * Returns true if the given effects require damage distribution (divided damage spells).
+     */
+    public static boolean needsDamageDistribution(List<CardEffect> effects) {
+        return effects.stream().anyMatch(EffectResolution::distributesAmountsAmongTargets);
+    }
+
+    /**
+     * An effect whose per-target integer amounts are announced by the controller (CR 601.2d) and
      * carried on {@code StackEntry.damageAssignments}: divided damage (CHOSEN mode reading the
      * standard targeting buffer, not the ETB {@code pendingETBDamageAssignments} path), divided
      * prevention (Remedy) or a chosen counter distribution (Spoils of War).
+     *
+     * <p>Its targets live in that assignment map rather than in the stack entry's single
+     * {@code targetId}, so the target-validation pipeline must not demand a {@code targetId} for
+     * it. {@code TargetValidationService} reads this instead of inferring the tolerance from the
+     * spec's shape, which is what let these effects declare a deliberately no-op
+     * {@code TargetCategory} and hide what they really target.
      */
-    private static boolean needsAmountDistribution(CardEffect e) {
+    public static boolean distributesAmountsAmongTargets(CardEffect e) {
         return isChosenDivision(e)
                 || e instanceof PreventDividedDamageEffect
                 || (e instanceof DistributeCountersAmongTargetsEffect d && d.mode() == DivisionMode.CHOSEN);

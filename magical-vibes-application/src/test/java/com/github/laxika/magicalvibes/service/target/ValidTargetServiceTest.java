@@ -114,6 +114,13 @@ class ValidTargetServiceTest {
                 new TargetPredicateEvaluationService(
                         new PredicateEvaluationService(gameQueryService), targetLegalityService));
         lenient().when(targetValidationService.checkEffectTargets(any(), any())).thenReturn(Optional.empty());
+        // Enumeration evaluates the restriction a spell's effects declare ("target creature", "any
+        // target") for real, so the mocked GameQueryService has to answer isCreature honestly for the
+        // cards these tests build. Individual tests still override it to model animation or a
+        // type-changing effect.
+        lenient().when(gameQueryService.isCreature(eq(gameData), any(Permanent.class)))
+                .thenAnswer(invocation ->
+                        invocation.<Permanent>getArgument(1).getCard().hasType(CardType.CREATURE));
         // Ground Seal gate — default open so graveyard enumeration tests are not emptied by the mock.
         lenient().when(gameQueryService.canGraveyardCardsBeTargeted(any())).thenReturn(true);
     }

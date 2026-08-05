@@ -57,7 +57,7 @@ public class TargetValidationService {
                 boolean spellTargetPath = context.targetZone() == Zone.STACK
                         && EffectResolution.targetsSpellOnStack(effectToValidate);
                 if (spec.targetPredicate() != null && !spellTargetPath) {
-                    validateSpec(context, spec);
+                    validateSpec(context, spec, effectToValidate);
                 }
                 if (validator != null) {
                     validator.validate(context, effectToValidate);
@@ -87,7 +87,7 @@ public class TargetValidationService {
      * a property of the board, not of the candidate. So is the CR 702.16b protection check, which
      * rides on the orthogonal {@link TargetSpec#harmful()} axis.</p>
      */
-    private void validateSpec(TargetValidationContext ctx, TargetSpec spec) {
+    private void validateSpec(TargetValidationContext ctx, TargetSpec spec, CardEffect effect) {
         TargetPredicate predicate = spec.targetPredicate();
 
         if (predicate.admits(TargetPredicate.Kind.GRAVEYARD_CARD)
@@ -96,7 +96,7 @@ public class TargetValidationService {
         }
 
         PermanentPredicate restriction = predicate.permanentRestriction().orElse(null);
-        if (restriction != null && demandsPermanentTarget(predicate, restriction)) {
+        if (restriction != null && demandsPermanentTarget(predicate, restriction, effect)) {
             requireTarget(ctx);
             boolean playerTarget = predicate.admits(TargetPredicate.Kind.PLAYER)
                     && ctx.gameData().playerIds.contains(ctx.targetId());
@@ -123,14 +123,26 @@ public class TargetValidationService {
     }
 
     /**
-     * Whether the spec insists that a target be supplied at all. A predicate that accepts every
-     * player <em>and</em> every permanent restricts nothing, so there is nothing for it to demand —
-     * which is what the divided-damage and distributed-counter effects rely on: their per-target
-     * amounts ride on the stack entry's assignment map, so the validated {@code targetId} is null.
-     * Every other shape either narrows the domain ("a permanent, not a player") or narrows within
-     * it, and can only judge a target that exists.
+     * Whether the spec insists that a target be supplied at all. Two shapes say no:
+     *
+     * <ul>
+     *   <li>An effect that distributes an announced amount among its targets (CR 601.2d) keeps them
+     *       in {@code StackEntry.damageAssignments}, so the {@code targetId} handed to validation is
+     *       null by design and the caller — not the predicate — decides whether that is legal. This
+     *       used to be bought by declaring {@code PLAYER_OR_PERMANENT}, a category the interpreter
+     *       no-ops on, which hid what the effect really targets.</li>
+     *   <li>A predicate that accepts every player <em>and</em> every permanent restricts nothing, so
+     *       there is nothing for it to demand.</li>
+     * </ul>
+     *
+     * <p>Every other shape either narrows the domain ("a permanent, not a player") or narrows within
+     * it, and can only judge a target that exists.</p>
      */
-    private static boolean demandsPermanentTarget(TargetPredicate predicate, PermanentPredicate restriction) {
+    private static boolean demandsPermanentTarget(TargetPredicate predicate, PermanentPredicate restriction,
+                                                  CardEffect effect) {
+        if (EffectResolution.distributesAmountsAmongTargets(effect)) {
+            return false;
+        }
         return !predicate.admits(TargetPredicate.Kind.PLAYER)
                 || !(restriction instanceof PermanentTruePredicate);
     }

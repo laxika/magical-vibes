@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SpellTarget;
@@ -388,7 +387,13 @@ public class TargetLegalityService {
         validateMultiTargetCount(targetIds, ability.getEffectiveMinTargets(xValue), ability.getEffectiveMaxTargets(xValue));
 
         List<TargetFilter> perPositionFilters = ability.getMultiTargetFilters();
-        boolean anyTarget = ValidTargetService.isAnyTargetAbility(ability);
+        // An unfiltered position is restricted by what the ability's own effects declare, exactly
+        // as target enumeration reads it (ValidTargetService.computeValidTargetsForAbility).
+        boolean allowsPlayers = ability.getTargetFilter() == null
+                && EffectResolution.allowsPlayerTargets(ability.getEffects());
+        PermanentPredicate declaredRestriction = ability.getTargetFilter() == null
+                ? EffectResolution.declaredPermanentRestriction(ability.getEffects()).orElse(null)
+                : null;
         for (int i = 0; i < targetIds.size(); i++) {
             UUID targetId = targetIds.get(i);
             TargetFilter positionFilter = getPositionFilter(perPositionFilters, i);
@@ -398,7 +403,7 @@ public class TargetLegalityService {
 
             // "Any target" position (Chandra, the Firebrand −6): players are legal alongside
             // creatures and planeswalkers, and no other permanent type is.
-            if (positionFilter == null && anyTarget && gameData.playerIds.contains(targetId)) {
+            if (positionFilter == null && allowsPlayers && gameData.playerIds.contains(targetId)) {
                 String peaceTalks = peaceTalksUntargetableReason(gameData);
                 if (peaceTalks != null) {
                     throw new IllegalStateException(peaceTalks);
@@ -441,9 +446,9 @@ public class TargetLegalityService {
                 throw new IllegalStateException(peaceTalks);
             }
             validatePermanentTargetable(gameData, target, playerId);
-            if (positionFilter == null && anyTarget
-                    && !gameQueryService.isCreature(gameData, target)
-                    && !target.getCard().hasType(CardType.PLANESWALKER)) {
+            if (positionFilter == null && declaredRestriction != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(target, declaredRestriction,
+                            filterContext(gameData, sourceCard.getId(), playerId))) {
                 throw new IllegalStateException(target.getCard().getName() + " is not a legal target");
             }
             validateHexproofFromColor(gameData, target, sourceCard, playerId);
@@ -690,6 +695,10 @@ public class TargetLegalityService {
                 card.getSpellTargets(), card.isAllowSharedTargets());
 
         List<TargetFilter> perPositionFilters = card.getMultiTargetFilters();
+        // The restriction an unfiltered position inherits from the spell's own effects, read the
+        // same way target enumeration reads it (ValidTargetService.isValidPermanentTarget).
+        PermanentPredicate declaredRestriction = EffectResolution
+                .declaredPermanentRestriction(card.getEffects(EffectSlot.SPELL)).orElse(null);
         for (int i = 0; i < targetIds.size(); i++) {
             UUID targetId = targetIds.get(i);
 
@@ -730,8 +739,11 @@ public class TargetLegalityService {
                 throw new IllegalStateException("Invalid target");
             }
 
-            // Apply per-position target filter if available; otherwise fall back to
-            // the card-level targetFilter, or require a creature target as default.
+            // Apply per-position target filter if available; otherwise fall back to the card-level
+            // targetFilter, then to what the spell's own effects declare — "any target" (CR 115.4)
+            // makes a planeswalker legal here, which the creature-only default below rejected even
+            // though enumeration offered it. That default now applies only to a slot no effect
+            // restricts.
             TargetFilter positionFilter = slotFilter;
             if (positionFilter != null) {
                 predicateEvaluationService.validateTargetFilter(positionFilter, target,
@@ -739,6 +751,11 @@ public class TargetLegalityService {
             } else if (card.getTargetFilter() != null) {
                 predicateEvaluationService.validateTargetFilter(card.getTargetFilter(), target,
                         filterContext(gameData, card.getId(), controllerId));
+            } else if (declaredRestriction != null) {
+                if (!predicateEvaluationService.matchesPermanentPredicate(target, declaredRestriction,
+                        filterContext(gameData, card.getId(), controllerId))) {
+                    throw new IllegalStateException(target.getCard().getName() + " is not a legal target");
+                }
             } else if (!gameQueryService.isCreature(gameData, target)) {
                 throw new IllegalStateException(target.getCard().getName() + " is not a creature");
             }

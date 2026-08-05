@@ -65,14 +65,12 @@ public record DistributeCountersAmongTargetsEffect(
     public TargetSpec targetSpec() {
         boolean harmful = counterType == CounterType.MINUS_ONE_MINUS_ONE
                 || counterType == CounterType.MINUS_TWO_MINUS_ONE;
-        // CHOSEN-mode targets ride on StackEntry.damageAssignments, so targetId is null on that path.
-        // PLAYER_OR_PERMANENT is a no-op in the spec interpreter, which preserves that null tolerance.
-        // It declares nothing about which permanents are legal, and no @ValidatesTarget validator
-        // covers this effect either — enumeration's "any target" inference is the only narrowing
-        // (see agent-docs/TARGET_PREDICATE_PLAN.md, Step 2b).
-        TargetCategory category = mode == DivisionMode.CHOSEN
-                ? TargetCategory.PLAYER_OR_PERMANENT
-                : TargetCategory.CREATURE;
-        return harmful ? TargetSpec.harmful(category) : TargetSpec.benign(category);
+        // Both modes distribute among target *creatures*. CHOSEN-mode targets ride on
+        // StackEntry.damageAssignments, so the validated targetId is null; that tolerance comes
+        // from EffectResolution.distributesAmountsAmongTargets rather than from declaring a
+        // category the spec interpreter no-ops on.
+        return harmful
+                ? TargetSpec.harmful(TargetCategory.CREATURE)
+                : TargetSpec.benign(TargetCategory.CREATURE);
     }
 }

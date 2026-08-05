@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LilianaVess;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -41,6 +44,45 @@ class ArcTrailTest extends BaseCardTest {
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Arc Trail");
         assertThat(entry.getTargetIds()).containsExactly(id1, id2);
+    }
+
+    @Test
+    @DisplayName("A planeswalker is a legal target for an any-target slot (CR 115.4)")
+    void canTargetPlaneswalker() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent liliana = harness.addToBattlefieldAndReturn(player2, new LilianaVess());
+        liliana.setCounterCount(CounterType.LOYALTY, 5);
+        harness.setHand(player1, List.of(new ArcTrail()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        GameData gd = harness.getGameData();
+        var response = harness.getValidTargetService()
+                .computeValidTargetsForSpell(gd, gd.playerHands.get(player1.getId()).getFirst(),
+                        player1.getId(), null);
+        assertThat(response.validPermanentIds()).contains(liliana.getId());
+
+        // 2 damage to the planeswalker, 1 to the creature.
+        harness.castSorcery(player1, 0, List.of(liliana.getId(), bearsId));
+        harness.passBothPriorities();
+
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A land is not a legal target for an any-target slot")
+    void cannotTargetLand() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.setHand(player1, List.of(new ArcTrail()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(mountain.getId(), bearsId)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("is not a legal target");
     }
 
     @Test

@@ -28,7 +28,9 @@ import java.util.List;
  * @param totalDamage       the total to divide (CHOSEN/EVEN). Ignored for ORDERED (pass {@code null}).
  * @param orderedAmounts    fixed per-target amounts (ORDERED only; {@code null} otherwise).
  * @param mode              how the total is split.
- * @param targetRestriction target legality restriction (informational; {@code null} = any).
+ * @param targetRestriction narrows which permanents may be targeted, on top of the creature
+ *                          restriction implied by {@code canTargetPlayers == false}; {@code null}
+ *                          adds no narrowing. Enforced through {@link #targetSpec()}.
  * @param maxTargets        maximum number of targets, {@code 0} = unbounded.
  * @param canTargetPlayers  whether players may be targeted (creatures and/or players).
  * @param damagedCreaturesCantBlock    if {@code true}, creatures dealt damage this way can't block this turn.
@@ -153,10 +155,13 @@ public record DealDividedDamageEffect(
         if (etbAssignments) {
             return TargetSpec.NONE;
         }
-        // PLAYER_OR_PERMANENT is a no-op in the spec interpreter, which preserves this effect's
-        // null-targetId tolerance (CHOSEN-mode targets ride on StackEntry.damageAssignments). The
-        // kept @ValidatesTarget validator (DamageTargetValidators) enforces the real per-target type
-        // rules, including rejecting player targets when this spell targets creatures only.
-        return TargetSpec.harmful(TargetCategory.PLAYER_OR_PERMANENT);
+        // What this effect may target is declared honestly: "any target" (CR 115.4 — a creature,
+        // player or planeswalker) when players are legal, otherwise a creature narrowed by the
+        // restriction. CHOSEN-mode targets ride on StackEntry.damageAssignments, so the validated
+        // targetId is null; that tolerance comes from
+        // EffectResolution.distributesAmountsAmongTargets, not from picking a category the spec
+        // interpreter happens to no-op on.
+        TargetCategory category = canTargetPlayers ? TargetCategory.ANY_TARGET : TargetCategory.CREATURE;
+        return new TargetSpec(category, true, targetRestriction, false, 1);
     }
 }

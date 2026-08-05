@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LilianaVess;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -77,6 +78,25 @@ class BlessingsOfNatureTest extends BaseCardTest {
         assertThatThrownBy(() ->
                 harness.castSorcery(player1, 0, Map.of(mountain.getId(), 4))
         ).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Target enumeration offers creatures only — not planeswalkers and not players")
+    void enumerationOffersCreaturesOnly() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent liliana = harness.addToBattlefieldAndReturn(player2, new LilianaVess());
+        prepareCast();
+
+        var response = harness.getValidTargetService().computeValidTargetsForSpell(
+                harness.getGameData(),
+                harness.getGameData().playerHands.get(player1.getId()).getFirst(),
+                player1.getId(), null);
+
+        assertThat(response.validPermanentIds())
+                .contains(bears.getId())
+                .doesNotContain(mountain.getId(), liliana.getId());
+        assertThat(response.validPlayerIds()).isEmpty();
     }
 
     @Test

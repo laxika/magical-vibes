@@ -408,6 +408,26 @@ it. Arm 3 used to be an open-coded `TargetCategory` switch whose `default` rejec
 so a bare `LAND` or `PLAYER_OR_PLANESWALKER` spec found no legal target at all (Boggart Shenanigans
 never offered a planeswalker).
 
+### Unfiltered spell / activated-ability slots
+
+A cast-time or activation target slot that carries **neither** a card/ability-level `TargetFilter`
+**nor** a per-position one is restricted by what its effects declare:
+`EffectResolution.declaredPermanentRestriction` conjoins every permanent restriction those effects
+carry on their `TargetSpec`, and `EffectResolution.allowsPlayerTargets` says whether a player may be
+chosen. Enumeration (`ValidTargetService.isValidPermanentTarget` /
+`computeValidTargetsForAbility`) and validation (`TargetLegalityService.validateMultiSpellTargets` /
+`validateMultiTargetAbility`) both read them, so the UI and the cast path cannot disagree.
+
+"Any target" (CR 115.4 — a creature, player or planeswalker) is one such declaration. It used to be
+*inferred* from "every permanent-targeting effect also accepts players", which could not tell it
+apart from `PLAYER_OR_PERMANENT`; effects that picked the latter as an unchecked escape hatch got
+the creature/planeswalker narrowing they never asked for, while their real restriction ("among any
+number of target creatures") stayed unexpressed, and the cast path — which required a creature —
+rejected the planeswalker enumeration had just offered.
+
+A slot no effect restricts still falls back to the legacy creature-only default when it is
+multi-target (Karn's Temporal Sundering's bare "target player" group).
+
 ---
 
 ## Common pitfalls

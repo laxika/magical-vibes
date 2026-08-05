@@ -75,12 +75,13 @@ if (allAnyTarget) {
 *any* permanent". The two categories are semantically distinct and the enumerator cannot tell them
 apart.
 
-> **REFUTED by Step 2 — read "Step 2 outcome" instead of this paragraph.** The claim below (two
-> producers; `ClashEffect` reaching `PLAYER_OR_PERMANENT` for Fire Juggler;
-> `CreatureModTargetValidators` covering `DistributeCountersAmongTargetsEffect`) is wrong on every
-> particular, and the direction of the defect is inverted: `PLAYER_OR_PERMANENT` is an *unchecked
-> escape hatch*, and the `allAnyTarget` inference is the only thing narrowing eight real cards.
-> Deleting it is Step 2b, and it is blocked. Original text, kept for the record:
+> **REFUTED by Step 2, then FIXED by Step 2b — read those two outcome sections instead of this
+> paragraph.** The claim below (two producers; `ClashEffect` reaching `PLAYER_OR_PERMANENT` for Fire
+> Juggler; `CreatureModTargetValidators` covering `DistributeCountersAmongTargetsEffect`) is wrong on
+> every particular, and the direction of the defect is inverted: `PLAYER_OR_PERMANENT` was an
+> *unchecked escape hatch*, and the `allAnyTarget` inference was the only thing narrowing eight real
+> cards. Step 2b made those effects declare honestly and deleted the inference. Original text, kept
+> for the record:
 >
 > ~~Both producers of `PLAYER_OR_PERMANENT` were checked. `DistributeCountersAmongTargetsEffect`
 > selects it deliberately as a documented null-tolerance escape hatch (its own comment says
@@ -248,7 +249,7 @@ mechanical high-churn. Phase 4 is deletion.
 |---|---|---|---|
 | 1 | Introduce `TargetPredicate` + `TargetPredicates` factories + adapter evaluator. `TargetSpec` gains a derived `targetPredicate()` computed from the existing `category`+`predicate`; **no call site changes**. Fix the stale Jackson javadoc. Add the equivalence harness: for each of the 14 factories, assert it accepts/rejects exactly the candidate set the category does. | LOW | **DONE** — see "Step 1 outcome" below. Two deliberate divergences found and pinned; `StackEntryTruePredicate` added. |
 | 2 | Move `TargetValidationService.validateSpec` and `ValidTargetService` enumeration onto `targetPredicate()`. Delete the inferred `allAnyTarget` block. **Confirm or refute defect 2** against Fire Juggler, Spoils of War, Blessings of Nature, Contagion before claiming a fix; record the finding here. **Also decide the two Step 1 divergences** (LAND / planeswalker layer-awareness) — they land the moment the interpreter moves. | MED | **DONE** — see "Step 2 outcome". Both divergences adopted. **Defect 2 refuted as written**: the `allAnyTarget` block was NOT deleted, and a new Step 2b owns that. |
-| 2b | **Delete the `allAnyTarget` inference for real.** Blocked on making eight cards' effects declare honestly instead of using `PLAYER_OR_PERMANENT` as an unchecked escape hatch — see "Step 2 outcome" for the list, the two tiers, and the two mechanisms that must be replaced first (null-target tolerance, and the fact that validators are skipped for multi-target positions). Also covers the ability twin of the same inference (`ValidTargetService.isAnyTargetAbility`, read by `TargetLegalityService.validateMultiTargetAbility:391`), which must change in the same step or enumeration and cast-time validation will disagree. | HIGH | TODO |
+| 2b | **Delete the `allAnyTarget` inference for real.** Blocked on making eight cards' effects declare honestly instead of using `PLAYER_OR_PERMANENT` as an unchecked escape hatch — see "Step 2 outcome" for the list, the two tiers, and the two mechanisms that must be replaced first (null-target tolerance, and the fact that validators are skipped for multi-target positions). Also covers the ability twin of the same inference (`ValidTargetService.isAnyTargetAbility`, read by `TargetLegalityService.validateMultiTargetAbility:391`), which must change in the same step or enumeration and cast-time validation will disagree. | HIGH | **DONE** — see "Step 2b outcome". Inference and its ability twin deleted; null tolerance now comes from `EffectResolution.distributesAmountsAmongTargets`, not from the target count. |
 | 3 | Route `MayAbilityHandlerService` through the shared evaluator; delete both copies of the open-coded switch (defect 3). Add a regression test for a `LAND`-spec may-ability. | MED | **DONE** — see "Step 3 outcome". Defect 3 confirmed verbatim; both copies collapsed into one helper. No implemented card has a `LAND` may-ability, so that regression is a service test; `PLAYER_OR_PLANESWALKER` had a real card (Boggart Shenanigans) and got a card test. |
 | 4 | Migrate the ~400 effect records' `targetSpec()` to the factories. Mechanical and scriptable; the Step 1 equivalence harness is the safety net. Batch by category, smallest first (`EXILE_CARD` 2, `CONTROLLERS_GRAVEYARD_CARD` 2, `LAND` 4, `PLAYER_OR_PLANESWALKER` 4 … `PLAYER` 155 last). | MED | TODO |
 | 5 | Collapse the three graveyard categories onto `GraveyardCards.scope`; delete the five hand-copied scope mappings. | LOW | TODO |
@@ -361,6 +362,9 @@ Flames of the Firebrand, Hail of Arrows, Infernal Harvest, Jaws of Stone, Meteor
 Pyrotechnics, Fight with Fire) is already covered by `DamageTargetValidators.validateDealDividedDamage`
 or `PreventionTargetValidators.validatePreventDividedDamage`, so the inference is dead weight there.
 
+> **Both mechanisms below turned out to be the wrong boundary — Step 2b replaced neither of them.
+> Read "Step 2b outcome" for what actually blocked the deletion.** Kept for the record:
+
 **Step 2b must therefore replace two mechanisms before it can delete anything:**
 
 1. **Null-target tolerance.** These effects' per-target amounts ride on
@@ -379,7 +383,7 @@ or `PreventionTargetValidators.validatePreventDividedDamage`, so the inference i
 
 Until then the inference stays, but it is now honest about what it is: it *recognises* the slot with
 the same lossy `admits(PLAYER)` test, and gets the restriction itself from `TargetPredicates.anyTarget()`.
-The comment at the call site says so and points here.
+The comment at the call site says so and points here. *(Step 2b has since deleted it.)*
 
 ### Two other things a later step needs
 
@@ -394,6 +398,107 @@ The comment at the call site says so and points here.
   `PredicateEvaluationService` over their mocked `GameQueryService`, because the type restrictions
   the interpreter used to open-code are now real predicate evaluations. Any future test that mocks
   predicate evaluation and expects targeting to work will silently reject every candidate.
+
+---
+
+## Step 2b outcome
+
+The inference is gone, in both its spell form (`ValidTargetService.isValidPermanentTarget`) and its
+ability form (`ValidTargetService.isAnyTargetAbility`, deleted, plus its reader
+`TargetLegalityService.validateMultiTargetAbility`). What replaced it:
+
+**An unfiltered slot is restricted by what its effects declare.**
+`EffectResolution.declaredPermanentRestriction(List<CardEffect>)` conjoins every permanent
+restriction the slot's effects carry (skipping the ones that carry none — a bare `PERMANENT` spec
+and `PLAYER_OR_PERMANENT` both yield `PermanentTruePredicate`), and
+`EffectResolution.allowsPlayerTargets` answers the player half. Four call sites read them:
+enumeration for spells and for multi-target abilities, and validation in `validateMultiSpellTargets`
+and `validateMultiTargetAbility`. A slot no effect restricts keeps the pre-existing creature-only
+default when it is multi-target — that default is a separate legacy heuristic, not the inference,
+and Karn's Temporal Sundering's bare "target player" group is its only live user.
+
+**Both premises in the Step 2 outcome were re-verified and both were wrong about the boundary.** The
+blockers named there do not describe the code:
+
+1. *"Move 'a target is required' onto the declared target count"* does **not work**. Every
+   `ActivatedAbility` convenience and loyalty constructor hard-codes `minTargets = 1`, including for
+   abilities that target nothing, so a count-based check would reject every non-targeting activation.
+   (`Card` is the opposite: `getMinTargets()` sums the declared groups, so a card with no `target()`
+   call is 0/0.) The honest discriminator is a property of the *effect*, not of the count: an effect
+   that announces a division (CR 601.2d) keeps its targets in `StackEntry.damageAssignments`, so
+   there is no `targetId` to judge. `EffectResolution.needsAmountDistribution` already modelled
+   exactly that set; it is now public as `distributesAmountsAmongTargets` and
+   `TargetValidationService.demandsPermanentTarget` reads it. The old shape-sniffing arm ("accepts
+   every player and every permanent") is kept underneath it, so no existing tolerance was withdrawn.
+2. *"Extend the validator pass to multi-target positions"* was **not needed**, and would have been
+   wrong — the `@ValidatesTarget` escape hatches are not written for a per-position call. Only the
+   declarative spec had to reach those positions.
+
+Also refuted: the spell cast path never reaches `validateSpec` with a null `targetId` at all
+(`SpellCastingService:1169` / `:3275` gate on `targetId != null`, and `:1158-1166` already exempts
+`needsDamageDistribution` from "Spell requires a target"). The null tolerance only ever mattered on
+the activated-ability path — Huatli, Warrior Poet's −X and Samut, the Tested's −2.
+
+### The escape hatch is closed
+
+Five effect records now declare what they target. The audit behind this is exhaustive: these are the
+*only* `PLAYER_OR_PERMANENT` producers that ever sit on a slot with no `TargetFilter`; every other
+one (fight / attach / move-counter / untap-two-targets families, and `ClashEffect`, which no
+implemented card drives to `PLAYER_OR_PERMANENT`) is on a slot whose per-position filters carry the
+restriction, so deleting the inference cannot widen them.
+
+| Effect | Now declares |
+|---|---|
+| `DealDividedDamageEffect` | `ANY_TARGET` when `canTargetPlayers`, else `CREATURE`, narrowed by `targetRestriction` (which stopped being "informational") |
+| `DistributeCountersAmongTargetsEffect` | `CREATURE` in both modes |
+| `PreventDividedDamageEffect` | `ANY_TARGET` (Remedy's oracle text is "any number of targets") |
+| `RevealTopCardsBottomThenDamageIfCopyRevealedEffect` | `ANY_TARGET` |
+| `DealDamageToEachTargetEffect` | `harmful(ANY_TARGET)` — was `benign`, see below |
+
+Behaviour changes, all rules-correct:
+
+| Card(s) | Before | Now |
+|---|---|---|
+| Arc Trail, Cone of Flame, Fireball, Jaya's Immolating Inferno | enumeration offered a planeswalker but `validateMultiSpellTargets` then threw "is not a creature" | a planeswalker is legal (CR 115.4) |
+| Fire Covenant, Infernal Harvest, Pyrokinesis, Blessings of Nature, Bounty of the Hunt, Spoils of War | players and planeswalkers offered for a creatures-only spell | creatures only |
+| Hail of Arrows, Rock Slide | any creature/planeswalker + players offered | attacking (resp. attacking-or-blocking non-flying) creatures only |
+| Huatli, Warrior Poet −X | every permanent + players offered | creatures only |
+| Samut, the Tested −2 | every permanent + players offered | creature/planeswalker + players |
+| Chandra, the Firebrand −6 | protection from the source was not checked (`isValidAbilityPermanentTarget` keys that on `harmful`) | protection blocks targeting (CR 702.16b) |
+
+The `benign` → `harmful` flip on `DealDamageToEachTargetEffect` is in scope because it is the same
+defect: an effect that deals damage was declaring the opposite of what it does. On the spell path it
+changes nothing (protection is checked structurally there regardless); on the ability path it fixes
+Chandra's −6.
+
+Pinned by three card tests confirmed to fail against a restored copy of the old code —
+`ArcTrailTest` (a planeswalker is enumerated *and* castable; a land is rejected with the new
+predicate-derived message) and `BlessingsOfNatureTest` (enumeration offers creatures only, no
+planeswalker, no player) — plus `TargetLegalityServiceTest`, which now also covers the legacy
+creature-only default explicitly (a slot whose only effect is `UntapPermanentsEffect(ALL_TARGETS)`).
+
+### Two things a later step should know
+
+- **A multi-target ability's `damageAssignments` are never validated.** `SpellCastingService` has
+  ~200 lines validating sums, per-target legality and positivity for spells (`:1764-1957`); the
+  ability path threads the map straight from `AbilityActivationService` into the stack entry
+  (`ActivatedAbilityExecutionService:1233`) with no checks at all. Huatli's −X and Samut's −2 are
+  affected. Out of scope here — it is a cast/activation-parity gap, not a targeting-model one.
+- **Karn's Temporal Sundering enumerates permanents for its "target player" group.** Position 0 is a
+  bare unfiltered group bound only to `ExtraTurnEffect`, but enumeration passes *all* spell effects
+  to the slot check, so `ReturnToHandEffect`'s `PERMANENT` spec keeps permanents in play there and
+  the legacy creature-only default narrows them to creatures. The fix is per-position effect scoping
+  (`Card.getEffectTargetIndex` already binds effects to groups, and `doesPositionAllowPlayerTargets`
+  already uses it for the player half). Deliberately left alone: it is pre-existing and orthogonal.
+
+### Test-harness note (third time this has bitten)
+
+`TargetLegalityServiceTest` mocks `PredicateEvaluationService`, and the unfiltered-slot narrowing is
+a real predicate evaluation, so a mocked evaluator silently rejects every candidate. Its `setUp` now
+delegates `matchesPermanentPredicate` to a genuine evaluator over the same mocked `GameQueryService`
+and answers `isCreature` from the card type; `ValidTargetServiceTest` got the `isCreature` default
+too. Any future test that mocks predicate evaluation and expects targeting to work will fail the
+same way.
 
 ---
 

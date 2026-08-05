@@ -46,6 +46,10 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatureYouControlPredicate;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -128,6 +132,20 @@ class TargetLegalityServiceTest {
                 .thenReturn(Optional.empty());
         lenient().when(targetValidationService.checkEffectTargets(any(), any()))
                 .thenReturn(Optional.empty());
+        // An unfiltered multi-target slot is narrowed by the restriction its effects declare ("any
+        // target", "target creature"), which is a real predicate evaluation — a mocked one would
+        // silently reject every candidate. Only that call delegates to a genuine evaluator over the
+        // same mocked GameQueryService; TargetFilter checking stays mocked, as the tests rely on.
+        PredicateEvaluationService realPredicates = new PredicateEvaluationService(gameQueryService);
+        lenient().when(predicateEvaluationService.matchesPermanentPredicate(
+                        any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                .thenAnswer(invocation -> realPredicates.matchesPermanentPredicate(
+                        invocation.<Permanent>getArgument(0),
+                        invocation.<PermanentPredicate>getArgument(1),
+                        invocation.<FilterContext>getArgument(2)));
+        lenient().when(gameQueryService.isCreature(eq(gd), any(Permanent.class)))
+                .thenAnswer(invocation ->
+                        invocation.<Permanent>getArgument(1).getCard().hasType(CardType.CREATURE));
     }
 
     // ===== Helpers =====
@@ -1287,19 +1305,57 @@ class TargetLegalityServiceTest {
         }
 
         @Test
-        @DisplayName("throws when non-creature target without target filter")
-        void throwsWhenNonCreatureTargetWithoutFilter() {
+        @DisplayName("throws when an unfiltered any-target slot is given a non-creature")
+        void throwsWhenAnyTargetSlotGivenNonCreature() {
             Card spell = createMultiTargetSpell(1, 2);
-            Card artifact = new Card();
-            artifact.setName("Test Artifact");
-            artifact.setType(CardType.ARTIFACT);
-            artifact.setManaCost("{1}");
-            Permanent target = addPermanent(player2Id, artifact);
+            Permanent target = addPermanent(player2Id, createArtifact());
+
+            assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
+                    List.of(target.getId()), player1Id))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("is not a legal target");
+        }
+
+        @Test
+        @DisplayName("an unfiltered any-target slot accepts a planeswalker (CR 115.4)")
+        void anyTargetSlotAcceptsPlaneswalker() {
+            Card spell = createMultiTargetSpell(1, 2);
+            Card walkerCard = new Card();
+            walkerCard.setName("Test Walker");
+            walkerCard.setType(CardType.PLANESWALKER);
+            walkerCard.setManaCost("{3}");
+            Permanent walker = addPermanent(player2Id, walkerCard);
+            when(gameQueryService.isPlaneswalker(gd, walker)).thenReturn(true);
+
+            sut.validateMultiSpellTargets(gd, spell, List.of(walker.getId()), player1Id);
+        }
+
+        @Test
+        @DisplayName("falls back to creatures only when no effect restricts the slot")
+        void fallsBackToCreaturesWhenNoEffectRestricts() {
+            Card spell = new Card();
+            spell.setName("Bare Multi Target Spell");
+            spell.setType(CardType.SORCERY);
+            spell.setManaCost("{R}");
+            spell.setColor(CardColor.RED);
+            // UntapPermanentsEffect(ALL_TARGETS) declares "a player or any permanent" — a spec that
+            // restricts nothing — so the legacy creature-only default is what governs the slot.
+            spell.target(null, 1, 2)
+                    .addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS));
+            Permanent target = addPermanent(player2Id, createArtifact());
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
                     List.of(target.getId()), player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("is not a creature");
+        }
+
+        private Card createArtifact() {
+            Card artifact = new Card();
+            artifact.setName("Test Artifact");
+            artifact.setType(CardType.ARTIFACT);
+            artifact.setManaCost("{1}");
+            return artifact;
         }
 
         @Test

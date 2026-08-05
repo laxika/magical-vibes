@@ -15,6 +15,6 @@ public record RevealTopCardsBottomThenDamageIfCopyRevealedEffect(int count, int 
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetCategory.PLAYER_OR_PERMANENT);
+        return TargetSpec.harmful(TargetCategory.ANY_TARGET);
     }
 }
