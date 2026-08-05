@@ -91,7 +91,6 @@ public class AttackLegalityService {
                 && !canAttackDespiteDefender(gameData, creature)) return false;
         if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackOrBlockEffect.class)) return false;
         if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackEffect.class)) return false;
-        if (CombatHelper.isCantAttackOrBlockUnlessEquipped(gameQueryService, gameData, creature)) return false;
         if (isCantAttackUnlessConditionUnmet(gameData, creature, controllerId)) return false;
         if (isCantAttackDueToGlobalRestriction(gameData, creature)) return false;
         return true;

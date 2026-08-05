@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfAttackingAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -24,14 +23,6 @@ import java.util.UUID;
 public final class CombatHelper {
 
     private CombatHelper() {}
-
-    public static boolean isCantAttackOrBlockUnlessEquipped(GameQueryService gameQueryService,
-                                                            GameData gameData,
-                                                            Permanent creature) {
-        return creature.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(CantAttackOrBlockUnlessEquippedEffect.class::isInstance)
-                && !gameQueryService.isEquipped(gameData, creature);
-    }
 
     public static boolean isCantBeBlockedDueToDefenderCondition(PredicateEvaluationService predicateEvaluationService,
                                                           GameData gameData,

@@ -53,7 +53,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
-import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
+import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
+import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -446,18 +448,16 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("WinGameIfCreaturesInGraveyardEffect triggers when threshold met")
+        @DisplayName("Graveyard-threshold intervening-if triggers when threshold met")
         void winGameTriggersWhenThresholdMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Mortal Combat");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new WinGameIfCreaturesInGraveyardEffect(20));
+            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, mortalCombatEffect());
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             // Add 20 creature cards to graveyard
             for (int i = 0; i < 20; i++) {
-                Card creature = new Card();
-                creature.setType(CardType.CREATURE);
-                gd.playerGraveyards.get(player1Id).add(creature);
+                gd.playerGraveyards.get(player1Id).add(creatureCard());
             }
 
             sut.handleUpkeepTriggers(gd);
@@ -467,23 +467,36 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("WinGameIfCreaturesInGraveyardEffect does not trigger when threshold not met")
+        @DisplayName("Graveyard-threshold intervening-if does not trigger when threshold not met")
         void winGameDoesNotTriggerWhenThresholdNotMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Mortal Combat");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new WinGameIfCreaturesInGraveyardEffect(20));
+            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, mortalCombatEffect());
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             // Add only 5 creatures
             for (int i = 0; i < 5; i++) {
-                Card creature = new Card();
-                creature.setType(CardType.CREATURE);
-                gd.playerGraveyards.get(player1Id).add(creature);
+                gd.playerGraveyards.get(player1Id).add(creatureCard());
             }
 
             sut.handleUpkeepTriggers(gd);
 
             assertThat(gd.stack).isEmpty();
+        }
+
+        private ConditionalEffect mortalCombatEffect() {
+            // Mortal Combat: "if twenty or more creature cards are in your graveyard, you win the game".
+            lenient().when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                    .thenAnswer(invocation -> ((Card) invocation.getArgument(0)).hasType(CardType.CREATURE));
+            return new ConditionalEffect(
+                    new GraveyardCardThreshold(20, new CardTypePredicate(CardType.CREATURE)),
+                    new WinGameEffect());
+        }
+
+        private Card creatureCard() {
+            Card creature = new Card();
+            creature.setType(CardType.CREATURE);
+            return creature;
         }
 
         @Test

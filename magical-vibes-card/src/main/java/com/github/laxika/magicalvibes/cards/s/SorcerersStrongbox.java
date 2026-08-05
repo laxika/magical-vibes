@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndDrawCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 
 import java.util.List;
 
@@ -15,7 +16,7 @@ public class SorcerersStrongbox extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new FlipCoinWinEffect(new SacrificeSelfAndDrawCardsEffect(3))),
+                List.of(new FlipCoinWinEffect(new SacrificeSelfThenEffect(new DrawCardEffect(3)))),
                 "{2}, {T}: Flip a coin. If you win the flip, sacrifice Sorcerer's Strongbox and draw three cards."
         ));
     }

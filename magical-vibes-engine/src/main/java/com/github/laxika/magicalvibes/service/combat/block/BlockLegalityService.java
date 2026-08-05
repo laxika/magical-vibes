@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect
 import com.github.laxika.magicalvibes.model.effect.BlockingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -355,10 +354,6 @@ public class BlockLegalityService {
         }
         UUID controllerId = null;
         for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof CantAttackOrBlockUnlessEquippedEffect
-                    && !gameQueryService.isEquipped(gameData, creature)) {
-                return true;
-            }
             Condition unless = null;
             if (effect instanceof AttackOrBlockRestrictionEffect restriction) {
                 unless = restriction.cantAttackOrBlockUnless();

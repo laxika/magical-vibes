@@ -131,6 +131,29 @@ class ImpalerShrikeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("\"If you do\" gate — Shrike killed in response means no sacrifice and no draw")
+    void noDrawWhenShrikeLeavesBeforeResolution() {
+        Permanent shrike = addReadyCreature(player1, new ImpalerShrike());
+        shrike.setAttacking(true);
+
+        resolveCombat();
+
+        GameData gd = harness.getGameData();
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        // The Shrike is removed while the trigger is still waiting on the may choice — it can no
+        // longer be sacrificed, so the contingent draw must not happen either.
+        gd.playerBattlefields.get(player1.getId()).remove(shrike);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("fizzles") && log.contains("source no longer on the battlefield"));
+    }
+
+    @Test
     @DisplayName("No trigger when Impaler Shrike is blocked and deals no damage to player")
     void noTriggerWhenBlocked() {
         Permanent shrike = addReadyCreature(player1, new ImpalerShrike());

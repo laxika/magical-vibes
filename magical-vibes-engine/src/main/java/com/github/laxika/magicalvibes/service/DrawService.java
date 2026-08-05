@@ -35,7 +35,9 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCreatureToGraveyardE
 import com.github.laxika.magicalvibes.model.MiracleCast;
 import com.github.laxika.magicalvibes.model.effect.MiracleRevealEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealFirstDrawDrawOnBasicLandEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenDealDamageToTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ZursWeirdingDrawReplacementEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -697,7 +699,8 @@ public class DrawService {
                             perm.getCard(),
                             controllerId,
                             perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(new SacrificeSelfThenDealDamageToTargetPlayerEffect(10))),
+                            new ArrayList<>(List.of(new SacrificeSelfThenEffect(
+                                    new DealDamageToPlayersEffect(10, DamageRecipient.TARGET_PLAYER)))),
                             drawingPlayerId,
                             perm.getId()
                     ));

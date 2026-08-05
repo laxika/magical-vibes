@@ -83,6 +83,31 @@ class MindstabThrullTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("\"If you do\" gate — Thrull removed in response means no sacrifice and no discard")
+    void unblockedNoDiscardWhenThrullLeavesBeforeResolution() {
+        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new HillGiant(), new Forest())));
+        Permanent thrull = addAttacker();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        // The Thrull is removed while the trigger waits on the may choice — with no sacrifice the
+        // contingent discard must not happen.
+        gd.playerBattlefields.get(player1.getId()).remove(thrull);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
     @DisplayName("Blocked attacker does not trigger the ability")
     void blockedNoTrigger() {
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new HillGiant(), new Forest())));

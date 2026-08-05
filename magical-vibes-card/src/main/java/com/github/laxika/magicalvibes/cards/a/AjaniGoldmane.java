@@ -5,16 +5,21 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.CreateLifeTotalAvatarTokenEffect;
+import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @CardRegistration(set = "LRW", collectorNumber = "1")
 @CardRegistration(set = "M10", collectorNumber = "1")
@@ -44,10 +49,13 @@ public class AjaniGoldmane extends Card {
         //     toughness are each equal to your life total."
         addActivatedAbility(new ActivatedAbility(
                 -6,
-                List.of(new CreateLifeTotalAvatarTokenEffect(
-                        "Avatar",
-                        CardColor.WHITE,
-                        List.of(CardSubtype.AVATAR)
+                List.of(new CreateTokenEffect(
+                        1, "Avatar", 0, 0,
+                        CardColor.WHITE, List.of(CardSubtype.AVATAR),
+                        Set.of(), Set.of(),
+                        // CDA: "This creature's power and toughness are each equal to your life total."
+                        Map.of(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+                                new ControllerLifeTotal(), new ControllerLifeTotal()))
                 )),
                 "\u22126: Create a white Avatar creature token. It has \"This creature's power and toughness are each equal to your life total.\""
         ));

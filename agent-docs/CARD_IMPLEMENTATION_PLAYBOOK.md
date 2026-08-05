@@ -556,7 +556,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new AttacksAlone(), wrapped)` | - | yes | yes (attack) |
 | `ConditionalEffect(new MinimumAttackers(minimumAttackers), wrapped)` | - | yes | yes (attack) |
 | `ConditionalEffect(new HasAttacker(predicate), wrapped)` | - | yes | yes (attack) |
-| `ConditionalEffect(new GraveyardCardThreshold(threshold, filter), wrapped)` | yes | yes | - |
+| `ConditionalEffect(new GraveyardCardThreshold(threshold, filter), wrapped)` | yes | yes | yes (upkeep) | counts **nontoken** cards only — a token that reaches a graveyard ceases to exist, so it can never be one of the "N or more … cards". Mortal Combat: `(20, new CardTypePredicate(CardType.CREATURE))` + `WinGameEffect()` |
 | `ConditionalEffect(new SourceCardInGraveyard(), wrapped)` | - | yes | yes (graveyard triggers) | intervening-if for abilities that trigger from a graveyard ("... if this card is in your graveyard, ..."): true while the source card object is still in its controller's graveyard. Vengeful Pharaoh |
 | `ConditionalEffect(new CardsAboveSelfInGraveyard(threshold, filter), wrapped)` | - | yes | yes (graveyard upkeep) | source's controller graveyard is ordered; counts filter-matching cards positioned *above* self (higher index). Nether Shadow: `(3, new CardTypePredicate(CardType.CREATURE))` |
 | `ConditionalEffect(new CardDirectlyAboveSelfInGraveyard(filter), wrapped)` | - | yes | yes (graveyard upkeep / graveyard end step) | like the above but matches only the single card *immediately* above self in the ordered graveyard. Krovikan Horror: `new CardTypePredicate(CardType.CREATURE)` |

@@ -48,7 +48,7 @@ reverts one of them is a regression:
 
 | File | Fix to preserve |
 |---|---|
-| `SacrificeSelfAndDrawCardsEffectHandler`, `SacrificeSelfAndTargetPlayerDiscardsEffectHandler` | Fire `checkAllyPermanentSacrificedTriggers`, call `removeOrphanedAuras`, and gate the payload on the removal succeeding ("If you do") |
+| `SacrificeSelfThenEffectHandler` (absorbed the `SacrificeSelfAndDrawCards` / `SacrificeSelfAndTargetPlayerDiscards` / `SacrificeSelfThenDealDamageToTargetPlayer` handlers in Step 2) | Fire `checkAllyPermanentSacrificedTriggers`, call `removeOrphanedAuras`, and gate the payload on the removal succeeding ("If you do"). **Never** re-express this as `SequenceEffect.of(SacrificeSelfEffect(), payload)` — a sequence splices its steps unconditionally |
 | `AttachSourceEquipmentToTargetCreatureEffectHandler`, `AttachTargetEquipmentToTargetCreatureEffectHandler` | Success path logs an attach message, not a fizzle message |
 | `CopySpellForEachOtherSubtypePermanentEffectHandler` | Has the `isCantBeCopied()` guard (CR 707.10) |
 | `DealDamageToTargetCreatureEqualToChosenTypeCountEffectHandler` | Applies `applyDamageMultiplier` |
@@ -69,7 +69,7 @@ high-churn or needs a design call and is optional.
 | # | Step | Classes deleted | Risk | Status |
 |---|---|---|---|---|
 | 1 | Emblem effects → `CreateEmblemEffect` | 16 | LOW | **DONE** — premise held (all 16 records zero-component, all 16 handlers identical bar Garruk's `getTargetId()`); two deliberate deltas: the `playerIds.contains` guard now runs on the controller path too, and Garruk's emblem log gains the trailing `.` the other 15 already had |
-| 2 | Outright deletions (compose from existing effects) | 5 | LOW | TODO |
+| 2 | Outright deletions (compose from existing effects) | 6 | LOW | **DONE** — rows 1–4 held; the `SacrificeSelf*` row did **not** (`SequenceEffect` has no "if you do" gate, so composing it would have reverted a `9b8147333` fix) and was replaced with a new `SacrificeSelfThenEffect(CardEffect)`, which also absorbs `SacrificeSelfThenDealDamageToTargetPlayerEffect` — that class was **not** unused |
 | 3 | Redirect-next-damage family | 5 | LOW | TODO |
 | 4 | Any-color mana family | 7 | LOW | TODO |
 | 5 | Combat-requirement / must-attack | 5 | LOW | TODO |
@@ -139,33 +139,63 @@ logic belongs. No emblem effect class is referenced outside its own handler and 
 
 ---
 
-### Step 2 — Outright deletions
+### Step 2 — Outright deletions — **DONE**
 
-Each of these is already expressible with existing effects. No new class.
-
-| Delete | Replace with | Cards |
+| Deleted | Replaced with | Cards |
 |---|---|---|
 | `WinGameIfCreaturesInGraveyardEffect` | `ConditionalEffect(new GraveyardCardThreshold(20, new CardTypePredicate(CardType.CREATURE)), new WinGameEffect())` | 1 |
 | `CreateLifeTotalAvatarTokenEffect` | `CreateTokenEffect` with the existing `tokenEffects` overload, carrying `SetPowerToughnessToAmountEffect(new ControllerLifeTotal(), new ControllerLifeTotal())` | 1 |
-| `ChooseTwoColorsOnEnterEffect` | `ChooseColorOnEnterEffect(2, allowedColors)` | 1 |
+| `ChooseTwoColorsOnEnterEffect` | `ChooseColorOnEnterEffect(2)` | 1 |
 | `CantAttackOrBlockUnlessEquippedEffect` | `CantAttackOrBlockUnlessEffect(new Equipped(), "it's equipped")` | 1 |
-| `SacrificeSelfAndDrawCardsEffect`, `SacrificeSelfAndTargetPlayerDiscardsEffect` | `SequenceEffect.of(new SacrificeSelfEffect(), <payload>)` | 2 + 2 |
+| `SacrificeSelfAndDrawCardsEffect`, `SacrificeSelfAndTargetPlayerDiscardsEffect`, `SacrificeSelfThenDealDamageToTargetPlayerEffect` | **new** `SacrificeSelfThenEffect(CardEffect thenEffect)` | 2 + 2 + 1 |
 
-**Notes**
-- `ChooseTwoColorsOnEnterEffect` is a **zero-engine-change** merge: both implement `ChooseColorEffect`,
-  which already declares `choicesRequired()`/`allowedColors()`, and every read site is interface-typed
-  (`BattlefieldEntryService:1012,1154`, `StackResolutionService:478,536`, `PlayerInputService:163`).
-- `CantAttackOrBlockUnlessEquippedEffect`: also delete `CombatHelper.isCantAttackOrBlockUnlessEquipped`
-  and its two call sites. The `Equipped` condition
-  (`ConditionEvaluationService:215 → isSourceEquipped:717`) matches `GameQueryService.isEquipped:3753`.
-- `WinGameIfCreaturesInGraveyardEffect`: `GraveyardCardThreshold` counts **nontoken** cards while the
-  current handler counts all. Mortal Combat says "creature *cards*", so this is a small correctness
-  improvement — assert it.
-- The `SacrificeSelf*` composites were already bug-fixed (see the regression table), so this is now
-  pure cleanup. `SequenceEffect`'s javadoc warns `FlipCoinWinEffect` dispatches synchronously; draw
-  and sacrifice are both synchronous, so Sorcerer's Strongbox is fine — but test it.
-- Also delete `SacrificeSelfThenDealDamageToTargetPlayerEffect` — **0 card usages** (its javadoc names
-  Booby Trap, but that card uses `BoobyTrapEffect`).
+Net: 7 records and 5 handlers deleted, 1 record and 1 handler added.
+
+**What held**
+- `ChooseTwoColorsOnEnterEffect` was a **zero-engine-change** merge as predicted — every read site is
+  interface-typed on `ChooseColorEffect` (`BattlefieldEntryService:1012,1154`,
+  `StackResolutionService:478,536`, `PlayerInputService:163`). `ChooseColorOnEnterEffect` gained an
+  `int choicesRequired` component; all 15 existing call sites use the no-arg/varargs ctors and were untouched.
+- `CantAttackOrBlockUnlessEquippedEffect`: `CombatHelper.isCantAttackOrBlockUnlessEquipped` and its one
+  call site (`AttackLegalityService:94`) are gone, as is the `BlockLegalityService:358` special case —
+  both sides already handle `AttackOrBlockRestrictionEffect` generically. `isSourceEquipped` and
+  `GameQueryService.isEquipped` are equivalent.
+- `WinGameIfCreaturesInGraveyardEffect`: the nontoken difference is real and is now asserted
+  (`MortalCombatTest.tokensInGraveyardDoNotCount`). `StepTriggerService` gained a
+  `ConditionalEffect + GraveyardCardThreshold` upkeep branch in place of the class-keyed one.
+- `CreateLifeTotalAvatarTokenEffect`: the generic token path is a strict superset — it also runs
+  `handleCreatureEnteredBattlefield` and the legend rule, which the deleted handler skipped. That
+  latent bug is fixed and asserted (`AjaniGoldmaneTest.avatarTokenFiresEnterTriggers`).
+
+**What did not hold — two corrections**
+- **`SequenceEffect` cannot express "if you do".** Its own javadoc says so and
+  `EffectResolutionService:230` confirms it: the steps are spliced into the entry unconditionally.
+  Composing `SequenceEffect.of(new SacrificeSelfEffect(), payload)` would have let Impaler Shrike draw
+  three cards after being killed in response — a straight revert of the `9b8147333` fix in the
+  regression table. Replaced with `SacrificeSelfThenEffect(CardEffect thenEffect)`, which keeps the
+  gate, delegates `targetSpec()` to the payload, and dispatches the payload synchronously through
+  `EffectHandlerRegistry` (expanding a `SequenceEffect` payload the way `FlipCoinWinEffectHandler`
+  does). Gating is covered by `ImpalerShrikeTest.noDrawWhenShrikeLeavesBeforeResolution` and
+  `MindstabThrullTest.unblockedNoDiscardWhenThrullLeavesBeforeResolution`.
+- **`SacrificeSelfThenDealDamageToTargetPlayerEffect` was not unused.** `DrawService:700` constructs it
+  at runtime for Booby Trap's draw trigger (`BoobyTrapEffect` is only the static marker). Deleting it
+  outright would have removed Booby Trap's trigger. It is absorbed by `SacrificeSelfThenEffect` instead,
+  with `DealDamageToPlayersEffect(10, DamageRecipient.TARGET_PLAYER)` as the payload.
+
+**Left for a later step**
+- `SacrificeSelfThenDestroyTargetEffect` (Wasp of the Bitter End) was **not** absorbed: it declares
+  `TargetSpec.harmful(CREATURE)` and no existing destroy effect reproduces that category
+  (`DestroyTargetPermanentEffect` is `harmful(PERMANENT)`), so folding it in would have silently
+  widened the spec. Revisit alongside Step 9.
+
+**Deliberate behaviour deltas**
+- Mindstab Thrull / Dauthi Mindripper now set `discardCausedByOpponent = true` (the generic
+  `DiscardEffect(TARGET_PLAYER)` path); the old bespoke handler left the flag untouched. The defending
+  player's discard *is* opponent-caused, so discard punishers should see it.
+- Those two cards also no longer skip the sacrifice when the trigger carries no target player — the
+  sacrifice is not contingent on there being a defender.
+- Log strings changed for Mortal Combat (generic `ConditionalEffect` / `WinGameEffect` wording) and for
+  the Avatar token (generic token log). Assertions updated.
 
 ---
 

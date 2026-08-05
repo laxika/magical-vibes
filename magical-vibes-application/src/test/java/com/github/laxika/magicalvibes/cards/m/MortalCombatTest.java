@@ -141,7 +141,8 @@ class MortalCombatTest extends BaseCardTest {
 
         // Condition no longer met — game should NOT be finished
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("condition is no longer met"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(l -> l.contains("does nothing") && l.contains("fewer than 20 matching cards in graveyard"));
     }
 
     // ===== Does not trigger on opponent's upkeep =====
@@ -191,8 +192,30 @@ class MortalCombatTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // Log mentions creature count and winning
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("20 creature cards") && l.contains("wins the game"));
+        // Log names the card the win came from
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(l -> l.contains("Mortal Combat") && l.contains("wins the game"));
+    }
+
+    // ===== Only nontoken cards count =====
+
+    @Test
+    @DisplayName("Token creature cards in the graveyard do not count toward the threshold")
+    void tokensInGraveyardDoNotCount() {
+        harness.addToBattlefield(player1, new MortalCombat());
+
+        List<Card> graveyard = new ArrayList<>(createCreatureCards(19));
+        Card token = new GrizzlyBears();
+        token.setToken(true);
+        graveyard.add(token);
+        harness.setGraveyard(player1, graveyard);
+
+        advanceToUpkeep(player1);
+
+        // 20 creature cards in the pile, but one is a token — a token that hits a graveyard
+        // ceases to exist, so it can never be one of the "twenty or more creature cards".
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 }
 

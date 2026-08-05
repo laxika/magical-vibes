@@ -197,6 +197,24 @@ class AjaniGoldmaneTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, avatar)).isEqualTo(10);
     }
 
+    @Test
+    @DisplayName("Avatar token entering fires ally creature-enters triggers")
+    void avatarTokenFiresEnterTriggers() {
+        Permanent ajani = addReadyAjani(player1);
+        ajani.setCounterCount(CounterType.LOYALTY, 6);
+        harness.addToBattlefield(player1, new AnointerPriest());
+
+        GameData gd = harness.getGameData();
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        // Anointer Priest: "whenever a creature token you control enters, you gain 1 life".
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
+
     // ===== Loyalty ability restrictions =====
 
     @Test

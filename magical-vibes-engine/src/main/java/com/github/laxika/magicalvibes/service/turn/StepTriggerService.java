@@ -126,7 +126,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndR
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndReturnCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
-import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
+import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -725,27 +725,25 @@ public class StepTriggerService {
                     log.info("Game {} - {} upkeep trigger pushed onto stack (surveil compound)",
                             gameData.id, perm.getCard().getName());
                     break; // All effects grouped into one entry
-                } else if (effect instanceof WinGameIfCreaturesInGraveyardEffect winEffect) {
-                    // Intervening-if: only trigger if condition is met
-                    List<Card> graveyard = gameData.playerGraveyards.get(activePlayerId);
-                    long creatureCount = 0;
-                    if (graveyard != null) {
-                        creatureCount = graveyard.stream()
-                                .filter(c -> c.hasType(CardType.CREATURE))
-                                .count();
-                    }
-                    if (creatureCount >= winEffect.threshold()) {
+                } else if (effect instanceof ConditionalEffect conditional
+                        && conditional.condition() instanceof GraveyardCardThreshold graveyardCheck) {
+                    // Intervening-if: only trigger if the controller's graveyard holds enough
+                    // matching cards (Mortal Combat — twenty creature cards)
+                    if (conditionEvaluationService.isMet(gameData, graveyardCheck,
+                            ConditionContext.forPermanent(perm, activePlayerId))) {
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 activePlayerId,
                                 perm.getCard().getName() + "'s upkeep ability",
-                                new ArrayList<>(List.of(effect))
+                                new ArrayList<>(List.of(effect)),
+                                (UUID) null,
+                                perm.getId()
                         ));
 
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
-                        log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: {} creatures in graveyard)",
-                                gameData.id, perm.getCard().getName(), creatureCount);
+                        log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: {}+ matching cards in graveyard)",
+                                gameData.id, perm.getCard().getName(), graveyardCheck.threshold());
                     }
                 } else if (effect.targetSpec().category().includesPermanents()) {
                     // Generic targeted-permanent upkeep trigger (e.g. Weed-Pruner Poplar's
