@@ -90,8 +90,16 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         // Delayed trigger should be on the stack
         assertThat(gd.stack).isNotEmpty();
 
-        // Resolve the trigger
+        // Resolve the trigger — the controller is asked which lands to untap
         harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.maxCount()).isEqualTo(2);
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(plains.getId(), island.getId()));
 
         // Both lands should be untapped
         assertThat(plains.isTapped()).isFalse();
@@ -125,6 +133,17 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
         harness.passBothPriorities();
+
+        // The choice offers all three lands but caps the selection at 2
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactlyInAnyOrderElementsOf(
+                lands.stream().map(Permanent::getId).toList());
+        assertThat(choice.maxCount()).isEqualTo(2);
+
+        harness.handleMultiplePermanentsChosen(player1,
+                lands.stream().limit(2).map(Permanent::getId).toList());
 
         // Only 2 should be untapped, 1 remains tapped
         long tappedCount = lands.stream().filter(Permanent::isTapped).count();
