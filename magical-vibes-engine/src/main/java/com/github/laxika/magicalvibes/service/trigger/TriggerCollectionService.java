@@ -24,7 +24,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
+import com.github.laxika.magicalvibes.model.LifeGainOpponentLifeLossWatcher;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageDamagedCreatureControllerAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyDamagedCreatureEffect;
@@ -2260,7 +2264,9 @@ public class TriggerCollectionService {
      * "Whenever you activate an ability, if it isn't a mana ability, you may pay {N} to copy it"
      * triggers (Rings of Brighthearth). Called after the non-mana ability has been put on the stack
      * so it can be snapshotted. Fires on every permanent the activating player controls that has an
-     * {@link EffectSlot#ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY} effect.
+     * {@link EffectSlot#ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY} effect — except for
+     * {@code equippedCreatureOnly} triggers (Illusionist's Bracers), which instead fire on any
+     * permanent attached to the ability's source permanent, and copy the ability for free.
      *
      * @param abilityEntry the activated ability's stack entry (already on the stack)
      * @param ability      the activated ability that was activated (retained for retargeting the copy)
@@ -2269,28 +2275,41 @@ public class TriggerCollectionService {
                                                                StackEntry abilityEntry, ActivatedAbility ability) {
         if (abilityEntry == null) return;
         gameData.forEachPermanent((ownerId, perm) -> {
-            if (!ownerId.equals(activatingPlayerId)) return;
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY)) {
                 if (!(effect instanceof CopyControllerActivatedAbilityTriggerEffect trigger)) continue;
+                if (trigger.equippedCreatureOnly()) {
+                    // "an ability of equipped creature" — the ability's source must be what this
+                    // permanent is attached to, whoever activated it.
+                    if (perm.getAttachedTo() == null
+                            || !perm.getAttachedTo().equals(abilityEntry.getSourcePermanentId())) {
+                        continue;
+                    }
+                } else if (!ownerId.equals(activatingPlayerId)) {
+                    continue;
+                }
                 if (trigger.sourceFilter() != null && !predicateEvaluationService.matchesStackEntryPredicate(
                         abilityEntry, trigger.sourceFilter(), null)) {
                     continue;
                 }
 
                 StackEntry snapshot = new StackEntry(abilityEntry);
-                CopyControllerActivatedAbilityEffect copyEffect = new CopyControllerActivatedAbilityEffect(
-                        snapshot, ability, activatingPlayerId);
-                MayPayManaEffect mayCopy = new MayPayManaEffect(
-                        trigger.manaCost(),
-                        copyEffect,
-                        "Pay " + trigger.manaCost() + " to copy " + abilityEntry.getCard().getName() + "'s ability?");
+                // CR 707.10 — the copy is controlled by the controller of the effect that created it.
+                UUID copyControllerId = trigger.equippedCreatureOnly() ? ownerId : activatingPlayerId;
+                CardEffect copyEffect = new CopyControllerActivatedAbilityEffect(
+                        snapshot, ability, copyControllerId);
+                if (trigger.manaCost() != null) {
+                    copyEffect = new MayPayManaEffect(
+                            trigger.manaCost(),
+                            copyEffect,
+                            "Pay " + trigger.manaCost() + " to copy " + abilityEntry.getCard().getName() + "'s ability?");
+                }
 
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         ownerId,
                         perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(mayCopy)),
+                        new ArrayList<>(List.of(copyEffect)),
                         null,
                         perm.getId()
                 ));
@@ -2369,6 +2388,35 @@ public class TriggerCollectionService {
                 }
             }
         });
+
+        collectLifeGainOpponentLifeLossTriggers(gameData, gainingPlayerId, lifeGainedAmount);
+    }
+
+    /**
+     * Fires the turn-scoped "whenever you gain life this turn, each opponent loses that much life"
+     * delayed triggers (Vizkopa Guildmage). One trigger per watcher whose controller is the player
+     * who gained life; the amount rides on the entry's event value.
+     */
+    private void collectLifeGainOpponentLifeLossTriggers(GameData gameData, UUID gainingPlayerId,
+                                                        int lifeGainedAmount) {
+        for (LifeGainOpponentLifeLossWatcher watcher : List.copyOf(gameData.lifeGainOpponentLifeLossWatchers)) {
+            if (!watcher.controllerId().equals(gainingPlayerId)) {
+                continue;
+            }
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    watcher.sourceCard(),
+                    watcher.controllerId(),
+                    watcher.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(new LoseLifeEffect(new EventValue(), LoseLifeRecipient.EACH_OPPONENT))),
+                    (UUID) null,
+                    (UUID) null);
+            entry.setEventValue(lifeGainedAmount);
+            gameData.enqueueTrigger(entry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
+            log.info("Game {} - {} triggers (controller gained {} life), each opponent loses that much life",
+                    gameData.id, watcher.sourceCard().getName(), lifeGainedAmount);
+        }
     }
 
     // ── Creature-card-milled triggers ─────────────────────────────────
@@ -3408,7 +3456,20 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.PermanentEnters(enteringCreature, controllerId, null, 1, null);
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        for (Permanent perm : battlefield) {
+        for (Permanent perm : new ArrayList<>(battlefield)) {
+            // "Whenever this creature or another creature you control enters" is the same scan
+            // minus the self-exclusion, so it is checked before the source is skipped.
+            List<CardEffect> selfOrAllyEffects = perm.getCard().getEffects(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD);
+            if (selfOrAllyEffects != null) {
+                for (CardEffect effect : selfOrAllyEffects) {
+                    CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCreature, gameData, controllerId);
+                    if (resolved == null) continue;
+                    resolved = unwrapEnterCreatureConditional(gameData, enteringCreature, perm, resolved);
+                    if (resolved == null) continue;
+                    dispatchEnter(gameData, perm, controllerId, EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD, resolved, ctx);
+                }
+            }
+
             if (perm.getCard() == enteringCreature) continue;
 
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD);

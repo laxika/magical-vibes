@@ -2610,6 +2610,12 @@ public class AbilityActivationService {
             }
         }
 
+        // Soul Ransom: only opponents of the source permanent's controller may activate this ability.
+        if (ability.isActivatableOnlyByOpponents()
+                && playerId.equals(gameQueryService.findPermanentController(gameData, permanent.getId()))) {
+            throw new IllegalStateException("Only your opponents may activate this ability");
+        }
+
         // Pithing Needle check: block non-mana activated abilities of the chosen name
         validateNotBlockedByPithingNeedle(gameData, permanent, ability);
 

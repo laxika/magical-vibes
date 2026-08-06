@@ -2390,6 +2390,11 @@ public class CombatDamageService {
             gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }
+        // Armored Transport: prevent all combat damage to this creature dealt by creatures blocking it.
+        if (damagePreventionService.isCombatDamageFromBlockerPrevented(gameData, target, source)) {
+            gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
+            return;
+        }
         // Prismatic Ward: prevent all combat damage to the enchanted creature from sources of the chosen colour.
         if (gameQueryService.isColorDamageToEnchantedCreaturePrevented(gameData, target, gameQueryService.getEffectiveColors(gameData, source))) {
             gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));

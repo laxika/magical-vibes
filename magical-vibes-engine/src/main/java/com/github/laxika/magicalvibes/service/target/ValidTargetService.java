@@ -155,6 +155,15 @@ public class ValidTargetService {
                             .anyMatch(sel -> gameQueryService.shareCreatureType(gameData, sel, perm));
                 });
             }
+            // Cross-target restriction (Bioshift): later positions may only choose permanents
+            // controlled by the first target's controller.
+            if (card.getMultiTargetConstraint() == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET
+                    && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()) {
+                UUID requiredControllerId = controllerOfFirstTarget(gameData, alreadySelectedIds.getFirst());
+                validPermanentIds.removeIf(id ->
+                        !java.util.Objects.equals(requiredControllerId,
+                                gameQueryService.findPermanentController(gameData, id)));
+            }
             if (card.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
                     && !excludeIds.isEmpty()) {
                 Set<UUID> selectedControllers = excludeIds.stream()
@@ -978,8 +987,12 @@ public class ValidTargetService {
             return true;
         }
 
+        // Glaring Spotlight: opponents' hexproof creatures are targetable as though they had none.
+        boolean hexproofLifted = gameQueryService.isCreature(gameData, perm)
+                && gameQueryService.ignoresOpponentCreatureHexproof(gameData, controllerId);
+
         // Hexproof (only blocks if target is opponent's)
-        if (gameQueryService.hasKeyword(gameData, perm, Keyword.HEXPROOF)) {
+        if (!hexproofLifted && gameQueryService.hasKeyword(gameData, perm, Keyword.HEXPROOF)) {
             UUID targetController = gameQueryService.findPermanentController(gameData, perm.getId());
             if (targetController != null && !targetController.equals(controllerId)) {
                 return true;
@@ -987,7 +1000,7 @@ public class ValidTargetService {
         }
 
         // Granted hexproof-like effect (TargetingRestrictionEffect hexproof, e.g. Asceticism)
-        if (gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, perm)) {
+        if (!hexproofLifted && gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, perm)) {
             UUID targetController = gameQueryService.findPermanentController(gameData, perm.getId());
             if (targetController != null && !targetController.equals(controllerId)) {
                 return true;

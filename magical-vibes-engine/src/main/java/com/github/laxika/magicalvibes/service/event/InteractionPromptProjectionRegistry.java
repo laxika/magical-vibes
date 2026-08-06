@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
@@ -707,6 +708,11 @@ public class InteractionPromptProjectionRegistry {
         }
         String targetName =
                 gameData.playerIdToName.getOrDefault(interaction.targetPlayerId(), "that player");
+        if (interaction.destination() == HandChoiceDestination.EXILE) {
+            return interaction.remainingCount() < interaction.discardCount()
+                    ? "Choose another revealed card to exile."
+                    : "Choose a revealed card to exile.";
+        }
         if (interaction.remainingCount() < interaction.discardCount()) {
             return "Choose another card for " + targetName + " to discard.";
         }

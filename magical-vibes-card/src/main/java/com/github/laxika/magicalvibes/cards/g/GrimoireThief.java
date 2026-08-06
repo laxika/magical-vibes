@@ -19,7 +19,7 @@ public class GrimoireThief extends Card {
         // library face down. (Two-player: the single opponent is the only legal target.)
         addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED, new TriggeringPermanentConditionalEffect(
                 new PermanentIsSourceCardPredicate(),
-                new ExileTopCardsOfOpponentLibraryToSourceEffect(3)));
+                new ExileTopCardsOfOpponentLibraryToSourceEffect(3, true)));
 
         // {U}, Sacrifice this creature: Turn all cards exiled with this creature face up.
         // Counter all spells with those names. (You may look at the exiled cards.)

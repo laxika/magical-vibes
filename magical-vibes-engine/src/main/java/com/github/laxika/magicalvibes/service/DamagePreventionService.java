@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventHalfDamageToController
 import com.github.laxika.magicalvibes.model.effect.PreventAllButOneDamageToControllerAndPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToCreaturesYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfAndSourceControllerDrawsEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfFromBlockersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToSelfAndExileFromLibraryEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.PreventSpellDamageToOpponentAndCreateTokensEffect;
@@ -120,6 +121,18 @@ public class DamagePreventionService {
                     gameData.id, gameData.playerIdToName.get(controllerId), exiled, target.getCard().getName());
         }
         return true;
+    }
+
+    /**
+     * Armored Transport: "Prevent all combat damage that would be dealt to this creature by
+     * creatures blocking it." Only combat damage whose source is currently blocking {@code target}
+     * is prevented; damage the creature takes while blocking, and all noncombat damage, is untouched.
+     */
+    public boolean isCombatDamageFromBlockerPrevented(GameData gameData, Permanent target, Permanent source) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return false;
+        boolean hasEffect = target.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(PreventAllCombatDamageToSelfFromBlockersEffect.class::isInstance);
+        return hasEffect && source.isBlocking() && source.getBlockingTargetIds().contains(target.getId());
     }
 
     int applyGlobalPreventionShield(GameData gameData, int damage) {

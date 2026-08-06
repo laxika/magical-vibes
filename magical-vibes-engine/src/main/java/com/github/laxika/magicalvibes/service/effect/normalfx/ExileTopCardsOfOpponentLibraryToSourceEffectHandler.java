@@ -17,9 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Triggered handler: target opponent exiles the top N cards of their library face down, tracked
- * "exiled with" the source permanent (Grimoire Thief). In a two-player game the single opponent is
- * the only legal target.
+ * Triggered handler: an opponent exiles the top N cards of their library, tracked "exiled with" the
+ * source permanent (Grimoire Thief face down, Nightveil Specter face up). In a two-player game the
+ * single opponent is the only legal target.
  */
 @Slf4j
 @Component
@@ -48,9 +48,13 @@ public class ExileTopCardsOfOpponentLibraryToSourceEffectHandler implements Norm
             return;
         }
 
-        UUID opponentId = gameData.orderedPlayerIds.stream()
-                .filter(id -> !id.equals(controllerId))
-                .findFirst().orElse(null);
+        // A combat-damage trigger binds the damaged player as the target; otherwise (Grimoire
+        // Thief) the single opponent is the only legal target in a two-player game.
+        UUID opponentId = entry.getTargetId() != null && !entry.getTargetId().equals(controllerId)
+                ? entry.getTargetId()
+                : gameData.orderedPlayerIds.stream()
+                        .filter(id -> !id.equals(controllerId))
+                        .findFirst().orElse(null);
         if (opponentId == null) return;
 
         List<Card> deck = gameData.playerDecks.get(opponentId);
@@ -59,13 +63,18 @@ public class ExileTopCardsOfOpponentLibraryToSourceEffectHandler implements Norm
         int toExile = Math.min(e.count(), deck.size());
         for (int i = 0; i < toExile; i++) {
             Card card = deck.removeFirst();
-            exileService.exileCardFaceDown(gameData, opponentId, card, sourcePermanentId);
+            if (e.faceDown()) {
+                exileService.exileCardFaceDown(gameData, opponentId, card, sourcePermanentId);
+            } else {
+                exileService.exileCard(gameData, opponentId, card, sourcePermanentId);
+            }
         }
 
         if (toExile > 0) {
             String playerName = gameData.playerIdToName.get(opponentId);
-            
-            gameLogService.append(gameData, GameLog.builder().text(playerName + " exiles the top " + toExile + " card" + (toExile != 1 ? "s" : "") + " of their library face down (").card(sourcePermanent.getCard()).text(").").build());
+            String visibility = e.faceDown() ? " face down" : "";
+
+            gameLogService.append(gameData, GameLog.builder().text(playerName + " exiles the top " + toExile + " card" + (toExile != 1 ? "s" : "") + " of their library" + visibility + " (").card(sourcePermanent.getCard()).text(").").build());
             log.info("Game {} - {} exiles {} cards from {}'s library to {}",
                     gameData.id, playerName, toExile, playerName, sourcePermanent.getCard().getName());
         }

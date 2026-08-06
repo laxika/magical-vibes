@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantBeBlocke
 import com.github.laxika.magicalvibes.model.effect.GlobalBlockLifeCostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
+import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentCreatureHexproofEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingSourceKind;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
@@ -1345,6 +1346,28 @@ public class GameQueryService {
                 .anyMatch(e -> e instanceof TargetingRestrictionEffect r
                         && r.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES
                         && r.mode() == TargetColorMode.ANY);
+    }
+
+    /**
+     * Returns {@code true} if {@code controllerId} controls a permanent whose static effects let
+     * them target opponents' hexproof creatures as though they didn't have hexproof (Glaring
+     * Spotlight). Only hexproof is lifted — shroud and protection still apply.
+     */
+    public boolean ignoresOpponentCreatureHexproof(GameData gameData, UUID controllerId) {
+        if (controllerId == null) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return false;
+        }
+        for (Permanent permanent : battlefield) {
+            if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(IgnoreOpponentCreatureHexproofEffect.class::isInstance)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -2076,11 +2077,13 @@ public class StepTriggerService {
 
     /**
      * Returns exiled cards scheduled for the given step from exile to the battlefield
-     * under their owner's control.
+     * under their owner's control. A return flagged {@code onlyOnControllersTurn} waits for a step of
+     * this kind on its controller's own turn ("at the beginning of <em>your</em> next upkeep").
      */
     public void processPendingExileReturns(GameData gameData, TurnStep step) {
-        List<PendingExileReturn> matching =
-                gameData.drainDelayedActions(PendingExileReturn.class, p -> p.returnStep() == step);
+        List<PendingExileReturn> matching = gameData.drainDelayedActions(PendingExileReturn.class,
+                p -> p.returnStep() == step
+                        && (!p.onlyOnControllersTurn() || p.controllerId().equals(gameData.activePlayerId)));
         if (matching.isEmpty()) {
             return;
         }
@@ -2113,6 +2116,10 @@ public class StepTriggerService {
                     if (counters > 0) {
                         perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
                     }
+                }
+                perm.setEnteredFromExile(true);
+                if (pending.grantHaste()) {
+                    perm.getPersistentGrantedKeywords().add(Keyword.HASTE);
                 }
                 battlefieldEntryService.putPermanentOntoBattlefield(
                         gameData, controllerId, perm, enterTappedTypes, simultaneouslyEntered);
@@ -3065,7 +3072,9 @@ public class StepTriggerService {
                             gameLogService.append(gameData, GameLog.text(logEntry));
                             log.info("Game {} - {} controller end-step targeting may-trigger queued", gameData.id, perm.getCard().getName());
                         } else {
-                            gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
+                            // Source permanent context is required by self-affecting may-effects
+                            // (Obzedat, Ghost Council's "you may exile Obzedat").
+                            gameData.queueMayAbility(perm.getCard(), activePlayerId, may, null, perm.getId());
                         }
                     } else if (effect instanceof DestroyRandomOpponentPermanentWithCounterEffect destroyRandom) {
                         // Intervening-if: only trigger if enough opponent permanents have the counter

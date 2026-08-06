@@ -11,9 +11,19 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * graveyard to the battlefield." →
  * {@code new ReturnCardsFromControllerGraveyardToBattlefieldEffect(new CardAllOfPredicate(List.of(
  * new CardTypePredicate(CardType.CREATURE), new CardPowerAtMostPredicate(2))), 2)}
+ *
+ * <p>When {@code manaValueEqualsX} is set, matching cards are additionally restricted to those
+ * whose mana value equals the spell's paid X, and {@code maxCount} is normally
+ * {@link Integer#MAX_VALUE} so that every match is returned — Immortal Servitude's "return each
+ * creature card with mana value X from your graveyard to the battlefield."
  */
 public record ReturnCardsFromControllerGraveyardToBattlefieldEffect(
         CardPredicate filter,
-        int maxCount
+        int maxCount,
+        boolean manaValueEqualsX
 ) implements CardEffect {
+
+    public ReturnCardsFromControllerGraveyardToBattlefieldEffect(CardPredicate filter, int maxCount) {
+        this(filter, maxCount, false);
+    }
 }

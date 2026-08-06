@@ -197,6 +197,7 @@ public class TurnCleanupService {
         gameData.preventAllDamageByCreatures = false;
         gameData.combatDamageExemptPredicate = null;
         gameData.allPermanentsEnterTappedThisTurn = false;
+        gameData.additionalEnterCountersThisTurn.clear();
         gameData.preventDamageFromColors.clear();
         gameData.combatDamageRedirectTarget = null;
         gameData.playerColorDamagePreventionCount.clear();
@@ -221,6 +222,7 @@ public class TurnCleanupService {
         gameData.combatDamageToCreaturesDoublingsThisTurn = 0;
         gameData.controllerDamageDoublingsThisTurn.clear();
         gameData.opponentGraveyardLifeLossWatchers.clear();
+        gameData.lifeGainOpponentLifeLossWatchers.clear();
         gameData.drawReplacementTargetToController.clear();
         gameData.pendingNextDrawLookAtTop.clear();
         gameData.pendingNextDrawFromExiledPile.clear();

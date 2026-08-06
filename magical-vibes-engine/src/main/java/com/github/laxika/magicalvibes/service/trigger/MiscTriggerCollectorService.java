@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCreatureCardInOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CradleOfVitalityLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -513,6 +514,33 @@ public class MiscTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (creature card put into graveyard from anywhere)", gameData.id, cardName);
+        return true;
+    }
+
+    @CollectsTrigger(value = BecomeCopyOfCreatureCardInOpponentGraveyardEffect.class,
+            slot = EffectSlot.ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
+    private boolean handleCreatureCardPutIntoOpponentGraveyardBecomeCopy(TriggerMatchContext match,
+            BecomeCopyOfCreatureCardInOpponentGraveyardEffect effect, TriggerContext ctx) {
+        // Lazav, Dimir Mastermind: the ability doesn't target and doesn't check the graveyard again on
+        // resolution, so bake the triggering card in and copy it as last-known information.
+        var gameData = match.gameData();
+        var triggeringCard = ((TriggerContext.CreatureCardPutIntoGraveyard) ctx).creatureCard();
+        String cardName = match.permanent().getCard().getName();
+
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(new MayEffect(
+                        new BecomeCopyOfCreatureCardInOpponentGraveyardEffect(triggeringCard),
+                        "Become a copy of " + triggeringCard.getName() + "?"))),
+                null,
+                match.permanent().getId()
+        ));
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (become a copy of {})", gameData.id, cardName, triggeringCard.getName());
         return true;
     }
 

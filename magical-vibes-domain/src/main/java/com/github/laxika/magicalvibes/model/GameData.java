@@ -274,6 +274,12 @@ public class GameData {
     /** When non-null, creatures NOT matching this predicate are prevented from dealing combat damage this turn. */
     public PermanentPredicate combatDamageExemptPredicate;
     public boolean allPermanentsEnterTappedThisTurn;
+    /**
+     * Per-player count of additional +1/+1 counters that creatures entering under that player's
+     * control receive for the rest of this turn (Zameck Guildmage). Turn-long replacement effect
+     * (CR 614.1c) that survives the source leaving the battlefield.
+     */
+    public final Map<UUID, Integer> additionalEnterCountersThisTurn = new ConcurrentHashMap<>();
     /** Per-controller, per-color additive damage bonus this turn (e.g. The Flame of Keld Chapter III). */
     public final Map<UUID, Map<CardColor, Integer>> colorSourceDamageBonusThisTurn = new ConcurrentHashMap<>();
     public final Set<CardColor> preventDamageFromColors = ConcurrentHashMap.newKeySet();
@@ -532,6 +538,13 @@ public class GameData {
      * repeated activations stack. Cleared at turn cleanup.
      */
     public final List<OpponentGraveyardLifeLossWatcher> opponentGraveyardLifeLossWatchers =
+            Collections.synchronizedList(new ArrayList<>());
+    /**
+     * Active "whenever you gain life this turn, each opponent loses that much life" delayed triggers
+     * (Vizkopa Guildmage). One entry per activation, so repeated activations stack. Cleared at turn
+     * cleanup.
+     */
+    public final List<LifeGainOpponentLifeLossWatcher> lifeGainOpponentLifeLossWatchers =
             Collections.synchronizedList(new ArrayList<>());
     /** Damage redirect shields (e.g. Vengeful Archon): prevention shields that redirect prevented damage to a target player. */
     public final List<DamageRedirectShield> damageRedirectShields = Collections.synchronizedList(new ArrayList<>());
@@ -2209,6 +2222,7 @@ public class GameData {
         copy.preventAllDamageByCreatures = this.preventAllDamageByCreatures;
         copy.combatDamageExemptPredicate = this.combatDamageExemptPredicate;
         copy.allPermanentsEnterTappedThisTurn = this.allPermanentsEnterTappedThisTurn;
+        copy.additionalEnterCountersThisTurn.putAll(this.additionalEnterCountersThisTurn);
         this.colorSourceDamageBonusThisTurn.forEach((pid, colorMap) ->
                 copy.colorSourceDamageBonusThisTurn.put(pid, new HashMap<>(colorMap)));
         copy.combatDamageRedirectTarget = this.combatDamageRedirectTarget;
@@ -2321,6 +2335,7 @@ public class GameData {
         copy.combatDamageToCreaturesDoublingsThisTurn = this.combatDamageToCreaturesDoublingsThisTurn;
         copy.controllerDamageDoublingsThisTurn.putAll(this.controllerDamageDoublingsThisTurn);
         copy.opponentGraveyardLifeLossWatchers.addAll(this.opponentGraveyardLifeLossWatchers);
+        copy.lifeGainOpponentLifeLossWatchers.addAll(this.lifeGainOpponentLifeLossWatchers);
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
         copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);

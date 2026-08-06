@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilLandsMillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,7 @@ public class RevealUntilLandsMillTargetPlayerEffectHandler implements NormalEffe
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,8 +42,17 @@ public class RevealUntilLandsMillTargetPlayerEffectHandler implements NormalEffe
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         RevealUntilLandsMillTargetPlayerEffect e = (RevealUntilLandsMillTargetPlayerEffect) effect;
 
+        Permanent source = entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                : null;
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        int landCount = amountEvaluationService.evaluate(gameData, e.landCount(),
+                AmountContext.forStackEntry(entry, source));
+
         for (UUID playerId : resolveRevealingPlayers(gameData, entry, e)) {
-            revealAndMill(gameData, playerId, e.landCount());
+            revealAndMill(gameData, playerId, landCount);
         }
     }
 

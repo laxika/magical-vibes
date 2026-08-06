@@ -459,6 +459,22 @@ new ActivatedAbility(false, null,
 
 Cards: `VolrathsCurse`
 
+Chain `.withActivatableOnlyByOpponents()` instead for "Only your opponents may activate this
+ability" (Soul Ransom) — same two-flag shape, but the second flag rejects only the source
+permanent's own controller. Pair it with an effect that acts on the source's controller rather than
+the entry's controller (`SacrificeSelfAndControllerDrawsEffect`), since the activator is the opponent.
+
+```java
+// Discard two cards: this Aura's controller sacrifices it, then draws two cards.
+new ActivatedAbility(false, null,
+    List.of(new DiscardCardTypeCost(null, null, 2),
+            new SacrificeSelfAndControllerDrawsEffect(2)), description)
+    .withActivatableByAnyPlayer()
+    .withActivatableOnlyByOpponents()
+```
+
+Cards: `SoulRansom`
+
 ---
 
 ### 8b. Untap-symbol cost `{Q}` (`.withRequiresUntap()`)
@@ -886,6 +902,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_DEATH` | This permanent dies |
 | `ON_SACRIFICE` | This permanent is sacrificed |
 | `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` | A creature (including tokens) enters battlefield under your control |
+| `ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD` | "Whenever this creature or another creature you control enters" — same scan as `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` minus the self-exclusion, so the source's own entry also fires it. The entering permanent rides along as the trigger's `triggeringPermanentId` (through `EntersTriggerTarget` for targeted effects), so "that creature" is resolvable. Gruul Ragebeast (`EnteringCreatureFightsTargetCreatureEffect`) |
 | `ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD` | A nontoken creature enters battlefield under your control (not this permanent, not tokens). Used with MayPayManaEffect for Minion Reflector's copy trigger, or mandatory `CreateTokenCopyOfTargetPermanentEffect` (optionally gated by `TriggeringCardConditionalEffect`) for Necroduality. Entering permanent ID is baked as stack `targetId` / PendingMayAbility.targetCardId so the copy effect knows which creature to copy |
 | `ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD` | An artifact enters battlefield under your control (not this permanent). Supports `TriggeringCardConditionalEffect` (e.g. Blood token gate) and intervening-if `ControlsPermanentCount` (checked at trigger time; ConditionalEffect left wrapped for resolution re-check). |
 | `ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD` | A nontoken artifact enters battlefield under your control (not this permanent). Used with MayPayManaEffect for Mirrorworks' copy trigger. Entering permanent ID is passed via PendingMayAbility.targetCardId |

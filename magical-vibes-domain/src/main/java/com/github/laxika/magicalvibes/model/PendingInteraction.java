@@ -869,12 +869,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * where {@code decidingPlayerId} is the {@code controllerId}: {@code revealedCardIds} is the
      * fixed revealed set shown to the controller and {@code validIndices} are the indices into that
      * set. Answers are {@link com.github.laxika.magicalvibes.model.effect.CardEffect}-agnostic
-     * {@code CardIndexChosen} picks, dispatched by the deciding player.
+     * {@code CardIndexChosen} picks, dispatched by the deciding player. {@code destination} is
+     * {@code DISCARD} for the discard cards, or {@code EXILE} when the controller's pick is exiled
+     * from the target's hand instead (Vizkopa Confessor).
      */
     record RevealCardsDiscardChoice(UUID decidingPlayerId, UUID targetPlayerId, UUID controllerId,
                                     boolean revealStage, java.util.List<Integer> validIndices,
                                     int remainingCount, java.util.List<UUID> revealedCardIds,
-                                    int discardCount) implements PendingInteraction {
+                                    int discardCount,
+                                    com.github.laxika.magicalvibes.model.effect.HandChoiceDestination destination)
+            implements PendingInteraction {
         // The decidingPlayerId component accessor doubles as the interface override.
 
         public RevealCardsDiscardChoice {

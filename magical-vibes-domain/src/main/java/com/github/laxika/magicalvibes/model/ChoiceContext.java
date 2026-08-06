@@ -199,6 +199,15 @@ public sealed interface ChoiceContext {
                                   com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate)
             implements ChoiceContext {}
 
+    /**
+     * "Move any number of {@code counterType} counters from target creature onto another target
+     * creature" (Bioshift): the spell's controller chooses how many (0..the count on
+     * {@code fromPermanentId}); on the answer that many counters are moved onto
+     * {@code toPermanentId}.
+     */
+    record MoveCountersAmountChoice(UUID fromPermanentId, UUID toPermanentId, CounterType counterType,
+                                    String sourceCardName) implements ChoiceContext {}
+
     /** Choosing one of Primal Clay's three shapes "as this creature enters". */
     record PrimalClayFormChoice(UUID permanentId) implements ChoiceContext {}
 

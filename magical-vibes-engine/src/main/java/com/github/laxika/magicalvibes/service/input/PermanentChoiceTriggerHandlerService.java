@@ -655,6 +655,7 @@ public class PermanentChoiceTriggerHandlerService {
                     ett.sourcePermanentId()
             );
             entry.setTargetId(permanentId);
+            entry.setTriggeringPermanentId(ett.enteringPermanentId());
             gameData.stack.add(entry);
 
             String targetName = getTargetDisplayName(gameData, permanentId);

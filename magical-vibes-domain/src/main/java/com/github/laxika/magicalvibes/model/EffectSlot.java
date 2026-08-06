@@ -5,6 +5,14 @@ public enum EffectSlot {
     ON_ENTER_BATTLEFIELD,
     SPELL,
 ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+    /** "Whenever this creature or another creature you control enters, …" — like
+     *  {@link #ON_ALLY_CREATURE_ENTERS_BATTLEFIELD} but the source's own entry also triggers it.
+     *  Scanned in the same pass ({@code TriggerCollectionService.checkAllyCreatureEntersTriggers})
+     *  without the self-exclusion. The entering permanent rides along as the trigger's
+     *  {@code triggeringPermanentId} so an effect like
+     *  {@code EnteringCreatureFightsTargetCreatureEffect} knows which creature "that creature" is.
+     *  Used by Gruul Ragebeast. */
+    ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** "Whenever a nontoken creature enters under your control" (excludes this permanent and tokens).
      *  Like {@link #ON_ALLY_CREATURE_ENTERS_BATTLEFIELD} but the entering permanent's id is preserved on
      *  any queued may-pay ability (mirrors {@link #ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD}), so a

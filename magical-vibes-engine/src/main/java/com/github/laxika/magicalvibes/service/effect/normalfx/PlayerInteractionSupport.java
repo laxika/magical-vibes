@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -523,6 +524,16 @@ public class PlayerInteractionSupport {
      * controller's discard choice begins immediately.
      */
     public void beginRevealCardsChooseDiscard(GameData gameData, StackEntry entry, int revealCount, int discardCount) {
+        beginRevealCardsChooseDiscard(gameData, entry, revealCount, discardCount, HandChoiceDestination.DISCARD);
+    }
+
+    /**
+     * As {@link #beginRevealCardsChooseDiscard(GameData, StackEntry, int, int)}, but the
+     * controller's pick goes to {@code destination} — {@code EXILE} exiles it from the target's hand
+     * instead of discarding it (Vizkopa Confessor).
+     */
+    public void beginRevealCardsChooseDiscard(GameData gameData, StackEntry entry, int revealCount, int discardCount,
+                                              HandChoiceDestination destination) {
 
         UUID targetPlayerId = entry.getTargetId();
         UUID controllerId = entry.getControllerId();
@@ -536,12 +547,15 @@ public class PlayerInteractionSupport {
         }
 
         // A discard forced by an opponent enables replacement effects (e.g. Obstinate Baloth).
-        gameData.discardCausedByOpponent = !controllerId.equals(targetPlayerId);
+        if (destination == HandChoiceDestination.DISCARD) {
+            gameData.discardCausedByOpponent = !controllerId.equals(targetPlayerId);
+        }
 
         if (hand.size() <= revealCount) {
             // Whole hand is revealed — no choice for the target player.
             List<UUID> revealedCardIds = hand.stream().map(Card::getId).toList();
-            beginRevealCardsDiscardStage(gameData, targetPlayerId, controllerId, revealedCardIds, discardCount);
+            beginRevealCardsDiscardStage(gameData, targetPlayerId, controllerId, revealedCardIds, discardCount,
+                    destination);
             return;
         }
 
@@ -554,7 +568,7 @@ public class PlayerInteractionSupport {
         // sibling — carried forward once the reveal picks complete (see the discard-stage begin).
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
                 targetPlayerId, targetPlayerId, controllerId, true, validIndices, revealCount,
-                new ArrayList<>(), discardCount));
+                new ArrayList<>(), discardCount, destination));
 
         log.info("Game {} - {} choosing {} cards to reveal for reveal-and-discard",
                 gameData.id, targetName, revealCount);
@@ -566,7 +580,8 @@ public class PlayerInteractionSupport {
      * {@code discardCount} of the revealed cards (fewer if the hand held fewer).
      */
     public void beginRevealCardsDiscardStage(GameData gameData, UUID targetPlayerId,
-                                             UUID controllerId, List<UUID> revealedCardIds, int discardCount) {
+                                             UUID controllerId, List<UUID> revealedCardIds, int discardCount,
+                                             HandChoiceDestination destination) {
 
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
@@ -588,7 +603,7 @@ public class PlayerInteractionSupport {
         int toDiscard = Math.min(discardCount, revealedCardIds.size());
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
                 controllerId, targetPlayerId, controllerId, false, validIndices, toDiscard,
-                new ArrayList<>(revealedCardIds), toDiscard));
+                new ArrayList<>(revealedCardIds), toDiscard, destination));
     }
 
     /**
@@ -598,7 +613,8 @@ public class PlayerInteractionSupport {
      */
     public void beginRevealCardsDiscardStageContinuation(GameData gameData, UUID targetPlayerId,
                                                          UUID controllerId, List<UUID> revealedCardIds,
-                                                         int remainingDiscards, int discardCount) {
+                                                         int remainingDiscards, int discardCount,
+                                                         HandChoiceDestination destination) {
 
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < revealedCardIds.size(); i++) {
@@ -606,7 +622,7 @@ public class PlayerInteractionSupport {
         }
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
                 controllerId, targetPlayerId, controllerId, false, validIndices, remainingDiscards,
-                new ArrayList<>(revealedCardIds), discardCount));
+                new ArrayList<>(revealedCardIds), discardCount, destination));
     }
 
     public boolean sharesCardType(List<Card> cards) {

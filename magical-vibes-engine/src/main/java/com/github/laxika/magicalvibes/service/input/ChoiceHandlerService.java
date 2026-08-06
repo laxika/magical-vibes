@@ -213,6 +213,10 @@ public class ChoiceHandlerService {
             handleTetravusCounterRemoval(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.MoveCountersAmountChoice ctx) {
+            handleMoveCountersAmountChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.PrimalClayFormChoice ctx) {
             handlePrimalClayFormChoice(gameData, player, colorName, ctx);
             return;
@@ -1589,6 +1593,40 @@ public class ChoiceHandlerService {
                     " to create " + removed + " Tetravite token" + (removed == 1 ? "" : "s") + "."));
             log.info("Game {} - {} removes {} +1/+1 counters from {} to create {} Tetravite tokens",
                     gameData.id, player.getUsername(), removed, source.getCard().getName(), removed);
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Bioshift: move the chosen number of counters from the first target creature onto the second.
+     * The count is re-clamped to what is still there, and placement goes through
+     * {@code PermanentCounterSupport} so put-counter triggers and "can't have counters" apply.
+     */
+    private void handleMoveCountersAmountChoice(GameData gameData, Player player, String numberName,
+                                                ChoiceContext.MoveCountersAmountChoice ctx) {
+        int chosen = Integer.parseInt(numberName);
+
+        gameData.interaction.clearAwaitingInput();
+
+        Permanent from = gameQueryService.findPermanentById(gameData, ctx.fromPermanentId());
+        Permanent to = gameQueryService.findPermanentById(gameData, ctx.toPermanentId());
+        if (from != null && to != null && chosen > 0) {
+            int moved = Math.min(chosen, from.getCounterCount(ctx.counterType()));
+            if (moved > 0) {
+                from.setCounterCount(ctx.counterType(), from.getCounterCount(ctx.counterType()) - moved);
+                StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
+                if (sourceEntry != null) {
+                    permanentCounterSupport.placeCounterOnPermanent(gameData, sourceEntry, to, ctx.counterType(), moved);
+                } else {
+                    to.setCounterCount(ctx.counterType(), to.getCounterCount(ctx.counterType()) + moved);
+                }
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(player.getUsername() + " moves " + moved + " counter" + (moved == 1 ? "" : "s") + " from ")
+                        .card(from.getCard()).text(" onto ").card(to.getCard()).text(".").build());
+                log.info("Game {} - {} moves {} {} counters from {} to {} ({})", gameData.id, player.getUsername(),
+                        moved, ctx.counterType(), from.getCard().getName(), to.getCard().getName(), ctx.sourceCardName());
+            }
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

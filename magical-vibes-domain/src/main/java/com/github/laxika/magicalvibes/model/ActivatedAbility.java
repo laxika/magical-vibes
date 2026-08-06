@@ -40,6 +40,8 @@ public class ActivatedAbility {
     private boolean activatableByAnyPlayer;
     /** When true, only the controller of the permanent this Aura is attached to may activate this ability, e.g. Volrath's Curse. Set via {@link #withActivatableOnlyByEnchantedPermanentController()}. */
     private boolean activatableOnlyByEnchantedPermanentController;
+    /** When true, only opponents of the source permanent's controller may activate this ability, e.g. Soul Ransom. Set via {@link #withActivatableOnlyByOpponents()}. */
+    private boolean activatableOnlyByOpponents;
     /** When true, the ability's cost includes the untap symbol {@code {Q}}: the permanent must be tapped and is untapped to pay (e.g. Order of Whiteclay). Set via {@link #withRequiresUntap()}. */
     private boolean requiresUntap;
     /** Predicate a controlled permanent must match to count toward {@link #requiredControlledPermanentCount} (e.g. Leechridden Swamp's "two or more black permanents"). Null = no such restriction. Set via {@link #withRequiredControlledPermanents}. */
@@ -209,6 +211,7 @@ public class ActivatedAbility {
         copy.maxCardsInHandToActivate = this.maxCardsInHandToActivate;
         copy.activatableByAnyPlayer = this.activatableByAnyPlayer;
         copy.activatableOnlyByEnchantedPermanentController = this.activatableOnlyByEnchantedPermanentController;
+        copy.activatableOnlyByOpponents = this.activatableOnlyByOpponents;
         copy.requiresUntap = this.requiresUntap;
         copy.requiredControlledPermanentPredicate = this.requiredControlledPermanentPredicate;
         copy.requiredControlledPermanentCount = this.requiredControlledPermanentCount;
@@ -368,6 +371,18 @@ public class ActivatedAbility {
      */
     public ActivatedAbility withActivatableOnlyByEnchantedPermanentController() {
         this.activatableOnlyByEnchantedPermanentController = true;
+        return this;
+    }
+
+    /**
+     * Narrows {@link #withActivatableByAnyPlayer()} to the opponents of the source permanent's
+     * controller (Soul Ransom: "Only your opponents may activate this ability."). Chain both flags:
+     * the any-player flag makes the ability reachable from a battlefield the activator doesn't
+     * control, this one rejects the source's own controller. Returns this ability for chaining in
+     * card constructors.
+     */
+    public ActivatedAbility withActivatableOnlyByOpponents() {
+        this.activatableOnlyByOpponents = true;
         return this;
     }
 

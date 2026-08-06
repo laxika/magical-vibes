@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
@@ -40,10 +41,14 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
 
         // Collect first: applyControlEffect moves permanents between battlefield lists, so we can't
         // seize while iterating. Skip permanents the controller already controls (a no-op steal).
+        // The predicate may be source-relative (e.g. "permanents you own" — Gruul Charm), so the
+        // resolving controller has to reach the evaluation as the filter context's source controller.
+        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(controllerId);
+
         List<Permanent> toSeize = new ArrayList<>();
         gameData.forEachPermanent((playerId, permanent) -> {
             if (playerId.equals(controllerId)) return;
-            if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, e.predicate())) {
+            if (predicateEvaluationService.matchesPermanentPredicate(permanent, e.predicate(), filterContext)) {
                 toSeize.add(permanent);
             }
         });

@@ -320,6 +320,11 @@ public class Permanent {
      *  it came from; {@code null} otherwise. Read during the entering creature's ETB processing to fire
      *  "whenever a creature enters from your graveyard" triggers (e.g. Flayer of the Hatebound). */
     @Setter private UUID enteredFromGraveyardOwnerId;
+    /** True when this permanent entered the battlefield from exile via a delayed return (flicker,
+     *  Obzedat, Ghost Council). Like a token copy or a reanimated creature it never went through
+     *  cast-time target selection, so a mandatory targeted ETB must choose its target as the
+     *  triggered ability is put on the stack (CR 603.3b). */
+    @Setter private boolean enteredFromExile;
     /** Source permanent IDs that prevent this permanent from untapping during its controller's untap step.
      *  Each entry means: "this permanent doesn't untap for as long as that source permanent remains tapped." */
     private final Set<UUID> untapPreventedByPermanentIds = new HashSet<>();
@@ -561,6 +566,7 @@ public class Permanent {
         this.extraLoyaltyActivationsThisTurn = source.extraLoyaltyActivationsThisTurn;
         this.protectorPlayerId = source.protectorPlayerId;
         this.enteredFromGraveyardOwnerId = source.enteredFromGraveyardOwnerId;
+        this.enteredFromExile = source.enteredFromExile;
         this.grantedKeywords.addAll(source.grantedKeywords);
         this.persistentGrantedKeywords.addAll(source.persistentGrantedKeywords);
         this.removedKeywords.addAll(source.removedKeywords);

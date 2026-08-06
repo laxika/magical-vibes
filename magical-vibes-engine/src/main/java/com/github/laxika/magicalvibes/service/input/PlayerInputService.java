@@ -497,6 +497,34 @@ public class PlayerInputService {
     }
 
     /**
+     * Bioshift: prompt {@code playerId} for how many {@code counterType} counters (0..{@code max})
+     * to move from one target creature onto the other. {@link ChoiceHandlerService} performs the
+     * move on the answer.
+     */
+    public void beginMoveCountersAmountChoice(GameData gameData, UUID playerId, UUID fromPermanentId,
+                                              UUID toPermanentId, CounterType counterType,
+                                              String sourceCardName, int max) {
+        ChoiceContext.MoveCountersAmountChoice choiceContext = new ChoiceContext.MoveCountersAmountChoice(
+                fromPermanentId, toPermanentId, counterType, sourceCardName);
+
+        List<String> options = java.util.stream.IntStream.rangeClosed(0, Math.max(0, max))
+                .mapToObj(Integer::toString)
+                .toList();
+        String counterName = switch (counterType) {
+            case PLUS_ONE_PLUS_ONE -> "+1/+1";
+            case MINUS_ONE_MINUS_ONE -> "-1/-1";
+            default -> counterType.name().toLowerCase().replace('_', ' ');
+        };
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options,
+                sourceCardName + " — move how many " + counterName + " counters (0-" + Math.max(0, max) + ")?"));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose how many {} counters to move (0-{})",
+                gameData.id, playerName, counterType, max);
+    }
+
+    /**
      * Quarry Hauler: prompt {@code playerId} to add or remove one counter of the FIRST kind in
      * {@code remainingKinds} on {@code targetId}. {@link ChoiceHandlerService} applies the answer and
      * re-invokes this with the remaining kinds until every kind has been resolved.

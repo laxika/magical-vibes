@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -583,6 +584,35 @@ public class DamageTriggerCollectorService {
         if (card == null || color == null) return false;
         if (card.getColor() == color) return true;
         return card.getColors().contains(color);
+    }
+
+    /**
+     * "Whenever this creature is dealt damage, you may destroy target nonland permanent"
+     * (High Priest of Penance). CR 603.3d: a targeted "may" trigger chooses its target as the
+     * ability goes on the stack, while the "you may" is answered on resolution — so the target
+     * choice is queued here, honouring the card's own target filter. Non-targeting mays keep the
+     * plain trigger entry, whose targetId is the damaged permanent itself.
+     */
+    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE)
+    private boolean handleDealtDamageMayEffect(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
+        TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
+        if (!may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+            return handleDealtDamageDefault(match, may, ctx);
+        }
+
+        GameData gameData = match.gameData();
+        Permanent damagedCreature = dc.damagedCreature();
+        UUID controllerId = gameQueryService.findPermanentController(gameData, damagedCreature.getId());
+        if (controllerId == null) return false;
+
+        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                damagedCreature.getCard(), controllerId, new ArrayList<>(List.of(may)),
+                false, damagedCreature.getCard().getTargetFilter(), 0, damagedCreature.getId()));
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(damagedCreature.getCard()));
+        log.info("Game {} - {} ON_DEALT_DAMAGE targeted-may trigger fires",
+                gameData.id, damagedCreature.getCard().getName());
+        return true;
     }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE)

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BasicLandsOfChosenTypesBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByBushidoEffect;
@@ -177,6 +178,7 @@ public final class LayerClassifier {
         // Layer 1 — copy effects (CR 613.2a).
         map.put(BecomeCopyOfTargetCreatureEffect.class, fixed(Layer.L1_COPY));
         map.put(BecomeCopyOfTargetCreatureUntilEndOfTurnEffect.class, fixed(Layer.L1_COPY));
+        map.put(BecomeCopyOfTargetLandEffect.class, fixed(Layer.L1_COPY));
         map.put(MakeTargetCopyOfTargetCreatureUntilNextTurnEffect.class, fixed(Layer.L1_COPY));
         map.put(CopyPermanentOnEnterEffect.class, fixed(Layer.L1_COPY));
 

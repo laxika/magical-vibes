@@ -1393,7 +1393,10 @@ public class TargetLegalityService {
             return target.getCard().getName() + " has shroud and can't be targeted";
         }
         UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
-        if (targetController != null && !targetController.equals(sourcePlayerId)) {
+        // Glaring Spotlight: opponents' hexproof creatures are targetable as though they had none.
+        boolean hexproofLifted = gameQueryService.isCreature(gameData, target)
+                && gameQueryService.ignoresOpponentCreatureHexproof(gameData, sourcePlayerId);
+        if (!hexproofLifted && targetController != null && !targetController.equals(sourcePlayerId)) {
             if (gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF)
                     || gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, target)) {
                 return target.getCard().getName() + " has hexproof and can't be targeted";
