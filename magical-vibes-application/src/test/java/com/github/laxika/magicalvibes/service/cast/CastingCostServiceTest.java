@@ -29,7 +29,6 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForCardTypeE
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -871,14 +870,15 @@ class CastingCostServiceTest {
         }
 
         @Test
-        @DisplayName("SacrificeArtifactCost — false with no artifact, true with one")
+        @DisplayName("SacrificePermanentCost (artifact) — false with no artifact, true with one")
         void sacrificeArtifactCost() {
-            Card spell = spellWith(new SacrificeArtifactCost());
+            var filter = new com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate();
+            Card spell = spellWith(new SacrificePermanentCost(filter, "an artifact", false));
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
 
             Permanent artifact = new Permanent(graveyardCard("Trinket", CardType.ARTIFACT));
             gd.playerBattlefields.get(player1Id).add(artifact);
-            when(gameQueryService.isArtifact(gd, artifact)).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, artifact, filter)).thenReturn(true);
 
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
         }

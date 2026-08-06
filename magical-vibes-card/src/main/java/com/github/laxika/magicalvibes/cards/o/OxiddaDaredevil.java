@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ public class OxiddaDaredevil extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SacrificeArtifactCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)),
+                List.of(new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)),
                 "Sacrifice an artifact: Oxidda Daredevil gains haste until end of turn."
         ));
     }

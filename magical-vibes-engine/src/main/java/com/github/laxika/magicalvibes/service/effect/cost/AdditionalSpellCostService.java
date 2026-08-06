@@ -29,7 +29,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAllPermanentsYouCont
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
@@ -74,7 +73,6 @@ public class AdditionalSpellCostService {
             SacrificeAllPermanentsYouControlCost.class,
             SacrificeCreatureCost.class,
             SacrificeCreatureOrPayManaCost.class,
-            SacrificeArtifactCost.class,
             SacrificePermanentCost.class,
             SacrificeMultiplePermanentsCost.class,
             SacrificeAnyNumberOfPermanentsCost.class,
@@ -108,7 +106,6 @@ public class AdditionalSpellCostService {
             boolean sacrificeAllPermanents,
             boolean sacrificeCreature,
             SacrificeCreatureOrPayManaCost sacrificeCreatureOrPayManaCost,
-            boolean sacrificeArtifact,
             SacrificePermanentCost sacrificePermanentCost,
             SacrificeMultiplePermanentsCost sacrificeMultiplePermanentsCost,
             SacrificeAnyNumberOfPermanentsCost sacrificeAnyNumberCost,
@@ -133,7 +130,6 @@ public class AdditionalSpellCostService {
         public boolean any() {
             return sacrificeAllCreatures || sacrificeAllPermanents || sacrificeCreature
                     || sacrificeCreatureOrPayManaCost != null
-                    || sacrificeArtifact
                     || sacrificePermanentCost != null || sacrificeMultiplePermanentsCost != null
                     || sacrificeAnyNumberCost != null
                     || tapAnyNumberCost != null || returnAnyNumberCost != null
@@ -204,7 +200,6 @@ public class AdditionalSpellCostService {
         boolean sacAllPermanents = effects.removeIf(SacrificeAllPermanentsYouControlCost.class::isInstance);
         boolean sacCreature = effects.removeIf(SacrificeCreatureCost.class::isInstance);
         SacrificeCreatureOrPayManaCost sacOrPay = removeFirst(effects, SacrificeCreatureOrPayManaCost.class);
-        boolean sacArtifact = effects.removeIf(SacrificeArtifactCost.class::isInstance);
         SacrificePermanentCost permCost = removeFirst(effects, SacrificePermanentCost.class);
         SacrificeMultiplePermanentsCost multiPermCost = removeFirst(effects, SacrificeMultiplePermanentsCost.class);
         SacrificeAnyNumberOfPermanentsCost sacAnyNumberCost =
@@ -226,7 +221,7 @@ public class AdditionalSpellCostService {
         EscalateDiscardCost escalateDiscardCost = removeFirst(effects, EscalateDiscardCost.class);
         EscalateManaCost escalateManaCost = removeFirst(effects, EscalateManaCost.class);
         RepeatableAdditionalManaCost repeatableManaCost = removeFirst(effects, RepeatableAdditionalManaCost.class);
-        return new ExtractedCosts(sacAllCreatures, sacAllPermanents, sacCreature, sacOrPay, sacArtifact, permCost, multiPermCost,
+        return new ExtractedCosts(sacAllCreatures, sacAllPermanents, sacCreature, sacOrPay, permCost, multiPermCost,
                 sacAnyNumberCost, tapAnyNumberCost, returnAnyNumberCost, returnCreature,
                 putCounterCost, payXLife, payLifeCost, exileGraveyardCost, exileXCardsCost, exileNCardsCost, discardCost, discardOrPay,
                 discardHand, discardXCards, escalateDiscardCost, escalateManaCost, repeatableManaCost);
@@ -285,9 +280,6 @@ public class AdditionalSpellCostService {
                 }
                 case PutCounterOnControlledCreatureCost ignored -> {
                     if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
-                }
-                case SacrificeArtifactCost ignored -> {
-                    if (battlefield.stream().noneMatch(p -> gameQueryService.isArtifact(gameData, p))) return false;
                 }
                 case SacrificePermanentCost cost -> {
                     if (battlefield.stream().noneMatch(p ->
@@ -420,10 +412,6 @@ public class AdditionalSpellCostService {
                         + costs.discardCardOrPayManaCost().manaCost()
                         + " to cast " + card.getName());
             }
-        }
-        if (costs.sacrificeArtifact()) {
-            validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
-                    "an artifact", p -> gameQueryService.isArtifact(p));
         }
         if (costs.sacrificePermanentCost() != null) {
             validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),

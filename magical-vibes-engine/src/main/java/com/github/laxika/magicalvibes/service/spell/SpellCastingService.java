@@ -79,7 +79,6 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
@@ -2232,10 +2231,6 @@ public class SpellCastingService {
                 resolvedXValue = stats.toughness();
             }
         }
-        if (costs.sacrificeArtifact()) {
-            paySingleSacrificeCost(gameData, player, card, sacrificePermanentId,
-                    "an artifact", p -> gameQueryService.isArtifact(p));
-        }
         if (costs.sacrificePermanentCost() != null) {
             SacrificePermanentCost sacPermCost = costs.sacrificePermanentCost();
             SacrificedCreatureStats stats = paySingleSacrificeCost(gameData, player, card, sacrificePermanentId,
@@ -2810,7 +2805,6 @@ public class SpellCastingService {
         boolean hasUnsupportedAdditionalCost = additionalCosts.sacrificeAllCreatures()
                 || additionalCosts.sacrificeAllPermanents()
                 || additionalCosts.sacrificeCreatureOrPayManaCost() != null
-                || additionalCosts.sacrificeArtifact()
                 || additionalCosts.sacrificePermanentCost() != null || additionalCosts.returnCreatureToHand()
                 || additionalCosts.putCounterCost() != null || additionalCosts.exileGraveyardCost() != null
                 || additionalCosts.exileXCardsCost() != null || additionalCosts.discardCost() != null
@@ -2832,7 +2826,7 @@ public class SpellCastingService {
             // Validate only the sacrifice slice so an exile-N cost (validated above with
             // the spell's GY index excluded) is not re-checked against a null selection.
             AdditionalSpellCostService.ExtractedCosts sacOnly = new AdditionalSpellCostService.ExtractedCosts(
-                    false, false, true, null, false, null, null, null, null, null, false, null,
+                    false, false, true, null, null, null, null, null, null, false, null,
                     false, null, null, null, null, null, null, false, false, null, null, null);
             AdditionalSpellCostService.CostSelection sacSelection = new AdditionalSpellCostService.CostSelection(
                     sacrificePermanentId, null, null, null, null, 0, -1, null);

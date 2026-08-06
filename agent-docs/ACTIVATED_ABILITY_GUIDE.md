@@ -745,7 +745,7 @@ All cost effects implement the `CostEffect` marker interface (which extends `Car
 | `SacrificeSelfCost` | `()` or `(true)` | "Sacrifice this: ...". `(true)` snapshots this permanent's effective power into xValue at payment (Mausoleum Wanderer) |
 | `SacrificeCreatureCost` | `()` | "Sacrifice a creature: ..." |
 | `SacrificeCreatureCost` | `(false, false, false, true)` | "Sacrifice another creature: ..." (excludeSelf prevents sacrificing the source) |
-| `SacrificeArtifactCost` | `()` | "Sacrifice an artifact: ..." |
+| `SacrificePermanentCost` | `(new PermanentIsArtifactPredicate(), "an artifact", false)` | "Sacrifice an artifact: ..." (`excludeSource=false` so an artifact source can sacrifice itself) |
 | `SacrificePermanentCost` | `(PermanentPredicate filter, String description)` or `(PermanentPredicate filter, String description, boolean excludeSource)` | "Sacrifice an artifact or creature: ..." or "Sacrifice a Goblin: ..." — generic predicate-based sacrifice. Use `PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)))` and `excludeSource=false` for subtype creature costs that can sacrifice the source. The 4-arg form `(filter, description, excludeSource, trackSacrificedPower)` snapshots the sacrificed permanent's effective power into the ability's xValue at payment — Freyalise Supplicant (`PermanentAllOfPredicate(creature + PermanentColorInPredicate(RED, WHITE))` + `DealDamageToAnyTargetEffect(new Divided(new XValue(), 2))`). The 5-arg form adds `trackSacrificedManaValue` — Soldevi Adnate (`AwardManaEffect(ManaColor.BLACK, new XValue())`, a mana ability, `excludeSource=false` so it can eat itself). The 6-arg form adds `trackSacrificedToughness` — Korozda Guildmage (`creature + PermanentNotPredicate(PermanentIsTokenPredicate)` + `CreateTokenEffect(new XValue(), …)`) |
 | `SacrificeMultiplePermanentsCost` | `(int count, PermanentPredicate filter)` | "Sacrifice three artifacts: ..." (use with matching predicate) |
 | `SacrificePermanentsSequenceCost` | `(List<PermanentPredicate> filters, List<String> descriptions)` | "Sacrifice a green creature, a white creature, and a blue creature: ..." (Angel's Herald) — one distinct permanent per per-slot filter, in order. Use this single cost, NOT several `SacrificePermanentCost` entries: the activation resume path carries only one cost effect through interactive picks, so multiple distinct sacrifice costs on one ability would silently skip the 2nd/3rd. Only offers a slot permanents whose selection still leaves a full matching for the remaining slots (no dead-end mid-payment). Slot filters see the ability's source card, so a slot may be `PermanentIsSourceCardPredicate()` for "…, and this creature" — Urborg Panther ("Sacrifice a creature named Feral Shadow, a creature named Breathstealer, and this creature") uses two `PermanentNamedPredicate`s plus that source slot, which pins the third sacrifice to the activating Panther rather than any copy |
@@ -792,7 +792,8 @@ new ActivatedAbility(false, null,
 
 // {T}, Sacrifice an artifact: Deal 2 damage to any target
 new ActivatedAbility(true, null,
-    List.of(new SacrificeArtifactCost(), new DealDamageToAnyTargetEffect(2)),
+    List.of(new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false),
+            new DealDamageToAnyTargetEffect(2)),
     "{T}, Sacrifice an artifact: Barrage Ogre deals 2 damage to any target.")
 
 // {T}, Sacrifice three artifacts: Search library for artifact to battlefield

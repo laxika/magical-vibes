@@ -77,7 +77,7 @@ high-churn or needs a design call and is optional.
 | 7 | `SkipNextEffect` | 4 | MED | **DONE** — premise held for all four handlers; the audit undercounted (4 records, not 3). One correction: `boolean targetsPlayer` cannot express the family — Blinding Angel is `targetId`-bound but non-targeting — so the second component is a 3-value `SkipRecipient`, which keeps "which player" off the `SkipKind` axis. Polarity unified on `benign` |
 | 8 | Phase-out + attached-counter placement | 6 | LOW | **DONE** — premise held for all six handlers; the optional 8b fold was taken, so 6 records + 6 handlers went. The audit missed that `@CollectsTrigger` is class-keyed: two collector annotations had to be re-keyed. Zero behavior change beyond one redundant guard dropped |
 | 9 | Destroy-referenced-permanent | 4 | LOW | **DONE** — premise held for all four handlers; `ENCHANTED` became `PermanentReference.ATTACHED` as the note directed and the enum gained `SOURCE`. One correction: the Ajani half needed no player target filter but **did** need `DestroyAllPermanentsEffect.targetSpec()`, which the two sibling scoped effects already had and it was silently missing |
-| 10 | Search-target-library + sacrifice costs | 4 | LOW | TODO |
+| 10 | Search-target-library + sacrifice costs | 5 | LOW | **DONE** — 10a's premise held in shape but not in detail (the audit's "only `.destination()` varies" is wrong on four other axes) and the audit undercounted: a fourth sibling, the play-permission form, folds in as two destinations, so 5 records + 5 handlers went. The reconcile picked `checkSearchRestriction` — `isSearchPrevented` shuffled the *searcher's* library, not the searched one. The 10b stretch was not taken (reason in the step body) |
 | 11 | Tap / untap scopes and costs | 3 | LOW | TODO |
 | 12 | `Grant*` low-risk batch | 6 | LOW | TODO |
 | 13 | Cost-modification batch | 4 | LOW | TODO |
@@ -699,35 +699,124 @@ Ran green: the 13 card tests plus `RainOfDaggersTest`, `OverwhelmingForcesTest`,
 
 ---
 
-### Step 10 — Search-target-library + sacrifice costs
+### Step 10 — Search-target-library + sacrifice costs — **DONE**
 
-**10a Target**: `SearchTargetLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination, boolean canFailToFind)`
-— the target-player mirror of the 165-use `SearchLibraryEffect`, which already carries
-`count/filter/destination`.
-**Absorbs**: `SearchTargetLibraryForCardsToExileEffect` (3),
-`SearchTargetLibraryForCardsToGraveyardEffect` (1),
-`SearchTargetLibraryForCardToBattlefieldUnderControlEffect` (1).
-All three run the same pipeline ending in
-`librarySearchSupport.sendLibrarySearchToPlayer(...)` with a `LibrarySearchParams.builder(...)`;
-the **only** varying builder argument is `.destination(...)`
-(`EXILE` / `GRAVEYARD` / `BATTLEFIELD_UNDER_SEARCHER`).
-*Reconcile*: the exile/graveyard handlers use `isSearchPrevented(...)`, the battlefield one uses
-`checkSearchRestriction(...)` and shuffles on refusal. Pick the rules-correct one and apply it
-uniformly — the target still shuffles.
+**Shipped**
+```java
+public record SearchTargetLibraryEffect(DynamicAmount count,
+                                        CardPredicate filter,
+                                        LibrarySearchDestination destination,
+                                        boolean canFailToFind) implements CardEffect
+// sugar: (int count, CardPredicate, LibrarySearchDestination, boolean)
+// compact ctor rejects any destination outside
+//   { EXILE, GRAVEYARD, BATTLEFIELD_UNDER_SEARCHER, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP }
+```
+plus `SacrificeArtifactCost` → `SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false)`.
 
-**10b**: `SacrificeArtifactCost` (15 cards) → `SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false)`.
-Also deletes `service/ability/cost/ArtifactSacrificeCostHandler.java`.
-`SacrificeArtifactCost` already declares `consumedPermanentFilter() -> new PermanentIsArtifactPredicate()`
-— the exact value `SacrificePermanentCost.filter()` holds. `ArtifactSacrificeCostHandler` is
-`MultiplePermanentSacrificeCostHandler` with `count=1`.
-*Touches*: `AbilityActivationService:2225`, `AdditionalSpellCostService:77,207,289`, and the
-`ExtractedCosts` record field.
-**Stretch**: fold `SacrificeMultiplePermanentsCost` (18) into `SacrificePermanentCost` by adding
-`count` — `MultiplePermanentSacrificeCostHandler` already serves both through two constructors
-differing only in `count`.
+**10a** — four records and four handlers deleted, one record + one handler added. Cards (7):
+Jester's Cap, Earwig Squad, Nightmare Incursion; Life's Finale; Bribery; Praetor's Grasp,
+Grinning Totem.
+
+**What held** — every branch really does reduce to one `sendLibrarySearchToPlayer` with a
+`LibrarySearchParams.builder`, and the per-card pick loop really is driven entirely by `destination`
+in `LibraryChoiceHandlerService`. `targetSpec()` was already `TargetSpec.benign(player())` on all
+four and is unchanged. No AI, view or serialization file named any of the four records.
+
+**What the audit missed**
+- **`.destination(...)` was not the only varying argument.** The candidate list varied (whole deck
+  for the unfiltered exile form, pre-filtered for the other two), the *filter mechanism* varied
+  (`Set<CardType>` + `.filterCardTypes(...)` for graveyard vs `CardPredicate` + the
+  `PredicateEvaluationService` for battlefield), `remainingCount` varied (clamped to the deck size /
+  raw / never set), and so did `canFailToFind`, the prompt wording and `.sourceCards(...)`. They all
+  reduce to the four components, but the merge is not the one-line switch the audit described.
+- **The two filter mechanisms are already unified downstream.** `LibraryChoiceHandlerService:878`
+  gives `filterPredicate` priority over `filterCardTypes`, and a `CardTypePredicate` resolves to
+  `Card.hasType` — character-identical to `LibrarySearchSupport.matchesCardTypes`. Life's Finale
+  therefore carries `new CardTypePredicate(CardType.CREATURE)`, and the `filterCardTypes` field stays
+  for its remaining user, `SearchLibraryForCardTypeToExileAndImprintEffectHandler`.
+- **There was a fourth sibling.** `SearchTargetLibraryForCardToExileWithPlayPermissionEffect`
+  (Praetor's Grasp, Grinning Totem) is the same shape whose only component,
+  `boolean expiresAtNextUpkeep`, its own handler already spelled as a *destination* pair
+  (`EXILE_PLAYABLE` / `EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP`). Absorbed: **4 records + 4 handlers, not
+  3.** Its `.sourceCards(List.of(entry.getCard()))` is derived from the destination — Step 3's
+  derived-axis pattern — because only the until-next-upkeep branch reads it back
+  (`LibraryChoiceHandlerService:749`).
+- **`canFailToFind` is not derivable from `filter != null`.** Nightmare Incursion is an unfiltered
+  "up to X" search, so it must be able to fail to find with a null filter. It stays an explicit
+  component, which is also what makes it document the rule split: `false` = a bare quantity, which
+  must be found if present (CR 701.23d — Jester's Cap, Earwig Squad, Praetor's Grasp, Grinning
+  Totem); `true` = a stated quality or an "up to" wording (CR 701.23b).
+
+**The reconcile the step asked for — `isSearchPrevented` was the wrong one.** It shuffles the
+**searching player's own** library, which is right for a self-search and wrong for every card in this
+family: the instruction is "then *that player* shuffles", i.e. the library that was to be searched.
+Unified on the Bribery handler's shape (`checkSearchRestriction` → shuffle the target → log
+`"<target>'s library is shuffled."`). **Deliberate behaviour change** for the six cards that used
+`isSearchPrevented`; covered by `JestersCapTest.preventedSearchShufflesOnlyTheTargetsLibrary`, which
+asserts both halves — the target's shuffle log fires and the searcher's own library is untouched.
+
+**Other deliberate deltas** (all prompt/log only)
+- `remainingCount` is now `min(count, candidates.size())` on every destination; only the exile form
+  clamped before. For Jester's Cap this is byte-identical; for Life's Finale with fewer than three
+  creatures it changes which tail-log branch fires (`"puts cards into their graveyard for X"` instead
+  of `"finds no more matching cards"`). Both shuffle and both run the same follow-ups.
+- The two "found nothing" strings unified on the graveyard wording
+  (`"… but finds no matching cards. Library is shuffled."`), which `LifesFinaleTest` already
+  asserts; Bribery's differently-worded line is the one that changes.
+- Prompts are now built from `CardPredicateUtils.describeFilter`, so the exile and graveyard prompts
+  stay byte-identical ("a card" / "a creature card") and Bribery's gains "creature".
+- The `count <= 0` early return and the universal clamp mean an empty-after-filter library and a zero
+  count are now two distinct log lines on every destination.
+
+**10b** — one record and one handler deleted (`SacrificeArtifactCost`,
+`ArtifactSacrificeCostHandler`) across 15 cards: Atog, Barrage Ogre, Etherium Astrolabe, Ferrovore,
+Gnathosaur, Kuldotha Rebirth, Orcish Vandal, Oxidda Daredevil, Phyrexia's Core, Piston Sledge,
+Rusted Slasher, Sage of Lat-Nam, Shrapnel Blast, Throne of Geth, Trading Post.
+`AdditionalSpellCostService.ExtractedCosts` loses its `sacrificeArtifact` field (and with it the
+`extractAndRemove` / `any()` / `satisfiable` / `validateAll` arms), `SpellCastingService` loses its
+payment arm and its graveyard-cast reject arm, and `AbilityActivationService` loses one
+`toPermanentChoiceCostHandler` line. The AI mock-suite stub `AiTestPlayabilityStub` gains a
+`SacrificePermanentCost` arm restricted to the artifact predicate, replacing its
+`SacrificeArtifactCost` one.
+
+**Deliberate deltas**
+- The satisfiability path was already identical (`isArtifact(gameData, p)` on both sides), but the
+  **payment and validation paths widen**: `gameQueryService.isArtifact(permanent)` (natural + granted
+  card types) becomes `matchesPermanentPredicate` → `isArtifact(gameData, permanent)`, the
+  layer-aware form that also sees static card-type grants. Rules-correct, and it removes a
+  disagreement between satisfiability and payment.
+- Error and prompt strings become the shared ones: `"No permanent to sacrifice matching: an
+  artifact"` (was `"No artifact to sacrifice"`) and `"Choose a permanent to sacrifice (an
+  artifact)."` (was `"Choose an artifact to sacrifice."`). Eight card tests asserted the old error
+  and were updated.
+- `excludeSource=false` is load-bearing — the merged handler excludes the source when it is `true`,
+  and four of the 15 cards are artifacts whose own ability may sacrifice them. Already pinned by
+  `ThroneOfGethTest."Can sacrifice itself as the only artifact"` and
+  `EtheriumAstrolabeTest."Can sacrifice itself to pay the ability and still draws"`.
+
+**The stretch was NOT taken.** Folding `SacrificeMultiplePermanentsCost` into `SacrificePermanentCost`
+is not the one-field addition the audit describes: the two are separate `ExtractedCosts` fields fed by
+separate `AdditionalSpellCostService` accumulation and validation paths, are paid through different
+`SpellCastingService` methods against different `CostSelection` fields (`sacrificePermanentId` vs
+`sacrificePermanentIds`), and branch to genuinely different flows in `ForcedCostOrElseEffectHandler`
+(`:124` vs `:134`) and `MayPenaltyChoiceHandlerService` (`:1340` vs `:1369`). `SacrificePermanentCost`
+would also grow to seven components. It needs its own step, not a stretch on this one.
+
 **Do NOT merge** `SacrificeCreatureCost` (86): it overrides `sacrificesChosenCreature() -> true`, is
-special-cased in `SpellCastingService:2207` and `AbilityActivationService:2667`, and carries a
+special-cased in `SpellCastingService` and `AbilityActivationService`, and carries a
 `ManaColor trackSacrificedColorSymbols` field.
+
+**Tests** — no test referenced any of the five deleted classes by name except the deleted
+`ArtifactSacrificeCostHandlerTest` and the AI mock-suite fixtures. Added the cross-contamination
+assertions a destination-switch merge needs, one per axis where a misread is observable:
+`JestersCapTest.preventedSearchShufflesOnlyTheTargetsLibrary` (the rules fix, both halves),
+`JestersCapTest.cannotDeclineToFind` (the `canFailToFind=false` arm, which Life's Finale's and
+Bribery's existing decline tests pin the other way),
+`LifesFinaleTest.foundCreatureLandsOnlyInTheTargetsGraveyard` (GRAVEYARD must reach neither exile nor
+the caster's graveyard), and exile/graveyard negatives in
+`BriberyTest.putsChosenCreatureUnderControl` (BATTLEFIELD_UNDER_SEARCHER must not fall through). The
+`EXILE_PLAYABLE` pair is already pinned by `PraetorsGraspTest` / `GrinningTotemTest`, and the
+face-down-vs-face-up split by `JestersCapTest.exilesThreeCards`.
 
 ---
 

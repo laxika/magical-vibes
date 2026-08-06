@@ -95,7 +95,7 @@ class GnathosaurTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("No artifact to sacrifice");
+                .hasMessageContaining("No permanent to sacrifice matching: an artifact");
     }
 
     @Test

@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryForCardsToExileEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryEffect;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -17,7 +18,7 @@ public class JestersCap extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new SacrificeSelfCost(), new SearchTargetLibraryForCardsToExileEffect(3)),
+                List.of(new SacrificeSelfCost(), new SearchTargetLibraryEffect(3, null, LibrarySearchDestination.EXILE, false)),
                 "{2}, {T}, Sacrifice Jester's Cap: Search target player's library for three cards and exile them. Then that player shuffles."
         ));
     }

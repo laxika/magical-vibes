@@ -269,7 +269,7 @@ class MediumAiDecisionEngineTest {
     // ===== Sacrifice cost checks =====
 
     @Test
-    @DisplayName("Medium AI skips spell with SacrificeArtifactCost when no artifact on battlefield")
+    @DisplayName("Medium AI skips spell with a sacrifice-an-artifact cost when no artifact on battlefield")
     void skipsSpellWithSacrificeArtifactCostWhenNoArtifact() {
         giveAiPriority();
 
