@@ -121,7 +121,7 @@ public class AdditionalSpellCostService {
             DiscardCardTypeCost discardCost,
             DiscardCardOrPayManaCost discardCardOrPayManaCost,
             boolean discardHand,
-            boolean discardXCards,
+            DiscardXCardsCost discardXCardsCost,
             EscalateDiscardCost escalateDiscardCost,
             EscalateManaCost escalateManaCost,
             RepeatableAdditionalManaCost repeatableManaCost
@@ -136,7 +136,7 @@ public class AdditionalSpellCostService {
                     || returnCreatureToHand || putCounterCost != null
                     || payXLife || payLifeCost != null
                     || exileGraveyardCost != null || exileXCardsCost != null || exileNCardsCost != null
-                    || discardCost != null || discardCardOrPayManaCost != null || discardHand || discardXCards
+                    || discardCost != null || discardCardOrPayManaCost != null || discardHand || discardXCardsCost != null
                     || escalateDiscardCost != null || escalateManaCost != null
                     || repeatableManaCost != null;
         }
@@ -217,7 +217,7 @@ public class AdditionalSpellCostService {
         DiscardCardTypeCost discardCost = removeFirst(effects, DiscardCardTypeCost.class);
         DiscardCardOrPayManaCost discardOrPay = removeFirst(effects, DiscardCardOrPayManaCost.class);
         boolean discardHand = effects.removeIf(DiscardHandCost.class::isInstance);
-        boolean discardXCards = effects.removeIf(DiscardXCardsCost.class::isInstance);
+        DiscardXCardsCost discardXCards = removeFirst(effects, DiscardXCardsCost.class);
         EscalateDiscardCost escalateDiscardCost = removeFirst(effects, EscalateDiscardCost.class);
         EscalateManaCost escalateManaCost = removeFirst(effects, EscalateManaCost.class);
         RepeatableAdditionalManaCost repeatableManaCost = removeFirst(effects, RepeatableAdditionalManaCost.class);
@@ -874,9 +874,19 @@ public class AdditionalSpellCostService {
      * Validates the "discard X cards" additional cast cost (Abandon Hope) against the announced X,
      * without mutating anything. Returns the post-spell-removal hand indices that would be
      * discarded. Kept out of {@link #validateAll} because only the cast path knows the announced X.
+     * When the cost carries a predicate ("discard X land cards" — Scorched Earth), every chosen
+     * card must match it.
      */
     public List<Integer> validateDiscardXCardsCost(GameData gameData, Player player, Card card, int announcedX,
                                                    List<Integer> discardHandCardIndices, int spellCardIndex) {
+        return validateDiscardXCardsCost(gameData, player, card, peek(card).discardXCardsCost(), announcedX,
+                discardHandCardIndices, spellCardIndex);
+    }
+
+    /** As {@link #validateDiscardXCardsCost}, for callers that already extracted the cost. */
+    public List<Integer> validateDiscardXCardsCost(GameData gameData, Player player, Card card, DiscardXCardsCost cost,
+                                                   int announcedX, List<Integer> discardHandCardIndices,
+                                                   int spellCardIndex) {
         if (announcedX < 0) {
             throw new IllegalStateException("X cannot be negative for " + card.getName());
         }
@@ -904,6 +914,11 @@ public class AdditionalSpellCostService {
                     ? discardHandCardIndex - 1 : discardHandCardIndex;
             if (effectiveIndex < 0 || effectiveIndex >= hand.size()) {
                 throw new IllegalStateException("Must discard cards to cast " + card.getName());
+            }
+            Card toDiscard = hand.get(effectiveIndex);
+            if (cost != null && cost.predicate() != null
+                    && !predicateEvaluationService.matchesCardPredicate(toDiscard, cost.predicate(), toDiscard.getId())) {
+                throw new IllegalStateException("Discarded cards must be " + cost.label());
             }
             effectiveIndices.add(effectiveIndex);
         }

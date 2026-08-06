@@ -15,10 +15,21 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * controller (CR 109.5). The {@link com.github.laxika.magicalvibes.model.amount.CountScope#CONTROLLER}
  * scope on the amounts resolves to that controller, since the static handler evaluates amounts
  * with the source (the Aura/Equipment) as the amount source.
+ *
+ * <p>Set {@code amountsFromAttachedCreature} when the wording measures the <em>attached creature</em>
+ * instead: the amounts are then evaluated with that creature as the amount source and its controller
+ * as the amount controller, so {@link com.github.laxika.magicalvibes.model.amount.IfSourceAttacking}
+ * reads its combat state ("as long as it's attacking", Tahngarth's Rage) and {@code CONTROLLER}
+ * reads "its controller".
  */
 public record AttachedBoostEffect(
         DynamicAmount powerBoost,
         DynamicAmount toughnessBoost,
-        GrantScope scope
+        GrantScope scope,
+        boolean amountsFromAttachedCreature
 ) implements CardEffect {
+
+    public AttachedBoostEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost, GrantScope scope) {
+        this(powerBoost, toughnessBoost, scope, false);
+    }
 }

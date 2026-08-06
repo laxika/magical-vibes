@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PlayerNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
+import com.github.laxika.magicalvibes.model.SourceNextCombatDamageToOpponentRedirectShield;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -773,6 +774,46 @@ public class DamagePreventionService {
 
         gameData.creatureDamageRedirectShields.addAll(toReAdd);
         return remaining;
+    }
+
+    /**
+     * Soltari Guerrillas: the next time the given source would deal combat damage to an opponent
+     * this turn, that damage is dealt to the shield's destination creature instead. Keyed on the
+     * damage <em>source</em> rather than on the damaged object, one-shot, and matched only for
+     * combat damage dealt to a player. This is a redirection (replacement) effect, so it applies
+     * even when damage can't be prevented. The redirect only happens while the destination is still
+     * a creature on the battlefield; otherwise the damage is dealt normally and the shield is left
+     * in place. Redirected damage is queued in {@link GameData#pendingSourceRedirectDamage} for the
+     * caller's {@code processSourceRedirectDamage}.
+     *
+     * @param damagedPlayerId  the opponent that would have taken the combat damage
+     * @param sourcePermanentId the attacking permanent dealing the damage
+     * @param damage           the raw damage amount
+     * @return the remaining damage after redirection (0 if redirected)
+     */
+    public int applySourceNextCombatDamageToOpponentRedirect(GameData gameData, UUID damagedPlayerId,
+                                                             UUID sourcePermanentId, int damage) {
+        if (damage <= 0 || sourcePermanentId == null || damagedPlayerId == null
+                || gameData.sourceNextCombatDamageToOpponentRedirectShields.isEmpty()) {
+            return damage;
+        }
+
+        Iterator<SourceNextCombatDamageToOpponentRedirectShield> it =
+                gameData.sourceNextCombatDamageToOpponentRedirectShields.iterator();
+        while (it.hasNext()) {
+            SourceNextCombatDamageToOpponentRedirectShield shield = it.next();
+            if (!shield.sourcePermanentId().equals(sourcePermanentId)) continue;
+
+            UUID destinationId = shield.destinationPermanentId();
+            Permanent destination = gameQueryService.findPermanentById(gameData, destinationId);
+            if (destination == null || !gameQueryService.isCreature(gameData, destination)) continue;
+
+            it.remove();
+            gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                    damagedPlayerId, sourcePermanentId, damage, destinationId));
+            return 0;
+        }
+        return damage;
     }
 
     /**

@@ -1283,6 +1283,7 @@ public class TriggerCollectionService {
             // sacrificed when a spell targets the Aura rather than the enchanted creature).
             if (!targetPermanent.isAttached()) {
                 collectBecomesTargetTriggers(gameData, targetPermanent, controllerId, targetPermanent, spellEntry);
+                collectBecomesTargetOfAuraSpellTriggers(gameData, targetPermanent, controllerId, spellEntry);
                 collectBecomesTargetOfOpponentSpellTriggers(gameData, targetPermanent, controllerId, spellEntry);
                 collectBecomesTargetOfSpellOrAbilityTriggers(gameData, targetPermanent, controllerId, spellEntry);
                 collectBecomesTargetOfOpponentSpellOrAbilityNonCounterTriggers(
@@ -1497,6 +1498,33 @@ public class TriggerCollectionService {
 
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
         log.info("Game {} - {} becomes-target-of-spell-or-ability trigger queued", gameData.id, source.getCard().getName());
+    }
+
+    /**
+     * "Whenever this creature becomes the target of an Aura spell, &lt;effect&gt;." Narrower than
+     * {@link EffectSlot#ON_BECOMES_TARGET_OF_SPELL}: only Aura spells count, and there is no controller
+     * restriction, so an opponent's Aura triggers it just as the controller's own does. Used by
+     * Fugitive Druid.
+     */
+    private void collectBecomesTargetOfAuraSpellTriggers(GameData gameData, Permanent source, UUID controllerId, StackEntry spellEntry) {
+        if (spellEntry.getCard() == null || !spellEntry.getCard().isAura()) return;
+
+        List<CardEffect> effects = source.getCard().getEffects(EffectSlot.ON_BECOMES_TARGET_OF_AURA_SPELL);
+        if (effects.isEmpty()) return;
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                source.getCard(),
+                controllerId,
+                source.getCard().getName() + "'s triggered ability",
+                new ArrayList<>(effects),
+                null,
+                source.getId()
+        );
+        gameData.stack.add(entry);
+
+        gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
+        log.info("Game {} - {} becomes-target-of-Aura-spell trigger queued", gameData.id, source.getCard().getName());
     }
 
     private void collectBecomesTargetOfOpponentSpellTriggers(GameData gameData, Permanent source, UUID controllerId, StackEntry spellEntry) {
@@ -3917,16 +3945,20 @@ public class TriggerCollectionService {
     }
 
     /**
-     * "Whenever you play a land" (ON_CONTROLLER_PLAYS_LAND, e.g. Search the City, Juju Bubble).
-     * Called from the land-play sites only, so a land put onto the battlefield by an effect does
-     * not trigger it. Dispatches through the collector registry so name-match gates (Search the
-     * City) and bare effects (Juju Bubble) both resolve correctly.
+     * "Whenever you play a land" (ON_CONTROLLER_PLAYS_LAND, e.g. Search the City, Juju Bubble) and
+     * its opponent-side mirror ON_OPPONENT_PLAYS_LAND (Dirtcowl Wurm). Called from the land-play
+     * sites only, so a land put onto the battlefield by an effect does not trigger either.
+     * Dispatches through the collector registry so name-match gates (Search the City) and bare
+     * effects (Juju Bubble) both resolve correctly.
      */
     public void checkControllerPlaysLandTriggers(GameData gameData, UUID playingPlayerId, Card landCard) {
         var ctx = new TriggerContext.LandPlayed(playingPlayerId, landCard);
         gameData.forEachPermanent((playerId, perm) -> {
-            if (!playerId.equals(playingPlayerId)) return;
-            dispatchSlot(gameData, perm, playerId, EffectSlot.ON_CONTROLLER_PLAYS_LAND, ctx);
+            if (playerId.equals(playingPlayerId)) {
+                dispatchSlot(gameData, perm, playerId, EffectSlot.ON_CONTROLLER_PLAYS_LAND, ctx);
+            } else {
+                dispatchSlot(gameData, perm, playerId, EffectSlot.ON_OPPONENT_PLAYS_LAND, ctx);
+            }
         });
     }
 

@@ -56,6 +56,16 @@ public class GraveyardTargetOperationState {
      */
     public boolean resolutionTimeForgottenLoreResume;
     /**
+     * Resolution-time "target opponent chooses one of the top two cards of your graveyard"
+     * (Phyrexian Grimoire). When set, {@code GraveyardChoiceHandlerService.handleGraveyardCardChosen}
+     * only records the chosen card on {@link #phyrexianGrimoireChosenCardId} and resumes the paused
+     * resolution — the card is not moved. Set by
+     * {@code OpponentChoosesOneOfTopTwoGraveyardCardsEffectHandler}.
+     */
+    public boolean resolutionTimePhyrexianGrimoireResume;
+    /** Card the opponent just picked for the above, consumed on the next re-entry. */
+    public UUID phyrexianGrimoireChosenCardId;
+    /**
      * As-enters "exile any number of creature cards from your graveyard" (CR 614.1c, Sutured
      * Ghoul). When set, {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen} exiles the
      * chosen cards tracked with the entering permanent and then resumes the entry by running its

@@ -120,6 +120,24 @@ class PutCardsFromHandOnLibraryAiStrategyTest {
         }
 
         @Test
+        @DisplayName("Scroll Rack's any-number swap picks only the single most expensive card")
+        void swapPicksOnlyOneCard() throws Exception {
+            Card cheap = spell("Cheap", "{1}");
+            Card mid = spell("Mid", "{2}{U}");
+            Card expensive = spell("Expensive", "{4}{U}{U}");
+            List<Card> hand = List.of(cheap, expensive, mid);
+            var interaction = PendingInteraction.PutCardsFromHandOnLibraryCardChoice.swapWithLibraryTop(
+                    aiPlayerId, hand.stream().map(Card::getId).toList(), hand);
+
+            strategy.answer(interaction, context());
+
+            ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
+            verify(gameActions).answerInteraction(captor.capture());
+            assertThat(((InteractionAnswer.CardsChosen) captor.getValue()).cardIds())
+                    .containsExactly(expensive.getId());
+        }
+
+        @Test
         @DisplayName("Answers an empty pick instead of hanging when nothing is selectable")
         void answersEmptyPickWhenNothingSelectable() throws Exception {
             strategy.answer(choice(aiPlayerId, List.of(), 2), context());

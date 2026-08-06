@@ -564,6 +564,9 @@ public class GameData {
     public final List<TurnDamageRedirectToCreatureShield> turnDamageRedirectToCreatureShields = Collections.synchronizedList(new ArrayList<>());
     /** Martyrdom: redirect the next N damage this turn dealt to a protected player onto a fixed permanent (any source). */
     public final List<PlayerNextDamageRedirectShield> playerNextDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
+    /** Soltari Guerrillas: redirect the next combat damage a specific source would deal to an opponent onto a fixed creature. */
+    public final List<SourceNextCombatDamageToOpponentRedirectShield> sourceNextCombatDamageToOpponentRedirectShields =
+            Collections.synchronizedList(new ArrayList<>());
     /** Queue for "each player returns up to N cards from graveyard to battlefield" choices. */
     public final List<PendingGraveyardReturnChoice> pendingGraveyardReturnQueue = Collections.synchronizedList(new ArrayList<>());
     /** APNAP-ordered queue of players still to choose for "each player may draw up to N" effects (Temporary Truce). Head player is the one currently prompted. */
@@ -2341,6 +2344,7 @@ public class GameData {
         copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);
         copy.turnDamageRedirectToCreatureShields.addAll(this.turnDamageRedirectToCreatureShields);
         copy.playerNextDamageRedirectShields.addAll(this.playerNextDamageRedirectShields);
+        copy.sourceNextCombatDamageToOpponentRedirectShields.addAll(this.sourceNextCombatDamageToOpponentRedirectShields);
         copy.targetSourceDamagePreventionShields.addAll(this.targetSourceDamagePreventionShields);
         copy.damagePreventionLifeGainShields.addAll(this.damagePreventionLifeGainShields);
         copy.playerSourceNextDamageShields.addAll(this.playerSourceNextDamageShields);
@@ -2521,6 +2525,10 @@ public class GameData {
         copy.graveyardTargetOperation.resolutionTimeExileResume = this.graveyardTargetOperation.resolutionTimeExileResume;
         copy.graveyardTargetOperation.resolutionTimeForgottenLoreResume =
                 this.graveyardTargetOperation.resolutionTimeForgottenLoreResume;
+        copy.graveyardTargetOperation.resolutionTimePhyrexianGrimoireResume =
+                this.graveyardTargetOperation.resolutionTimePhyrexianGrimoireResume;
+        copy.graveyardTargetOperation.phyrexianGrimoireChosenCardId =
+                this.graveyardTargetOperation.phyrexianGrimoireChosenCardId;
 
         // --- CloneOperationState ---
         copy.cloneOperation.card = this.cloneOperation.card;

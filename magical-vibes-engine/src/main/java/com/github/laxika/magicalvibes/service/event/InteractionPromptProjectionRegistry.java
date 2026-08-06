@@ -522,10 +522,15 @@ public class InteractionPromptProjectionRegistry {
             case BOTTOM -> "the bottom of";
             case PLAYER_CHOICE -> "top or bottom of";
         };
-        String prompt = interaction.shuffleIn()
-                ? "Choose " + interaction.maxCount() + " card(s) to shuffle into your library."
-                : "Choose " + interaction.maxCount() + " card(s) to put on " + destination
-                        + " your library.";
+        String prompt;
+        if (interaction.shuffleIn()) {
+            prompt = "Choose " + interaction.maxCount() + " card(s) to shuffle into your library.";
+        } else if (interaction.swapWithLibraryTop()) {
+            prompt = "Choose any number of cards to exile face down and swap for the top of your library.";
+        } else {
+            prompt = "Choose " + interaction.maxCount() + " card(s) to put on " + destination
+                    + " your library.";
+        }
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
                 cardViews(interaction.cards()),

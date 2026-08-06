@@ -973,7 +973,7 @@ public class PredicateEvaluationService {
             case PermanentIsAttackingSourceControllerPredicate ignored -> {
                 // Recursion-safe: attack state and attack target are stored on the permanent, so
                 // "creatures attacking you" only needs the source controller from the context
-                // (Boarded Window).
+                // (Boarded Window, Watchdog).
                 UUID sourceControllerId = context == null ? null : context.sourceControllerId();
                 yield permanent.isAttacking() && sourceControllerId != null
                         && sourceControllerId.equals(permanent.getAttackTarget());

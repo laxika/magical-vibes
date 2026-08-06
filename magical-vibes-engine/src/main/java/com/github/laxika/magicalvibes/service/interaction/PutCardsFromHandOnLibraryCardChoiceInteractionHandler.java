@@ -110,6 +110,11 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
             return;
         }
 
+        if (interaction.swapWithLibraryTop()) {
+            swapWithLibraryTop(gameData, player, validated);
+            return;
+        }
+
         if (interaction.placement() == HandToLibraryPlacement.PLAYER_CHOICE) {
             interactionHandlerRegistry.begin(gameData,
                     new PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice(player.getId(), validated));
@@ -117,6 +122,48 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
         }
 
         putOnLibrary(gameData, player, validated, interaction.placement() == HandToLibraryPlacement.TOP);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Scroll Rack: the chosen hand cards are set aside, that many cards are moved from the top of
+     * the library into the hand (a move, not a draw — no draw triggers or replacements), and the
+     * set-aside cards go back on top through the "in any order" reorder prompt. A single set-aside
+     * card has only one legal order, so it skips straight back on top.
+     */
+    private void swapWithLibraryTop(GameData gameData, Player player, List<UUID> chosenCardIds) {
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        List<Card> deck = gameData.playerDecks.get(playerId);
+
+        List<Card> setAside = new ArrayList<>();
+        for (UUID id : chosenCardIds) {
+            Card found = hand.stream().filter(c -> c.getId().equals(id)).findFirst().orElse(null);
+            if (found != null) {
+                hand.remove(found);
+                setAside.add(found);
+            }
+        }
+
+        int moved = Math.min(setAside.size(), deck.size());
+        for (int i = 0; i < moved; i++) {
+            hand.add(deck.remove(0));
+        }
+
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " sets aside " + setAside.size()
+                + " card(s) from their hand and puts " + moved + " card(s) from the top of their library"
+                + " into their hand."));
+        log.info("Game {} - {} swapped {} hand card(s) for {} library card(s)",
+                gameData.id, player.getUsername(), setAside.size(), moved);
+
+        if (setAside.size() > 1) {
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(playerId,
+                    List.copyOf(setAside), false, playerId,
+                    "Put the set-aside cards on top of your library in any order."));
+            return;
+        }
+
+        deck.add(0, setAside.get(0));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

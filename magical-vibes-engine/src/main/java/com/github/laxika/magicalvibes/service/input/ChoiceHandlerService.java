@@ -72,6 +72,7 @@ public class ChoiceHandlerService {
     private final WarpWorldService warpWorldService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
+    private final com.github.laxika.magicalvibes.service.CardRevealService cardRevealService;
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
     private final TurnProgressionService turnProgressionService;
@@ -281,8 +282,16 @@ public class ChoiceHandlerService {
             handleNameCardMillDrawChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.ChooseCreatureNameRevealTopCardsChoice ctx) {
+            handleChooseCreatureNameRevealTopCardsChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.ChooseNameExileTopRevealUntilNamedChoice ctx) {
             handleChooseNameExileTopRevealUntilNamedChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealRandomHandCardDamageChoice ctx) {
+            handleChooseNameRevealRandomHandCardDamageChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice ctx) {
@@ -1958,6 +1967,53 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    /**
+     * Cursed Scroll: the controller has named a card and now reveals one card at random from their
+     * own hand. On a match the source deals the stored damage to the any-target picked when the
+     * ability was activated. An empty hand reveals nothing and deals no damage.
+     */
+    private void handleChooseNameRevealRandomHandCardDamageChoice(
+            GameData gameData, Player player, String cardName,
+            ChoiceContext.ChooseNameRevealRandomHandCardDamageChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " chooses \"" + cardName + "\"."));
+        log.info("Game {} - {} chooses card name \"{}\" (name/reveal random/damage)",
+                gameData.id, player.getUsername(), cardName);
+
+        List<Card> hand = gameData.playerHands.get(ctx.controllerId());
+        if (hand == null || hand.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(player.getUsername() + " has no cards to reveal."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        Card revealed = hand.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(hand.size()));
+        gameLogService.append(gameData,
+                GameLog.textCardText(player.getUsername() + " reveals ", revealed, " at random."));
+        cardRevealService.revealToAllPlayers(gameData, ctx.controllerId(),
+                com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND, List.of(revealed));
+
+        if (!revealed.getName().equals(cardName)) {
+            log.info("Game {} - revealed {} does not match \"{}\", no damage", gameData.id, revealed.getName(), cardName);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        StackEntry damageEntry = new StackEntry(
+                StackEntryType.ACTIVATED_ABILITY,
+                ctx.sourceCard(),
+                ctx.controllerId(),
+                ctx.sourceCard().getName() + "'s ability",
+                List.of(),
+                ctx.targetId(),
+                ctx.sourcePermanentId());
+        damageSupport.resolveAnyTargetDamage(gameData, damageEntry, ctx.targetId(), ctx.damage(), false);
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     private void handleNameCardMillGainLifeChoice(GameData gameData, Player player, String cardName,
                                                   ChoiceContext.NameCardMillGainLifeChoice ctx) {
         gameData.interaction.clearAwaitingInput();
@@ -2041,6 +2097,48 @@ public class ChoiceHandlerService {
                         + cardName + " until " + gameData.playerIdToName.get(controllerId) + "'s next turn."));
         log.info("Game {} - {} chooses card name \"{}\" (opponents can't cast until next turn)",
                 gameData.id, player.getUsername(), cardName);
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleChooseCreatureNameRevealTopCardsChoice(GameData gameData, Player player,
+                                                              String cardName,
+                                                              ChoiceContext.ChooseCreatureNameRevealTopCardsChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        UUID controllerId = ctx.controllerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " chooses \"" + cardName + "\"."));
+
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        if (deck == null || deck.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(controllerName + "'s library is empty."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        List<Card> revealed = new ArrayList<>();
+        int toReveal = Math.min(ctx.count(), deck.size());
+        for (int i = 0; i < toReveal; i++) {
+            revealed.add(deck.removeFirst());
+        }
+
+        String revealedNames = revealed.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
+        gameLogService.append(gameData, GameLog.text(controllerName + " reveals " + revealedNames + "."));
+
+        for (Card card : revealed) {
+            if (card.getName().equals(cardName)) {
+                gameData.addCardToHand(controllerId, card);
+            } else {
+                graveyardService.addCardToGraveyard(gameData, controllerId, card);
+            }
+        }
+
+        log.info("Game {} - {} names \"{}\" with {} — revealed {} card(s)",
+                gameData.id, player.getUsername(), cardName,
+                ctx.sourceCard() != null ? ctx.sourceCard().getName() : "?", revealed.size());
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

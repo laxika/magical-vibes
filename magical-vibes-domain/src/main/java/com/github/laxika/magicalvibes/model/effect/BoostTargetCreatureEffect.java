@@ -15,9 +15,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * "target creature an opponent controls gets -2/-0" passes a "creature an opponent controls"
  * predicate. Trigger pipelines that read {@code targetSpec().predicate()} (such as the
  * cycle/discard controller-trigger target collector) use it to build the legal-target list.
+ *
+ * <p>As a {@link CombatOpponentReferencingEffect}, when this fires from a combat trigger
+ * ("whenever this creature blocks …, that creature gets +1/+1") the boosted creature is the
+ * source's combat opponent, baked in as the trigger's non-targeting target.
  */
 public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
-                                        PermanentPredicate filter) implements CreatureBoostEffect {
+                                        PermanentPredicate filter) implements CreatureBoostEffect, CombatOpponentReferencingEffect {
 
     public BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost) {
         this(powerBoost, toughnessBoost, null);

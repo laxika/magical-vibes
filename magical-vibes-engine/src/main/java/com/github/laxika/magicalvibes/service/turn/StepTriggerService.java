@@ -451,6 +451,17 @@ public class StepTriggerService {
             grantedUpkeepEffectSupport.appendGrantedUpkeepEffects(gameData, perm, upkeepEffects);
             if (upkeepEffects.isEmpty()) continue;
 
+            // Intervening-if on an any-target upkeep ability (Scalding Tongs): the condition is
+            // checked at trigger time (CR 603.4), so a failed check must not even ask for a target.
+            // Scoped to any-target conditional effects; the other intervening-if forms are handled
+            // per-condition further below.
+            upkeepEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                    && ce.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                    && ce.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                    && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                            ConditionContext.forPermanent(perm, activePlayerId)));
+            if (upkeepEffects.isEmpty()) continue;
+
             // If any effect can target both a player and a permanent (i.e. "any target" —
             // creature/planeswalker/player, e.g. Form of the Dragon's "deals 5 damage to any target"),
             // route through the any-target pipeline so the controller may pick a permanent as well as a
@@ -1845,6 +1856,8 @@ public class StepTriggerService {
 
         handlePrecombatMainBattlefieldTriggers(gameData);
 
+        handleEachPrecombatMainTriggers(gameData);
+
         paradigmService.firePrecombatMainTriggers(gameData);
 
         // Chancellor-style delayed mana triggers: fire at the beginning of the revealing player's first main phase
@@ -1952,6 +1965,36 @@ public class StepTriggerService {
             log.info("Game {} - {} precombat main trigger pushed onto stack",
                     gameData.id, perm.getCard().getName());
         }
+    }
+
+    /**
+     * Fires triggered abilities that watch every player's first main phase, regardless of who
+     * controls the source (Eladamri's Vineyard). The ability is controlled by the source's
+     * controller; the active player is carried as the entry's target so effects that act on
+     * "that player" know who the phase belongs to.
+     */
+    private void handleEachPrecombatMainTriggers(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+        gameData.forEachPermanent((playerId, perm) -> {
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.EACH_PRECOMBAT_MAIN_TRIGGERED);
+            if (effects == null || effects.isEmpty()) {
+                return;
+            }
+
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    perm.getCard(),
+                    playerId,
+                    perm.getCard().getName() + "'s ability",
+                    new ArrayList<>(effects),
+                    activePlayerId,
+                    perm.getId()
+            ));
+
+            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+            log.info("Game {} - {} each-precombat-main trigger pushed onto stack",
+                    gameData.id, perm.getCard().getName());
+        });
     }
 
     /**

@@ -324,6 +324,14 @@ public sealed interface ChoiceContext {
             implements ChoiceContext {}
 
     /**
+     * Wood Sage: the controller names a creature card, then reveals the top {@code count} cards of
+     * their library, putting every revealed card with that name into their hand and the rest into
+     * their graveyard.
+     */
+    record ChooseCreatureNameRevealTopCardsChoice(UUID controllerId, Card sourceCard, int count)
+            implements ChoiceContext {}
+
+    /**
      * Comply: the controller names a card; until their next turn, their opponents can't cast spells
      * with that name. Stamped on {@code GameData.opponentsCantCastNamedSpellsUntilControllerNextTurn}.
      */
@@ -337,6 +345,14 @@ public sealed interface ChoiceContext {
      */
     record TargetPlayerNameCardRevealTopChoice(UUID controllerId, UUID targetPlayerId, UUID sourcePermanentId,
                                                int damageOnMiss) implements ChoiceContext {}
+
+    /**
+     * Cursed Scroll: the controller names a card, then reveals a card at random from their own hand.
+     * If the revealed card has that name, {@code sourceCard} deals {@code damage} damage to
+     * {@code targetId} (the any-target chosen when the ability was activated).
+     */
+    record ChooseNameRevealRandomHandCardDamageChoice(UUID controllerId, UUID targetId, UUID sourcePermanentId,
+                                                     Card sourceCard, int damage) implements ChoiceContext {}
 
     /**
      * The controller chooses a permanent type at resolution time (e.g. Creeping Renaissance),

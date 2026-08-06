@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.CardType;
-
-import java.util.List;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
- * The target player reveals their hand, the controller chooses a card in it that isn't of any of
- * {@code excludedTypes}, then that player's graveyard, hand, and library are searched for
+ * The target player reveals their hand, the controller chooses a card in it matching
+ * {@code choosableFilter}, then that player's graveyard, hand, and library are searched for
  * <b>all</b> cards with the same name as the chosen card and those are exiled (no choice —
  * mandatory). Then that player shuffles.
  * <p>
@@ -15,9 +13,9 @@ import java.util.List;
  * copy; here the choice is restricted to cards actually in the revealed hand and no damage is
  * dealt. Nothing happens when the revealed hand holds no legal card.
  * <p>
- * Used by: Shimian Specter (excluding lands).
+ * Used by: Shimian Specter (nonland cards), Lobotomy (cards other than basic lands).
  */
-public record RevealHandChooseCardFromItAndExileAllCopiesEffect(List<CardType> excludedTypes)
+public record RevealHandChooseCardFromItAndExileAllCopiesEffect(CardPredicate choosableFilter)
         implements CombatDamageTriggerContextEffect {
 
     @Override

@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesOfUnchosenParityEnterTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfCreaturesSetPowerToughnessOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -1135,6 +1136,28 @@ public class BattlefieldEntryService {
                 return;
             }
             // No other creatures — devours nothing; ETB triggers proceed with 0 devoured creatures.
+        }
+
+        // "As this creature enters, sacrifice any number of creatures. This creature's power becomes
+        // their total power and its toughness their total toughness" (CR 614.1c, Dracoplasm).
+        boolean needsSacrificeForPowerToughness = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof SacrificeAnyNumberOfCreaturesSetPowerToughnessOnEnterEffect);
+        if (needsSacrificeForPowerToughness) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = bf.get(bf.size() - 1);
+            List<UUID> sacrificeable = bf.stream()
+                    .filter(p -> p != justEntered && gameQueryService.isCreature(gameData, p))
+                    .map(Permanent::getId)
+                    .toList();
+            if (!sacrificeable.isEmpty()) {
+                playerInputService.beginMultiPermanentChoice(gameData, controllerId,
+                        new ArrayList<>(sacrificeable), sacrificeable.size(),
+                        new MultiPermanentChoiceContext.SacrificeCreaturesSetEnteringPowerToughness(
+                                justEntered.getId(), controllerId, card, targetId, wasCastFromHand, etbMode, kicked),
+                        card.getName() + " — sacrifice any number of creatures.");
+                return;
+            }
+            // No other creatures — nothing is sacrificed; the creature enters as a 0/0.
         }
 
         // "As this creature enters, pay any amount of life" (Minion of the Wastes). The payment is a

@@ -19,17 +19,27 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * <p>{@code fromHandOnly} restricts the alternative cost to spells cast from the controller's hand —
  * "you may cast spells from your hand without paying their mana costs" (Omniscience). Sources without
  * this restriction (Rooftop Storm, Jodah, As Foretold) apply regardless of the zone cast from.
+ *
+ * <p>{@code appliesToAllPlayers} offers the alternative cost to every player rather than only the
+ * source's controller — "Any player may cast creature spells with mana value 3 or less without
+ * paying their mana costs" (Aluren).
  */
 public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
                                              CounterType manaValueCapCounter, boolean oncePerTurn,
-                                             boolean fromHandOnly) implements CardEffect {
+                                             boolean fromHandOnly, boolean appliesToAllPlayers) implements CardEffect {
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter) {
-        this(manaCost, filter, null, false, false);
+        this(manaCost, filter, null, false, false, false);
     }
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
                                           CounterType manaValueCapCounter, boolean oncePerTurn) {
-        this(manaCost, filter, manaValueCapCounter, oncePerTurn, false);
+        this(manaCost, filter, manaValueCapCounter, oncePerTurn, false, false);
+    }
+
+    public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
+                                          CounterType manaValueCapCounter, boolean oncePerTurn,
+                                          boolean fromHandOnly) {
+        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, false);
     }
 }

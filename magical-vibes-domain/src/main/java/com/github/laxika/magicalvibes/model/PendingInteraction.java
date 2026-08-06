@@ -1211,12 +1211,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * onto the stack as a reflexive triggered ability from {@code thenEffectSourceCard} afterwards
      * ("Shuffle a card from your hand into your library. If you do, …"). {@code placement} is
      * unused on that path.
+     *
+     * <p>When {@code swapWithLibraryTop} is {@code true} the chosen cards are set aside instead,
+     * that many cards are moved from the top of the library into the hand, and the set-aside cards
+     * then go back on top through a {@link LibraryReorder} "in any order" prompt (Scroll Rack).
+     * {@code placement} is unused on that path too.
      */
     record PutCardsFromHandOnLibraryCardChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                java.util.List<Card> cards, int minCount, int maxCount,
                                                HandToLibraryPlacement placement,
                                                boolean shuffleIn, Card thenEffectSourceCard,
-                                               com.github.laxika.magicalvibes.model.effect.CardEffect thenEffect)
+                                               com.github.laxika.magicalvibes.model.effect.CardEffect thenEffect,
+                                               boolean swapWithLibraryTop)
             implements PendingInteraction {
 
         public PutCardsFromHandOnLibraryCardChoice {
@@ -1229,7 +1235,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                 java.util.List<UUID> validCardIds, java.util.List<Card> cards, int maxCount,
                 HandToLibraryPlacement placement) {
             return new PutCardsFromHandOnLibraryCardChoice(playerId, validCardIds, cards, 0, maxCount, placement,
-                    false, null, null);
+                    false, null, null, false);
         }
 
         /** "Put a card from your hand on top of your library" (mandatory when the hand is nonempty). */
@@ -1237,7 +1243,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                 java.util.List<UUID> validCardIds, java.util.List<Card> cards,
                 HandToLibraryPlacement placement) {
             return new PutCardsFromHandOnLibraryCardChoice(playerId, validCardIds, cards, 1, 1, placement,
-                    false, null, null);
+                    false, null, null, false);
         }
 
         /** "Shuffle {@code count} cards from your hand into your library. If you do, {@code thenEffect}." */
@@ -1246,7 +1252,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                 Card sourceCard, com.github.laxika.magicalvibes.model.effect.CardEffect thenEffect) {
             return new PutCardsFromHandOnLibraryCardChoice(playerId, validCardIds, cards, count,
                     count,
-                    HandToLibraryPlacement.TOP, true, sourceCard, thenEffect);
+                    HandToLibraryPlacement.TOP, true, sourceCard, thenEffect, false);
+        }
+
+        /**
+         * "Exile any number of cards from your hand face down. Put that many cards from the top of
+         * your library into your hand. Then look at the exiled cards and put them on top of your
+         * library in any order." (Scroll Rack)
+         */
+        public static PutCardsFromHandOnLibraryCardChoice swapWithLibraryTop(UUID playerId,
+                java.util.List<UUID> validCardIds, java.util.List<Card> cards) {
+            return new PutCardsFromHandOnLibraryCardChoice(playerId, validCardIds, cards, 0, cards.size(),
+                    HandToLibraryPlacement.TOP, false, null, null, true);
         }
 
         @Override

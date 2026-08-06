@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "POR", collectorNumber = "194")
+@CardRegistration(set = "TMP", collectorNumber = "265")
 public class WintersGrasp extends Card {
 
     public WintersGrasp() {

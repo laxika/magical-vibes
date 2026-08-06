@@ -358,33 +358,38 @@ public class CastingCostService {
     }
 
     /**
-     * A permanent the player controls whose {@link AlternativeCostForSpellsEffect} offers a zero
+     * A permanent whose {@link AlternativeCostForSpellsEffect} offers the player a zero
      * alternative cost currently applicable to {@code card}: the filter matches, any counter-based
      * mana-value cap is satisfied, and a once-each-turn source has not yet been used this turn. An
      * unlimited source (e.g. Rooftop Storm) is preferred over a once-each-turn source (As Foretold)
      * so the limited use is not spent while a free one is available. A hand-only source (Omniscience)
-     * is skipped entirely when the spell is not being cast from hand.
+     * is skipped entirely when the spell is not being cast from hand. The player's emblems are
+     * consulted first; permanents are then searched across every battlefield, but an opponent's
+     * source only counts when it applies to all players (Aluren).
      */
     private FreeCastSource findFreeCastSource(GameData gameData, UUID playerId, Card card, boolean fromHand) {
         FreeCastSource emblemSource = findEmblemFreeCastSource(gameData, playerId, card, fromHand);
         if (emblemSource != null) return emblemSource;
 
-        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null) return null;
         FreeCastSource oncePerTurnFallback = null;
-        for (Permanent perm : bf) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof AlternativeCostForSpellsEffect altCost
-                        && new ManaCost(altCost.manaCost()).getManaValue() == 0
-                        && (fromHand || !altCost.fromHandOnly())
-                        && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)
-                        && manaValueCapSatisfied(perm, card, altCost)
-                        && !(altCost.oncePerTurn() && gameData.freeCastPermanentUsedThisTurn.contains(perm.getId()))) {
-                    if (!altCost.oncePerTurn()) {
-                        return new FreeCastSource(perm, altCost);
-                    }
-                    if (oncePerTurnFallback == null) {
-                        oncePerTurnFallback = new FreeCastSource(perm, altCost);
+        for (UUID ownerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof AlternativeCostForSpellsEffect altCost
+                            && (altCost.appliesToAllPlayers() || ownerId.equals(playerId))
+                            && new ManaCost(altCost.manaCost()).getManaValue() == 0
+                            && (fromHand || !altCost.fromHandOnly())
+                            && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)
+                            && manaValueCapSatisfied(perm, card, altCost)
+                            && !(altCost.oncePerTurn() && gameData.freeCastPermanentUsedThisTurn.contains(perm.getId()))) {
+                        if (!altCost.oncePerTurn()) {
+                            return new FreeCastSource(perm, altCost);
+                        }
+                        if (oncePerTurnFallback == null) {
+                            oncePerTurnFallback = new FreeCastSource(perm, altCost);
+                        }
                     }
                 }
             }

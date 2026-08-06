@@ -60,6 +60,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     ) implements PermanentChoiceContext {}
 
     /**
+     * Echo Chamber: {@code choosingPlayerId} picks one creature they control; a token copy of it is
+     * then created under {@code copyControllerId}'s control from {@code sourceCard}.
+     */
+    record OpponentChoosesCreatureTheyControlToCopy(
+            UUID choosingPlayerId,
+            UUID copyControllerId,
+            Card sourceCard
+    ) implements PermanentChoiceContext {}
+
+    /**
      * Opponent accepted Infernal Denizen's upkeep may and is picking which creature of
      * {@code victimControllerId}'s to gain control of for {@code duration}, keyed to {@code sourcePermanentId}.
      */

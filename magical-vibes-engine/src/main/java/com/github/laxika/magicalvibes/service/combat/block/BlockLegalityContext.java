@@ -157,6 +157,7 @@ public final class BlockLegalityContext {
                         boolean reach,
                         boolean horsemanship,
                         boolean shadow,
+                        boolean blocksShadowAsThoughShadow,
                         boolean artifact,
                         Set<CardColor> colors,
                         List<CanBlockOnlyIfAttackerMatchesPredicateEffect> attackerFilterRestrictions,

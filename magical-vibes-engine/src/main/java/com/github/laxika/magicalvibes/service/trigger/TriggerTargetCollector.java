@@ -119,7 +119,13 @@ public class TriggerTargetCollector {
                 .map(e -> unwrap(e, options))
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
 
-        boolean opponentOnly = isOpponentRestricted(targetFilter);
+        // "Target opponent or planeswalker" (Scalding Tongs) narrows both sides on its own, without
+        // a card-level filter: players are opponents only, permanents are planeswalkers only.
+        boolean playerOrPlaneswalkerOnly = !effects.isEmpty() && effects.stream()
+                .map(e -> unwrap(e, options))
+                .allMatch(e -> e.targetSpec().declares(TargetPredicates.playerOrPlaneswalker()));
+
+        boolean opponentOnly = isOpponentRestricted(targetFilter) || playerOrPlaneswalkerOnly;
 
         List<UUID> validTargets = new ArrayList<>();
 
@@ -163,10 +169,11 @@ public class TriggerTargetCollector {
                     || targetFilter instanceof AnyTargetPredicateTargetFilter;
             boolean creaturesOnly = options.creaturesOnly() && !explicitPermanentFilter;
 
-            // Effects that declare anyTarget() (Flameblast Dragon attack trigger, Form of the
-            // Dragon upkeep) restrict the permanent half to what CR 115.4 admits — never a land or
-            // other permanent kind. The restriction is *evaluated* from the declared target rather
-            // than re-implemented here, so this path cannot drift from the spell path in
+            // Effects that declare a cross-kind target — CR 115.4's anyTarget() (Flameblast Dragon
+            // attack trigger, Form of the Dragon upkeep) or playerOrPlaneswalker() (Scalding Tongs)
+            // — restrict the permanent half to the permanent kinds that target admits, never a land
+            // or other kind. The restriction is *evaluated* from the declared target rather than
+            // re-implemented here, so this path cannot drift from the spell path in
             // ValidTargetService / TargetValidationService, and it is layer-aware (CR 613.1d): a
             // planeswalker a type-replacing effect turned into a land is no longer an any target.
             // An explicit PermanentPredicateTargetFilter fully governs instead (e.g. destroy land).
@@ -174,14 +181,20 @@ public class TriggerTargetCollector {
                     .map(e -> unwrap(e, options))
                     .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                     .toList();
-            boolean anyTargetPermanentsOnly = !explicitPermanentFilter
-                    && !permanentEffects.isEmpty()
-                    && permanentEffects.stream()
-                            .allMatch(e -> e.targetSpec().declares(TargetPredicates.anyTarget()));
-            PermanentPredicate anyTargetRestriction = anyTargetPermanentsOnly
-                    ? TargetPredicates.anyTarget().permanentRestriction().orElseThrow()
+            TargetPredicate declaredPermanentTarget = null;
+            if (!explicitPermanentFilter && !permanentEffects.isEmpty()) {
+                for (TargetPredicate candidate : List.of(TargetPredicates.anyTarget(),
+                        TargetPredicates.playerOrPlaneswalker())) {
+                    if (permanentEffects.stream().allMatch(e -> e.targetSpec().declares(candidate))) {
+                        declaredPermanentTarget = candidate;
+                        break;
+                    }
+                }
+            }
+            PermanentPredicate declaredTargetRestriction = declaredPermanentTarget != null
+                    ? declaredPermanentTarget.permanentRestriction().orElseThrow()
                     : null;
-            FilterContext anyTargetFilterCtx = anyTargetPermanentsOnly
+            FilterContext declaredTargetFilterCtx = declaredTargetRestriction != null
                     ? new FilterContext(gameData, sourceCard.getId(), controllerId, null, null)
                     : null;
 
@@ -191,8 +204,8 @@ public class TriggerTargetCollector {
                 for (Permanent p : battlefield) {
                     if (creaturesOnly && !gameQueryService.isCreature(gameData, p)) continue;
 
-                    if (anyTargetRestriction != null && !predicateEvaluationService.matchesPermanentPredicate(
-                            p, anyTargetRestriction, anyTargetFilterCtx)) {
+                    if (declaredTargetRestriction != null && !predicateEvaluationService.matchesPermanentPredicate(
+                            p, declaredTargetRestriction, declaredTargetFilterCtx)) {
                         continue;
                     }
 

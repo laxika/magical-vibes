@@ -68,6 +68,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateDiscardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
@@ -255,11 +256,11 @@ public class SpellCastingService {
      * is re-checked by {@code AdditionalSpellCostService.validateDiscardXCardsCost}, which the cast
      * path already ran before any cost was consumed.
      */
-    private void payDiscardXCardsCost(GameData gameData, Player player, Card card, int announcedX,
-                                      List<Integer> discardHandCardIndices, int spellCardIndex) {
+    private void payDiscardXCardsCost(GameData gameData, Player player, Card card, DiscardXCardsCost cost,
+                                      int announcedX, List<Integer> discardHandCardIndices, int spellCardIndex) {
         List<Integer> effectiveIndices = new ArrayList<>(
                 additionalSpellCostService.validateDiscardXCardsCost(
-                        gameData, player, card, announcedX, discardHandCardIndices, spellCardIndex));
+                        gameData, player, card, cost, announcedX, discardHandCardIndices, spellCardIndex));
         effectiveIndices.sort(java.util.Collections.reverseOrder());
         UUID playerId = player.getId();
         List<Card> hand = gameData.playerHands.get(playerId);
@@ -1547,9 +1548,9 @@ public class SpellCastingService {
             if (additionalCosts.payXLife()) {
                 additionalSpellCostService.validatePayXLifeCost(gameData, player, card, resolvedXValue);
             }
-            if (additionalCosts.discardXCards()) {
-                additionalSpellCostService.validateDiscardXCardsCost(gameData, player, card, resolvedXValue,
-                        discardHandCardIndices, cardIndex);
+            if (additionalCosts.discardXCardsCost() != null) {
+                additionalSpellCostService.validateDiscardXCardsCost(gameData, player, card,
+                        additionalCosts.discardXCardsCost(), resolvedXValue, discardHandCardIndices, cardIndex);
             }
             validateImposedSacrificeTax(gameData, player, card, imposedSacrificePermanentIds);
             if (kicked && kickerEffect != null && kickerEffect.hasSacrificeCost()) {
@@ -1676,11 +1677,18 @@ public class SpellCastingService {
                 long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
                         .filter(c -> predicateEvaluationService.matchesCardPredicate(c, graveyardToHandEffect.filter(), card.getId()))
                         .count();
-                if (matchingCount > 0) {
+                // "Up to X target cards … where X is [something about target opponent] as you cast
+                // this spell" (Reap): X is locked in here, once the player target is known.
+                int graveyardMaxTargets = graveyardToHandEffect.dynamicMaxTargets() == null
+                        ? graveyardToHandEffect.maxTargets()
+                        : amountEvaluationService.evaluate(gameData, graveyardToHandEffect.dynamicMaxTargets(),
+                                new com.github.laxika.magicalvibes.service.effect.AmountContext(
+                                        playerId, null, targetId, 0, 0));
+                if (matchingCount > 0 && graveyardMaxTargets > 0) {
                     gameData.graveyardTargetOperation.spellCounterTargetId = spellCounterTargetId;
                     graveyardTargetingService.handleUpToNGraveyardSpellTargeting(gameData, playerId, card,
                             entryType, graveyardToHandEffect.filter(),
-                            graveyardToHandEffect.maxTargets(), filteredSpellEffects);
+                            graveyardMaxTargets, filteredSpellEffects);
                     return; // finishSpellCast handled in handleMultipleCardsChosen
                 }
                 // No matching cards — put spell on stack with 0 graveyard targets (the return fizzles),
@@ -2121,8 +2129,8 @@ public class SpellCastingService {
         if (costs.discardHand()) {
             payDiscardHandCost(gameData, player, card);
         }
-        if (costs.discardXCards()) {
-            payDiscardXCardsCost(gameData, player, card, resolvedXValue,
+        if (costs.discardXCardsCost() != null) {
+            payDiscardXCardsCost(gameData, player, card, costs.discardXCardsCost(), resolvedXValue,
                     selection.discardHandCardIndices(), selection.spellCardIndex());
         }
         payEscalateDiscardCost(gameData, player, card, costs.escalateDiscardCost(),
@@ -2809,7 +2817,7 @@ public class SpellCastingService {
                 || additionalCosts.putCounterCost() != null || additionalCosts.exileGraveyardCost() != null
                 || additionalCosts.exileXCardsCost() != null || additionalCosts.discardCost() != null
                 || additionalCosts.discardCardOrPayManaCost() != null || additionalCosts.discardHand()
-                || additionalCosts.discardXCards()
+                || additionalCosts.discardXCardsCost() != null
                 || additionalCosts.escalateDiscardCost() != null
                 || additionalCosts.escalateManaCost() != null;
         if (hasUnsupportedAdditionalCost) {
@@ -2827,7 +2835,7 @@ public class SpellCastingService {
             // the spell's GY index excluded) is not re-checked against a null selection.
             AdditionalSpellCostService.ExtractedCosts sacOnly = new AdditionalSpellCostService.ExtractedCosts(
                     false, false, true, null, null, null, null, null, null, false, null,
-                    false, null, null, null, null, null, null, false, false, null, null, null);
+                    false, null, null, null, null, null, null, false, null, null, null, null);
             AdditionalSpellCostService.CostSelection sacSelection = new AdditionalSpellCostService.CostSelection(
                     sacrificePermanentId, null, null, null, null, 0, -1, null);
             additionalSpellCostService.validateAll(gameData, player, castHalf, sacOnly, sacSelection);

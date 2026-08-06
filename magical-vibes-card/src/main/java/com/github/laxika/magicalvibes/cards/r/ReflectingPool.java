@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "278")
+@CardRegistration(set = "TMP", collectorNumber = "322")
 public class ReflectingPool extends Card {
 
     public ReflectingPool() {

@@ -69,6 +69,7 @@ public sealed interface Condition permits
         DidntActivateLoyaltyAbilityThisTurn,
         DidntAttack,
         DidntGainLifeThisTurn,
+        DuringCombat,
         Enchanted,
         EnchantedByAtLeastAuras,
         EnchantedCreatureDidntAttack,

@@ -542,12 +542,14 @@ public class CastingPermissionService {
         if (gameData.playersWithFlashUntilEndOfTurn.contains(playerId)) return true;
         // Quicken: an unconsumed grant for the next spell of a given type this turn.
         if (gameData.hasNextSpellFlashGrant(playerId, card)) return true;
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
-        for (Permanent perm : battlefield) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof GrantFlashToCardTypeEffect grant) {
-                    if (predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
+        for (UUID ownerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(ownerId);
+            if (battlefield == null) continue;
+            for (Permanent perm : battlefield) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof GrantFlashToCardTypeEffect grant
+                            && (grant.appliesToAllPlayers() || ownerId.equals(playerId))
+                            && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
                         return true;
                     }
                 }

@@ -18,7 +18,9 @@ import org.springframework.stereotype.Component;
  *
  * <p>Amounts are evaluated with the source (the Aura/Equipment) as the amount source and its
  * controller as the amount controller, so {@code CONTROLLER}-scoped counts read the attachment's
- * controller — not the enchanted/equipped creature's controller (CR 109.5). Evaluation runs under
+ * controller — not the enchanted/equipped creature's controller (CR 109.5), unless the effect sets
+ * {@code amountsFromAttachedCreature}, in which case the attached creature and its controller are
+ * used instead. Evaluation runs under
  * {@link AmountContext#forStaticEffect} (static recursion guard), so permanent counts use only
  * intrinsic values and cannot recurse back into this computation.
  */
@@ -40,7 +42,9 @@ public class AttachedBoostEffectHandler implements StaticEffectHandlerBean {
         if (!support.matchesCreatureScope(context, boost.scope(), null)) {
             return;
         }
-        AmountContext ctx = AmountContext.forStaticEffect(context.source(), context.sourceControllerId());
+        AmountContext ctx = boost.amountsFromAttachedCreature()
+                ? AmountContext.forStaticEffect(context.target(), context.gameData().findControllerOf(context.target()))
+                : AmountContext.forStaticEffect(context.source(), context.sourceControllerId());
         accumulator.addPower(amountEvaluationService.evaluate(context.gameData(), boost.powerBoost(), ctx));
         accumulator.addToughness(amountEvaluationService.evaluate(context.gameData(), boost.toughnessBoost(), ctx));
     }

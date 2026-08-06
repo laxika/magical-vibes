@@ -280,7 +280,10 @@ public class TargetLegalityService {
                 // "Return up to N target [type] cards from your graveyard to your hand" (Soul of
                 // Innistrad) — no more than N distinct cards, each in the controller's own graveyard
                 // and matching the filter.
-                if (targetCardIds.size() > returnCardsEffect.maxTargets()) {
+                // A dynamic cap (Reap) is computed and enforced at cast time by the multi-graveyard
+                // choice itself — there is no fixed number to check against here.
+                if (returnCardsEffect.dynamicMaxTargets() == null
+                        && targetCardIds.size() > returnCardsEffect.maxTargets()) {
                     throw new IllegalStateException("Cannot target more than "
                             + returnCardsEffect.maxTargets() + " cards");
                 }

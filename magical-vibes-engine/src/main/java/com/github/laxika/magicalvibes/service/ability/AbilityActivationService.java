@@ -63,6 +63,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingP
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeSacrificedLandCouldProduceEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantLandwalkOfSacrificedLandToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintedCardXCostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
@@ -2266,9 +2267,9 @@ public class AbilityActivationService {
 
     /**
      * Remembers the land sacrificed to pay a {@link SacrificePermanentCost} when the ability adds
-     * mana of a type that land could produce (Squandered Resources). The land's card is stored on
-     * the source so the mana effect can still scan its abilities after the land has left the
-     * battlefield.
+     * mana of a type that land could produce (Squandered Resources) or grants landwalk of its land
+     * types (Excavator). The land's card is stored on the source so the effect can still read it
+     * after the land has left the battlefield.
      */
     private void recordSacrificedLandCard(CardEffect costEffect, Permanent source, int abilityIndex,
                                           Permanent sacrificed) {
@@ -2282,7 +2283,8 @@ public class AbilityActivationService {
             return;
         }
         if (abilities.get(abilityIndex).getEffects().stream()
-                .anyMatch(e -> e instanceof AwardManaOfTypeSacrificedLandCouldProduceEffect)) {
+                .anyMatch(e -> e instanceof AwardManaOfTypeSacrificedLandCouldProduceEffect
+                        || e instanceof GrantLandwalkOfSacrificedLandToTargetEffect)) {
             source.setChosenCard(sacrificed.getCard());
         }
     }
@@ -2996,6 +2998,11 @@ public class AbilityActivationService {
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_WHILE_ATTACKING_OR_BLOCKING) {
                 if (!permanent.isAttacking() && !permanent.isBlocking()) {
                     throw new IllegalStateException("Activate only if this creature is attacking or blocking");
+                }
+            }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_OPPONENTS_TURN) {
+                if (playerId.equals(gameData.activePlayerId)) {
+                    throw new IllegalStateException("This ability can only be activated during an opponent's turn");
                 }
             }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_OPPONENTS_TURN_BEFORE_COMBAT) {

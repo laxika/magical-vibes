@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedE
 import java.util.Set;
 
 @CardRegistration(set = "10E", collectorNumber = "292")
+@CardRegistration(set = "TMP", collectorNumber = "250")
 public class RootMaze extends Card {
 
     public RootMaze() {

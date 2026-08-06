@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreature
 
 @CardRegistration(set = "POR", collectorNumber = "161")
 @CardRegistration(set = "M15", collectorNumber = "171")
+@CardRegistration(set = "TMP", collectorNumber = "218")
 public class ChargingRhino extends Card {
 
     public ChargingRhino() {

@@ -633,6 +633,17 @@ public class GameTestHarness {
                 null, null, List.of(), null, List.of(), false, null, discardHandCardIndices);
     }
 
+    /**
+     * Casts an X sorcery that pays a "discard X cards" additional cost and targets an X-scaled
+     * target group (Scorched Earth). {@code discardHandCardIndices} are pre-removal hand indices.
+     */
+    public void castSorceryWithDiscards(Player player, int cardIndex, int xValue, List<UUID> targetIds,
+                                        List<Integer> discardHandCardIndices) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, xValue, null, null, targetIds, List.of(), false,
+                null, null, List.of(), null, List.of(), false, null, discardHandCardIndices);
+    }
+
     public void castSorceryWithDiscard(Player player, int cardIndex, int discardHandCardIndex) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, List.of(), null, List.of(), false, discardHandCardIndex);

@@ -45,6 +45,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      * battlefield by an effect.
      */
     ON_CONTROLLER_PLAYS_LAND,
+    /**
+     * "Whenever an opponent plays a land" — the opponent-side mirror of
+     * {@link #ON_CONTROLLER_PLAYS_LAND}: fired at the actual land-play sites only, NOT when a land
+     * merely enters the battlefield. Use {@link #ON_OPPONENT_LAND_ENTERS_BATTLEFIELD} for the
+     * enters-based version. Dirtcowl Wurm.
+     */
+    ON_OPPONENT_PLAYS_LAND,
     ON_OPPONENT_CASTS_SPELL,
     ON_DEATH,
     ON_ALLY_CREATURE_DIES,
@@ -114,6 +121,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Thraximundar. */
     ON_ANY_CREATURE_SACRIFICED,
     ON_BECOMES_TARGET_OF_SPELL,
+    /** Triggers when this permanent becomes the target of an Aura spell (any player's — the Aura's
+     *  controller is irrelevant). Spells only; an Aura already on the battlefield being moved by an
+     *  ability never triggers it. The trigger belongs to the targeted permanent's controller and goes
+     *  on the stack with {@code sourcePermanentId} set. Checked in
+     *  {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers}. Used by Fugitive Druid
+     *  (pair with {@code DrawCardEffect}). */
+    ON_BECOMES_TARGET_OF_AURA_SPELL,
     ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
     ON_ANY_CREATURE_DIES,
     ON_ALLY_NONTOKEN_CREATURE_DIES,
@@ -355,6 +369,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers at the beginning of the active player's precombat main phase on the
      *  controller's turn. Checked in {@code StepTriggerService.handlePrecombatMainTriggers}. */
     PRECOMBAT_MAIN_TRIGGERED,
+    /** Triggers at the beginning of each player's first main phase (any player's turn), not only
+     *  the controller's. Checked in {@code StepTriggerService.handlePrecombatMainTriggers} by
+     *  scanning all battlefields; the trigger is controlled by the source's controller while the
+     *  active player is carried as the stack entry's target. Used by Eladamri's Vineyard. */
+    EACH_PRECOMBAT_MAIN_TRIGGERED,
     /** Triggers at the beginning of each of the controller's postcombat main phases.
      *  Checked in {@code StepTriggerService.handlePostcombatMainTriggers}. */
     POSTCOMBAT_MAIN_TRIGGERED,

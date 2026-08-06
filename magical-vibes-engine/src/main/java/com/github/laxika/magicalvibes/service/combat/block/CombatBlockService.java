@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -334,7 +335,7 @@ public class CombatBlockService {
                 blockerAssignments);
         validateMustBeBlockedIfAbleRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
-        validateMustBlockIfAbleRequirements(blockContext, attackerBattlefield, defenderBattlefield, blockable,
+        validateMustBlockIfAbleRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
 
         // Block tax (e.g. Hipparion): the block is legal only if its additional cost can be paid.
@@ -1459,9 +1460,12 @@ public class CombatBlockService {
      * "Target creature blocks this turn if able" (Nacatl Hunt-Pride): a creature flagged with
      * {@link Permanent#isMustBlockThisTurnIfAble()} must be declared as a blocker of at least one
      * attacker if it is able to block any of them. The requirement is satisfied vacuously when the
-     * creature can't legally block any declared attacker (evasion, tapped, etc.).
+     * creature can't legally block any declared attacker (evasion, tapped, etc.). The permanent
+     * static form, {@link MustBlockEachCombatEffect} ("this creature blocks each combat if able" —
+     * Watchdog), is enforced on the same path.
      */
-    private void validateMustBlockIfAbleRequirements(BlockLegalityContext blockContext,
+    private void validateMustBlockIfAbleRequirements(GameData gameData,
+                                                     BlockLegalityContext blockContext,
                                                      List<Permanent> attackerBattlefield,
                                                      List<Permanent> defenderBattlefield,
                                                      List<Integer> blockable,
@@ -1473,7 +1477,7 @@ public class CombatBlockService {
 
         for (int blockerIdx : blockable) {
             Permanent blocker = defenderBattlefield.get(blockerIdx);
-            if (!blocker.isMustBlockThisTurnIfAble() || assignedBlockerIndices.contains(blockerIdx)) {
+            if (assignedBlockerIndices.contains(blockerIdx) || !mustBlockIfAble(gameData, blocker)) {
                 continue;
             }
             for (Permanent attacker : attackerBattlefield) {
@@ -1482,6 +1486,18 @@ public class CombatBlockService {
                 }
             }
         }
+    }
+
+    /**
+     * A creature carries a "blocks if able" requirement either from a one-shot effect this turn
+     * ({@link Permanent#isMustBlockThisTurnIfAble()}) or from a permanent static
+     * {@link MustBlockEachCombatEffect} on itself or on an Aura attached to it.
+     */
+    private boolean mustBlockIfAble(GameData gameData, Permanent blocker) {
+        return blocker.isMustBlockThisTurnIfAble()
+                || blocker.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(MustBlockEachCombatEffect.class::isInstance)
+                || gameQueryService.hasAuraWithEffect(gameData, blocker, MustBlockEachCombatEffect.class);
     }
 
     private void validateCantBlockAlone(List<Permanent> defenderBattlefield,

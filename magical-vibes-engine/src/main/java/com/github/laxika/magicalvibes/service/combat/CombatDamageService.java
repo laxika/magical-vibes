@@ -2217,6 +2217,13 @@ public class CombatDamageService {
             // Redirection is a replacement effect, not prevention, so it fires before prevention checks.
             damage = damagePreventionService.applySourceRedirectShields(gameData, defenderId, atk.getId(), damage);
             processSourceRedirectDamage(gameData);
+            // Soltari Guerrillas: this attacker's next combat damage to an opponent goes to a creature instead.
+            UUID atkController = gameQueryService.findPermanentController(gameData, atk.getId());
+            if (atkController != null && !atkController.equals(defenderId)) {
+                damage = damagePreventionService.applySourceNextCombatDamageToOpponentRedirect(
+                        gameData, defenderId, atk.getId(), damage);
+                processSourceRedirectDamage(gameData);
+            }
             // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
             damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, atk.getId(), damage);
             processEyeForAnEyeReflections(gameData);

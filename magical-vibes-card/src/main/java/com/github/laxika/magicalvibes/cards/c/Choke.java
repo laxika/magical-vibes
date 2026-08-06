@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntap
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "8ED", collectorNumber = "237")
+@CardRegistration(set = "TMP", collectorNumber = "219")
 public class Choke extends Card {
 
     public Choke() {

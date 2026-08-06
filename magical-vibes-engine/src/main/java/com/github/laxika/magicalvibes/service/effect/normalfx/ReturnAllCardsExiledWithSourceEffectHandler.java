@@ -40,20 +40,23 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
                 .filter(e -> sourcePermanentId.equals(e.sourcePermanentId()))
                 .toList();
 
+        boolean underControllerControl =
+                ((ReturnAllCardsExiledWithSourceEffect) effect).underControllerControl();
+
         for (ExiledCardEntry exiledEntry : toReturn) {
             Card card = exiledEntry.card();
-            UUID ownerId = exiledEntry.ownerId();
+            UUID newControllerId = underControllerControl ? entry.getControllerId() : exiledEntry.ownerId();
             if (!gameData.removeFromExile(card.getId())) {
                 continue;
             }
 
             Permanent perm = new Permanent(card);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm);
-            
-            gameLogService.append(gameData, GameLog.builder().card(card).text(" returns to the battlefield under " + gameData.playerIdToName.get(ownerId) + "'s control.").build());
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, newControllerId, perm);
+
+            gameLogService.append(gameData, GameLog.builder().card(card).text(" returns to the battlefield under " + gameData.playerIdToName.get(newControllerId) + "'s control.").build());
             log.info("Game {} - {} returns from exile via {} (put into graveyard from battlefield)",
                     gameData.id, card.getName(), entry.getCard().getName());
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, card, null, false);
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, newControllerId, card, null, false);
         }
     }
 }

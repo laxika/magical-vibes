@@ -41,6 +41,11 @@ public enum ActivationTimingRestriction {
     /** Activate only during an upkeep step of a turn whose active player is not you. Trade Caravan. */
     ONLY_DURING_OPPONENTS_UPKEEP,
     /**
+     * Activate only during a turn whose active player is not you. Ghost Town's
+     * "Activate only if it's not your turn."
+     */
+    ONLY_DURING_OPPONENTS_TURN,
+    /**
      * Activate only during a turn whose active player is not you, and only in a step that precedes
      * the combat phase. Maddening Imp's "Activate only during an opponent's turn and only before
      * combat."

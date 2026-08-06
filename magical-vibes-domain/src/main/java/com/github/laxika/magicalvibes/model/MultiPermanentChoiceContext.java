@@ -282,6 +282,19 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
+     * Dracoplasm: the entering creature's controller chose which of their other creatures to
+     * sacrifice as it enters (CR 614.1c). The chosen creatures are sacrificed, the entering
+     * permanent's base power and toughness are set to their total power and total toughness, then
+     * the creature's ETB triggers proceed. Carries the entry context needed to resume
+     * {@code processCreatureETBEffects}.
+     */
+    record SacrificeCreaturesSetEnteringPowerToughness(UUID enteringPermanentId, UUID controllerId, Card card,
+                                                       UUID targetId, boolean wasCastFromHand, int etbMode,
+                                                       boolean kicked)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /**
      * Magnetic Mountain: the acting player ({@code actingPlayerId}, the player whose upkeep it is)
      * chose any number of their tapped blue creatures (up to what they can afford). They pay
      * {@code manaPerCreature} for each chosen creature from their mana pool, then those creatures

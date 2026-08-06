@@ -794,18 +794,18 @@ public class PlayerInputService {
     }
 
     /**
-     * Shimian Specter: {@code targetPlayerId} reveals their hand and the controller chooses a card
-     * in it that isn't of an excluded type. The pick reuses the Thought Hemorrhage answer flow with
-     * {@code damagePerCard = 0}, so every copy of the chosen name is exiled from the target's hand,
-     * graveyard, and library and they shuffle. Unlike that card the options come from the revealed
-     * hand only, so no interaction begins when the hand holds no legal card.
+     * Shimian Specter / Lobotomy: {@code targetPlayerId} reveals their hand and the controller
+     * chooses a card in it accepted by {@code choosable}. The pick reuses the Thought Hemorrhage
+     * answer flow with {@code damagePerCard = 0}, so every copy of the chosen name is exiled from
+     * the target's hand, graveyard, and library and they shuffle. Unlike that card the options come
+     * from the revealed hand only, so no interaction begins when the hand holds no legal card.
      */
     public void beginRevealHandChooseCardFromItAndExileAllCopiesChoice(GameData gameData, UUID choosingPlayerId,
-                                                                       UUID targetPlayerId, List<CardType> excludedTypes,
-                                                                       Card sourceCard) {
+                                                                       UUID targetPlayerId, Predicate<Card> choosable,
+                                                                       String choosableLabel, Card sourceCard) {
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         List<String> cardNames = hand == null ? List.of() : hand.stream()
-                .filter(card -> !hasExcludedType(card, excludedTypes))
+                .filter(choosable)
                 .map(Card::getName)
                 .distinct()
                 .sorted()
@@ -818,10 +818,9 @@ public class PlayerInputService {
         }
 
         ChoiceContext.RevealHandDamageAndExileByNameChoice choiceContext =
-                new ChoiceContext.RevealHandDamageAndExileByNameChoice(targetPlayerId, choosingPlayerId, excludedTypes, 0, sourceCard);
+                new ChoiceContext.RevealHandDamageAndExileByNameChoice(targetPlayerId, choosingPlayerId, List.of(), 0, sourceCard);
 
-        String excludedLabel = excludedTypes.stream().map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
-        String prompt = "Choose a non" + excludedLabel + " card from " + targetName + "'s revealed hand.";
+        String prompt = "Choose a " + choosableLabel + " from " + targetName + "'s revealed hand.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 choosingPlayerId, null, null, choiceContext, cardNames, prompt));
 

@@ -75,6 +75,28 @@ public class PlayedCardNameTriggerCollectorService {
     }
 
     /**
+     * Default for {@link EffectSlot#ON_OPPONENT_PLAYS_LAND}: put bare effects on the stack
+     * (e.g. Dirtcowl Wurm's {@code PutCountersOnSourceEffect}).
+     */
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
+    private boolean handleOpponentPlaysLandDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        Card sourceCard = match.permanent().getCard();
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on an opponent playing a land",
+                match.gameData().id, sourceCard.getName());
+        return true;
+    }
+
+    /**
      * Fires only when a card exiled with this permanent shares the played card's name. The queued
      * ability is the optional "put one of those cards with that name into its owner's hand" followed
      * by the intervening-if "then if there are no cards exiled with this enchantment, sacrifice it.

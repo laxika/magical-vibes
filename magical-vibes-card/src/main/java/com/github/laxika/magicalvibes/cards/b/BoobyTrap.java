@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "289")
+@CardRegistration(set = "TMP", collectorNumber = "277")
 public class BoobyTrap extends Card {
 
     public BoobyTrap() {

@@ -69,6 +69,7 @@ import com.github.laxika.magicalvibes.model.condition.EnchantedCreaturePowerAtLe
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.DidntGainLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Enchanted;
+import com.github.laxika.magicalvibes.model.condition.DuringCombat;
 import com.github.laxika.magicalvibes.model.condition.EnchantedByAtLeastAuras;
 import com.github.laxika.magicalvibes.model.condition.EndStepPlayerDidntCastCreatureSpell;
 import com.github.laxika.magicalvibes.model.condition.OpponentCastSpellThisTurn;
@@ -319,6 +320,8 @@ public class ConditionEvaluationService {
                     countAttackingCreatures(gameData, ctx.controllerId()) == 1;
             case AllMatchingCreaturesAttack c ->
                     allMatchingCreaturesAttack(gameData, ctx, c.filter());
+            case DuringCombat ignored ->
+                    gameData.currentStep != null && gameData.currentStep.isCombatPhase();
             case FirstCombatPhase ignored ->
                     gameData.combatPhasesThisTurn == 1;
             case MinimumAttackers c ->
