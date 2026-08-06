@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectRole;
@@ -188,6 +190,12 @@ public class TargetPolarityClassifier {
             return TargetPolarity.NEUTRAL;
         }
 
+        // Phasing: only the targeted form aims at a permanent the AI chose (Reality Ripple, Vision
+        // Charm) — the source and attached forms carry no target and no polarity.
+        if (effect instanceof PhaseOutEffect phaseOut) {
+            return phaseOut.subject() == PhaseOutSubject.TARGET ? TargetPolarity.HARMFUL_REMOVAL : null;
+        }
+
         // Redirect-next-damage: the target is either the object the redirected damage lands on
         // (Zhalfirin Crusader — aim at the opponent) or the object being shielded (Martyrdom,
         // Hazduhr the Abbot — aim at the AI's own board).
@@ -316,7 +324,6 @@ public class TargetPolarityClassifier {
             // uses (Hazoret's Favor) are safe: their target filters restrict candidates anyway.
             entry("SacrificeTargetPermanentAtEndStepEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ShuffleTargetPermanentIntoLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
-            entry("PhaseOutTargetPermanentEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("EquipoiseEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("WintersChillEffect", TargetPolarity.HARMFUL_REMOVAL),
 

@@ -1,0 +1,24 @@
+package com.github.laxika.magicalvibes.model.effect;
+
+/**
+ * Names a permanent an effect acts on without targeting it. Used by
+ * {@link PutCounterOnReferencedPermanentEffect}.
+ *
+ * <ul>
+ *   <li>{@link #ATTACHED} — the permanent the source Aura or Equipment is attached to ("enchanted
+ *       creature", "equipped creature"). Read from the source permanent's {@code attachedTo}, so
+ *       Aura and Equipment are the same case: both resolve through {@code Permanent.getAttachedTo()}
+ *       and neither targets, because the enchant/equip clause already chose the host.</li>
+ *   <li>{@link #TRIGGERING} — the permanent whose event produced this triggered ability ("put a
+ *       wind counter on it", where "it" is the permanent that became tapped; Freyalise's Winds).
+ *       Read from {@code StackEntry.triggeringPermanentId}, so an effect using this value belongs
+ *       only on a trigger slot that populates it.</li>
+ * </ul>
+ *
+ * <p>Neither value ever fizzles: if the referenced permanent has left the battlefield, nothing
+ * happens.
+ */
+public enum PermanentReference {
+    ATTACHED,
+    TRIGGERING
+}

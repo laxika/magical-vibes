@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>Because they phased out directly, they phase in during their controller's next untap step even
  * without the phasing keyword (CR 702.26a).
  *
- * <p>Mass sibling of {@link PhaseOutSelfEffect} / {@link PhaseOutTargetPermanentEffect}.
+ * <p>Mass sibling of {@link PhaseOutEffect}, which phases out one named permanent.
  *
  * @param filter which permanents phase out
  * @param controllerOnly true to consider only the source controller's battlefield

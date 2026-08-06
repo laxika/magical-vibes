@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnEquippedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public class RingOfEvosIsle extends Card {
         ));
 
         // At the beginning of your upkeep, put a +1/+1 counter on equipped creature if it's blue.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnEquippedCreatureEffect(
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCounterOnReferencedPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentColorInPredicate(Set.of(CardColor.BLUE))));
 
         // Equip {1}

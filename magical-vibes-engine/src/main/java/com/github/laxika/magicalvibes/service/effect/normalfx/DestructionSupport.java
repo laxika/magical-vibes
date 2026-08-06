@@ -28,7 +28,8 @@ import com.github.laxika.magicalvibes.model.effect.OpponentGainsControlOfSourceC
 import com.github.laxika.magicalvibes.model.effect.OpponentMayGainControlOfCreatureYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -517,7 +518,8 @@ public class DestructionSupport {
             } else if (elseEffect instanceof ExileSelfEffect exileSelf) {
                 // "exile this creature unless you sacrifice another creature" (Demonlord of Ashmouth).
                 exileSelfEffectHandler.resolve(gameData, entry, exileSelf);
-            } else if (elseEffect instanceof PhaseOutSelfEffect) {
+            } else if (elseEffect instanceof PhaseOutEffect phaseOut
+                    && phaseOut.subject() == PhaseOutSubject.SOURCE) {
                 // "unless you pay {cost}, this creature phases out" (Vaporous Djinn).
                 phaseOutSource(gameData, entry);
             } else if (elseEffect instanceof LoseLifeEffect loseLife

@@ -75,7 +75,7 @@ high-churn or needs a design call and is optional.
 | 5 | Combat-requirement / must-attack | 6 | LOW | **DONE** — premise held for all six handlers; the audit undercounted by one (5b absorbs 2 classes, not 1, so 6 records + 6 handlers went). One unlisted axis found: `MustBlockThisTurnIfAbleEffect` alone carried a `PermanentIsCreaturePredicate` in its spec, preserved by branching `targetSpec()`. Zero behavior change |
 | 6 | `SetLifeTotalEffect` | 6 | LOW | **DONE** — premise held for all four listed handlers; the audit undercounted (4 records, not 3) and the optional stretch fell out easily, so both each-player siblings went too: 6 records + 6 handlers. `EACH_PLAYER` now evaluates the amount once per player, which is what made the stretch free |
 | 7 | `SkipNextEffect` | 4 | MED | **DONE** — premise held for all four handlers; the audit undercounted (4 records, not 3). One correction: `boolean targetsPlayer` cannot express the family — Blinding Angel is `targetId`-bound but non-targeting — so the second component is a 3-value `SkipRecipient`, which keeps "which player" off the `SkipKind` axis. Polarity unified on `benign` |
-| 8 | Phase-out + attached-counter placement | 4 | LOW | TODO |
+| 8 | Phase-out + attached-counter placement | 6 | LOW | **DONE** — premise held for all six handlers; the optional 8b fold was taken, so 6 records + 6 handlers went. The audit missed that `@CollectsTrigger` is class-keyed: two collector annotations had to be re-keyed. Zero behavior change beyond one redundant guard dropped |
 | 9 | Destroy-referenced-permanent | 3 | LOW | TODO |
 | 10 | Search-target-library + sacrifice costs | 4 | LOW | TODO |
 | 11 | Tap / untap scopes and costs | 3 | LOW | TODO |
@@ -511,25 +511,83 @@ per-`Permanent` `skipUntapCount`; the step still happens). The distinction is do
 
 ---
 
-### Step 8 — Phase-out + attached-counter placement
+### Step 8 — Phase-out + attached-counter placement — **DONE**
 
-**8a Target**: `PhaseOutEffect(PhaseOutSubject subject)` — `{ SOURCE, TARGET, ATTACHED }`.
-**Absorbs** (12 cards): `PhaseOutSelfEffect` (7), `PhaseOutTargetPermanentEffect` (4),
-`PhaseOutEnchantedCreatureEffect` (1).
-All three handlers end in `phasingService.phaseOut(gameData, List.of(permanent))`; only the lookup
-differs (`getSourcePermanentId()` / `getTargetId()` / `findPermanentById(source).getAttachedTo()`).
-Attachments, combat removal and phase-in all live inside `PhasingService`. Switch `targetSpec()` on
-`subject`, exactly as `PutTargetOnTopOfLibraryEffect` already does for `PutOnTopOfLibraryScope`.
-**Keep separate**: `PhaseOutPermanentsEffect` (mass, filter-driven battlefield scan).
+**Shipped**
+```java
+public record PhaseOutEffect(PhaseOutSubject subject) implements CardEffect
+// enum PhaseOutSubject { SOURCE, TARGET, ATTACHED }
 
-**8b Target**: `PutCounterOnAttachedPermanentEffect(CounterType counterType, int count, PermanentPredicate condition)`.
-**Absorbs** (17 cards): `PutCounterOnEnchantedCreatureEffect` (12),
-`PutCountersOnEquippedCreatureEffect` (5). Optionally fold `PutCounterOnTriggeringPermanentEffect` (1)
-with a `subject` enum (`ATTACHED` / `TRIGGERING`) for 3→1.
-Both handlers do the same three steps and end in the identical
-`permanentCounterSupport.placeCounterOnPermanent(gameData, entry, creature, counterType, count)`.
-Aura-vs-Equipment is not a semantic axis — both resolve through `Permanent.getAttachedTo()`.
-`placeCounterOnPermanent` centrally handles `cantHaveCounters`, doubling, -1/-1 reduction and triggers.
+public record PutCounterOnReferencedPermanentEffect(PermanentReference reference,
+                                                    CounterType counterType,
+                                                    int count,
+                                                    PermanentPredicate condition) implements CardEffect
+// sugar: (CounterType), (CounterType, int), (CounterType, int, PermanentPredicate) — all ATTACHED;
+//        (PermanentReference, CounterType)
+// enum PermanentReference { ATTACHED, TRIGGERING }
+```
+
+Six records and six handlers deleted, two records + two enums + two handlers added. Cards (30):
+Mist Dragon, Crystal Golem, Frenetic Efreet, Rainbow Efreet, Teferi's Honor Guard, Vaporous Djinn,
+Warping Wurm; Reality Ripple, Sapphire Charm, Shimmering Efreet, Vision Charm; Vanishing —
+Biting Tether, Consuming Fervor, Daily Regimen, Essence Flare, Forced Adaptation, Glistening Oil,
+Krovikan Plague, Primal Cocoon, Sadistic Glee, Spirit Shackle, Torture, Unstable Mutation;
+Ring of Evos Isle / Kalonia / Thune / Valkas / Xathrid; Freyalise's Winds.
+
+**What held** — all three 8a handlers really do reduce to one `phasingService.phaseOut(gameData,
+List.of(permanent))` varying only in the lookup, and `targetSpec()` switches on `subject` exactly as
+`PutTargetOnTopOfLibraryEffect` does. All three 8b handlers really do end in the identical
+`placeCounterOnPermanent(gameData, entry, creature, counterType, count)`, and Aura-vs-Equipment is
+not a semantic axis — the two guards (`!aura.isAttached()` vs `getAttachedTo() == null`) are the
+same test spelled two ways.
+
+**The optional 8b fold was taken.** `PutCounterOnTriggeringPermanentEffect` is genuinely the same
+shape with a different non-targeting reference, so it became `PermanentReference.TRIGGERING` rather
+than a fourth class. The enum is deliberately named for Step 9 to extend with `SOURCE` when
+`DestroyReferencedPermanentEffect` lands — the two families select a permanent the same way.
+The plan's `PutCounterOnAttachedPermanentEffect` name would have lied once `TRIGGERING` was folded
+in, hence `PutCounterOnReferencedPermanentEffect`.
+
+**What the audit missed — `@CollectsTrigger` is class-keyed.** `TriggerCollectorRegistry` keys on
+the exact `(EffectSlot, effect.getClass())` pair, so two collector annotations had to be re-keyed to
+the merged class: `MiscTriggerCollectorService:238` (`ON_ENCHANTED_PERMANENT_TAPPED`, Spirit Shackle)
+and `DeathTriggerCollectorService:1149` (`ON_ANY_CREATURE_DIES`, Sadistic Glee). Both stay
+slot-scoped, and no card puts a `TRIGGERING` reference in either slot, so the re-key is inert; had it
+been missed, both cards' triggers would have silently stopped firing. Neither trigger-collection
+lookup nor `UPKEEP_TRIGGERED` (which is generic) needed anything else.
+
+**Other call sites updated**
+- `DestructionSupport:520` matched `elseEffect instanceof PhaseOutSelfEffect` for the "unless you pay
+  {cost}, this creature phases out" fallback (Vaporous Djinn); now `instanceof PhaseOutEffect p &&
+  p.subject() == SOURCE`.
+- `TargetPolarityClassifier` (magical-vibes-ai) swaps its single name-keyed entry for an `instanceof`
+  branch keyed on `subject`: `TARGET` is `HARMFUL_REMOVAL`, the two non-targeting subjects return
+  `null` as they always did (they never reached `FIXED_BY_CLASS_NAME`).
+
+**Deliberate delta** (one, inert)
+- `PutCounterOnTriggeringPermanentEffectHandler` re-checked `gameQueryService.cantHaveCounters`
+  before calling `placeCounterOnPermanent`, whose own first statement is that same check. The
+  duplicate is dropped, not the guard.
+
+The `condition` predicate is now available on every reference rather than only the Equipment form,
+and the `ATTACHED` path gained the Equipment handler's slf4j fizzle lines (the Aura form logged
+nothing). Both are no-ops for today's pool — no Aura or `TRIGGERING` card passes a condition.
+
+**Keep separate**: `PhaseOutPermanentsEffect` (mass, filter-driven battlefield scan),
+`PhaseOutSelfAndCombatOpponentEffect` (two permanents, combat-opponent reference) and
+`PhaseOutChosenTypeNontokenPermanentsEffect`. `PreventPhaseOutTargetPermanentEffect` is the
+protection marker, not a phase-out.
+
+**Tests** — no test referenced any of the six classes by name, and all 30 cards already had test
+classes. Added the cross-contamination assertions a `switch` merge needs, one per axis where a
+misread is observable: `CrystalGolemTest.phasesOutOnlyItself` (SOURCE must not reach other
+permanents), `ShimmeringEfreetTest.phasesInPresentsTargetChoice` gains "the Efreet stays" (TARGET
+must not read `sourcePermanentId` — the strongest case, since that card's source *is* on the
+battlefield), `SadisticGleeTest.counterLandsOnlyOnTheEnchantedCreature` (ATTACHED must not become
+TRIGGERING: `ON_ANY_CREATURE_DIES` is exactly where a merged handler could reach for the dying
+creature) and `FreyalisesWindsTest.windCounterLandsOnlyOnTheTappedPermanent` (the mirror).
+Vanishing's existing `isPhasedOutIndirectly()` assertions already pin ATTACHED against a SOURCE
+misread, and the Ring tests already pin the `condition` branch both ways.
 
 ---
 
@@ -537,6 +595,15 @@ Aura-vs-Equipment is not a semantic axis — both resolve through `Permanent.get
 
 **Target**: `DestroyReferencedPermanentEffect(PermanentReference ref, boolean cannotBeRegenerated)` —
 `{ SOURCE, ENCHANTED, TRIGGERING }`.
+
+**Note after Step 8**: `PermanentReference` now **exists** (`model/effect/PermanentReference.java`)
+with `ATTACHED` and `TRIGGERING`, created for `PutCounterOnReferencedPermanentEffect`. Extend it with
+`SOURCE` rather than defining a second enum, and use `ATTACHED` for what this entry calls
+`ENCHANTED` — the destroy family's "enchanted" case is the same `getAttachedTo()` lookup, and Step 8
+established that Aura vs Equipment is not a semantic axis. Adding `SOURCE` will break
+`PutCounterOnReferencedPermanentEffectHandler`'s exhaustive `switch` at compile time, which is the
+intended forcing function: decide there whether a source-counter case belongs in that family (it
+does not — `PutCountersOnSourceEffect` already owns it) and throw, or keep the switch total.
 
 **Absorbs** (12 cards): `DestroySourcePermanentEffect` (3), `DestroyEnchantedPermanentEffect` (8),
 `DestroyTriggeringPermanentEffect` (1).

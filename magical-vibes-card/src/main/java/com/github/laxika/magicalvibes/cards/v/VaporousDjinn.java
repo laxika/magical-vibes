@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class VaporousDjinn extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new ForcedCostOrElseEffect(
                         new PayManaCost("{U}{U}"),
-                        List.of(new PhaseOutSelfEffect()),
+                        List.of(new PhaseOutEffect(PhaseOutSubject.SOURCE)),
                         true));
     }
 }

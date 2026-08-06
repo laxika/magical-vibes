@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -31,7 +32,7 @@ public class SapphireCharm extends Card {
                                 "Target must be a creature.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature an opponent controls phases out",
-                        new PhaseOutTargetPermanentEffect(),
+                        new PhaseOutEffect(PhaseOutSubject.TARGET),
                         TargetFilters.creatureAnOpponentControls())
         )));
     }

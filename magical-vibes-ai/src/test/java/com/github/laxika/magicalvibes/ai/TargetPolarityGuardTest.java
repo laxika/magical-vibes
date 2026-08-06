@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetAttackingCreatureBlockedEffect;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -51,8 +52,10 @@ class TargetPolarityGuardTest {
                 .isEqualTo(TargetPolarity.BENEFICIAL);
         assertThat(classifier.classify(gd, new MakeTargetAttackingCreatureBlockedEffect(), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL);
-        assertThat(classifier.classify(gd, new PhaseOutTargetPermanentEffect(), aiPlayerId))
+        assertThat(classifier.classify(gd, new PhaseOutEffect(PhaseOutSubject.TARGET), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
+        assertThat(classifier.classify(gd, new PhaseOutEffect(PhaseOutSubject.SOURCE), aiPlayerId))
+                .isNull();
         assertThat(classifier.classify(gd,
                 new PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect(
                         new PermanentColorInPredicate(Set.of(CardColor.RED))), aiPlayerId))

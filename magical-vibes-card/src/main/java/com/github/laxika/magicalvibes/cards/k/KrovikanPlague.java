@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.TapEnchantedPermanentCost;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -39,7 +39,7 @@ public class KrovikanPlague extends Card {
         addActivatedAbility(new ActivatedAbility(false, null,
                 List.of(new TapEnchantedPermanentCost(),
                         new DealDamageToAnyTargetEffect(1),
-                        new PutCounterOnEnchantedCreatureEffect(CounterType.MINUS_ZERO_MINUS_ONE)),
+                        new PutCounterOnReferencedPermanentEffect(CounterType.MINUS_ZERO_MINUS_ONE)),
                 "Tap enchanted creature: Krovikan Plague deals 1 damage to any target. "
                         + "Put a -0/-1 counter on enchanted creature. "
                         + "Activate only if enchanted creature is untapped."));

@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 import java.util.List;
@@ -25,7 +26,7 @@ public class WarpingWurm extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new ForcedCostOrElseEffect(
                         new PayManaCost("{2}{G}{U}"),
-                        List.of(new PhaseOutSelfEffect()),
+                        List.of(new PhaseOutEffect(PhaseOutSubject.SOURCE)),
                         true));
         addEffect(EffectSlot.ON_SELF_PHASES_IN, new PutCountersOnSourceEffect(1, 1, 1));
     }
