@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.CaptivatingVampire;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -130,6 +132,34 @@ class SorinImperiousBloodlordTest extends BaseCardTest {
         PendingInteraction.PermanentChoice choice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
         assertThat(choice.validIds()).containsExactly(vampire.getId());
+    }
+
+    /**
+     * The reflexive trigger's target list is evaluated from what the rider declares — "any target"
+     * (CR 115.4) — instead of a hand-rolled creature-or-planeswalker pair, so it reads the
+     * planeswalker type after layer 4 (CR 613.1d). A planeswalker Imprisoned in the Moon turned into
+     * a colorless land is not offered; Sorin himself still is.
+     */
+    @Test
+    @DisplayName("+1 sacrifice rider offers a planeswalker, but not one Imprisoned in the Moon turned into a land")
+    void plusOneSacrificeRiderReadsTheDeclaredAnyTarget() {
+        Permanent sorin = addReadySorin(player1);
+        Permanent vampire = harness.addToBattlefieldAndReturn(player1, new CaptivatingVampire());
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ImprisonedInTheMoon());
+        aura.setAttachedTo(jace.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, vampire.getId());
+
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validIds())
+                .contains(sorin.getId(), player1.getId(), player2.getId())
+                .doesNotContain(jace.getId(), aura.getId());
     }
 
     // ===== −3: put Vampire from hand =====

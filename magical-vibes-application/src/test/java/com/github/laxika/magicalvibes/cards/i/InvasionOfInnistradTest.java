@@ -1,14 +1,22 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.a.ArcTrail;
 import com.github.laxika.magicalvibes.cards.d.DelugeOfTheDead;
+import com.github.laxika.magicalvibes.cards.f.FiresongAndSunspeaker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealDividedDamageEffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +24,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -140,6 +149,75 @@ class InvasionOfInnistradTest extends BaseCardTest {
                     .count()).isEqualTo(1);
             assertThat(gd.playerGraveyards.get(player2.getId()))
                     .noneMatch(c -> "Shock".equals(c.getName()));
+        }
+    }
+
+    /**
+     * A battle is a legal damage recipient (CR 115.4), and damage dealt to it removes that many
+     * defense counters (CR 120.3h). Invasion of Innistrad cannot yet be *chosen* as an "any target",
+     * so these drive the damage services directly — the same way the Siege-defeat test above drives
+     * {@link BattleDefeatSupport}.
+     */
+    @Nested
+    @DisplayName("Damage to a battle")
+    class DamageToBattle {
+
+        @Test
+        @DisplayName("Divided damage removes defense counters instead of skipping the battle")
+        void dividedDamageRemovesDefenseCounters() {
+            Permanent battle = addBattle(5);
+            DamageSupport damageSupport = GameTestEngineContext.get().getBean(DamageSupport.class);
+            Card source = new Shock();
+
+            harness.inMutationScope(() -> damageSupport.dealDividedDamageToAnyTargets(
+                    gd, source, player1.getId(), Map.of(battle.getId(), 3)));
+
+            assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("An ordered divided-damage spell removes defense counters from a battle target")
+        void orderedDividedDamageRemovesDefenseCounters() {
+            Permanent battle = addBattle(5);
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            var handler = GameTestEngineContext.get().getBean(DealDividedDamageEffectHandler.class);
+            // Arc Trail's shape: 2 damage to one target, 1 to another.
+            var effect = DealDividedDamageEffect.ordered(List.of(2, 1));
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, new ArcTrail(),
+                    player1.getId(), "Arc Trail", List.of(), 0, List.of(battle.getId(), bears.getId()));
+
+            harness.inMutationScope(() -> handler.resolve(gd, entry, effect));
+
+            assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(3);
+            assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        }
+
+        /**
+         * The any-target path used to remove defense counters in an arm of its own that returned
+         * before the shared damage pipeline, so prevention, redirection, damage multipliers and
+         * spell lifelink (CR 702.15b) were all skipped for a battle.
+         */
+        @Test
+        @DisplayName("Any-target damage to a battle goes through the shared pipeline, so spell lifelink applies")
+        void anyTargetDamageToBattleGainsLifeForALifelinkSpell() {
+            harness.addToBattlefield(player1, new FiresongAndSunspeaker());
+            Permanent battle = addBattle(5);
+            int lifeBefore = gd.getLife(player1.getId());
+            DamageSupport damageSupport = GameTestEngineContext.get().getBean(DamageSupport.class);
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, new Shock(),
+                    player1.getId(), "Shock", List.of());
+
+            harness.inMutationScope(() ->
+                    damageSupport.resolveAnyTargetDamage(gd, entry, battle.getId(), 3, false));
+
+            assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(2);
+            assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 3);
+        }
+
+        private Permanent addBattle(int defense) {
+            Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfInnistrad());
+            battle.setCounterCount(CounterType.DEFENSE, defense);
+            return battle;
         }
     }
 

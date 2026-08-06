@@ -77,6 +77,17 @@ class TriggerTargetCollectorTest {
         // Non-strict stub: most tests don't have permanents, but the helper still calls isCreature
         // on each when canTargetPermanents is true.
         lenient().when(gameQueryService.isCreature(any(), any())).thenReturn(true);
+        // The any-target narrowing evaluates the declared TargetPredicate's permanent restriction
+        // instead of re-implementing it, which is a real predicate evaluation — a mocked one would
+        // silently reject every candidate. Delegate that one call to a genuine evaluator over the
+        // same mocked GameQueryService; TargetFilter checking stays mocked, as the tests rely on.
+        PredicateEvaluationService realPredicates = new PredicateEvaluationService(gameQueryService);
+        lenient().when(predicateEvaluationService.matchesPermanentPredicate(
+                        any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                .thenAnswer(invocation -> realPredicates.matchesPermanentPredicate(
+                        invocation.<Permanent>getArgument(0),
+                        invocation.<PermanentPredicate>getArgument(1),
+                        invocation.<FilterContext>getArgument(2)));
     }
 
     @Test
@@ -202,6 +213,28 @@ class TriggerTargetCollectorTest {
         assertThat(result.validTargets())
                 .contains(player1Id, player2Id, creature.getId())
                 .doesNotContain(land.getId());
+    }
+
+    /**
+     * The narrowing comes from evaluating {@code TargetPredicates.anyTarget()} rather than a
+     * hand-rolled type check, so it admits whatever CR 115.4 admits and stays layer-aware: a
+     * permanent that is a planeswalker only after layer 4 is offered, and one that stopped being a
+     * creature is not.
+     */
+    @Test
+    @DisplayName("ATTACK any-target offers a layer-4 planeswalker that is not a creature")
+    void attackAnyTargetOffersLayeredPlaneswalker() {
+        Permanent planeswalker = new Permanent(new Card());
+        gd.playerBattlefields.get(player2Id).add(planeswalker);
+        lenient().when(gameQueryService.isCreature(gd, planeswalker)).thenReturn(false);
+        lenient().when(gameQueryService.isPlaneswalker(gd, planeswalker)).thenReturn(true);
+
+        List<CardEffect> effects = List.of(new DealDamageToAnyTargetEffect(1));
+
+        TriggerTargetCollector.Result result = collector.collect(
+                gd, effects, null, player1Id, sourceCard, TriggerTargetCollector.Options.ATTACK);
+
+        assertThat(result.validTargets()).contains(planeswalker.getId());
     }
 
     @Test

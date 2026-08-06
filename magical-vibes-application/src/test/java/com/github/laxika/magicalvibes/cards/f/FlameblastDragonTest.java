@@ -1,7 +1,11 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -93,6 +97,35 @@ class FlameblastDragonTest extends BaseCardTest {
         assertThat(choice.validIds())
                 .contains(bears.getId(), player1.getId(), player2.getId())
                 .doesNotContain(mountain.getId());
+    }
+
+    /**
+     * The attack trigger's any-target narrowing is evaluated from the declared target rather than
+     * re-implemented, so it reads the planeswalker type after layer 4 (CR 613.1d). A planeswalker
+     * Imprisoned in the Moon turned into a colorless land is no longer an any target (CR 115.4) —
+     * the same answer the spell path gives Lightning Bolt.
+     */
+    @Test
+    @DisplayName("Attack trigger offers a planeswalker, but not one Imprisoned in the Moon turned into a land")
+    void offersPlaneswalkerUnlessLayerFourTookTheTypeAway() {
+        addCreatureReady(player1, new FlameblastDragon());
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 6);
+
+        Permanent aura = new Permanent(new ImprisonedInTheMoon());
+        aura.setAttachedTo(jace.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+
+        declareAttackers(player1, List.of(0));
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds())
+                .contains(chandra.getId())
+                .doesNotContain(jace.getId());
     }
 
     @Test

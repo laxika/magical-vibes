@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -22,7 +21,9 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
@@ -77,6 +78,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final StateBasedActionService stateBasedActionService;
     private final TriggerCollectionService triggerCollectionService;
     private final TriggerTargetCollector triggerTargetCollector;
+    private final TargetPredicateEvaluationService targetPredicateEvaluationService;
     private final CreatureControlService creatureControlService;
     private final PopulateSupport populateSupport;
     private final DamageSupport damageSupport;
@@ -1032,14 +1034,19 @@ public class PermanentChoiceBattlefieldHandlerService {
             if (needsTarget) {
                 List<UUID> validPermanentTargets = new ArrayList<>();
                 if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {
+                    // The rider's own declared target decides which permanents are legal — Sorin's
+                    // is "any target" (CR 115.4), so the restriction is evaluated rather than
+                    // re-implemented here and stays layer-aware (CR 613.1d).
+                    TargetPredicate declared = targetSpec.targetPredicate();
+                    FilterContext filterContext = new FilterContext(
+                            gameData, ctx.sourceCard().getId(), ctx.controllerId(), null, null);
                     for (UUID pid : gameData.orderedPlayerIds) {
                         List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                         if (battlefield == null) {
                             continue;
                         }
                         for (Permanent p : battlefield) {
-                            if (gameQueryService.isCreature(gameData, p)
-                                    || p.getCard().hasType(CardType.PLANESWALKER)) {
+                            if (targetPredicateEvaluationService.matchesPermanent(declared, p, filterContext)) {
                                 validPermanentTargets.add(p.getId());
                             }
                         }

@@ -228,15 +228,25 @@ Evaluate one through `TargetPredicateEvaluationService` (`service/target/`), whi
 kind and delegates to the service that already owns that hierarchy — it adds no evaluation logic and
 never reaches `PredicateEvaluationService.matchesStaticFilter`. Its permanent/graveyard/exile/spell
 methods require a `FilterContext` carrying `GameData`: without it the creature and land leaves fall
-back to raw card types and mis-handle an animated land (CR 613.1d). `ValidTargetService` and
-`MayAbilityHandlerService` both take the adapter; the latter uses it for the one arm where a
-may-ability's `TargetSpec` is its only target restriction (see
-`agent-docs/TRIGGER_SLOT_TARGETING.md` for that precedence).
+back to raw card types and mis-handle an animated land (CR 613.1d). `ValidTargetService`,
+`MayAbilityHandlerService` and `PermanentChoiceBattlefieldHandlerService` all take the adapter:
+`MayAbilityHandlerService` uses it for the one arm where a may-ability's `TargetSpec` is its only
+target restriction (see `agent-docs/TRIGGER_SLOT_TARGETING.md` for that precedence), and
+`PermanentChoiceBattlefieldHandlerService` for the reflexive-trigger target of
+`SacrificePermanentThenEffect` (Sorin, Imperious Bloodlord).
 
 `TargetValidationService` is the exception that does NOT go through that adapter: injecting it would
 close the cycle `TargetValidationService → TargetPredicateEvaluationService → TargetLegalityService →
 TargetValidationService`. It reads `TargetPredicate.permanentRestriction()` and evaluates that one
 `PermanentPredicate` through `PredicateEvaluationService` directly — the same call the adapter makes.
+`TriggerTargetCollector` does the same, for the same reason it already evaluates its `TargetFilter`
+predicates that way: it holds a `PredicateEvaluationService` and the any-target narrowing is one
+`PermanentPredicate` question.
+
+**Never re-implement a declared restriction as a type check.** An enumeration path that open-codes
+`isCreature || hasType(PLANESWALKER)` where the effect declares `TargetPredicates.anyTarget()` is a
+recurring defect in this codebase — it silently drifts from the spell path, ignores layer 4, and
+does not pick up a widening of the factory. Read the declared target and evaluate it.
 
 ## PlayerPredicate compositions
 

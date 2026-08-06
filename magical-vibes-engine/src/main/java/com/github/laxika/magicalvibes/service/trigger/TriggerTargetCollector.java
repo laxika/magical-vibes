@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -164,10 +163,13 @@ public class TriggerTargetCollector {
                     || targetFilter instanceof AnyTargetPredicateTargetFilter;
             boolean creaturesOnly = options.creaturesOnly() && !explicitPermanentFilter;
 
-            // "Any target" = creature / planeswalker / player — never a land or other noncreature
-            // permanent. Mirror ValidTargetService / TargetValidationService for effects that
-            // declare anyTarget() (Flameblast Dragon attack trigger, Form of the Dragon upkeep). An
-            // explicit PermanentPredicateTargetFilter fully governs instead (e.g. destroy land).
+            // Effects that declare anyTarget() (Flameblast Dragon attack trigger, Form of the
+            // Dragon upkeep) restrict the permanent half to what CR 115.4 admits — never a land or
+            // other permanent kind. The restriction is *evaluated* from the declared target rather
+            // than re-implemented here, so this path cannot drift from the spell path in
+            // ValidTargetService / TargetValidationService, and it is layer-aware (CR 613.1d): a
+            // planeswalker a type-replacing effect turned into a land is no longer an any target.
+            // An explicit PermanentPredicateTargetFilter fully governs instead (e.g. destroy land).
             List<CardEffect> permanentEffects = effects.stream()
                     .map(e -> unwrap(e, options))
                     .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
@@ -176,6 +178,12 @@ public class TriggerTargetCollector {
                     && !permanentEffects.isEmpty()
                     && permanentEffects.stream()
                             .allMatch(e -> e.targetSpec().declares(TargetPredicates.anyTarget()));
+            PermanentPredicate anyTargetRestriction = anyTargetPermanentsOnly
+                    ? TargetPredicates.anyTarget().permanentRestriction().orElseThrow()
+                    : null;
+            FilterContext anyTargetFilterCtx = anyTargetPermanentsOnly
+                    ? new FilterContext(gameData, sourceCard.getId(), controllerId, null, null)
+                    : null;
 
             for (UUID pid : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
@@ -183,9 +191,8 @@ public class TriggerTargetCollector {
                 for (Permanent p : battlefield) {
                     if (creaturesOnly && !gameQueryService.isCreature(gameData, p)) continue;
 
-                    if (anyTargetPermanentsOnly
-                            && !gameQueryService.isCreature(gameData, p)
-                            && !p.getCard().hasType(CardType.PLANESWALKER)) {
+                    if (anyTargetRestriction != null && !predicateEvaluationService.matchesPermanentPredicate(
+                            p, anyTargetRestriction, anyTargetFilterCtx)) {
                         continue;
                     }
 

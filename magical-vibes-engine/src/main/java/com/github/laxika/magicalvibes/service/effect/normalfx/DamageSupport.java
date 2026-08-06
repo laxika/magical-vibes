@@ -267,7 +267,9 @@ public class DamageSupport {
             }
         }
 
-        // CR 310.8 — damage dealt to a battle removes that many defense counters
+        // CR 120.3h — damage dealt to a battle removes that many defense counters
+        // (the state-based action check reaps it at 0 defense). A permanent that is
+        // also a creature additionally gets the damage marked below (CR 120.3e).
         if (target.getCard().hasType(CardType.BATTLE)) {
             if (damage > 0) {
                 target.setCounterCount(CounterType.DEFENSE, target.getCounterCount(CounterType.DEFENSE) - damage);
@@ -471,6 +473,24 @@ public class DamageSupport {
                     || gameQueryService.hasAuraWithEffect(gameData, source, PreventAllDamageToAndByEnchantedCreatureEffect.class));
     }
 
+    /**
+     * Whether {@code permanent} is one of the permanent kinds "any target" damage can be dealt to —
+     * a creature, a planeswalker or a battle (CR 115.4). A permanent that is none of them was never
+     * a legal target, or stopped being one before resolution (CR 608.2b), and the divided-damage
+     * loops skip it rather than burning a land.
+     *
+     * <p>The planeswalker and battle halves read the printed type line rather than the layer-aware
+     * {@code GameQueryService.isPlaneswalker} / {@code isBattle} on purpose: the destinations that
+     * consume this answer — {@link #dealCreatureDamage}'s CR 120.3c loyalty branch and CR 120.3h
+     * defense branch — key off the printed line too, so a layered question here would let damage
+     * through to a branch that would then do nothing with it.</p>
+     */
+    public boolean isAnyTargetDamageRecipient(GameData gameData, Permanent permanent) {
+        return gameQueryService.isCreature(gameData, permanent)
+                || permanent.getCard().hasType(CardType.PLANESWALKER)
+                || permanent.getCard().hasType(CardType.BATTLE);
+    }
+
     public void resolveAnyTargetDamage(GameData gameData, StackEntry entry, UUID targetId, int rawDamage, boolean cantRegenerate) {
         Card source = entry.getEffectiveDamageSourceCard();
         boolean targetIsPlayer = gameData.playerIds.contains(targetId);
@@ -526,24 +546,11 @@ public class DamageSupport {
                 }
                 return;
             }
-            if (targetPermanent.getCard().hasType(CardType.BATTLE)) {
-                if (gameQueryService.isDamagePreventable(gameData)
-                        && gameData.creaturesWithAllDamagePrevented.contains(targetPermanent.getId())) {
-                    gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
-                    return;
-                }
-                int defenseDamage = Math.max(0, rawDamage);
-                if (defenseDamage > 0) {
-                    accumulateSourceDamageForReflection(gameData, source, entry.getControllerId(), defenseDamage);
-                    targetPermanent.setCounterCount(CounterType.DEFENSE,
-                            targetPermanent.getCounterCount(CounterType.DEFENSE) - defenseDamage);
-                    gameLogService.append(gameData, GameLog.cardTextCard(source,
-                            " deals " + defenseDamage + " damage to ", targetPermanent.getCard(),
-                            " (" + targetPermanent.getCounterCount(CounterType.DEFENSE) + " defense remaining)."));
-                    battleDefeatSupport.checkAfterDefenseRemoved(gameData, targetPermanent);
-                }
-                return;
-            }
+            // A battle deliberately has no arm of its own here: it falls through to
+            // dealCreatureDamage, whose CR 120.3h branch removes the defense counters after the
+            // shared pipeline has applied prevention shields, redirects, damage multipliers and
+            // spell lifelink (CR 702.15b). The planeswalker arm above predates that pipeline and
+            // still open-codes its own; the two must not diverge again.
             if (cantRegenerate) {
                 targetPermanent.setCantRegenerateThisTurn(true);
             }
@@ -941,8 +948,9 @@ public class DamageSupport {
 
                 int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, damage);
                 if (effectiveDamage > 0) {
-                    // Planeswalker / battle destinations lose loyalty / defense (CR 120.3c); a
-                    // permanent that is also a creature additionally gets marked damage (CR 120.3e).
+                    // A planeswalker destination loses that much loyalty (CR 120.3c) and a battle
+                    // destination that many defense counters (CR 120.3h); a permanent that is also
+                    // a creature additionally gets marked damage (CR 120.3e).
                     if (targetPerm.getCard().hasType(CardType.PLANESWALKER)) {
                         targetPerm.setCounterCount(CounterType.LOYALTY,
                                 targetPerm.getCounterCount(CounterType.LOYALTY) - effectiveDamage);
@@ -1010,11 +1018,9 @@ public class DamageSupport {
 
             if (!targetIsPlayer && targetPermanent == null) continue;
 
-            // Divided damage only ever targets creatures, planeswalkers, or players — a permanent
-            // that is none of those (e.g. a land) is an illegal target and isn't affected.
-            if (!targetIsPlayer
-                    && !gameQueryService.isCreature(gameData, targetPermanent)
-                    && !targetPermanent.getCard().hasType(CardType.PLANESWALKER)) {
+            // Divided damage is "any target" damage, so a permanent that is not a creature,
+            // planeswalker or battle (CR 115.4) is an illegal target and isn't affected.
+            if (!targetIsPlayer && !isAnyTargetDamageRecipient(gameData, targetPermanent)) {
                 continue;
             }
 
