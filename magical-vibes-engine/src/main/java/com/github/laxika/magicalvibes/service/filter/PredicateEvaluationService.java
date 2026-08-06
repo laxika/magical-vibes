@@ -85,6 +85,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
@@ -450,6 +451,12 @@ public class PredicateEvaluationService {
                     yield permanent.getCard().hasType(CardType.PLANESWALKER);
                 }
                 yield gameQueryService.isPlaneswalker(gameData, permanent);
+            }
+            case PermanentIsBattlePredicate ignored -> {
+                if (gameData == null) {
+                    yield permanent.getCard().hasType(CardType.BATTLE);
+                }
+                yield gameQueryService.isBattle(gameData, permanent);
             }
             case PermanentIsTappedPredicate ignored ->
                     permanent.isTapped();
@@ -1147,6 +1154,8 @@ public class PredicateEvaluationService {
                     state.hasCardType(CardType.ENCHANTMENT);
             case PermanentIsPlaneswalkerPredicate ignored ->
                     state.hasCardType(CardType.PLANESWALKER);
+            case PermanentIsBattlePredicate ignored ->
+                    state.hasCardType(CardType.BATTLE);
             case PermanentHasKeywordPredicate p ->
                     state.hasKeyword(p.keyword());
             case PermanentHasProtectionFromColorPredicate p ->

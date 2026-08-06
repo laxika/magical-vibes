@@ -107,7 +107,7 @@ class DarkNourishmentTest extends BaseCardTest {
         UUID forestId = harness.getPermanentId(player2, "Forest");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, forestId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("creature, planeswalker, or player");
+                .hasMessageContaining("creature, planeswalker, battle, or player");
 
         harness.assertOnBattlefield(player2, "Forest");
     }

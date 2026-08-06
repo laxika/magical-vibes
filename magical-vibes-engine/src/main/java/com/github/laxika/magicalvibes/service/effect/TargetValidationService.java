@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -181,6 +182,7 @@ public class TargetValidationService {
             case PermanentIsCreaturePredicate ignored -> List.of("creature");
             case PermanentIsLandPredicate ignored -> List.of("land");
             case PermanentIsPlaneswalkerPredicate ignored -> List.of("planeswalker");
+            case PermanentIsBattlePredicate ignored -> List.of("battle");
             case PermanentAnyOfPredicate anyOf -> {
                 List<String> kinds = new ArrayList<>();
                 for (PermanentPredicate branch : anyOf.predicates()) {

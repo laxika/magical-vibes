@@ -158,7 +158,7 @@ class TargetValidationServiceSpecTest {
         when(gameQueryService.isCreature(gd, land)).thenReturn(false);
 
         assertThat(check(new AnyTargetHarmfulEffect(), land.getId()))
-                .contains("Target must be a creature, planeswalker, or player");
+                .contains("Target must be a creature, planeswalker, battle, or player");
     }
 
     @Test

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -27,7 +28,7 @@ import java.util.Map;
  * set of things an effect may declare stays enumerable.
  *
  * <p>{@link #playerOrPermanent()} is "a player or <em>any</em> permanent" and {@link #anyTarget()}
- * is CR 115.4's "any target" — a creature, planeswalker or player. They are structurally distinct
+ * is CR 115.4's "any target" — a creature, planeswalker, battle or player. They are structurally distinct
  * values; a reader that wants one specifically must compare against it
  * ({@code TargetSpec.declares}) rather than asking whether both players and permanents are
  * admitted, which cannot tell them apart.</p>
@@ -47,8 +48,17 @@ public final class TargetPredicates {
     private static final PermanentPredicate IS_CREATURE = new PermanentIsCreaturePredicate();
     private static final PermanentPredicate IS_LAND = new PermanentIsLandPredicate();
     private static final PermanentPredicate IS_PLANESWALKER = new PermanentIsPlaneswalkerPredicate();
+    private static final PermanentPredicate IS_BATTLE = new PermanentIsBattlePredicate();
     private static final PermanentPredicate IS_CREATURE_OR_PLANESWALKER =
             new PermanentAnyOfPredicate(List.of(IS_CREATURE, IS_PLANESWALKER));
+
+    /**
+     * The permanent half of CR 115.4's "any target". Deliberately <em>not</em>
+     * {@link #IS_CREATURE_OR_PLANESWALKER}: "target creature or planeswalker" is a narrower
+     * restriction that must stay battle-free, so the two cannot share a leaf.
+     */
+    private static final PermanentPredicate IS_ANY_TARGET_PERMANENT =
+            new PermanentAnyOfPredicate(List.of(IS_CREATURE, IS_PLANESWALKER, IS_BATTLE));
 
     /**
      * The canonical declared targets, interned. {@code TargetSpec} values are rebuilt on every
@@ -62,7 +72,7 @@ public final class TargetPredicates {
     private static final TargetPredicate CREATURE_OR_PLANESWALKER = permanents(IS_CREATURE_OR_PLANESWALKER);
     private static final TargetPredicate PLAYER_OR_PERMANENT = anyOf(PLAYER, PERMANENT);
     private static final TargetPredicate PLAYER_OR_PLANESWALKER = anyOf(PLAYER, permanents(IS_PLANESWALKER));
-    private static final TargetPredicate ANY_TARGET = anyOf(PLAYER, CREATURE_OR_PLANESWALKER);
+    private static final TargetPredicate ANY_TARGET = anyOf(PLAYER, permanents(IS_ANY_TARGET_PERMANENT));
     private static final TargetPredicate SPELL_ON_STACK = spells(ANY_SPELL);
     private static final Map<GraveyardSearchScope, TargetPredicate> GRAVEYARD_CARD_BY_SCOPE =
             buildGraveyardCardIndex();
@@ -143,7 +153,7 @@ public final class TargetPredicates {
         return PLAYER_OR_PLANESWALKER;
     }
 
-    /** CR 115.4's "any target" — a creature, planeswalker or player, layer-aware. */
+    /** CR 115.4's "any target" — a creature, planeswalker, battle or player, layer-aware. */
     public static TargetPredicate anyTarget() {
         return ANY_TARGET;
     }

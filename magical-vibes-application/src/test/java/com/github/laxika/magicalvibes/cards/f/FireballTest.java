@@ -255,7 +255,7 @@ class FireballTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
-    // ===== Illegal targets — "any target" means creature, planeswalker, or player =====
+    // ===== Illegal targets — "any target" means creature, planeswalker, battle, or player =====
 
     @Test
     @DisplayName("Single-targetId cast at a land is rejected")
@@ -268,7 +268,7 @@ class FireballTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, plainsId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("creature, planeswalker, or player");
+                .hasMessageContaining("creature, planeswalker, battle, or player");
 
         harness.assertOnBattlefield(player2, "Plains");
         harness.assertInHand(player1, "Fireball");

@@ -256,7 +256,7 @@ mechanical high-churn. Phase 4 is deletion.
 | 5 | Collapse the three graveyard categories onto `GraveyardCards.scope`; delete the five hand-copied scope mappings. | LOW | **DONE** — see "Step 5 outcome". Not LOW and not five: there were **fourteen** copies and they disagreed, so six effects were declaring a scope they did not mean. Six rules-visible fixes. |
 | 6 | Migrate the derived-boolean readers (`includesPermanents` / `includesPlayers` / `isGraveyard`) in the trigger collectors, `StepTriggerService`, AI, and `EffectResolution.collectTargetTypes`. ~30 call sites across engine + AI. | MED | **DONE** — see "Step 6 outcome". 152 call sites, not ~30, across 31 files; `TargetSpec.admits` was changed to read `declaredTarget()` so it stops allocating. |
 | 7 | Delete `TargetCategory`; update `TargetSpecRatchetTest`, `scripts/targetspec-audit.py`, and the `EFFECTS_INDEX.md` category table. | LOW | **DONE** — see "Step 7 outcome". Genuinely LOW; the two `== ANY_TARGET` readers became `TargetSpec.declares(...)`, a new identity reader added for exactly that purpose. |
-| 8 | **Optional, separate decision.** Add `PermanentIsBattlePredicate` and include battles in the `ANY_TARGET` factory per CR 115.4 (defect 4). Needs a rules review of the battle-damage path first — do not bundle into Step 7. | MED | **BLOCKED** — the required rules review was done and says *not ready*. See "Step 8 review outcome". Widening `anyTarget()` alone would offer a battle that resolution silently ignores. Prerequisites were Steps 8a and 8b, **both now done**. Only **row 5** of the review's table is left (`TargetValidationService.describe` needs a `"battle"` arm), and it is an item *inside* Step 8 rather than a separate prerequisite — see "Step 8b outcome". Step 8 is now unblocked. |
+| 8 | **Optional, separate decision.** Add `PermanentIsBattlePredicate` and include battles in the `ANY_TARGET` factory per CR 115.4 (defect 4). Needs a rules review of the battle-damage path first — do not bundle into Step 7. | MED | **DONE** — see "Step 8 outcome". Battles are targetable. One site the review and 8a/8b both missed (`SoulBurnEffectHandler`) was found by asking which *resolution* paths read a permanent's type after any-target damage, and fixed here. |
 | 8a | **Prerequisite for Step 8.** Teach the divided-damage and any-target damage paths to treat a battle as a damage recipient (CR 120.3h), and replace the two hand-rolled creature-or-planeswalker enumerations that bypass the declared predicate. See "Step 8 review outcome" for the exact sites. | MED | **DONE** — see "Step 8a outcome". Rows 1-4 fixed. The review under-counted the hand-rolled enumerations: **five more** were found, and Step 8 is still blocked on them plus row 5. |
 
 | 8b | **Second prerequisite for Step 8**, discovered by 8a. Replace the five *remaining* hand-rolled `isCreature \|\| printed PLANESWALKER` any-target enumerations / validations — three in `TriggeredAbilityQueueService`, one in `SpellCastingService`, one in `DamageTargetValidators` — with an evaluation of the declared target, exactly as 8a did for the two it was given. Same shape, same risk, same class of live layer-4 fix. Exact sites and line numbers in "Step 8a outcome". | MED | **DONE** — see "Step 8b outcome". All five sites held; four were live layer-4 fixes, the fifth turned out to be dead code the spec interpreter already subsumed. |
@@ -1109,6 +1109,98 @@ these paths has a real card.
   step's scope, but it is a candidate for the same deletion on its own merits.
 - The `StepTriggerService:448` shape-sniff is still there, still paired with `TriggerTargetCollector`;
   Steps 6 and 7 both asked that whoever fixes one fixes both.
+
+---
+
+## Step 8 outcome
+
+Defect 4 is fixed: `TargetPredicates.anyTarget()` is
+`anyOf(player(), permanents(anyOf(isCreature, isPlaneswalker, isBattle)))`, and Invasion of Innistrad
+(INR 120) can now be chosen as an "any target" (CR 115.4, re-verified: *"These targets may be
+creatures, players, planeswalkers, or battles."*).
+
+**Every premise held verbatim.** No `PermanentIsBattlePredicate` existed, `grep Battle` over
+`model/filter/` still returned nothing, `ANY_TARGET` still shared `IS_CREATURE_OR_PLANESWALKER` with
+`creatureOrPlaneswalker()`, `describe` still had no battle arm and `GameQueryService.isBattle`
+(`:973`) was still there and layer-aware. `matchesPermanentPredicate` is still exhaustive with no
+`default`, so the new leaf was a compile error until each arm existed.
+
+### What landed
+
+| Site | Change |
+|---|---|
+| `PermanentIsBattlePredicate` (domain, `model/filter/`) | new bare record, added to the sealed `permits` |
+| `PredicateEvaluationService.matchesPermanentPredicate(Permanent, …)` | layer-aware arm with the `gameData == null` → printed-type fallback, mirroring the planeswalker leaf |
+| `PredicateEvaluationService.matchesPermanentPredicate(CharacteristicState, …)` | `state.hasCardType(CardType.BATTLE)` — without it the `default` re-asks the non-layered path and layer 4 is silently ignored mid-pass |
+| `PredicateEvaluationService.matchesStaticFilter` | **untouched**, as the step required: no static or continuous ability filters on "battle", nothing on the targeting path reaches that whitelist, and widening it would widen what can recurse through `computeStaticBonus` |
+| `TargetPredicates` | `IS_BATTLE` interned; `anyTarget()` given its **own** permanent leaf `IS_ANY_TARGET_PERMANENT`. `creatureOrPlaneswalker()` keeps `IS_CREATURE_OR_PLANESWALKER` and stays battle-free |
+| `TargetValidationService.describe` | `PermanentIsBattlePredicate -> List.of("battle")` (row 5 of the review) |
+| `SpellCastingService` kicked divided-damage assignment loop | its hand-written rejection string, a literal copy of what `describe` produces, updated in lockstep |
+| `SoulBurnEffectHandler` | new battle branches — see below |
+
+### The site nobody had counted: Soul Burn
+
+The review's blocker table and Steps 8a/8b covered every path that *enumerates* or *deals* any-target
+damage. What none of them covered is a path that **measures** it afterwards. `SoulBurnEffectHandler`
+computes "life equal to the damage dealt this way" as a before/after delta, with a loyalty branch for
+planeswalkers and a marked-damage `else` for everything else. A battle marks nothing (CR 120.3h,
+verified: *"Damage dealt to a battle causes that many defense counters to be removed from that
+battle"*), so the moment battles became targetable Soul Burn would have dealt the damage and gained
+zero life. It now has a defense-counter branch in both the pre-damage cap and the delta, mirroring the
+loyalty pair exactly.
+
+Found by asking the question the earlier sweeps did not: not "who enumerates an any target" but "who
+reads a permanent's type *after* the damage resolves". The sweep behind it was exhaustive — all
+seventeen effect records declaring `anyTarget()` had their handlers checked for type-specific logic,
+and Soul Burn is the only one. (`SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffectHandler`'s
+`isCreature` is about the creature being sacrificed, not the target.)
+
+### Behaviour changes
+
+| Path | Before | Now |
+|---|---|---|
+| Every "any target" spell and ability | a battle was never offered and was rejected on cast | a battle is a legal target; damage removes defense counters and can defeat a Siege |
+| Soul Burn at a battle | (unreachable) would have gained 0 life | gains life equal to the defense counters removed, capped as usual |
+| Any-target rejection message | "Target must be a creature, planeswalker, or player" | "…creature, planeswalker, battle, or player" |
+
+The message change is the reason row 5 was a Step 8 item rather than a nicety: `describe`'s
+`PermanentAnyOfPredicate` branch yields empty the moment one branch is unphraseable, so without the
+battle arm the whole any-target sentence would have collapsed to the generic
+"Target does not match the required predicate". Five test classes assert the wording and were updated
+together with it.
+
+`creatureOrPlaneswalker()` is deliberately unchanged — "target creature or planeswalker" is a
+narrower restriction than "any target", which is exactly why the two could not keep sharing a leaf.
+
+### Tests
+
+- `TargetPredicateEquivalenceTest` — a battle joins the shared board, so the two existing sweeps
+  (evaluator vs spec interpreter, over every canonical declared target) now cover it for free, plus
+  `anyTargetAdmitsABattleButCreatureOrPlaneswalkerDoesNot` asserting the split through both paths.
+- `InvasionOfInnistradTest.ChosenAsAnyTarget` (two) — Shock is *enumerated* as able to hit the battle
+  and removes 2 defense counters; a lethal Shock runs the whole Siege-defeat → exile → cast-transformed
+  chain from a targeted burn spell. The pre-existing `DamageToBattle` tests still drive the services
+  directly, since no implemented card can aim a *division* at a battle.
+- `PredicateEvaluationServiceTest` (two) — the leaf accepts a battle and rejects a creature, and the
+  layered overload answers from the `CharacteristicState`. The second was confirmed to fail with the
+  layered arm removed, which is the failure mode that arm exists to prevent.
+- `SoulBurnTest.gainsLifeForDamageDealtToABattle`.
+
+### What is left in this area
+
+Nothing blocks anything, but three known items outlive the plan:
+
+- **`StepTriggerService:448`'s `admits(PLAYER) && admits(PERMANENT)` shape-sniff**, still paired with
+  `TriggerTargetCollector`'s `declares(anyTarget())`. Steps 6 and 7 both asked that whoever fixes one
+  fixes both. Still nothing is mis-targeted: the collector applies the real narrowing afterwards, and
+  that narrowing now includes battles.
+- **`EffectResolution.targetsSpellOnStack`'s four-`instanceof` list** — the "Risk hotspots" entry.
+  When those four become honest `AnyOf(spells(...), permanents(...))`,
+  `ActivatedAbility.isSpellOnlyTarget` must flip to `!admits(PERMANENT)` in the same commit.
+- **`DamageSupport.dealCreatureDamage`'s creature-trigger block** fires Kazarov / Death Pits of Rath
+  for whatever `Permanent` reaches it. Step 8a flagged this; it already mis-fires for a non-creature
+  planeswalker today and now does the same for a battle. Gating it on `gameQueryService.isCreature` is
+  rules-correct for both and is a change on its own merits.
 
 ---
 

@@ -1794,7 +1794,8 @@ public class SpellCastingService {
                         }
                         if (!predicateEvaluationService.matchesPermanentPredicate(
                                 perm, assignmentRestriction, assignmentContext)) {
-                            throw new IllegalStateException("Target must be a creature, planeswalker, or player");
+                            throw new IllegalStateException(
+                                    "Target must be a creature, planeswalker, battle, or player");
                         }
                     }
                     if (assignment.getValue() <= 0) {

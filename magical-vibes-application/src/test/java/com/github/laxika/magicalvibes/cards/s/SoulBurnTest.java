@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfInnistrad;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -109,6 +112,27 @@ class SoulBurnTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20); // 0B on X → 0 life
+    }
+
+    /**
+     * Damage to a battle removes defense counters (CR 120.3h) and marks nothing, so the damage
+     * actually dealt has to be measured as the drop in defense — reading marked damage would report
+     * zero and gain no life.
+     */
+    @Test
+    @DisplayName("Damage to a battle gains life equal to the defense counters removed")
+    void gainsLifeForDamageDealtToABattle() {
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfInnistrad());
+        battle.setCounterCount(CounterType.DEFENSE, 5);
+        harness.setHand(player1, List.of(new SoulBurn()));
+        harness.addMana(player1, ManaColor.BLACK, 6); // X=3
+        harness.setLife(player1, 20);
+
+        harness.castSorcery(player1, 0, 3, battle.getId());
+        harness.passBothPriorities();
+
+        assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(2);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
     }
 
     @Test

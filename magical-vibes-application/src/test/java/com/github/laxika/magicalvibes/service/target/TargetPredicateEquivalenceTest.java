@@ -91,6 +91,7 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
         permanents.put("creature", battlefield(player1, card("Bear", CardType.CREATURE)));
         permanents.put("land", battlefield(player1, card("Forest", CardType.LAND)));
         permanents.put("planeswalker", battlefield(player1, card("Walker", CardType.PLANESWALKER)));
+        permanents.put("battle", battlefield(player1, card("Siege", CardType.BATTLE)));
         permanents.put("artifact", battlefield(player2, card("Thopter", CardType.ARTIFACT)));
         permanents.put("enchantment", battlefield(player2, card("Pacifism", CardType.ENCHANTMENT)));
 
@@ -293,6 +294,30 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
         assertThat(matchesPermanent(TargetPredicates.anyTarget(), artifact)).isFalse();
         assertThat(matchesPlayer(TargetPredicates.playerOrPermanent(), player2.getId())).isTrue();
         assertThat(matchesPlayer(TargetPredicates.anyTarget(), player2.getId())).isTrue();
+    }
+
+    /**
+     * CR 115.4 lists battles among what "any target" may be, so {@code anyTarget()} needs a permanent
+     * leaf of its own — "target creature or planeswalker" is a narrower restriction and must not
+     * inherit the battle.
+     */
+    @Test
+    @DisplayName("anyTarget() admits a battle; creatureOrPlaneswalker() does not")
+    void anyTargetAdmitsABattleButCreatureOrPlaneswalkerDoesNot() {
+        Permanent battle = permanents.get("battle");
+
+        assertThat(matchesPermanent(TargetPredicates.anyTarget(), battle)).isTrue();
+        assertThat(specInterpreterAccepts(TargetPredicates.anyTarget(), battle.getId())).isTrue();
+
+        assertThat(matchesPermanent(TargetPredicates.creatureOrPlaneswalker(), battle)).isFalse();
+        assertThat(specInterpreterAccepts(TargetPredicates.creatureOrPlaneswalker(), battle.getId())).isFalse();
+
+        Permanent creature = permanents.get("creature");
+        Permanent walker = permanents.get("planeswalker");
+        for (Permanent stillLegal : List.of(creature, walker)) {
+            assertThat(matchesPermanent(TargetPredicates.creatureOrPlaneswalker(), stillLegal)).isTrue();
+            assertThat(matchesPermanent(TargetPredicates.anyTarget(), stillLegal)).isTrue();
+        }
     }
 
     /**

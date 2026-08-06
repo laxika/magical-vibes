@@ -153,10 +153,55 @@ class InvasionOfInnistradTest extends BaseCardTest {
     }
 
     /**
-     * A battle is a legal damage recipient (CR 115.4), and damage dealt to it removes that many
-     * defense counters (CR 120.3h). Invasion of Innistrad cannot yet be *chosen* as an "any target",
-     * so these drive the damage services directly — the same way the Siege-defeat test above drives
-     * {@link BattleDefeatSupport}.
+     * CR 115.4 lists battles among what "any target" may be, so a burn spell may be aimed at one and
+     * the damage removes defense counters (CR 120.3h).
+     */
+    @Nested
+    @DisplayName("Chosen as an \"any target\"")
+    class ChosenAsAnyTarget {
+
+        @Test
+        @DisplayName("A burn spell can be aimed at a battle, removing that many defense counters")
+        void burnSpellTargetsTheBattle() {
+            Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfInnistrad());
+            battle.setCounterCount(CounterType.DEFENSE, 5);
+            harness.setHand(player1, List.of(new Shock()));
+            harness.addMana(player1, ManaColor.RED, 1);
+
+            var response = harness.getValidTargetService().computeValidTargetsForSpell(
+                    gd, gd.playerHands.get(player1.getId()).getFirst(), player1.getId(), null);
+            assertThat(response.validPermanentIds()).contains(battle.getId());
+
+            harness.castInstant(player1, 0, battle.getId());
+            harness.passBothPriorities();
+
+            assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("Removing the last defense counter by targeted damage defeats the Siege")
+        void lethalBurnDefeatsTheSiege() {
+            Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfInnistrad());
+            battle.setCounterCount(CounterType.DEFENSE, 2);
+            harness.setHand(player1, List.of(new Shock()));
+            harness.addMana(player1, ManaColor.RED, 1);
+
+            harness.castInstant(player1, 0, battle.getId());
+            harness.passBothPriorities(); // resolve Shock
+            harness.passBothPriorities(); // resolve defeat trigger (exile + put transformed spell)
+            harness.passBothPriorities(); // resolve Deluge spell
+            harness.passBothPriorities(); // resolve Deluge ETB
+
+            assertThat(gd.playerBattlefields.get(player1.getId()))
+                    .noneMatch(p -> "Invasion of Innistrad".equals(p.getCard().getName()));
+            assertThat(findPermanent(player1, "Deluge of the Dead").isTransformed()).isTrue();
+        }
+    }
+
+    /**
+     * Damage dealt to a battle removes that many defense counters (CR 120.3h). These drive the damage
+     * services directly, so the divided-damage entry points are covered without a card that can aim
+     * a division at a battle.
      */
     @Nested
     @DisplayName("Damage to a battle")

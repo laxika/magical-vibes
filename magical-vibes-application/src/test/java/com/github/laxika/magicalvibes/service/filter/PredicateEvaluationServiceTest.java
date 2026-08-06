@@ -38,6 +38,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredic
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
+import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -166,6 +168,14 @@ class PredicateEvaluationServiceTest {
         Card card = new Card();
         card.setName(name);
         card.setType(CardType.ARTIFACT);
+        card.setManaCost("{1}");
+        return card;
+    }
+
+    private static Card createBattle(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.BATTLE);
         card.setManaCost("{1}");
         return card;
     }
@@ -962,6 +972,35 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsPlaneswalkerPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentIsBattlePredicate accepts a battle and rejects a creature")
+        void battlePredicateMatchesOnlyBattles() {
+            Permanent battle = addPermanent(player1Id, createBattle("Invasion of Somewhere"));
+            Permanent bear = addPermanent(player1Id,
+                    createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, battle, new PermanentIsBattlePredicate())).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, bear, new PermanentIsBattlePredicate())).isFalse();
+        }
+
+        /**
+         * Without its own arm in the layered overload the predicate falls through to the default,
+         * which re-asks the non-layered path and so ignores the layer-4 types computed so far.
+         */
+        @Test
+        @DisplayName("PermanentIsBattlePredicate is answered from the layered state during the CR 613 pass")
+        void battlePredicateReadsTheLayeredState() {
+            Permanent bear = addPermanent(player1Id,
+                    createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            CharacteristicState state = new CharacteristicState(bear.getCard(), bear);
+            state.overrideCardTypes(List.of(CardType.BATTLE));
+
+            assertThat(evaluator.matchesPermanentPredicate(
+                    state, bear, new PermanentIsBattlePredicate(), FilterContext.of(gd))).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(
+                    state, bear, new PermanentIsCreaturePredicate(), FilterContext.of(gd))).isFalse();
         }
     }
 

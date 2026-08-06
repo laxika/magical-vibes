@@ -166,7 +166,7 @@ class FightWithFireTest extends BaseCardTest {
                         player2.getId(), 6
                 ))
         ).isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("creature, planeswalker, or player");
+                .hasMessageContaining("creature, planeswalker, battle, or player");
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(plains.getId()));
@@ -217,7 +217,7 @@ class FightWithFireTest extends BaseCardTest {
                         player2.getId(), 6
                 ))
         ).isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("creature, planeswalker, or player");
+                .hasMessageContaining("creature, planeswalker, battle, or player");
     }
 
     private Permanent addToBattlefield(Player player, Card card) {

@@ -231,7 +231,7 @@ class RodOfRuinTest extends BaseCardTest {
                 gd, rod.getCard(), rod.getCard().getActivatedAbilities().getFirst(),
                 player1.getId(), 0);
 
-        // "Any target" is a creature, planeswalker, or player — the land and the Rod itself
+        // "Any target" is a creature, planeswalker, battle, or player — the land and the Rod itself
         // are not legal, and activation would reject them.
         assertThat(response.validPermanentIds()).contains(bearId).doesNotContain(plainsId, rod.getId());
         assertThat(response.validPlayerIds()).contains(player1.getId(), player2.getId());
@@ -245,7 +245,7 @@ class RodOfRuinTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, rod.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("creature, planeswalker, or player");
+                .hasMessageContaining("creature, planeswalker, battle, or player");
     }
 
     // ===== Fizzle =====
