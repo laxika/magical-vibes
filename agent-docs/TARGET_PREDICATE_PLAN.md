@@ -256,7 +256,8 @@ mechanical high-churn. Phase 4 is deletion.
 | 5 | Collapse the three graveyard categories onto `GraveyardCards.scope`; delete the five hand-copied scope mappings. | LOW | **DONE** — see "Step 5 outcome". Not LOW and not five: there were **fourteen** copies and they disagreed, so six effects were declaring a scope they did not mean. Six rules-visible fixes. |
 | 6 | Migrate the derived-boolean readers (`includesPermanents` / `includesPlayers` / `isGraveyard`) in the trigger collectors, `StepTriggerService`, AI, and `EffectResolution.collectTargetTypes`. ~30 call sites across engine + AI. | MED | **DONE** — see "Step 6 outcome". 152 call sites, not ~30, across 31 files; `TargetSpec.admits` was changed to read `declaredTarget()` so it stops allocating. |
 | 7 | Delete `TargetCategory`; update `TargetSpecRatchetTest`, `scripts/targetspec-audit.py`, and the `EFFECTS_INDEX.md` category table. | LOW | **DONE** — see "Step 7 outcome". Genuinely LOW; the two `== ANY_TARGET` readers became `TargetSpec.declares(...)`, a new identity reader added for exactly that purpose. |
-| 8 | **Optional, separate decision.** Add `PermanentIsBattlePredicate` and include battles in the `ANY_TARGET` factory per CR 115.4 (defect 4). Needs a rules review of the battle-damage path first — do not bundle into Step 7. | MED | TODO |
+| 8 | **Optional, separate decision.** Add `PermanentIsBattlePredicate` and include battles in the `ANY_TARGET` factory per CR 115.4 (defect 4). Needs a rules review of the battle-damage path first — do not bundle into Step 7. | MED | **BLOCKED** — the required rules review was done and says *not ready*. See "Step 8 review outcome". Widening `anyTarget()` alone would offer a battle that resolution silently ignores. Prerequisites are Step 8a below. |
+| 8a | **Prerequisite for Step 8.** Teach the divided-damage and any-target damage paths to treat a battle as a damage recipient (CR 120.3h), and replace the two hand-rolled creature-or-planeswalker enumerations that bypass the declared predicate. See "Step 8 review outcome" for the exact sites. | MED | TODO |
 
 Steps 1-3 are independently valuable and can be shipped without 4-8. If the plan is abandoned
 after Step 3, the codebase is strictly better than it is today and `TargetCategory` still exists.
@@ -840,6 +841,84 @@ turn the guard into a false positive.
   for `TriggerCollectionService`, Defiant Greatmaw for `PermanentCounterSupport`, Spiketail Hatchling
   + Eight-and-a-Half-Tails for `ActivatedAbility`, Glamerdye + Magical Hack for the duals, plus Arc
   Trail and Boggart Shenanigans).
+
+---
+
+## Step 8 review outcome
+
+**No code was changed.** Step 8 required a rules review of the battle-damage path before widening
+`anyTarget()`; the review says the engine is **not ready**, so the step stopped at the gate rather
+than shipping a target that enumeration offers and resolution mishandles.
+
+CR 115.4 re-verified: *"These targets may be creatures, players, planeswalkers, or battles."* The
+premise of defect 4 is correct — `anyTarget()` is missing battles, and there is still no
+`PermanentIsBattlePredicate` in `model/filter/`. What is wrong is defect 4's **cost estimate**: it
+calls this "a one-line fix in a single factory". It is not.
+
+### What is already ready
+
+More than the plan assumed. `GameQueryService.isBattle` **already exists** and is layer-aware
+(`:973-975`, same shape as `isPlaneswalker`); the 0-defense state-based action is implemented and
+correctly cited (`StateBasedActionService:206-211`, CR 704.5v verified); `BattleDefeatSupport`
+implements the full Siege defeat → exile → cast-transformed flow; the hexproof / shroud / protection
+gates in `TargetLegalityService` and `TargetValidationService` are type-agnostic and need no change;
+`TargetPredicate.Kind` needs no new constant, because a battle is a battlefield permanent and belongs
+under `PERMANENT`; and the view/frontend need nothing — battles already live in
+`gameData.playerBattlefields`, serialize as ordinary `PermanentView`s with their `DEFENSE` counter,
+and the client highlights targets purely by id. The `battle`-relevant "protector" mechanic
+(`Permanent.protectorPlayerId`) gates **attacking** only (`AttackLegalityService`), never targeting,
+so it is correctly irrelevant here.
+
+`PredicateEvaluationService.matchesPermanentPredicate(Permanent, …)` (`:318-903`) is **exhaustive with
+no `default`**, so adding a leaf to the sealed `PermanentPredicate` is a compile error until that arm
+exists. That is the safety net the whole design relies on, and it works.
+
+### Why it is blocked — resolution would mishandle an offered battle
+
+Three of these are the exact failure the step was told to stop on.
+
+| # | Site | What breaks |
+|---|---|---|
+| 1 | `DamageSupport.dealDividedDamageToAnyTargets:1013-1019` **and** `DealDividedDamageEffectHandler:113-120` | Both `continue` past a permanent that is not a creature or a printed planeswalker. `DealDividedDamageEffect` declares `anyTarget()`, so Fireball / Arc Trail / Cone of Flame / Jaya's Immolating Inferno would **offer** a battle and then deal it **zero** damage — no defense removed, no log, no defeat check. Their comment ("divided damage only ever targets creatures, planeswalkers, or players") is false post-battles. |
+| 2 | `DamageSupport.resolveAnyTargetDamage:529-546` (the battle arm) | Returns before the shared pipeline, so it skips `applyCreaturePreventionShield`, every redirect shield (Harm's Way, Divine Deflection, Palisade Giant), `getDamageToRecipientMultiplier` (Gisela), `getSpellDamageReduction`, and **`checkSpellLifelink`** — a lifelink burn spell hitting a battle gains no life (CR 702.15b, verified). Path A's battle arm (`:270-285`) *does* call lifelink, so the two disagree. Six-plus `Prevent*` effects declare `anyTarget()`, so a shield could be legally placed on a battle and then ignored by the one path that damages it. |
+| 3 | `TriggerTargetCollector:186-190` | Hand-rolls the any-target narrowing (`isCreature \|\| printed PLANESWALKER`) instead of evaluating the predicate. It *detects* the slot with `declares(anyTarget())` — which keeps working, since `ANY_TARGET` is interned — but then filters battles out by hand. Flameblast Dragon and Form of the Dragon would keep excluding battles no matter what the factory says. |
+| 4 | `PermanentChoiceBattlefieldHandlerService:1040-1045` | Same hand-rolled pair for reflexive-trigger targets (Sorin, Imperious Bloodlord); it reads only `admits(Kind.PERMANENT)` and never the restriction. |
+| 5 | `TargetValidationService.describe:180-196` | `default -> List.of()`, and the `PermanentAnyOfPredicate` branch bails to empty the moment *any* branch is unphraseable. Without a `"battle"` arm, **every** any-target rejection message silently degrades from "Target must be a creature, planeswalker, or player" to the generic string — regressing `TargetValidationServiceSpecTest:161`, `FireballTest:271`, `RodOfRuinTest:248`, `DarkNourishmentTest:110`, `FightWithFireTest:165`. |
+
+`DamageSupport.dealCreatureDamageUnpreventable:347` also has no battle arm and would mark damage on a
+battle instead of removing defense, but its only callers are "target creature" effects, so a battle
+cannot reach it today. It is a latent hazard, not a blocker.
+
+### What Step 8a must do, and what Step 8 then becomes
+
+**8a (prerequisite, behaviour-changing, needs its own tests):** fix rows 1-4 above. Row 1 is the real
+rules bug and is worth doing on its own merits — it is reachable today via combat and via any future
+battle-damage source, independent of this plan. Row 3 and row 4 are the same class of defect Steps 2b
+and 3 already fixed twice: an enumeration path that re-implements the restriction instead of
+evaluating it.
+
+**8 (after 8a):** add `PermanentIsBattlePredicate` (a bare record, mirroring
+`PermanentIsPlaneswalkerPredicate`), add it to the sealed `permits`, then:
+
+- `PredicateEvaluationService:448`-style arm with the `gameData == null` → printed-type branch (compile error until added);
+- `PredicateEvaluationService:1148`-style layered arm `state.hasCardType(CardType.BATTLE)` — without it the `default` at `:1179` silently falls back to the non-layered path and ignores layer-4 type changes;
+- `TargetValidationService.describe` → `List.of("battle")` (row 5);
+- **do not** add it to `matchesStaticFilter`'s throwing whitelist (`:938-991`) unless a static/continuous ability actually filters on "battle" — `TargetPredicateEvaluationService:25-27` documents that nothing on the targeting path reaches it, and the "Risk hotspots" entry says new leaves must not widen what does;
+- `TargetPredicates`: intern `IS_BATTLE` and give `anyTarget()` its **own** permanent leaf. It currently shares `IS_CREATURE_OR_PLANESWALKER` with `creatureOrPlaneswalker()`, which must stay battle-free ("target creature or planeswalker" is not "any target") — so `ANY_TARGET` becomes `anyOf(PLAYER, permanents(anyOf(IS_CREATURE, IS_PLANESWALKER, IS_BATTLE)))`.
+
+Test material exists: Invasion of Innistrad (INR 120) is the **only** implemented battle, it is a
+Siege, and `InvasionOfInnistradTest` already shows the setup (cast it, 5 defense counters, defeat via
+`BattleDefeatSupport`).
+
+### Unrelated verified defect found during the review
+
+`DamageSupport:270` comments the damage→defense-counter removal as **CR 310.8**. Verified: CR 310.8 is
+*"If a non-Siege battle's defense is 0, it's put into its owner's graveyard"* — a state-based action,
+not the damage result. The correct citation is **CR 120.3h** (*"Damage dealt to a battle causes that
+many defense counters to be removed from that battle"*, verified), which also matches the CR 120.3c
+planeswalker citation 16 lines above it. CR 310.6 says the same thing and would also be correct.
+`DamageSupport:944` has the same problem — it cites only CR 120.3c for a comment covering both the
+planeswalker and battle destinations. Not fixed here; this step changed no code.
 
 ---
 
