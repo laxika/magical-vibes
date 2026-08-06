@@ -47,8 +47,12 @@ class GalvanicIterationTest extends BaseCardTest {
                 && e.getDescription().contains("Copy Lightning Bolt"));
         assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).doesNotContainKey(player1.getId());
 
+        // Resolve the copy trigger, which creates the copy and offers a retarget choice.
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        // Resolve the copy, then the original Lightning Bolt.
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         harness.clearPriorityPassed();
