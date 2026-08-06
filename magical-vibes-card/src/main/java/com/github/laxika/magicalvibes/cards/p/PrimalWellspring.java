@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaWithInstantSorceryCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 
 import java.util.List;
 
@@ -20,7 +21,7 @@ public class PrimalWellspring extends Card {
         // or sorcery spell, copy that spell and you may choose new targets for the copy.
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new AwardAnyColorManaWithInstantSorceryCopyEffect()),
+                List.of(new AwardAnyColorManaEffect(1, ManaSpendRestriction.INSTANT_SORCERY_COPY)),
                 "{T}: Add one mana of any color. When that mana is spent to cast an instant or sorcery spell, copy that spell and you may choose new targets for the copy."
         ));
     }

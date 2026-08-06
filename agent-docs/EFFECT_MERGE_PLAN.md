@@ -71,7 +71,7 @@ high-churn or needs a design call and is optional.
 | 1 | Emblem effects → `CreateEmblemEffect` | 16 | LOW | **DONE** — premise held (all 16 records zero-component, all 16 handlers identical bar Garruk's `getTargetId()`); two deliberate deltas: the `playerIds.contains` guard now runs on the controller path too, and Garruk's emblem log gains the trailing `.` the other 15 already had |
 | 2 | Outright deletions (compose from existing effects) | 6 | LOW | **DONE** — rows 1–4 held; the `SacrificeSelf*` row did **not** (`SequenceEffect` has no "if you do" gate, so composing it would have reverted a `9b8147333` fix) and was replaced with a new `SacrificeSelfThenEffect(CardEffect)`, which also absorbs `SacrificeSelfThenDealDamageToTargetPlayerEffect` — that class was **not** unused |
 | 3 | Redirect-next-damage family | 6 | LOW | **DONE** — premise held for all six handlers; the audit missed a third axis (`TargetSpec.harmful`), which is now derived from `destinationRole == TARGET` and makes Zealous Inquisitor harmful like its Zhalfirin Crusader twin (CR 702.16b). The `PermanentPredicate` moved out of the effect onto the two white-creature cards |
-| 4 | Any-color mana family | 7 | LOW | TODO |
+| 4 | Any-color mana family | 7 | LOW | **DONE** — premise held; `eachManaChosenSeparately` is derived from the restriction, not a component, and `AwardAnyColorSubtypeSpellManaEffect` (Sliver Hive) was left out as the plan specified. Three deliberate deltas, all rules fixes: Damping Sphere / land-type replacement now see spend-restricted land mana, "could produce" scans (CR 106.7) now include restricted any-color lands, and the AI's choice-prompt filter covers all nine restrictions |
 | 5 | Combat-requirement / must-attack | 5 | LOW | TODO |
 | 6 | `SetLifeTotalEffect` | 3 | LOW | TODO |
 | 7 | `SkipNextEffect` | 3 | MED | TODO |
@@ -252,37 +252,72 @@ creature with protection from white; covered by
 
 ---
 
-### Step 4 — Any-color mana family
+### Step 4 — Any-color mana family — **DONE**
 
-**Target**
+**Shipped**
 ```java
 public record AwardAnyColorManaEffect(DynamicAmount amount,
                                       ManaSpendRestriction restriction,
-                                      boolean eachManaChosenSeparately) implements CardEffect
+                                      CardSubtype subtype) implements ManaProducingEffect
+// sugar: (), (int), (DynamicAmount), (int, ManaSpendRestriction), (int, ManaSpendRestriction, CardSubtype)
+// enum ManaSpendRestriction { NONE, INSTANT_SORCERY_COPY, INSTANT_SORCERY_ONLY, FLASHBACK_ONLY,
+//                             CREATURE_SPELL_ONLY, CHOSEN_SUBTYPE_CREATURE,
+//                             CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE, SUBTYPE_SPELL_OR_ABILITY }
 ```
 
-**Absorbs**: `AwardXAnyColorManaEffect` (1), `AwardAnyOneColorInstantSorceryOnlyManaEffect` (1),
-`AwardFlashbackOnlyAnyColorManaEffect` (1), `AwardAnyColorManaWithInstantSorceryCopyEffect` (1),
-`AwardAnyColorCreatureSpellManaEffect` (2), `AwardAnyColorSubtypeSpellOrAbilityManaEffect` (2),
-`AwardAnyColorChosenSubtypeCreatureManaEffect` (3).
+Seven records and two handlers deleted, one record + one enum + one support class
+(`service/effect/AnyColorManaChoiceSupport`) added. Cards: Springjack Pasture, Resonating Lute,
+Altar of the Lost, Primal Wellspring, Ancient Ziggurat, Somberwald Sage, Smokebraider, Primal Beyond,
+Cavern of Souls, Pillar of Origins, Unclaimed Territory. The survivor's 45 existing call sites were
+untouched — the `()` / `(int)` constructors still mean the same thing.
 
-**Evidence** — the restriction axis is **already unified on the choice side**:
-`ChoiceContext.ManaColorChoice` (`ChoiceContext.java:17`) is a single record carrying
-`playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, instantSorceryOnly,
-spellOrAbilitySubtype, fixedColorOptions, creatureSpellOnly, grantsUncounterable`. The effect side
-never followed. The same seven-branch `else if` chain is duplicated verbatim in
-`ActivatedAbilityExecutionService:584-666` (activation) and again at `:962-978` (potential-mana
-estimation) — collapsing the records collapses all three copies.
+**What held** — the restriction axis really was already unified on the choice side
+(`ChoiceContext.ManaColorChoice`), and every branch reduces to "evaluate an amount, then open one
+`PendingInteraction.ColorChoice` with the matching context". `AnyColorManaChoiceSupport.beginColorChoice`
+is now the single expression of the nine cases, shared by the mana-ability path, the stack handler and
+the enchanted-land-tap trigger.
 
-`AwardXAnyColorManaEffect` is only "amount comes from xValue"; `AwardManaOfColorsEffect` already
-proves `DynamicAmount` + `AmountContext.forManaAbility(permanent, playerId, xValue)` works here
-(`:634`).
+**What the audit missed**
+- **`eachManaChosenSeparately` is not an independent axis.** `ChoiceHandlerService.handleManaColorChosen`
+  decides per-mana vs per-batch colour picking from *which restriction branch it took* — there is no
+  such flag on `ManaColorChoice`. Carrying a boolean on the effect would have needed new plumbing to
+  mean anything, so polarity is derived instead (`FLASHBACK_ONLY` and `SUBTYPE_SPELL_OR_ABILITY` are
+  the "any combination of colors" wordings), exactly as Step 3 derived `harmful`.
+- **There is an eighth sibling.** `AwardAnyColorSubtypeSpellManaEffect` (Sliver Hive) — a *printed*
+  subtype routed into the same spell-only bucket as Cavern of Souls — is the natural
+  `CHOSEN_SUBTYPE_CREATURE` counterpart with a fixed type. It was deliberately left out to stay inside
+  the plan's scope; folding it in is a one-branch follow-up (it would need the `subtype` component to
+  serve two restrictions instead of one).
+- **The X variant is not just "amount from xValue".** It also reported nothing to the AI's estimator
+  where the plain form reports full colour coverage. `estimatedCountsAllColors()` is therefore
+  `restriction == NONE && amount instanceof Fixed`, which keeps Springjack Pasture invisible to the
+  estimator instead of making the AI believe it taps for a free any-colour mana.
 
-**Gotchas**
-- `AwardAnyColorManaWithInstantSorceryCopyEffect` also does
-  `gameData.pendingNextInstantSorceryCopyCount.merge(...)` — a restriction case, not a separate effect.
-- `AwardAnyColorManaEffect` is the only one overriding `estimatedCountsAllColors()`; the AI's
-  potential-mana model must keep that override for restriction-free instances.
+**Deliberate deltas** (all three widen a scan that had silently omitted spend-restricted producers)
+- `calculateTotalManaProduction` now counts every restriction, so **Damping Sphere and the
+  land-type replacements (Infernal Darkness / Reality Twist) finally see restricted land mana**. It
+  previously counted flashback and subtype-spell mana but not creature-spell, chosen-subtype,
+  instant/sorcery-only or copy mana, so Cavern of Souls under Infernal Darkness got a free any-colour
+  prompt while `PotentialManaService.estimateLandManaAmount` — the AI mirror — already modelled it as
+  one replaced mana. Verified against CR 106.6 ("This doesn't affect the mana's type"). Covered by
+  `DampingSphereTest.multiManaLandWithSpendRestrictionProducesColorlessInstead`.
+- `collectManaTypesFromEffects` / `collectManaColorsFromEffects` now treat a spend-restricted
+  any-colour land as a source of all five colours, per CR 106.7 (what a permanent "could produce" is
+  about the mana's type). Covered by
+  `FellwarStoneTest.spendRestrictedOpponentLandContributesEveryColor`.
+- `PotentialManaService.wouldManaAbilityTriggerChoice` collapses from a five-class list to one
+  `instanceof`, so the AI's "safe" virtual pool now also skips the X, instant/sorcery-only and
+  subtype-restricted abilities — all of which do open a colour prompt. Strictly more conservative.
+
+**Guards that preserve behaviour deliberately**
+- The revertable-mana-activation check (`ActivatedAbilityExecutionService:~330`) still requires
+  `restriction == NONE`: the undo snapshot only covers the ordinary pool and creature mana, so a
+  restricted-bucket activation must not be parked as revertable.
+- The virtual-pool contributions in `PotentialManaService` (`buildVirtualManaPool` /
+  `buildLandOnlyVirtualManaPool`) also require `restriction == NONE`, and `LandManaDrainSupport`
+  skips restricted producers rather than laundering them into plain colorless.
+- `hasOnTapManaEffects` now matches every restriction. Inert today — no card carries a restricted
+  any-colour producer in `EffectSlot.ON_TAP`; all eleven are activated abilities.
 
 ---
 

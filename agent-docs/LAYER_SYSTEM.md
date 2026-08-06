@@ -348,7 +348,7 @@ extend the transformer's visitor when a card needs them): `PreventDamageEffect.f
 `GrantControllerSpellsCantBeCounteredByColorsEffect`, `GrantLifelinkToControllerSpellsByColorEffect`,
 `BoostColorSourceDamageThisTurnEffect`, `DealDamageOnSpellLifeGainEffect`,
 `PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect`,
-`AwardAnyColorSubtypeSpellOrAbilityManaEffect`, and color/land-type words inside trigger
+`AwardAnyColorManaEffect`'s `subtype`, and color/land-type words inside trigger
 predicates and activated-ability definitions. The remaining `CardColor`/`CardSubtype`-carrying
 effect types (token creators, one-shot damage/draw/return effects, costs) consume their
 parameters at resolution and are never re-read from a permanent's text, so they need no

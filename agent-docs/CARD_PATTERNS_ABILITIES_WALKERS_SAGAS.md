@@ -44,9 +44,9 @@ All paths relative to `cards/`.
 | Reveal until basic land (to hand, rest GY) | `h/HermitDruid.java` | `(true, "{G}", RevealUntilBasicLandToHandRestToGraveyardEffect)` — nonbasics do not stop |
 | Mana dork (tap for color) | `b/BirdsOfParadise.java` | `(true, null, AwardAnyColorManaEffect, false)` |
 | Mana rock (tap for N of any color) | `g/GildedLotus.java` | `(true, null, AwardAnyColorManaEffect(3), false)` |
-| Mana rock (choose subtype + tap for any color restricted to chosen creature type) | `p/PillarOfOrigins.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + `(true, null, AwardAnyColorChosenSubtypeCreatureManaEffect, false)` |
-| Land (choose subtype + tap for any color restricted to chosen creature type, and that spell can't be countered) | `c/CavernOfSouls.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + `ManaAbilities.tapFor(COLORLESS)` + `AwardAnyColorChosenSubtypeCreatureManaEffect(true)` |
-| Mana dork (tap for N any color, creature spells only) | `s/SomberwaldSage.java` | `(true, null, AwardAnyColorCreatureSpellManaEffect(3), false)` |
+| Mana rock (choose subtype + tap for any color restricted to chosen creature type) | `p/PillarOfOrigins.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + `(true, null, AwardAnyColorManaEffect(1, CHOSEN_SUBTYPE_CREATURE), false)` |
+| Land (choose subtype + tap for any color restricted to chosen creature type, and that spell can't be countered) | `c/CavernOfSouls.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + `ManaAbilities.tapFor(COLORLESS)` + `AwardAnyColorManaEffect(1, CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE)` |
+| Mana dork (tap for N any color, creature spells only) | `s/SomberwaldSage.java` | `(true, null, AwardAnyColorManaEffect(3, CREATURE_SPELL_ONLY), false)` |
 | Mana dork (ON_TAP) | `l/LlanowarElves.java` | addEffect(ON_TAP, AwardManaEffect) |
 | Mana dork (G or U + conditional Nissa life) | `a/AvidReclaimer.java` | two `{T}` abilities: AwardManaEffect(GREEN\|BLUE) + ConditionalEffect(ControlsPermanent(NISSA), GainLifeEffect(2)) — conditional rider resolved inline on mana abilities |
 | Animate self (X/X) | `c/ChimericStaff.java` | AnimatePermanentsEffect(XValue, XValue, subtypes, …, SELF, UEOT) |

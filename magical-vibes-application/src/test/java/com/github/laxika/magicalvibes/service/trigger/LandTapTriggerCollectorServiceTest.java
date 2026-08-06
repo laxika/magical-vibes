@@ -462,6 +462,7 @@ class LandTapTriggerCollectorServiceTest {
         @Test
         @DisplayName("begins color choice for any-color mana when enchanted land is tapped")
         void beginsColorChoiceForAnyColorMana() {
+            when(amountEvaluationService.evaluate(any(), any(), any())).thenReturn(1);
             Permanent fertileGround = createPermanent("Fertile Ground");
             Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
             fertileGround.setAttachedTo(forest.getId());

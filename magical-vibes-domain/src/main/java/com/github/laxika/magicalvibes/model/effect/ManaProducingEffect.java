@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * (virtual-pool building, land-play color coverage, mana-ability scoring) describe a
  * producer's output without naming the concrete effect type. They are DESCRIPTIVE and
  * deliberately PARTIAL: only the three producers the estimator directly models —
- * {@link AwardManaEffect} (a fixed single color), {@link AwardAnyColorManaEffect} (any of
- * the five colors), and {@link AwardAnyColorChosenSubtypeCreatureManaEffect} (a spend-
- * restricted any-color) — override them. The other, special-routing producers (chosen-player,
+ * {@link AwardManaEffect} (a fixed single color) and {@link AwardAnyColorManaEffect}, which reports
+ * full colour coverage only for its unrestricted flat-amount shape and a bare quantity for the
+ * creature-spell and chosen-subtype restrictions — override them. The other, special-routing producers (chosen-player,
  * restricted-bucket, among-controlled, lands-could-produce, double-pool, flashback/instant-
  * sorcery/subtype-restricted, X, one-of-each) keep the neutral defaults and are resolved
  * exactly by {@code PotentialManaService} / {@code ActivatedAbilityExecutionService}; the
@@ -51,8 +51,8 @@ public interface ManaProducingEffect extends CardEffect {
 
     /**
      * How much mana this effect produces once its color is chosen at resolution
-     * ({@link AwardAnyColorManaEffect} → its amount; {@link AwardAnyColorChosenSubtypeCreatureManaEffect}
-     * → one), or {@code 0} when the estimator models no such output.
+     * (an unrestricted, creature-spell or chosen-subtype {@link AwardAnyColorManaEffect} → its flat
+     * amount), or {@code 0} when the estimator models no such output.
      *
      * <p>This is a <em>quantity</em>, not a promise that the mana is spendable. When
      * {@link #estimatedCountsAllColors()} is {@code false} the producer is spend-restricted: the

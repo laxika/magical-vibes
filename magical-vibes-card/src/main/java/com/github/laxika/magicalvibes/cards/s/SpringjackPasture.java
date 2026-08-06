@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.AwardXAnyColorManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeXPermanentsCost;
@@ -42,7 +42,7 @@ public class SpringjackPasture extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentHasSubtypePredicate(CardSubtype.GOAT)
                         ))),
-                        new AwardXAnyColorManaEffect(),
+                        new AwardAnyColorManaEffect(new XValue()),
                         new GainLifeEffect(new XValue())
                 ),
                 "{T}, Sacrifice X Goats: Add X mana of any one color. You gain X life."

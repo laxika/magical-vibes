@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
@@ -526,12 +526,12 @@ class AiManaManagerTest {
          * no way to pay for, and the engine rejected the cast with the sources already tapped.
          */
         @Test
-        @DisplayName("ignores AwardAnyColorChosenSubtypeCreatureManaEffect — its mana is spend-restricted")
+        @DisplayName("ignores chosen-subtype any-color mana — its mana is spend-restricted")
         void chosenSubtypeManaIsNotCounted() {
             Card card = new Card();
             card.setName("Pillar of Origins");
             card.setType(CardType.ARTIFACT);
-            card.addEffect(EffectSlot.ON_TAP, new AwardAnyColorChosenSubtypeCreatureManaEffect());
+            card.addEffect(EffectSlot.ON_TAP, new AwardAnyColorManaEffect(1, ManaSpendRestriction.CHOSEN_SUBTYPE_CREATURE));
             Permanent perm = new Permanent(card);
             perm.setSummoningSick(false);
             gd.playerBattlefields.get(player1Id).add(perm);
@@ -1818,7 +1818,7 @@ class AiManaManagerTest {
                 card.setName(name);
                 card.setType(CardType.LAND);
                 card.addActivatedAbility(new ActivatedAbility(
-                        true, null, List.of(new AwardAnyColorChosenSubtypeCreatureManaEffect()),
+                        true, null, List.of(new AwardAnyColorManaEffect(1, ManaSpendRestriction.CHOSEN_SUBTYPE_CREATURE)),
                         "{T}: Add one mana of any color. Spend this mana only to cast a creature "
                                 + "spell of the chosen type."));
                 Permanent perm = new Permanent(card);
@@ -2514,12 +2514,12 @@ class AiManaManagerTest {
         }
 
         @Test
-        @DisplayName("skips AwardAnyColorChosenSubtypeCreatureManaEffect — its mana is spend-restricted")
+        @DisplayName("skips chosen-subtype any-color mana — its mana is spend-restricted")
         void skipsChosenSubtypeMana() {
             Card card = new Card();
             card.setName("Pillar of Origins");
             card.setType(CardType.ARTIFACT);
-            card.addEffect(EffectSlot.ON_TAP, new AwardAnyColorChosenSubtypeCreatureManaEffect());
+            card.addEffect(EffectSlot.ON_TAP, new AwardAnyColorManaEffect(1, ManaSpendRestriction.CHOSEN_SUBTYPE_CREATURE));
             ManaPool pool = new ManaPool();
 
             manager.addCardManaToPool(card, pool);
