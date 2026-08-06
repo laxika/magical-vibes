@@ -74,7 +74,7 @@ high-churn or needs a design call and is optional.
 | 4 | Any-color mana family | 8 | LOW | **DONE** — premise held; `eachManaChosenSeparately` is derived from the restriction, not a component. The audit missed an eighth sibling (`AwardAnyColorSubtypeSpellManaEffect`, Sliver Hive), absorbed in a follow-up commit. Three deliberate deltas, all rules fixes: Damping Sphere / land-type replacement now see spend-restricted land mana, "could produce" scans (CR 106.7) now include restricted any-color lands, and the AI's choice-prompt filter covers all restrictions |
 | 5 | Combat-requirement / must-attack | 6 | LOW | **DONE** — premise held for all six handlers; the audit undercounted by one (5b absorbs 2 classes, not 1, so 6 records + 6 handlers went). One unlisted axis found: `MustBlockThisTurnIfAbleEffect` alone carried a `PermanentIsCreaturePredicate` in its spec, preserved by branching `targetSpec()`. Zero behavior change |
 | 6 | `SetLifeTotalEffect` | 6 | LOW | **DONE** — premise held for all four listed handlers; the audit undercounted (4 records, not 3) and the optional stretch fell out easily, so both each-player siblings went too: 6 records + 6 handlers. `EACH_PLAYER` now evaluates the amount once per player, which is what made the stretch free |
-| 7 | `SkipNextEffect` | 3 | MED | TODO |
+| 7 | `SkipNextEffect` | 4 | MED | **DONE** — premise held for all four handlers; the audit undercounted (4 records, not 3). One correction: `boolean targetsPlayer` cannot express the family — Blinding Angel is `targetId`-bound but non-targeting — so the second component is a 3-value `SkipRecipient`, which keeps "which player" off the `SkipKind` axis. Polarity unified on `benign` |
 | 8 | Phase-out + attached-counter placement | 4 | LOW | TODO |
 | 9 | Destroy-referenced-permanent | 3 | LOW | TODO |
 | 10 | Search-target-library + sacrifice costs | 4 | LOW | TODO |
@@ -441,28 +441,73 @@ asserts the null target). Added the cross-contamination assertions a `switch` me
 
 ---
 
-### Step 7 — `SkipNextEffect`
+### Step 7 — `SkipNextEffect` — **DONE**
 
-**Target**: `SkipNextEffect(SkipKind kind, boolean targetsPlayer)` —
-`{ TURN, DRAW_STEP, UNTAP_STEP, COMBAT_PHASE }`.
+**Shipped**
+```java
+public record SkipNextEffect(SkipKind kind, SkipRecipient recipient)
+        implements CombatDamageTriggerContextEffect
+// sugar: (SkipKind) -> recipient = CONTROLLER
+// enum SkipKind      { TURN, UNTAP_STEP, DRAW_STEP, COMBAT_PHASE }
+// enum SkipRecipient { CONTROLLER, DAMAGED_PLAYER, TARGET_PLAYER }
+```
 
-**Absorbs** (8 cards): `SkipNextTurnEffect` (2), `SkipNextDrawStepEffect` (1),
-`SkipNextUntapStepEffect` (1), `SkipNextCombatPhaseEffect` (4).
+Four records and four handlers deleted, one record + two enums + one handler added. Cards (8):
+Chronatog, Meditate; Ivory Gargoyle; Yosei, the Morning Star; Blinding Angel, False Peace,
+Empty City Ruse, Stonehorn Dignitary.
 
-**Evidence** — all four handlers are the same eight lines: resolve a player id,
-`gameData.playerIds.contains` guard, `gameData.skipNextXCount.merge(playerId, 1, Integer::sum)`, log.
-The two axes are which of the four sibling counters in `GameData:251-261`
-(`skipNextCombatPhaseCount`, `skipNextDrawStepCount`, `skipNextTurnCount`, `skipNextUntapStepCount`),
-and `entry.getControllerId()` (Turn, DrawStep) vs `entry.getTargetId()` (UntapStep, CombatPhase).
-`SkipNextCombatPhaseEffect` **already** has `boolean targetsPlayer`.
+**What held** — all four handlers really are the same eight lines (resolve a player id,
+`playerIds.contains` guard, `merge(playerId, 1, Integer::sum)` on one of the four sibling counters,
+one log line), and no consumer outside those handlers ever named the four records: no AI file, no
+view, no serialization. Turn-engine consumers were untouched.
 
-**Risk MED** — `SkipNextCombatPhaseEffect` implements `CombatDamageTriggerContextEffect` returning
-`TriggerContext.DAMAGED_PLAYER`, and `targetSpec()` differs per kind (`harmful` for untap-step vs
-`benign` for combat-phase). Both must become `switch (kind)`. Turn-engine consumers are untouched.
+**What the audit missed**
+- **Four records, not three.** The Step Index said 3 deleted.
+- **`boolean targetsPlayer` cannot express the family.** The plan derived the affected id from
+  `kind` (controller for Turn/DrawStep, target for UntapStep/CombatPhase), but Blinding Angel is
+  `COMBAT_PHASE` with `targetsPlayer = false` and still reads `getTargetId()` — the combat-damage
+  trigger bakes the damaged player in there. So `targetsPlayer` and "which id" are not the same
+  axis, and keying the id on `kind` would have made *whose* occurrence is skipped a property of
+  *what* is skipped — an accident of the current card pool ("target player skips their next turn"
+  is a printable wording). Replaced by a 3-value `SkipRecipient`: `CONTROLLER` reads
+  `controllerId`; `DAMAGED_PLAYER` and `TARGET_PLAYER` both read `targetId` and differ in whether
+  the player was targeted. `targetsPlayer` is exactly `recipient == TARGET_PLAYER`.
 
-**Do NOT merge**: `SkipDrawStepEffect` (static marker read by `StepTriggerService`, no handler) and
-`SkipNextUntapEffect` (marks per-`Permanent` `skipUntapCount`; the step still happens). The
-distinction is documented in their javadocs.
+**Deliberate deltas** (all three inert today)
+- **Polarity unified on `benign`** instead of the planned `switch (kind)`.
+  `SkipNextUntapStepEffect` was the family's only `harmful` spec while the three combat-phase
+  cards were `benign`. Per `TargetSpec`'s own contract `harmful` means "protection from the source
+  must be honoured" — damage / destroy / exile / sacrifice / fight — which a skipped step is not,
+  and the flag is unreadable here regardless: `TargetValidationService:121` only runs
+  `checkProtection` against a permanent target, `ValidTargetService:686` gates on
+  `admits(PERMANENT)`, and `GameSimulator.rankAbilityTargets` only ranks *activated-ability*
+  targets (none of the eight cards is one).
+- **`combatDamageTriggerContext()` is now `null` except for `DAMAGED_PLAYER`.** The absorbed record
+  returned `DAMAGED_PLAYER` unconditionally, including for its targeted form, which never sits in
+  the `ON_COMBAT_DAMAGE_TO_PLAYER` slot. The merged record implements the interface for *every*
+  kind, so this was checked against all four readers — `CombatDamageService:1219`,
+  `TriggerCollectionService:801`, `SequenceEffect:77`, `SacrificeSelfThenEffect:38` — and every one
+  calls the method rather than using `instanceof` as a bare marker, with `null` documented as "no
+  special context". Yosei's `SequenceEffect` therefore still reports the same context it did when
+  its untap step was a non-implementing record.
+- The slf4j line for `COMBAT_PHASE` now reads "skips their next combat phase" rather than "will
+  skip …", matching the game-log line it always disagreed with. Every **game-log** string is
+  preserved byte-for-byte (one phrase per kind, shared by both sinks).
+
+**Tests** — no test referenced any of the four classes by name, and every kind already had card
+coverage. Added the cross-contamination assertions a `switch` merge needs — each kind must land on
+its own counter and no other, and each recipient on the right player:
+`MeditateTest.queuesNothingButTheTurnSkip`,
+`IvoryGargoyleTest.queuesNothingButTheControllersDrawStepSkip`,
+`YoseiTheMorningStarTest.queuesNothingButTheTargetPlayersUntapStepSkip`,
+`BlindingAngelTest.flagsOnlyTheDamagedPlayersCombatPhase` (the `DAMAGED_PLAYER` branch is the one
+where a merged handler could read the controller instead), and the sibling-queue negatives in
+`FalsePeaceTest.resolvingFlagsTargetPlayer`.
+
+**Do NOT merge**: `SkipDrawStepEffect` (static marker read by `StepTriggerService`, no handler),
+`PlayersSkipUntapStepEffect` (global static, Sands of Time) and `SkipNextUntapEffect` (marks
+per-`Permanent` `skipUntapCount`; the step still happens). The distinction is documented in
+`SkipKind`'s javadoc and in each of their own. Still true after the merge.
 
 ---
 
@@ -1081,7 +1126,7 @@ Do these individually; each is self-contained. Reassess before starting — seve
 Checked and found to differ semantically. Do not re-propose without new evidence.
 
 - `MustBeBlockedIfAbleEffect` / `MustBeBlockedByAllCreaturesEffect` / `MustAttackEffect` vs the one-shot `SetCombatRequirementThisTurnEffect` constants that share their wording — static ability vs one-shot flag.
-- `SkipDrawStepEffect` vs `SkipNextDrawStepEffect`; `SkipNextUntapEffect` vs `SkipNextUntapStepEffect` — static marker vs one-shot, permanent-level vs step-level.
+- `SkipDrawStepEffect` / `PlayersSkipUntapStepEffect` / `SkipNextUntapEffect` vs the one-shot `SkipNextEffect` kinds that share their wording — static marker vs one-shot, permanent-level vs step-level.
 - `DamageCantBePreventedEffect` / `…ThisTurnEffect`; `DoubleControllerDamageEffect` / `…ThisTurnEffect` — static layer effect vs turn flag.
 - `BecomeCopyOfTargetCreatureEffect` vs `…UntilEndOfTurnEffect` — deferred `PendingMayAbility` vs immediate `applyCloneCopy` + layer-1 revert.
 - `ReturnTargetCardsFromGraveyardToHandEffect` vs `…ToBattlefieldEffect` — 3-line delegation vs the full ETB pipeline. A rewrite, not a merge.

@@ -40,6 +40,10 @@ class FalsePeaceTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player1.getId(), 0)).isEqualTo(0);
+        assertThat(gd.skipNextTurnCount).isEmpty();
+        assertThat(gd.skipNextUntapStepCount).isEmpty();
+        assertThat(gd.skipNextDrawStepCount).isEmpty();
     }
 
     @Test

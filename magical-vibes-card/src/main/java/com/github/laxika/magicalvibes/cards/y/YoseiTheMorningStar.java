@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipNextUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
+import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipRecipient;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -24,7 +26,7 @@ public class YoseiTheMorningStar extends Card {
 
     public YoseiTheMorningStar() {
         addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(
-                new SkipNextUntapStepEffect(),
+                new SkipNextEffect(SkipKind.UNTAP_STEP, SkipRecipient.TARGET_PLAYER),
                 new TapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS,
                         new PermanentTruePredicate(), 5)));
     }

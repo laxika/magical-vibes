@@ -221,7 +221,7 @@ a code change. Branching on one of these interfaces is fine anywhere — it is t
   `RevealRandomCardFromTargetPlayerHandLoseLifeEqualToManaValueEffect` (reveal random + lose life = its mana value, Singe-Mind Ogre),
   `LookAtRandomCardInTargetPlayerHandEffect`,
   `SphinxAmbassadorEffect`, `TargetPlayerExilesFromHandEffect`, `ChooseCardsFromTargetHandEffect`,
-  `SkipNextCombatPhaseEffect`, `TargetPlayerCantGainLifeRestOfGameEffect`, `DiscardEffect` /
+  `SkipNextEffect`, `TargetPlayerCantGainLifeRestOfGameEffect`, `DiscardEffect` /
   `MillEffect` / `DealDamageToPlayersEffect` (only when recipient is the target player). NOT for the
   bespoke `MayEffect`-wrapped or destroy/sacrifice "damaged player controls" flows, which stay in
   `CombatDamageService`
@@ -1441,10 +1441,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `ControlTargetPlayerNextTurnEffect()` / `(true)` — control target player during their next turn (Mindslaver); `true` = also grant that player an extra turn after the controlled turn (Emrakul, the Promised End; scheduled when control activates)
 - `AdditionalCombatMainPhaseEffect(int)` — additional combat + main phase pairs (Relentless Assault)
 - `AdditionalCombatPhaseEffect(int)` — additional combat phase(s) with NO additional main phase (Finest Hour: "After this phase, there is an additional combat phase")
-- `SkipNextCombatPhaseEffect()` — ON_COMBAT_DAMAGE_TO_PLAYER: the damaged player skips their next combat phase (Blinding Angel). `(true)` = targeted spell variant where the caster picks the affected player (False Peace)
-- `SkipNextTurnEffect()` — controller skips their next turn (Chronatog); counter consumed in `TurnProgressionService.advanceTurn`
+- `SkipNextEffect(SkipKind, SkipRecipient)` / `(SkipKind)` (= `CONTROLLER`) — the one-shot "skips their next …" family. `SkipKind` = `TURN` (Chronatog, Meditate) / `UNTAP_STEP` (Yosei, the Morning Star) / `DRAW_STEP` (Ivory Gargoyle) / `COMBAT_PHASE` (Blinding Angel, False Peace, Empty City Ruse, Stonehorn Dignitary), each queued on its own per-player `GameData.skipNext*Count` and drained by the turn engine. `SkipRecipient` = `CONTROLLER` (no targeting) / `DAMAGED_PLAYER` (ON_COMBAT_DAMAGE_TO_PLAYER bakes the damaged player in as `targetId`; no targeting) / `TARGET_PLAYER` (the only value with a benign `PLAYER` spec). Skipping proceeds past the turn/step/phase as though it didn't exist, so a skipped untap step means no phasing and no untap-restriction choice (Storage Matrix, Static Orb), and a skipped draw step means no turn-based draw and no draw-step triggers. Not the static markers `SkipDrawStepEffect` / `PlayersSkipUntapStepEffect`, nor `SkipNextUntapEffect` (marks individual permanents; the step still happens)
 - `EndTurnEffect()` — end the turn
-- `SkipNextUntapStepEffect()` — target player skips their next untap step. Harmful `PLAYER` spec; queued on `GameData.skipNextUntapStepCount` and consumed by `TurnProgressionService.advanceTurn`. The step is proceeded past as though it didn't exist, so phasing doesn't happen and no untap-restriction choice (Storage Matrix, Static Orb) is offered. Distinct from `SkipNextUntapEffect`, which only marks individual permanents while the step still happens. Yosei, the Morning Star
 
 ## Animate / transform
 

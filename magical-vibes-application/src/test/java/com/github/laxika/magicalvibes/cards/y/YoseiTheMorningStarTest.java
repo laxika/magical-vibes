@@ -81,6 +81,24 @@ class YoseiTheMorningStarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The skip lands on the targeted player's untap-step queue and on no other queue")
+    void queuesNothingButTheTargetPlayersUntapStepSkip() {
+        harness.addToBattlefield(player1, new YoseiTheMorningStar());
+        addReady(player2, new GrizzlyBears());
+
+        killYosei();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(gd.skipNextUntapStepCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextUntapStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(0);
+        assertThat(gd.skipNextTurnCount).isEmpty();
+        assertThat(gd.skipNextDrawStepCount).isEmpty();
+        assertThat(gd.skipNextCombatPhaseCount).isEmpty();
+    }
+
+    @Test
     @DisplayName("Only the targeted player's permanents may be chosen, up to five of them")
     void onlyTargetPlayersPermanentsAreValidChoices() {
         harness.addToBattlefield(player1, new YoseiTheMorningStar());
