@@ -226,6 +226,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect} for resolution. */
     ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_YOU,
     ON_EQUIPPED_CREATURE_DIES,
+    /** Triggers on an Equipment whenever the creature it is attached to transforms, in either
+     *  direction. Fired by {@code AnimationSupport.fireEquipmentTransformTriggers} right after the
+     *  equipped creature's own transform triggers. Used by Neglected Heirloom. */
+    ON_EQUIPPED_CREATURE_TRANSFORMS,
     ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
     ON_OPPONENT_LAND_ENTERS_BATTLEFIELD,
     /** Triggers whenever a land the controller controls enters the battlefield.

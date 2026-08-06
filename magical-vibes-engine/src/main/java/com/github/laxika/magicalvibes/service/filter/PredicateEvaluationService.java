@@ -970,6 +970,14 @@ public class PredicateEvaluationService {
             case PermanentHasSupertypePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsArtifactPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsAttackingPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsAttackingSourceControllerPredicate ignored -> {
+                // Recursion-safe: attack state and attack target are stored on the permanent, so
+                // "creatures attacking you" only needs the source controller from the context
+                // (Boarded Window).
+                UUID sourceControllerId = context == null ? null : context.sourceControllerId();
+                yield permanent.isAttacking() && sourceControllerId != null
+                        && sourceControllerId.equals(permanent.getAttackTarget());
+            }
             case PermanentIsBlockingPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsCreaturePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsEnchantmentPredicate ignored -> matchesStaticLeaf(permanent, predicate);

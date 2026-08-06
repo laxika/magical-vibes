@@ -116,6 +116,7 @@ combat damage step is processed.
 |---|---|---|
 | `ON_DEATH` | `DeathTriggerCollectorService.handleDeathDefault` + `handleDeathMayEffect` + `handleDeathMayPayMana` + `handleLosesLifeEqualToPower` | Death |
 | `ON_EQUIPPED_CREATURE_DIES` | `DeathTriggerCollectorService.handleEquippedCreatureDeathDefault` | Death |
+| `ON_EQUIPPED_CREATURE_TRANSFORMS` | `AnimationSupport.fireEquipmentTransformTriggers` (non-targeting; pushed with the Equipment as `sourcePermanentId`) | Transform |
 | `ON_ALLY_CREATURE_DIES` (targeting variants) | `TriggerCollectionService.checkAllyCreatureDeathTriggers` | Death |
 | `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` (targeting branches) | `DeathTriggerCollectorService.addEnchantedPermanentDeathEntry` | Death |
 | `ON_ATTACK` (attached-permanent flavour) | `CombatTriggerService` aura/equipment flow | Attack |

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "221")
+@CardRegistration(set = "INR", collectorNumber = "422")
 public class TraverseTheUlvenwald extends Card {
 
     public TraverseTheUlvenwald() {

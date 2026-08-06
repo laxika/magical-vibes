@@ -13,6 +13,8 @@ import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "104")
 @CardRegistration(set = "INR", collectorNumber = "117")
+@CardRegistration(set = "INR", collectorNumber = "309")
+@CardRegistration(set = "INR", collectorNumber = "383")
 public class HeartlessSummoning extends Card {
 
     public HeartlessSummoning() {

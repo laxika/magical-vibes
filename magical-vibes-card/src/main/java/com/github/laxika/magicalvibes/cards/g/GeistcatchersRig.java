@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "223")
+@CardRegistration(set = "INR", collectorNumber = "264")
 public class GeistcatchersRig extends Card {
 
     public GeistcatchersRig() {

@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounter
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
+import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -109,6 +110,11 @@ public class GameData {
     public final Map<UUID, java.util.EnumMap<ManaColor, Integer>> spellCastManaSpentOnX = new ConcurrentHashMap<>();
     /** Tracks which permanent types each player has cast from graveyard this turn via Muldrotha-style effects. */
     public final Map<UUID, Set<CardType>> permanentTypesCastFromGraveyardThisTurn = new ConcurrentHashMap<>();
+    /**
+     * Permanents whose once-per-your-turn graveyard cast permission has already been used this turn
+     * (Gisa and Geralf), keyed by the granting permanent's id.
+     */
+    public final Set<UUID> oncePerTurnGraveyardCastPermissionsUsedThisTurn = ConcurrentHashMap.newKeySet();
     /** Snapshot of per-player spell counts from the previous turn. Used by werewolf transform triggers. */
     public final Map<UUID, Integer> spellsCastLastTurn = new ConcurrentHashMap<>();
     /** Tracks which players declared at least one attacker this turn (for Angelic Arbiter etc.). */
@@ -1816,7 +1822,9 @@ public class GameData {
     /**
      * Total lands the given player may play this turn: the normal one, plus any additional grants
      * ({@code additionalLandsThisTurn}), plus one for each {@link EachPlayerPlaysAdditionalLandEffect}
-     * static permanent on any battlefield (Storm Cauldron — symmetric, benefits every player).
+     * static permanent on any battlefield (Storm Cauldron — symmetric, benefits every player), plus
+     * one for each {@link PlaysAdditionalLandEachTurnEffect} static permanent the player themselves
+     * controls (The Gitrog Monster — controller-only).
      */
     public int getMaxLandsThisTurn(UUID playerId) {
         int extraFromStatics = 0;
@@ -1826,6 +1834,8 @@ public class GameData {
             for (Permanent perm : battlefield) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof EachPlayerPlaysAdditionalLandEffect) {
+                        extraFromStatics++;
+                    } else if (effect instanceof PlaysAdditionalLandEachTurnEffect && pid.equals(playerId)) {
                         extraFromStatics++;
                     }
                 }
@@ -2650,6 +2660,7 @@ public class GameData {
         copy.manaAbilityResolutionDepth = this.manaAbilityResolutionDepth;
         this.permanentTypesCastFromGraveyardThisTurn.forEach((k, v) ->
                 copy.permanentTypesCastFromGraveyardThisTurn.put(k, new HashSet<>(v)));
+        copy.oncePerTurnGraveyardCastPermissionsUsedThisTurn.addAll(this.oncePerTurnGraveyardCastPermissionsUsedThisTurn);
 
         // --- Spell-cast payment tracking (X / converge / colors spent) ---
         copy.spellCastManaSpent.putAll(this.spellCastManaSpent);

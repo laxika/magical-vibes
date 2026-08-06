@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "116")
+@CardRegistration(set = "INR", collectorNumber = "382")
 public class HauntedDead extends Card {
 
     public HauntedDead() {

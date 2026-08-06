@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DKA", collectorNumber = "16")
 @CardRegistration(set = "INR", collectorNumber = "35")
+@CardRegistration(set = "INR", collectorNumber = "346")
 public class NiblisOfTheUrn extends Card {
 
     public NiblisOfTheUrn() {

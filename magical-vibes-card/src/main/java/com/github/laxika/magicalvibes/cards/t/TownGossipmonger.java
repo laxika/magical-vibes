@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "46")
+@CardRegistration(set = "INR", collectorNumber = "451")
 public class TownGossipmonger extends Card {
 
     public TownGossipmonger() {

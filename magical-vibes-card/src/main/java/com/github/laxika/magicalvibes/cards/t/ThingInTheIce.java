@@ -29,6 +29,7 @@ import java.util.List;
  * Then if it has no ice counters on it, transform it.
  */
 @CardRegistration(set = "INR", collectorNumber = "91")
+@CardRegistration(set = "INR", collectorNumber = "460")
 public class ThingInTheIce extends Card {
 
     public ThingInTheIce() {

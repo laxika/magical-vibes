@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "44")
+@CardRegistration(set = "INR", collectorNumber = "300")
+@CardRegistration(set = "INR", collectorNumber = "351")
 public class ThaliaHereticCathar extends Card {
 
     public ThaliaHereticCathar() {

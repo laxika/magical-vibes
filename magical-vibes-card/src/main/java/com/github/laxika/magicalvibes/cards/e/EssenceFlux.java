@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "64")
+@CardRegistration(set = "INR", collectorNumber = "354")
 public class EssenceFlux extends Card {
 
     public EssenceFlux() {

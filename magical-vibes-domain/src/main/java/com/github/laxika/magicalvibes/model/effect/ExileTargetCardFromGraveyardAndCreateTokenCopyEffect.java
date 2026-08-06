@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Exiles the targeted card from a graveyard, then creates a token that is a copy of that card.
@@ -22,6 +24,10 @@ import java.util.List;
  * @param colorOverride       if non-null, the token's color is set to exactly this color
  * @param powerOverride       if non-null, the token's base power is set to this
  * @param toughnessOverride   if non-null, the token's base toughness is set to this
+ * @param additionalKeywords  keywords the token copy has in addition to the copied ones (e.g. flying for Soul Separator)
+ * @param createZombieTokenWithExiledCardStats when {@code true}, a second token — a black Zombie creature token whose
+ *                            power and toughness equal the exiled card's power and toughness — is created afterwards
+ *                            (Soul Separator)
  */
 public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
         CardPredicate filter,
@@ -31,7 +37,9 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
         boolean exileAtEndStep,
         CardColor colorOverride,
         Integer powerOverride,
-        Integer toughnessOverride
+        Integer toughnessOverride,
+        Set<Keyword> additionalKeywords,
+        boolean createZombieTokenWithExiledCardStats
 ) implements CardEffect {
 
     /** Compact form without Eternalize-style P/T/color overrides (Séance). */
@@ -41,7 +49,21 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
             List<CardSubtype> additionalSubtypes,
             boolean grantHaste,
             boolean exileAtEndStep) {
-        this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep, null, null, null);
+        this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep, null, null, null, Set.of(), false);
+    }
+
+    /** Eternalize-style transform without extra keywords or the companion Zombie token (The Scarab God). */
+    public ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
+            CardPredicate filter,
+            boolean ownGraveyardOnly,
+            List<CardSubtype> additionalSubtypes,
+            boolean grantHaste,
+            boolean exileAtEndStep,
+            CardColor colorOverride,
+            Integer powerOverride,
+            Integer toughnessOverride) {
+        this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep,
+                colorOverride, powerOverride, toughnessOverride, Set.of(), false);
     }
 
     @Override

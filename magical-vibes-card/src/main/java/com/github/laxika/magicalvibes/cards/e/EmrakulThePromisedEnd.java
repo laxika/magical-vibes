@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "INR", collectorNumber = "5")
+@CardRegistration(set = "INR", collectorNumber = "330")
 public class EmrakulThePromisedEnd extends Card {
 
     public EmrakulThePromisedEnd() {

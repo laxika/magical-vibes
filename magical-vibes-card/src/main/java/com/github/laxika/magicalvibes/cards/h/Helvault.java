@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DKA", collectorNumber = "151")
+@CardRegistration(set = "INR", collectorNumber = "266")
 public class Helvault extends Card {
 
     public Helvault() {

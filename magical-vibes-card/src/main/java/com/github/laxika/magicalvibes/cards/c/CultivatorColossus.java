@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "190")
+@CardRegistration(set = "INR", collectorNumber = "317")
+@CardRegistration(set = "INR", collectorNumber = "409")
 public class CultivatorColossus extends Card {
 
     public CultivatorColossus() {

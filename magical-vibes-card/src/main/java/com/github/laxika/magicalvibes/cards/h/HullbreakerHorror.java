@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "68")
+@CardRegistration(set = "INR", collectorNumber = "303")
+@CardRegistration(set = "INR", collectorNumber = "357")
 public class HullbreakerHorror extends Card {
 
     public HullbreakerHorror() {

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseSacrificeEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "210")
+@CardRegistration(set = "INR", collectorNumber = "247")
+@CardRegistration(set = "INR", collectorNumber = "434")
 public class SigardaHostOfHerons extends Card {
 
     public SigardaHostOfHerons() {

@@ -27,6 +27,8 @@ import java.util.Set;
  * intervening-if so it fails if the card left the command zone (e.g. cast in response).
  */
 @CardRegistration(set = "INR", collectorNumber = "234")
+@CardRegistration(set = "INR", collectorNumber = "328")
+@CardRegistration(set = "INR", collectorNumber = "428")
 public class EdgarMarkov extends Card {
 
     public EdgarMarkov() {

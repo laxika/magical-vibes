@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "13")
+@CardRegistration(set = "INR", collectorNumber = "335")
 public class BoundByMoonsilver extends Card {
 
     public BoundByMoonsilver() {

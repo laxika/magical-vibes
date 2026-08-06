@@ -1238,6 +1238,11 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.BeginningOfCombatTriggerTarget.class)) {
+            turnProgressionService.processNextBeginningOfCombatTriggerTarget(gameData);
+            return;
+        }
+
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
             return;

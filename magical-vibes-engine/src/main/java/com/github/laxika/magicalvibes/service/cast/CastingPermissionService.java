@@ -575,22 +575,58 @@ public class CastingPermissionService {
      * (Abandoned Sarcophagus). Lands that are not also another permanent type are not spells.
      */
     public boolean canCastViaFilteredGraveyardPermission(GameData gameData, UUID playerId, Card card) {
+        return findFilteredGraveyardPermissionSource(gameData, playerId, card).isPresent();
+    }
+
+    /**
+     * Returns the permanent granting this player permission to cast {@code card} from their graveyard
+     * via a {@link CastSpellsFromGraveyardPermission}, or empty if none applies. A once-per-your-turn
+     * permission (Gisa and Geralf) only applies during its controller's own turn and only while that
+     * permanent's use for the turn is unspent; the returned id keys that per-instance tracking.
+     */
+    public Optional<UUID> findFilteredGraveyardPermissionSource(GameData gameData, UUID playerId, Card card) {
         if (!isCastableSpellCard(card)) {
-            return false;
+            return Optional.empty();
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
-            return false;
+            return Optional.empty();
         }
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof CastSpellsFromGraveyardPermission permission
-                        && predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null)) {
-                    return true;
+                if (!(effect instanceof CastSpellsFromGraveyardPermission permission)
+                        || !predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null)) {
+                    continue;
                 }
+                if (permission.oncePerControllerTurn()
+                        && (!playerId.equals(gameData.activePlayerId)
+                            || gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.contains(perm.getId()))) {
+                    continue;
+                }
+                return Optional.of(perm.getId());
             }
         }
-        return false;
+        return Optional.empty();
+    }
+
+    /**
+     * Marks a once-per-your-turn graveyard cast permission as spent for this turn. No-op for
+     * unlimited permissions (Abandoned Sarcophagus), which are not tracked.
+     */
+    public void markFilteredGraveyardPermissionUsed(GameData gameData, UUID playerId, UUID permanentId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return;
+        battlefield.stream()
+                .filter(perm -> perm.getId().equals(permanentId))
+                .findFirst()
+                .ifPresent(perm -> {
+                    boolean oncePerTurn = perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                            .anyMatch(effect -> effect instanceof CastSpellsFromGraveyardPermission permission
+                                    && permission.oncePerControllerTurn());
+                    if (oncePerTurn) {
+                        gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.add(permanentId);
+                    }
+                });
     }
 
     private static boolean isCastableSpellCard(Card card) {

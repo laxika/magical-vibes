@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "115")
+@CardRegistration(set = "INR", collectorNumber = "381")
 @CardRegistration(set = "AVR", collectorNumber = "106")
 public class Griselbrand extends Card {
 

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "210")
+@CardRegistration(set = "INR", collectorNumber = "415")
 public class NooseConstrictor extends Card {
 
     public NooseConstrictor() {

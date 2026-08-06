@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "173")
+@CardRegistration(set = "INR", collectorNumber = "402")
 public class StromkirkOccultist extends Card {
 
     public StromkirkOccultist() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "66")
+@CardRegistration(set = "INR", collectorNumber = "356")
 public class GeistlightSnare extends Card {
 
     public GeistlightSnare() {

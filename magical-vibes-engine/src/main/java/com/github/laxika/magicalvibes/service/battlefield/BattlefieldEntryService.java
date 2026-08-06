@@ -948,17 +948,22 @@ public class BattlefieldEntryService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null || battlefield.isEmpty()) return;
 
-        List<ControlledCreaturesEnterWithAdditionalCountersEffect> effects = battlefield.stream()
-                .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream())
-                .filter(ControlledCreaturesEnterWithAdditionalCountersEffect.class::isInstance)
-                .map(ControlledCreaturesEnterWithAdditionalCountersEffect.class::cast)
+        record SourcedCounters(CardSubtype subtype, int count) {}
+        List<SourcedCounters> effects = battlefield.stream()
+                .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(ControlledCreaturesEnterWithAdditionalCountersEffect.class::isInstance)
+                        .map(ControlledCreaturesEnterWithAdditionalCountersEffect.class::cast)
+                        .map(effect -> new SourcedCounters(
+                                effect.subtype() != null ? effect.subtype() : source.getChosenSubtype(),
+                                effect.count())))
+                .filter(sourced -> sourced.subtype() != null)
                 .toList();
         if (effects.isEmpty()) return;
 
         EnteringSubtypes resolved = resolveEnteringSubtypes(gameData, permanent, controllerId, simultaneouslyEntered);
         int additionalCounters = effects.stream()
-                .filter(effect -> hasSubtype(resolved, effect.subtype()))
-                .mapToInt(ControlledCreaturesEnterWithAdditionalCountersEffect::count)
+                .filter(sourced -> hasSubtype(resolved, sourced.subtype()))
+                .mapToInt(SourcedCounters::count)
                 .sum();
 
         if (additionalCounters > 0) {

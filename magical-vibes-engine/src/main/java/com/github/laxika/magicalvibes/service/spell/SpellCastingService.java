@@ -2772,11 +2772,13 @@ public class SpellCastingService {
         }
 
         // Abandoned Sarcophagus: cast spells with cycling from graveyard (any number, normal cost)
-        boolean isGrantedCyclingGraveyardCast = flashbackOpt.isEmpty()
-                && !isDisturb
-                && !grantedFlashback && !emblemFlashback && !grantedHavengulCast
-                && !isGrantedGraveyardPlay && !isGraveyardCast && !isGrantedGraveyardCast
-                && castingPermissionService.canCastViaFilteredGraveyardPermission(gameData, playerId, card);
+        Optional<UUID> filteredGraveyardPermissionSourceId =
+                flashbackOpt.isEmpty() && !isDisturb
+                        && !grantedFlashback && !emblemFlashback && !grantedHavengulCast
+                        && !isGrantedGraveyardPlay && !isGraveyardCast && !isGrantedGraveyardCast
+                        ? castingPermissionService.findFilteredGraveyardPermissionSource(gameData, playerId, card)
+                        : Optional.empty();
+        boolean isGrantedCyclingGraveyardCast = filteredGraveyardPermissionSourceId.isPresent();
 
         if (flashbackOpt.isEmpty() && !isDisturb && !grantedFlashback && !emblemFlashback && !grantedHavengulCast
                 && !isGraveyardCast && !isGrantedGraveyardCast && !isGrantedGraveyardPlay && !isRetrace
@@ -2851,6 +2853,8 @@ public class SpellCastingService {
 
         // Remove card from graveyard
         permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
+        filteredGraveyardPermissionSourceId.ifPresent(sourceId ->
+                castingPermissionService.markFilteredGraveyardPermissionUsed(gameData, playerId, sourceId));
         gameData.graveyardPlayPermissions.remove(card.getId());
         gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(card.getId());
 

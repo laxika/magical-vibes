@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDamagedByWatchedCreature;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDealingCombatDamageToPlaneswalker;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -288,6 +289,10 @@ public class CombatDamageService {
         processDelayedDestroyCreatureDamagedTriggers(gameData, state.combatDamageDealtToCreatures);
 
         processDelayedPlaneswalkerCombatDamageTriggers(gameData, state.combatDamageDealt);
+
+        // Tamiyo, Field Researcher's +1: "until your next turn, whenever either of those creatures
+        // deals combat damage, you draw a card".
+        processDelayedWatchedCreatureCombatDamageTriggers(gameData, state.combatDamageDealt);
 
         // Process ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen)
         processAllyDealtDamageToCreatureReflectionTriggers(gameData, state);
@@ -1620,6 +1625,42 @@ public class CombatDamageService {
                 trigger.setNonTargeting(true);
                 gameData.stack.add(trigger);
                 gameLogService.append(gameData, GameLog.abilityTriggers(delayed.sourceCard()));
+            }
+        }
+    }
+
+    /**
+     * Fires the "whenever either of those creatures deals combat damage" delayed triggers registered
+     * by Tamiyo, Field Researcher's +1. {@code combatDamageDealt} already sums each source's damage to
+     * every recipient, so a watched creature that damaged both a blocker and a player triggers once.
+     * The trigger is controlled by the player who activated the ability, not by the creature's
+     * controller, so "you draw a card" always draws for them.
+     */
+    private void processDelayedWatchedCreatureCombatDamageTriggers(GameData gameData,
+                                                                   Map<Permanent, Integer> combatDamageDealt) {
+        if (combatDamageDealt.isEmpty()
+                || !gameData.hasDelayedAction(DelayedWatchedCreaturesCombatDamage.class)) {
+            return;
+        }
+
+        for (DelayedWatchedCreaturesCombatDamage watch
+                : gameData.getDelayedActions(DelayedWatchedCreaturesCombatDamage.class)) {
+            for (var entry : combatDamageDealt.entrySet()) {
+                if (entry.getValue() <= 0 || !watch.watchedPermanentIds().contains(entry.getKey().getId())) {
+                    continue;
+                }
+
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        watch.sourceCard(),
+                        watch.controllerId(),
+                        watch.sourceCard().getName() + "'s delayed trigger",
+                        new ArrayList<>(watch.effects()),
+                        (UUID) null,
+                        (UUID) null);
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData, GameLog.abilityTriggers(watch.sourceCard()));
             }
         }
     }

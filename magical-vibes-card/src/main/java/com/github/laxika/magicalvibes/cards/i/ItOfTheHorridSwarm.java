@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "INR", collectorNumber = "6")
+@CardRegistration(set = "INR", collectorNumber = "331")
 public class ItOfTheHorridSwarm extends Card {
 
     public ItOfTheHorridSwarm() {

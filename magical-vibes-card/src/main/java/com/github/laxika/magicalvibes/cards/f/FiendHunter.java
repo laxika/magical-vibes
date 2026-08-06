@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "15")
 @CardRegistration(set = "INR", collectorNumber = "22")
+@CardRegistration(set = "INR", collectorNumber = "340")
 public class FiendHunter extends Card {
 
     public FiendHunter() {

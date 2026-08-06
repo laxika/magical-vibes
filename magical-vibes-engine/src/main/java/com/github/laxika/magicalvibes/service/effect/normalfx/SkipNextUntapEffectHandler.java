@@ -37,6 +37,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
         switch (e.scope()) {
             case TARGET -> resolveTarget(gameData, entry, effect);
             case SELF -> resolveSelf(gameData, entry);
+            case ENCHANTED -> resolveEnchanted(gameData, entry);
             case CONTROLLED -> resolveControlled(gameData, entry, e);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
             case ALL_CREATURES -> resolveAllCreatures(gameData, entry, e);
@@ -55,6 +56,20 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
         
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " won't untap during its controller's next untap step."));
         log.info("Game {} - {} skip next untap set (self)", gameData.id, source.getCard().getName());
+    }
+
+    private void resolveEnchanted(GameData gameData, StackEntry entry) {
+        Permanent attachment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (attachment == null || attachment.getAttachedTo() == null) {
+            return;
+        }
+
+        Permanent host = gameQueryService.findPermanentById(gameData, attachment.getAttachedTo());
+        if (host == null) {
+            return;
+        }
+
+        lockTarget(gameData, host);
     }
 
     private void resolveTarget(GameData gameData, StackEntry entry, CardEffect effect) {

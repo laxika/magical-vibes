@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "235")
+@CardRegistration(set = "INR", collectorNumber = "429")
 public class Fleshtaker extends Card {
 
     public Fleshtaker() {

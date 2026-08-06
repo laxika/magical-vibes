@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "187")
+@CardRegistration(set = "INR", collectorNumber = "407")
 public class BrambleWurm extends Card {
 
     public BrambleWurm() {

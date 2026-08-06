@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.condition.ChosenColorStrictlyMostCom
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
@@ -44,6 +45,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreLifeThanA
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeLastTurn;
+import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerOwnTurnCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
@@ -268,6 +270,9 @@ public class ConditionEvaluationService {
             case ControllerLifeAtMost c ->
                     ctx.controllerId() != null
                             && gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 20) <= c.threshold();
+            case EachPlayerLifeAtMost c ->
+                    gameData.orderedPlayerIds.stream()
+                            .allMatch(pid -> gameData.playerLifeTotals.getOrDefault(pid, 20) <= c.threshold());
             case GraveyardCardThreshold c ->
                     countMatchingGraveyardCards(gameData, ctx, c) >= c.threshold();
             case CardsAboveSelfInGraveyard c ->
@@ -347,6 +352,10 @@ public class ConditionEvaluationService {
                     gameData.lastRedSpellDamagerThisTurn.containsKey(ctx.controllerId());
             case OpponentDealtDamageThisTurn c ->
                     wasAnyOpponentDealtDamageThisTurn(gameData, ctx.controllerId(), c.minimumAmount());
+            case ControllerDealtDamageThisTurn c ->
+                    ctx.controllerId() != null
+                            && gameData.damageDealtToPlayersThisTurn.getOrDefault(ctx.controllerId(), 0)
+                                    >= Math.max(1, c.minimumAmount());
             case SelfDealtDamageToOpponentThisTurn ignored ->
                     sourceDealtDamageToOpponentThisTurn(gameData, ctx);
             case SelfWasDealtDamageThisTurn ignored ->

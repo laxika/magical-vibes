@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "175")
+@CardRegistration(set = "INR", collectorNumber = "404")
 public class ThroughTheBreach extends Card {
 
     public ThroughTheBreach() {

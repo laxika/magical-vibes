@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEachControlledCreatureTokenEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "213")
+@CardRegistration(set = "INR", collectorNumber = "417")
 public class SecondHarvest extends Card {
 
     public SecondHarvest() {

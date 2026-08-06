@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "DKA", collectorNumber = "146")
+@CardRegistration(set = "INR", collectorNumber = "257")
+@CardRegistration(set = "INR", collectorNumber = "471")
 public class ChaliceOfLife extends Card {
 
     public ChaliceOfLife() {

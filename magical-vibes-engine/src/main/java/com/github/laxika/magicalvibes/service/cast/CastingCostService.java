@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -365,6 +366,9 @@ public class CastingCostService {
      * is skipped entirely when the spell is not being cast from hand.
      */
     private FreeCastSource findFreeCastSource(GameData gameData, UUID playerId, Card card, boolean fromHand) {
+        FreeCastSource emblemSource = findEmblemFreeCastSource(gameData, playerId, card, fromHand);
+        if (emblemSource != null) return emblemSource;
+
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return null;
         FreeCastSource oncePerTurnFallback = null;
@@ -386,6 +390,33 @@ public class CastingCostService {
             }
         }
         return oncePerTurnFallback;
+    }
+
+    /**
+     * The emblem counterpart of {@link #findFreeCastSource}: an emblem the player has whose
+     * {@link AlternativeCostForSpellsEffect} offers a zero alternative cost for {@code card}
+     * ("You may cast spells from your hand without paying their mana costs." — Tamiyo, Field
+     * Researcher's −7). An emblem is not a permanent, so it carries no counters and cannot be
+     * "used this turn"; the counter-capped and once-each-turn variants are therefore skipped rather
+     * than silently treated as unlimited. The returned source has a null permanent — every caller
+     * only consults {@code effect()}, and {@code consumeFreeCastFromBattlefield} touches the
+     * permanent only on the once-each-turn path this can never take.
+     */
+    private FreeCastSource findEmblemFreeCastSource(GameData gameData, UUID playerId, Card card, boolean fromHand) {
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
+            if (!playerId.equals(emblem.controllerId())) continue;
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (effect instanceof AlternativeCostForSpellsEffect altCost
+                        && altCost.manaValueCapCounter() == null
+                        && !altCost.oncePerTurn()
+                        && new ManaCost(altCost.manaCost()).getManaValue() == 0
+                        && (fromHand || !altCost.fromHandOnly())
+                        && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
+                    return new FreeCastSource(null, altCost);
+                }
+            }
+        }
+        return null;
     }
 
     private boolean manaValueCapSatisfied(Permanent perm, Card card, AlternativeCostForSpellsEffect altCost) {

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "INR", collectorNumber = "119")
+@CardRegistration(set = "INR", collectorNumber = "310")
+@CardRegistration(set = "INR", collectorNumber = "385")
 public class InfernalGrasp extends Card {
 
     public InfernalGrasp() {

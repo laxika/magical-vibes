@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTokensCreatedWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -1194,6 +1195,22 @@ public class DeathTriggerCollectorService {
         return handleAllyNontokenDefault(match, bound, ctx);
     }
 
+    /**
+     * Liesa, Forgotten Archangel: bind the delayed graveyard-to-hand return to the specific dying
+     * creature card ("return <em>that card</em> to its owner's hand at the beginning of the next end
+     * step"), otherwise the handler would fall back to the source card on the stack entry.
+     */
+    @CollectsTrigger(value = RegisterDelayedReturnCardFromGraveyardToHandEffect.class,
+            slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)
+    boolean handleAllyNontokenDelayedReturn(TriggerMatchContext match,
+            RegisterDelayedReturnCardFromGraveyardToHandEffect delayedReturn, TriggerContext ctx) {
+        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
+        CardEffect bound = delayedReturn.cardId() == null && cd.dyingCard() != null
+                ? new RegisterDelayedReturnCardFromGraveyardToHandEffect(cd.dyingCard().getId())
+                : delayedReturn;
+        return handleAllyNontokenDefault(match, bound, ctx);
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)
     boolean handleAllyNontokenDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
@@ -1451,6 +1468,23 @@ public class DeathTriggerCollectorService {
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new DestroyTokensCreatedWithSourceEffect(
                         effect.cannotBeRegenerated(), match.permanent().getId())))
+        ));
+        logSelfLeaves(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = MayCastCardsExiledWithSourceEffect.class, slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handleMayCastCardsExiledWithSourceOnLeave(TriggerMatchContext match,
+            MayCastCardsExiledWithSourceEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        // The source has already left, so the id the exiled cards are tracked under is baked into
+        // the effect — nothing on the stack can resolve it back to a battlefield permanent.
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                sl.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new MayCastCardsExiledWithSourceEffect(match.permanent().getId())))
         ));
         logSelfLeaves(match);
         return true;

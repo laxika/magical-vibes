@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCounteredCardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceControlledCounterWithExileAndPlayEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -238,7 +238,7 @@ public class CounterSupport {
         gameData.pendingMayAbilities.add(new PendingMayAbility(
                 spell,
                 counterControllerId,
-                List.of(new MayPlayExiledCounteredCardEffect()),
+                List.of(new MayPlayExiledCardWithoutPayingManaCostEffect()),
                 "Play " + spell.getName() + " without paying its mana cost?",
                 spell.getId()
         ));

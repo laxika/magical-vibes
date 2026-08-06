@@ -478,6 +478,7 @@ public class AnimationSupport {
         log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
 
         fireTransformTriggers(gameData, self, backFace, EffectSlot.ON_TRANSFORM_TO_BACK_FACE);
+        fireEquipmentTransformTriggers(gameData, self);
         return true;
     }
 
@@ -491,6 +492,41 @@ public class AnimationSupport {
         log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
 
         fireTransformTriggers(gameData, self, originalCard, EffectSlot.ON_TRANSFORM_TO_FRONT_FACE);
+        fireEquipmentTransformTriggers(gameData, self);
+    }
+
+    /**
+     * Fires {@link EffectSlot#ON_EQUIPPED_CREATURE_TRANSFORMS} abilities on every Equipment attached to
+     * the permanent that just transformed ("When equipped creature transforms, ..." — Neglected Heirloom).
+     */
+    private void fireEquipmentTransformTriggers(GameData gameData, Permanent transformed) {
+        gameData.forEachPermanent((controllerId, equipment) -> {
+            if (!transformed.getId().equals(equipment.getAttachedTo())) {
+                return;
+            }
+            if (!equipment.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+                return;
+            }
+
+            Card equipmentCard = equipment.getCard();
+            List<CardEffect> effects = equipmentCard.getEffects(EffectSlot.ON_EQUIPPED_CREATURE_TRANSFORMS);
+            if (effects.isEmpty()) {
+                return;
+            }
+
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    equipmentCard,
+                    controllerId,
+                    equipmentCard.getName() + "'s transform ability",
+                    effects,
+                    null,
+                    equipment.getId()
+            ));
+            gameLogService.append(gameData, GameLog.cardThen(equipmentCard, "'s transform ability triggers."));
+            log.info("Game {} - {} transform trigger pushed onto stack (equipped creature transformed)",
+                    gameData.id, equipmentCard.getName());
+        });
     }
 
     /**

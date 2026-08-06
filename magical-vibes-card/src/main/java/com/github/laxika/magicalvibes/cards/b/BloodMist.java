@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "143")
+@CardRegistration(set = "INR", collectorNumber = "395")
 public class BloodMist extends Card {
 
     public BloodMist() {

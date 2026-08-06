@@ -36,6 +36,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
@@ -731,6 +733,15 @@ public class ActivatedAbilityExecutionService {
                 int amount = amountEvaluationService.evaluate(gameData, gain.amount(),
                         new AmountContext(playerId, permanent, null, xValue, 0));
                 lifeSupport.applyGainLife(gameData, playerId, amount);
+            } else if (effect instanceof LoseLifeEffect loss && isNonTargetedLifeLoss(loss)) {
+                // Life loss riding along with mana production (Cryptolith Fragment: "Add one mana
+                // of any color. Each player loses 1 life."). Still a mana ability, so it resolves
+                // here rather than on the stack.
+                int amount = amountEvaluationService.evaluate(gameData, loss.amount(),
+                        new AmountContext(playerId, permanent, null, xValue, 0));
+                for (UUID victimId : lifeLossRecipients(gameData, playerId, loss.recipient())) {
+                    lifeSupport.applyLifeLoss(gameData, victimId, amount, permanent.getCard().getName());
+                }
             } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.CONTROLLER) {
                 String cardName = permanent.getCard().getName();
                 int damage = amountEvaluationService.evaluate(gameData, dmg.amount(),
@@ -896,6 +907,29 @@ public class ActivatedAbilityExecutionService {
             }
         }
         return false;
+    }
+
+    /**
+     * Whether a {@link LoseLifeEffect} bundled into a mana ability can be applied without the
+     * stack. Only the recipients that need no chosen target qualify; a {@code TARGET_*} recipient
+     * would make the ability targeted, which disqualifies it as a mana ability (CR 605.1a).
+     */
+    private static boolean isNonTargetedLifeLoss(LoseLifeEffect effect) {
+        return effect.recipient() == LoseLifeRecipient.CONTROLLER
+                || effect.recipient() == LoseLifeRecipient.EACH_PLAYER
+                || effect.recipient() == LoseLifeRecipient.EACH_OPPONENT;
+    }
+
+    /** The players losing life, in turn order, for a non-targeted {@link LoseLifeRecipient}. */
+    private static List<UUID> lifeLossRecipients(GameData gameData, UUID controllerId, LoseLifeRecipient recipient) {
+        return switch (recipient) {
+            case CONTROLLER -> List.of(controllerId);
+            case EACH_PLAYER -> List.copyOf(gameData.orderedPlayerIds);
+            case EACH_OPPONENT -> gameData.orderedPlayerIds.stream()
+                    .filter(pid -> !pid.equals(controllerId))
+                    .toList();
+            default -> List.of();
+        };
     }
 
     private int calculateTotalManaProduction(GameData gameData, UUID playerId, Permanent permanent, List<CardEffect> effects, int xValue) {

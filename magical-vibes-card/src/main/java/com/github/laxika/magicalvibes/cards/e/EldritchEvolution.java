@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "195")
+@CardRegistration(set = "INR", collectorNumber = "410")
 public class EldritchEvolution extends Card {
 
     public EldritchEvolution() {

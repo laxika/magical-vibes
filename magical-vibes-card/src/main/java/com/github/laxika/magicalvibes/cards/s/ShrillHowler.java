@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "214")
+@CardRegistration(set = "INR", collectorNumber = "469")
 public class ShrillHowler extends Card {
 
     public ShrillHowler() {

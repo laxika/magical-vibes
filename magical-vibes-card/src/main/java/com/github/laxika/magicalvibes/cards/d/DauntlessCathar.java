@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "19")
+@CardRegistration(set = "INR", collectorNumber = "339")
 public class DauntlessCathar extends Card {
 
     public DauntlessCathar() {

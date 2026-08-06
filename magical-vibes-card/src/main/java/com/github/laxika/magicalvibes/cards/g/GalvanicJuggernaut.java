@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "263")
+@CardRegistration(set = "INR", collectorNumber = "443")
 @CardRegistration(set = "ISD", collectorNumber = "222")
 public class GalvanicJuggernaut extends Card {
 

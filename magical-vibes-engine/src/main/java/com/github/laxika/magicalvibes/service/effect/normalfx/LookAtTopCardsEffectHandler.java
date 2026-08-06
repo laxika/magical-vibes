@@ -118,10 +118,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
 
         if (matchingCards.isEmpty()) {
             if (randomBottom) {
-                java.util.Collections.shuffle(topCards);
-                gameData.playerDecks.get(controllerId).addAll(topCards);
-                gameLogService.append(gameData, GameLog.text(playerName
-                        + " finds no eligible cards. All cards are put on the bottom of their library in a random order."));
+                bottomInRandomOrder(gameData, controllerId, playerName, topCards);
             } else {
                 libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, topCards);
             }
@@ -220,6 +217,15 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 false));
     }
 
+    /** No eligible card was found: every looked-at card goes to the bottom in a random order. */
+    private void bottomInRandomOrder(GameData gameData, UUID controllerId, String playerName,
+            List<Card> topCards) {
+        java.util.Collections.shuffle(topCards);
+        gameData.playerDecks.get(controllerId).addAll(topCards);
+        gameLogService.append(gameData, GameLog.text(playerName
+                + " finds no eligible cards. All cards are put on the bottom of their library in a random order."));
+    }
+
     private void resolveMayRevealToHand(GameData gameData, StackEntry entry,
             LookAtTopCardsEffect e, int lookCount, int chooseCount) {
         LibraryRevealSupport.TopCardsResult result =
@@ -229,6 +235,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         List<Card> topCards = result.topCards();
         String playerName = result.playerName();
         boolean toGraveyard = e.restDestination() == LookDestination.GRAVEYARD;
+        boolean randomBottom = e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM;
 
         if (e.reveal()) {
             GameLog.Builder revealBuilder = GameLog.builder().text(playerName + " reveals ");
@@ -250,6 +257,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 appendCardList(restBuilder, topCards);
                 restBuilder.text(" into their graveyard.");
                 gameLogService.append(gameData, restBuilder.build());
+            } else if (randomBottom) {
+                bottomInRandomOrder(gameData, controllerId, playerName, topCards);
             } else {
                 libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, topCards);
             }
@@ -257,18 +266,26 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
 
         String description = CardPredicateUtils.describeFilter(e.choosePredicate());
-        if (chooseCount > 1) {
+        if (chooseCount > 1 || randomBottom) {
             List<UUID> cardIds = matchingCards.stream().map(Card::getId).toList();
             int max = Math.min(chooseCount, matchingCards.size());
-            String revealPrompt = e.reveal()
-                    ? (chooseCount >= Integer.MAX_VALUE
-                            ? "You may put any number of " + description + "s into your hand."
-                            : "You may put up to " + max + " " + description + "s into your hand.")
-                    : (chooseCount >= Integer.MAX_VALUE
-                            ? "You may reveal any number of " + description + "s and put them into your hand."
-                            : "You may reveal up to " + max + " " + description + "s and put them into your hand.");
+            String revealPrompt;
+            if (max == 1) {
+                revealPrompt = e.reveal()
+                        ? "You may put a " + description + " from among them into your hand."
+                        : "You may reveal a " + description + " from among them and put it into your hand.";
+            } else {
+                revealPrompt = e.reveal()
+                        ? (chooseCount >= Integer.MAX_VALUE
+                                ? "You may put any number of " + description + "s into your hand."
+                                : "You may put up to " + max + " " + description + "s into your hand.")
+                        : (chooseCount >= Integer.MAX_VALUE
+                                ? "You may reveal any number of " + description + "s and put them into your hand."
+                                : "You may reveal up to " + max + " " + description + "s and put them into your hand.");
+            }
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
-                    controllerId, topCards, cardIds, toGraveyard, true, !toGraveyard, false, false, 0, null,
+                    controllerId, topCards, cardIds, toGraveyard, true,
+                    !toGraveyard && !randomBottom, randomBottom, false, 0, null,
                     max, revealPrompt));
             return;
         }

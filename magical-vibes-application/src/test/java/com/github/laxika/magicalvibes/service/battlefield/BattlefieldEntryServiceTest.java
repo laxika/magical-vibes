@@ -433,6 +433,43 @@ class BattlefieldEntryServiceTest {
         }
 
         @Test
+        @DisplayName("Chosen-subtype additional-counter source applies only to the type its source chose")
+        void chosenSubtypeAdditionalCounterSourceUsesSourceChoice() {
+            Card counterSourceCard = new Card();
+            counterSourceCard.setName("Chosen Counter Source");
+            counterSourceCard.setType(CardType.CREATURE);
+            counterSourceCard.addEffect(EffectSlot.STATIC,
+                    ControlledCreaturesEnterWithAdditionalCountersEffect.ofChosenSubtype(1));
+            Permanent counterSource = new Permanent(counterSourceCard);
+            counterSource.setChosenSubtype(CardSubtype.BEAR);
+            lookaheadGameData.playerBattlefields.get(playerId).add(counterSource);
+
+            Permanent bear = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
+            lookaheadService.putPermanentOntoBattlefield(lookaheadGameData, playerId, bear);
+            assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
+
+            Permanent goblin = new Permanent(createCreatureCard("Goblin Piker", List.of(CardSubtype.GOBLIN)));
+            lookaheadService.putPermanentOntoBattlefield(lookaheadGameData, playerId, goblin);
+            assertThat(goblin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        }
+
+        @Test
+        @DisplayName("Chosen-subtype additional-counter source grants nothing before a type is chosen")
+        void chosenSubtypeAdditionalCounterSourceInertWithoutChoice() {
+            Card counterSourceCard = new Card();
+            counterSourceCard.setName("Chosen Counter Source");
+            counterSourceCard.setType(CardType.CREATURE);
+            counterSourceCard.addEffect(EffectSlot.STATIC,
+                    ControlledCreaturesEnterWithAdditionalCountersEffect.ofChosenSubtype(1));
+            lookaheadGameData.playerBattlefields.get(playerId).add(new Permanent(counterSourceCard));
+
+            Permanent bear = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
+            lookaheadService.putPermanentOntoBattlefield(lookaheadGameData, playerId, bear);
+
+            assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        }
+
+        @Test
         @DisplayName("Multiple additional-counter sources matching a looked-ahead subtype all apply")
         void multipleAdditionalCounterSourcesStack() {
             Card firstSourceCard = new Card();

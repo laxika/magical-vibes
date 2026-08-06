@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 
 import java.util.List;
 
+@CardRegistration(set = "INR", collectorNumber = "418")
 @CardRegistration(set = "INR", collectorNumber = "215")
 @CardRegistration(set = "AVR", collectorNumber = "194")
 public class SomberwaldSage extends Card {

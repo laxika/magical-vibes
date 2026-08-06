@@ -474,9 +474,9 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
-    private boolean handleLandPutIntoGraveyardPutCountersOnSelf(TriggerMatchContext match,
-            PutCountersOnSelfEffect effect, TriggerContext ctx) {
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    private boolean handleLandPutIntoGraveyardDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
 
@@ -491,7 +491,7 @@ public class MiscTriggerCollectorService {
         ));
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers (land put into graveyard, put counter on self)", gameData.id, cardName);
+        log.info("Game {} - {} triggers (land put into graveyard)", gameData.id, cardName);
         return true;
     }
 

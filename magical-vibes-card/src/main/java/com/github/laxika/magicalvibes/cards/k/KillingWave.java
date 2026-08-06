@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.KillingWaveEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "121")
+@CardRegistration(set = "INR", collectorNumber = "386")
 @CardRegistration(set = "AVR", collectorNumber = "111")
 public class KillingWave extends Card {
 

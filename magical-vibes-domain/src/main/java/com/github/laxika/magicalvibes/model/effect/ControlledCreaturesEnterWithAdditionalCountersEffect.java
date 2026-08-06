@@ -15,9 +15,22 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  * <p>
  * Used by cards like Sage of Fables ("Each other Wizard creature you control enters
  * with an additional +1/+1 counter on it.").
+ * <p>
+ * A {@code null} {@code subtype} means "the creature type chosen as the source entered"
+ * — the effect then reads the source permanent's {@code chosenSubtype} and applies to
+ * nothing while no type has been chosen. Pair it with a
+ * {@link ChooseSubtypeOnEnterEffect} in {@code ON_ENTER_BATTLEFIELD} (Metallic Mimic).
  */
 public record ControlledCreaturesEnterWithAdditionalCountersEffect(
         CardSubtype subtype,
         int count
 ) implements CardEffect {
+
+    /**
+     * "Each other creature you control of the chosen type enters with {@code count}
+     * additional +1/+1 counters on it."
+     */
+    public static ControlledCreaturesEnterWithAdditionalCountersEffect ofChosenSubtype(int count) {
+        return new ControlledCreaturesEnterWithAdditionalCountersEffect(null, count);
+    }
 }

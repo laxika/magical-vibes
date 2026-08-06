@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "AVR", collectorNumber = "172")
+@CardRegistration(set = "INR", collectorNumber = "480")
 public class CraterhoofBehemoth extends Card {
 
     public CraterhoofBehemoth() {

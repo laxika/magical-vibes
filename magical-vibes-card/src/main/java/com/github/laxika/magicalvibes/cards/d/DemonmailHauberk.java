@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "221")
+@CardRegistration(set = "INR", collectorNumber = "261")
+@CardRegistration(set = "INR", collectorNumber = "442")
 public class DemonmailHauberk extends Card {
 
     public DemonmailHauberk() {

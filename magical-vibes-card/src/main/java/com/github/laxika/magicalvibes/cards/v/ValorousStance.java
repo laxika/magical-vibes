@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPred
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "48")
+@CardRegistration(set = "INR", collectorNumber = "352")
 public class ValorousStance extends Card {
 
     public ValorousStance() {

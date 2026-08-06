@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnyOpponentMayTakeDamageSacrificeSourceEffect;
 
+@CardRegistration(set = "INR", collectorNumber = "313")
 @CardRegistration(set = "INR", collectorNumber = "178")
 @CardRegistration(set = "AVR", collectorNumber = "164")
 public class VexingDevil extends Card {

@@ -1110,7 +1110,20 @@ public class GraveyardReturnSupport {
                                          boolean replaceSubtypes, boolean grantHasteUntilEndOfTurn) {
         createTokenCopyFromCard(gameData, entry, sourceCard, additionalSubtypes, grantHaste, exileAtEndStep,
                 colorOverride, powerOverride, toughnessOverride, replaceSubtypes, grantHasteUntilEndOfTurn,
-                new ArrayList<>());
+                new ArrayList<>(), Set.of());
+    }
+
+    /**
+     * Variant that also grants the token copy printed keywords it does not copy ("except it … has
+     * flying" — Soul Separator).
+     */
+    public void createTokenCopyFromCard(GameData gameData, StackEntry entry, Card sourceCard,
+                                         List<CardSubtype> additionalSubtypes, Set<Keyword> additionalKeywords,
+                                         boolean grantHaste, boolean exileAtEndStep, CardColor colorOverride,
+                                         Integer powerOverride, Integer toughnessOverride) {
+        createTokenCopyFromCard(gameData, entry, sourceCard, additionalSubtypes, grantHaste, exileAtEndStep,
+                colorOverride, powerOverride, toughnessOverride, false, false,
+                new ArrayList<>(), additionalKeywords);
     }
 
     /**
@@ -1125,7 +1138,8 @@ public class GraveyardReturnSupport {
                                          boolean exileAtEndStep, CardColor colorOverride,
                                          Integer powerOverride, Integer toughnessOverride,
                                          boolean replaceSubtypes, boolean grantHasteUntilEndOfTurn,
-                                         List<Permanent> simultaneouslyEntered) {
+                                         List<Permanent> simultaneouslyEntered,
+                                         Set<Keyword> additionalKeywords) {
         UUID controllerId = entry.getControllerId();
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
         Set<CardType> enterTappedTypesSnapshot = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
@@ -1174,6 +1188,9 @@ public class GraveyardReturnSupport {
             }
             if (grantHaste && !grantHasteUntilEndOfTurn) {
                 keywords.add(Keyword.HASTE);
+            }
+            if (additionalKeywords != null) {
+                keywords.addAll(additionalKeywords);
             }
             tokenCard.setKeywords(keywords);
 

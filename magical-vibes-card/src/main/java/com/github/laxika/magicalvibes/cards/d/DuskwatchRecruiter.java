@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "193")
+@CardRegistration(set = "INR", collectorNumber = "323")
+@CardRegistration(set = "INR", collectorNumber = "467")
 public class DuskwatchRecruiter extends Card {
 
     public DuskwatchRecruiter() {

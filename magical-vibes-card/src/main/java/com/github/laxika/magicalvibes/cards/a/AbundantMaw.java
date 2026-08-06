@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "1")
+@CardRegistration(set = "INR", collectorNumber = "329")
 public class AbundantMaw extends Card {
 
     public AbundantMaw() {

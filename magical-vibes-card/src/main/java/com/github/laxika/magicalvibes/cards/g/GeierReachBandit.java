@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "156")
+@CardRegistration(set = "INR", collectorNumber = "464")
 public class GeierReachBandit extends Card {
 
     public GeierReachBandit() {

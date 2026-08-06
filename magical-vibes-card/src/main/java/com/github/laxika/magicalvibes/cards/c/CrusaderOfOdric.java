@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "18")
+@CardRegistration(set = "INR", collectorNumber = "338")
 @CardRegistration(set = "M13", collectorNumber = "10")
 public class CrusaderOfOdric extends Card {
 

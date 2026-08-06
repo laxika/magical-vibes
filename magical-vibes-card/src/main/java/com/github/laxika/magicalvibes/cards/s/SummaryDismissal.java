@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileOtherSpellsAndCounterAbilitiesEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "88")
+@CardRegistration(set = "INR", collectorNumber = "368")
 public class SummaryDismissal extends Card {
 
     public SummaryDismissal() {

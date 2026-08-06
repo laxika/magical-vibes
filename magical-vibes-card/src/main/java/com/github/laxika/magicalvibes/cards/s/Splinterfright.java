@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "205")
 @CardRegistration(set = "INR", collectorNumber = "217")
+@CardRegistration(set = "INR", collectorNumber = "420")
 public class Splinterfright extends Card {
 
     public Splinterfright() {
