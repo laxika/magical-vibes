@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -23,8 +23,8 @@ public class SavageStomp extends Card {
 
     public SavageStomp() {
         // This spell costs {2} less to cast if it targets a Dinosaur you control.
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingControlledPermanentEffect(
-                new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR), 2));
+        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(
+                new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR), 2, true));
 
         // Put a +1/+1 counter on target creature you control.
         // Then that creature fights target creature you don't control.

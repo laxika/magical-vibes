@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.LimitSpellsForControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellLimitScope;
 
 @CardRegistration(set = "LRW", collectorNumber = "106")
 public class ColfenorsPlans extends Card {
@@ -19,6 +20,6 @@ public class ColfenorsPlans extends Card {
         // Skip your draw step.
         addEffect(EffectSlot.STATIC, new SkipDrawStepEffect());
         // You can't cast more than one spell each turn.
-        addEffect(EffectSlot.STATIC, new LimitSpellsForControllerEffect(1));
+        addEffect(EffectSlot.STATIC, new LimitSpellsPerTurnEffect(1, SpellLimitScope.CONTROLLER));
     }
 }

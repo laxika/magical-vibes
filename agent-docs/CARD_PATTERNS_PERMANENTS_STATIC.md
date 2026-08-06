@@ -114,15 +114,15 @@ All paths relative to `cards/`.
 | Each upkeep: exile random from hand, may play this turn; unplayed → GY at next end step | `e/ElkinLair.java` | EACH_UPKEEP_TRIGGERED ExileRandomCardFromHandMayPlayThisTurnEffect — World enchantment; world rule = SBA |
 | Two players name cards; those spells/lands are locked | `n/NullChamber.java` | ON_ENTER_BATTLEFIELD YouAndOpponentChooseCardNamesOnEnterEffect + STATIC SpellsAndLandsWithChosenNamesCantBePlayedEffect — World enchantment (world rule = CR 704.5k SBA); symmetric lock on casting AND land plays |
 | Unique-name enforcer (ETB wipe + enter trigger) | `e/EyeOfSingularity.java` | ON_ENTER_BATTLEFIELD DestroyAllPermanentsEffect(Not(basicLand)+SharesNameWithAnother, cantRegen) + ON_ANY_PERMANENT_ENTERS_BATTLEFIELD TriggeringCardConditionalEffect(Not(basicLandCard), DestroyOtherPermanentsWithEnteringNameEffect) — World enchantment; world rule = SBA |
-| Limit spells (all players) | `r/RuleOfLaw.java` | STATIC LimitSpellsPerTurnEffect |
-| Limit spells (enchanted player) | `c/CurseOfExhaustion.java` | STATIC LimitSpellsForEnchantedPlayerEffect |
+| Limit spells (all players) | `r/RuleOfLaw.java`, `a/ArcaneLaboratory.java` | STATIC LimitSpellsPerTurnEffect(1, EACH_PLAYER) |
+| Limit spells (enchanted player) | `c/CurseOfExhaustion.java` | STATIC LimitSpellsPerTurnEffect(1, ENCHANTED_PLAYER) — Curse Aura on a player |
 | Tax attackers (player only) | `g/GhostlyPrison.java`, `k/KoskunFalls.java`, `w/WindbornMuse.java` | STATIC `RequirePaymentToAttackEffect.playerOnly` — uniform per-attacker tax from defender side |
 | CU + color hard-deny + attack tax | `e/ElephantGrass.java` | UPKEEP_TRIGGERED CumulativeUpkeepEffect("{1}") + STATIC CreaturesCantAttackControllerUnlessPredicateEffect(Not(ColorIn(BLACK))) + STATIC RequirePaymentToAttackEffect.playerOnly(2) — black can't attack you; nonblack pay {2} |
 | Tax the enchanted attacker (Aura) | `b/Brainwash.java` | STATIC EnchantedCreatureCantAttackUnlessPaysEffect(3) — enchanted creature can't attack unless its controller pays {3}; per-creature, not uniform |
 | Tax blocks of the enchanted creature (Aura) | `a/AwesomePresence.java` | STATIC EnchantedCreatureCantBeBlockedUnlessPaysEffect(3) — enchanted creature can't be blocked unless the defending player pays {3} for each creature blocking it; charged per declared block in `CombatBlockService` |
 | Tax attackers, scaling | `s/SphereOfSafety.java` | STATIC RequirePaymentToAttackEffect with a `PermanentCount` DynamicAmount (enchantments you control) |
-| Tax opponent spells | `a/AuraOfSilence.java` | STATIC IncreaseOpponentCastCostEffect |
-| Tax matching spells (all players) | `t/ThaliaGuardianOfThraben.java` | STATIC IncreaseSpellCostEffect(CardNotPredicate(CardTypePredicate(CREATURE)), 1) â€” symmetric, affects all players |
+| Tax opponent spells | `a/AuraOfSilence.java` | STATIC IncreaseSpellCostEffect(CardAnyOfPredicate(CardTypePredicate(ARTIFACT), CardTypePredicate(ENCHANTMENT)), 2, OPPONENT) |
+| Tax matching spells (all players) | `t/ThaliaGuardianOfThraben.java` | STATIC IncreaseSpellCostEffect(CardNotPredicate(CardTypePredicate(CREATURE)), 1, ALL) — symmetric, affects all players |
 | Enters tapped | `r/RootMaze.java` | STATIC EnterPermanentsOfTypesTappedEffect |
 | Opponent creatures enter tapped + haste lord | `u/UrabraskTheHidden.java` | STATIC GrantKeywordEffect(HASTE, OWN_CREATURES) + EnterPermanentsOfTypesTappedEffect(CREATURE, opponentsOnly=true) |
 | Opponent creatures + nonbasic lands enter tapped | `t/ThaliaHereticCathar.java` | STATIC `EnterPermanentsOfTypesTappedEffect.matching(creature OR (land AND NOT basic), opponentsOnly=true)` |

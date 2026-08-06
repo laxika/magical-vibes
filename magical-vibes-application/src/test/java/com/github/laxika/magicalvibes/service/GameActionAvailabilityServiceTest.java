@@ -8,9 +8,13 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
+import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -46,6 +50,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -205,7 +210,9 @@ class GameActionAvailabilityServiceTest {
             reducer.setName("Heartless Summoning");
             reducer.setType(CardType.ENCHANTMENT);
             reducer.addEffect(EffectSlot.STATIC,
-                    new ReduceOwnCastCostForCardTypeEffect(Set.of(CardType.CREATURE), new Fixed(2)));
+                    new ReduceCastCostForMatchingSpellsEffect(new CardTypePredicate(CardType.CREATURE),
+                            new Fixed(2), CostModificationScope.SELF));
+            evaluateCardTypePredicates();
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
 
             // Player has {G} and a {2}{G} creature — with -2 reduction, effective cost is {G} only
@@ -232,7 +239,9 @@ class GameActionAvailabilityServiceTest {
             reducer.setName("Big Reducer");
             reducer.setType(CardType.ENCHANTMENT);
             reducer.addEffect(EffectSlot.STATIC,
-                    new ReduceOwnCastCostForCardTypeEffect(Set.of(CardType.CREATURE), new Fixed(5)));
+                    new ReduceCastCostForMatchingSpellsEffect(new CardTypePredicate(CardType.CREATURE),
+                            new Fixed(5), CostModificationScope.SELF));
+            evaluateCardTypePredicates();
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
 
             Card creature = new Card();
@@ -259,7 +268,10 @@ class GameActionAvailabilityServiceTest {
             thalia.setName("Thalia");
             thalia.setType(CardType.CREATURE);
             thalia.addEffect(EffectSlot.STATIC,
-                    new IncreaseOpponentCastCostEffect(Set.of(CardType.INSTANT, CardType.SORCERY), 1));
+                    new IncreaseSpellCostEffect(new CardAnyOfPredicate(List.of(
+                            new CardTypePredicate(CardType.INSTANT),
+                            new CardTypePredicate(CardType.SORCERY))), 1, CostModificationScope.OPPONENT));
+            evaluateCardTypePredicates();
             gd.playerBattlefields.get(player2Id).add(new Permanent(thalia));
 
             // Player has exactly {R} — Lightning Bolt costs {R} + {1} tax = can't afford
@@ -609,4 +621,22 @@ class GameActionAvailabilityServiceTest {
             assertThat(faceUpCaptor.getValue()).containsExactly(faceUpCard);
         }
     }
+
+    /**
+     * Stubs the mocked predicate service to really evaluate the card-type predicates these tests
+     * build, so the cost-modifier scope is exercised rather than an always-true mock.
+     */
+    private void evaluateCardTypePredicates() {
+        lenient().when(predicateEvaluationService.matchesCardPredicate(any(), any(), any()))
+                .thenAnswer(inv -> matchesCardType(inv.getArgument(0), inv.getArgument(1)));
+    }
+
+    private static boolean matchesCardType(Card card, CardPredicate predicate) {
+        return switch (predicate) {
+            case CardTypePredicate p -> card.hasType(p.cardType());
+            case CardAnyOfPredicate p -> p.predicates().stream().anyMatch(inner -> matchesCardType(card, inner));
+            case null, default -> false;
+        };
+    }
+
 }

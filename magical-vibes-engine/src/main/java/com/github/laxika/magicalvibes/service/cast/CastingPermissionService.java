@@ -27,8 +27,6 @@ import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentControllerCantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.LimitSpellsForControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.LimitSpellsForEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
@@ -105,19 +103,17 @@ public class CastingPermissionService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    // Rule of Law etc.: applies to every player globally.
-                    if (effect instanceof LimitSpellsPerTurnEffect global) {
-                        limit = Math.min(limit, global.maxSpells());
-                    }
-                    // Curse of Exhaustion etc.: only applies to the enchanted player.
-                    if (effect instanceof LimitSpellsForEnchantedPlayerEffect curse
-                            && perm.isAttached() && playerId.equals(perm.getAttachedTo())) {
-                        limit = Math.min(limit, curse.maxSpells());
-                    }
-                    // Colfenor's Plans etc.: only applies to the permanent's controller.
-                    if (effect instanceof LimitSpellsForControllerEffect controllerLimit
-                            && pid.equals(playerId)) {
-                        limit = Math.min(limit, controllerLimit.maxSpells());
+                    if (!(effect instanceof LimitSpellsPerTurnEffect spellLimit)) continue;
+                    boolean applies = switch (spellLimit.scope()) {
+                        // Rule of Law etc.: applies to every player globally.
+                        case EACH_PLAYER -> true;
+                        // Colfenor's Plans etc.: only applies to the permanent's controller.
+                        case CONTROLLER -> pid.equals(playerId);
+                        // Curse of Exhaustion etc.: only applies to the enchanted player.
+                        case ENCHANTED_PLAYER -> perm.isAttached() && playerId.equals(perm.getAttachedTo());
+                    };
+                    if (applies) {
+                        limit = Math.min(limit, spellLimit.maxSpells());
                     }
                 }
             }

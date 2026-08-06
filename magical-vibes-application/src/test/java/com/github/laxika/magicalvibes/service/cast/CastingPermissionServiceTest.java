@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellLimitScope;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -167,7 +168,7 @@ class CastingPermissionServiceTest {
             Card ruleOfLaw = new Card();
             ruleOfLaw.setName("Rule of Law");
             ruleOfLaw.setType(CardType.ENCHANTMENT);
-            ruleOfLaw.addEffect(EffectSlot.STATIC, new LimitSpellsPerTurnEffect(1));
+            ruleOfLaw.addEffect(EffectSlot.STATIC, new LimitSpellsPerTurnEffect(1, SpellLimitScope.EACH_PLAYER));
             gd.playerBattlefields.get(player2Id).add(new Permanent(ruleOfLaw));
 
             Card dummy = new Card();

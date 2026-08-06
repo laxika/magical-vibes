@@ -80,7 +80,7 @@ high-churn or needs a design call and is optional.
 | 10 | Search-target-library + sacrifice costs | 5 | LOW | **DONE** — 10a's premise held in shape but not in detail (the audit's "only `.destination()` varies" is wrong on four other axes) and the audit undercounted: a fourth sibling, the play-permission form, folds in as two destinations, so 5 records + 5 handlers went. The reconcile picked `checkSearchRestriction` — `isSearchPrevented` shuffled the *searcher's* library, not the searched one. The 10b stretch was not taken (reason in the step body) |
 | 11 | Tap / untap scopes and costs | 3 | LOW | **DONE** — all three premises held. Two corrections: the `ON_ANY_CREATURE_DIES` collector for 11a was already occupied by an identical `UntapPermanentsEffect` one (a deletion, not a re-key), and 11c's `DynamicAmount` count cannot be evaluated inside the handler (`requiredCount()` takes no game state), so a new `TapCostSupport` resolves it at construction and `toPermanentChoiceCostHandler` gained a `GameData` parameter. The MED stretch was not taken |
 | 12 | `Grant*` low-risk batch | 6 | LOW | **DONE** — all five premises held; the audit's net count is one high (5, not 6 — the sixth would have been folding away the `SpellCastingAbilityGrantingEffect` capability interface, which is deliberately kept). One correction: the hand-size row is a rename, not an extension — `GrantPermanentNoMaxHandSizeEffect` would have lied once `UNTIL_NEXT_TURN` was folded in |
-| 13 | Cost-modification batch | 4 | LOW | TODO |
+| 13 | Cost-modification batch | 6 | LOW | **DONE** — all four premises held; the audit's net count is two low (6 records + 3 handlers, not 4). One correction: the tax scope reuses the existing `CostModificationScope`, not a new `CostTaxScope`. Two rules fixes shipped, both from `getType()` → `hasType` (CR 205.2b) |
 | 14 | Remove-counter batch | 4 | LOW–MED | TODO |
 | 15 | Reveal / reorder library batch | 2 | LOW | TODO |
 | 16 | Damage target-category batch | 3 | LOW | TODO |
@@ -1033,32 +1033,117 @@ lifetimes (`getProtectionFromCardTypes()` is not an until-EOT bucket and is also
 
 ---
 
-### Step 13 — Cost-modification batch
+### Step 13 — Cost-modification batch — **DONE**
 
-| Target | Absorbs | Cards |
-|---|---|---|
-| `IncreaseSpellCostEffect(CardPredicate predicate, int amount, CostTaxScope scope)` — `{ALL_PLAYERS, CONTROLLER, OPPONENTS}` | `IncreaseOwnCastCostEffect`, `IncreaseOpponentCastCostEffect` | 1 + 1 |
-| `LimitSpellsPerTurnEffect(int maxSpells, SpellLimitScope scope)` — `{EACH_PLAYER, CONTROLLER, ENCHANTED_PLAYER}` | `LimitSpellsForControllerEffect`, `LimitSpellsForEnchantedPlayerEffect` | 1 + 1 |
-| `ReduceCastCostForMatchingSpellsEffect(predicate, amount, CostModificationScope.SELF)` | `ReduceOwnCastCostForCardTypeEffect` | 1 |
-| `ReduceOwnCastCostIfTargetingPermanentEffect(predicate, amount, boolean controlledOnly)` | `ReduceOwnCastCostIfTargetingControlledPermanentEffect` | 1 |
+**Shipped**
+```java
+public record IncreaseSpellCostEffect(CardPredicate predicate,
+                                      int amount,
+                                      CostModificationScope scope) implements CardEffect
+// reuses the existing enum: CostModificationScope { SELF, OPPONENT, ALL }
 
-**Notes**
-- `IncreaseSpellCost*`: the three handlers in `service/cast/costmod/` are the same three lines; the
-  own/opponent variants add exactly one `source.controlledBy(context.castingPlayerId())` guard (and
-  its negation). `IncreaseOpponentCastCostEffect` uses `Set<CardType>` + `.contains(spell.getType())`
-  — confirm the multi-type card (`AuraOfSilence`) still matches under `CardTypePredicate`.
-- `LimitSpells*`: all three are `record X(int maxSpells)` with exactly one consumer,
-  `CastingPermissionService.getMaxSpellsPerTurn:101-125` — three adjacent
-  `if (effect instanceof …) limit = Math.min(limit, x.maxSpells());` branches differing only in the
-  applies-to guard. No handler beans, no AI references.
-- `ReduceOwnCastCostForCardTypeEffect`: **behavior change** — the absorbed handler tests
-  `contains(context.spell().getType())` (primary type only) whereas `CardTypePredicate` uses
-  `hasType(...)`, so an artifact creature would newly match. That is a fix; confirm Heartless
-  Summoning's intent before shipping.
-- `ReduceOwnCastCostIfTargeting*`: identical components `(PermanentPredicate, int)`, consumed only by
-  `CastingCostService.computeTargetBasedCostReduction:537-560` and
-  `GameActionAvailabilityService:413-436`; the controlled variant adds one `findPermanentController`
-  line and swaps `battlefieldHasPermanentMatching` for `controlsPermanent`.
+public record LimitSpellsPerTurnEffect(int maxSpells, SpellLimitScope scope) implements CardEffect
+// enum SpellLimitScope { EACH_PLAYER, CONTROLLER, ENCHANTED_PLAYER }
+
+public record ReduceOwnCastCostIfTargetingPermanentEffect(PermanentPredicate predicate,
+                                                          int amount,
+                                                          boolean controlledByCaster) implements CardEffect
+// sugar: (predicate, amount) -> controlledByCaster = false
+```
+
+Six records and three handlers deleted, one enum added; no new record and no new handler. Cards (17):
+Thalia Guardian of Thraben, Chill, Gloom, Feroz's Ban, Thorn of Amethyst, Irini Sengir, Derelor,
+Aura of Silence; Rule of Law, Arcane Laboratory, Colfenor's Plans, Curse of Exhaustion;
+Heartless Summoning; Savage Stomp, Ajani's Response.
+
+**What held** — all four premises did. The three `Increase*` handlers really are the same two
+statements with an added `source.controlledBy(context.castingPlayerId())` guard and its negation; the
+three `LimitSpells*` reads really are three adjacent `Math.min` branches in the single consumer
+`CastingPermissionService.getMaxSpellsPerTurn`, differing only in the applies-to guard; and the two
+`ReduceOwnCastCostIfTargeting*Permanent*` records really are the same `(PermanentPredicate, int)`
+consumed only by `CastingCostService.computeTargetBasedCostReduction` and
+`GameActionAvailabilityService`. No AI file, view, or serialization site named any of the six.
+
+**What the audit missed**
+- **The tax scope already existed.** The plan prescribed a new `CostTaxScope {ALL_PLAYERS,
+  CONTROLLER, OPPONENTS}`, but `ReduceCastCostForMatchingSpellsEffect` — the exact reduction-side
+  mirror of this family, in the same `costmod` package — has carried
+  `CostModificationScope {SELF, OPPONENT, ALL}` since before this plan. A second three-value enum
+  meaning the same three things would have been the duplication the plan exists to remove, so the
+  survivor reuses it and the two handlers are now the same five-line `switch`. That also makes the
+  13c row a pure record swap: Heartless Summoning is `ReduceCastCostForMatchingSpellsEffect` with a
+  `CardTypePredicate(CREATURE)` and `SELF`, so **`ReduceOwnCastCostForCardTypeEffect`'s handler is
+  deleted outright rather than merged** — hence 3 handlers for 6 records.
+- **The net count is two low.** The Step Index said 4 deleted; the body's own rows list six.
+- **No default scope.** Both merged records take their scope explicitly at all 17 call sites rather
+  than defaulting the previous meaning through a 2-arg sugar. `ReduceCastCostForMatchingSpellsEffect`
+  already requires it, and after the merge a bare `IncreaseSpellCostEffect(pred, 1)` would have been
+  the one cost modifier in the package whose scope you cannot read at the call site. The
+  `controlledByCaster` flag does keep a `false` sugar — there the survivor's name still says what the
+  default is.
+
+**Deliberate deltas — two rules fixes, both `getType()` to `hasType` (CR 205.2b verified: "Some
+objects have more than one card type … Such objects satisfy the criteria for any effect that applies
+to any of their card types")**
+- **Heartless Summoning now discounts artifact creature spells.** This is the change the step
+  flagged, and the oracle text settles it: "Creature spells you cast cost {2} less to cast" — an
+  artifact creature spell **is** a creature spell. The absorbed handler tested
+  `Set.of(CREATURE).contains(spell.getType())`, and `TypeLineParser` assigns the *first* type word as
+  the primary type, so "Artifact Creature" parses as `type=ARTIFACT, additionalTypes={CREATURE}` and
+  every artifact creature silently missed the discount. Covered by
+  `HeartlessSummoningTest.artifactCreatureSpellsAreReduced` (Juggernaut, {4} to {2}) and its negative
+  `nonCreatureArtifactSpellsNotReduced` (Angel's Feather, a plain artifact, still full price).
+- **Aura of Silence is unchanged in practice, and the audit's worry was the wrong way round.** The
+  step asked to confirm the multi-type card "still matches" under `CardTypePredicate`; it does, and
+  strictly more so. Because canonical type lines put Artifact and Enchantment *before* Creature, every
+  card with either type already had it as its primary type, so the old `Set.contains(getType())` and
+  the new `hasType` agree across today's pool. Pinned by
+  `AuraOfSilenceTest.opponentArtifactCreaturesCostMore`.
+- The merged reduce path evaluates its amount against the **source permanent**
+  (`ReduceCastCostForMatchingSpellsEffectHandler`'s `AmountContext`) where the absorbed handler passed
+  `AmountContext.forCasting` (null permanent). A strict widening — source-relative amounts now work
+  on this shape too. Inert for Heartless Summoning, whose amount is `Fixed(2)`.
+
+**Other call sites updated**
+- `CastingCostService.computeTargetBasedCostReduction` collapses from two `findFirst()` scans to one.
+  The two scans had **opposite precedence** to `GameActionAvailabilityService`'s loop (general-first
+  vs controlled-first); with one record there is no precedence left to disagree about. Behaviour is
+  unchanged because no card carries both — Ajani's Response has the any-controller form, Savage Stomp
+  the controlled one.
+- `GameActionAvailabilityService`'s playability branch keeps both battlefield probes, now selected by
+  the flag: `controlsPermanent` when `controlledByCaster`, `battlefieldHasPermanentMatching` otherwise.
+- `GameViewProjectionFactory` imported all three `ReduceOwnCastCostIfTargeting*` records and used
+  none of them; the dead imports are gone.
+- `TargetPolarityClassifier` and the AI module needed nothing — none of the six records was ever
+  named outside the engine.
+
+**Tests** — no test referenced the six classes by name except the service tests that construct them
+(`CastingCostServiceTest`, `GameActionAvailabilityServiceTest`, `CastingPermissionServiceTest`,
+`SpellCastingServiceTest`, plus `CostModificationTestRegistry`), all converted. Two of those mock
+`PredicateEvaluationService`, and the absorbed increase/reduce handlers never called it — they did a
+raw `Set.contains`. Converting them to a predicate would therefore have made the modifier silently
+vanish behind a default-`false` mock, so both classes gained an `evaluateCardTypePredicates()` helper
+that really evaluates `CardTypePredicate`/`CardAnyOfPredicate`; one pre-existing local stub that cast
+argument 1 straight to `CardTypePredicate` was folded into it (a `CardAnyOfPredicate` made it throw).
+
+Every scope branch was already pinned both ways by existing card tests, which is why only the two
+behaviour-change tests above are new: `DerelorTest.opponentBlackSpellNotTaxed` (SELF must not leak to
+ALL) and `AuraOfSilenceTest.ownEnchantmentsNotAffected` (OPPONENT must not either), `ChillTest`'s
+"Opponent's red spell also costs {2} more" (ALL must not narrow to SELF),
+`ColfenorsPlansTest.opponentIsNotRestricted` and `CurseOfExhaustionTest.doesNotLimitNonEnchantedPlayer`
+(CONTROLLER and ENCHANTED_PLAYER must not leak to EACH_PLAYER — the latter casts the Curse *and* is
+unrestricted, which is exactly the mirror), `RuleOfLawTest`/`ArcaneLaboratoryTest` "affects both
+players", and `AjanisResponseTest`'s "Reduced cost applies when targeting opponent's tapped creature"
+(`controlledByCaster=false` must not behave like `true`).
+
+**Keep separate**: `IncreaseSpellCostExceptOnControllersTurnEffect` (Defense Grid — its waiver is
+keyed on the active player, not on who controls the source),
+`IncreaseOwnCastCostUnlessRevealSubtypeEffect` and `IncreaseCostOfSpellsTargetingThisSpellEffect`
+(both spell-self, not battlefield-source), `IncreaseOpponentCostForTargetingControlledPermanentEffect`
+(target-gated), `IncreaseActivatedAbilityCostEffect` (taxes abilities, not spells),
+`ReduceOwnCastCostForSharedCardTypeWithImprintEffect` (compares against the imprinted card, not a
+predicate), and `ReduceOwnCastCostIfTargetingStackEntryEffect` (a `StackEntryPredicate`, not a
+`PermanentPredicate`).
 
 ---
 

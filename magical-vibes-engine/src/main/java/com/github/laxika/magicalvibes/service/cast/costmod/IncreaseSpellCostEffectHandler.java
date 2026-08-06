@@ -23,6 +23,14 @@ public class IncreaseSpellCostEffectHandler implements CostModificationHandlerBe
     @Override
     public int modifyCost(CostModificationContext context, CardEffect effect, CostModificationSource source) {
         var increase = (IncreaseSpellCostEffect) effect;
+        boolean applies = switch (increase.scope()) {
+            case SELF -> source.controlledBy(context.castingPlayerId());
+            case OPPONENT -> !source.controlledBy(context.castingPlayerId());
+            case ALL -> true;
+        };
+        if (!applies) {
+            return 0;
+        }
         return predicateEvaluationService.matchesCardPredicate(context.spell(), increase.predicate(), null)
                 ? increase.amount() : 0;
     }

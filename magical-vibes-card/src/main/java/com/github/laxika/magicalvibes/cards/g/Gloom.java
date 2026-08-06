@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.IncreaseActivatedAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -21,7 +22,7 @@ public class Gloom extends Card {
     public Gloom() {
         // White spells cost {3} more to cast.
         addEffect(EffectSlot.STATIC, new IncreaseSpellCostEffect(
-                new CardColorPredicate(CardColor.WHITE), 3));
+                new CardColorPredicate(CardColor.WHITE), 3, CostModificationScope.ALL));
 
         // Activated abilities of white enchantments cost {3} more to activate.
         addEffect(EffectSlot.STATIC, new IncreaseActivatedAbilityCostEffect(
