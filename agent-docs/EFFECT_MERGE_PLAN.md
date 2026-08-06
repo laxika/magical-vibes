@@ -71,7 +71,7 @@ high-churn or needs a design call and is optional.
 | 1 | Emblem effects → `CreateEmblemEffect` | 16 | LOW | **DONE** — premise held (all 16 records zero-component, all 16 handlers identical bar Garruk's `getTargetId()`); two deliberate deltas: the `playerIds.contains` guard now runs on the controller path too, and Garruk's emblem log gains the trailing `.` the other 15 already had |
 | 2 | Outright deletions (compose from existing effects) | 6 | LOW | **DONE** — rows 1–4 held; the `SacrificeSelf*` row did **not** (`SequenceEffect` has no "if you do" gate, so composing it would have reverted a `9b8147333` fix) and was replaced with a new `SacrificeSelfThenEffect(CardEffect)`, which also absorbs `SacrificeSelfThenDealDamageToTargetPlayerEffect` — that class was **not** unused |
 | 3 | Redirect-next-damage family | 6 | LOW | **DONE** — premise held for all six handlers; the audit missed a third axis (`TargetSpec.harmful`), which is now derived from `destinationRole == TARGET` and makes Zealous Inquisitor harmful like its Zhalfirin Crusader twin (CR 702.16b). The `PermanentPredicate` moved out of the effect onto the two white-creature cards |
-| 4 | Any-color mana family | 7 | LOW | **DONE** — premise held; `eachManaChosenSeparately` is derived from the restriction, not a component, and `AwardAnyColorSubtypeSpellManaEffect` (Sliver Hive) was left out as the plan specified. Three deliberate deltas, all rules fixes: Damping Sphere / land-type replacement now see spend-restricted land mana, "could produce" scans (CR 106.7) now include restricted any-color lands, and the AI's choice-prompt filter covers all nine restrictions |
+| 4 | Any-color mana family | 8 | LOW | **DONE** — premise held; `eachManaChosenSeparately` is derived from the restriction, not a component. The audit missed an eighth sibling (`AwardAnyColorSubtypeSpellManaEffect`, Sliver Hive), absorbed in a follow-up commit. Three deliberate deltas, all rules fixes: Damping Sphere / land-type replacement now see spend-restricted land mana, "could produce" scans (CR 106.7) now include restricted any-color lands, and the AI's choice-prompt filter covers all restrictions |
 | 5 | Combat-requirement / must-attack | 5 | LOW | TODO |
 | 6 | `SetLifeTotalEffect` | 3 | LOW | TODO |
 | 7 | `SkipNextEffect` | 3 | MED | TODO |
@@ -262,14 +262,15 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
 // sugar: (), (int), (DynamicAmount), (int, ManaSpendRestriction), (int, ManaSpendRestriction, CardSubtype)
 // enum ManaSpendRestriction { NONE, INSTANT_SORCERY_COPY, INSTANT_SORCERY_ONLY, FLASHBACK_ONLY,
 //                             CREATURE_SPELL_ONLY, CHOSEN_SUBTYPE_CREATURE,
-//                             CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE, SUBTYPE_SPELL_OR_ABILITY }
+//                             CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE, SUBTYPE_SPELL,
+//                             SUBTYPE_SPELL_OR_ABILITY }
 ```
 
-Seven records and two handlers deleted, one record + one enum + one support class
+Eight records and two handlers deleted, one record + one enum + one support class
 (`service/effect/AnyColorManaChoiceSupport`) added. Cards: Springjack Pasture, Resonating Lute,
 Altar of the Lost, Primal Wellspring, Ancient Ziggurat, Somberwald Sage, Smokebraider, Primal Beyond,
-Cavern of Souls, Pillar of Origins, Unclaimed Territory. The survivor's 45 existing call sites were
-untouched — the `()` / `(int)` constructors still mean the same thing.
+Cavern of Souls, Pillar of Origins, Unclaimed Territory, Sliver Hive. The survivor's 45 existing call
+sites were untouched — the `()` / `(int)` constructors still mean the same thing.
 
 **What held** — the restriction axis really was already unified on the choice side
 (`ChoiceContext.ManaColorChoice`), and every branch reduces to "evaluate an amount, then open one
@@ -283,11 +284,13 @@ the enchanted-land-tap trigger.
   such flag on `ManaColorChoice`. Carrying a boolean on the effect would have needed new plumbing to
   mean anything, so polarity is derived instead (`FLASHBACK_ONLY` and `SUBTYPE_SPELL_OR_ABILITY` are
   the "any combination of colors" wordings), exactly as Step 3 derived `harmful`.
-- **There is an eighth sibling.** `AwardAnyColorSubtypeSpellManaEffect` (Sliver Hive) — a *printed*
+- **There was an eighth sibling.** `AwardAnyColorSubtypeSpellManaEffect` (Sliver Hive) — a *printed*
   subtype routed into the same spell-only bucket as Cavern of Souls — is the natural
-  `CHOSEN_SUBTYPE_CREATURE` counterpart with a fixed type. It was deliberately left out to stay inside
-  the plan's scope; folding it in is a one-branch follow-up (it would need the `subtype` component to
-  serve two restrictions instead of one).
+  `CHOSEN_SUBTYPE_CREATURE` counterpart with a fixed type. It was outside the plan's stated scope, so
+  it landed as an immediate follow-up commit: `ManaSpendRestriction.SUBTYPE_SPELL`, with the `subtype`
+  component now serving both printed-subtype restrictions. **8 records absorbed in total, not 7.**
+  Same CR 106.7 delta as the rest — Sliver Hive now counts as a source of every colour for
+  "could produce".
 - **The X variant is not just "amount from xValue".** It also reported nothing to the AI's estimator
   where the plain form reports full colour coverage. `estimatedCountsAllColors()` is therefore
   `restriction == NONE && amount instanceof Fixed`, which keeps Springjack Pasture invisible to the

@@ -10,8 +10,9 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * The restriction also decides whether the controller picks one colour for the whole batch or one
  * per mana — see {@link ManaSpendRestriction}.
  *
- * <p>{@code subtype} is the fixed creature type of a {@link ManaSpendRestriction#SUBTYPE_SPELL_OR_ABILITY}
- * instance (Smokebraider's Elemental) and is {@code null} for every other restriction. The
+ * <p>{@code subtype} is the type printed on the card for the {@link ManaSpendRestriction#SUBTYPE_SPELL}
+ * and {@link ManaSpendRestriction#SUBTYPE_SPELL_OR_ABILITY} restrictions (Sliver Hive's Sliver,
+ * Smokebraider's Elemental) and is {@code null} for every other restriction. The
  * {@code CHOSEN_SUBTYPE_*} forms read their type off the source permanent instead, since it is
  * chosen as the permanent enters.
  */
@@ -55,7 +56,8 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
         return switch (restriction) {
             case NONE, CREATURE_SPELL_ONLY, CHOSEN_SUBTYPE_CREATURE, CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE ->
                     amount instanceof Fixed fixed ? fixed.value() : 0;
-            case INSTANT_SORCERY_COPY, INSTANT_SORCERY_ONLY, FLASHBACK_ONLY, SUBTYPE_SPELL_OR_ABILITY -> 0;
+            case INSTANT_SORCERY_COPY, INSTANT_SORCERY_ONLY, FLASHBACK_ONLY,
+                 SUBTYPE_SPELL, SUBTYPE_SPELL_OR_ABILITY -> 0;
         };
     }
 }

@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorSubtypeSpellManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +24,7 @@ public class SliverHive extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardAnyColorSubtypeSpellManaEffect(CardSubtype.SLIVER)),
+                List.of(new AwardAnyColorManaEffect(1, ManaSpendRestriction.SUBTYPE_SPELL, CardSubtype.SLIVER)),
                 "{T}: Add one mana of any color. Spend this mana only to cast a Sliver spell."
         ));
 

@@ -44,6 +44,14 @@ public enum ManaSpendRestriction {
     CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE,
 
     /**
+     * Spendable only to cast spells of the effect's own {@code subtype} (Sliver Hive). Routes into
+     * the same spell-only bucket as {@link #CHOSEN_SUBTYPE_CREATURE}, so it cannot pay for activated
+     * abilities either; the difference is that the subtype is printed on the card rather than chosen
+     * as the source entered.
+     */
+    SUBTYPE_SPELL,
+
+    /**
      * Spendable only to cast spells of the effect's own {@code subtype} or to activate abilities of
      * permanents of that subtype (Smokebraider, Primal Beyond).
      */
