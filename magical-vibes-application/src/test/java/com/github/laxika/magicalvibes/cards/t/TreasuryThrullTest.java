@@ -86,7 +86,7 @@ class TreasuryThrullTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TreasuryThrull());
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castCreature(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
@@ -94,6 +94,7 @@ class TreasuryThrullTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 
     @Test

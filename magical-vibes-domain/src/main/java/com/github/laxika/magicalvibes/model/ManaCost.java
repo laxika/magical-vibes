@@ -1073,7 +1073,11 @@ public class ManaCost {
             }
         }
 
-        int remainingGeneric = genericCost + xValue * effectiveXMultiplier();
+        // Pay hybrid symbols from the general pool, exactly as the context-free pay(ManaPool, int)
+        // does. Without this a cost made only of hybrid pips ({R/G}{R/G}) would be free.
+        int extraHybridGeneric = payHybrids(pool);
+
+        int remainingGeneric = genericCost + extraHybridGeneric + xValue * effectiveXMultiplier();
 
         // Spend more-restrictive mana first: Myr-only before artifact-only
         if (myrContext && remainingGeneric > 0) {
@@ -1183,7 +1187,11 @@ public class ManaCost {
             }
         }
 
-        int remainingGeneric = genericCost + xValue * effectiveXMultiplier();
+        // Pay hybrid symbols from the general pool, exactly as the context-free pay(ManaPool, int)
+        // does. Without this a cost made only of hybrid pips ({R/G}{R/G}) would be free.
+        int extraHybridGeneric = payHybrids(pool);
+
+        int remainingGeneric = genericCost + extraHybridGeneric + xValue * effectiveXMultiplier();
 
         // Spend subtype mana for generic costs first (most restricted)
         if (remainingGeneric > 0) {

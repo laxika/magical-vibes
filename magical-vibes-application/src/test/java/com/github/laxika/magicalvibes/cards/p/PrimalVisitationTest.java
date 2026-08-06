@@ -53,9 +53,11 @@ class PrimalVisitationTest extends BaseCardTest {
     void cannotTargetNonCreature() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new Forest());
         harness.setHand(player1, List.of(new PrimalVisitation()));
-        harness.addMana(player1, ManaColor.RED, 5);
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         Permanent land = findPermanent(player1, "Forest");
 
