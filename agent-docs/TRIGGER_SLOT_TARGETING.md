@@ -476,6 +476,22 @@ Auras have their own trigger slots. Use this table to pick the correct one based
 | "Whenever enchanted creature attacks and isn't blocked, ..." | `ON_ENCHANTED_CREATURE_ATTACKS_UNBLOCKED` | Enchanted attacker ends up unblocked (declare-blockers step). Non-targeting: `sourcePermanentId`=enchanted attacker, `targetId`=defending player | Cloak of Confusion |
 | "Whenever a creature is dealt damage, ..." (any creature) | `ON_ANY_CREATURE_DEALT_DAMAGE` | Any creature is dealt damage (combat or non-combat). Queued entry targets the damaged creature | Death Pits of Rath |
 
+**`ON_ANY_CREATURE_DEALT_DAMAGE`, `ON_OPPONENT_CREATURE_DEALT_DAMAGE` and
+`ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE` fire only when the damaged permanent is a creature.** All
+three are worded around damage dealt *to a creature*, so `DamageSupport.dealCreatureDamage` queues all
+three behind one `gameQueryService.isCreature` gate (CR 603.2 — a trigger fires only when the event
+matches its trigger event). The gate is layer-aware (CR 613.1d), unlike the printed type lines the
+CR 120.3c loyalty and CR 120.3h defense branches in the same method key off: a planeswalker or battle
+routed through this method is a *damage destination*, not a creature, so it must not fire them. A
+permanent that is both a creature and a planeswalker does fire them.
+
+The gate lives at the `DamageSupport` call site rather than inside `TriggerCollectionService` because
+the call site still holds the live `Permanent` — `checkAllyDealtDamageToCreatureTriggers` takes only a
+`UUID`, and the damaged creature may already have died to the same damage, so a lookup there would
+suppress a trigger that legitimately fired. `checkCreatureDamageToYouOrYourPermanentTriggers`
+(Mangara's Equity) is deliberately **outside** the gate: it also covers damage to the player, and the
+effect's own `damagedPermanentFilter` does the narrowing in `DamageTriggerCollectorService`.
+
 **Key distinction**: "your upkeep" on an aura means the **aura controller's** upkeep → use `UPKEEP_TRIGGERED`. "Enchanted creature's controller's upkeep" means the **enchanted permanent's controller's** upkeep → use `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED`. These are different when the aura enchants an opponent's creature.
 
 **How `UPKEEP_TRIGGERED` works for auras**: The aura permanent sits on the controller's battlefield. `StepTriggerService` iterates the active player's battlefield looking for permanents with `UPKEEP_TRIGGERED` effects. Since the aura is on the controller's battlefield, the trigger fires during the controller's upkeep. The `sourcePermanentId` on the stack entry is set to the aura permanent's ID (`perm.getId()`), so the resolution handler can find the enchanted creature via `auraPerm.getAttachedTo()`.

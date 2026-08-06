@@ -1200,7 +1200,102 @@ Nothing blocks anything, but three known items outlive the plan:
 - **`DamageSupport.dealCreatureDamage`'s creature-trigger block** fires Kazarov / Death Pits of Rath
   for whatever `Permanent` reaches it. Step 8a flagged this; it already mis-fires for a non-creature
   planeswalker today and now does the same for a battle. Gating it on `gameQueryService.isCreature` is
-  rules-correct for both and is a change on its own merits.
+  rules-correct for both and is a change on its own merits. *(Done — see "Follow-up: the
+  creature-trigger gate", which also caught a third slot in the same block:
+  `ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE`.)*
+
+---
+
+## Follow-up: the creature-trigger gate
+
+Not a numbered step — the third bullet above, executed on its own merits.
+
+**The premise held verbatim.** `DamageSupport.dealCreatureDamage` queued both slots for whatever
+`Permanent` reached its `damage > 0` block, with no creature test. Both cards are worded
+"a creature ... is dealt damage" (re-verified on Scryfall: Kazarov, Sengir Pureblood DOM 96 —
+*"Whenever a creature an opponent controls is dealt damage, put a +1/+1 counter on Kazarov"*;
+Death Pits of Rath TMP 127 — *"Whenever a creature is dealt damage, destroy it. It can't be
+regenerated."*), so a non-creature permanent does not match the trigger event (CR 603.2, verified).
+
+**A third slot in the same block had the identical defect and is fixed here too.**
+`checkAllyDealtDamageToCreatureTriggers` (`ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE`) guards only
+`damageSource != null` and never checks the damaged permanent's type, while all three cards on the slot
+— one per effect type — are worded "deals damage **to a creature**": Greatbow Doyen (MOR 125,
+verified: *"Whenever an Archer you control deals damage to a creature, that Archer deals that much
+damage to that creature's controller"*), Bellowing Fiend (TMP 108, verified: *"Whenever this creature
+deals damage to a creature, this creature deals 3 damage to that creature's controller and 3 damage to
+you"*), and Cruel Deceiver's granted `DestroyDamagedCreatureEffect`.
+
+All three calls are now inside one `if (gameQueryService.isCreature(gameData, target))`.
+`damagedCreatureControllerId` and `reflectionSource` were hoisted above the gate — the Mangara's
+Equity call *below* it reads both and is unchanged.
+
+**The gate is deliberately layer-aware** (CR 613.1d, verified), which is the opposite choice from
+`isAnyTargetDamageRecipient`'s printed-type read two steps up the call chain. Step 8a's note explains
+why that one is printed-type: it feeds the CR 120.3c / CR 120.3h destinations, which key off the
+printed line too. This gate feeds neither — "creature" here is a *trigger condition*, so a permanent
+that stopped being a creature under layer 4 must not fire it, and a permanent that is both creature
+and planeswalker must. Both facts follow from the same rule.
+
+### Behaviour changes
+
+| Path | Before | Now |
+|---|---|---|
+| Divided damage to a planeswalker (Arc Trail, Fireball, Cone of Flame, Jaya's Immolating Inferno) | Death Pits of Rath **destroyed** the planeswalker; Kazarov got a counter | neither fires |
+| Any-target damage to a battle | Death Pits of Rath destroyed the battle; Kazarov got a counter | neither fires |
+| Either of the above from a *permanent* source | Greatbow Doyen / Bellowing Fiend / Cruel Deceiver also reflected or destroyed | none fires |
+
+The planeswalker half was live before Step 8: `resolveAnyTargetDamage` returns early for a printed
+planeswalker, so the only route into `dealCreatureDamage` was the divided-damage path
+(`dealDividedDamageToAnyTargets` / `DealDividedDamageEffectHandler.dealToAssignments`). The battle
+half became reachable the moment Step 8 widened `anyTarget()`, via the plain any-target path. The
+ally-reflection row additionally needs a *permanent* damage source — a spell source leaves
+`reflectionSource` null and the method returns early.
+
+### Tests
+
+Six new tests, each confirmed to fail against its gate removed and pass with it (12 tests in the
+Kazarov + Death Pits classes with exactly 4 failing; 5 in `BellowingFiendTest` with exactly 2):
+
+- `DeathPitsOfRathTest.NonCreatureAnyTargets` — Arc Trail splits 2/1 across Liliana Vess and a Hill
+  Giant: exactly **one** trigger is queued, the Hill Giant dies and Liliana survives at 3 loyalty
+  (the positive control lives in the same test); Shock at Invasion of Innistrad queues nothing and
+  leaves the battle at 3 defense.
+- `KazarovSengirPurebloodTest.NonCreatureAnyTargets` — Arc Trail at an opponent's planeswalker and
+  its controller (no creature damaged at all) leaves Kazarov at zero counters; likewise Shock at an
+  opponent's battle.
+- `BellowingFiendTest.NonCreatureAnyTargets` — the Fiend's own divided damage at a planeswalker
+  (via `dealDividedDamageToAnyTargets`, which finds the source permanent by card identity) and its
+  any-target damage at a battle (via `resolveAnyTargetDamage`) both remove the counters and queue
+  nothing, so neither player loses the 3+3. No implemented card can aim either at a non-creature yet,
+  so both drive `DamageSupport` inside `harness.inMutationScope`, the way
+  `InvasionOfInnistradTest.DamageToBattle` does.
+
+Also cleaned in `KazarovSengirPurebloodTest`: fifteen accidental duplicate
+`import …model.amount.Fixed;` lines interleaved through the import block, and three `// ===== … =====`
+divider comments (one of them heading an empty section) that `CLAUDE.md` forbids. No test logic
+touched.
+
+### Where the gate was placed, and why not inside the trigger services
+
+All three gates live at the `DamageSupport` call site, not inside `TriggerCollectionService`. Gating
+`checkAllyDealtDamageToCreatureTriggers` internally would mean re-finding the damaged permanent from
+its `UUID`, and by then it may have died to the same damage — `findPermanentById` would return null
+and suppress a trigger that legitimately fired when the damage was dealt. The call site still holds
+the live `Permanent`, so the question is answered without a lookup.
+
+The other callers need no gate, re-verified rather than assumed: `CombatDamageService`'s three
+`recordCombatDamageToCreature` sites are all attacker-vs-blocker, and its
+`checkOpponentCreatureDealtDamageTriggers` pair reads `defDamageTaken` / `atkDamageTaken`, which only
+ever hold combat creatures. `dealCreatureDamageUnpreventable` carries a byte-identical copy of the
+whole block and was also left alone: its only callers are
+`DealDamageToTargetCreatureEffectHandler:63` and `:93`, so a non-creature cannot reach it.
+
+Checked and **not** a defect: `checkCreatureDamageToYouOrYourPermanentTriggers` (Mangara's Equity)
+applies `trigger.damagedPermanentFilter()` through `PredicateEvaluationService` in
+`DamageTriggerCollectorService:480`, so the damaged permanent is already filtered; and
+`checkDealtDamageToCreatureTriggers` (`ON_DEALT_DAMAGE`, Nested Ghoul) is self-referential — the
+watcher *is* the damaged permanent, so "whenever this is dealt damage" is correct for any type.
 
 ---
 

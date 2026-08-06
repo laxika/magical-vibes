@@ -1,43 +1,27 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.cards.a.ArcTrail;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfInnistrad;
+import com.github.laxika.magicalvibes.cards.l.LilianaVess;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import org.junit.jupiter.api.DisplayName;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import org.junit.jupiter.api.Nested;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import org.junit.jupiter.api.Test;
 
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import java.util.List;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import java.util.UUID;
 
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class KazarovSengirPurebloodTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    
 
     @Test
     @DisplayName("Kazarov has activated ability: {3}{R}: deal 2 damage to target creature")
@@ -53,8 +37,6 @@ class KazarovSengirPurebloodTest extends BaseCardTest {
         DealDamageToTargetCreatureEffect damageEffect = (DealDamageToTargetCreatureEffect) ability.getEffects().getFirst();
         assertThat(damageEffect.damage()).isEqualTo(new Fixed(2));
     }
-
-    // ===== Triggered ability: non-combat damage =====
 
     @Nested
     @DisplayName("Triggered ability — non-combat damage")
@@ -129,8 +111,6 @@ class KazarovSengirPurebloodTest extends BaseCardTest {
         }
     }
 
-    // ===== Triggered ability: combat damage =====
-
     @Nested
     @DisplayName("Triggered ability — combat damage")
     class CombatDamageTrigger {
@@ -169,6 +149,55 @@ class KazarovSengirPurebloodTest extends BaseCardTest {
             // Kazarov should have a +1/+1 counter
             Permanent kazarov = findPermanent(player1, "Kazarov, Sengir Pureblood");
             assertThat(kazarov.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isGreaterThanOrEqualTo(1);
+        }
+    }
+
+    /**
+     * "Whenever a creature an opponent controls is dealt damage" — a permanent an opponent controls
+     * that is not a creature does not match that trigger event (CR 603.2), so an any-target spell
+     * aimed at a planeswalker or a battle leaves Kazarov alone.
+     */
+    @Nested
+    @DisplayName("Triggered ability — non-creature any-target permanents")
+    class NonCreatureAnyTargets {
+
+        @Test
+        @DisplayName("Damage to an opponent's planeswalker does not trigger Kazarov")
+        void damageToOpponentPlaneswalkerDoesNotTrigger() {
+            harness.addToBattlefield(player1, new KazarovSengirPureblood());
+            Permanent liliana = harness.addToBattlefieldAndReturn(player2, new LilianaVess());
+            liliana.setCounterCount(CounterType.LOYALTY, 5);
+            harness.setHand(player1, List.of(new ArcTrail()));
+            harness.addMana(player1, ManaColor.RED, 2);
+
+            // 2 damage to the planeswalker, 1 to its controller — no creature is damaged at all.
+            harness.castSorcery(player1, 0, List.of(liliana.getId(), player2.getId()));
+            harness.passBothPriorities(); // Resolve Arc Trail
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+
+            Permanent kazarov = findPermanent(player1, "Kazarov, Sengir Pureblood");
+            assertThat(kazarov.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        }
+
+        @Test
+        @DisplayName("Damage to an opponent's battle does not trigger Kazarov")
+        void damageToOpponentBattleDoesNotTrigger() {
+            harness.addToBattlefield(player1, new KazarovSengirPureblood());
+            Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfInnistrad());
+            battle.setCounterCount(CounterType.DEFENSE, 5);
+            harness.setHand(player1, List.of(new Shock()));
+            harness.addMana(player1, ManaColor.RED, 1);
+
+            harness.castInstant(player1, 0, battle.getId());
+            harness.passBothPriorities(); // Resolve Shock — 2 damage to the battle
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(3);
+
+            Permanent kazarov = findPermanent(player1, "Kazarov, Sengir Pureblood");
+            assertThat(kazarov.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         }
     }
 }

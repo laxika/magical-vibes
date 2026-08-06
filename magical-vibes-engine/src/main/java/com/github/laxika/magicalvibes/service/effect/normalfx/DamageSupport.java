@@ -226,22 +226,35 @@ public class DamageSupport {
                     sourceControllerId, damage);
             triggerCollectionService.checkDealtDamageToCreatureTriggers(gameData, target, damage, sourceControllerId);
 
-            // Fire ON_OPPONENT_CREATURE_DEALT_DAMAGE triggers (e.g. Kazarov)
             UUID damagedCreatureControllerId = gameQueryService.findPermanentController(gameData, target.getId());
-            if (damagedCreatureControllerId != null) {
-                triggerCollectionService.checkOpponentCreatureDealtDamageTriggers(gameData, damagedCreatureControllerId);
-            }
-
-            // Fire ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)
-            triggerCollectionService.checkAnyCreatureDealtDamageTriggers(gameData, target);
-
-            // Fire ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen)
             Permanent reflectionSource = damageSource != null
                     ? damageSource
                     : (sourcePermId != null ? gameQueryService.findPermanentById(gameData, sourcePermId) : null);
-            triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource, sourceControllerId, damagedCreatureControllerId, target.getId(), damage);
 
-            // Mangara's Equity: "…or a white creature you control"
+            // All three slots below trigger on damage dealt *to a creature* — "whenever a creature …
+            // is dealt damage" (Kazarov, Sengir Pureblood; Death Pits of Rath) and "whenever … deals
+            // damage to a creature" (Greatbow Doyen, Bellowing Fiend, Cruel Deceiver's granted
+            // ability) — so a planeswalker or battle that is not also a creature must not fire them:
+            // CR 603.2, an ability triggers only when the event matches its trigger event. The gate is
+            // layer-aware (CR 613.1d), unlike the printed type lines the CR 120.3c / CR 120.3h
+            // branches below key off, because "creature" is the trigger condition here rather than a
+            // choice of damage destination.
+            if (gameQueryService.isCreature(gameData, target)) {
+                // Fire ON_OPPONENT_CREATURE_DEALT_DAMAGE triggers (e.g. Kazarov)
+                if (damagedCreatureControllerId != null) {
+                    triggerCollectionService.checkOpponentCreatureDealtDamageTriggers(gameData, damagedCreatureControllerId);
+                }
+
+                // Fire ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)
+                triggerCollectionService.checkAnyCreatureDealtDamageTriggers(gameData, target);
+
+                // Fire ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen)
+                triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource, sourceControllerId, damagedCreatureControllerId, target.getId(), damage);
+            }
+
+            // Mangara's Equity: "…or a white creature you control" — deliberately outside the gate.
+            // It also covers damage to the player, and the effect's own damagedPermanentFilter does
+            // the narrowing in DamageTriggerCollectorService.
             triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(
                     gameData, damagedCreatureControllerId, target, reflectionSource, damage);
         }
