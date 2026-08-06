@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -39,6 +40,14 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class TriggeredAbilityQueueService {
+
+    /**
+     * The permanent half of "any target" (CR 115.4), taken from the declared
+     * {@link TargetPredicates#anyTarget()} rather than re-implemented. Hoisted because the
+     * enumerations below ask it once per permanent on every battlefield.
+     */
+    private static final PermanentPredicate ANY_TARGET_PERMANENTS =
+            TargetPredicates.anyTarget().permanentRestriction().orElseThrow();
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -436,19 +445,8 @@ public class TriggeredAbilityQueueService {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
             PermanentChoiceContext.DiscardTriggerAnyTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class);
 
-            // Collect valid targets: all creatures and planeswalkers on all battlefields + all players
-            List<UUID> validPermanentTargets = new ArrayList<>();
-            for (UUID pid : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                if (battlefield == null) continue;
-                for (Permanent p : battlefield) {
-                    if (gameQueryService.isCreature(gameData, p)
-                            || p.getCard().hasType(CardType.PLANESWALKER)) {
-                        validPermanentTargets.add(p.getId());
-                    }
-                }
-            }
-
+            List<UUID> validPermanentTargets =
+                    anyTargetPermanents(gameData, pending.controllerId(), pending.discardedCard());
             List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
 
             // There are always valid targets (at least the players)
@@ -473,23 +471,20 @@ public class TriggeredAbilityQueueService {
             List<UUID> validPermanentTargets = new ArrayList<>();
             if (!pending.playerTargetOnly()) {
                 TargetFilter filter = pending.targetFilter();
-                FilterContext filterContext = filter != null
-                        ? FilterContext.of(gameData)
-                                .withSourceControllerId(pending.controllerId())
-                                .withSourceCardId(pending.sourceCard().getId())
-                        : null;
-
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                    if (battlefield == null) continue;
-                    for (Permanent p : battlefield) {
-                        if (filter != null) {
+                if (filter == null) {
+                    validPermanentTargets =
+                            anyTargetPermanents(gameData, pending.controllerId(), pending.sourceCard());
+                } else {
+                    FilterContext filterContext = FilterContext.of(gameData)
+                            .withSourceControllerId(pending.controllerId())
+                            .withSourceCardId(pending.sourceCard().getId());
+                    for (UUID pid : gameData.orderedPlayerIds) {
+                        List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                        if (battlefield == null) continue;
+                        for (Permanent p : battlefield) {
                             if (predicateEvaluationService.matchesFilters(p, Set.of(filter), filterContext)) {
                                 validPermanentTargets.add(p.getId());
                             }
-                        } else if (gameQueryService.isCreature(gameData, p)
-                                || p.getCard().hasType(CardType.PLANESWALKER)) {
-                            validPermanentTargets.add(p.getId());
                         }
                     }
                 }
@@ -621,19 +616,8 @@ public class TriggeredAbilityQueueService {
             PermanentChoiceContext.EnteringPermanentAnyTargetTrigger pending =
                     gameData.peekPendingInteraction(PermanentChoiceContext.EnteringPermanentAnyTargetTrigger.class);
 
-            // "Any target" — every creature and planeswalker on every battlefield, plus every player.
-            List<UUID> validPermanentTargets = new ArrayList<>();
-            for (UUID pid : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                if (battlefield == null) continue;
-                for (Permanent p : battlefield) {
-                    if (gameQueryService.isCreature(gameData, p)
-                            || p.getCard().hasType(CardType.PLANESWALKER)) {
-                        validPermanentTargets.add(p.getId());
-                    }
-                }
-            }
-
+            List<UUID> validPermanentTargets =
+                    anyTargetPermanents(gameData, pending.controllerId(), pending.sourceCard());
             List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
 
             // There are always valid targets (at least the players).
@@ -649,6 +633,32 @@ public class TriggeredAbilityQueueService {
                     gameData.id, pending.sourceCard().getName());
             return;
         }
+    }
+
+    /**
+     * Every permanent on every battlefield that CR 115.4 admits as the permanent half of "any
+     * target". The restriction is <em>evaluated</em> from the declared
+     * {@link TargetPredicates#anyTarget()} rather than re-implemented here, so these trigger
+     * enumerations cannot drift from the spell path in {@code ValidTargetService} /
+     * {@code TargetValidationService}, and they are layer-aware (CR 613.1d): a planeswalker a
+     * type-replacing effect turned into a land is no longer an any target.
+     *
+     * <p>Players are added by the callers — every one of them offers all of them.</p>
+     */
+    private List<UUID> anyTargetPermanents(GameData gameData, UUID controllerId, Card sourceCard) {
+        FilterContext filterContext =
+                new FilterContext(gameData, sourceCard == null ? null : sourceCard.getId(), controllerId, null, null);
+        List<UUID> validTargets = new ArrayList<>();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (predicateEvaluationService.matchesPermanentPredicate(p, ANY_TARGET_PERMANENTS, filterContext)) {
+                    validTargets.add(p.getId());
+                }
+            }
+        }
+        return validTargets;
     }
 
     public void processNextEmblemTriggerTarget(GameData gameData) {

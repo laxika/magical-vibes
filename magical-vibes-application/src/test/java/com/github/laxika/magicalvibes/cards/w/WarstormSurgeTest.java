@@ -1,7 +1,11 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -67,6 +71,40 @@ class WarstormSurgeTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(victim.getId()));
+    }
+
+    /**
+     * The entering-permanent trigger's any-target enumeration is evaluated from the declared target
+     * rather than re-implemented, so it reads the planeswalker type after layer 4 (CR 613.1d). A
+     * planeswalker Imprisoned in the Moon turned into a colorless land is no longer an any target
+     * (CR 115.4) — the same answer the spell path gives.
+     */
+    @Test
+    @DisplayName("Offers a planeswalker, but not one Imprisoned in the Moon turned into a land")
+    void offersPlaneswalkerUnlessLayerFourTookTheTypeAway() {
+        harness.addToBattlefield(player1, new WarstormSurge());
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 6);
+
+        Permanent aura = new Permanent(new ImprisonedInTheMoon());
+        aura.setAttachedTo(jace.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+
+        harness.setHand(player1, List.of(new HillGiant()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        resolveUntilInputOrEmpty();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds())
+                .contains(chandra.getId())
+                .doesNotContain(jace.getId());
     }
 
     @Test

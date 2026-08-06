@@ -256,10 +256,10 @@ mechanical high-churn. Phase 4 is deletion.
 | 5 | Collapse the three graveyard categories onto `GraveyardCards.scope`; delete the five hand-copied scope mappings. | LOW | **DONE** — see "Step 5 outcome". Not LOW and not five: there were **fourteen** copies and they disagreed, so six effects were declaring a scope they did not mean. Six rules-visible fixes. |
 | 6 | Migrate the derived-boolean readers (`includesPermanents` / `includesPlayers` / `isGraveyard`) in the trigger collectors, `StepTriggerService`, AI, and `EffectResolution.collectTargetTypes`. ~30 call sites across engine + AI. | MED | **DONE** — see "Step 6 outcome". 152 call sites, not ~30, across 31 files; `TargetSpec.admits` was changed to read `declaredTarget()` so it stops allocating. |
 | 7 | Delete `TargetCategory`; update `TargetSpecRatchetTest`, `scripts/targetspec-audit.py`, and the `EFFECTS_INDEX.md` category table. | LOW | **DONE** — see "Step 7 outcome". Genuinely LOW; the two `== ANY_TARGET` readers became `TargetSpec.declares(...)`, a new identity reader added for exactly that purpose. |
-| 8 | **Optional, separate decision.** Add `PermanentIsBattlePredicate` and include battles in the `ANY_TARGET` factory per CR 115.4 (defect 4). Needs a rules review of the battle-damage path first — do not bundle into Step 7. | MED | **BLOCKED** — the required rules review was done and says *not ready*. See "Step 8 review outcome". Widening `anyTarget()` alone would offer a battle that resolution silently ignores. Prerequisites are Step 8a below. **Step 8a is done but Step 8 is still blocked**: five more hand-rolled enumerations the review missed, plus row 5 — see "Step 8a outcome". |
+| 8 | **Optional, separate decision.** Add `PermanentIsBattlePredicate` and include battles in the `ANY_TARGET` factory per CR 115.4 (defect 4). Needs a rules review of the battle-damage path first — do not bundle into Step 7. | MED | **BLOCKED** — the required rules review was done and says *not ready*. See "Step 8 review outcome". Widening `anyTarget()` alone would offer a battle that resolution silently ignores. Prerequisites were Steps 8a and 8b, **both now done**. Only **row 5** of the review's table is left (`TargetValidationService.describe` needs a `"battle"` arm), and it is an item *inside* Step 8 rather than a separate prerequisite — see "Step 8b outcome". Step 8 is now unblocked. |
 | 8a | **Prerequisite for Step 8.** Teach the divided-damage and any-target damage paths to treat a battle as a damage recipient (CR 120.3h), and replace the two hand-rolled creature-or-planeswalker enumerations that bypass the declared predicate. See "Step 8 review outcome" for the exact sites. | MED | **DONE** — see "Step 8a outcome". Rows 1-4 fixed. The review under-counted the hand-rolled enumerations: **five more** were found, and Step 8 is still blocked on them plus row 5. |
 
-| 8b | **Second prerequisite for Step 8**, discovered by 8a. Replace the five *remaining* hand-rolled `isCreature \|\| printed PLANESWALKER` any-target enumerations / validations — three in `TriggeredAbilityQueueService`, one in `SpellCastingService`, one in `DamageTargetValidators` — with an evaluation of the declared target, exactly as 8a did for the two it was given. Same shape, same risk, same class of live layer-4 fix. Exact sites and line numbers in "Step 8a outcome". | MED | TODO |
+| 8b | **Second prerequisite for Step 8**, discovered by 8a. Replace the five *remaining* hand-rolled `isCreature \|\| printed PLANESWALKER` any-target enumerations / validations — three in `TriggeredAbilityQueueService`, one in `SpellCastingService`, one in `DamageTargetValidators` — with an evaluation of the declared target, exactly as 8a did for the two it was given. Same shape, same risk, same class of live layer-4 fix. Exact sites and line numbers in "Step 8a outcome". | MED | **DONE** — see "Step 8b outcome". All five sites held; four were live layer-4 fixes, the fifth turned out to be dead code the spec interpreter already subsumed. |
 
 Steps 1-3 are independently valuable and can be shipped without 4-8. If the plan is abandoned
 after Step 3, the codebase is strictly better than it is today and `TargetCategory` still exists.
@@ -1020,6 +1020,95 @@ remains a Step 8 item, as the review said.
   Nothing is affected until Step 8 makes battles targetable. Gating that block on
   `gameQueryService.isCreature` is the fix, it is rules-correct for planeswalkers too, and it was
   deliberately left out here because it is a fifth behaviour change beyond the four rows.
+
+---
+
+## Step 8b outcome
+
+All five sites were still there, at the lines Step 8a named — with one naming correction: the first
+is in `processNextDiscardSelfTrigger`, not `processNextDiscardTrigger` (`processNextDiscardTrigger`
+services `DiscardControllerTriggerTarget`, which already goes through `TriggerTargetCollector` and was
+never hand-rolled). No `PermanentIsBattlePredicate` was added and `anyTarget()` was not widened.
+
+### What landed
+
+| Site | Change |
+|---|---|
+| `TriggeredAbilityQueueService` ×3 (`processNextDiscardSelfTrigger`, `processNextSpellTargetTrigger`'s filterless branch, `processNextEnteringPermanentAnyTarget`) | Three copies of the same loop collapsed into one private `anyTargetPermanents(gameData, controllerId, sourceCard)`, evaluating a hoisted `TargetPredicates.anyTarget().permanentRestriction()` through `PredicateEvaluationService` |
+| `SpellCastingService` (kicked divided-damage assignment loop) | Each announced assignment target (CR 601.2d, verified) is judged against `dividedEffect.targetSpec().targetPredicate().permanentRestriction()` — the effect's *own* declared target, so a creature-only divided-damage effect would narrow correctly too. Message unchanged. |
+| `DamageTargetValidators.validateDealDividedDamage` | The type check is **deleted**, not rewritten — see below |
+
+The filterless branch of `processNextSpellTargetTrigger` was pulled out of the filtered loop rather
+than left as an `else` inside it; the two share nothing now that the filterless side is one call.
+
+### Why site 5 was deleted instead of rewritten
+
+`TargetValidationService.checkEffectTargets` interprets the declared `targetSpec()` **before** it
+calls the registered validator (`:54-64`), and `DealDividedDamageEffect`'s spec is non-`NONE` for
+every non-ETB instance. So by the time `validateDealDividedDamage` ran, `validateSpec` had already
+evaluated the same restriction — layer-aware — and thrown with the *same* string
+("Target must be a creature, planeswalker, or player" is what `describe(anyOf(isCreature,
+isPlaneswalker))` plus the player noun produces). The hand-rolled pair could therefore only ever
+*reject* something the spec had accepted: a permanent that is a planeswalker only after layer 4. No
+implemented card creates one, so this site had no observable behaviour and no test is possible —
+which is why it is the one of the five with no failing-before test.
+
+What stayed: the player branch (`canTargetPlayers`), which `validateSpec` genuinely does not cover —
+a player target for a creature-only divided-damage effect passes `validateSpec` because
+`demandsPermanentTarget` is false for a distributing effect and `findPermanentById` then returns
+null — and `requireBattlefieldTarget`, which is the only thing enforcing that a non-player `targetId`
+is actually on the battlefield. `checkProtection` is also redundant (the spec is `harmful`, and
+`validateSpec` calls it) but was left alone as out of scope.
+
+`GameQueryService` is no longer a dependency of `DamageTargetValidators`.
+
+### Behaviour changes
+
+All four live ones are the same change Steps 2, 3 and 8a made before: the *printed* planeswalker type
+line becomes layer-aware (CR 613.1d, verified), so a planeswalker Imprisoned in the Moon turned into a
+colorless land stops being an any target (CR 115.4, verified).
+
+| Path | Card | Before | Now |
+|---|---|---|---|
+| Discard-self any-target trigger | Guerrilla Tactics | offered a moon'd planeswalker | does not |
+| Spell-target trigger, filterless | Spitemare (also Livewire Lash, Rage Extractor, Burning Vengeance, Chandra Dressed to Kill) | offered a moon'd planeswalker | does not |
+| Entering-permanent any-target trigger | Warstorm Surge (also Scourge of Valkas, Vigilante Justice, Where Ancients Tread, Flayer of the Hatebound) | offered a moon'd planeswalker | does not |
+| Kicked divided-damage assignment | Fight with Fire | a moon'd planeswalker was a legal assignment target | rejected at cast time |
+
+### Tests
+
+Four new tests, each confirmed to fail against a restored copy of the old code and pass against the
+new: `GuerrillaTacticsTest.discardTriggerOffersPlaneswalkerUnlessLayerFourTookTheTypeAway`,
+`SpitemareTest.reflectedDamageOffersPlaneswalkerUnlessLayerFourTookTheTypeAway`,
+`WarstormSurgeTest.offersPlaneswalkerUnlessLayerFourTookTheTypeAway` (all three assert the offered
+`PendingInteraction.PermanentChoice.validIds()` contains an ordinary planeswalker and not a moon'd
+one), and `FightWithFireTest.kickedDamageAssignmentsRejectAPlaneswalkerLayerFourUnmade` — paired with
+a new `kickedDamageAssignmentsAcceptAPlaneswalker` that pins the positive half. The two Fight with
+Fire halves must stay separate tests: a rejected `castKickedSorcery` still consumes mana, so a second
+cast in the same test fails with "Card is not playable".
+
+The mocked-evaluator trap did not bite this time — no new service test was needed, since every one of
+these paths has a real card.
+
+### What Step 8 inherits
+
+- **Row 5 of the review is still open**: `TargetValidationService.describe` needs a `"battle"` arm, or
+  every any-target rejection message degrades to the generic string the moment `anyTarget()` grows a
+  battle leaf. Unchanged by this step.
+- **No hand-rolled any-target enumeration is left.** Re-grepped after the change: across all of
+  `magical-vibes-engine/src/main`, the `isCreature(gameData, p) || p.getCard().hasType(PLANESWALKER)`
+  pair now appears in exactly two places, both deliberate — `MassDamageEffectHandler:62`, which
+  implements "damage to each creature and planeswalker" and is not an any target, and
+  `DamageSupport.isAnyTargetDamageRecipient`, which Step 8a made printed-type on purpose so it agrees
+  with the CR 120.3c / CR 120.3h destinations it feeds. Every other surviving
+  `hasType(CardType.PLANESWALKER)` is a loyalty-counter setup, a combat/attack-legality read, a damage
+  *destination*, or `PredicateEvaluationService`'s own `gameData == null` fallback.
+- **`DamageTargetValidators.validateDealDamageToTargetOpponentOrPlaneswalker` has the same
+  spec-vs-validator overlap** (a printed-type check on `DealDamageToTargetOpponentOrPlaneswalkerEffect`
+  that `validateSpec` has already answered layer-aware). It is a different effect and was outside this
+  step's scope, but it is a candidate for the same deletion on its own merits.
+- The `StepTriggerService:448` shape-sniff is still there, still paired with `TriggerTargetCollector`;
+  Steps 6 and 7 both asked that whoever fixes one fixes both.
 
 ---
 

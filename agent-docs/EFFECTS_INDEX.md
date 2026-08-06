@@ -2550,9 +2550,15 @@ effect must STILL declare its structural `targetSpec()` (redundant with the vali
 checks � harmless, and the `TargetSpecRatchetTest` guard requires it). Validator classes live in
 `service/validate/`, auto-registered via the annotation.
 
+`TargetValidationService.checkEffectTargets` interprets the declared `targetSpec()` **before** it
+calls the registered validator, so a validator must never re-check which permanent kinds are legal —
+the spec has already answered that, layer-aware (CR 613.1d). Restating it in the validator is how the
+two drift: `DamageTargetValidators.validateDealDividedDamage` used to re-run "creature or planeswalker"
+against the *printed* type line, which the spec interpreter no longer reads anywhere.
+
 | Category | Validator class | Dependencies |
 |----------|----------------|--------------|
-| Damage (opponent-or-planeswalker, divided-damage null tolerance, per-recipient player guard) | `DamageTargetValidators` | `TargetValidationService`, `GameQueryService` |
+| Damage (opponent-or-planeswalker, divided-damage null tolerance, per-recipient player guard) | `DamageTargetValidators` | `TargetValidationService` |
 | Creature mods (only the equip/attach boost validators � target outside the single-target pipeline) | `CreatureModTargetValidators` | `TargetValidationService` |
 | Destruction (per-recipient player guard, combat-state "creature blocking this") | `DestructionTargetValidators` | `TargetValidationService`, `GameQueryService` |
 | Graveyard (own/opponent graveyard controller-compare, card-zone/type checks) | `GraveyardTargetValidators` | `TargetValidationService`, `GameQueryService` |

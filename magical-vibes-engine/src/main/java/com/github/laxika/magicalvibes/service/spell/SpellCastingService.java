@@ -98,6 +98,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import lombok.RequiredArgsConstructor;
@@ -1775,6 +1776,14 @@ public class SpellCastingService {
                 if (totalDamage != expectedTotal) {
                     throw new IllegalStateException("Damage assignments must sum to " + expectedTotal);
                 }
+                // Each announced assignment target (CR 601.2d) has to be legal for the effect. The
+                // restriction is evaluated from what the effect declares rather than re-implemented,
+                // so this cast-time gate cannot drift from enumeration, and it is layer-aware
+                // (CR 613.1d): a planeswalker a type-replacing effect turned into a land is no
+                // longer an any target (CR 115.4).
+                PermanentPredicate assignmentRestriction =
+                        dividedEffect.targetSpec().targetPredicate().permanentRestriction().orElseThrow();
+                FilterContext assignmentContext = new FilterContext(gameData, card.getId(), playerId, null, null);
                 for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
                     UUID target = assignment.getKey();
                     boolean isPlayer = gameData.playerIds.contains(target);
@@ -1783,8 +1792,8 @@ public class SpellCastingService {
                         if (perm == null) {
                             throw new IllegalStateException("Invalid target");
                         }
-                        if (!gameQueryService.isCreature(gameData, perm)
-                                && !perm.getCard().hasType(CardType.PLANESWALKER)) {
+                        if (!predicateEvaluationService.matchesPermanentPredicate(
+                                perm, assignmentRestriction, assignmentContext)) {
                             throw new IllegalStateException("Target must be a creature, planeswalker, or player");
                         }
                     }

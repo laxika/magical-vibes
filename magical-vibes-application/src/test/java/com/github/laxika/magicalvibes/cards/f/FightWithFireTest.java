@@ -1,13 +1,17 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -166,6 +170,54 @@ class FightWithFireTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(plains.getId()));
+    }
+
+    @Test
+    void kickedDamageAssignmentsAcceptAPlaneswalker() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new FightWithFire()));
+        harness.addMana(player1, ManaColor.RED, 9);
+
+        addToBattlefield(player2, new GrizzlyBears());
+        Permanent chandra = addToBattlefield(player2, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 6);
+
+        harness.castKickedSorcery(player1, 0, Map.of(
+                chandra.getId(), 4,
+                player2.getId(), 6
+        ));
+        harness.passBothPriorities();
+
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+    }
+
+    /**
+     * Each announced assignment target (CR 601.2d) is judged against what the effect declares
+     * rather than against a re-implemented type pair, so the cast-time gate reads the planeswalker
+     * type after layer 4 (CR 613.1d): a planeswalker Imprisoned in the Moon turned into a colorless
+     * land is no longer an any target (CR 115.4).
+     */
+    @Test
+    void kickedDamageAssignmentsRejectAPlaneswalkerLayerFourUnmade() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new FightWithFire()));
+        harness.addMana(player1, ManaColor.RED, 9);
+
+        addToBattlefield(player2, new GrizzlyBears());
+        Permanent jace = addToBattlefield(player2, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
+
+        Permanent aura = new Permanent(new ImprisonedInTheMoon());
+        aura.setAttachedTo(jace.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+
+        assertThatThrownBy(() ->
+                harness.castKickedSorcery(player1, 0, Map.of(
+                        jace.getId(), 4,
+                        player2.getId(), 6
+                ))
+        ).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature, planeswalker, or player");
     }
 
     private Permanent addToBattlefield(Player player, Card card) {

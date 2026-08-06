@@ -1,9 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -53,6 +58,40 @@ class SpitemareTest extends BaseCardTest {
 
         // 2 damage is lethal for the 2/2 Grizzly Bears
         harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    /**
+     * The dealt-damage trigger's any-target enumeration is evaluated from the declared target
+     * rather than re-implemented, so it reads the planeswalker type after layer 4 (CR 613.1d). A
+     * planeswalker Imprisoned in the Moon turned into a colorless land is no longer an any target
+     * (CR 115.4) — the same answer the spell path gives.
+     */
+    @Test
+    @DisplayName("Reflected damage offers a planeswalker, but not one Imprisoned in the Moon turned into a land")
+    void reflectedDamageOffersPlaneswalkerUnlessLayerFourTookTheTypeAway() {
+        harness.addToBattlefield(player2, new Spitemare()); // 3/3
+        Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
+        Permanent chandra = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 6);
+
+        Permanent aura = new Permanent(new ImprisonedInTheMoon());
+        aura.setAttachedTo(jace.getId());
+        gd.playerBattlefields.get(player2.getId()).add(aura);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        UUID spitemareId = harness.getPermanentId(player2, "Spitemare");
+        harness.castInstant(player1, 0, spitemareId);
+        harness.passBothPriorities(); // Shock deals 2 to Spitemare, ON_DEALT_DAMAGE queued
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds())
+                .contains(chandra.getId())
+                .doesNotContain(jace.getId());
     }
 
     @Test

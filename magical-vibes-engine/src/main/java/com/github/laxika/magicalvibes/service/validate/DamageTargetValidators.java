@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrP
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
@@ -25,7 +24,6 @@ import org.springframework.stereotype.Service;
 public class DamageTargetValidators {
 
     private final TargetValidationService tvs;
-    private final GameQueryService gameQueryService;
 
     @ValidatesTarget(DealDamageToTargetOpponentOrPlaneswalkerEffect.class)
     public void validateDealDamageToTargetOpponentOrPlaneswalker(TargetValidationContext ctx) {
@@ -62,12 +60,13 @@ public class DamageTargetValidators {
             }
             return;
         }
+        // Which permanents are legal is the declared target's job, not this validator's:
+        // TargetValidationService interprets DealDividedDamageEffect.targetSpec() — "any target"
+        // (CR 115.4) or a creature, narrowed by targetRestriction — before every registered
+        // validator runs, and it evaluates that layer-aware (CR 613.1d). Re-checking the type here
+        // only re-stated CR 115.4 from the *printed* type line, which layer 4 can change. All that
+        // is left for the escape hatch is the zone.
         Permanent target = tvs.requireBattlefieldTarget(ctx);
-        boolean validPermanentType = gameQueryService.isCreature(ctx.gameData(), target)
-                || target.getCard().hasType(CardType.PLANESWALKER);
-        if (!validPermanentType) {
-            throw new IllegalStateException("Target must be a creature, planeswalker, or player");
-        }
         tvs.checkProtection(ctx, target);
     }
 

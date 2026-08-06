@@ -2,10 +2,15 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.d.Distress;
+import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.cards.s.Sift;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -195,6 +200,40 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    /**
+     * The discard trigger's any-target enumeration is evaluated from the declared target rather
+     * than re-implemented, so it reads the planeswalker type after layer 4 (CR 613.1d). A
+     * planeswalker Imprisoned in the Moon turned into a colorless land is no longer an any target
+     * (CR 115.4) — the same answer the spell path gives.
+     */
+    @Test
+    @DisplayName("Discard trigger offers a planeswalker, but not one Imprisoned in the Moon turned into a land")
+    void discardTriggerOffersPlaneswalkerUnlessLayerFourTookTheTypeAway() {
+        Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
+        Permanent chandra = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 6);
+
+        Permanent aura = new Permanent(new ImprisonedInTheMoon());
+        aura.setAttachedTo(jace.getId());
+        gd.playerBattlefields.get(player2.getId()).add(aura);
+
+        harness.setHand(player2, new ArrayList<>(List.of(new GuerrillaTactics())));
+        harness.setHand(player1, List.of(new Distress()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds())
+                .contains(chandra.getId())
+                .doesNotContain(jace.getId());
     }
 
     // ===== Discard trigger — opponent forces discard via Mind Rot (handleDiscardCardChosen path) =====
