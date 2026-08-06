@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "348")
 @CardRegistration(set = "9ED", collectorNumber = "318")
+@CardRegistration(set = "M15", collectorNumber = "240")
 public class BattlefieldForge extends Card {
 
     public BattlefieldForge() {

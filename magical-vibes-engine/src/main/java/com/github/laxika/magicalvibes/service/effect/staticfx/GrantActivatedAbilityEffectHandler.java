@@ -25,7 +25,8 @@ public class GrantActivatedAbilityEffectHandler implements StaticEffectHandlerBe
         boolean scopeMatch = switch (grant.scope()) {
             case OWN_PERMANENTS -> context.targetOnSameBattlefield()
                     && support.matchesStaticFilter(context, context.target(), grant.filter());
-            case OWN_LANDS, ALL_LANDS -> support.matchesLandScope(context, grant.scope(), grant.filter());
+            case OWN_LANDS, ALL_LANDS, ALL_LANDS_INCLUDING_SELF ->
+                    support.matchesLandScope(context, grant.scope(), grant.filter());
             case SELF -> context.target().getId().equals(context.source().getId());
             case SELF_AND_PAIRED -> {
                 UUID targetId = context.target().getId();

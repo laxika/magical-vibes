@@ -44,6 +44,8 @@ import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEff
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -63,11 +65,14 @@ public class DamagePreventionService {
     private final GameQueryService gameQueryService;
     private final LifeSupport lifeSupport;
     private final DrawService drawService;
+    private final AmountEvaluationService amountEvaluationService;
 
-    public DamagePreventionService(GameQueryService gameQueryService, LifeSupport lifeSupport, DrawService drawService) {
+    public DamagePreventionService(GameQueryService gameQueryService, LifeSupport lifeSupport, DrawService drawService,
+                                   AmountEvaluationService amountEvaluationService) {
         this.gameQueryService = gameQueryService;
         this.lifeSupport = lifeSupport;
         this.drawService = drawService;
+        this.amountEvaluationService = amountEvaluationService;
     }
 
     /**
@@ -1073,7 +1078,8 @@ public class DamagePreventionService {
                 if (p.isAttached() && p.getAttachedTo().equals(creature.getId())) {
                     for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                         if (effect instanceof PreventXDamageFromEachSourceToAttachedCreatureEffect e) {
-                            totalReduction += e.amount();
+                            totalReduction += amountEvaluationService.evaluate(gameData, e.amount(),
+                                    AmountContext.forStaticEffect(p, playerId));
                         }
                     }
                 }

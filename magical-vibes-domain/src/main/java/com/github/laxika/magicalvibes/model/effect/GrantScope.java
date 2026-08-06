@@ -48,6 +48,12 @@ public enum GrantScope {
     /** All lands on the battlefield, regardless of controller (Natural Affinity). */
     ALL_LANDS,
     /**
+     * All lands on the battlefield <em>including</em> the source permanent itself, regardless of
+     * controller. Use this for "each land is …" wordings whose source is a land too and therefore
+     * affects itself (Urborg, Tomb of Yawgmoth).
+     */
+    ALL_LANDS_INCLUDING_SELF,
+    /**
      * The tokens created by earlier effects in this same resolution (read from
      * {@code StackEntry.createdPermanentIds}). Use for "those tokens gain [keyword]" clauses that
      * follow a token-creation effect on the same spell/ability, e.g. Gilt-Leaf Ambush's clash-win

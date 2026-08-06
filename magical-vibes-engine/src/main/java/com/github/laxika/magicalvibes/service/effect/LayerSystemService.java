@@ -1513,11 +1513,13 @@ public class LayerSystemService {
                     }
                 }
             }
-            case OWN_LANDS, ALL_LANDS -> {
+            case OWN_LANDS, ALL_LANDS, ALL_LANDS_INCLUDING_SELF -> {
                 for (PermanentSlot slot : slots) {
-                    if (slot.permanent() == source.permanent()) continue;
+                    if (slot.permanent() == source.permanent()
+                            && scope != GrantScope.ALL_LANDS_INCLUDING_SELF) continue;
                     boolean own = slot.controllerId().equals(source.controllerId());
-                    boolean inScope = scope == GrantScope.ALL_LANDS || own;
+                    boolean inScope = scope == GrantScope.ALL_LANDS
+                            || scope == GrantScope.ALL_LANDS_INCLUDING_SELF || own;
                     CharacteristicState state = board.states().get(slot.permanent().getId());
                     if (inScope && state != null && state.hasCardType(CardType.LAND)
                             && matchesL4Filter(slot, filter, board)) {

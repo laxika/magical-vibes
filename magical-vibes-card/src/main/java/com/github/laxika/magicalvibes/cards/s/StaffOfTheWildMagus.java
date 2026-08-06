@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M14", collectorNumber = "223")
+@CardRegistration(set = "M15", collectorNumber = "236")
 public class StaffOfTheWildMagus extends Card {
 
     public StaffOfTheWildMagus() {

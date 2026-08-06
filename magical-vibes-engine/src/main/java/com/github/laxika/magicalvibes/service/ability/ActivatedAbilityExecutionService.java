@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorSubtypeSpellManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorCreatureSpellManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorSubtypeSpellOrAbilityManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
@@ -599,6 +600,14 @@ public class ActivatedAbilityExecutionService {
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
                 log.info("Game {} - Awaiting {} to choose a mana color (creature spells only)", gameData.id, player.getUsername());
+            } else if (effect instanceof AwardAnyColorSubtypeSpellManaEffect subtypeSpellMana) {
+                ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(
+                        playerId, false, subtypeSpellMana.amount() * manaMultiplier, subtypeSpellMana.subtype());
+                List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
+                log.info("Game {} - Awaiting {} to choose a mana color (restricted to {} spells)",
+                        gameData.id, player.getUsername(), subtypeSpellMana.subtype());
             } else if (effect instanceof AwardAnyColorSubtypeSpellOrAbilityManaEffect soa) {
                 ChoiceContext.ManaColorChoice choiceContext =
                         ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(playerId, soa.amount() * manaMultiplier, soa.subtype());
@@ -976,6 +985,8 @@ public class ActivatedAbilityExecutionService {
                 total += fba.amount();
             } else if (effect instanceof AwardAnyColorSubtypeSpellOrAbilityManaEffect soa) {
                 total += soa.amount();
+            } else if (effect instanceof AwardAnyColorSubtypeSpellManaEffect subtypeSpellMana) {
+                total += subtypeSpellMana.amount();
             } else if (effect instanceof AwardManaOfColorsAmongControlledEffect manaAmong) {
                 Set<CardColor> colors = collectColorsAmongControlled(gameData, playerId, manaAmong);
                 if (!colors.isEmpty()) {

@@ -2252,6 +2252,13 @@ public class GameQueryService {
         CharacteristicState state = board.states().get(target.getId());
         AccumulatorSnapshot beforeSelf = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            // A self-including scope (ALL_LANDS_INCLUDING_SELF, ALL_CREATURES_INCLUDING_SELF)
+            // records a layer-4 contribution on its own source; the source-loop above skips
+            // source == target, so the replay for those has to happen here.
+            if (board.isManagedL4(effect)) {
+                board.replayL4Contribution(effect, target.getId(), accumulator);
+                continue;
+            }
             StaticEffectHandler selfHandler = staticEffectRegistry.getSelfHandler(effect);
             if (selfHandler != null) {
                 // CR 613.4a: an object whose own static abilities were removed in layer 6

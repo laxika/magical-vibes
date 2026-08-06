@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "219")
+@CardRegistration(set = "M15", collectorNumber = "237")
 public class TormodsCrypt extends Card {
 
     public TormodsCrypt() {
