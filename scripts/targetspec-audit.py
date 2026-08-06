@@ -24,18 +24,21 @@ THE TWO INVARIANTS
    as `public <boolean|int|PermanentPredicate> <name>() {` — a method with a
    body. Record COMPONENTS named `canTargetSpell` / `targetPredicate` (on the
    two duals ChangeColorTextEffect / PutCounterOnTargetPermanentEffect) are NOT
-   method declarations with a body and do not match.
+   method declarations with a body and do not match. The return-type alternation
+   is load-bearing for `targetPredicate`: the deleted legacy method returned
+   PermanentPredicate, while TargetSpec.targetPredicate() legitimately returns a
+   TargetPredicate. Do not widen it.
 
 2. EVERY @ValidatesTarget EFFECT DECLARES A NON-NONE targetSpec(). A
    hand-written @ValidatesTarget validator is now ONLY an escape hatch for
    non-structural rules (opponent-relation, controller/owner compare,
    chosen-source, null-target tolerance); such an effect must STILL declare its
    structural spec so the declarative interpreter offers and type-checks it. A
-   targetSpec() body counts as non-NONE iff it uses a benign( / harmful( factory,
-   names a TargetPredicates factory, or names a TargetCategory value other than
-   NONE (a conditional body with at least one non-NONE branch counts). The two equip/attach validators
-   (StaticBoostEffect, AttachedBoostEffect) target outside the single-target
-   pipeline and carry no targetSpec() category by design — they are EXEMPT.
+   targetSpec() body counts as non-NONE iff it uses a benign( / harmful( factory
+   or names a TargetPredicates factory (a conditional body with at least one
+   non-NONE branch counts). The two equip/attach validators (StaticBoostEffect,
+   AttachedBoostEffect) target outside the single-target pipeline and declare no
+   targetSpec() target by design — they are EXEMPT.
 
 ============================================================================
 LOCKSTEP CONTRACT with TargetSpecRatchetTest
@@ -77,7 +80,6 @@ EQUIP_ATTACH_VALIDATED_EFFECTS = {"StaticBoostEffect", "AttachedBoostEffect"}
 VALIDATES_TARGET_RE = re.compile(r"@ValidatesTarget\(\s*([A-Za-z_]\w*)\.class")
 TARGET_SPEC_METHOD_RE = re.compile(r"TargetSpec\s+targetSpec\s*\(\s*\)\s*\{")
 SPEC_FACTORY_RE = re.compile(r"\b(?:benign|harmful)\s*\(")
-SPEC_CATEGORY_RE = re.compile(r"\bTargetCategory\.(\w+)")
 SPEC_TARGET_RE = re.compile(r"\bTargetPredicates\.\w+\s*\(")
 
 
@@ -117,9 +119,7 @@ def declares_non_none_targetspec(text):
     if not m:
         return False
     body = brace_matched_body(text, m.end() - 1)
-    if SPEC_FACTORY_RE.search(body) or SPEC_TARGET_RE.search(body):
-        return True
-    return any(mm.group(1) != "NONE" for mm in SPEC_CATEGORY_RE.finditer(body))
+    return bool(SPEC_FACTORY_RE.search(body) or SPEC_TARGET_RE.search(body))
 
 
 # --------------------------------------------------------------------------

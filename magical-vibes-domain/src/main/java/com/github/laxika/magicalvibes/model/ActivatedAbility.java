@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import lombok.Getter;
@@ -439,11 +438,16 @@ public class ActivatedAbility {
         return isNeedsSpellTarget() && (requestedZone == Zone.STACK || isSpellOnlyTarget());
     }
 
-    /** True when no effect offers a permanent target as an alternative to the spell target. */
+    /**
+     * True when no effect offers a permanent target as an alternative to the spell target. The dual
+     * effects are exactly the ones that reach {@code targetsSpellOnStack} without declaring a spell
+     * leaf — their spec describes the permanent half and the spell half rides on a dedicated record
+     * component.
+     */
     private boolean isSpellOnlyTarget() {
         return effects.stream()
                 .filter(EffectResolution::targetsSpellOnStack)
-                .allMatch(e -> e.targetSpec().category() == TargetCategory.SPELL_ON_STACK);
+                .allMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.SPELL));
     }
 
     /**

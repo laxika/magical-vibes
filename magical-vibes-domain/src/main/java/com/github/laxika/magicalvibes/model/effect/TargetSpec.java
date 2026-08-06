@@ -16,7 +16,7 @@ import java.util.Optional;
  * from the effect's existing components instead. (Serialization is not the reason: nothing
  * deserializes effects — {@code CardEffect} carries no {@code @JsonTypeInfo}, the wire protocol
  * sends resolved UUID lists and derived booleans, and {@code magical-vibes-networking} references
- * neither {@link TargetCategory} nor the predicate hierarchy.)</p>
+ * neither {@link TargetPredicate} nor the predicate hierarchy.)</p>
  *
  * @param declaredTarget   which targets are legal, as a composable {@link TargetPredicate} built
  *                         from a {@link TargetPredicates} factory; {@code null} when the effect
@@ -76,15 +76,17 @@ public record TargetSpec(
     }
 
     /**
-     * The legacy {@link TargetCategory} equivalent of {@link #declaredTarget()}.
+     * Whether this spec declares exactly {@code target} — an identity test against one interned
+     * {@link TargetPredicates} value, ignoring the orthogonal {@link #predicate()} narrowing.
      *
-     * <p>Transitional bridge for the readers that still switch on the enum (trigger collectors,
-     * {@code StepTriggerService}, the AI, {@code EffectResolution.collectTargetTypes}); it is
-     * deleted together with {@code TargetCategory} — see
-     * {@code agent-docs/TARGET_PREDICATE_PLAN.md}.</p>
+     * <p>Use it where a reader means one specific declaration rather than "which kinds are legal":
+     * "any target" (CR 115.4) is {@code declares(TargetPredicates.anyTarget())} and must NOT be
+     * spelled {@code admits(PLAYER) && admits(PERMANENT)}, which cannot tell it apart from
+     * {@link TargetPredicates#playerOrPermanent()} — "a player or <em>any</em> permanent". When the
+     * question really is about kinds, use {@link #admits} instead.</p>
      */
-    public TargetCategory category() {
-        return TargetPredicates.categoryOf(declaredTarget);
+    public boolean declares(TargetPredicate target) {
+        return declaredTarget != null && declaredTarget.equals(target);
     }
 
     /**

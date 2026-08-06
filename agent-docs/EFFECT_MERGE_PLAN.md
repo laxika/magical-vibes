@@ -206,9 +206,9 @@ Net: 7 records and 5 handlers deleted, 1 record and 1 handler added.
 public record RedirectNextDamageEffect(RedirectRole protectedRole,   // SOURCE_PERMANENT | TARGET
                                        RedirectRole destinationRole, // TARGET | SOURCE_PERMANENT | CONTROLLER
                                        DynamicAmount amount,
-                                       TargetCategory targetCategory, // NONE | CREATURE | ANY_TARGET
+                                       TargetPredicate declaredTarget, // null | creature() | anyTarget()
                                        PermanentPredicate targetPredicate) implements CardEffect
-// + (…, DynamicAmount, TargetCategory) and (…, int, TargetCategory) convenience ctors
+// + (…, DynamicAmount, TargetPredicate) and (…, int, TargetPredicate) convenience ctors
 // enum RedirectRole { SOURCE_PERMANENT, TARGET, CONTROLLER }
 ```
 
@@ -333,7 +333,7 @@ then `GameLog.text(playerName + "'s life total becomes " + newLife + " (was " + 
 then the same `log.info`. Controller/EachPlayer both build `AmountContext.forStackEntry(entry, source)`
 with the same source-or-snapshot fallback. `SetTargetPlayerLifeToSpecificValueEffect(int)` is
 `Fixed(n)`; `SetTargetPlayerLifeToHalfStartingEffect()` is `Fixed(GameData.STARTING_LIFE_TOTAL / 2)`.
-Both target variants declare identical `TargetSpec.benign(TargetCategory.PLAYER)`.
+Both target variants declare identical `TargetSpec.benign(TargetPredicates.player())`.
 
 **Stretch (MED, optional)**: `SetEachPlayerLifeToCreatureCountEffect` (1) needs the amount evaluated
 *per player*; `SetEachPlayerLifeToHighestAmongPlayersEffect` (1) needs a new `DynamicAmount`
@@ -597,11 +597,11 @@ lifetimes (`getProtectionFromCardTypes()` is not an until-EOT bucket and is also
 |---|---|---|
 | `DealDamageToTargetPlayerOrPlaneswalkerEffect(DynamicAmount, boolean opponentOnly)` | `DealDamageToTargetOpponentOrPlaneswalkerEffect` | 14 |
 | `DealDamageToAllCreaturesTargetControlsEffect(int, boolean mustAttack, boolean includePlaneswalkers)` | `DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect` | 1 |
-| `DealDamageEqualToChosenTypeCountEffect(TargetCategory targetCategory)` | both chosen-type-count effects | 1 + 1 |
+| `DealDamageEqualToChosenTypeCountEffect(TargetPredicate declaredTarget)` | both chosen-type-count effects | 1 + 1 |
 
 **Notes**
 - Player-or-planeswalker: the records are identical (one `DynamicAmount`, same
-  `TargetSpec.harmful(PLAYER_OR_PLANESWALKER)`), and the two handlers are **byte-for-byte identical**
+  `TargetSpec.harmful(TargetPredicates.playerOrPlaneswalker())`), and the two handlers are **byte-for-byte identical**
   apart from the class name and one comment word. The only real difference is external:
   `@ValidatesTarget(DealDamageToTargetOpponentOrPlaneswalkerEffect.class)` in
   `service/validate/DamageTargetValidators.java:30`, which rejects the controller — exactly what the
@@ -692,7 +692,7 @@ needs one new toughness predicate (`CardAllOfPredicate` composes it) — still n
 **19b Target**
 ```java
 GrantEffectToTargetEffect(EffectSlot slot, CardEffect grantedEffect, EffectDuration duration,
-                          boolean skipIfAlreadyPresent, GrantScope scope, TargetCategory targetCategory)
+                          boolean skipIfAlreadyPresent, GrantScope scope, TargetPredicate declaredTarget)
 ```
 **Absorbs**: `GrantEffectToTargetUntilEndOfTurnEffect` (6),
 `GrantEffectToSourceUntilEndOfTurnEffect` (1), `GrantEffectToOwnCreaturesUntilEndOfTurnEffect` (2).
@@ -723,7 +723,7 @@ Independent, all LOW. Do as many as land cleanly; note any that don't.
 | `SacrificeCreatureForTokenEffect(CreateTokenEffect, PermanentPredicate, SacrificedStat, TokenScaling)` | `SacrificeCreatureCreateSizedTokenEqualToPowerEffect`, `SacrificeCreatureToCreateTokensEqualToToughnessEffect` | 1 + 1 |
 | `SacrificeAllYouControlCost(PermanentPredicate, boolean trackTotalPower)` | `SacrificeAllCreaturesYouControlCost`, `SacrificeAllPermanentsYouControlCost` | 1 + 1 |
 | `MillEffect` + `MillRecipient.DEFENDING_PLAYER` | `MillDefendingPlayerEffect` | 1 |
-| `GainLifeEffect` — replace `boolean targetsPlayer` with `TargetCategory targetCategory` | `GainLifeEqualToTargetCreatureStatEffect` | 2 |
+| `GainLifeEffect` — replace `boolean targetsPlayer` with `TargetPredicate declaredTarget` | `GainLifeEqualToTargetCreatureStatEffect` | 2 |
 
 **Notes**
 - `AwardOneManaOfEachColor…`: identical record components, and both branches in

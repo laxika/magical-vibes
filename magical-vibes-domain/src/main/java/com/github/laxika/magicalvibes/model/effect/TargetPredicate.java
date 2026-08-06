@@ -18,12 +18,13 @@ import java.util.Optional;
  * <em>domain</em> (battlefield / players / graveyards / exile / stack) the target is drawn from,
  * together with the restriction that applies inside that domain.
  *
- * <p>This is the successor to {@link TargetCategory}, whose flat enum squeezed the domain axis
- * through two booleans ({@code includesPermanents()} / {@code includesPlayers()}) and could
- * therefore not tell "a player or <em>any</em> permanent" apart from "any target" (CR 115.4: a
- * creature, player, planeswalker, or battle). Each kind leaf carries the predicate hierarchy that
- * already exists for its domain, so the 130-odd existing predicate records are reused verbatim and
- * every leaf is evaluated by the service that already owns that hierarchy.</p>
+ * <p>The domain axis is a composable value rather than a flat enum precisely so that "a player or
+ * <em>any</em> permanent" and "any target" (CR 115.4: a creature, player, planeswalker, or battle)
+ * stay distinguishable — squeezing it through two booleans
+ * ({@code includesPermanents} / {@code includesPlayers}) could not. Each kind leaf carries the
+ * predicate hierarchy that already exists for its domain, so the 130-odd existing predicate records
+ * are reused verbatim and every leaf is evaluated by the service that already owns that
+ * hierarchy.</p>
  *
  * <h2>Algebra</h2>
  *
@@ -55,7 +56,7 @@ import java.util.Optional;
  * everything" to the card evaluator, and a target restriction must not depend on which convention
  * a reader assumes.</p>
  *
- * @see TargetPredicates for the factory per {@link TargetCategory} constant
+ * @see TargetPredicates for the named factory behind every declared target
  */
 public sealed interface TargetPredicate permits TargetPredicate.Leaf, TargetPredicate.AnyOf {
 
@@ -218,8 +219,8 @@ public sealed interface TargetPredicate permits TargetPredicate.Leaf, TargetPred
     /**
      * Which graveyards a card target is drawn from, or empty when this predicate admits no
      * graveyard card at all. This is the single source of truth for graveyard scope: the three
-     * mutually-exclusive zone states the old {@code TargetCategory} spelled as three constants are
-     * one {@link GraveyardSearchScope} component here, so no reader hand-copies the mapping.
+     * mutually-exclusive zone states are one {@link GraveyardSearchScope} component here, so no
+     * reader hand-copies the mapping.
      */
     default Optional<GraveyardSearchScope> graveyardScope() {
         return leaf(Kind.GRAVEYARD_CARD).map(leaf -> ((GraveyardCards) leaf).scope());

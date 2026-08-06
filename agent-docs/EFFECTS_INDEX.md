@@ -113,9 +113,11 @@ constructor for self-targeting or a two-player count:
 target (i.e. the target must survive a `checkProtection` test � protection means "can't be
 targeted"). Counters, bounces, control-changes, boosts, taps, text changes are `benign`.
 
-`TargetPredicates` factories and what each offers/type-checks. **Always build the declared target
-from one of these** — a hand-rolled `TargetPredicate` is not expressible as a `TargetCategory` while
-the legacy enum bridge still exists, and `TargetSpec.category()` throws on one:
+`TargetPredicates` factories and what each offers/type-checks. **Build the declared target from one
+of these**: the named values are interned, so a spec compares and hashes cheaply and the readers that
+mean one specific declaration (`TargetSpec.declares(...)`) match by value. A hand-composed
+`TargetPredicate` is legal where no factory fits — a cross-kind target is an `anyOf` of at most one
+leaf per kind — but prefer adding a named factory when a second card wants the same shape:
 
 | Factory | Legal target |
 |---------|--------------|
@@ -172,15 +174,19 @@ planeswalker that stopped being one is not a legal "any target" (CR 613.1d, CR 1
 interpreter reaches all of them through one composed `PermanentPredicate` — the declared target's
 own restriction and the spec's narrowing predicate folded together by `TargetSpec.targetPredicate()`.
 
-> **Migration in progress.** Every effect declares a `TargetPredicate` and every "which kinds does
-> this target?" reader asks `TargetSpec.admits(TargetPredicate.Kind.X)` — the successor to the enum's
-> `includesPermanents()` / `includesPlayers()` / `isGraveyard()`. `TargetCategory` survives only
-> behind the `TargetSpec.category()` bridge for a handful of identity comparisons (`== NONE`,
-> `== ANY_TARGET`, `== SPELL_ON_STACK`, `PermanentCounterSupport`, `DrawService`,
-> `TriggerTargetCollector`) that Step 7 deletes. Write new effects and new readers against the
-> `TargetPredicates` factories and `admits(Kind)`, never against the enum —
-> `agent-docs/TARGET_PREDICATE_PLAN.md` tracks the state and `PREDICATES_REFERENCE.md` documents the
-> type.
+**How to ask a spec a question.** There is no target-category enum any more; `TargetSpec` exposes
+three readers and each answers a different question:
+
+| Reader | Question | Use it for |
+|---|---|---|
+| `admits(TargetPredicate.Kind.X)` | can a target of this kind ever be legal? | the trigger collectors, `StepTriggerService`, the AI, "does this need a permanent target at all" |
+| `declares(TargetPredicates.x())` | is this *exactly* that declaration? | when one specific declaration is meant — `anyTarget()` vs `playerOrPermanent()` |
+| `declaredTarget() == null` | does it target nothing? | the successor to the old `NONE` comparison |
+
+`admits(PLAYER) && admits(PERMANENT)` is **not** a test for "any target": `playerOrPermanent()`
+answers it too, and the two mean very different things. That lossy inference is the defect the
+targeting model was rebuilt to remove — use `declares(TargetPredicates.anyTarget())`.
+`PREDICATES_REFERENCE.md` documents the type; `agent-docs/TARGET_PREDICATE_PLAN.md` has the history.
 
 ### Worked example � a new "deal N damage to target creature" effect
 

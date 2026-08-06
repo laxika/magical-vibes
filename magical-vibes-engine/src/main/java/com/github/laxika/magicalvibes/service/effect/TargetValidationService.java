@@ -76,7 +76,7 @@ public class TargetValidationService {
      * {@code DamageTargetValidators} / {@code DestructionTargetValidators}).
      *
      * <p>Everything about <em>which</em> permanent is legal comes from the spec's
-     * {@link TargetSpec#targetPredicate()}: the category's own restriction and the spec's narrowing
+     * {@link TargetSpec#targetPredicate()}: the declared target's own restriction and the narrowing
      * predicate are one composed {@code PermanentPredicate} there, evaluated by the service that
      * owns that hierarchy. Two consequences, both rules-correct and both deliberate (CR 613.1d,
      * layer 4 — type-changing effects are applied before targeting legality is judged): "target

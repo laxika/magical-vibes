@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -29,6 +28,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,31 +40,35 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * The safety net for the {@code TargetCategory} → {@link TargetPredicate} migration
- * (see {@code agent-docs/TARGET_PREDICATE_PLAN.md}): for every {@link TargetCategory} constant, the
- * predicate {@link TargetPredicates#forCategory} produces must accept and reject exactly the
- * candidates the category accepts and rejects today.
- *
- * <p>"What the category does today" is reconstructed from the two halves the engine actually uses,
- * not from a re-reading of the enum's javadoc:</p>
+ * The safety net for the {@link TargetPredicate} targeting model (see
+ * {@code agent-docs/TARGET_PREDICATE_PLAN.md}). It guards two things a single service test cannot:
  *
  * <ul>
- *   <li><b>Admission</b> — which kinds of candidate the category offers at all. This is
- *       {@code includesPermanents()} / {@code includesPlayers()} / {@code isGraveyard()} plus the
- *       two identity comparisons, exactly as {@code EffectResolution.collectTargetTypes} and
- *       {@code ValidTargetService} read them.</li>
- *   <li><b>Narrowing</b> — for an admitted permanent or player, whether the real
- *       {@link TargetValidationService} spec interpreter accepts it. Driven through the public
- *       {@code checkEffectTargets} entry point with a stub effect, against a real board, so the
- *       layer-aware creature check is the production one.</li>
+ *   <li><b>The two evaluation paths agree.</b> A declared target is evaluated by
+ *       {@link TargetPredicateEvaluationService} (target enumeration, may-ability enumeration) and,
+ *       independently, by the spec interpreter inside {@link TargetValidationService} — which
+ *       deliberately does not take the adapter, because injecting it would close a Spring
+ *       constructor cycle. Two implementations of one restriction can drift, so every canonical
+ *       declared target is driven through both against the same board and the answers compared.</li>
+ *   <li><b>The declared targets admit exactly the kinds they claim to.</b> {@code admits(Kind)} is
+ *       what the trigger collectors, {@code StepTriggerService} and the AI route on, so the
+ *       kind-set of each named factory is pinned as an explicit table rather than derived.</li>
  * </ul>
  *
- * <p>Since Step 2 the interpreter <em>is</em> the predicate, so the sweep now guards the admission
- * axis — which kinds a category offers at all. The two type-<em>replacing</em> cases that used to
- * diverge (LAND, and the planeswalker half of ANY_TARGET) were adopted in the layer-aware direction
- * and are pinned by their own tests at the bottom.</p>
+ * <p>The two type-<em>replacing</em> cases that were rules-incorrect before the migration (LAND, and
+ * the planeswalker half of "any target") are pinned by their own tests at the bottom: both halves
+ * must be layer-aware.</p>
  */
 class TargetPredicateEquivalenceTest extends BaseCardTest {
+
+    /**
+     * Every declared target a {@code TargetPredicates} factory hands out, plus the {@code null}
+     * "targets nothing" case. The sweeps below iterate this, so a new factory must be added here.
+     */
+    private static final Map<String, TargetPredicate> CANONICAL_TARGETS = canonicalTargets();
+
+    /** The kinds each canonical target admits — the contract {@code TargetSpec.admits} answers. */
+    private static final Map<String, Set<TargetPredicate.Kind>> ADMITTED_KINDS = admittedKinds();
 
     private TargetPredicateEvaluationService sut;
     private TargetValidationService targetValidationService;
@@ -109,17 +114,17 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Every category's predicate accepts exactly the permanents the category accepts today")
-    void permanentCandidatesMatchCategory() {
+    @DisplayName("The evaluator and the spec interpreter accept exactly the same permanents")
+    void permanentCandidatesAgreeWithTheSpecInterpreter() {
         List<String> mismatches = new ArrayList<>();
-        for (TargetCategory category : TargetCategory.values()) {
+        for (Map.Entry<String, TargetPredicate> declared : CANONICAL_TARGETS.entrySet()) {
             for (Map.Entry<String, Permanent> candidate : permanents.entrySet()) {
-                boolean expected = category.includesPermanents()
-                        && specInterpreterAccepts(category, candidate.getValue().getId());
-                boolean actual = matchesPermanent(category, candidate.getValue());
-                if (expected != actual) {
-                    mismatches.add(category + " on permanent '" + candidate.getKey()
-                            + "': category=" + expected + " predicate=" + actual);
+                boolean interpreter = TargetSpec.benign(declared.getValue()).admits(TargetPredicate.Kind.PERMANENT)
+                        && specInterpreterAccepts(declared.getValue(), candidate.getValue().getId());
+                boolean evaluator = matchesPermanent(declared.getValue(), candidate.getValue());
+                if (interpreter != evaluator) {
+                    mismatches.add(declared.getKey() + " on permanent '" + candidate.getKey()
+                            + "': interpreter=" + interpreter + " evaluator=" + evaluator);
                 }
             }
         }
@@ -127,17 +132,17 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Every category's predicate accepts exactly the players the category accepts today")
-    void playerCandidatesMatchCategory() {
+    @DisplayName("The evaluator and the spec interpreter accept exactly the same players")
+    void playerCandidatesAgreeWithTheSpecInterpreter() {
         List<String> mismatches = new ArrayList<>();
-        for (TargetCategory category : TargetCategory.values()) {
+        for (Map.Entry<String, TargetPredicate> declared : CANONICAL_TARGETS.entrySet()) {
             for (UUID playerId : List.of(player1.getId(), player2.getId())) {
-                boolean expected = category.includesPlayers()
-                        && specInterpreterAccepts(category, playerId);
-                boolean actual = matchesPlayer(category, playerId);
-                if (expected != actual) {
-                    mismatches.add(category + " on player " + (playerId.equals(player1.getId())
-                            ? "self" : "opponent") + ": category=" + expected + " predicate=" + actual);
+                boolean interpreter = TargetSpec.benign(declared.getValue()).admits(TargetPredicate.Kind.PLAYER)
+                        && specInterpreterAccepts(declared.getValue(), playerId);
+                boolean evaluator = matchesPlayer(declared.getValue(), playerId);
+                if (interpreter != evaluator) {
+                    mismatches.add(declared.getKey() + " on player " + (playerId.equals(player1.getId())
+                            ? "self" : "opponent") + ": interpreter=" + interpreter + " evaluator=" + evaluator);
                 }
             }
         }
@@ -145,20 +150,20 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Every category's predicate accepts exactly the graveyard cards the category scopes to today")
-    void graveyardCandidatesMatchCategory() {
+    @DisplayName("Only a graveyard target accepts a graveyard card, and only within its declared scope")
+    void graveyardCandidatesMatchTheDeclaredScope() {
         List<String> mismatches = new ArrayList<>();
-        for (TargetCategory category : TargetCategory.values()) {
-            Map<Card, UUID> candidates = Map.of(
-                    ownGraveyardCard, player1.getId(),
-                    opponentGraveyardCard, player2.getId());
+        Map<Card, UUID> candidates = Map.of(
+                ownGraveyardCard, player1.getId(),
+                opponentGraveyardCard, player2.getId());
+        for (Map.Entry<String, TargetPredicate> declared : CANONICAL_TARGETS.entrySet()) {
             for (Map.Entry<Card, UUID> candidate : candidates.entrySet()) {
-                boolean expected = category.isGraveyard()
-                        && inScopeToday(category, candidate.getValue());
-                boolean actual = matchesGraveyardCard(category, candidate.getKey(), candidate.getValue());
+                boolean expected = inDeclaredScope(declared.getValue(), candidate.getValue());
+                boolean actual = matchesGraveyardCard(
+                        declared.getValue(), candidate.getKey(), candidate.getValue());
                 if (expected != actual) {
-                    mismatches.add(category + " on " + candidate.getKey().getName()
-                            + ": category=" + expected + " predicate=" + actual);
+                    mismatches.add(declared.getKey() + " on " + candidate.getKey().getName()
+                            + ": scope=" + expected + " evaluator=" + actual);
                 }
             }
         }
@@ -166,47 +171,47 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Only EXILE_CARD's predicate accepts an exiled card, and it accepts every one")
-    void exileCandidatesMatchCategory() {
-        for (TargetCategory category : TargetCategory.values()) {
-            TargetPredicate predicate = TargetPredicates.forCategory(category);
+    @DisplayName("Only exileCard() accepts an exiled card, and it accepts every one")
+    void exileCandidatesMatchTheAdmittedKind() {
+        for (Map.Entry<String, TargetPredicate> declared : CANONICAL_TARGETS.entrySet()) {
+            TargetPredicate predicate = declared.getValue();
             boolean actual = predicate != null
                     && sut.matchesExiledCard(predicate, exiledCard, filterContext());
             assertThat(actual)
-                    .as("%s on an exiled card", category)
-                    .isEqualTo(category == TargetCategory.EXILE_CARD);
+                    .as("%s on an exiled card", declared.getKey())
+                    .isEqualTo(TargetSpec.benign(predicate).admits(TargetPredicate.Kind.EXILED_CARD));
         }
     }
 
     @Test
-    @DisplayName("Only SPELL_ON_STACK's predicate accepts a spell on the stack, and it accepts every one")
-    void stackCandidatesMatchCategory() {
-        for (TargetCategory category : TargetCategory.values()) {
-            TargetPredicate predicate = TargetPredicates.forCategory(category);
+    @DisplayName("Only spellOnStack() accepts a spell on the stack, and it accepts every one")
+    void stackCandidatesMatchTheAdmittedKind() {
+        for (Map.Entry<String, TargetPredicate> declared : CANONICAL_TARGETS.entrySet()) {
+            TargetPredicate predicate = declared.getValue();
             boolean actual = predicate != null
                     && sut.matchesSpell(predicate, spellOnStack, player1.getId(), null, filterContext());
             assertThat(actual)
-                    .as("%s on a spell on the stack", category)
-                    .isEqualTo(category == TargetCategory.SPELL_ON_STACK);
+                    .as("%s on a spell on the stack", declared.getKey())
+                    .isEqualTo(TargetSpec.benign(predicate).admits(TargetPredicate.Kind.SPELL));
         }
     }
 
     @Test
-    @DisplayName("CREATURE and LAND stay layer-aware for an animated land: it is both")
+    @DisplayName("creature() and land() stay layer-aware for an animated land: it is both")
     void animatedLandIsBothCreatureAndLand() {
         Permanent animatedLand = permanents.get("animatedLand");
         assertThat(gqs.isCreature(gd, animatedLand)).isTrue();
         assertThat(gqs.isLand(gd, animatedLand)).isTrue();
 
-        assertThat(matchesPermanent(TargetCategory.CREATURE, animatedLand)).isTrue();
-        assertThat(matchesPermanent(TargetCategory.LAND, animatedLand)).isTrue();
-        assertThat(matchesPermanent(TargetCategory.CREATURE_OR_PLANESWALKER, animatedLand)).isTrue();
-        assertThat(matchesPermanent(TargetCategory.ANY_TARGET, animatedLand)).isTrue();
+        assertThat(matchesPermanent(TargetPredicates.creature(), animatedLand)).isTrue();
+        assertThat(matchesPermanent(TargetPredicates.land(), animatedLand)).isTrue();
+        assertThat(matchesPermanent(TargetPredicates.creatureOrPlaneswalker(), animatedLand)).isTrue();
+        assertThat(matchesPermanent(TargetPredicates.anyTarget(), animatedLand)).isTrue();
 
         Permanent plainLand = permanents.get("land");
-        assertThat(matchesPermanent(TargetCategory.CREATURE, plainLand)).isFalse();
-        assertThat(matchesPermanent(TargetCategory.LAND, plainLand)).isTrue();
-        assertThat(matchesPermanent(TargetCategory.ANY_TARGET, plainLand)).isFalse();
+        assertThat(matchesPermanent(TargetPredicates.creature(), plainLand)).isFalse();
+        assertThat(matchesPermanent(TargetPredicates.land(), plainLand)).isTrue();
+        assertThat(matchesPermanent(TargetPredicates.anyTarget(), plainLand)).isFalse();
     }
 
     @Test
@@ -228,97 +233,109 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
     @DisplayName("A NONE spec has no target predicate at all")
     void noneSpecHasNoTargetPredicate() {
         assertThat(TargetSpec.NONE.targetPredicate()).isNull();
-        assertThat(TargetPredicates.forCategory(TargetCategory.NONE)).isNull();
+        assertThat(TargetSpec.NONE.declaredTarget()).isNull();
+        assertThat(TargetSpec.NONE.declares(TargetPredicates.creature())).isFalse();
     }
 
     @Test
-    @DisplayName("Every category round-trips through the declared target a spec now stores")
-    void everyCategoryRoundTripsThroughTheDeclaredTarget() {
-        for (TargetCategory category : TargetCategory.values()) {
-            assertThat(TargetSpec.benign(TargetPredicates.forCategory(category)).category())
-                    .as("round-trip of %s", category)
-                    .isEqualTo(category);
-        }
-    }
-
-    @Test
-    @DisplayName("A narrowing predicate does not disturb the category a spec reports")
-    void narrowingDoesNotDisturbTheReportedCategory() {
+    @DisplayName("A narrowing predicate stays on predicate() and does not fold into declaredTarget()")
+    void narrowingStaysOffTheDeclaredTarget() {
         TargetSpec spec = TargetSpec.benign(TargetPredicates.creature(), new PermanentIsArtifactPredicate());
 
-        assertThat(spec.category()).isEqualTo(TargetCategory.CREATURE);
+        assertThat(spec.declaredTarget()).isEqualTo(TargetPredicates.creature());
+        assertThat(spec.declares(TargetPredicates.creature())).isTrue();
         assertThat(spec.predicate()).isEqualTo(new PermanentIsArtifactPredicate());
     }
 
     @Test
-    @DisplayName("admits(Kind) answers exactly what the legacy derived booleans answered")
-    void admitsMatchesTheLegacyDerivedBooleans() {
+    @DisplayName("Every canonical declared target admits exactly the kinds it claims")
+    void everyDeclaredTargetAdmitsExactlyItsKinds() {
         List<String> mismatches = new ArrayList<>();
-        for (TargetCategory category : TargetCategory.values()) {
-            TargetSpec spec = TargetSpec.benign(TargetPredicates.forCategory(category));
-            record Pair(String legacy, boolean expected, boolean actual) {
-            }
-            List<Pair> pairs = List.of(
-                    new Pair("includesPermanents", category.includesPermanents(),
-                            spec.admits(TargetPredicate.Kind.PERMANENT)),
-                    new Pair("includesPlayers", category.includesPlayers(),
-                            spec.admits(TargetPredicate.Kind.PLAYER)),
-                    new Pair("isGraveyard", category.isGraveyard(),
-                            spec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)),
-                    new Pair("== EXILE_CARD", category == TargetCategory.EXILE_CARD,
-                            spec.admits(TargetPredicate.Kind.EXILED_CARD)),
-                    new Pair("== SPELL_ON_STACK", category == TargetCategory.SPELL_ON_STACK,
-                            spec.admits(TargetPredicate.Kind.SPELL)));
-            for (Pair pair : pairs) {
-                if (pair.expected() != pair.actual()) {
-                    mismatches.add(category + "." + pair.legacy() + ": category=" + pair.expected()
-                            + " admits=" + pair.actual());
+        for (Map.Entry<String, TargetPredicate> declared : CANONICAL_TARGETS.entrySet()) {
+            TargetSpec spec = TargetSpec.benign(declared.getValue());
+            Set<TargetPredicate.Kind> expected = ADMITTED_KINDS.get(declared.getKey());
+            for (TargetPredicate.Kind kind : TargetPredicate.Kind.values()) {
+                if (spec.admits(kind) != expected.contains(kind)) {
+                    mismatches.add(declared.getKey() + " admits(" + kind + ")=" + spec.admits(kind)
+                            + " but the declared kind set is " + expected);
                 }
             }
         }
         assertThat(mismatches).isEmpty();
+        assertThat(ADMITTED_KINDS.keySet()).isEqualTo(CANONICAL_TARGETS.keySet());
     }
 
     @Test
     @DisplayName("A narrowing predicate cannot add or remove a kind, so admits(Kind) ignores it")
     void narrowingDoesNotDisturbWhichKindsAreAdmitted() {
-        for (TargetCategory category : TargetCategory.values()) {
-            TargetPredicate declared = TargetPredicates.forCategory(category);
-            TargetSpec bare = TargetSpec.benign(declared);
-            TargetSpec narrowed = TargetSpec.benign(declared, new PermanentIsArtifactPredicate());
+        for (Map.Entry<String, TargetPredicate> declared : CANONICAL_TARGETS.entrySet()) {
+            TargetSpec bare = TargetSpec.benign(declared.getValue());
+            TargetSpec narrowed = TargetSpec.benign(declared.getValue(), new PermanentIsArtifactPredicate());
 
             for (TargetPredicate.Kind kind : TargetPredicate.Kind.values()) {
                 assertThat(narrowed.admits(kind))
-                        .as("%s narrowed to artifacts still admits %s the same way", category, kind)
+                        .as("%s narrowed to artifacts still admits %s the same way", declared.getKey(), kind)
                         .isEqualTo(bare.admits(kind));
             }
             assertThat(narrowed.graveyardScope())
-                    .as("narrowing does not disturb %s's graveyard scope", category)
+                    .as("narrowing does not disturb %s's graveyard scope", declared.getKey())
                     .isEqualTo(bare.graveyardScope());
         }
     }
 
     @Test
-    @DisplayName("A declared target no category can express fails loudly rather than being rounded")
-    void anUnmappableDeclaredTargetThrows() {
-        TargetPredicate artifactOrPlayer = TargetPredicates.anyOf(
-                TargetPredicates.player(), TargetPredicates.permanents(new PermanentIsArtifactPredicate()));
-
-        assertThatThrownBy(() -> TargetSpec.benign(artifactOrPlayer).category())
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("No TargetCategory expresses");
-    }
-
-    @Test
-    @DisplayName("ANY_TARGET and PLAYER_OR_PERMANENT are structurally distinct")
+    @DisplayName("anyTarget() and playerOrPermanent() are structurally distinct")
     void anyTargetIsNotPlayerOrPermanent() {
         assertThat(TargetPredicates.anyTarget()).isNotEqualTo(TargetPredicates.playerOrPermanent());
 
         Permanent artifact = permanents.get("artifact");
-        assertThat(matchesPermanent(TargetCategory.PLAYER_OR_PERMANENT, artifact)).isTrue();
-        assertThat(matchesPermanent(TargetCategory.ANY_TARGET, artifact)).isFalse();
-        assertThat(matchesPlayer(TargetCategory.PLAYER_OR_PERMANENT, player2.getId())).isTrue();
-        assertThat(matchesPlayer(TargetCategory.ANY_TARGET, player2.getId())).isTrue();
+        assertThat(matchesPermanent(TargetPredicates.playerOrPermanent(), artifact)).isTrue();
+        assertThat(matchesPermanent(TargetPredicates.anyTarget(), artifact)).isFalse();
+        assertThat(matchesPlayer(TargetPredicates.playerOrPermanent(), player2.getId())).isTrue();
+        assertThat(matchesPlayer(TargetPredicates.anyTarget(), player2.getId())).isTrue();
+    }
+
+    /**
+     * {@code declares} is the identity test a reader must use when it means one specific
+     * declaration. Asking "does it admit players and permanents?" instead is exactly the lossy test
+     * that made "any target" indistinguishable from "a player or any permanent".
+     */
+    @Test
+    @DisplayName("declares() tells anyTarget() and playerOrPermanent() apart; admits() cannot")
+    void declaresDistinguishesWhatAdmitsCannot() {
+        TargetSpec anyTarget = TargetSpec.harmful(TargetPredicates.anyTarget());
+        TargetSpec playerOrPermanent = TargetSpec.benign(TargetPredicates.playerOrPermanent());
+
+        assertThat(anyTarget.declares(TargetPredicates.anyTarget())).isTrue();
+        assertThat(playerOrPermanent.declares(TargetPredicates.anyTarget())).isFalse();
+
+        for (TargetSpec spec : List.of(anyTarget, playerOrPermanent)) {
+            assertThat(spec.admits(TargetPredicate.Kind.PLAYER)).isTrue();
+            assertThat(spec.admits(TargetPredicate.Kind.PERMANENT)).isTrue();
+        }
+    }
+
+    /**
+     * A declared target no named factory produces is now a legal thing to build — the transitional
+     * bridge that rejected one (there was no enum constant for "an artifact or a player") is gone
+     * with the enum. Both evaluation paths must handle it.
+     */
+    @Test
+    @DisplayName("A hand-composed cross-kind target works in both evaluation paths")
+    void aHandComposedCrossKindTargetIsEvaluatedByBothPaths() {
+        TargetPredicate artifactOrPlayer = TargetPredicates.anyOf(
+                TargetPredicates.player(), TargetPredicates.permanents(new PermanentIsArtifactPredicate()));
+
+        Permanent artifact = permanents.get("artifact");
+        Permanent creature = permanents.get("creature");
+
+        assertThat(matchesPermanent(artifactOrPlayer, artifact)).isTrue();
+        assertThat(matchesPermanent(artifactOrPlayer, creature)).isFalse();
+        assertThat(matchesPlayer(artifactOrPlayer, player2.getId())).isTrue();
+
+        assertThat(specInterpreterAccepts(artifactOrPlayer, artifact.getId())).isTrue();
+        assertThat(specInterpreterAccepts(artifactOrPlayer, creature.getId())).isFalse();
+        assertThat(specInterpreterAccepts(artifactOrPlayer, player2.getId())).isTrue();
     }
 
     @Test
@@ -387,27 +404,20 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
                 .isEqualTo(TargetPredicates.permanents(new PermanentTruePredicate()));
         assertThat(TargetPredicates.spellOnStack())
                 .isEqualTo(TargetPredicates.spells(new StackEntryTruePredicate()));
-        assertThat(TargetPredicates.graveyardCard(GraveyardSearchScope.OPPONENT_GRAVEYARD).leaf(TargetPredicate.Kind.GRAVEYARD_CARD))
-                .get()
-                .extracting(leaf -> ((TargetPredicate.GraveyardCards) leaf).scope())
-                .isEqualTo(GraveyardSearchScope.OPPONENT_GRAVEYARD);
-        assertThat(TargetPredicates.graveyardCard(GraveyardSearchScope.ALL_GRAVEYARDS).leaf(TargetPredicate.Kind.GRAVEYARD_CARD))
-                .get()
-                .extracting(leaf -> ((TargetPredicate.GraveyardCards) leaf).scope())
-                .isEqualTo(GraveyardSearchScope.ALL_GRAVEYARDS);
-        assertThat(TargetPredicates.graveyardCard(GraveyardSearchScope.CONTROLLERS_GRAVEYARD).leaf(TargetPredicate.Kind.GRAVEYARD_CARD))
-                .get()
-                .extracting(leaf -> ((TargetPredicate.GraveyardCards) leaf).scope())
-                .isEqualTo(GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
+        for (GraveyardSearchScope scope : GraveyardSearchScope.values()) {
+            assertThat(TargetPredicates.graveyardCard(scope).graveyardScope())
+                    .as("graveyardCard(%s) carries its scope on the leaf", scope)
+                    .contains(scope);
+        }
     }
 
     /**
-     * {@code LAND} used to read the <em>printed</em> card type, so a permanent that a
+     * {@code land()} used to read the <em>printed</em> card type, so a permanent that a
      * type-<em>replacing</em> effect turned into a land (CR 613.1d, layer 4) was not a legal
      * "target land". Step 2 adopted the layer-aware answer, so both halves now agree that it is.
      */
     @Test
-    @DisplayName("LAND is layer-aware in both halves for a permanent turned into a land")
+    @DisplayName("land() is layer-aware in both halves for a permanent turned into a land")
     void landIsLayerAwareForATypeReplacedPermanent() {
         Permanent bears = new Permanent(new GrizzlyBears());
         gd.playerBattlefields.get(player2.getId()).add(bears);
@@ -418,20 +428,20 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
         assertThat(gqs.isLand(gd, bears)).isTrue();
         assertThat(bears.getCard().hasType(CardType.LAND)).isFalse();
 
-        assertThat(specInterpreterAccepts(TargetCategory.LAND, bears.getId())).isTrue();
-        assertThat(matchesPermanent(TargetCategory.LAND, bears)).isTrue();
+        assertThat(specInterpreterAccepts(TargetPredicates.land(), bears.getId())).isTrue();
+        assertThat(matchesPermanent(TargetPredicates.land(), bears)).isTrue();
 
-        assertThat(specInterpreterAccepts(TargetCategory.CREATURE, bears.getId())).isFalse();
-        assertThat(matchesPermanent(TargetCategory.CREATURE, bears)).isFalse();
+        assertThat(specInterpreterAccepts(TargetPredicates.creature(), bears.getId())).isFalse();
+        assertThat(matchesPermanent(TargetPredicates.creature(), bears)).isFalse();
     }
 
     /**
-     * The mirror case: {@code ANY_TARGET} used to read the printed planeswalker type, so a
+     * The mirror case: {@code anyTarget()} used to read the printed planeswalker type, so a
      * planeswalker that stopped being one still passed. Step 2 adopted the layer-aware answer —
      * CR 115.4 lists what "any target" may be, judged after layer 4.
      */
     @Test
-    @DisplayName("ANY_TARGET is layer-aware in both halves for a de-typed planeswalker")
+    @DisplayName("anyTarget() is layer-aware in both halves for a de-typed planeswalker")
     void anyTargetIsLayerAwareForATypeReplacedPlaneswalker() {
         Permanent walker = permanents.get("planeswalker");
         Permanent aura = new Permanent(new ImprisonedInTheMoon());
@@ -441,44 +451,80 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
         assertThat(gqs.isPlaneswalker(gd, walker)).isFalse();
         assertThat(walker.getCard().hasType(CardType.PLANESWALKER)).isTrue();
 
-        assertThat(specInterpreterAccepts(TargetCategory.ANY_TARGET, walker.getId())).isFalse();
-        assertThat(matchesPermanent(TargetCategory.ANY_TARGET, walker)).isFalse();
+        assertThat(specInterpreterAccepts(TargetPredicates.anyTarget(), walker.getId())).isFalse();
+        assertThat(matchesPermanent(TargetPredicates.anyTarget(), walker)).isFalse();
     }
 
-    private boolean matchesPermanent(TargetCategory category, Permanent permanent) {
-        TargetPredicate predicate = TargetPredicates.forCategory(category);
-        return predicate != null && sut.matchesPermanent(predicate, permanent, filterContext());
+    private static Map<String, TargetPredicate> canonicalTargets() {
+        Map<String, TargetPredicate> targets = new LinkedHashMap<>();
+        targets.put("targets nothing", null);
+        targets.put("player()", TargetPredicates.player());
+        targets.put("permanent()", TargetPredicates.permanent());
+        targets.put("creature()", TargetPredicates.creature());
+        targets.put("land()", TargetPredicates.land());
+        targets.put("creatureOrPlaneswalker()", TargetPredicates.creatureOrPlaneswalker());
+        targets.put("playerOrPermanent()", TargetPredicates.playerOrPermanent());
+        targets.put("playerOrPlaneswalker()", TargetPredicates.playerOrPlaneswalker());
+        targets.put("anyTarget()", TargetPredicates.anyTarget());
+        targets.put("spellOnStack()", TargetPredicates.spellOnStack());
+        for (GraveyardSearchScope scope : GraveyardSearchScope.values()) {
+            targets.put("graveyardCard(" + scope + ")", TargetPredicates.graveyardCard(scope));
+        }
+        targets.put("exileCard()", TargetPredicates.exileCard());
+        // Not Map.copyOf: the "targets nothing" entry is a null value, which it rejects.
+        return Collections.unmodifiableMap(targets);
     }
 
-    private boolean matchesPlayer(TargetCategory category, UUID playerId) {
-        TargetPredicate predicate = TargetPredicates.forCategory(category);
-        return predicate != null && sut.matchesPlayer(predicate, playerId, player1.getId(), gd);
+    private static Map<String, Set<TargetPredicate.Kind>> admittedKinds() {
+        Set<TargetPredicate.Kind> permanentOnly = EnumSet.of(TargetPredicate.Kind.PERMANENT);
+        Set<TargetPredicate.Kind> playerAndPermanent =
+                EnumSet.of(TargetPredicate.Kind.PLAYER, TargetPredicate.Kind.PERMANENT);
+
+        Map<String, Set<TargetPredicate.Kind>> kinds = new LinkedHashMap<>();
+        kinds.put("targets nothing", EnumSet.noneOf(TargetPredicate.Kind.class));
+        kinds.put("player()", EnumSet.of(TargetPredicate.Kind.PLAYER));
+        kinds.put("permanent()", permanentOnly);
+        kinds.put("creature()", permanentOnly);
+        kinds.put("land()", permanentOnly);
+        kinds.put("creatureOrPlaneswalker()", permanentOnly);
+        kinds.put("playerOrPermanent()", playerAndPermanent);
+        kinds.put("playerOrPlaneswalker()", playerAndPermanent);
+        kinds.put("anyTarget()", playerAndPermanent);
+        kinds.put("spellOnStack()", EnumSet.of(TargetPredicate.Kind.SPELL));
+        for (GraveyardSearchScope scope : GraveyardSearchScope.values()) {
+            kinds.put("graveyardCard(" + scope + ")", EnumSet.of(TargetPredicate.Kind.GRAVEYARD_CARD));
+        }
+        kinds.put("exileCard()", EnumSet.of(TargetPredicate.Kind.EXILED_CARD));
+        return Map.copyOf(kinds);
     }
 
-    private boolean matchesGraveyardCard(TargetCategory category, Card card, UUID graveyardOwnerId) {
-        TargetPredicate predicate = TargetPredicates.forCategory(category);
-        return predicate != null
-                && sut.matchesGraveyardCard(predicate, card, graveyardOwnerId, player1.getId(), filterContext());
+    private boolean matchesPermanent(TargetPredicate declaredTarget, Permanent permanent) {
+        return declaredTarget != null && sut.matchesPermanent(declaredTarget, permanent, filterContext());
+    }
+
+    private boolean matchesPlayer(TargetPredicate declaredTarget, UUID playerId) {
+        return declaredTarget != null && sut.matchesPlayer(declaredTarget, playerId, player1.getId(), gd);
+    }
+
+    private boolean matchesGraveyardCard(TargetPredicate declaredTarget, Card card, UUID graveyardOwnerId) {
+        return declaredTarget != null
+                && sut.matchesGraveyardCard(declaredTarget, card, graveyardOwnerId, player1.getId(), filterContext());
     }
 
     /**
-     * Whether the real {@code TargetSpec} interpreter accepts {@code targetId} for a benign spec of
-     * {@code category}. Benign so the CR 702.16b protection check (an orthogonal axis the predicate
-     * deliberately does not carry) never fires.
+     * Whether the real {@code TargetSpec} interpreter accepts {@code targetId} for a benign spec
+     * declaring {@code declaredTarget}. Benign so the CR 702.16b protection check (an orthogonal
+     * axis the predicate deliberately does not carry) never fires.
      */
-    private boolean specInterpreterAccepts(TargetCategory category, UUID targetId) {
+    private boolean specInterpreterAccepts(TargetPredicate declaredTarget, UUID targetId) {
         return targetValidationService.checkEffectTargets(
-                List.of(new CategoryStubEffect(category)),
+                List.of(new DeclaredTargetStubEffect(declaredTarget)),
                 new TargetValidationContext(gd, targetId, null, sourceCard)).isEmpty();
     }
 
-    /**
-     * Whether {@code category}'s declared {@link GraveyardSearchScope} reaches the graveyard of
-     * {@code graveyardOwnerId}, expressed through the scope itself rather than through a
-     * hand-copied category comparison — the engine has no such copy left to mirror.
-     */
-    private boolean inScopeToday(TargetCategory category, UUID graveyardOwnerId) {
-        return TargetSpec.benign(TargetPredicates.forCategory(category)).graveyardScope()
+    /** Whether {@code declaredTarget}'s graveyard scope reaches {@code graveyardOwnerId}'s graveyard. */
+    private boolean inDeclaredScope(TargetPredicate declaredTarget, UUID graveyardOwnerId) {
+        return TargetSpec.benign(declaredTarget).graveyardScope()
                 .map(scope -> scope.graveyardOwners(gd.orderedPlayerIds, player1.getId()))
                 .orElse(List.of())
                 .contains(graveyardOwnerId);
@@ -502,11 +548,11 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
         return card;
     }
 
-    /** Declares nothing but the category under test, so the interpreter is exercised in isolation. */
-    private record CategoryStubEffect(TargetCategory category) implements CardEffect {
+    /** Declares nothing but the target under test, so the interpreter is exercised in isolation. */
+    private record DeclaredTargetStubEffect(TargetPredicate declaredTarget) implements CardEffect {
         @Override
         public TargetSpec targetSpec() {
-            return TargetSpec.benign(TargetPredicates.forCategory(category));
+            return TargetSpec.benign(declaredTarget);
         }
     }
 }

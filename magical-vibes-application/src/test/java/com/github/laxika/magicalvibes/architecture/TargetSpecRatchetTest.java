@@ -39,7 +39,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  *       quietly bringing back the per-effect targeting booleans the program deleted. (Record
  *       COMPONENTS named {@code canTargetSpell} / {@code targetPredicate} are NOT method
  *       declarations with a body and do not match — the two documented duals
- *       {@code ChangeColorTextEffect} / {@code PutCounterOnTargetPermanentEffect} keep theirs.)</li>
+ *       {@code ChangeColorTextEffect} / {@code PutCounterOnTargetPermanentEffect} keep theirs.
+ *       The return-type alternation is load-bearing for {@code targetPredicate}: the deleted legacy
+ *       method returned {@code PermanentPredicate}, while {@code TargetSpec.targetPredicate()}
+ *       legitimately returns a {@code TargetPredicate}. Do not widen it.)</li>
  *   <li><b>Every {@code @ValidatesTarget} effect declares a non-NONE {@code targetSpec()}.</b> A
  *       hand-written {@code @ValidatesTarget} validator is now ONLY an escape hatch for
  *       non-structural rules (opponent-relation, controller/owner compare, chosen-source,
@@ -47,8 +50,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  *       declarative interpreter offers/type-checks it. This invariant forbids a validator-only
  *       effect that bypasses {@code targetSpec()} entirely. The two documented equip/attach
  *       validators ({@code StaticBoostEffect}, {@code AttachedBoostEffect}) are exempt: they target
- *       through the equip/attach mechanism, not the single-target pipeline, so they carry no
- *       {@code targetSpec()} category by design.</li>
+ *       through the equip/attach mechanism, not the single-target pipeline, so they declare no
+ *       {@code targetSpec()} target by design.</li>
  * </ol>
  *
  * <p><b>LOCKSTEP:</b> both invariants are duplicated in {@code scripts/targetspec-audit.py}
@@ -85,8 +88,6 @@ class TargetSpecRatchetTest {
             Pattern.compile("TargetSpec\\s+targetSpec\\s*\\(\\s*\\)\\s*\\{");
     private static final Pattern SPEC_FACTORY_RE =
             Pattern.compile("\\b(?:benign|harmful)\\s*\\(");
-    private static final Pattern SPEC_CATEGORY_RE =
-            Pattern.compile("\\bTargetCategory\\.(\\w+)");
     private static final Pattern SPEC_TARGET_RE =
             Pattern.compile("\\bTargetPredicates\\.\\w+\\s*\\(");
 
@@ -185,9 +186,8 @@ class TargetSpecRatchetTest {
     /**
      * True iff the file overrides {@code targetSpec()} with a body that can return a non-NONE spec —
      * i.e. it uses a {@code benign(} / {@code harmful(} factory (both take a non-{@code null}
-     * declared target), names a {@code TargetPredicates} factory, or names a {@code TargetCategory}
-     * value other than {@code NONE}. A conditional body with at least one non-NONE branch
-     * (per-recipient / per-scope specs) counts as declaring a structural spec.
+     * declared target) or names a {@code TargetPredicates} factory. A conditional body with at least
+     * one non-NONE branch (per-recipient / per-scope specs) counts as declaring a structural spec.
      * Mirrors {@code targetspec-audit.py}'s brace-matched detection exactly.
      */
     private static boolean declaresNonNoneTargetSpec(String text) {
@@ -196,16 +196,7 @@ class TargetSpecRatchetTest {
             return false;
         }
         String body = braceMatchedBody(text, m.end() - 1);
-        if (SPEC_FACTORY_RE.matcher(body).find() || SPEC_TARGET_RE.matcher(body).find()) {
-            return true;
-        }
-        Matcher cat = SPEC_CATEGORY_RE.matcher(body);
-        while (cat.find()) {
-            if (!"NONE".equals(cat.group(1))) {
-                return true;
-            }
-        }
-        return false;
+        return SPEC_FACTORY_RE.matcher(body).find() || SPEC_TARGET_RE.matcher(body).find();
     }
 
     /** Body between the matching braces starting at {@code openBraceIdx} (excludes the outer braces). */

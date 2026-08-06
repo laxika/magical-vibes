@@ -17,22 +17,24 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTruePredicate;
 
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Factories for {@link TargetPredicate}: the five kind leaves, the cross-kind disjunction, and one
- * named factory per {@link TargetCategory} constant so the migration off the enum is mechanical.
+ * named factory per declared target a card can name. <strong>Always build a declared target from
+ * one of these</strong> — the named values are interned, so specs compare and hash cheaply, and the
+ * set of things an effect may declare stays enumerable.
  *
- * <p>The two categories the enum could not tell apart become structurally distinct here:
- * {@link #playerOrPermanent()} is "a player or <em>any</em> permanent" while {@link #anyTarget()}
- * is CR 115.4's "any target" — a creature, planeswalker or player. Both were
- * {@code (includesPermanents=true, includesPlayers=true)} before.</p>
+ * <p>{@link #playerOrPermanent()} is "a player or <em>any</em> permanent" and {@link #anyTarget()}
+ * is CR 115.4's "any target" — a creature, planeswalker or player. They are structurally distinct
+ * values; a reader that wants one specifically must compare against it
+ * ({@code TargetSpec.declares}) rather than asking whether both players and permanents are
+ * admitted, which cannot tell them apart.</p>
  *
- * <p>Conversely the enum's three graveyard constants collapse onto a single
- * {@link #graveyardCard(GraveyardSearchScope)}, because the zone state they encoded is one
- * {@link GraveyardSearchScope} component on the leaf.</p>
+ * <p>There is a single {@link #graveyardCard(GraveyardSearchScope)} rather than one factory per
+ * zone state: which graveyards are searched is a {@link GraveyardSearchScope} component on the
+ * leaf, read back through {@code TargetSpec.graveyardScope()}.</p>
  */
 public final class TargetPredicates {
 
@@ -49,8 +51,8 @@ public final class TargetPredicates {
             new PermanentAnyOfPredicate(List.of(IS_CREATURE, IS_PLANESWALKER));
 
     /**
-     * The fourteen canonical declared targets, interned. {@code TargetSpec} values are rebuilt on
-     * every {@code CardEffect.targetSpec()} call and target enumeration calls that in a loop, so the
+     * The canonical declared targets, interned. {@code TargetSpec} values are rebuilt on every
+     * {@code CardEffect.targetSpec()} call and target enumeration calls that in a loop, so the
      * named factories hand back a shared immutable value rather than allocating one per call.
      */
     private static final TargetPredicate PLAYER = players(ANY_PLAYER);
@@ -65,9 +67,6 @@ public final class TargetPredicates {
     private static final Map<GraveyardSearchScope, TargetPredicate> GRAVEYARD_CARD_BY_SCOPE =
             buildGraveyardCardIndex();
     private static final TargetPredicate EXILE_CARD = exiledCards(ANY_CARD);
-
-    /** Inverse of {@link #forCategory(TargetCategory)}; see {@link #categoryOf(TargetPredicate)}. */
-    private static final Map<TargetPredicate, TargetCategory> CATEGORY_BY_TARGET = buildCategoryIndex();
 
     private TargetPredicates() {
     }
@@ -109,57 +108,53 @@ public final class TargetPredicates {
         return new TargetPredicate.AnyOf(options);
     }
 
-    /** {@link TargetCategory#PLAYER}. */
+    /** A player. */
     public static TargetPredicate player() {
         return PLAYER;
     }
 
-    /** {@link TargetCategory#PERMANENT}. */
+    /** Any permanent on the battlefield. */
     public static TargetPredicate permanent() {
         return PERMANENT;
     }
 
-    /** {@link TargetCategory#CREATURE} — layer-aware, so an animated land qualifies (CR 613.1d). */
+    /** A creature — layer-aware, so an animated land qualifies (CR 613.1d). */
     public static TargetPredicate creature() {
         return CREATURE;
     }
 
-    /** {@link TargetCategory#LAND}. */
+    /** A land, layer-aware. */
     public static TargetPredicate land() {
         return LAND;
     }
 
-    /** {@link TargetCategory#CREATURE_OR_PLANESWALKER}. */
+    /** A creature or a planeswalker, layer-aware. */
     public static TargetPredicate creatureOrPlaneswalker() {
         return CREATURE_OR_PLANESWALKER;
     }
 
-    /** {@link TargetCategory#PLAYER_OR_PERMANENT} — a player or <em>any</em> permanent. */
+    /** A player or <em>any</em> permanent — declares no restriction on the permanent half. */
     public static TargetPredicate playerOrPermanent() {
         return PLAYER_OR_PERMANENT;
     }
 
-    /** {@link TargetCategory#PLAYER_OR_PLANESWALKER}. */
+    /** A player or a planeswalker, layer-aware. */
     public static TargetPredicate playerOrPlaneswalker() {
         return PLAYER_OR_PLANESWALKER;
     }
 
-    /** {@link TargetCategory#ANY_TARGET} — CR 115.4's creature / planeswalker / player. */
+    /** CR 115.4's "any target" — a creature, planeswalker or player, layer-aware. */
     public static TargetPredicate anyTarget() {
         return ANY_TARGET;
     }
 
-    /** {@link TargetCategory#SPELL_ON_STACK}. */
+    /** A spell on the stack (validated on the stack path, not by the spec interpreter). */
     public static TargetPredicate spellOnStack() {
         return SPELL_ON_STACK;
     }
 
     /**
-     * A card in a graveyard within {@code scope}, with no card restriction — the single factory the
-     * three graveyard {@link TargetCategory} constants collapsed onto
-     * ({@link TargetCategory#GRAVEYARD_CARD} is {@code OPPONENT_GRAVEYARD},
-     * {@link TargetCategory#ANY_GRAVEYARD_CARD} is {@code ALL_GRAVEYARDS},
-     * {@link TargetCategory#CONTROLLERS_GRAVEYARD_CARD} is {@code CONTROLLERS_GRAVEYARD}).
+     * A card in a graveyard within {@code scope}, with no card restriction.
      *
      * <p>Declare the scope the card's oracle text actually names; every reader takes its search
      * scope from here via {@code TargetSpec.graveyardScope()}, so a wrong scope widens or narrows
@@ -169,57 +164,9 @@ public final class TargetPredicates {
         return GRAVEYARD_CARD_BY_SCOPE.get(scope);
     }
 
-    /** {@link TargetCategory#EXILE_CARD}. */
+    /** A card in exile. */
     public static TargetPredicate exileCard() {
         return EXILE_CARD;
-    }
-
-    /**
-     * The predicate equivalent to {@code category}, or {@code null} for
-     * {@link TargetCategory#NONE} (which targets nothing and therefore restricts nothing).
-     */
-    public static TargetPredicate forCategory(TargetCategory category) {
-        return switch (category) {
-            case NONE -> null;
-            case PLAYER -> player();
-            case PERMANENT -> permanent();
-            case CREATURE -> creature();
-            case LAND -> land();
-            case CREATURE_OR_PLANESWALKER -> creatureOrPlaneswalker();
-            case PLAYER_OR_PERMANENT -> playerOrPermanent();
-            case PLAYER_OR_PLANESWALKER -> playerOrPlaneswalker();
-            case ANY_TARGET -> anyTarget();
-            case SPELL_ON_STACK -> spellOnStack();
-            case GRAVEYARD_CARD -> graveyardCard(GraveyardSearchScope.OPPONENT_GRAVEYARD);
-            case ANY_GRAVEYARD_CARD -> graveyardCard(GraveyardSearchScope.ALL_GRAVEYARDS);
-            case CONTROLLERS_GRAVEYARD_CARD -> graveyardCard(GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
-            case EXILE_CARD -> exileCard();
-        };
-    }
-
-    /**
-     * The {@link TargetCategory} whose {@link #forCategory(TargetCategory)} value is
-     * {@code declaredTarget}, i.e. the inverse of that mapping.
-     *
-     * <p>Transitional bridge behind {@code TargetSpec.category()}, deleted together with the enum.
-     * It is a lookup over the fourteen canonical factory values rather than a structural match, so
-     * a predicate no category can express fails loudly instead of being silently rounded to the
-     * nearest enum constant. Narrow with {@code TargetSpec.predicate()} (or a card-level
-     * {@code TargetFilter}); do not hand-build a declared target outside these factories while the
-     * enum still exists — see {@code agent-docs/TARGET_PREDICATE_PLAN.md}.</p>
-     */
-    public static TargetCategory categoryOf(TargetPredicate declaredTarget) {
-        if (declaredTarget == null) {
-            return TargetCategory.NONE;
-        }
-        TargetCategory category = CATEGORY_BY_TARGET.get(declaredTarget);
-        if (category == null) {
-            throw new IllegalArgumentException(
-                    "No TargetCategory expresses " + declaredTarget + ". While TargetCategory still "
-                            + "exists a declared target must come from a TargetPredicates factory; "
-                            + "put any further restriction on TargetSpec.predicate() instead.");
-        }
-        return category;
     }
 
     private static Map<GraveyardSearchScope, TargetPredicate> buildGraveyardCardIndex() {
@@ -228,17 +175,6 @@ public final class TargetPredicates {
             index.put(scope, graveyardCards(ANY_CARD, scope));
         }
         return index;
-    }
-
-    private static Map<TargetPredicate, TargetCategory> buildCategoryIndex() {
-        Map<TargetPredicate, TargetCategory> index = new HashMap<>();
-        for (TargetCategory category : TargetCategory.values()) {
-            TargetPredicate target = forCategory(category);
-            if (target != null) {
-                index.put(target, category);
-            }
-        }
-        return Map.copyOf(index);
     }
 
     /**

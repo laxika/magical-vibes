@@ -237,7 +237,7 @@ model can silently break rules correctness.
 | `PutCounterOnTargetPermanentEffect` | Carries **three** `PermanentPredicate` components with different semantics (`predicate` = resolution-time chooser, `targetPredicate` = target legality with no cast-time gate, `resolutionCondition` = placement gate) and is read through `EffectResolution.targetPredicateOf`. Do not collapse these. |
 | Card-level `TargetFilter` vs effect-level `TargetSpec` | Both are enforced, independently. Unifying them is **out of scope** for this plan — it is a second, larger refactor. Keep both paths working. |
 | CR 608.2b resolution recheck | Verified: targets are re-checked on resolution using last known information if the source has left its zone. `FilterContext.sourcePermanentSnapshot` exists for exactly this. Any new evaluation path must carry the snapshot through. |
-| `TargetSpecRatchetTest` + `scripts/targetspec-audit.py` | Both regex for `\bTargetCategory\.(\w+)`. They will silently stop matching once the enum is gone, turning a guard into a no-op. Update them in the same step that deletes the enum, not later. |
+| `TargetSpecRatchetTest` + `scripts/targetspec-audit.py` | Both used to regex for `\bTargetCategory\.(\w+)`. *(Handled: Step 4 taught them `\bTargetPredicates\.\w+\s*\(` and Step 7 dropped the dead arm. They stay in lockstep with each other — change an invariant in one and you must change it in the other.)* |
 
 ---
 
@@ -255,7 +255,7 @@ mechanical high-churn. Phase 4 is deletion.
 | 4 | Migrate the ~400 effect records' `targetSpec()` to the factories. Mechanical and scriptable; the Step 1 equivalence harness is the safety net. Batch by category, smallest first (`EXILE_CARD` 2, `CONTROLLERS_GRAVEYARD_CARD` 2, `LAND` 4, `PLAYER_OR_PLANESWALKER` 4 … `PLAYER` 155 last). | MED | **DONE** — see "Step 4 outcome". Batching was unnecessary (one scripted sweep, no import churn); `TargetSpec` now *stores* the declared target and `category()` became a bridge. |
 | 5 | Collapse the three graveyard categories onto `GraveyardCards.scope`; delete the five hand-copied scope mappings. | LOW | **DONE** — see "Step 5 outcome". Not LOW and not five: there were **fourteen** copies and they disagreed, so six effects were declaring a scope they did not mean. Six rules-visible fixes. |
 | 6 | Migrate the derived-boolean readers (`includesPermanents` / `includesPlayers` / `isGraveyard`) in the trigger collectors, `StepTriggerService`, AI, and `EffectResolution.collectTargetTypes`. ~30 call sites across engine + AI. | MED | **DONE** — see "Step 6 outcome". 152 call sites, not ~30, across 31 files; `TargetSpec.admits` was changed to read `declaredTarget()` so it stops allocating. |
-| 7 | Delete `TargetCategory`; update `TargetSpecRatchetTest`, `scripts/targetspec-audit.py`, and the `EFFECTS_INDEX.md` category table. | LOW | TODO |
+| 7 | Delete `TargetCategory`; update `TargetSpecRatchetTest`, `scripts/targetspec-audit.py`, and the `EFFECTS_INDEX.md` category table. | LOW | **DONE** — see "Step 7 outcome". Genuinely LOW; the two `== ANY_TARGET` readers became `TargetSpec.declares(...)`, a new identity reader added for exactly that purpose. |
 | 8 | **Optional, separate decision.** Add `PermanentIsBattlePredicate` and include battles in the `ANY_TARGET` factory per CR 115.4 (defect 4). Needs a rules review of the battle-damage path first — do not bundle into Step 7. | MED | TODO |
 
 Steps 1-3 are independently valuable and can be shipped without 4-8. If the plan is abandoned
@@ -754,6 +754,92 @@ decision (which pending-interaction record to queue) rather than a narrowing, so
 mis-targeted by it — `TriggerTargetCollector` applies the real narrowing afterwards, via the
 `== ANY_TARGET` comparison two rows above. Deliberately left alone; whoever fixes the
 `TriggerTargetCollector` row should fix this one in the same breath, because the two must agree.
+
+---
+
+## Step 7 outcome
+
+`TargetCategory` is deleted, together with the `TargetSpec.category()` bridge and the
+`TargetPredicates.forCategory` / `categoryOf` pair that backed it. Every premise held: the six
+readers the Step 6 outcome listed were still there verbatim, and no seventh had appeared.
+
+### The six readers
+
+| Site | Was | Now |
+|---|---|---|
+| `EffectResolution.targetsSpellOnStack` | `== SPELL_ON_STACK` | `admits(Kind.SPELL)` |
+| `ActivatedAbility.isSpellOnlyTarget` | `allMatch(== SPELL_ON_STACK)` | `allMatch(admits(Kind.SPELL))` |
+| `DrawService:738` | `== ANY_TARGET` | `declares(TargetPredicates.anyTarget())` |
+| `TriggerTargetCollector:178` | `allMatch(== ANY_TARGET)` | `allMatch(declares(TargetPredicates.anyTarget()))` |
+| `TriggerCollectionService:1389` | `== NONE` | `declaredTarget() == null` |
+| `PermanentCounterSupport:507` | `!= NONE` | `declaredTarget() != null` |
+
+**`TargetSpec.declares(TargetPredicate)` is new** — an identity test against one interned factory
+value, ignoring the `predicate()` narrowing exactly as `category()` did. It exists so the two
+`ANY_TARGET` rows have a spelling that is *not* `admits(PLAYER) && admits(PERMANENT)`; its javadoc
+says so, and `TargetPredicateEquivalenceTest.declaresDistinguishesWhatAdmitsCannot` pins it by
+showing both specs answer the `admits` pair identically while `declares` separates them.
+
+**The two `SPELL_ON_STACK` rows deliberately did NOT become `!admits(PERMANENT)`**, even though
+`isSpellOnlyTarget`'s own javadoc ("no effect offers a permanent target as an alternative") reads
+that way. The set those two see is `{declares spellOnStack()} ∪ {the four `instanceof` duals}`, and
+`GrantColorUntilEndOfTurnEffect` with `scope == TARGET_PLAYERS_CREATURES` declares `player()` — so
+`!admits(PERMANENT)` would call it spell-only where the enum did not. `admits(SPELL)` is exactly
+equivalent for every effect in the set. Checked all four duals' specs individually; none declares
+`NONE`, which is the other way the two spellings could have diverged.
+
+### The equivalence test kept its name but changed what it proves
+
+`TargetPredicateEquivalenceTest` was built to compare the predicate against the enum, so with the
+enum gone every sweep would have been tautological. It now guards two things that survive the enum:
+
+1. **The two evaluation paths agree.** `TargetPredicateEvaluationService` (enumeration) and the spec
+   interpreter inside `TargetValidationService` are separate implementations of one restriction —
+   the Step 2 outcome records *why* (injecting the adapter closes a Spring constructor cycle). Every
+   canonical declared target is driven through both against the same board.
+2. **Each factory admits exactly the kinds it claims**, as an explicit `ADMITTED_KINDS` table rather
+   than something derived. That table plus `CANONICAL_TARGETS` is now the enumerable list of declared
+   targets the enum used to be; a new factory must be added to both, and the test asserts the two
+   key sets match so a half-added factory fails.
+
+Deleted with the bridge: the round-trip test, the "narrowing does not disturb the reported category"
+test (kept as `narrowingStaysOffTheDeclaredTarget`, asserting `declaredTarget()` instead), and
+`anUnmappableDeclaredTargetThrows`. That last one is replaced by its inverse,
+`aHandComposedCrossKindTargetIsEvaluatedByBothPaths`: a target no factory produces
+(`anyOf(player(), permanents(isArtifact))`) is now a legal thing to build and both paths handle it.
+The Step 4 throw was a migration tripwire, not a rule.
+
+### Ratchet and audit script
+
+Both lost only their `\bTargetCategory\.(\w+)` arm of invariant-2 detection — `benign(`/`harmful(`
+and `\bTargetPredicates\.\w+\s*\(` already covered every effect, as Step 4 arranged when it moved
+these files early. Still in lockstep; the script reports both invariants OK over 35 `@ValidatesTarget`
+effects. One note added to both: invariant 1's `boolean|int|PermanentPredicate` return-type
+alternation is load-bearing for the `targetPredicate` entry, because `TargetSpec.targetPredicate()`
+legitimately uses that name for a `TargetPredicate`-returning method. Widening the alternation would
+turn the guard into a false positive.
+
+### What Step 8 inherits
+
+- **The lossy shape-sniff at `StepTriggerService:448` is still there**, unchanged and still paired
+  with `TriggerTargetCollector`'s narrowing. The Step 6 outcome asked that whoever fixes one fixes
+  both; this step only changed *how* the collector spells its comparison
+  (`declares(anyTarget())`), not the fact that the upkeep router cannot tell `anyTarget()` from
+  `playerOrPermanent()`. Nothing is mis-targeted today because the collector applies the real
+  narrowing afterwards.
+- **The `EffectResolution.targetsSpellOnStack` `instanceof` list is untouched** — it is the "Risk
+  hotspots" entry, and turning those four effects into honest `AnyOf(spells(...), permanents(...))`
+  is its own change. Note that when it happens, `ActivatedAbility.isSpellOnlyTarget` must flip to
+  `!admits(PERMANENT)` in the same commit: an honest dual would admit `SPELL`, and `admits(SPELL)`
+  would then wrongly call it spell-only.
+- **No behaviour change anywhere in this step.** Confirmed by `TargetPredicateEquivalenceTest`,
+  `TargetSpecRatchetTest`, `MayAbilityHandlerServiceTest`, `ValidTargetServiceTest`,
+  `TargetLegalityServiceTest`, `TargetValidationServiceSpecTest`, `EffectResolutionServiceTest`, and
+  the card tests covering each migrated reader (Niv-Mizzet the Firemind / Dracogenius for
+  `DrawService`, Flameblast Dragon + Form of the Dragon for `TriggerTargetCollector`, Livewire Lash
+  for `TriggerCollectionService`, Defiant Greatmaw for `PermanentCounterSupport`, Spiketail Hatchling
+  + Eight-and-a-Half-Tails for `ActivatedAbility`, Glamerdye + Magical Hack for the duals, plus Arc
+  Trail and Boggart Shenanigans).
 
 ---
 

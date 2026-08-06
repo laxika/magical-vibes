@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -504,7 +503,7 @@ public class PermanentCounterSupport {
             return;
         }
 
-        boolean needsTarget = effects.stream().anyMatch(e -> e.targetSpec().category() != TargetCategory.NONE);
+        boolean needsTarget = effects.stream().anyMatch(e -> e.targetSpec().declaredTarget() != null);
         if (needsTarget) {
             PermanentPredicate targetPredicate = effects.stream()
                     .map(e -> e.targetSpec().predicate())

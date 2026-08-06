@@ -35,7 +35,6 @@ import com.github.laxika.magicalvibes.model.effect.ReflectAllyDamageToDamagedCre
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringSpellReferencingEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
@@ -1386,7 +1385,7 @@ public class TriggerCollectionService {
         for (CardEffect effect : effects) {
             if (effect instanceof TriggeringSpellReferencingEffect) {
                 triggeringSpellEffects.add(effect);
-            } else if (effect.targetSpec().category() == TargetCategory.NONE) {
+            } else if (effect.targetSpec().declaredTarget() == null) {
                 nonTargetingEffects.add(effect);
             } else {
                 targetingEffects.add(effect);

@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentIntoLibraryNFromTopEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByConvergeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -204,14 +203,14 @@ public final class EffectResolution {
     /**
      * Whether the effect can target a spell on the stack — the successor to the deleted
      * {@code CardEffect.canTargetSpell()}. Almost every effect answers this from its
-     * {@link CardEffect#targetSpec()} category ({@link TargetCategory#SPELL_ON_STACK}).
+     * {@link CardEffect#targetSpec()} declaring a {@link TargetPredicate.Kind#SPELL} leaf.
      * Dual spell-or-permanent effects ({@link ChangeColorTextEffect}, {@link SetTargetColorEffect},
      * {@link PutTargetSpellOrPermanentIntoLibraryNFromTopEffect}) ALSO target a spell independently
-     * of their {@code PERMANENT} spec; spell targets are validated on the stack path, never by the
-     * spec interpreter.
+     * of their permanent spec; spell targets are validated on the stack path, never by the spec
+     * interpreter.
      */
     public static boolean targetsSpellOnStack(CardEffect e) {
-        return e.targetSpec().category() == TargetCategory.SPELL_ON_STACK
+        return e.targetSpec().admits(TargetPredicate.Kind.SPELL)
                 || (e instanceof ChangeColorTextEffect c && c.canTargetSpell())
                 || e instanceof SetTargetColorEffect
                 || (e instanceof GrantColorUntilEndOfTurnEffect c && c.canTargetSpell())
@@ -291,8 +290,8 @@ public final class EffectResolution {
      * <p>Its targets live in that assignment map rather than in the stack entry's single
      * {@code targetId}, so the target-validation pipeline must not demand a {@code targetId} for
      * it. {@code TargetValidationService} reads this instead of inferring the tolerance from the
-     * spec's shape, which is what let these effects declare a deliberately no-op
-     * {@code TargetCategory} and hide what they really target.
+     * spec's shape, which is what let these effects declare a deliberately no-op target
+     * ({@code playerOrPermanent()}) and hide what they really target.
      */
     public static boolean distributesAmountsAmongTargets(CardEffect e) {
         return isChosenDivision(e)

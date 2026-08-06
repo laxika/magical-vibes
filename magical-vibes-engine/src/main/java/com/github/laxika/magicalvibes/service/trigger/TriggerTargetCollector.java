@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -165,8 +165,8 @@ public class TriggerTargetCollector {
             boolean creaturesOnly = options.creaturesOnly() && !explicitPermanentFilter;
 
             // "Any target" = creature / planeswalker / player — never a land or other noncreature
-            // permanent. Mirror ValidTargetService / TargetValidationService for true ANY_TARGET
-            // effects (Flameblast Dragon attack trigger, Form of the Dragon upkeep, etc.). An
+            // permanent. Mirror ValidTargetService / TargetValidationService for effects that
+            // declare anyTarget() (Flameblast Dragon attack trigger, Form of the Dragon upkeep). An
             // explicit PermanentPredicateTargetFilter fully governs instead (e.g. destroy land).
             List<CardEffect> permanentEffects = effects.stream()
                     .map(e -> unwrap(e, options))
@@ -175,7 +175,7 @@ public class TriggerTargetCollector {
             boolean anyTargetPermanentsOnly = !explicitPermanentFilter
                     && !permanentEffects.isEmpty()
                     && permanentEffects.stream()
-                            .allMatch(e -> e.targetSpec().category() == TargetCategory.ANY_TARGET);
+                            .allMatch(e -> e.targetSpec().declares(TargetPredicates.anyTarget()));
 
             for (UUID pid : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCategory;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -45,7 +45,7 @@ import static org.mockito.Mockito.when;
 /**
  * Target enumeration for a targeted may-ability whose only restriction is its effect's
  * {@code TargetSpec} — no card-level {@code TargetFilter}, no effect-level
- * {@code PermanentPredicate}. That arm used to be an open-coded {@code TargetCategory} switch whose
+ * {@code PermanentPredicate}. That arm used to be an open-coded target-category switch whose
  * {@code default} rejected every permanent, so a {@code LAND} spec found nothing to target; it now
  * goes through the shared {@code TargetPredicateEvaluationService}, the same evaluation cast-time
  * validation performs.
@@ -116,7 +116,7 @@ class MayAbilityHandlerServiceTest {
         when(gameQueryService.isLand(gd, forest)).thenReturn(true);
         when(gameQueryService.isLand(gd, bear)).thenReturn(false);
 
-        acceptMayAbility(specEffect(TargetCategory.LAND));
+        acceptMayAbility(specEffect(TargetPredicates.land()));
 
         assertThat(offeredTargets()).containsExactly(forest.getId());
     }
@@ -131,7 +131,7 @@ class MayAbilityHandlerServiceTest {
         when(gameQueryService.isCreature(gd, forest)).thenReturn(false);
         when(gameQueryService.isCreature(gd, bear)).thenReturn(true);
 
-        acceptMayAbility(specEffect(TargetCategory.CREATURE));
+        acceptMayAbility(specEffect(TargetPredicates.creature()));
 
         assertThat(offeredTargets()).containsExactly(bear.getId());
     }
@@ -143,7 +143,7 @@ class MayAbilityHandlerServiceTest {
         gd.playerBattlefields.get(PLAYER1_ID).add(bear);
         when(gameQueryService.isLand(gd, bear)).thenReturn(false);
 
-        acceptMayAbility(specEffect(TargetCategory.LAND));
+        acceptMayAbility(specEffect(TargetPredicates.land()));
 
         verify(playerInputService, org.mockito.Mockito.never())
                 .beginPermanentChoice(any(), any(), anyList(), anyString());
@@ -169,11 +169,11 @@ class MayAbilityHandlerServiceTest {
         return captor.getValue();
     }
 
-    private static CardEffect specEffect(TargetCategory category) {
+    private static CardEffect specEffect(TargetPredicate declaredTarget) {
         return new CardEffect() {
             @Override
             public TargetSpec targetSpec() {
-                return TargetSpec.benign(TargetPredicates.forCategory(category));
+                return TargetSpec.benign(declaredTarget);
             }
         };
     }

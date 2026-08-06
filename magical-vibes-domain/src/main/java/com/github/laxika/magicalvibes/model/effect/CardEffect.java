@@ -4,7 +4,7 @@ public interface CardEffect {
 
     /**
      * The declarative targeting descriptor for this effect — the single source of truth for what an
-     * effect can target. Every reader consumes targeting through this ({@code targetSpec().category()},
+     * effect can target. Every reader consumes targeting through this ({@code targetSpec().declaredTarget()},
      * {@code .predicate()}, {@code .harmful()}, {@code .selfTargeting()}, {@code .playerTargetCount()});
      * the eleven legacy per-effect {@code canTarget*} / targeting booleans that used to derive from it
      * were deleted once every reader was repointed here (TargetSpec migration step 10). Effects that

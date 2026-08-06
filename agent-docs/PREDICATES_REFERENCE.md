@@ -183,19 +183,21 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 
 `TargetPredicate` (`model/effect/`) sits one level above the four hierarchies above: it says which
 candidate **domain** a target is drawn from, and carries that domain's predicate as its payload. It
-is the successor to `TargetCategory` and is now what every effect *declares*: `TargetSpec.declaredTarget()`
-holds one, and `TargetSpec.targetPredicate()` folds the spec's narrowing predicate into its permanent leaf.
-That composed value is what the spec interpreter (`TargetValidationService`) and target enumeration
+is what every effect *declares*: `TargetSpec.declaredTarget()` holds one, and
+`TargetSpec.targetPredicate()` folds the spec's narrowing predicate into its permanent leaf. That
+composed value is what the spec interpreter (`TargetValidationService`) and target enumeration
 (`ValidTargetService`) evaluate.
 
 `TargetSpec.admits(Kind)` is the null-safe "can this kind ever be legal?" query — a spec that targets
 nothing has no predicate at all. It answers from `declaredTarget()` rather than the composed
 `targetPredicate()`, because the narrowing predicate only ever replaces the permanent leaf's inner
 predicate and so cannot add or remove a kind; that keeps it allocation-free for the trigger
-collectors, `StepTriggerService` and the AI, which ask it per effect in loops. **Use it instead of
-reaching for the legacy enum** — `TargetCategory` now survives only behind the `TargetSpec.category()`
-bridge, read by a handful of remaining identity comparisons (`== NONE`, `== ANY_TARGET`,
-`== SPELL_ON_STACK`) that Step 7 deletes; see `agent-docs/TARGET_PREDICATE_PLAN.md`.
+collectors, `StepTriggerService` and the AI, which ask it per effect in loops.
+
+`TargetSpec.declares(target)` is the other question: an identity test against one interned factory
+value. A reader that means one specific declaration must use it — `admits(PLAYER) && admits(PERMANENT)`
+cannot tell `anyTarget()` (CR 115.4) from `playerOrPermanent()` ("a player or *any* permanent"), and
+telling those apart is why the flat category enum was replaced.
 
 | Leaf | Payload | Evaluated by |
 |------|---------|--------------|
@@ -206,8 +208,9 @@ bridge, read by a handful of remaining identity comparisons (`== NONE`, `== ANY_
 | `TargetPredicate.Spells` | `StackEntryPredicate` | `TargetLegalityService.matchesStackEntryPredicate` |
 | `TargetPredicate.AnyOf` | ≥2 leaves, at most one per kind | dispatches to the leaf of the asked-for kind |
 
-Build them with the `TargetPredicates` factories (one per `TargetCategory` constant), never by hand —
-`TargetSpec.category()` throws on a declared target no category can express.
+Build them with the `TargetPredicates` factories wherever one fits: the named values are interned, so
+specs compare and hash cheaply and `declares(...)` matches by value. A hand-composed target is legal
+where no factory fits (say "an artifact or a player"), and both evaluation paths handle it.
 Three rules are enforced structurally, not documented:
 
 - **No `AllOf`, no `Not` at this level.** A kind-mismatched leaf is `false`, so a top-level `Not`
