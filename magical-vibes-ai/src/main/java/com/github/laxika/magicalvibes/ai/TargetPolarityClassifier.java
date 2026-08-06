@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MustAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectRole;
@@ -27,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -203,8 +203,17 @@ public class TargetPolarityClassifier {
             return TargetPolarity.HARMFUL;
         }
 
-        if (effect instanceof MustAttackThisTurnEffect || effect instanceof GainControlOfTargetEffect) {
+        if (effect instanceof GainControlOfTargetEffect) {
             return TargetPolarity.HARMFUL;
+        }
+
+        // One-shot combat requirements split by who benefits: forcing a creature to attack or block is a
+        // punisher aimed at an opponent's creature, while the "must BE blocked" lures help the AI's own.
+        if (effect instanceof SetCombatRequirementThisTurnEffect combatRequirement) {
+            return switch (combatRequirement.requirement()) {
+                case MUST_ATTACK, MUST_ATTACK_EFFECT_CONTROLLER, MUST_BLOCK -> TargetPolarity.HARMFUL;
+                case MUST_BE_BLOCKED, MUST_BE_BLOCKED_BY_ALL -> TargetPolarity.BENEFICIAL;
+            };
         }
 
         // Counters: -1/-1 hurts, +1/+1 helps, anything else carries no direction.
@@ -347,9 +356,6 @@ public class TargetPolarityClassifier {
             entry("MakeTargetAttackingCreatureBlockedEffect", TargetPolarity.HARMFUL),
             entry("MustBlockSourceEffect", TargetPolarity.HARMFUL),
             entry("MustBlockTargetCreatureEffect", TargetPolarity.HARMFUL),
-            // Mark for Death: forcing a block is a punisher aimed at an opponent's creature, the
-            // mirror image of the BENEFICIAL "must BE blocked" lure below.
-            entry("MustBlockThisTurnIfAbleEffect", TargetPolarity.HARMFUL),
             entry("PreventTargetCreatureRegenerationThisTurnEffect", TargetPolarity.HARMFUL),
             entry("RemoveKeywordEffect", TargetPolarity.HARMFUL),
             entry("RemoveTargetFromCombatEffect", TargetPolarity.HARMFUL),
@@ -373,8 +379,6 @@ public class TargetPolarityClassifier {
             entry("GrantProtectionChoiceUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantProtectionFromCardTypeUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("MakeCreatureUnblockableEffect", TargetPolarity.BENEFICIAL),
-            entry("MustBeBlockedByAllCreaturesThisTurnEffect", TargetPolarity.BENEFICIAL),
-            entry("MustBeBlockedIfAbleThisTurnEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageToTargetFromChosenSourceEffect", TargetPolarity.BENEFICIAL),

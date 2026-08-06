@@ -7,9 +7,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetIfDidNotAttackAtEndStepEffect;
-import com.github.laxika.magicalvibes.model.effect.MustAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackUnlessControllerPaysManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -28,7 +29,7 @@ import org.springframework.stereotype.Component;
 public class MustAttackUnlessControllerPaysManaValueEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final MustAttackThisTurnEffectHandler mustAttackThisTurnEffectHandler;
+    private final SetCombatRequirementThisTurnEffectHandler setCombatRequirementThisTurnEffectHandler;
     private final DestroyTargetIfDidNotAttackAtEndStepEffectHandler destroyTargetIfDidNotAttackAtEndStepEffectHandler;
 
     @Override
@@ -61,13 +62,14 @@ public class MustAttackUnlessControllerPaysManaValueEffectHandler implements Nor
      * it if it didn't attack this turn."
      */
     public void applyPenalty(GameData gameData, Card sourceCard, UUID abilityControllerId, UUID targetPermanentId) {
-        MustAttackThisTurnEffect mustAttack = new MustAttackThisTurnEffect(false);
+        SetCombatRequirementThisTurnEffect mustAttack =
+                new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_ATTACK);
         DestroyTargetIfDidNotAttackAtEndStepEffect destroy = new DestroyTargetIfDidNotAttackAtEndStepEffect();
         StackEntry syntheticEntry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY, sourceCard, abilityControllerId,
                 sourceCard.getName() + " - must attack or be destroyed",
                 List.of(mustAttack, destroy), targetPermanentId, (UUID) null);
-        mustAttackThisTurnEffectHandler.resolve(gameData, syntheticEntry, mustAttack);
+        setCombatRequirementThisTurnEffectHandler.resolve(gameData, syntheticEntry, mustAttack);
         destroyTargetIfDidNotAttackAtEndStepEffectHandler.resolve(gameData, syntheticEntry, destroy);
     }
 }

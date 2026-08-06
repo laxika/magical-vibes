@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MustAttackSourcePermanentNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.MustAttackNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.TauntTarget;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -26,7 +27,7 @@ public class GideonJura extends Card {
         // +2: During target opponent's next turn, creatures that player controls attack Gideon Jura if able.
         addActivatedAbility(new ActivatedAbility(
                 +2,
-                List.of(new MustAttackSourcePermanentNextTurnEffect()),
+                List.of(new MustAttackNextTurnEffect(TauntTarget.SOURCE_PERMANENT)),
                 "+2: During target opponent's next turn, creatures that player controls attack Gideon Jura if able.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

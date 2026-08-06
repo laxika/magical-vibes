@@ -95,6 +95,31 @@ class CourtlyProvocateurTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each ability imposes only its own requirement, not the other one")
+    void abilitiesImposeOnlyTheirOwnRequirement() {
+        addCreatureReady(player1, new CourtlyProvocateur());
+        addCreatureReady(player1, new CourtlyProvocateur());
+        Permanent attackTarget = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blockTarget = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, ABILITY_MUST_ATTACK, null, attackTarget.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, ABILITY_MUST_BLOCK, null, blockTarget.getId());
+        harness.passBothPriorities();
+
+        assertThat(attackTarget.isMustAttackThisTurn()).isTrue();
+        assertThat(attackTarget.isMustBlockThisTurnIfAble()).isFalse();
+        assertThat(attackTarget.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(attackTarget.isMustBeBlockedByAllThisTurn()).isFalse();
+
+        assertThat(blockTarget.isMustBlockThisTurnIfAble()).isTrue();
+        assertThat(blockTarget.isMustAttackThisTurn()).isFalse();
+        assertThat(blockTarget.getMustAttackTargetId()).isNull();
+        assertThat(blockTarget.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(blockTarget.isMustBeBlockedByAllThisTurn()).isFalse();
+    }
+
+    @Test
     @DisplayName("Abilities can't target a non-creature permanent")
     void cannotTargetNonCreature() {
         addCreatureReady(player1, new CourtlyProvocateur());

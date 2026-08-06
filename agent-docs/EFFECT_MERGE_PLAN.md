@@ -72,7 +72,7 @@ high-churn or needs a design call and is optional.
 | 2 | Outright deletions (compose from existing effects) | 6 | LOW | **DONE** — rows 1–4 held; the `SacrificeSelf*` row did **not** (`SequenceEffect` has no "if you do" gate, so composing it would have reverted a `9b8147333` fix) and was replaced with a new `SacrificeSelfThenEffect(CardEffect)`, which also absorbs `SacrificeSelfThenDealDamageToTargetPlayerEffect` — that class was **not** unused |
 | 3 | Redirect-next-damage family | 6 | LOW | **DONE** — premise held for all six handlers; the audit missed a third axis (`TargetSpec.harmful`), which is now derived from `destinationRole == TARGET` and makes Zealous Inquisitor harmful like its Zhalfirin Crusader twin (CR 702.16b). The `PermanentPredicate` moved out of the effect onto the two white-creature cards |
 | 4 | Any-color mana family | 8 | LOW | **DONE** — premise held; `eachManaChosenSeparately` is derived from the restriction, not a component. The audit missed an eighth sibling (`AwardAnyColorSubtypeSpellManaEffect`, Sliver Hive), absorbed in a follow-up commit. Three deliberate deltas, all rules fixes: Damping Sphere / land-type replacement now see spend-restricted land mana, "could produce" scans (CR 106.7) now include restricted any-color lands, and the AI's choice-prompt filter covers all restrictions |
-| 5 | Combat-requirement / must-attack | 5 | LOW | TODO |
+| 5 | Combat-requirement / must-attack | 6 | LOW | **DONE** — premise held for all six handlers; the audit undercounted by one (5b absorbs 2 classes, not 1, so 6 records + 6 handlers went). One unlisted axis found: `MustBlockThisTurnIfAbleEffect` alone carried a `PermanentIsCreaturePredicate` in its spec, preserved by branching `targetSpec()`. Zero behavior change |
 | 6 | `SetLifeTotalEffect` | 3 | LOW | TODO |
 | 7 | `SkipNextEffect` | 3 | MED | TODO |
 | 8 | Phase-out + attached-counter placement | 4 | LOW | TODO |
@@ -326,35 +326,58 @@ the enchanted-land-tap trigger.
 
 ## Phase 2 — Scope / enum parameterization, LOW risk
 
-### Step 5 — Combat-requirement / must-attack
+### Step 5 — Combat-requirement / must-attack — **DONE**
 
-**5a Target**
+**Shipped**
 ```java
 public record SetCombatRequirementThisTurnEffect(CombatRequirement requirement) implements CardEffect
 // enum CombatRequirement { MUST_ATTACK, MUST_ATTACK_EFFECT_CONTROLLER, MUST_BLOCK,
 //                          MUST_BE_BLOCKED, MUST_BE_BLOCKED_BY_ALL }
+
+public record MustAttackNextTurnEffect(TauntTarget tauntTarget) implements CardEffect
+// enum TauntTarget { EFFECT_CONTROLLER, SOURCE_PERMANENT }
 ```
-**Absorbs** (17 cards): `MustAttackThisTurnEffect(boolean)` (7),
-`MustBeBlockedByAllCreaturesThisTurnEffect` (4), `MustBeBlockedIfAbleThisTurnEffect` (3),
-`MustBlockThisTurnIfAbleEffect` (3).
 
-**Evidence** — all four handlers are the same five lines: `findPermanentById`, null-guard, **one
-boolean setter** on `Permanent`, one log line. The four flags are declared adjacently in
-`Permanent.java:130-137`, copied together at `:527-531`, and cleared together in
-`resetModifiers():1032-1036` — the model already treats them as one family. `MUST_ATTACK_EFFECT_CONTROLLER`
-is the only branch that also sets `mustAttackTargetId = entry.getControllerId()`.
-Preserve the five distinct log strings via a `switch`.
+Six records and six handlers deleted, two records + two enums + two handlers added. Cards (17 usages
+across 18 files): Incite, Imp's Taunt, Courtly Provocateur (both abilities), Heckling Fiends,
+Chemister's Trick, Alluring Siren, Norritt; Taunting Challenge, Alluring Scent, Revenge of the Hunted,
+Lead; Enlarge, Emergent Growth, Deadly Allure; Nacatl Hunt-Pride, Mark for Death; Taunt, Gideon Jura.
 
-**5b Target**: `MustAttackNextTurnEffect(TauntTarget tauntTarget)` — `{ EFFECT_CONTROLLER, SOURCE_PERMANENT }`.
-**Absorbs**: `MustAttackControllerNextTurnEffect` (1), `MustAttackSourcePermanentNextTurnEffect` (1).
-Handlers are line-for-line identical except `gameData.tauntedNextTurn.put(targetPlayerId, X)` where
-X is `entry.getControllerId()` vs `entry.getSourcePermanentId()`. Keep the source-null early return
-for the `SOURCE_PERMANENT` case.
+**What held** — all four 5a handlers really are `findPermanentById` → null-guard → **one boolean
+setter** → one log line, and the five flags are already one family on `Permanent` (declared
+adjacently, copied together, cleared together in `resetModifiers()`). `MUST_ATTACK_EFFECT_CONTROLLER`
+is the only branch that also sets `mustAttackTargetId`. The five log strings differ in *shape*, not
+just wording (`GameLog.cardThen` / `builder().card().text()` / `textCardText` / plain `text`), so the
+handler is a five-arm `switch` and every string is preserved byte-for-byte. 5b held line-for-line,
+including the source-null early return, which is kept for `SOURCE_PERMANENT`.
+
+**What the audit missed**
+- **The 5a spec has a second axis.** `MustBlockThisTurnIfAbleEffect` declared
+  `benign(creature(), new PermanentIsCreaturePredicate())` while the other three declared plain
+  `benign(creature())`. Carrying the predicate on every branch would have narrowed targeted-trigger
+  candidates for four cards, so `targetSpec()` branches on `requirement == MUST_BLOCK` instead.
+- **5b absorbs two classes, not one.** The Step Index said 5 deleted; the two 5b siblings are both
+  deletions, so the real count is 6 records + 6 handlers.
+
+**Other call sites updated**
+- `MustAttackUnlessControllerPaysManaValueEffectHandler` (Arcum's Whistle) injects the merged handler
+  and builds `MUST_ATTACK` for its synthetic penalty entry — it was constructing the deleted record.
+- `TargetPolarityClassifier` (magical-vibes-ai) loses three name-keyed entries and one `instanceof`
+  in favour of a single `switch (requirement)` branch: attack/block requirements are `HARMFUL`,
+  the two "must BE blocked" lures are `BENEFICIAL`. `TargetPolarityGuardTest`'s exhaustiveness
+  ratchet covers the new shape.
+
+**Tests** — no test referenced any of the six classes by name, and every branch already had card-level
+coverage (both 5b ids are pinned by `TauntTest` / `GideonJuraTest`). Added the cross-contamination
+assertions a `switch` merge needs: `CourtlyProvocateurTest.abilitiesImposeOnlyTheirOwnRequirement`
+(same card, two requirements, neither leaks into the other three flags),
+`AlluringScentTest.resolvingDoesNotSetTheIfAbleFlag`, and by-all/attack/block negatives in
+`EmergentGrowthTest.resolvingBoostsAndSetsMustBeBlocked`.
 
 **Do NOT merge** the non-`ThisTurn` siblings `MustBeBlockedIfAbleEffect` /
 `MustBeBlockedByAllCreaturesEffect`: those are **static abilities** read off `EffectSlot.STATIC` at
 block-legality time (`CombatBlockService:804,1421`; `GameQueryService:3493`), not one-shot flag
-stamps. Different mechanism and lifetime.
+stamps. Different mechanism and lifetime. Still true after the merge.
 
 ---
 
@@ -1018,7 +1041,7 @@ Do these individually; each is self-contained. Reassess before starting — seve
 
 Checked and found to differ semantically. Do not re-propose without new evidence.
 
-- `MustBeBlockedIfAbleEffect` / `MustBeBlockedByAllCreaturesEffect` vs their `*ThisTurn` counterparts — static ability vs one-shot flag.
+- `MustBeBlockedIfAbleEffect` / `MustBeBlockedByAllCreaturesEffect` / `MustAttackEffect` vs the one-shot `SetCombatRequirementThisTurnEffect` constants that share their wording — static ability vs one-shot flag.
 - `SkipDrawStepEffect` vs `SkipNextDrawStepEffect`; `SkipNextUntapEffect` vs `SkipNextUntapStepEffect` — static marker vs one-shot, permanent-level vs step-level.
 - `DamageCantBePreventedEffect` / `…ThisTurnEffect`; `DoubleControllerDamageEffect` / `…ThisTurnEffect` — static layer effect vs turn flag.
 - `BecomeCopyOfTargetCreatureEffect` vs `…UntilEndOfTurnEffect` — deferred `PendingMayAbility` vs immediate `applyCloneCopy` + layer-1 revert.
