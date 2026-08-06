@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyPermanentsTargetPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
@@ -282,17 +281,6 @@ public class BoardEvaluator {
         if (effect instanceof DestroyAllPermanentsEffect wipe) {
             if (wipe.scope() == EachPermanentScope.TARGET_PLAYER
                     && !controllerId.equals(entry.getTargetId())) {
-                return false;
-            }
-            if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
-                return false;
-            }
-            return wipe.filter() == null
-                    || predicateEvaluationService.matchesPermanentPredicate(perm, wipe.filter(), filterContext);
-        }
-
-        if (effect instanceof DestroyPermanentsTargetPlayerControlsEffect wipe) {
-            if (!controllerId.equals(entry.getTargetId())) {
                 return false;
             }
             if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {

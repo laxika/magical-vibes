@@ -2,9 +2,13 @@ package com.github.laxika.magicalvibes.model.effect;
 
 /**
  * Names a permanent an effect acts on without targeting it. Used by
- * {@link PutCounterOnReferencedPermanentEffect}.
+ * {@link PutCounterOnReferencedPermanentEffect} and {@link DestroyReferencedPermanentEffect}.
  *
  * <ul>
+ *   <li>{@link #SOURCE} — the permanent the ability came from ("destroy this Aura", "destroy this
+ *       enchantment"). Read from {@code StackEntry.sourcePermanentId}. Not every family accepts
+ *       this value: counter placement on the source is owned by {@code PutCountersOnSourceEffect},
+ *       so {@link PutCounterOnReferencedPermanentEffect} rejects it in its constructor.</li>
  *   <li>{@link #ATTACHED} — the permanent the source Aura or Equipment is attached to ("enchanted
  *       creature", "equipped creature"). Read from the source permanent's {@code attachedTo}, so
  *       Aura and Equipment are the same case: both resolve through {@code Permanent.getAttachedTo()}
@@ -15,10 +19,10 @@ package com.github.laxika.magicalvibes.model.effect;
  *       only on a trigger slot that populates it.</li>
  * </ul>
  *
- * <p>Neither value ever fizzles: if the referenced permanent has left the battlefield, nothing
- * happens.
+ * <p>No value ever fizzles: if the referenced permanent has left the battlefield, nothing happens.
  */
 public enum PermanentReference {
+    SOURCE,
     ATTACHED,
     TRIGGERING
 }

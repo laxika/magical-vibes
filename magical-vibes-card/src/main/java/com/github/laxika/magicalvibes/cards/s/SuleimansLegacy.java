@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -29,6 +30,6 @@ public class SuleimansLegacy extends Card {
                 new CardAnyOfPredicate(List.of(
                         new CardSubtypePredicate(CardSubtype.DJINN),
                         new CardSubtypePredicate(CardSubtype.EFREET))),
-                new DestroyTriggeringPermanentEffect(true)));
+                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING, true)));
     }
 }

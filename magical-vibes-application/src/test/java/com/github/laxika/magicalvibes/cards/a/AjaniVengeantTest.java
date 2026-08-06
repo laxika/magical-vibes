@@ -91,6 +91,24 @@ class AjaniVengeantTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Mountain"));
     }
 
+    @Test
+    @DisplayName("-7 spares the target player's nonland permanents")
+    void minusSevenSparesTargetPlayersNonlands() {
+        Permanent ajani = addReadyAjani(player1);
+        ajani.setCounterCount(CounterType.LOYALTY, 7);
+        harness.addToBattlefield(player2, new Mountain());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        harness.passBothPriorities();
+
+        GameData g = harness.getGameData();
+        assertThat(g.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Mountain"));
+        assertThat(g.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+    }
+
     // ===== Helpers =====
 
     private Permanent addReadyAjani(Player player) {

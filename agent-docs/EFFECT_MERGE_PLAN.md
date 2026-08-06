@@ -76,7 +76,7 @@ high-churn or needs a design call and is optional.
 | 6 | `SetLifeTotalEffect` | 6 | LOW | **DONE** — premise held for all four listed handlers; the audit undercounted (4 records, not 3) and the optional stretch fell out easily, so both each-player siblings went too: 6 records + 6 handlers. `EACH_PLAYER` now evaluates the amount once per player, which is what made the stretch free |
 | 7 | `SkipNextEffect` | 4 | MED | **DONE** — premise held for all four handlers; the audit undercounted (4 records, not 3). One correction: `boolean targetsPlayer` cannot express the family — Blinding Angel is `targetId`-bound but non-targeting — so the second component is a 3-value `SkipRecipient`, which keeps "which player" off the `SkipKind` axis. Polarity unified on `benign` |
 | 8 | Phase-out + attached-counter placement | 6 | LOW | **DONE** — premise held for all six handlers; the optional 8b fold was taken, so 6 records + 6 handlers went. The audit missed that `@CollectsTrigger` is class-keyed: two collector annotations had to be re-keyed. Zero behavior change beyond one redundant guard dropped |
-| 9 | Destroy-referenced-permanent | 3 | LOW | TODO |
+| 9 | Destroy-referenced-permanent | 4 | LOW | **DONE** — premise held for all four handlers; `ENCHANTED` became `PermanentReference.ATTACHED` as the note directed and the enum gained `SOURCE`. One correction: the Ajani half needed no player target filter but **did** need `DestroyAllPermanentsEffect.targetSpec()`, which the two sibling scoped effects already had and it was silently missing |
 | 10 | Search-target-library + sacrifice costs | 4 | LOW | TODO |
 | 11 | Tap / untap scopes and costs | 3 | LOW | TODO |
 | 12 | `Grant*` low-risk batch | 6 | LOW | TODO |
@@ -591,39 +591,111 @@ misread, and the Ring tests already pin the `condition` branch both ways.
 
 ---
 
-### Step 9 — Destroy-referenced-permanent
+### Step 9 — Destroy-referenced-permanent — **DONE**
 
-**Target**: `DestroyReferencedPermanentEffect(PermanentReference ref, boolean cannotBeRegenerated)` —
-`{ SOURCE, ENCHANTED, TRIGGERING }`.
+**Shipped**
+```java
+public record DestroyReferencedPermanentEffect(PermanentReference reference,
+                                               boolean cannotBeRegenerated) implements CardEffect
+// sugar: (PermanentReference) -> cannotBeRegenerated = false
+// enum PermanentReference { SOURCE, ATTACHED, TRIGGERING }   // SOURCE added by this step
+```
 
-**Note after Step 8**: `PermanentReference` now **exists** (`model/effect/PermanentReference.java`)
-with `ATTACHED` and `TRIGGERING`, created for `PutCounterOnReferencedPermanentEffect`. Extend it with
-`SOURCE` rather than defining a second enum, and use `ATTACHED` for what this entry calls
-`ENCHANTED` — the destroy family's "enchanted" case is the same `getAttachedTo()` lookup, and Step 8
-established that Aura vs Equipment is not a semantic axis. Adding `SOURCE` will break
-`PutCounterOnReferencedPermanentEffectHandler`'s exhaustive `switch` at compile time, which is the
-intended forcing function: decide there whether a source-counter case belongs in that family (it
-does not — `PutCountersOnSourceEffect` already owns it) and throw, or keep the switch total.
+Four records and four handlers deleted, one record + one handler added. Cards (13): Aether Storm,
+Arachnus Web, Ice Cage; Aggression, Blight, Brink of Disaster, Hot Soup, Mortal Wound, Spinal Graft,
+Spreading Algae, Yoke of the Damned; Suleiman's Legacy; Ajani Vengeant.
 
-**Absorbs** (12 cards): `DestroySourcePermanentEffect` (3), `DestroyEnchantedPermanentEffect` (8),
-`DestroyTriggeringPermanentEffect` (1).
+**What held** — all three destroy records really are `(boolean cannotBeRegenerated)` with a no-arg
+ctor, no `targetSpec()` and no other members, and all three handlers really do reduce to one
+`tryDestroyAndLog` varying only in which id fills the slot. `ENCHANTED` became
+`PermanentReference.ATTACHED` exactly as the Step 8 note directed. The forcing function fired as
+predicted: adding `SOURCE` broke `PutCounterOnReferencedPermanentEffectHandler`'s exhaustive
+`switch`, and the answer is that a source-counter case does **not** belong in that family
+(`PutCountersOnSourceEffect` owns it, and the engine materialises that record at runtime for several
+other effects). Rather than only throwing from the handler arm, the record's **compact constructor**
+rejects `SOURCE`, so the mistake fails at card-construction time; the switch arm throws as documented
+dead code.
 
-**Evidence** — all three records are exactly `(boolean cannotBeRegenerated)` with a no-arg ctor
-defaulting to `false`, no `targetSpec()`, no other members. All three handlers inject exactly
-`DestructionSupport` + `GameQueryService` and reduce to: resolve one permanent id, null-check,
-`destructionSupport.tryDestroyAndLog(gameData, perm, entry.getCard().getName(), cannotBeRegenerated)`.
-The only variation is which id: `getSourcePermanentId()`; `findPermanentById(source).getAttachedTo()`
-guarded by `aura.isAttached()`; `getTriggeringPermanentId()`.
+**What the audit missed — `@CollectsTrigger` is class-keyed, three times.** As in Step 8, the
+collector annotations key on the exact `(EffectSlot, effect.getClass())` pair, so three had to be
+re-keyed to the merged class: `MiscTriggerCollectorService:199` (`ON_ENCHANTED_PERMANENT_TAPPED`),
+`DeathTriggerCollectorService:1133` (`ON_ANY_CREATURE_DIES`) and `DamageTriggerCollectorService:295`
+(`ON_ENCHANTED_CREATURE_DEALT_DAMAGE`). Two of those slots now hold **two** merged-class collectors
+each — Step 8's `PutCounterOnReferencedPermanentEffect` and this one — which is fine because the
+registry key includes the class. Each re-key widens the key from "the enchanted-destroy record" to
+"any referenced-destroy record" in that slot; no card puts a `SOURCE` or `TRIGGERING` reference in
+any of the three slots, so the widening is inert. Had the re-key been missed, Spreading Algae /
+Blight / Brink of Disaster, Yoke of the Damned and Mortal Wound / Hot Soup would have silently
+stopped triggering.
 
-**Leave out**: `DestroyLinkedPermanentEffect` (1, Merieke Ri Berit) — it also clears
-`source.setChosenPermanentId(null)` so a second untap doesn't re-destroy, and carries a baked `UUID`.
+**Other call sites updated**
+- `DestructionSupport:552` matched `elseEffect instanceof DestroySourcePermanentEffect` for the
+  "unless you pay {cost}, destroy this" fallback (Musician); now `instanceof
+  DestroyReferencedPermanentEffect d && d.reference() == SOURCE`.
+- `DestroyUnlessPaysPerCounterEffectHandler:47` **constructs** the deleted record at runtime for that
+  same fallback — it is not only a read site.
+- `BoardEvaluator:294`'s `DestroyPermanentsTargetPlayerControlsEffect` branch is deleted outright:
+  the `DestroyAllPermanentsEffect` branch twelve lines above it is character-for-character the same
+  test once `scope() == TARGET_PLAYER` is folded in.
+- `TargetPolarityClassifier` needed nothing — it classifies *permanent*-target polarity, and neither
+  effect targets a permanent.
 
-**Also in this step**: `DestroyPermanentsTargetPlayerControlsEffect` (1, Ajani Vengeant −7) →
-`DestroyAllPermanentsEffect(filter, cannotBeRegenerated, EachPermanentScope.TARGET_PLAYER, …)`,
-which already serves exactly this shape for Rain of Daggers and Overwhelming Forces. Its handler was
-already routed through `destroyBatchCollecting`, so this is now a straight record swap. Ajani's
-ability needs an explicit player target filter (`target(new PlayerPredicateTargetFilter(...))`), as
-Rain of Daggers does.
+**The Ajani half — the plan's prescription was wrong in one direction and short in another.**
+`DestroyPermanentsTargetPlayerControlsEffect` → `DestroyAllPermanentsEffect(PermanentIsLandPredicate,
+TARGET_PLAYER, null)` is indeed a straight record swap, but:
+- **No player target filter is needed.** Rain of Daggers and Overwhelming Forces carry
+  `PlayerPredicateTargetFilter(OPPONENT)` because their oracle text says "target *opponent*".
+  Ajani's −7 says "target player", which `PlayerRelation.ANY` would express as a no-op.
+- **`DestroyAllPermanentsEffect` was missing its `targetSpec()`, and that is load-bearing.**
+  `ActivatedAbility.isNeedsTarget()` (`ActivatedAbility:374`) is derived **only** from the effects'
+  `targetSpec()` — it never consults `getTargetFilter()`. Swapping the record without adding a spec
+  would have made Ajani's ultimate stop asking for a target, resolve with a null `targetId`, and do
+  nothing. The two sibling effects that share `EachPermanentScope` already branch their spec on the
+  scope (`DealDamageToEachMatchingPermanentEffect:26`,
+  `PutCounterOnEachMatchingPermanentEffect:28`); `DestroyAllPermanentsEffect` was the odd one out.
+  It now returns `TargetSpec.harmful(TargetPredicates.player())` for `TARGET_PLAYER` and
+  `TargetSpec.NONE` otherwise, which keeps Ajani identical and **fixes a latent bug for Rain of
+  Daggers and Overwhelming Forces**: neither declared a target through any effect, so
+  `EffectResolution.needsTarget(card)` was false and the client was never told to pick a player.
+  Both cards' tests pass a target explicitly, which is why nothing caught it. Validation is
+  unaffected — a bare `player()` predicate has no `permanentRestriction()`, so `validateSpec`
+  neither demands a target nor runs a protection check.
+
+`SpellEvaluator.evaluateDestroyAllValue` was deliberately **not** made scope-aware. Ajani's ultimate
+now reaches it where the deleted record had no branch at all, but that method scores nonland
+permanents by mana value and lands are almost all MV 0, so the ultimate scores ~0 either way. The
+pre-existing scope blindness — it subtracts the AI's own board for a target-player wipe, mis-scoring
+Rain of Daggers and Overwhelming Forces — is a separate AI bug, not this merge's to fix.
+
+**Deliberate deltas** (both inert)
+- The merged handler keeps the three absorbed destroy handlers' silence rather than adopting the
+  counter sibling's slf4j fizzle lines. Every game-log string is unchanged.
+- The `SOURCE` path gained a null-id guard before `findPermanentById`, which the two absorbed
+  handlers lacked. It cannot change an outcome, only skip a lookup.
+
+**Kept separate**: `DestroyLinkedPermanentEffect` (Merieke Ri Berit) as the plan says — it also
+clears `source.setChosenPermanentId(null)` and carries a baked `UUID`.
+`DestroyCreatureAttachedToEnchantedEquipmentEffect` (Artificer's Hex) is a two-hop
+Aura→Equipment→creature walk, not a `PermanentReference`.
+`DestroyOtherPermanentsWithEnteringNameEffect` reads the triggering permanent but destroys everything
+*else*.
+
+**Tests** — no test referenced any of the four classes by name, and all 13 cards had test classes.
+Added the cross-contamination assertions a `switch` merge needs, one per axis where a misread is
+observable: `ArachnusWebTest.destroyedAtEndStepWhenPowerIsFourOrGreater` and
+`IceCageTest.destroyedWhenEnchantedCreatureTargetedByAbility` gain "the enchanted creature survives"
+(SOURCE must not read `attachedTo` — the strongest case, since both sources *are* attached, and Ice
+Cage's ability variant is the one that leaves the creature alive to check),
+`SuleimansLegacyTest.enteringDjinnIsDestroyed` gains "Suleiman's Legacy itself survives" (TRIGGERING
+must not read `sourcePermanentId`), and `AjaniVengeantTest.minusSevenSparesTargetPlayersNonlands` is
+new (the record swap moved the filter onto the `FilterContext`-aware evaluation path). ATTACHED is
+already pinned against a SOURCE misread by the existing host-dies assertions in
+`YokeOfTheDamnedTest`, `MortalWoundTest`, `SpreadingAlgaeTest` and `SpinalGraftTest` — and
+`YokeOfTheDamnedTest.anotherCreatureDyingDestroysEnchantedCreature` pins it against a TRIGGERING
+misread too, since the triggering creature is already dead there.
+
+Ran green: the 13 card tests plus `RainOfDaggersTest`, `OverwhelmingForcesTest`, `MusicianTest`,
+`PhantasmalSphereTest`, `TargetPolarityGuardTest`, `AiManaManagerTest`.
 
 ---
 

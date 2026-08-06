@@ -15,6 +15,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>Whether the counters actually land — {@code cantHaveCounters}, +1/+1 doubling, -1/-1
  * reduction, and the counter-placement triggers — is decided centrally by
  * {@code PermanentCounterSupport.placeCounterOnPermanent}.
+ *
+ * <p>{@link PermanentReference#SOURCE} is rejected: counters on the ability's own source are owned
+ * by {@code PutCountersOnSourceEffect}, which the engine also materialises at runtime for several
+ * other effects. Two ways to spell the same placement would split that surface.
  */
 public record PutCounterOnReferencedPermanentEffect(
         PermanentReference reference,
@@ -22,6 +26,13 @@ public record PutCounterOnReferencedPermanentEffect(
         int count,
         PermanentPredicate condition
 ) implements CardEffect {
+
+    public PutCounterOnReferencedPermanentEffect {
+        if (reference == PermanentReference.SOURCE) {
+            throw new IllegalArgumentException(
+                    "PermanentReference.SOURCE is not supported here — use PutCountersOnSourceEffect");
+        }
+    }
 
     public PutCounterOnReferencedPermanentEffect(PermanentReference reference, CounterType counterType) {
         this(reference, counterType, 1, null);

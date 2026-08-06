@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.ReflectDamageToChosenColorCre
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyDamageSourcePermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
@@ -293,10 +293,10 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DestroyEnchantedPermanentEffect.class,
+    @CollectsTrigger(value = DestroyReferencedPermanentEffect.class,
             slot = EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
     private boolean handleEnchantedCreatureDealtDamageDestroy(TriggerMatchContext match,
-            DestroyEnchantedPermanentEffect effect, TriggerContext ctx) {
+            DestroyReferencedPermanentEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
         if (dc.damageDealt() <= 0) return false;
 

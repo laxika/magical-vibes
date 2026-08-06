@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CradleOfVitalityLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToLifeGainedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
@@ -197,9 +197,9 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DestroyEnchantedPermanentEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    @CollectsTrigger(value = DestroyReferencedPermanentEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapDestroy(TriggerMatchContext match,
-            DestroyEnchantedPermanentEffect e, TriggerContext ctx) {
+            DestroyReferencedPermanentEffect e, TriggerContext ctx) {
         match.gameData().enqueueTrigger(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),

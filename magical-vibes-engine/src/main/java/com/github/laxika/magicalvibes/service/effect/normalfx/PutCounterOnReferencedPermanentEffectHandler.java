@@ -40,6 +40,8 @@ public class PutCounterOnReferencedPermanentEffectHandler implements NormalEffec
         Permanent referenced = switch (e.reference()) {
             case ATTACHED -> findAttached(gameData, entry, sourceName);
             case TRIGGERING -> findPermanent(gameData, entry.getTriggeringPermanentId());
+            // Unreachable: the record's constructor rejects SOURCE (PutCountersOnSourceEffect owns it).
+            case SOURCE -> throw new IllegalStateException("SOURCE counters belong on PutCountersOnSourceEffect");
         };
         if (referenced == null) {
             return;

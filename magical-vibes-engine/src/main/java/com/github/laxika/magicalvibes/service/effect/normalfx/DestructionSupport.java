@@ -18,19 +18,20 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerThenTapSourceIfDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySourceAndDamageControllerIfDestroyedEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroySourcePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.OpponentGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayGainControlOfCreatureYouControlEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -549,7 +550,8 @@ public class DestructionSupport {
                 destroySourceAndDamageControllerIfDestroyed(gameData, entry, destroyDamage.damage());
             } else if (elseEffect instanceof DealDamageToControllerThenTapSourceIfDamageDealtEffect damageThenTap) {
                 dealDamageToControllerThenTapSourceIfDealt(gameData, entry, damageThenTap.damage());
-            } else if (elseEffect instanceof DestroySourcePermanentEffect destroySource) {
+            } else if (elseEffect instanceof DestroyReferencedPermanentEffect destroySource
+                    && destroySource.reference() == PermanentReference.SOURCE) {
                 destroySource(gameData, entry, destroySource.cannotBeRegenerated());
             } else if (elseEffect instanceof com.github.laxika.magicalvibes.model.effect.ExileControllerLibraryEffect) {
                 // "When a player doesn't pay this enchantment's cumulative upkeep, that player

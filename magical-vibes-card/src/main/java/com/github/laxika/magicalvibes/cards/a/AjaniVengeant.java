@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyPermanentsTargetPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -32,7 +33,8 @@ public class AjaniVengeant extends Card {
         // −7: Destroy all lands target player controls.
         addActivatedAbility(new ActivatedAbility(
                 -7,
-                List.of(new DestroyPermanentsTargetPlayerControlsEffect(new PermanentIsLandPredicate())),
+                List.of(new DestroyAllPermanentsEffect(new PermanentIsLandPredicate(),
+                        EachPermanentScope.TARGET_PLAYER, null)),
                 "−7: Destroy all lands target player controls."));
     }
 }

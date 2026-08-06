@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCou
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTokensCreatedWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCardsExiledWithSourceEffect;
@@ -1130,9 +1130,9 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DestroyEnchantedPermanentEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
+    @CollectsTrigger(value = DestroyReferencedPermanentEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathDestroyEnchanted(TriggerMatchContext match,
-            DestroyEnchantedPermanentEffect effect, TriggerContext ctx) {
+            DestroyReferencedPermanentEffect effect, TriggerContext ctx) {
         // Yoke of the Damned: needs its source Aura's permanent id to re-derive the enchanted creature.
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
