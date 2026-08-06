@@ -112,8 +112,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreatu
 import com.github.laxika.magicalvibes.model.effect.GraveyardAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardsCantBeTargetedEffect;
 import com.github.laxika.magicalvibes.model.effect.MadnessGrantingEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantControllerHexproofEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -291,6 +290,23 @@ public class GameQueryService {
         if (bf == null) return false;
         for (Permanent perm : bf) {
             if (perm.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectType::isInstance)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * The keyword-matching sibling of {@link #playerBattlefieldHasStaticEffect}: {@code true} when the
+     * player controls a permanent whose STATIC slot grants them {@code keyword}.
+     */
+    private boolean playerBattlefieldGrantsControllerKeyword(GameData gameData, UUID playerId, Keyword keyword) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return false;
+        for (Permanent perm : bf) {
+            if (perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof GrantControllerKeywordEffect grant
+                            && grant.keyword() == keyword)) {
                 return true;
             }
         }
@@ -3194,19 +3210,20 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if the player has shroud (cannot be the target of spells or
-     * abilities), granted by a permanent they control with {@link GrantControllerShroudEffect}.
+     * abilities), granted by a permanent they control with a {@link GrantControllerKeywordEffect}
+     * for {@link Keyword#SHROUD}.
      */
     public boolean playerHasShroud(GameData gameData, UUID playerId) {
-        return playerBattlefieldHasStaticEffect(gameData, playerId, GrantControllerShroudEffect.class);
+        return playerBattlefieldGrantsControllerKeyword(gameData, playerId, Keyword.SHROUD);
     }
 
     /**
      * Returns {@code true} if the player has hexproof (cannot be the target of spells or
      * abilities opponents control), granted by a permanent they control with
-     * {@link GrantControllerHexproofEffect}.
+     * a {@link GrantControllerKeywordEffect} for {@link Keyword#HEXPROOF}.
      */
     public boolean playerHasHexproof(GameData gameData, UUID playerId) {
-        return playerBattlefieldHasStaticEffect(gameData, playerId, GrantControllerHexproofEffect.class);
+        return playerBattlefieldGrantsControllerKeyword(gameData, playerId, Keyword.HEXPROOF);
     }
 
     /**

@@ -40,7 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -1461,7 +1461,7 @@ class GameQueryServiceTest {
         @Test
         @DisplayName("returns true when TrueBeliever is on battlefield")
         void returnsTrueWithTrueBeliever() {
-            addPermanent(player1Id, createCreatureWithStaticEffect("True Believer", 2, 2, CardColor.WHITE, new GrantControllerShroudEffect()));
+            addPermanent(player1Id, createCreatureWithStaticEffect("True Believer", 2, 2, CardColor.WHITE, new GrantControllerKeywordEffect(Keyword.SHROUD)));
 
             assertThat(gqs.playerHasShroud(gd, player1Id)).isTrue();
         }
@@ -1469,7 +1469,7 @@ class GameQueryServiceTest {
         @Test
         @DisplayName("does not affect opponent")
         void doesNotAffectOpponent() {
-            addPermanent(player1Id, createCreatureWithStaticEffect("True Believer", 2, 2, CardColor.WHITE, new GrantControllerShroudEffect()));
+            addPermanent(player1Id, createCreatureWithStaticEffect("True Believer", 2, 2, CardColor.WHITE, new GrantControllerKeywordEffect(Keyword.SHROUD)));
 
             assertThat(gqs.playerHasShroud(gd, player2Id)).isFalse();
         }

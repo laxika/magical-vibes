@@ -79,7 +79,7 @@ high-churn or needs a design call and is optional.
 | 9 | Destroy-referenced-permanent | 4 | LOW | **DONE** — premise held for all four handlers; `ENCHANTED` became `PermanentReference.ATTACHED` as the note directed and the enum gained `SOURCE`. One correction: the Ajani half needed no player target filter but **did** need `DestroyAllPermanentsEffect.targetSpec()`, which the two sibling scoped effects already had and it was silently missing |
 | 10 | Search-target-library + sacrifice costs | 5 | LOW | **DONE** — 10a's premise held in shape but not in detail (the audit's "only `.destination()` varies" is wrong on four other axes) and the audit undercounted: a fourth sibling, the play-permission form, folds in as two destinations, so 5 records + 5 handlers went. The reconcile picked `checkSearchRestriction` — `isSearchPrevented` shuffled the *searcher's* library, not the searched one. The 10b stretch was not taken (reason in the step body) |
 | 11 | Tap / untap scopes and costs | 3 | LOW | **DONE** — all three premises held. Two corrections: the `ON_ANY_CREATURE_DIES` collector for 11a was already occupied by an identical `UntapPermanentsEffect` one (a deletion, not a re-key), and 11c's `DynamicAmount` count cannot be evaluated inside the handler (`requiredCount()` takes no game state), so a new `TapCostSupport` resolves it at construction and `toPermanentChoiceCostHandler` gained a `GameData` parameter. The MED stretch was not taken |
-| 12 | `Grant*` low-risk batch | 6 | LOW | TODO |
+| 12 | `Grant*` low-risk batch | 6 | LOW | **DONE** — all five premises held; the audit's net count is one high (5, not 6 — the sixth would have been folding away the `SpellCastingAbilityGrantingEffect` capability interface, which is deliberately kept). One correction: the hand-size row is a rename, not an extension — `GrantPermanentNoMaxHandSizeEffect` would have lied once `UNTIL_NEXT_TURN` was folded in |
 | 13 | Cost-modification batch | 4 | LOW | TODO |
 | 14 | Remove-counter batch | 4 | LOW–MED | TODO |
 | 15 | Reveal / reorder library batch | 2 | LOW | TODO |
@@ -917,38 +917,119 @@ Ran green: the 6 card tests plus `TeferiHeroOfDominariaTest`, `GalvanicJuggernau
 
 ---
 
-### Step 12 — `Grant*` low-risk batch
+### Step 12 — `Grant*` low-risk batch — **DONE**
 
-| Target | Absorbs | Cards |
-|---|---|---|
-| `GrantChosenKeywordEffect(List<Keyword> options, GrantScope scope)` | `GrantChosenKeywordToSelfEffect`, `GrantChosenKeywordToTargetEffect` | 2 + 2 |
-| `GrantControllerKeywordEffect(Keyword keyword)` | `GrantControllerShroudEffect`, `GrantControllerHexproofEffect` | 2 + 4 |
-| `GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, CardPredicate filter)` | `GrantConspireToSpellsEffect`, `GrantConvokeToSpellsEffect` | 1 + 1 |
-| `GrantProtectionChoiceUntilEndOfTurnEffect` + `filter` + `GrantScope.OWN_CREATURES` | `GrantProtectionChoiceToOwnCreaturesUntilEndOfTurnEffect` | 1 |
-| `GrantPermanentNoMaxHandSizeEffect` + duration | `GrantNoMaximumHandSizeUntilNextTurnEffect` | 1 |
+**Shipped**
+```java
+public record GrantChosenKeywordEffect(List<Keyword> options, GrantScope scope) implements CardEffect
+// compact ctor rejects every scope but SELF / TARGET
 
-**Notes**
-- `GrantChosenKeyword*`: the two handlers are the same file; both end in
-  `playerInputService.beginKeywordChoice(gameData, entry.getControllerId(), permanent.getId(), e.options())`.
-  Update the name-keyed entry in `TargetPolarityClassifier` (magical-vibes-ai).
-- `GrantControllerKeyword*`: both are empty records consumed only by the adjacent pair
-  `GameQueryService.playerHasShroud` / `playerHasHexproof` (`:3167-3180`), each a one-liner
-  `playerBattlefieldHasStaticEffect(gameData, playerId, X.class)`. Needs a keyword-matching sibling
-  to that method. Touches `GameQueryServiceTest` and `TrueBelieverTest`.
-- `GrantSpellCastingAbility*`: uniquely clean — **nothing dispatches on the concrete types**. Both
-  consumers (`GameActionAvailabilityService:453`, `SpellCastingService:164`) match on the
-  `SpellCastingAbilityGrantingEffect` capability interface, which already carries both merged fields.
-  Zero handler beans exist.
-- `GrantProtectionChoice*`: both terminate in
-  `playerInputService.beginProtectionColorChoice(gameData, chooserId, recipientIds, includeArtifacts)`;
-  the surviving handler already has `resolveRecipientIds(entry, e)` switching on scope.
-- `GrantNoMaximumHandSize*`: one-line handlers adding `entry.getControllerId()` to
-  `playersWithNoMaximumHandSizeUntilNextTurn` vs `playersWithNoMaximumHandSize`.
+public record GrantControllerKeywordEffect(Keyword keyword) implements CardEffect
+// static marker, no handler; compact ctor rejects every keyword but SHROUD / HEXPROOF
+
+public record GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, CardPredicate filter)
+        implements SpellCastingAbilityGrantingEffect
+// no handler; compact ctor rejects every ability but CONSPIRE / CONVOKE
+
+public record GrantProtectionChoiceUntilEndOfTurnEffect(boolean includeArtifacts,
+                                                        boolean targetControllerChooses,
+                                                        GrantScope scope,
+                                                        PermanentPredicate filter) implements CardEffect
+// + the four existing sugar ctors (filter = null) and a new (GrantScope, PermanentPredicate)
+
+public record GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration duration) implements CardEffect
+// enum NoMaximumHandSizeDuration { REST_OF_GAME, UNTIL_NEXT_TURN }
+```
+
+Nine records and five handlers deleted, four records + one enum + two handlers added — net −5 records
+and −3 handlers. Cards (21): Urza's Avenger, Illusionary Presence, Golem Artisan, Practiced Offense;
+True Believer, Ivory Mask, Leyline of Sanctity, Witchbane Orb, Shalai, Spirit of the Hearth;
+Wort the Raidmother, Chief Engineer; Brave the Elements; Praetor's Counsel, Tamiyo the Moon Sage,
+Wrenn and Seven, Enter the Infinite.
+
+**What held** — every one of the five premises survived reading the records *and* the handlers.
+The two `GrantChosenKeyword*` handlers really are the same file bar the id lookup, and the SELF
+lookup's `sourcePermanentId != null ? … : targetId` fallback is preserved verbatim. The two
+`GrantControllerKeyword*` records really are empty markers with `playerHasShroud` / `playerHasHexproof`
+as their only consumers. `GrantSpellCastingAbility*` really is dispatch-free: both consumers
+(`GameActionAvailabilityService:453`, `SpellCastingService:165`) match on the capability interface, so
+the merge touched no engine logic at all. `GrantProtectionChoice*` really does terminate in one
+`beginProtectionColorChoice`, and the mass form slots into the surviving handler's existing
+`resolveRecipientIds` switch as a third arm. `GrantNoMaximumHandSize*` really is a one-line set insert.
+
+**Two corrections to the plan**
+- **The hand-size row is a rename, not an in-place extension.** The plan said
+  "`GrantPermanentNoMaxHandSizeEffect` + duration", but "Permanent" there means *permanently*, so the
+  name would have contradicted its own `UNTIL_NEXT_TURN` value — the same trap Step 8 avoided by
+  renaming to `PutCounterOnReferencedPermanentEffect`. Both records are deleted and
+  `GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration)` replaces them, so this row deletes 2 and
+  adds 1 rather than deleting 1.
+- **The `SpellCastingAbilityGrantingEffect` interface is deliberately kept** even though it now has a
+  single implementor. It is the capability contract `ARCHITECTURE.md` requires the engine to read
+  instead of a concrete type, and the plan's own note names it as the shared read surface. Deleting it
+  would be the only way to reach the Step Index's count of 6.
+
+**Three guards added — this step's real content beyond the merges.** Each merged enum axis has values
+the family cannot express, and in every case the mistake is *silent*: a scope with no handler arm, a
+keyword no query reads, an ability no cost gate consults. Following Step 9's precedent
+(`DestroyReferencedPermanentEffect` rejecting `SOURCE`), all three reject in the **compact
+constructor**, so the mistake fails at card-construction time rather than resolving to a no-op:
+`GrantChosenKeywordEffect` accepts only SELF / TARGET, `GrantControllerKeywordEffect` only SHROUD /
+HEXPROOF, `GrantSpellCastingAbilityToSpellsEffect` only CONSPIRE / CONVOKE.
+`GrantProtectionChoiceUntilEndOfTurnEffect` gets both halves: scope limited to TARGET / SELF /
+OWN_CREATURES, and a non-null `filter` rejected on any scope but OWN_CREATURES (it is only read
+there). Widening any of these means wiring the consumer at the same time.
+
+**Other call sites updated**
+- `GameQueryService` gained `playerBattlefieldGrantsControllerKeyword`, the keyword-matching sibling of
+  the existing class-keyed `playerBattlefieldHasStaticEffect`; `playerHasShroud` / `playerHasHexproof`
+  are still one-liners and every caller is untouched.
+- `TargetPolarityClassifier` (magical-vibes-ai) re-keys its single name entry from
+  `GrantChosenKeywordToTargetEffect` to `GrantChosenKeywordEffect`. No `instanceof` branch was needed:
+  the SELF form appears only in an activated ability and an `UPKEEP_TRIGGERED` slot, never in
+  SPELL / ON_ENTER_BATTLEFIELD, and the sibling `GrantProtectionChoiceUntilEndOfTurnEffect` entry has
+  already been name-keyed across its own scopes since Step 8. `TargetPolarityGuardTest` passes.
+- **Nothing else.** Unlike Steps 8 and 9, no `@CollectsTrigger` collector is keyed on any of these
+  nine classes — all five families live in SPELL / STATIC / activated-ability slots — so there was no
+  re-key to miss.
+
+**Deliberate delta** (one)
+- **The until-next-turn grant now writes a game-log line.** The rest-of-game handler logged
+  `"X has no maximum hand size for the rest of the game."`; the until-next-turn one resolved silently.
+  A duration `switch` that logs one arm and not the other is the kind of asymmetry that reads as a bug,
+  so both log, with the period as the only varying phrase (`"… for the rest of the game."` /
+  `"… until their next turn."`). The rest-of-game string is byte-for-byte unchanged. Covered by
+  `GrantNoMaximumHandSizeEffectHandlerTest.logsRestOfGameGrant` / `logsUntilNextTurnGrant`.
+
+**Tests** — `TrueBelieverTest.grantsControllerShroudOnBattlefield` was a white-box wiring test
+(`getEffects(STATIC)` + `instanceof`) of exactly the kind `CLAUDE.md` forbids; it is deleted rather
+than repointed, since the same file already asserts the shroud behaviourally three ways.
+`GameQueryServiceTest` and the hand-size handler test are repointed at the merged records, the latter
+renamed and extended to assert **each duration lands on its own set and not the other**.
+
+The cross-contamination assertions a `switch` merge needs were added only where an axis was not
+already pinned both ways:
+- `GolemArtisanTest.keywordLandsOnlyOnTheTarget` — TARGET must not read `sourcePermanentId`. The
+  strongest case in the family: the Artisan's own permanent is on the battlefield while it targets
+  another creature, so a merged handler reaching for the source would have looked correct until this
+  assertion. The SELF direction is already pinned by Urza's Avenger and Illusionary Presence, whose
+  abilities carry no target at all (a `targetId` read yields null and no prompt).
+- `StaveOffTest.protectionLandsOnlyOnTheTarget` — TARGET must not widen into the OWN_CREATURES scan.
+  The reverse is already pinned: `BraveTheElementsTest` asserts the non-white own creature and the
+  opponent's creature are both untouched, and would fail outright if OWN_CREATURES were read as TARGET
+  (no target id → no prompt).
+- The SHROUD / HEXPROOF axis needed nothing — it is already pinned in **both** directions by existing
+  behavioural tests. `IvoryMaskTest` / `TrueBelieverTest` assert the controller cannot target
+  themselves (fails if SHROUD is misread as HEXPROOF); `LeylineOfSanctityTest` /
+  `SpiritOfTheHearthTest` assert the controller still can (fails if HEXPROOF is misread as SHROUD).
+
+Ran: the 29 affected card test classes plus `GameQueryServiceTest`,
+`GrantNoMaximumHandSizeEffectHandlerTest` and `TargetPolarityGuardTest`. All green.
 
 **Do NOT merge**: `GrantProtectionFromCardTypeUntilEndOfTurnEffect` vs
 `GrantProtectionFromColorUntilEndOfTurnEffect` — different `Permanent` fields with different
 lifetimes (`getProtectionFromCardTypes()` is not an until-EOT bucket and is also written by
-`ChoiceHandlerService`).
+`ChoiceHandlerService`). Still true after the merge.
 
 ---
 

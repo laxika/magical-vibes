@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantConspireToSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSpellCastingAbilityToSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -28,7 +29,7 @@ public class WortTheRaidmother extends Card {
         ));
 
         // Each red or green instant or sorcery spell you cast has conspire.
-        addEffect(EffectSlot.STATIC, new GrantConspireToSpellsEffect(new CardAllOfPredicate(List.of(
+        addEffect(EffectSlot.STATIC, new GrantSpellCastingAbilityToSpellsEffect(Keyword.CONSPIRE, new CardAllOfPredicate(List.of(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY))),

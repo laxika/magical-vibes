@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantControllerHexproofEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -20,7 +20,7 @@ public class ShalaiVoiceOfPlenty extends Card {
 
     public ShalaiVoiceOfPlenty() {
         // You have hexproof.
-        addEffect(EffectSlot.STATIC, new GrantControllerHexproofEffect());
+        addEffect(EffectSlot.STATIC, new GrantControllerKeywordEffect(Keyword.HEXPROOF));
 
         // Planeswalkers you control have hexproof.
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS,

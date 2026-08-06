@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantPermanentNoMaxHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeDuration;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardPutIntoGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -49,7 +50,7 @@ public class TamiyoTheMoonSage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -8,
                 List.of(
-                        new GrantPermanentNoMaxHandSizeEffect(),
+                        new GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration.REST_OF_GAME),
                         new CreateEmblemEffect(
                                 List.of(new ReturnCardPutIntoGraveyardToHandEffect()),
                                 "Whenever a card is put into your graveyard from anywhere, you may "

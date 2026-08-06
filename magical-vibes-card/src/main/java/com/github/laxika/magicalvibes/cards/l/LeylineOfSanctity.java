@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.GrantControllerHexproofEffect;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -15,6 +16,6 @@ public class LeylineOfSanctity extends Card {
                 new LeylineStartOnBattlefieldEffect(),
                 "Begin the game with " + "Leyline of Sanctity" + " on the battlefield?"
         ));
-        addEffect(EffectSlot.STATIC, new GrantControllerHexproofEffect());
+        addEffect(EffectSlot.STATIC, new GrantControllerKeywordEffect(Keyword.HEXPROOF));
     }
 }

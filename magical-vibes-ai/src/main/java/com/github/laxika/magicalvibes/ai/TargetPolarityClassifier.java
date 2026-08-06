@@ -380,7 +380,7 @@ public class TargetPolarityClassifier {
             entry("GainLifeEqualToTargetCreatureStatEffect", TargetPolarity.BENEFICIAL),
             entry("GrantActivatedAbilityEffect", TargetPolarity.BENEFICIAL),
             entry("GrantAdditionalBlockToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
-            entry("GrantChosenKeywordToTargetEffect", TargetPolarity.BENEFICIAL),
+            entry("GrantChosenKeywordEffect", TargetPolarity.BENEFICIAL),
             entry("GrantEffectToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantEffectToTargetEffect", TargetPolarity.BENEFICIAL),
             entry("GrantProtectionChoiceUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
