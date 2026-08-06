@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyDamagedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 
 import java.util.List;
@@ -28,7 +29,7 @@ public class CruelDeceiver extends Card {
                 false,
                 "{2}",
                 List.of(
-                        new RevealTopCardOfOwnLibraryEffect(),
+                        new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER),
                         new ConditionalEffect(
                                 new TopCardOfLibraryType(CardType.LAND),
                                 new GrantEffectToSourceUntilEndOfTurnEffect(

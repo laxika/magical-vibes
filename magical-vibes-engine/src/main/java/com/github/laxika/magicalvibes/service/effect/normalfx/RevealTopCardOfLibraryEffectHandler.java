@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,18 +30,18 @@ public class RevealTopCardOfLibraryEffectHandler implements NormalEffectHandlerB
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-
         RevealTopCardOfLibraryEffect revealEffect = (RevealTopCardOfLibraryEffect) effect;
-        UUID targetPlayerId = entry.getTargetId();
-        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
-        String playerName = gameData.playerIdToName.get(targetPlayerId);
 
-        if (deck.isEmpty()) {
-            String logEntry = playerName + "'s library is empty.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
+        UUID deckOwnerId = resolveDeckOwner(entry, revealEffect.owner());
+        List<Card> deck = gameData.playerDecks.get(deckOwnerId);
+        String playerName = gameData.playerIdToName.get(deckOwnerId);
+
+        if (deck == null || deck.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(playerName + "'s library is empty."));
         } else {
             Card topCard = deck.getFirst();
-            gameLogService.append(gameData, GameLog.textCardText(playerName + " reveals " , topCard, " from the top of their library."));
+            gameLogService.append(gameData,
+                    GameLog.textCardText(playerName + " reveals ", topCard, " from the top of their library."));
 
             if (revealEffect.lifeGainIfLand() > 0 && topCard.hasType(CardType.LAND)) {
                 lifeSupport.applyGainLife(gameData, entry.getControllerId(), revealEffect.lifeGainIfLand(),
@@ -48,6 +50,11 @@ public class RevealTopCardOfLibraryEffectHandler implements NormalEffectHandlerB
         }
 
         log.info("Game {} - {} reveals top card of library", gameData.id, playerName);
+    }
 
+    /** Falls back to the controller when a target-player form resolves without a target. */
+    private static UUID resolveDeckOwner(StackEntry entry, LibraryOwner owner) {
+        if (owner != LibraryOwner.TARGET_PLAYER) return entry.getControllerId();
+        return entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
     }
 }

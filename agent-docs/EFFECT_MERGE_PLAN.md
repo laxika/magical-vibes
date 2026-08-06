@@ -82,7 +82,7 @@ high-churn or needs a design call and is optional.
 | 12 | `Grant*` low-risk batch | 6 | LOW | **DONE** — all five premises held; the audit's net count is one high (5, not 6 — the sixth would have been folding away the `SpellCastingAbilityGrantingEffect` capability interface, which is deliberately kept). One correction: the hand-size row is a rename, not an extension — `GrantPermanentNoMaxHandSizeEffect` would have lied once `UNTIL_NEXT_TURN` was folded in |
 | 13 | Cost-modification batch | 6 | LOW | **DONE** — all four premises held; the audit's net count is two low (6 records + 3 handlers, not 4). One correction: the tax scope reuses the existing `CostModificationScope`, not a new `CostTaxScope`. Two rules fixes shipped, both from `getType()` → `hasType` (CR 205.2b) |
 | 14 | Remove-counter batch | 4 | LOW–MED | **DONE** — all four premises held; the audit's count is two low (6 records + 5 handlers, not 4). Two corrections: both `fromTarget` booleans became a shared `CounterRemovalSubject` enum, and the two "identical" gain-life handlers were not identical (one rendered the counter name, the other the enum constant). The flagged decision went **for** adding `sourceCountersRemoved()` to the survivor — rationale in the step body |
-| 15 | Reveal / reorder library batch | 2 | LOW | TODO |
+| 15 | Reveal / reorder library batch | 2 | LOW | **DONE** — both premises held. Three corrections: the two `boolean targetPlayer` flags became one shared `LibraryOwner` enum (which keeps the reorder family's nine own-library call sites untouched); the reveal's `@ValidatesTarget` validator had to be branched or the Deceivers would demand a player target; and `Fixed(0)` is honest to the *amount*-reading `LifeGainEffect` consumers but not to the two presence-checking ones, so the capability gained a `gainsNoLife()` default |
 | 16 | Damage target-category batch | 3 | LOW | TODO |
 | 17 | Exile-top-cards families | 7 | LOW–MED | TODO |
 | 18 | Enchanted-creature aura batch | 3 | LOW–MED | TODO |
@@ -1267,23 +1267,87 @@ bound by `GremlinMineTest`'s up-to-four pair.
 
 ---
 
-### Step 15 — Reveal / reorder library batch
+### Step 15 — Reveal / reorder library batch — **DONE**
 
-| Target | Absorbs | Cards |
-|---|---|---|
-| `ReorderTopCardsOfLibraryEffect(int count, boolean targetPlayer)` | `ReorderTopCardsOfTargetLibraryEffect` | 8 + 3 |
-| `RevealTopCardOfLibraryEffect` + `boolean targetPlayer` | `RevealTopCardOfOwnLibraryEffect` | 2 + 3 |
+**Shipped**
+```java
+public record ReorderTopCardsOfLibraryEffect(int count, LibraryOwner owner) implements CardEffect
+// sugar: (int count) -> owner = CONTROLLER
 
-**Notes**
-- Reorder: identical single `int count` component; handlers share the same `Math.min`, empty-library
-  log, `count == 1` look-only shortcut, `deck.subList(0, count)` snapshot-and-clear, and
-  `PendingInteraction.LibraryReorder(controllerId, topCards, false, <deckOwnerId>, prompt)`. The
-  target variant already falls back to `controllerId` when `getTargetId()` is null — it is a strict
-  generalization. LOW risk, MED churn (11 card classes).
-- Reveal: handlers are copies (resolve deck, empty-library log, identical `GameLog.textCardText`);
-  differences are `getTargetId()` vs `getControllerId()` and the survivor's extra `lifeGainIfLand`
-  rider (already defaulted to 0). The survivor implements `LifeGainEffect`, which stays valid with
-  `Fixed(0)`.
+public record RevealTopCardOfLibraryEffect(LibraryOwner owner, int lifeGainIfLand)
+        implements LifeGainEffect
+// sugar: (LibraryOwner owner) -> lifeGainIfLand = 0
+// enum LibraryOwner { CONTROLLER, TARGET_PLAYER }
+```
+
+Two records and two handlers deleted, one enum added. Cards (17): Index, Ponder, Omen, Sage Owl,
+Sage Aven, Inkfathom Divers, Gilt-Leaf Seer, Mirri's Guile, Discombobulate; Portent, Elemental
+Augury, Architects of Will; Aven Windreader, Prophecy; Callous Deceiver, Cruel Deceiver, Harsh
+Deceiver. Only eight card files changed — the reorder family's nine own-library call sites still
+read `new ReorderTopCardsOfLibraryEffect(N)` and were untouched.
+
+**What held** — both premises. The two reorder handlers really do share the `Math.min`, the
+`count == 1` look-only shortcut, the `deck.subList(0, count)` snapshot-and-clear and the same
+`PendingInteraction.LibraryReorder(controllerId, topCards, false, <deckOwnerId>, prompt)` shape
+(`GameLog.cardThen(card, s)` and `GameLog.builder().card(card).text(s).build()` are the same call).
+The two reveal handlers are copies bar the id and the `lifeGainIfLand` rider. The target-variant
+fallback to `controllerId` on a null `getTargetId()` is a strict generalization and is kept.
+
+**What the audit missed — three corrections**
+- **A `boolean targetPlayer` on each record would have been two spellings of one axis, and would
+  have inverted the reveal family's defaults.** The reveal survivor's existing `()` / `(int)`
+  constructors mean "target player", so a trailing boolean would have made `false` the value nobody
+  wanted to write and forced `new RevealTopCardOfLibraryEffect(0, false)` on the three Deceivers.
+  Both records now take a shared `LibraryOwner` enum instead, in the codebase's `MillRecipient` /
+  `SkipRecipient` idiom. It leads on the reveal record (where the life-gain rider is the optional
+  tail) and trails on the reorder record (where `count` is the mandatory head), which is what keeps
+  all nine own-library reorder call sites source-compatible.
+- **The reveal's `@ValidatesTarget` had to be branched, not just re-keyed.**
+  `LibraryTargetValidators.validateRevealTopCardOfLibrary` called `tvs.requireTargetPlayer(ctx)`
+  unconditionally. The class key is unchanged by the merge, so nothing would have failed to compile
+  — the three Deceivers' second ability would simply have started demanding a player target it
+  never had. It now takes the effect as a second parameter and gates on
+  `owner == TARGET_PLAYER`, exactly as the `MillEffect` validator eight lines above it already does.
+- **`Fixed(0)` is honest to the amount-reading `LifeGainEffect` consumers but not to the
+  presence-checking ones.** `SpellEvaluator:479,628` evaluate `lifeGainAmount()` and correctly score
+  a rider-less reveal at 0, but `SpellEvaluator.isLifeGainEffect` and
+  `InstantCategoryClassifier:85` are bare `instanceof` tests — under them a `Fixed(0)` reveal is a
+  lifegain spell, worth a 3× danger multiplier and a `CARD_ADVANTAGE` classification. That was
+  already latently wrong for Aven Windreader; the merge would have extended it to every reveal card.
+  Rather than leave it accidental, `LifeGainEffect` gained a `gainsNoLife()` default (the amount is
+  `Fixed(0)`) and both presence checks now consult it. **Inert today**: `hasLifeGainEffect` scans
+  only `SPELL` / `ON_ENTER_BATTLEFIELD` and `InstantCategoryClassifier` only `SPELL`, while all
+  four rider-less reveals sit in activated abilities; Prophecy's rider is 1 and unaffected.
+
+**Deliberate deltas** (all log/prompt only)
+- **The reorder wording is derived from `deckOwnerId.equals(controllerId)`, not from the owner
+  axis.** Every string is byte-for-byte preserved for both families' normal paths; the one change is
+  that Portent / Elemental Augury / Architects of Will aimed at *yourself* — "target player" includes
+  you, and both cards have a test for it — now read "looks at the top 3 cards of their library" and
+  prompt "back on top of **your** library" instead of naming you in the third person.
+- The reveal path gained the own-library handler's `deck == null` guard and the reorder path's
+  null-target fallback, so a target form resolving with no target no longer NPEs. Unreachable
+  today — the validator requires the target.
+- The two slf4j lines are unified per family (the game-log lines they used to disagree with are
+  unchanged).
+
+**Tests** — the two handler tests keep their coverage and gain one branch each: the reorder's
+`controllerOwnerIgnoresTargetId` / `targetPlayerOwnerReadsTargetLibrary`, and the reveal's
+`controllerOwnerIgnoresTargetId`. At card level, `PortentTest` and `ArchitectsOfWillTest` already
+pinned `deckOwnerId` **and** `playerId` for `TARGET_PLAYER` both ways (including the
+target-yourself case), so the gaps were the `CONTROLLER` side and the reveal family:
+`DiscombobulateTest.resolvingEntersLibraryReorderState` gains a `deckOwnerId` assertion — the
+strongest case in the pool, because the countered spell genuinely occupies the entry's `targetId`,
+so a merged handler that read it would resolve `playerDecks.get(<spell id>)`;
+`CruelDeceiverTest.revealReadsTheControllersOwnLibrary` (the `CONTROLLER` reveal must name the
+caster's own top card and never the opponent's) and
+`AvenWindreaderTest.revealReadsTheTargetLibraryOnly` (the mirror).
+
+**Kept separate**: `LookAtTopCardsOfTargetLibraryEffect` — a *private* look with a `TargetLibraryAction`
+protocol (search interactions, exile/graveyard dispositions), not a public reveal or a reorder;
+`RevealTopCardGainLifeEqualToManaValueEffect`, `RevealTopCardsBottomThenDamageIfCopyRevealedEffect`
+and `RevealTopCardPutLandsIntoGraveyardRepeatEffect` (each moves cards or repeats);
+`PutTopCardsOfLibraryOnBottomEffect` (bottom, not top).
 
 ---
 

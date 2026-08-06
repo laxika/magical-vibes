@@ -111,7 +111,7 @@ a code change. Branching on one of these interfaces is fine anywhere — it is t
   per-type wipe SCORING stays concrete (each sweep is valued differently). Impl `MassDamageEffect`
   (always), `DestroyAllPermanentsEffect` (always), `DestroyOtherPermanentsWithEnteringNameEffect` (always), `ReturnToHandEffect` (only `BounceScope.ALL_MATCHING`)
 - `CardDrawingEffect` — `drawnCardAmount()` (`DynamicAmount`). Impl `DrawCardEffect`, `DrawCardUnlessPaysEffect`
-- `LifeGainEffect` — `lifeGainAmount()` (`DynamicAmount`). Impl `GainLifeEffect`, `GainLifeEqualToTargetCreatureStatEffect`
+- `LifeGainEffect` — `lifeGainAmount()` (`DynamicAmount`) + `gainsNoLife()` (default: amount is `Fixed(0)`; ask this instead of bare `instanceof` when the question is "does this card gain life"). Impl `GainLifeEffect`, `GainLifeEqualToTargetCreatureStatEffect`
 - `ExileTargetCreaturesAndControllersGainLifeEqualToPowerEffect()` — multi-target exile that grants each
   target's controller life equal to that target's effective power captured before exile
 - `TokenCreatingEffect` — `tokenAmount()`, `tokenType()`, `tokenPower()`, `tokenToughness()`.
@@ -935,7 +935,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `ChooseNameAndNumberRevealLibraryDamageEffect(List<CardType> excludedTypes, int damage)` — choose a card name and a number > 0; target player reveals their library; if it holds exactly that many cards with that name, deal `damage` to them; they shuffle either way (Mindblaze, lands excluded, 8). Targets player, harmful
 - `RevealHandChooseCardFromItAndExileAllCopiesEffect(CardPredicate choosableFilter)` — target reveals hand; controller picks a card **in that hand** matching `choosableFilter`; exile ALL copies of that name from hand/graveyard/library and shuffle; no damage. Targets player, harmful; `CombatDamageTriggerContextEffect` (DAMAGED_PLAYER) so a combat-damage trigger needs no `target(...)`, while a spell pairs it with `PlayerPredicateTargetFilter`. The prompt label comes from `CardPredicateUtils.describeFilter`. Nothing happens when the hand holds no legal card. Shimian Specter (`CardNotPredicate(CardTypePredicate(LAND))`), Lobotomy (`CardNotPredicate(CardPredicateUtils.basicLand())`)
 - `SearchTargetPlayerLibraryAndCastEffect(Set<CardType> castableTypes)` — search target opponent's library for a card of one of the types, caster may cast it without paying its mana cost, then that player shuffles (Knowledge Exploitation, INSTANT/SORCERY). Targets player; uses `CAST_WITHOUT_PAYING`
-- `RevealTopCardOfLibraryEffect()` / `(int lifeGainIfLand)` — reveal top card of target player's library; `lifeGainIfLand > 0` gains the controller that much life if it's a land (Prophecy)
+- `RevealTopCardOfLibraryEffect(LibraryOwner owner)` / `(LibraryOwner owner, int lifeGainIfLand)` — reveal the top card of the owner's library, card stays on top. `TARGET_PLAYER` = target player's library (Aven Windreader, Prophecy), `CONTROLLER` = your own (the Deceivers). `lifeGainIfLand > 0` gains the controller that much life if it's a land (Prophecy)
 - `RevealTopCardGainLifeEqualToManaValueEffect()` — reveal top card of controller's library; gain life = its mana value; card stays on top (Sifter Wurm, after `ScryEffect(3)` ETB)
 - `EachPlayerRevealsTopCardLosesLifeEqualToManaValueThenToHandEffect()` — each player (APNAP order) reveals their top card, loses life = its mana value, then puts it into their hand; empty library skipped (Duskmantle Seer, `UPKEEP_TRIGGERED`)
 - `RevealTopCardCreatureToBattlefieldElseGraveyardEffect(boolean grantHaste, boolean sacrificeAtEndStep)` — reveal top card; creature → battlefield, otherwise → graveyard (mandatory). No-arg `()` = both false (Call of the Wild `{2}{G}{G}`). `(true, true)` = entering creature gains haste and is sacrificed at the next end step (Impromptu Raid `{2}{R/G}`)
@@ -981,7 +981,6 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `SignalTheClansEffect()` — search your library for three creature cards and reveal them; if the three revealed cards have different names, one chosen at random goes into your hand. Every other revealed card is shuffled back. No target. Runs a `LibrarySearchDestination.SIGNAL_THE_CLANS_POOL` search (cards held outside every zone until the search ends). Signal the Clans
 - `GiftsUngivenEffect()` — search your library for up to four cards with different names and reveal them; target opponent chooses two to put into your graveyard, the rest go to your hand, then shuffle. Harmful `PLAYER` spec. Runs a `LibrarySearchDestination.GIFTS_UNGIVEN_POOL` search (cards held outside every zone) followed by a `PendingPileSeparation` with `CardPileDisposition.GIFTS_UNGIVEN`. Gifts Ungiven
 - `PutTopCardsOfLibraryOnBottomEffect(int count)` — put the top `count` cards of your library on the bottom in any order, ordered by the controller through a `LibraryReorder` interaction; a shorter library just moves what it has. Petals of Insight
-- `RevealTopCardOfOwnLibraryEffect()` — reveal the top card of the resolving controller's library; the card stays on top. Callous Deceiver, Cruel Deceiver, Harsh Deceiver
 
 ## Mill
 

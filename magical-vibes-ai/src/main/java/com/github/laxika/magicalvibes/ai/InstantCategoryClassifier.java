@@ -82,7 +82,7 @@ public final class InstantCategoryClassifier {
 
         // Card advantage
         if (effect instanceof CardDrawingEffect) return InstantCategory.CARD_ADVANTAGE;
-        if (effect instanceof LifeGainEffect) return InstantCategory.CARD_ADVANTAGE;
+        if (effect instanceof LifeGainEffect gain && !gain.gainsNoLife()) return InstantCategory.CARD_ADVANTAGE;
 
         return null;
     }

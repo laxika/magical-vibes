@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.validate;
 
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAndExileFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.MillBottomOfTargetLibraryConditionalTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
@@ -27,8 +28,12 @@ public class LibraryTargetValidators {
     }
 
     @ValidatesTarget(RevealTopCardOfLibraryEffect.class)
-    public void validateRevealTopCardOfLibrary(TargetValidationContext ctx) {
-        tvs.requireTargetPlayer(ctx);
+    public void validateRevealTopCardOfLibrary(TargetValidationContext ctx, RevealTopCardOfLibraryEffect effect) {
+        // Only the target-player owner reveals someone else's top card; the controller's own
+        // library takes no player target and must not have one forced on it.
+        if (effect.owner() == LibraryOwner.TARGET_PLAYER) {
+            tvs.requireTargetPlayer(ctx);
+        }
     }
 
     @ValidatesTarget(ChooseCardNameAndExileFromZonesEffect.class)
