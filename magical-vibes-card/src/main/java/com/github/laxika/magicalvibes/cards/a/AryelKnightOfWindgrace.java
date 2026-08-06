@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -37,7 +38,7 @@ public class AryelKnightOfWindgrace extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true, "{B}",
                 List.of(
-                        new TapXPermanentsCost(new PermanentHasSubtypePredicate(CardSubtype.KNIGHT), true),
+                        new TapMultiplePermanentsCost(new XValue(), new PermanentHasSubtypePredicate(CardSubtype.KNIGHT), true),
                         new DestroyTargetPermanentEffect()
                 ),
                 "{B}, {T}, Tap X untapped Knights you control: Destroy target creature with power X or less.",

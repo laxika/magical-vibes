@@ -123,7 +123,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapUpToControlledPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveDelayCounterFromExiledSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndReturnCardsExiledWithSourceEffect;
@@ -2423,7 +2424,8 @@ public class StepTriggerService {
                         pending.sourceCard(),
                         pending.controllerId(),
                         pending.sourceCard().getName() + "'s delayed trigger — untap up to " + pending.count() + " permanent(s)",
-                        new ArrayList<>(List.of(new UntapUpToControlledPermanentsEffect(pending.count(), pending.filter())))
+                        new ArrayList<>(List.of(new UntapPermanentsEffect(
+                                TapUntapScope.CONTROLLED, pending.filter(), pending.count())))
                 ));
                 gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                         "'s delayed trigger — untap up to " + pending.count() + " permanent(s)."));

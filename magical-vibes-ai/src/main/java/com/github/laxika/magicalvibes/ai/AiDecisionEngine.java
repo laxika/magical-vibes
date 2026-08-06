@@ -19,7 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanent
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
@@ -1223,7 +1224,9 @@ public abstract class AiDecisionEngine {
                     return false;
                 }
             }
-            if (effect instanceof TapXPermanentsCost) {
+            // A tap cost whose count is not a flat number is announced as X at activation, which the
+            // AI has no way to choose (Aryel, Knight of Windgrace). Fixed-count tap costs are fine.
+            if (effect instanceof TapMultiplePermanentsCost tapCost && !(tapCost.count() instanceof Fixed)) {
                 return false;
             }
         }

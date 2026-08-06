@@ -53,7 +53,7 @@ reverts one of them is a regression:
 | `CopySpellForEachOtherSubtypePermanentEffectHandler` | Has the `isCantBeCopied()` guard (CR 707.10) |
 | `DealDamageToTargetCreatureEqualToChosenTypeCountEffectHandler` | Applies `applyDamageMultiplier` |
 | `DestroyEachTargetPermanentEffectHandler`, `DestroyPermanentsTargetPlayerControlsEffectHandler` | Route through `DestructionSupport.destroyBatchCollecting` so deaths are simultaneous |
-| `UntapUpToControlledPermanentsEffectHandler` | Prompts the controller via `MultiPermanentChoiceContext.UntapChosenPermanents` — does not untap the first N in battlefield order |
+| `UntapPermanentsEffectHandler.resolveChosenControlled` (absorbed the `UntapUpToControlledPermanentsEffect` handler in Step 11) | Prompts the controller via `MultiPermanentChoiceContext.UntapChosenPermanents` — does not untap the first N in battlefield order |
 | `ExileTargetPermanentAndImprintEffect` | `TargetSpec.harmful`, not `benign` |
 
 Copy handlers cite **CR 707.10** for "can't be copied". CR 706.2 is the die-roll rule — do not
@@ -78,7 +78,7 @@ high-churn or needs a design call and is optional.
 | 8 | Phase-out + attached-counter placement | 6 | LOW | **DONE** — premise held for all six handlers; the optional 8b fold was taken, so 6 records + 6 handlers went. The audit missed that `@CollectsTrigger` is class-keyed: two collector annotations had to be re-keyed. Zero behavior change beyond one redundant guard dropped |
 | 9 | Destroy-referenced-permanent | 4 | LOW | **DONE** — premise held for all four handlers; `ENCHANTED` became `PermanentReference.ATTACHED` as the note directed and the enum gained `SOURCE`. One correction: the Ajani half needed no player target filter but **did** need `DestroyAllPermanentsEffect.targetSpec()`, which the two sibling scoped effects already had and it was silently missing |
 | 10 | Search-target-library + sacrifice costs | 5 | LOW | **DONE** — 10a's premise held in shape but not in detail (the audit's "only `.destination()` varies" is wrong on four other axes) and the audit undercounted: a fourth sibling, the play-permission form, folds in as two destinations, so 5 records + 5 handlers went. The reconcile picked `checkSearchRestriction` — `isSearchPrevented` shuffled the *searcher's* library, not the searched one. The 10b stretch was not taken (reason in the step body) |
-| 11 | Tap / untap scopes and costs | 3 | LOW | TODO |
+| 11 | Tap / untap scopes and costs | 3 | LOW | **DONE** — all three premises held. Two corrections: the `ON_ANY_CREATURE_DIES` collector for 11a was already occupied by an identical `UntapPermanentsEffect` one (a deletion, not a re-key), and 11c's `DynamicAmount` count cannot be evaluated inside the handler (`requiredCount()` takes no game state), so a new `TapCostSupport` resolves it at construction and `toPermanentChoiceCostHandler` gained a `GameData` parameter. The MED stretch was not taken |
 | 12 | `Grant*` low-risk batch | 6 | LOW | TODO |
 | 13 | Cost-modification batch | 4 | LOW | TODO |
 | 14 | Remove-counter batch | 4 | LOW–MED | TODO |
@@ -820,34 +820,100 @@ face-down-vs-face-up split by `JestersCapTest.exilesThreeCards`.
 
 ---
 
-### Step 11 — Tap / untap scopes and costs
+### Step 11 — Tap / untap scopes and costs — **DONE**
 
-**11a**: `UntapEquippedCreatureEffect` (3 cards) → `UntapPermanentsEffect(TapUntapScope.ENCHANTED)`.
-`UntapEquippedCreatureEffectHandler.resolve` and `UntapPermanentsEffectHandler.resolveEnchanted` are
-the same algorithm through the same three guards to the same `tapUntapSupport.untapPermanent(...)`.
-The class name is actively misleading — 2 of its 3 users are Auras, which is what `ENCHANTED`
-("the permanent the source aura is attached to") already covers via the same `getAttachedTo()`.
+**Shipped**
+```java
+public record UntapPermanentsEffect(TapUntapScope scope, PermanentPredicate filter, int chosenCount)
+        implements CardEffect
+// sugar: (scope), (scope, filter) — both chosenCount = 0
 
-**11b**: `UntapUpToControlledPermanentsEffect` (2 cards) → `UntapPermanentsEffect` with a
-`chosenCount` field, mirroring `TapPermanentsEffect` which already has exactly that field
-("0 = all in scope; >0 = up to N"). Keep the existing `(scope)` / `(scope, filter)` convenience
-constructors so none of the 156 existing call sites change.
-**Critical**: the controller-choice flow added in `9b8147333` must be preserved — the merged handler
-must still prompt via `MultiPermanentChoiceContext.UntapChosenPermanents`, and
-`RewindTest`/`UnwindTest` must keep passing unchanged.
+public record TapMultiplePermanentsCost(DynamicAmount count, PermanentPredicate filter,
+                                        boolean excludeSource) implements CostEffect
+// sugar: (int, filter), (int, filter, excludeSource) — both wrap Fixed
+// + new @Component service/ability/cost/TapCostSupport
+```
 
-**11c**: `TapXPermanentsCost` (1 card) → `TapMultiplePermanentsCost` with `count` widened from `int`
-to `DynamicAmount`. `TapXPermanentsCostHandler` and `MultiplePermanentTapCostHandler` have
-character-identical `getValidChoiceIds`, `validateAndPay` and `getPromptMessage`; the sole difference
-is `requiredCount()` returning `xValue` vs `cost.count()`.
-**Stretch (MED)**: `TapCreatureCost` (13 cards) is the same handler with `requiredCount() == 1`, an
-`isCreature` filter (expressible as `PermanentIsCreaturePredicate`), `excludeSelf` (== `excludeSource`)
-and `trackTappedCreaturePower` — used by only **1** of its 13 cards (Impelled Giant, consumed at
-`AbilityActivationService:2199,2391`).
+Three records and three handlers deleted, one support component added. Cards (6): Thornbite Staff,
+Paralyze, Dance of the Dead; Rewind, Unwind; Aryel, Knight of Windgrace. The survivors' existing call
+sites were untouched — all 156 `UntapPermanentsEffect` and 31 `TapMultiplePermanentsCost` uses still
+mean the same thing.
+
+**What held**
+- **11a** — `UntapEquippedCreatureEffectHandler.resolve` really is `resolveEnchanted` with the two
+  null guards fused into one `||`. `ENCHANTED` reads `getAttachedTo()` off the source permanent
+  whether that permanent is an Aura or an Equipment, which is why 2 of the 3 "equipped" users were
+  Auras all along.
+- **11b** — the up-to-N flow moved into `resolveControlled`'s `chosenCount > 0` branch verbatim,
+  `MultiPermanentChoiceContext.UntapChosenPermanents` included, so the `9b8147333` fix in the
+  regression table is preserved. `targetSpec()` needed nothing: `CONTROLLED` already fell through to
+  `TargetSpec.NONE`, which is what the absorbed record had.
+- **11c** — `getValidChoiceIds`, `validateAndPay` and `getPromptMessage` really are
+  character-identical across the two cost handlers.
+
+**What the audit missed**
+- **The `ON_ANY_CREATURE_DIES` collector was already occupied.** Steps 8 and 9 both had to *re-key* a
+  class-keyed `@CollectsTrigger` onto the merged class; here `DeathTriggerCollectorService` already
+  carried an `UntapPermanentsEffect` collector on that slot for Galvanic Juggernaut's `SELF` untap,
+  and it is character-identical to the Equipment one (same `StackEntry`, same
+  `logAnyCreatureDeath`). Re-keying would have registered two collectors under the same
+  `(slot, class)` key; the equipment method is simply deleted and Thornbite Staff now rides the
+  surviving one. Its comment gained the `ENCHANTED` case.
+- **`requiredCount()` has no game state, so the handler cannot evaluate a `DynamicAmount`.** The
+  plan's "widen `count` to `DynamicAmount`" stops one step short: the interface method takes no
+  arguments, and widening it would touch all 13 `PermanentChoiceCostHandler` implementations. The
+  count is therefore evaluated **by the caller** — new `@Component TapCostSupport`, which builds an
+  `AmountContext` from the source permanent, its controller and the activation `xValue` — and handed
+  to `MultiplePermanentTapCostHandler` as a plain int. That forced
+  `AbilityActivationService.toPermanentChoiceCostHandler` to take `GameData` (both overloads, 10 call
+  sites, all of which already had it in scope) and `MayAbilityTapCostService` to inject the support
+  at its two construction sites. `MultiplePermanentTapCostHandler`'s 4-arg convenience constructor
+  had no user left and is gone.
+- **The AI's refusal cannot key on the merged class.** `AiDecisionEngine.acceptsAbilityCosts` refused
+  every `TapXPermanentsCost` because the AI has no way to announce an X. Widened naively that would
+  have stopped the AI activating all 26 fixed-count tap-cost cards, so the branch is now
+  `TapMultiplePermanentsCost c && !(c.count() instanceof Fixed)` — the derived-axis pattern again.
+
+**Deliberate deltas** (all three inert or log-only)
+- The `ENCHANTED` game log replaces `GameLog.textCardText(sourceName + " untaps ", host, ".")` with
+  `GameLog.cardTextCard(entry.getCard(), " untaps ", host, ".")` — a card chip for the source instead
+  of a plain name, matching what the other ten untap scopes already emit and the same delta Step 3
+  took. No test asserted the old string. With it goes the `"Equipment"` fallback for a null
+  `entry.getCard()`, which every other scope already assumes is present.
+- The `xValue <= 0` early return in `TapXPermanentsCostHandler.validateCanPay` is
+  dropped as redundant: with `requiredCount == 0`, `validIds.size() < 0` is never true, so the merged
+  method returns in the same place. Pinned by `AryelKnightOfWindgraceTest.secondAbilityWithXZero`.
+- `TapCostSupport` passes the source permanent and its controller into the `AmountContext` even
+  though neither `Fixed` nor `XValue` reads them, so a counting amount would evaluate correctly if
+  one is ever used. For a graveyard-activated ability there is no source permanent and both are null,
+  which only `Fixed` reaches today.
+
+**The MED stretch was NOT taken.** `TapCreatureCost` is not "the same handler with
+`requiredCount() == 1`": its `getPromptMessage` ignores `remaining` ("Choose an untapped creature to
+tap."), its `validateCanPay` and all four `validateAndPay` rejections carry different strings, and
+the `isCreature` check is in the *handler* rather than the predicate — so folding it in changes the
+prompt and five error messages for 13 cards and needs a `PermanentAllOfPredicate(creature, …)`
+wrapper on each. `trackTappedCreaturePower` is also read by two `instanceof TapCreatureCost` sites
+(`AbilityActivationService:2197,2389`) and is only well-defined at count 1. It needs its own step.
 
 **Do NOT merge** `TapPermanentsEffect` (135) with `UntapPermanentsEffect` (156): both are already
 consolidated survivors, and their scopes genuinely diverge (`ALL_TARGETS` is a dead path for tap but
-a live multi-target scope for untap). 291 files of churn for a mode flag.
+a live multi-target scope for untap). 291 files of churn for a mode flag. Still true after the merge —
+`chosenCount` now exists on both, which makes them look closer than they are.
+
+**Tests** — no test referenced any of the three deleted classes by name, and every branch already had
+card coverage (Rewind/Unwind pin the up-to-N prompt from four angles including declining entirely;
+Aryel pins X = 0/1/2 and the more-Knights-than-X choice; Thornbite/Paralyze/Dance pin the ENCHANTED
+untap). Added the two cross-contamination assertions a scope merge needs:
+`ThornbiteStaffTest.untapsTheEquippedCreatureAndNotTheStaff` (ENCHANTED must not read
+`sourcePermanentId` — the strongest case, since the Staff itself is on the battlefield and is tapped
+here) and `VitalizeTest.untapsWithoutPromptingForAChoice` (the `chosenCount == 0` mirror: a plain
+CONTROLLED untap must not fall into the up-to-N prompt branch).
+
+Ran green: the 6 card tests plus `TeferiHeroOfDominariaTest`, `GalvanicJuggernautTest`,
+`EnterTriggerCollectorServiceTest`, `CostEffectClassificationTest`, the other 22
+`TapUntapScope.CONTROLLED` cards (`VitalizeTest` included), all 31 `TapMultiplePermanentsCost` cards, `SwarmIntelligenceTest`,
+`ClovenCastingTest`, `TapCreatureCostHandlerTest` and `MultiplePermanentSacrificeCostHandlerTest`.
 
 ---
 

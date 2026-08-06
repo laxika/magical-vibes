@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.UntapEquippedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5ED", collectorNumber = "185")
@@ -26,7 +26,7 @@ public class Paralyze extends Card {
                 // At the beginning of the upkeep of enchanted creature's controller, that player
                 // may pay {4}. If the player does, untap the creature.
                 .addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
-                        new MayPayManaEffect("{4}", new UntapEquippedCreatureEffect(),
+                        new MayPayManaEffect("{4}", new UntapPermanentsEffect(TapUntapScope.ENCHANTED),
                                 "pay {4} to untap the creature", MayPayPayer.ENCHANTED_CONTROLLER));
     }
 }

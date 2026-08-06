@@ -70,7 +70,6 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.UntapEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -985,28 +984,12 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = UntapEquippedCreatureEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
-    boolean handleAnyCreatureDeathUntapEquipped(TriggerMatchContext match,
-            UntapEquippedCreatureEffect effect, TriggerContext ctx) {
-        // Equipment-granted untap trigger needs its source permanent id to locate the equipment.
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()
-        ));
-        logAnyCreatureDeath(match);
-        return true;
-    }
-
     @CollectsTrigger(value = UntapPermanentsEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathUntap(TriggerMatchContext match,
             UntapPermanentsEffect effect, TriggerContext ctx) {
         // "Whenever another creature dies, untap this creature." SELF-scope untap needs its source
-        // permanent id to locate this creature at resolution (Galvanic Juggernaut).
+        // permanent id to locate this creature at resolution (Galvanic Juggernaut); ENCHANTED reads
+        // the same id to find the Aura/Equipment whose host untaps (Thornbite Staff).
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),

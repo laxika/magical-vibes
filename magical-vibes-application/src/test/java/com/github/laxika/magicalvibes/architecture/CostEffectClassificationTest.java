@@ -68,7 +68,6 @@ class CostEffectClassificationTest {
             "TapEnchantedPermanentCost",
             "TapTwoCreaturesSharingTypeCost",
             "TapMultiplePermanentsCost",
-            "TapXPermanentsCost",
             "UntapMultiplePermanentsCost");
 
     /**

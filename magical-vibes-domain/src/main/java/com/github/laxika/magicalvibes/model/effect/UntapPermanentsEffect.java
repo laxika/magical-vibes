@@ -11,16 +11,28 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * <p>Replaces the former {@code UntapTargetPermanentEffect}, {@code UntapAllTargetPermanentsEffect},
  * {@code UntapSelfEffect}, {@code UntapAllControlledPermanentsEffect},
- * {@code UntapEachOtherCreatureYouControlEffect} and {@code UntapAttackedCreaturesEffect}.
+ * {@code UntapEachOtherCreatureYouControlEffect}, {@code UntapAttackedCreaturesEffect},
+ * {@code UntapEquippedCreatureEffect} and {@code UntapUpToControlledPermanentsEffect}.
  *
- * @param scope  which permanent(s) to untap
- * @param filter optional predicate narrowing the scanned scopes, or the targeting restriction for
- *               {@link TapUntapScope#TARGET} (null = no restriction)
+ * <p>With {@link TapUntapScope#CONTROLLED}, {@code chosenCount} of 0 untaps every matching tapped
+ * permanent the controller controls; a positive {@code chosenCount} instead lets the controller pick
+ * <em>up to</em> that many of them to untap (Rewind, Unwind), mirroring
+ * {@link TapPermanentsEffect#chosenCount()}.
+ *
+ * @param scope       which permanent(s) to untap
+ * @param filter      optional predicate narrowing the scanned scopes, or the targeting restriction
+ *                    for {@link TapUntapScope#TARGET} (null = no restriction)
+ * @param chosenCount 0 = untap every permanent in scope; &gt;0 = the controller chooses up to N
  */
-public record UntapPermanentsEffect(TapUntapScope scope, PermanentPredicate filter) implements CardEffect {
+public record UntapPermanentsEffect(TapUntapScope scope, PermanentPredicate filter, int chosenCount)
+        implements CardEffect {
 
     public UntapPermanentsEffect(TapUntapScope scope) {
-        this(scope, null);
+        this(scope, null, 0);
+    }
+
+    public UntapPermanentsEffect(TapUntapScope scope, PermanentPredicate filter) {
+        this(scope, filter, 0);
     }
 
     @Override

@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapUpToControlledPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -24,6 +25,7 @@ public class Unwind extends Card {
                 "Target must be a noncreature spell."
         ))
                 .addEffect(EffectSlot.SPELL, new CounterSpellEffect())
-                .addEffect(EffectSlot.SPELL, new UntapUpToControlledPermanentsEffect(3, new PermanentIsLandPredicate()));
+                .addEffect(EffectSlot.SPELL,
+                        new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate(), 3));
     }
 }

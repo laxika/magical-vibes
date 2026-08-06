@@ -27,7 +27,7 @@ import com.github.laxika.magicalvibes.service.ability.cost.PermanentChoiceCostHa
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentSacrificeAction;
 import com.github.laxika.magicalvibes.service.ability.cost.SacrificeXPermanentsCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.TapCreatureCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.TapXPermanentsCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.TapCostSupport;
 import com.github.laxika.magicalvibes.service.ability.cost.TapTwoSharingCreatureTypeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.CrewCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.RemoveCounterFromCreatureCostHandler;
@@ -106,7 +106,6 @@ import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TapEnchantedPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.UntapMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapTwoCreaturesSharingTypeCost;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import lombok.RequiredArgsConstructor;
@@ -158,6 +157,7 @@ public class AbilityActivationService {
     private final ExileService exileService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final GameMutationCoordinator mutationCoordinator;
+    private final TapCostSupport tapCostSupport;
 
     /**
      * Taps a permanent for its mana ability (ON_TAP effects), adding the produced mana to the player's pool.
@@ -880,7 +880,7 @@ public class AbilityActivationService {
 
         // Identify permanent-choice costs (e.g. return lands to hand)
         List<PermanentChoiceCostHandler> permanentChoiceCosts = ability.getEffects().stream()
-                .map(e -> toPermanentChoiceCostHandler(e, null, 0))
+                .map(e -> toPermanentChoiceCostHandler(gameData, e, null, 0))
                 .filter(Objects::nonNull)
                 .toList();
 
@@ -1036,7 +1036,7 @@ public class AbilityActivationService {
         ActivatedAbility ability = effectiveGraveyardAbilities(gameData, card, playerId).get(idx);
 
         PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(
-                context.costEffect(), null, 0, context.chosenSoFar());
+                gameData, context.costEffect(), null, 0, context.chosenSoFar());
         if (handler == null) {
             throw new IllegalStateException("Unknown cost effect type");
         }
@@ -1054,7 +1054,7 @@ public class AbilityActivationService {
 
         List<UUID> chosenSoFar = new ArrayList<>(context.chosenSoFar());
         chosenSoFar.add(chosenPermanentId);
-        handler = toPermanentChoiceCostHandler(context.costEffect(), null, 0, chosenSoFar);
+        handler = toPermanentChoiceCostHandler(gameData, context.costEffect(), null, 0, chosenSoFar);
 
         int remaining = context.remaining() - handler.lastPaymentWeight();
         if (remaining > 0) {
@@ -1770,14 +1770,14 @@ public class AbilityActivationService {
         UUID sourceId = permanent.getId();
         final int xValueForCost = effectiveXValue;
         List<PermanentChoiceCostHandler> permanentChoiceCosts = new ArrayList<>(abilityEffects.stream()
-                .map(e -> toPermanentChoiceCostHandler(e, sourceId, xValueForCost))
+                .map(e -> toPermanentChoiceCostHandler(gameData, e, sourceId, xValueForCost))
                 .filter(Objects::nonNull)
                 .toList());
         CastingCostService.ImposedSacrificeRequirement imposedTax =
                 castingCostService.getImposedSacrificeRequirementForAbility(gameData, abilityCost);
         if (!imposedTax.isEmpty()) {
             PermanentChoiceCostHandler imposedHandler = toPermanentChoiceCostHandler(
-                    new SacrificeMultiplePermanentsCost(imposedTax.count(), imposedTax.filter()),
+                    gameData, new SacrificeMultiplePermanentsCost(imposedTax.count(), imposedTax.filter()),
                     sourceId, xValueForCost);
             if (imposedHandler != null) {
                 permanentChoiceCosts.add(imposedHandler);
@@ -2212,11 +2212,13 @@ public class AbilityActivationService {
                 effectiveXValue, targetId, targetZone, nonTargeting, effectiveIndex, targetIds, damageAssignments);
     }
 
-    PermanentChoiceCostHandler toPermanentChoiceCostHandler(CardEffect effect, UUID sourcePermanentId, int xValue) {
-        return toPermanentChoiceCostHandler(effect, sourcePermanentId, xValue, List.of());
+    PermanentChoiceCostHandler toPermanentChoiceCostHandler(GameData gameData, CardEffect effect,
+                                                            UUID sourcePermanentId, int xValue) {
+        return toPermanentChoiceCostHandler(gameData, effect, sourcePermanentId, xValue, List.of());
     }
 
-    PermanentChoiceCostHandler toPermanentChoiceCostHandler(CardEffect effect, UUID sourcePermanentId, int xValue,
+    PermanentChoiceCostHandler toPermanentChoiceCostHandler(GameData gameData, CardEffect effect,
+                                                            UUID sourcePermanentId, int xValue,
                                                             List<UUID> chosenSoFar) {
         PermanentSacrificeAction sacAction = this::sacrificePermanentAsCost;
         PermanentBounceAction bounceAction = this::returnPermanentToHandAsCost;
@@ -2226,9 +2228,8 @@ public class AbilityActivationService {
         if (effect instanceof SacrificePermanentsSequenceCost c) return new SequencePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction, chosenSoFar, sourcePermanentId);
         if (effect instanceof ReturnMultiplePermanentsToHandCost c) return new MultiplePermanentReturnToHandCostHandler(c, predicateEvaluationService, bounceAction);
         if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
-        if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
+        if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, tapCostSupport.requiredCount(gameData, c, sourcePermanentId, xValue), predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof UntapMultiplePermanentsCost c) return new MultiplePermanentUntapCostHandler(c, predicateEvaluationService, gameLogService, sourcePermanentId);
-        if (effect instanceof TapXPermanentsCost c) return new TapXPermanentsCostHandler(c, xValue, predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof SacrificeXPermanentsCost c) return new SacrificeXPermanentsCostHandler(c, xValue, predicateEvaluationService, sacAction);
         if (effect instanceof TapTwoCreaturesSharingTypeCost c) return new TapTwoSharingCreatureTypeCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, chosenSoFar);
         if (effect instanceof CrewCost c) return new CrewCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, sourcePermanentId);
@@ -2338,7 +2339,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("Activated ability no longer has the required cost");
         }
 
-        PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(context.costEffect(), context.sourcePermanentId(), context.xValue(), context.chosenSoFar());
+        PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(gameData, context.costEffect(), context.sourcePermanentId(), context.xValue(), context.chosenSoFar());
         if (handler == null) {
             throw new IllegalStateException("Unknown cost effect type");
         }
@@ -2400,7 +2401,7 @@ public class AbilityActivationService {
         // need the just-paid permanent threaded into the handler for the remaining choices.
         List<UUID> chosenSoFar = new ArrayList<>(context.chosenSoFar());
         chosenSoFar.add(chosenPermanentId);
-        handler = toPermanentChoiceCostHandler(context.costEffect(), context.sourcePermanentId(), context.xValue(), chosenSoFar);
+        handler = toPermanentChoiceCostHandler(gameData, context.costEffect(), context.sourcePermanentId(), context.xValue(), chosenSoFar);
         if (remaining > 0) {
             if (!handler.canPayRemaining(gameData, playerId, remaining)) {
                 throw new IllegalStateException("Not enough permanents remaining");
@@ -2678,7 +2679,7 @@ public class AbilityActivationService {
         // Permanent-choice costs (sacrifice, tap others, crew, ...) need enough valid choices
         UUID sourceId = permanent.getId();
         for (CardEffect effect : abilityEffects) {
-            PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(effect, sourceId, xValue);
+            PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(gameData, effect, sourceId, xValue);
             if (handler != null) {
                 handler.validateCanPay(gameData, playerId);
             }
@@ -2687,7 +2688,7 @@ public class AbilityActivationService {
                 castingCostService.getImposedSacrificeRequirementForAbility(gameData, ability.getManaCost());
         if (!imposedTax.isEmpty()) {
             PermanentChoiceCostHandler imposedHandler = toPermanentChoiceCostHandler(
-                    new SacrificeMultiplePermanentsCost(imposedTax.count(), imposedTax.filter()),
+                    gameData, new SacrificeMultiplePermanentsCost(imposedTax.count(), imposedTax.filter()),
                     sourceId, xValue);
             if (imposedHandler != null) {
                 imposedHandler.validateCanPay(gameData, playerId);
