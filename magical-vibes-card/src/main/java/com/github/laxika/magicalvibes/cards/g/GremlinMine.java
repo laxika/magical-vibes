@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -37,7 +38,7 @@ public class GremlinMine extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new SacrificeSelfCost(), new RemoveChargeCountersFromTargetPermanentEffect(4)),
+                List.of(new SacrificeSelfCost(), new RemoveCounterFromTargetPermanentEffect(CounterType.CHARGE, null, 4)),
                 "{1}, {T}, Sacrifice Gremlin Mine: Remove up to four charge counters from target noncreature artifact.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

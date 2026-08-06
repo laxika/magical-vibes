@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
@@ -26,7 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectRole;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
@@ -243,7 +244,8 @@ public class TargetPolarityClassifier {
         }
         // Removing counters inverts the sign: stripping -1/-1 counters helps the target,
         // stripping +1/+1 counters hurts it.
-        if (effect instanceof RemoveAllCountersFromTargetPermanentEffect removeAll) {
+        if (effect instanceof RemoveAllCountersEffect removeAll
+                && removeAll.subject() == CounterRemovalSubject.TARGET) {
             if (removeAll.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
                 return TargetPolarity.BENEFICIAL;
             }

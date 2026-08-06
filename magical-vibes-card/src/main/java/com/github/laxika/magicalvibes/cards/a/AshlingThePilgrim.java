@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTu
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ public class AshlingThePilgrim extends Card {
                 List.of(
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         new ConditionalEffect(new NthAbilityResolutionThisTurn(3),
-                                new RemoveAllCountersFromSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                                new RemoveAllCountersEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                         new ConditionalEffect(new NthAbilityResolutionThisTurn(3),
                                 new MassDamageEffect(new EventValue(), true))
                 ),

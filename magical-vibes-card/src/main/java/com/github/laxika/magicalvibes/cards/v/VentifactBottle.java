@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -41,7 +41,7 @@ public class VentifactBottle extends Card {
                 new ConditionalEffect(new SourceCounterThreshold(1, CounterType.CHARGE),
                         SequenceEffect.of(
                                 new TapPermanentsEffect(TapUntapScope.SELF),
-                                new RemoveAllCountersFromSelfEffect(CounterType.CHARGE),
+                                new RemoveAllCountersEffect(CounterType.CHARGE),
                                 new AwardManaEffect(ManaColor.COLORLESS, new EventValue()))));
     }
 }

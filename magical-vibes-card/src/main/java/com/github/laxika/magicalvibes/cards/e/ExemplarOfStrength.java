@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceAndGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AKH", collectorNumber = "165")
@@ -16,6 +17,6 @@ public class ExemplarOfStrength extends Card {
         target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 3));
 
         // "Whenever this creature attacks, remove a -1/-1 counter from it. If you do, you gain 1 life."
-        addEffect(EffectSlot.ON_ATTACK, new RemoveCounterFromSourceAndGainLifeEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
+        addEffect(EffectSlot.ON_ATTACK, new RemoveCounterAndGainLifeEffect(CounterType.MINUS_ONE_MINUS_ONE, 1, CounterRemovalSubject.SOURCE));
     }
 }

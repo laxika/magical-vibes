@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerThenTapSourceIfDamageDealtEffect;
@@ -31,7 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -82,7 +83,7 @@ public class DestructionSupport {
     private final LifeSupport lifeSupport;
     private final OpponentMayGainControlOfCreatureYouControlEffectHandler opponentMayGainControlHandler;
     private final OpponentGainsControlOfSourceCreatureEffectHandler opponentGainsControlOfSourceHandler;
-    private final RemoveAllCountersFromSelfEffectHandler removeAllCountersFromSelfHandler;
+    private final RemoveAllCountersEffectHandler removeAllCountersHandler;
     private final PhasingService phasingService;
     private final ExileSelfEffectHandler exileSelfEffectHandler;
     private final LibraryExileSupport libraryExileSupport;
@@ -557,9 +558,10 @@ public class DestructionSupport {
                 // "When a player doesn't pay this enchantment's cumulative upkeep, that player
                 // exiles all cards from their library" (Thought Lash).
                 libraryExileSupport.exileEntireLibrary(gameData, entry.getControllerId());
-            } else if (elseEffect instanceof RemoveAllCountersFromSelfEffect removeCounters) {
+            } else if (elseEffect instanceof RemoveAllCountersEffect removeCounters
+                    && removeCounters.subject() == CounterRemovalSubject.SOURCE) {
                 // "remove all wage counters from this creature" (Rogue Skycaptain).
-                removeAllCountersFromSelfHandler.resolve(gameData, entry, removeCounters);
+                removeAllCountersHandler.resolve(gameData, entry, removeCounters);
             } else if (elseEffect instanceof OpponentGainsControlOfSourceCreatureEffect gainControl) {
                 // "an opponent gains control of it" (Rogue Skycaptain).
                 opponentGainsControlOfSourceHandler.resolve(gameData, entry, gainControl);

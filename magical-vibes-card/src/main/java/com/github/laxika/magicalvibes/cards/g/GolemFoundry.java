@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -33,7 +33,7 @@ public class GolemFoundry extends Card {
                 false,
                 null,
                 List.of(
-                        new RemoveChargeCountersFromSourceCost(3),
+                        new RemoveCounterFromSourceCost(3, CounterType.CHARGE),
                         new CreateTokenEffect("Golem", 3, 3, null,
                                 List.of(CardSubtype.GOLEM), Set.of(), Set.of(CardType.ARTIFACT))
                 ),

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "134")
 public class WitherscaleWurm extends Card {
@@ -22,6 +22,6 @@ public class WitherscaleWurm extends Card {
 
         // Whenever this creature deals damage to an opponent, remove all -1/-1 counters from it.
         addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER,
-                new RemoveAllCountersFromSelfEffect(CounterType.MINUS_ONE_MINUS_ONE));
+                new RemoveAllCountersEffect(CounterType.MINUS_ONE_MINUS_ONE));
     }
 }

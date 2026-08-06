@@ -29,7 +29,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEff
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -228,7 +227,7 @@ class AiManaManagerTest {
         // Tap + remove a charge counter: add one mana of any color (like Sphere of the Suns)
         card.addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new RemoveChargeCountersFromSourceCost(1), new AwardAnyColorManaEffect()),
+                List.of(new RemoveCounterFromSourceCost(1, CounterType.CHARGE), new AwardAnyColorManaEffect()),
                 "{T}, Remove a charge counter: Add one mana of any color."));
         return card;
     }

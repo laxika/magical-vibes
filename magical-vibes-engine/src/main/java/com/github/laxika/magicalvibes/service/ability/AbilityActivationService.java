@@ -86,7 +86,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.IncreaseActivationCostPerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostPerCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
@@ -1906,11 +1905,6 @@ public class AbilityActivationService {
 
         boolean discardHandCost = abilityEffects.stream().anyMatch(e -> e instanceof DiscardHandCost);
 
-        Optional<RemoveChargeCountersFromSourceCost> removeChargeCost = abilityEffects.stream()
-                .filter(e -> e instanceof RemoveChargeCountersFromSourceCost)
-                .map(e -> (RemoveChargeCountersFromSourceCost) e)
-                .findFirst();
-
         // Validate X for Prototype Portal-style abilities here rather than in the shared legality
         // check alone: when the same ability's exile cost just imprinted a card (re-entry after the
         // graveyard choice), the imprint only exists at this point.
@@ -2048,18 +2042,6 @@ public class AbilityActivationService {
             String counterWord = count == 1 ? "a " + counterLabel + " counter" : count + " " + counterLabel + " counters";
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " removes " + counterWord + " from ", permanent.getCard(), "."));
-        }
-
-        // Pay remove-charge-counter cost
-        if (removeChargeCost.isPresent()) {
-            int required = removeChargeCost.get().count();
-            permanent.setCounterCount(CounterType.CHARGE, permanent.getCounterCount(CounterType.CHARGE) - required);
-            
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " removes " + required + " charge counter(s) from ")
-                    .card(permanent.getCard())
-                    .text(" (" + permanent.getCounterCount(CounterType.CHARGE) + " remaining).")
-                    .build());
         }
 
         // Pay put-counter cost: put counters on the source (e.g. "Put a -1/-1 counter on this creature: ...")
@@ -2865,18 +2847,6 @@ public class AbilityActivationService {
             List<Card> deck = gameData.playerDecks.get(playerId);
             if (deck == null || deck.size() < required) {
                 throw new IllegalStateException("Not enough cards in library to exile (need " + required + ")");
-            }
-        }
-
-        // Remove-charge-counter cost availability
-        Optional<RemoveChargeCountersFromSourceCost> removeChargeCost = abilityEffects.stream()
-                .filter(e -> e instanceof RemoveChargeCountersFromSourceCost)
-                .map(e -> (RemoveChargeCountersFromSourceCost) e)
-                .findFirst();
-        if (removeChargeCost.isPresent()) {
-            int required = removeChargeCost.get().count();
-            if (permanent.getCounterCount(CounterType.CHARGE) < required) {
-                throw new IllegalStateException("Not enough charge counters (need " + required + ", have " + permanent.getCounterCount(CounterType.CHARGE) + ")");
             }
         }
 

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AddNotedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.NoteManaSpentForActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
 import java.util.List;
 
@@ -32,7 +32,7 @@ public class JeweledAmulet extends Card {
         // noted type.
         addActivatedAbility(new ActivatedAbility(true, null,
                 List.of(
-                        new RemoveChargeCountersFromSourceCost(1),
+                        new RemoveCounterFromSourceCost(1, CounterType.CHARGE),
                         new AddNotedManaEffect()
                 ),
                 "{T}, Remove a charge counter from this artifact: Add one mana of this artifact's last noted type."));

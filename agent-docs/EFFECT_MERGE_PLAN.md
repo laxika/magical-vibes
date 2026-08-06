@@ -81,7 +81,7 @@ high-churn or needs a design call and is optional.
 | 11 | Tap / untap scopes and costs | 3 | LOW | **DONE** — all three premises held. Two corrections: the `ON_ANY_CREATURE_DIES` collector for 11a was already occupied by an identical `UntapPermanentsEffect` one (a deletion, not a re-key), and 11c's `DynamicAmount` count cannot be evaluated inside the handler (`requiredCount()` takes no game state), so a new `TapCostSupport` resolves it at construction and `toPermanentChoiceCostHandler` gained a `GameData` parameter. The MED stretch was not taken |
 | 12 | `Grant*` low-risk batch | 6 | LOW | **DONE** — all five premises held; the audit's net count is one high (5, not 6 — the sixth would have been folding away the `SpellCastingAbilityGrantingEffect` capability interface, which is deliberately kept). One correction: the hand-size row is a rename, not an extension — `GrantPermanentNoMaxHandSizeEffect` would have lied once `UNTIL_NEXT_TURN` was folded in |
 | 13 | Cost-modification batch | 6 | LOW | **DONE** — all four premises held; the audit's net count is two low (6 records + 3 handlers, not 4). One correction: the tax scope reuses the existing `CostModificationScope`, not a new `CostTaxScope`. Two rules fixes shipped, both from `getType()` → `hasType` (CR 205.2b) |
-| 14 | Remove-counter batch | 4 | LOW–MED | TODO |
+| 14 | Remove-counter batch | 4 | LOW–MED | **DONE** — all four premises held; the audit's count is two low (6 records + 5 handlers, not 4). Two corrections: both `fromTarget` booleans became a shared `CounterRemovalSubject` enum, and the two "identical" gain-life handlers were not identical (one rendered the counter name, the other the enum constant). The flagged decision went **for** adding `sourceCountersRemoved()` to the survivor — rationale in the step body |
 | 15 | Reveal / reorder library batch | 2 | LOW | TODO |
 | 16 | Damage target-category batch | 3 | LOW | TODO |
 | 17 | Exile-top-cards families | 7 | LOW–MED | TODO |
@@ -1147,32 +1147,123 @@ predicate), and `ReduceOwnCastCostIfTargetingStackEntryEffect` (a `StackEntryPre
 
 ---
 
-### Step 14 — Remove-counter batch
+### Step 14 — Remove-counter batch — **DONE**
 
-| Target | Absorbs | Cards |
-|---|---|---|
-| `RemoveCounterAndGainLifeEffect(CounterType, int lifeGain, boolean fromTarget)` | `RemoveCounterFromSourceAndGainLifeEffect`, `RemoveCounterFromTargetAndGainLifeEffect` | 2 + 2 |
-| `RemoveAllCountersEffect(CounterType, boolean fromTarget)` | `RemoveAllCountersFromSelfEffect`, `RemoveAllCountersFromTargetPermanentEffect` | 7 + 1 |
-| `RemoveCounterFromTargetPermanentEffect(CounterType, PermanentPredicate, int amount)` | `RemoveChargeCountersFromTargetPermanentEffect` | 1 |
-| `RemoveCounterFromSourceCost(count, CounterType.CHARGE)` | `RemoveChargeCountersFromSourceCost` | 23 |
+**Shipped**
+```java
+public enum CounterRemovalSubject { SOURCE, TARGET }
 
-**Notes**
-- Gain-life pair: identical components `(CounterType, int lifeGain)`; handlers are the same seven
-  statements including the `getCounterCount(ct) <= 0` early return that implements "If you do". The
-  source form's fallback (`getSourcePermanentId() != null ? … : getTargetId()`) **is** the target form.
-- `RemoveAllCounters*`: identical single `CounterType` component; both do
-  `removed = getCounterCount(ct)` → `setCounterCount(ct, 0)` → identical log. The self form also does
-  `entry.setEventValue(removed)` (Ashling) — harmless on both paths.
-  **Gotcha**: the self form implements `CombatDamageTriggerContextEffect` with
-  `TriggerContext.SOURCE_SELF` and `TargetSpec(NONE, …, requiresSource=true, 1)`, the target form is
-  `TargetSpec.benign(CREATURE)` — branch `targetSpec()`/`combatDamageTriggerContext()` on the flag.
-- Charge-counter cost: `AbilityActivationService` availability check `~:2870` is the `default ->`
-  branch of the generic check `~:2799`, and payment `~:2055` is the generic `default ->` at `~:1996`.
-  **Decision required**: `RemoveChargeCountersFromSourceCost` overrides
-  `CostEffect.sourceCountersRemoved()` to return `count` while `RemoveCounterFromSourceCost` inherits
-  `0`. The only consumer is `magical-vibes-ai/.../SpellEvaluator.java:161`. Adding the override to the
-  survivor is arguably correct but changes AI cost estimation for its 39 existing cards — decide
-  deliberately, do not let it ride in silently.
+public record RemoveCounterAndGainLifeEffect(CounterType counterType,
+                                             int lifeGain,
+                                             CounterRemovalSubject subject) implements CardEffect
+
+public record RemoveAllCountersEffect(CounterType counterType, CounterRemovalSubject subject)
+        implements CombatDamageTriggerContextEffect
+// sugar: (CounterType) -> subject = SOURCE
+
+public record RemoveCounterFromTargetPermanentEffect(CounterType counterType,
+                                                     PermanentPredicate targetPredicate,
+                                                     int amount) implements CardEffect
+// sugar: () -> (null, null, 1); (CounterType, PermanentPredicate) -> amount 1
+
+public record RemoveCounterFromSourceCost(int count, CounterType counterType) implements CostEffect
+// now overrides sourceCountersRemoved() -> count
+```
+
+Six records and five handlers deleted, two records + one enum + two handlers added. Cards (39):
+Living Artifact, Exemplar of Strength, Woeleecher, Chainbreaker; Ammit Eternal, Ashling the Pilgrim,
+Discordant Spirit, Energy Vortex, Rogue Skycaptain, Ventifact Bottle, Witherscale Wurm, Hapatra's
+Mark; Gremlin Mine; Conversion Chamber, Golem Foundry, Ice Cauldron, Jeweled Amulet, Lux Cannon, Mana
+Bloom, Necrogen Censer, Shriekhorn, Sigil of Distinction, Sphere of the Suns, Surge Node, Titan
+Forge, Trigon of Corruption / Infestation / Mending / Rage / Thought, Tumble Magnet, Vivid Crag /
+Creek / Grove / Marsh / Meadow.
+
+**What held** — all four premises. The gain-life handlers really do share the same seven statements
+and the source form's `getSourcePermanentId() != null ? … : getTargetId()` fallback really is the
+target form, so one expression covers both subjects. Both `RemoveAllCounters*` handlers really do
+reduce to `removed = getCounterCount(ct)` → `setCounterCount(ct, 0)` → the same log, and the flagged
+gotcha was real: `targetSpec()` and `combatDamageTriggerContext()` both branch on `subject`, with
+`TARGET` reporting `null` (Step 7's precedent — every reader calls the method rather than using the
+interface as a bare marker, and `null` is documented as "no special context"). The charge-cost
+availability check at `~:2870` really is the `default ->` branch of the generic check at `~:2799`,
+and payment `~:2055` the generic `default ->` at `~:1996`.
+
+**What the audit missed**
+- **Six records, not four.** The Step Index said 4 deleted; the body's own table lists six.
+- **`boolean fromTarget` reads as noise at the call site.** Rows 1 and 2 both wanted the same
+  two-valued axis, and row 1's four cards split 2/2 between the values, so there is no honest
+  default to hide the flag behind. Both use one shared `CounterRemovalSubject` enum instead —
+  the same "which permanent does this effect act on" axis Steps 8 and 9 spelled `PhaseOutSubject` /
+  `PermanentReference`. Neither of those enums offers both `SOURCE` and `TARGET`, so extending one
+  would have broken its exhaustive switches for no gain.
+- **The gain-life handlers were not identical.** The source form rendered the counter through
+  `PermanentCounterSupport.counterTypeName` ("-1/-1"), the target form interpolated the enum
+  constant ("MINUS_ONE_MINUS_ONE"). Unified on `counterTypeName`, which is what the rest of the
+  counter code already does — see the deliberate deltas.
+
+**The flagged decision: `sourceCountersRemoved()` now returns `count`.** Taken deliberately, for
+the survivor rather than against it:
+- The facet is **descriptive** by `CostEffect`'s own contract — "every facet returns an existing
+  record component … never a score". After the merge the survivor genuinely removes `count` counters
+  from the source, so `0` would be a false statement about the record.
+- It keeps all 23 absorbed charge cards' AI estimate **exactly** as it was; the alternative
+  (inheriting `0`) would have silently dropped it for them.
+- It ends an accidental split the merge exposes: Druid's Repository already used
+  `RemoveCounterFromSourceCost(1, CHARGE)` and reported `0` while Golem Foundry's charge record
+  reported `3` for the same resource.
+- The 39 cards that gain the estimate are overwhelmingly limited-use resource counters (charge,
+  wish, study, divinity, blaze, hoofprint, currency, …) plus +1/+1 removals, where one point of cost
+  per counter is the intended reading. For the seven `MINUS_ONE_MINUS_ONE` cards the counter is still
+  a limited number of activations, but the P/T the source gains back is not modelled — an
+  understatement of value in `SpellEvaluator:161`, not a wrong sign on the fact. Recorded in the
+  record's javadoc as a consumer-side shortcoming rather than papered over with a `counterType ==
+  CHARGE` special case, which would have made the facet a score.
+
+**Deliberate deltas** (all log-only or inert)
+- The gain-life `TARGET` form now logs "A -1/-1 counter removed from X." instead of
+  "A MINUS_ONE_MINUS_ONE counter removed from X.". Same unification applied to
+  `RemoveCounterFromTargetPermanentEffectHandler`, which had the same raw-enum bug. No test asserted
+  either string.
+- `RemoveCounterFromTargetPermanentEffect` gained an `amount` upper bound, so Gremlin Mine's log
+  loses the charge handler's "(N remaining)" suffix and reads "4 charge counters removed from X.".
+  `Math.min(amount, present)` is identical to the old "remove 1 if > 0" at `amount == 1`; both
+  amount-1 branches stay pinned by existing tests that stack more than one counter on the target
+  (`MedicineRunnerTest`, `DefiantGreatmawTest`).
+- Charge-cost activation now throws "Not enough counters to remove (need N, have M)" rather than
+  "Not enough charge counters (…)", and its payment log drops "(N remaining)". Asserted message
+  updated in `AbilityActivationServiceTest`.
+- `RemoveAllCountersEffect` sets the entry's event value on the `TARGET` path too (including `0`
+  when the subject is gone). Hapatra's Mark is the only `TARGET` card and nothing on its entry reads
+  `EventValue`.
+
+**Other call sites updated**
+- `DestructionSupport:560` gates its `ForcedCostOrElse` fallback on `subject == SOURCE` (Step 9's
+  precedent), so a `TARGET` form in that slot falls through to the existing unsupported-fallback
+  `log.warn` instead of silently reading the payer as a permanent id. Rogue Skycaptain unchanged.
+- `PutCounterOnSelfThenTransformIfThresholdEffectHandler:101` **constructs** the record at runtime
+  for Primal Amulet's may-transform — a write site, not just a read site.
+- `AbilityActivationService` loses both charge-specific blocks (availability + payment) and its
+  import; the generic remove-counter blocks already covered them.
+- `TargetPolarityClassifier:246` keys on `RemoveAllCountersEffect` **and** `subject == TARGET`, so
+  the seven self-form cards keep returning `null` as they always did.
+- `CostEffectClassificationTest.ABILITY_ONLY_COST_TYPES` drops the deleted cost name (its
+  stale-entry ratchet fails otherwise).
+
+**Tests** — added the cross-contamination assertions a subject merge needs, one per axis where a
+misread is observable: `WoeleecherTest.counterComesOffTheTargetNotTheSource` (the strongest case —
+an activated ability whose source permanent is on the battlefield and also carries a -1/-1 counter,
+so a `TARGET` branch reading `sourcePermanentId` is caught),
+`ExemplarOfStrengthTest.attackTriggerLeavesOtherCreaturesCountersAlone` (the `SOURCE` mirror) and
+`HapatrasMarkTest.leavesTheUntargetedCreaturesCountersAlone`. The `SOURCE_SELF` trigger context is
+already pinned by `AmmitEternalTest.combatDamageRemovesCounters`, the event-value snapshot by
+`AshlingThePilgrimTest`, the `ForcedCostOrElse` fallback by `RogueSkycaptainTest`, and the `amount`
+bound by `GremlinMineTest`'s up-to-four pair.
+
+**Kept separate**: `RemoveAllCountersAsCostEffect` (paid at activation, snapshots into xValue, no
+`subject`), `RemoveCounterFromSourceEffect` (a *resolved* self-effect, not a cost, with
+`selfTargeting()`), `RemoveCounterFromControlledCreatureCost` / `RemoveOneOrMoreCountersFrom*` /
+`RemoveXCountersFromSourceCost` (different payment mechanics), and
+`RemoveCountersInsteadOfUntappingEffect` (a static replacement).
 
 ---
 

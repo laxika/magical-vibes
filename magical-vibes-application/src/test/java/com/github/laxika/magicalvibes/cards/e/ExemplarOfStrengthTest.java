@@ -72,6 +72,30 @@ class ExemplarOfStrengthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The attack trigger takes the counter off the Exemplar and nothing else")
+    void attackTriggerLeavesOtherCreaturesCountersAlone() {
+        Permanent exemplar = new Permanent(new ExemplarOfStrength());
+        exemplar.setSummoningSick(false);
+        exemplar.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 3);
+        gd.playerBattlefields.get(player1.getId()).add(exemplar);
+
+        // A second creature carrying -1/-1 counters: the non-targeting SOURCE form must not reach it.
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        elemental.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        gs.declareAttackers(gd, player1, List.of(0));
+        harness.passBothPriorities(); // resolve attack trigger
+
+        assertThat(exemplar.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(elemental.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Attacking with no -1/-1 counters gains no life")
     void attackWithNoCountersGainsNoLife() {
         Permanent exemplar = new Permanent(new ExemplarOfStrength());

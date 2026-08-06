@@ -51,7 +51,6 @@ class CostEffectClassificationTest {
             "PutTypedCounterOnSourceCost",
             "ReduceActivationCostPerCounterEffect",
             "RemoveAllCountersAsCostEffect",
-            "RemoveChargeCountersFromSourceCost",
             "RemoveCounterFromControlledCreatureCost",
             "RemoveCounterFromSourceCost",
             "RemoveOneOrMoreCountersFromControlledCreaturesCost",
