@@ -68,6 +68,16 @@ public record AmountContext(
                 chosenPermanentId, List.of(), null);
     }
 
+    /**
+     * The same context re-pointed at another player, for effects that evaluate one amount once per
+     * player ("each player's life total becomes the number of creatures <em>they</em> control").
+     * Player-relative scopes ({@code CountScope.CONTROLLER}) then read that player.
+     */
+    public AmountContext withControllerId(UUID otherControllerId) {
+        return new AmountContext(otherControllerId, sourcePermanent, targetPermanentId, xValue,
+                eventValue, staticEvaluation, chosenPermanentId, repeatedAdditionalCosts, sourceCard);
+    }
+
     /** Context for resolving an effect on a stack entry (stack resolution time). */
     public static AmountContext forStackEntry(StackEntry entry, Permanent sourcePermanent) {
         return new AmountContext(entry.getControllerId(), sourcePermanent, entry.getTargetId(),

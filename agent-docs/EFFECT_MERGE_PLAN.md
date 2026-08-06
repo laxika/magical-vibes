@@ -73,7 +73,7 @@ high-churn or needs a design call and is optional.
 | 3 | Redirect-next-damage family | 6 | LOW | **DONE** — premise held for all six handlers; the audit missed a third axis (`TargetSpec.harmful`), which is now derived from `destinationRole == TARGET` and makes Zealous Inquisitor harmful like its Zhalfirin Crusader twin (CR 702.16b). The `PermanentPredicate` moved out of the effect onto the two white-creature cards |
 | 4 | Any-color mana family | 8 | LOW | **DONE** — premise held; `eachManaChosenSeparately` is derived from the restriction, not a component. The audit missed an eighth sibling (`AwardAnyColorSubtypeSpellManaEffect`, Sliver Hive), absorbed in a follow-up commit. Three deliberate deltas, all rules fixes: Damping Sphere / land-type replacement now see spend-restricted land mana, "could produce" scans (CR 106.7) now include restricted any-color lands, and the AI's choice-prompt filter covers all restrictions |
 | 5 | Combat-requirement / must-attack | 6 | LOW | **DONE** — premise held for all six handlers; the audit undercounted by one (5b absorbs 2 classes, not 1, so 6 records + 6 handlers went). One unlisted axis found: `MustBlockThisTurnIfAbleEffect` alone carried a `PermanentIsCreaturePredicate` in its spec, preserved by branching `targetSpec()`. Zero behavior change |
-| 6 | `SetLifeTotalEffect` | 3 | LOW | TODO |
+| 6 | `SetLifeTotalEffect` | 6 | LOW | **DONE** — premise held for all four listed handlers; the audit undercounted (4 records, not 3) and the optional stretch fell out easily, so both each-player siblings went too: 6 records + 6 handlers. `EACH_PLAYER` now evaluates the amount once per player, which is what made the stretch free |
 | 7 | `SkipNextEffect` | 3 | MED | TODO |
 | 8 | Phase-out + attached-counter placement | 4 | LOW | TODO |
 | 9 | Destroy-referenced-permanent | 3 | LOW | TODO |
@@ -381,24 +381,63 @@ stamps. Different mechanism and lifetime. Still true after the merge.
 
 ---
 
-### Step 6 — `SetLifeTotalEffect`
+### Step 6 — `SetLifeTotalEffect` — **DONE**
 
-**Target**: `SetLifeTotalEffect(LifeRecipient who, DynamicAmount amount)` —
-`{ CONTROLLER, TARGET_PLAYER, EACH_PLAYER }`.
+**Shipped**
+```java
+public record SetLifeTotalEffect(DynamicAmount amount,
+                                 SetLifeTotalRecipient recipient) implements CardEffect
+// sugar: (int, recipient), (DynamicAmount), (int) — the last two default to CONTROLLER
+// enum SetLifeTotalRecipient { CONTROLLER, TARGET_PLAYER, EACH_PLAYER }
+```
 
-**Absorbs**: `SetControllerLifeToAmountEffect` (6), `SetEachPlayerLifeToAmountEffect` (1),
-`SetTargetPlayerLifeToSpecificValueEffect` (3), `SetTargetPlayerLifeToHalfStartingEffect` (1).
+Six records and six handlers deleted; one record + one enum + one handler + one `DynamicAmount`
+(`HighestLifeTotalAmongPlayers`) added, plus `AmountContext.withControllerId`. Cards: Form of the
+Dragon, Invincible Hymn, Oketra's Last Mercy, Touch of the Eternal, Elderscale Wurm, Resolute
+Archangel; Magister Sphinx, Sorin Markov, Vraska Relic Seeker, Torgaar; Worldfire, Biorhythm,
+Arbiter of Knollridge. Argument order follows the `LoseLifeEffect` / `GainLifeEffect` siblings
+(amount first, recipient second), not the plan's `(who, amount)`.
 
-**Evidence** — all handlers end in the identical three lines: `lifeSupport.applySetLifeTotal(...)`,
-then `GameLog.text(playerName + "'s life total becomes " + newLife + " (was " + currentLife + ").")`,
-then the same `log.info`. Controller/EachPlayer both build `AmountContext.forStackEntry(entry, source)`
-with the same source-or-snapshot fallback. `SetTargetPlayerLifeToSpecificValueEffect(int)` is
-`Fixed(n)`; `SetTargetPlayerLifeToHalfStartingEffect()` is `Fixed(GameData.STARTING_LIFE_TOTAL / 2)`.
-Both target variants declare identical `TargetSpec.benign(TargetPredicates.player())`.
+**What held** — all four listed handlers really do end in the same three statements, and the two
+target records really are `Fixed(1)` / `Fixed(10)` / `Fixed(GameData.STARTING_LIFE_TOTAL / 2)` with
+identical `TargetSpec.benign(player())`. `targetSpec()` branches on `recipient == TARGET_PLAYER`,
+exactly as `LoseLifeEffect` already does. Torgaar's null-target no-op is preserved (its "up to one
+target player" test still passes unchanged).
 
-**Stretch (MED, optional)**: `SetEachPlayerLifeToCreatureCountEffect` (1) needs the amount evaluated
-*per player*; `SetEachPlayerLifeToHighestAmongPlayersEffect` (1) needs a new `DynamicAmount`
-(existing `HighestOpponentLifeTotal` excludes the controller). Skip unless it falls out easily.
+**What the audit missed**
+- **Four records, not three.** The Step Index said 3 deleted; the body correctly listed four.
+- **The each-player handlers gate the log on the total actually changing.** All three
+  `SetEachPlayer*` handlers wrap the log in `currentLife != newLife`; the controller and
+  target-player handlers logged unconditionally, emitting `"X's life total becomes 5 (was 5)."`.
+  Unified on the gate — see the deliberate delta below.
+
+**The stretch was taken.** `EACH_PLAYER` evaluates the amount **once per player**, re-pointing the
+`AmountContext` at that player (new `withControllerId` wither) so a `CountScope.CONTROLLER` amount
+reads "the creatures *they* control". That makes Biorhythm exactly
+`PermanentCount(PermanentIsCreaturePredicate, CountScope.CONTROLLER)` — verified equivalent, since
+`countPermanents` routes that predicate to the same `GameQueryService.isCreature` the deleted
+handler called. Arbiter of Knollridge needed one new amount, `HighestLifeTotalAmongPlayers` (the
+controller-*including* sibling of `HighestOpponentLifeTotal`); the merged handler determines every
+player's new total **before** applying any of them, which is what keeps that cross-player amount
+snapshotted. Worldfire's `Fixed(1)` is unaffected by per-player evaluation.
+
+`CONTROLLER` and `TARGET_PLAYER` deliberately do **not** re-point the context: "target player's life
+total becomes X" reads X from the controller's point of view, and `CountScope.TARGET_PLAYER` is the
+existing way to read the target. No card exercises this today.
+
+**Deliberate deltas** (both log/no-op only)
+- The `currentLife != newLife` log gate now applies on every path, so a redundant
+  `"X's life total becomes 5 (was 5)."` line is no longer emitted for the controller and
+  target-player forms. No test asserted it; `applySetLifeTotal` already returned early in that case,
+  so nothing else changes.
+- The `Math.max(0, …)` clamp and the source-or-snapshot `AmountContext` lookup are now universal.
+  No-ops for the two absorbed target-player forms, whose amounts were positive constants.
+
+**Tests** — no test referenced any of the six classes by name, and every recipient already had card
+coverage (Biorhythm asserts different per-player counts; Arbiter asserts the snapshot; Torgaar
+asserts the null target). Added the cross-contamination assertions a `switch` merge needs:
+`FormOfTheDragonTest.endStepLeavesOpponentLifeAlone` (CONTROLLER must not leak to EACH_PLAYER) and
+`MagisterSphinxTest.etbLeavesTheUntargetedPlayerAlone` (TARGET_PLAYER must not leak either way).
 
 ---
 

@@ -47,6 +47,22 @@ class MagisterSphinxTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("ETB touches only the targeted player, not the other one")
+    void etbLeavesTheUntargetedPlayerAlone() {
+        harness.setHand(player1, List.of(new MagisterSphinx()));
+        addManaCost(player1);
+        harness.setLife(player1, 25);
+        harness.setLife(player2, 20);
+
+        harness.castCreature(player1, 0, 0, player2.getId());
+        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve ETB trigger
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(10);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(25);
+    }
+
+    @Test
     @DisplayName("ETB can target its own controller")
     void etbCanTargetSelf() {
         harness.setHand(player1, List.of(new MagisterSphinx()));
