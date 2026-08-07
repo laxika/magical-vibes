@@ -85,7 +85,7 @@ high-churn or needs a design call and is optional.
 | 15 | Reveal / reorder library batch | 2 | LOW | **DONE** — both premises held. Three corrections: the two `boolean targetPlayer` flags became one shared `LibraryOwner` enum (which keeps the reorder family's nine own-library call sites untouched); the reveal's `@ValidatesTarget` validator had to be branched or the Deceivers would demand a player target; and `Fixed(0)` is honest to the *amount*-reading `LifeGainEffect` consumers but not to the two presence-checking ones, so the capability gained a `gainsNoLife()` default |
 | 16 | Damage target-category batch | 3 | LOW | **DONE** — all three premises held. The audit's "3" is the *net* count (5 records + 5 handlers deleted, 2 records + 1 enum + 2 handlers added) and its row-1 card count is three low (17, not 14). Three corrections: both proposed `boolean`s became enums (`PlayerRelation` reused, new `DamagedPermanentScope`), the all-creatures survivor had to be **renamed** or its name would lie, and the row-3 handlers diverged on two axes the audit missed (a null-target guard and `checkWinCondition`) |
 | 17 | Exile-top-cards families | 7 | LOW–MED | **DONE (partial)** — 17b's premise held (3 records + 3 handlers → 1). **17a's premise did not**: the six handlers are *not* identical (five different log shapes, a `DynamicAmount` evaluator, two delayed actions, face-down exile), so the full 17a merge was **rejected**; only its free sub-merge was taken. Net: 4 records + 4 handlers deleted, 1 enum added |
-| 18 | Enchanted-creature aura batch | 3 | LOW–MED | TODO |
+| 18 | Enchanted-creature aura batch | 3 | LOW–MED | **DONE** — both premises held, and this time the audit's "line-for-line identical" claim was accurate (all three tax consumers verified in full). Audit undercounted: 4 records + 0 handlers deleted (these are handler-less static markers), 1 record + 1 enum added. The optional follow-on was **rejected** — it would have rewritten 53 Mockito stubs to delete one class with one card |
 | 19 | Entering-creature conditionals + `GrantEffectTo*` | 5 | LOW–MED | TODO |
 | 20 | Misc low-risk 2→1 batch | 12 | LOW | TODO |
 | 21 | `RevealUntilEffect` | 4 | MED | TODO |
@@ -1557,30 +1557,95 @@ affected card tests — 69 tests, all green.
 
 ---
 
-### Step 18 — Enchanted-creature aura batch
+### Step 18 — Enchanted-creature aura batch — **DONE**
 
-**18a Target**: `EnchantedCreatureCombatTaxEffect(int amount, CombatTaxKind kind)` —
-`{ ATTACK, BLOCK_WITH, BE_BLOCKED_BY }`.
-**Absorbs**: `EnchantedCreatureCantAttackUnlessPaysEffect` (2),
-`EnchantedCreatureCantBlockUnlessPaysEffect` (1),
-`EnchantedCreatureCantBeBlockedUnlessPaysEffect` (1).
-All three are single-`int` records. Their three consumers in `GameQueryService` —
-`getEnchantedCreatureAttackTax:3521`, `getEnchantedCreatureBlockTax:3542`,
-`getEnchantedCreatureBlockerTax:3560` — are line-for-line identical, differing only in the class and
-accessor. Collapse to one `getEnchantedCreatureCombatTax(gameData, creature, kind)` and keep the
-three public methods as thin delegating wrappers so call sites are untouched.
+**Shipped**
+```java
+public record EnchantedCreatureCombatTaxEffect(int amount, CombatTaxKind kind) implements CardEffect
+// enum CombatTaxKind { ATTACK, BLOCK_WITH, BE_BLOCKED_BY }
 
-**18b Target**: `EnchantedCreatureCantAttackOrBlockEffect(boolean preventsAttacking, boolean preventsBlocking)`.
-**Absorbs**: `EnchantedCreatureCantAttackEffect` (2); survivor has 15.
-`AttackLegalityService:92-93` checks both on adjacent lines with the identical expression;
-`BlockLegalityService:353` checks only the survivor. `CantAttack` is a strict subset.
-**Prerequisite**: `GameQueryService.hasAuraWithEffect:3453` is class-based only — it needs a
-`Predicate<CardEffect>` overload first.
+public record EnchantedCreatureCantAttackOrBlockEffect(boolean preventsAttacking,
+                                                       boolean preventsBlocking) implements CardEffect
+// sugar: () -> (true, true); compact ctor rejects (false, false)
 
-**Optional follow-on** (only if the overload lands): `EnchantedCreatureCantActivateTapAbilitiesEffect`
-(1) → `EnchantedCreatureCantActivateAbilitiesEffect` (7) with `boolean tapOnly`. Forces the overload
-across 5 call sites (`AbilityActivationService:208,685,2617`, `GameQueryService:4383,4420`) to delete
-one class.
+// GameQueryService gains a second overload:
+public boolean hasAuraWithEffect(GameData, Permanent, Predicate<CardEffect>)
+```
+
+Four records deleted, one record + one enum + one `hasAuraWithEffect` overload added. **No handlers
+were deleted — all five records are handler-less static markers read directly**, which is why the
+Step Index's "3" undercounts records and overcounts handlers. Cards: Brainwash, Oppressive Rays
+(both tax kinds), Awesome Presence; Forced Worship, Weight of Conscience.
+
+**Both premises held — and this time the audit's identity claim was accurate.** Per the Step 17
+warning all three `GameQueryService` consumers were read in full before trusting it:
+`getEnchantedCreatureAttackTax`, `getEnchantedCreatureBlockTax` and `getEnchantedCreatureBlockerTax`
+really are the same nine lines (`forEachPermanent` → attachment guard → STATIC scan → `instanceof` →
+`total[0] +=`), differing only in the class and the accessor name. They are now three one-line
+wrappers over a private `getEnchantedCreatureCombatTax(gameData, creature, kind)`, so the two
+`CombatBlockService:1527-1528` call sites and `getCreatureAttackTax` were untouched. The second
+Step 17 warning also came back clean: none of the five records carries a capability interface, a
+`TargetSpec`, a `@CollectsTrigger`, a `@ValidatesTarget`, an AI polarity entry or a frontend
+reference.
+
+**What the audit missed**
+- **The survivor has 16 cards, not 15** (Arachnus Web, Arrest, Bonds of Faith, Bound by Moonsilver,
+  Cage of Hands, Compulsory Rest, Crystallization, Desert's Hold, Ice Cage, One Thousand Lashes,
+  Pacifism, Pious Interdiction, Prison Term, Recumbent Bliss, Serra Bestiary, Volrath's Curse). All
+  16 call sites were left untouched by keeping a no-arg constructor that means `(true, true)`.
+- **There is a fourth consumer of the 18b pair.** Beyond the two legality services the audit names,
+  `BoardEvaluator:231-232` tested both classes to score a pacified creature as sacrifice fodder —
+  now one class-keyed test, with no behaviour change since both arms already returned the same
+  score. `AiTargetSelector:185` is a fifth, indirect one; see the deliberate delta below.
+- **`isActiveEffect` needed a null guard once it took a predicate.** The class form relied on
+  `Class.isInstance(null)` returning `false` for an `EnchantedPermanentConditionalEffect` whose
+  inactive branch is `null`; an arbitrary matcher has no such guarantee, so the unwrap now checks
+  `activeEffect != null` explicitly. Behaviour-identical, but it would have NPE'd on the first
+  conditional Aura with a one-sided branch.
+
+**Design decisions**
+- **Two booleans, not an enum**, departing from the enum-per-axis habit of Steps 5–16. The two flags
+  map one-to-one onto the two consumers — `AttackLegalityService` asks `preventsAttacking()`,
+  `BlockLegalityService` asks `preventsBlocking()` — whereas an enum would force both to spell
+  `kind == ATTACK || kind == BOTH`. The one nonsense state a boolean pair admits is closed off in
+  the compact constructor, the same construction-time rejection Step 9 used for `SOURCE`.
+- **The name was kept.** Unlike Step 8's `ATTACHED`→`TRIGGERING` (where the new value fell outside
+  the old name's meaning), every value here stays inside "attack or block"; the record names the
+  pair of prohibitions and the flags select a subset. Renaming 18 files for that nuance is churn.
+- **`CombatTaxKind` is a separate axis from 18b and must stay one.** A tax of 0 is not a
+  prohibition — anyone can pay 0 — so the two families cannot be folded together.
+
+**Deliberate delta** (one, AI-only)
+- `AiTargetSelector:185` filters out creatures that already carry an Aura effect of each class the
+  candidate Aura would add. With the two classes merged, the AI now declines to put Forced Worship
+  on an already-Pacifism'd creature where it previously would have. Strictly better play (the
+  second Aura would add nothing) and heuristic-only — no rules behaviour depends on it.
+
+**Rejected: the optional follow-on.** The plan priced
+`EnchantedCreatureCantActivateTapAbilitiesEffect` → `EnchantedCreatureCantActivateAbilitiesEffect`
+at "5 call sites to delete one class". The real cost is 5 production call sites **plus 53 Mockito
+stubs** in `AbilityActivationServiceTest`, every one keyed on
+`eq(EnchantedCreatureCantActivateAbilitiesEffect.class)` and every one broken by moving those call
+sites to the predicate overload — a ~53-line mechanical rewrite of a mock-based test, with a real
+chance of silently weakening it, to delete one class used by one card (Serra Bestiary). Not worth
+it. The `Predicate<CardEffect>` overload it was waiting on now exists, so the merge stays available
+if the ability-lock family ever grows a third member.
+
+**Tests** — no test referenced any of the four deleted classes by name. 18b's flag split was already
+pinned from both sides by existing card tests (`ForcedWorshipTest.enchantedCreatureCanBlock` for
+`(true, false)`, `PacifismTest`'s attack **and** block negatives for `(true, true)`), so it needed
+nothing new. 18a's three kinds needed the cross-contamination assertions a `kind`-filtered sum can
+break, one per off-diagonal pair: `BrainwashTest.blockingWithTheEnchantedCreatureIsFree` and
+`.blockingTheEnchantedCreatureIsFree` (ATTACK must reach neither block kind),
+`AwesomePresenceTest.attackingWithTheEnchantedCreatureIsFree` and
+`.blockingWithTheEnchantedCreatureIsFree` (BE_BLOCKED_BY must reach neither),
+`OppressiveRaysTest.blockingTheEnchantedCreatureIsFree` (BLOCK_WITH must not become BE_BLOCKED_BY);
+Oppressive Rays' two pre-existing tests already pin that ATTACK and BLOCK_WITH stay distinct on one
+card. Plus two `GameQueryServiceTest.HasAuraWithEffect` cases for the new overload — that it
+distinguishes the two flags, and that it still unwraps `EnchantedPermanentConditionalEffect`.
+Ran with the 16 survivor cards, both legality suites, `AbilityActivationServiceTest` and
+`UntapStepServiceTest` (the two mock-based suites that stub the class overload) — 73 test classes,
+all green.
 
 ---
 

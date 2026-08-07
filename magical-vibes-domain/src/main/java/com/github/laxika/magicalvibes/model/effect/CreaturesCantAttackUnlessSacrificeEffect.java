@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * in {@code AttackLegalityService} and for the whole declaration in
  * {@code CombatAttackService.declareAttackers} — and the payment is applied by
  * {@code AttackSacrificeCostService}. Read directly (no dispatch handler), mirroring
- * {@link EnchantedCreatureCantAttackUnlessPaysEffect}.
+ * {@link EnchantedCreatureCombatTaxEffect}.
  *
  * @param attackerPredicate which attacking creatures the cost applies to
  * @param countPerAttacker  permanents that must be sacrificed per matching attacker

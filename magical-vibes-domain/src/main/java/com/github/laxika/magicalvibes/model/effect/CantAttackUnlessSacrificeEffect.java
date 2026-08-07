@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * a {@link CantAttackUnlessEffect} carrying a {@code ControlsPermanentCount} condition; this marker
  * only drives the actual sacrifice payment, applied by {@code AttackSacrificeCostService} as the
  * attack is committed. Read directly (no dispatch handler), mirroring
- * {@link EnchantedCreatureCantAttackUnlessPaysEffect}.
+ * {@link EnchantedCreatureCombatTaxEffect}.
  *
  * @param count       number of permanents that must be sacrificed to attack
  * @param filter      which permanents the controller must sacrifice

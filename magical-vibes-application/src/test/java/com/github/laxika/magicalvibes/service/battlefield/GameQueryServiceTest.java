@@ -2244,6 +2244,37 @@ class GameQueryServiceTest {
             assertThat(gqs.hasAuraWithEffect(gd, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)).isFalse();
             assertThat(gqs.hasAuraWithEffect(gd, creature, EnchantedCreatureCantAttackOrBlockEffect.class)).isTrue();
         }
+
+        @Test
+        @DisplayName("predicate overload distinguishes the halves of a parameterized effect")
+        void predicateOverloadInspectsEffectComponents() {
+            Permanent creature = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            Permanent aura = addPermanent(player1Id, createAura("Forced Worship",
+                    new EnchantedCreatureCantAttackOrBlockEffect(true, false)));
+            aura.setAttachedTo(creature.getId());
+
+            assertThat(gqs.hasAuraWithEffect(gd, creature,
+                    e -> e instanceof EnchantedCreatureCantAttackOrBlockEffect r && r.preventsAttacking())).isTrue();
+            assertThat(gqs.hasAuraWithEffect(gd, creature,
+                    e -> e instanceof EnchantedCreatureCantAttackOrBlockEffect r && r.preventsBlocking())).isFalse();
+            // the class-keyed overload still matches either half
+            assertThat(gqs.hasAuraWithEffect(gd, creature, EnchantedCreatureCantAttackOrBlockEffect.class)).isTrue();
+        }
+
+        @Test
+        @DisplayName("predicate overload still unwraps EnchantedPermanentConditionalEffect")
+        void predicateOverloadUnwrapsConditional() {
+            Permanent creature = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            Permanent aura = addPermanent(player1Id, createAura("Bonds of Faith",
+                    new EnchantedPermanentConditionalEffect(
+                            new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
+                            new PreventAllDamageToAndByEnchantedCreatureEffect(),
+                            new EnchantedCreatureCantAttackOrBlockEffect())));
+            aura.setAttachedTo(creature.getId());
+
+            assertThat(gqs.hasAuraWithEffect(gd, creature,
+                    e -> e instanceof EnchantedCreatureCantAttackOrBlockEffect r && r.preventsBlocking())).isTrue();
+        }
     }
 
     // ===== sourceHasKeyword =====

@@ -121,4 +121,37 @@ class AwesomePresenceTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
+
+    @Test
+    @DisplayName("Awesome Presence taxes only being blocked — the enchanted creature attacks for free")
+    void attackingWithTheEnchantedCreatureIsFree() {
+        harness.setLife(player2, 20);
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        enchant(enchanted, player1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        // player1's pool is empty: reading the BE_BLOCKED_BY tax as ATTACK would reject this
+        gs.declareAttackers(gd, player1, List.of(attackerIndex(enchanted)));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Awesome Presence taxes only being blocked — the enchanted creature blocks for free")
+    void blockingWithTheEnchantedCreatureIsFree() {
+        Permanent attacker = attacking(player1, new ScatheZombies());
+        Permanent enchanted = addCreatureReady(player2, new GrizzlyBears());
+        enchant(enchanted, player1);
+        enterDeclareBlockers();
+
+        // player2's pool is empty: reading the BE_BLOCKED_BY tax as BLOCK_WITH would reject this
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(defenderIndex(enchanted), attackerIndex(attacker))));
+
+        assertThat(enchanted.isBlocking()).isTrue();
+    }
 }

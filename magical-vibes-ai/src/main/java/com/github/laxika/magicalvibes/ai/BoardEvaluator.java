@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -227,9 +226,8 @@ public class BoardEvaluator {
             return baseScore * 0.15;
         }
 
-        // Pacified creatures (can't attack or block due to aura) — great sacrifice targets
-        if (gameQueryService.hasAuraWithEffect(gameData, perm, EnchantedCreatureCantAttackOrBlockEffect.class)
-                || gameQueryService.hasAuraWithEffect(gameData, perm, EnchantedCreatureCantAttackEffect.class)) {
+        // Pacified creatures (can't attack and/or block due to aura) — great sacrifice targets
+        if (gameQueryService.hasAuraWithEffect(gameData, perm, EnchantedCreatureCantAttackOrBlockEffect.class)) {
             return baseScore * 0.15;
         }
 

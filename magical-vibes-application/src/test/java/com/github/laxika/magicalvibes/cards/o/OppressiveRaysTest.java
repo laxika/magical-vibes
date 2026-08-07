@@ -81,6 +81,28 @@ class OppressiveRaysTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Oppressive Rays taxes blocking with the enchanted creature, not blocking it")
+    void blockingTheEnchantedCreatureIsFree() {
+        Permanent enchanted = addReadyCreature(player1);
+        enchanted.setAttacking(true);
+        enchant(enchanted, player2);
+
+        Permanent blocker = addReadyCreature(player2);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        // player2's pool is empty: reading the BLOCK_WITH tax as BE_BLOCKED_BY would reject this
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(enchanted))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     private Permanent addReadyCreature(Player player) {
         Permanent creature = new Permanent(new GrizzlyBears());
         creature.setSummoningSick(false);

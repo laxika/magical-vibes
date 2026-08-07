@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNam
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantBlockUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatTaxKind;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
@@ -51,8 +51,8 @@ import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseSacri
 import com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackCostEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantBeBlockedUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCombatTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalBlockLifeCostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
@@ -3500,11 +3500,22 @@ public class GameQueryService {
      * An Aura whose effects are being ignored this turn (Volrath's Curse) is skipped entirely.
      */
     public boolean hasAuraWithEffect(GameData gameData, Permanent creature, Class<? extends CardEffect> effectClass) {
+        return hasAuraWithEffect(gameData, creature, effectClass::isInstance);
+    }
+
+    /**
+     * Predicate-matching form of {@link #hasAuraWithEffect(GameData, Permanent, Class)}, for effects
+     * where the class alone is not the question — a parameterized restriction such as
+     * {@link EnchantedCreatureCantAttackOrBlockEffect} must also be asked which half of it applies.
+     * The matcher sees only effects that are actually active, so it never has to repeat the
+     * attachment, ignored-Aura or {@link EnchantedPermanentConditionalEffect} handling.
+     */
+    public boolean hasAuraWithEffect(GameData gameData, Permanent creature, Predicate<CardEffect> effectMatcher) {
         return gameData.anyPermanentMatches(p ->
                 p.isAttached() && p.getAttachedTo().equals(creature.getId())
                         && !p.isAuraEffectsIgnoredThisTurn()
                         && p.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> isActiveEffect(gameData, creature, e, effectClass)));
+                        .anyMatch(e -> isActiveEffect(gameData, creature, e, effectMatcher)));
     }
 
     /**
@@ -3548,7 +3559,7 @@ public class GameQueryService {
 
     /**
      * Returns the total additional generic mana the controller must pay to declare this creature as an
-     * attacker: every {@link EnchantedCreatureCantAttackUnlessPaysEffect} aura attached to it (e.g.
+     * attacker: every {@link CombatTaxKind#ATTACK} aura attached to it (e.g.
      * Brainwash — {3}) plus every {@link AttackCostEffect} on the creature itself (e.g. Phyrexian
      * Marauder — {1} per +1/+1 counter).
      */
@@ -3564,56 +3575,44 @@ public class GameQueryService {
 
     /**
      * Returns the total additional generic mana the controller must pay to declare this creature as an
-     * attacker, summed over every {@link EnchantedCreatureCantAttackUnlessPaysEffect} aura attached to it
+     * attacker, summed over every {@link CombatTaxKind#ATTACK} Aura attached to it
      * (e.g. Brainwash — {3}).
      */
     public int getEnchantedCreatureAttackTax(GameData gameData, Permanent creature) {
-        int[] total = {0};
-        gameData.forEachPermanent((playerId, aura) -> {
-            if (!aura.isAttached() || !aura.getAttachedTo().equals(creature.getId())) {
-                return;
-            }
-            for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof EnchantedCreatureCantAttackUnlessPaysEffect tax) {
-                    total[0] += tax.amount();
-                }
-            }
-        });
-        return total[0];
+        return getEnchantedCreatureCombatTax(gameData, creature, CombatTaxKind.ATTACK);
     }
 
     /**
      * Returns the additional generic mana the defending player must pay for each creature they declare as a
-     * blocker of this attacking creature, summed over every
-     * {@link EnchantedCreatureCantBeBlockedUnlessPaysEffect} aura attached to it (e.g. Awesome Presence — {3}).
+     * blocker of this attacking creature, summed over every {@link CombatTaxKind#BE_BLOCKED_BY} Aura
+     * attached to it (e.g. Awesome Presence — {3}).
      */
     public int getEnchantedCreatureBlockTax(GameData gameData, Permanent creature) {
-        int[] total = {0};
-        gameData.forEachPermanent((playerId, aura) -> {
-            if (!aura.isAttached() || !aura.getAttachedTo().equals(creature.getId())) {
-                return;
-            }
-            for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof EnchantedCreatureCantBeBlockedUnlessPaysEffect tax) {
-                    total[0] += tax.amountPerBlocker();
-                }
-            }
-        });
-        return total[0];
+        return getEnchantedCreatureCombatTax(gameData, creature, CombatTaxKind.BE_BLOCKED_BY);
     }
 
     /**
      * Returns the additional generic mana the enchanted creature's controller must pay for each
-     * block declared by that creature, summed over every matching Aura attached to it.
+     * block declared by that creature, summed over every {@link CombatTaxKind#BLOCK_WITH} Aura
+     * attached to it (e.g. Oppressive Rays — {3}).
      */
     public int getEnchantedCreatureBlockerTax(GameData gameData, Permanent creature) {
+        return getEnchantedCreatureCombatTax(gameData, creature, CombatTaxKind.BLOCK_WITH);
+    }
+
+    /**
+     * Sums the {@link EnchantedCreatureCombatTaxEffect} amounts of the given {@code kind} across every
+     * Aura attached to {@code creature}. Auras carrying a different kind contribute nothing, so a card
+     * taxing several actions at once (Oppressive Rays) is charged once per action.
+     */
+    private int getEnchantedCreatureCombatTax(GameData gameData, Permanent creature, CombatTaxKind kind) {
         int[] total = {0};
         gameData.forEachPermanent((playerId, aura) -> {
             if (!aura.isAttached() || !aura.getAttachedTo().equals(creature.getId())) {
                 return;
             }
             for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof EnchantedCreatureCantBlockUnlessPaysEffect tax) {
+                if (effect instanceof EnchantedCreatureCombatTaxEffect tax && tax.kind() == kind) {
                     total[0] += tax.amount();
                 }
             }
@@ -3646,13 +3645,14 @@ public class GameQueryService {
         return total[0];
     }
 
-    private boolean isActiveEffect(GameData gameData, Permanent creature, CardEffect effect, Class<? extends CardEffect> effectClass) {
-        if (effectClass.isInstance(effect)) return true;
+    private boolean isActiveEffect(GameData gameData, Permanent creature, CardEffect effect,
+                                   Predicate<CardEffect> effectMatcher) {
+        if (effectMatcher.test(effect)) return true;
         if (effect instanceof EnchantedPermanentConditionalEffect cond) {
             CardEffect activeEffect = predicateEvaluationService.matchesPermanentPredicate(gameData, creature, cond.filter())
                     ? cond.ifMatch()
                     : cond.ifNotMatch();
-            return effectClass.isInstance(activeEffect);
+            return activeEffect != null && effectMatcher.test(activeEffect);
         }
         return false;
     }

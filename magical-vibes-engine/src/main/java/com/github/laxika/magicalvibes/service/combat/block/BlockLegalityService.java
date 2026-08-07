@@ -350,7 +350,8 @@ public class BlockLegalityService {
      */
     private boolean hasUnmetBlockRequirement(BlockLegalityContext context, Permanent creature) {
         GameData gameData = context.gameData;
-        if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackOrBlockEffect.class)) {
+        if (gameQueryService.hasAuraWithEffect(gameData, creature,
+                e -> e instanceof EnchantedCreatureCantAttackOrBlockEffect r && r.preventsBlocking())) {
             return true;
         }
         UUID controllerId = null;

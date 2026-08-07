@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatTaxKind;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCombatTaxEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -12,6 +13,6 @@ public class Brainwash extends Card {
 
     public Brainwash() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackUnlessPaysEffect(3));
+                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCombatTaxEffect(3, CombatTaxKind.ATTACK));
     }
 }
